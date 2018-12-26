@@ -1,0 +1,55 @@
+256,267d255
+<     private static double getSign(double d){ 
+<         long l = Double.doubleToLongBits(d);
+<         return l < 0 ? -1.0 : 1.0;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+2801c2789
+<             return leftPlane ? getSign(xa) * Math.PI : xa;
+---
+>             return leftPlane ? copySign(Math.PI, xa) : xa;
+2960c2948
+<                     return getSign(y) * Math.PI;
+---
+>                     return copySign(Math.PI, y);
+3739a3728,3760
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double copySign(double magnitude, double sign){
+>         long m = Double.doubleToLongBits(magnitude);
+>         long s = Double.doubleToLongBits(sign);
+>         if ((m >= 0 && s >= 0) || (m < 0 && s < 0)) { 
+>             return magnitude;
+>         }
+>         return -magnitude; 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static float copySign(float magnitude, float sign){
+>         int m = Float.floatToIntBits(magnitude);
+>         int s = Float.floatToIntBits(sign);
+>         if ((m >= 0 && s >= 0) || (m < 0 && s < 0)) { 
+>             return magnitude;
+>         }
+>         return -magnitude; 
+>     }

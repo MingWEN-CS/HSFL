@@ -1,0 +1,65 @@
+28d27
+< import com.google.javascript.rhino.Token;
+99,103d97
+<     private final JSDocInfo info;
+< 
+<     
+< 
+< 
+112,114d105
+<     final boolean isDefine;
+< 
+<     
+135,136c126
+<                 Scope scope, int index, CompilerInput input, boolean isDefine,
+<                 JSDocInfo info) {
+---
+>                 Scope scope, int index, CompilerInput input) {
+143,144d132
+<       this.isDefine = isDefine;
+<       this.info = info;
+239c227,228
+<       return isDefine;
+---
+>       JSDocInfo info = getJSDocInfo();
+>       return info != null && info.isDefine();
+243,253c232
+<       Node parent = getParentNode();
+<       int pType = parent.getType();
+<       if (pType == Token.FUNCTION) {
+<         return parent;
+<       } else if (pType == Token.ASSIGN) {
+<         return parent.getLastChild();
+<       } else if (pType == Token.VAR) {
+<         return nameNode.getFirstChild();
+<       } else {
+<         return null;
+<       }
+---
+>       return NodeUtil.getRValueOfLValue(nameNode);
+277c256
+<       return info;
+---
+>       return nameNode == null ? null : NodeUtil.getBestJSDocInfo(nameNode);
+315,319c294,295
+<       if (info != null && info.isNoShadow()) {
+<         return true;
+<       } else {
+<         return false;
+<       }
+---
+>       JSDocInfo info = getJSDocInfo();
+>       return info != null && info.isNoShadow();
+392,393d367
+<         null,  
+<         false, 
+532,538c506
+<     
+<     JSDocInfo info = nameNode == null
+<         ? null : NodeUtil.getBestJSDocInfo(nameNode);
+< 
+<     Var var = new Var(inferred, name, nameNode, type, this, vars.size(), input,
+<         info != null && info.isDefine(), info);
+< 
+---
+>     Var var = new Var(inferred, name, nameNode, type, this, vars.size(), input);

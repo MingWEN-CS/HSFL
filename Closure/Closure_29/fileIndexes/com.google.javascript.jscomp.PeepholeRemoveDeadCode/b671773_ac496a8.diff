@@ -1,0 +1,145 @@
+138c138,139
+<     Node result = trySimplifyUnusedResult(subtree.getFirstChild());
+---
+>     Node result = NodeUtil.trySimplifyUnusedResult(
+>         subtree.getFirstChild(), this);
+154,279d154
+<   
+< 
+< 
+< 
+< 
+<   private Node trySimplifyUnusedResult(Node n) {
+<     return trySimplifyUnusedResult(n, true);
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   private Node trySimplifyUnusedResult(Node n, boolean removeUnused) {
+<     Node result = n;
+< 
+<     
+<     switch (n.getType()) {
+<       case Token.HOOK:
+<         Node trueNode = trySimplifyUnusedResult(n.getFirstChild().getNext());
+<         Node falseNode = trySimplifyUnusedResult(n.getLastChild());
+<         
+<         
+<         
+<         
+<         
+<         
+<         if (trueNode == null && falseNode != null) {
+<           n.setType(Token.OR);
+<           Preconditions.checkState(n.getChildCount() == 2);
+<         } else if (trueNode != null && falseNode == null) {
+<           n.setType(Token.AND);
+<           Preconditions.checkState(n.getChildCount() == 2);
+<         } else if (trueNode == null && falseNode == null) {
+<           result = trySimplifyUnusedResult(n.getFirstChild());
+<         } else {
+<           
+<           result = n;
+<         }
+<         break;
+<       case Token.AND:
+<       case Token.OR:
+<         
+<         
+<         
+<         Node conditionalResultNode = trySimplifyUnusedResult(
+<             n.getLastChild());
+<         if (conditionalResultNode == null) {
+<           Preconditions.checkState(n.hasOneChild());
+<           
+<           
+<           result = trySimplifyUnusedResult(n.getFirstChild());
+<         }
+<         break;
+<       case Token.FUNCTION:
+<         
+<         
+<         result = null;
+<         break;
+<       case Token.COMMA:
+<         
+<         
+<         
+<         
+<         Node left = trySimplifyUnusedResult(n.getFirstChild());
+<         Node right = trySimplifyUnusedResult(n.getLastChild());
+<         if (left == null && right == null) {
+<           result = null;
+<         } else if (left == null) {
+<           result = right;
+<         } else if (right == null){
+<           result = left;
+<         } else {
+<           
+<           result = n;
+<         }
+<         break;
+<       default:
+<         if (!NodeUtil.nodeTypeMayHaveSideEffects(n)) {
+<           
+<           
+<           Node resultList = null;
+<           for (Node next, c = n.getFirstChild(); c != null; c = next) {
+<             next = c.getNext();
+<             c = trySimplifyUnusedResult(c);
+<             if (c != null) {
+<               c.detachFromParent();
+<               if (resultList == null)  {
+<                 
+<                 resultList = c;
+<               } else {
+<                 
+<                 
+<                 resultList = IR.comma(resultList, c).srcref(c);
+<               }
+<             }
+<           }
+<           result = resultList;
+<         }
+<     }
+< 
+<     
+<     if (n != result) {
+<       Node parent = n.getParent();
+<       if (result == null) {
+<         if (removeUnused) {
+<           parent.removeChild(n);
+<         } else {
+<           result = IR.empty().srcref(n);
+<           parent.replaceChild(n, result);
+<         }
+<       } else {
+<         
+<         if (result.getParent() != null) {
+<           result.detachFromParent();
+<         }
+<         n.getParent().replaceChild(n, result);
+<       }
+<       reportCodeChange();
+<     }
+< 
+<     return result;
+<   }
+445c320
+<     left = trySimplifyUnusedResult(left);
+---
+>     left = NodeUtil.trySimplifyUnusedResult(left, this);
+779c654
+<       init = trySimplifyUnusedResult(init, false);
+---
+>       init = NodeUtil.trySimplifyUnusedResult(init, this, false);
+783c658,659
+<       increment = trySimplifyUnusedResult(increment, false);
+---
+>       increment = NodeUtil.trySimplifyUnusedResult(
+>           increment, this, false);

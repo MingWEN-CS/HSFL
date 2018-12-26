@@ -1,0 +1,186 @@
+24a25,28
+> import org.apache.commons.math.exception.ConvergenceException;
+> import org.apache.commons.math.exception.util.LocalizedFormats;
+> import org.apache.commons.math.stat.descriptive.moment.Variance;
+> 
+34a39,55
+>     public static enum EmptyClusterStrategy {
+> 
+>         
+>         LARGEST_VARIANCE,
+> 
+>         
+>         LARGEST_POINTS_NUMBER,
+> 
+>         
+>         FARTHEST_POINT,
+> 
+>         
+>         ERROR
+> 
+>     }
+> 
+>     
+37a59,65
+>     private final EmptyClusterStrategy emptyStrategy;
+> 
+>     
+> 
+> 
+> 
+> 
+41c69,80
+<         this.random = random;
+---
+>         this(random, EmptyClusterStrategy.LARGEST_VARIANCE);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public KMeansPlusPlusClusterer(final Random random, final EmptyClusterStrategy emptyStrategy) {
+>         this.random        = random;
+>         this.emptyStrategy = emptyStrategy;
+65,66c104,118
+<                 final T newCenter = cluster.getCenter().centroidOf(cluster.getPoints());
+<                 if (!newCenter.equals(cluster.getCenter())) {
+---
+>                 final T newCenter;
+>                 if (cluster.getPoints().isEmpty()) {
+>                     switch (emptyStrategy) {
+>                         case LARGEST_VARIANCE :
+>                             newCenter = getPointFromLargestVarianceCluster(clusters);
+>                             break;
+>                         case LARGEST_POINTS_NUMBER :
+>                             newCenter = getPointFromLargestNumberCluster(clusters);
+>                             break;
+>                         case FARTHEST_POINT :
+>                             newCenter = getFarthestPoint(clusters);
+>                             break;
+>                         default :
+>                             throw new ConvergenceException(LocalizedFormats.EMPTY_CLUSTER_IN_K_MEANS);
+>                     }
+67a120,124
+>                 } else {
+>                     newCenter = cluster.getCenter().centroidOf(cluster.getPoints());
+>                     if (!newCenter.equals(cluster.getCenter())) {
+>                         clusteringChanged = true;
+>                     }
+139a197,310
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private T getPointFromLargestVarianceCluster(final Collection<Cluster<T>> clusters) {
+> 
+>         double maxVariance = Double.NEGATIVE_INFINITY;
+>         Cluster<T> selected = null;
+>         for (final Cluster<T> cluster : clusters) {
+>             if (!cluster.getPoints().isEmpty()) {
+> 
+>                 
+>                 final T center = cluster.getCenter();
+>                 final Variance stat = new Variance();
+>                 for (final T point : cluster.getPoints()) {
+>                     stat.increment(point.distanceFrom(center));
+>                 }
+>                 final double variance = stat.getResult();
+> 
+>                 
+>                 if (variance > maxVariance) {
+>                     maxVariance = variance;
+>                     selected = cluster;
+>                 }
+> 
+>             }
+>         }
+> 
+>         
+>         if (selected == null) {
+>             throw new ConvergenceException(LocalizedFormats.EMPTY_CLUSTER_IN_K_MEANS);
+>         }
+> 
+>         
+>         final List<T> selectedPoints = selected.getPoints();
+>         return selectedPoints.remove(random.nextInt(selectedPoints.size()));
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private T getPointFromLargestNumberCluster(final Collection<Cluster<T>> clusters) {
+> 
+>         int maxNumber = 0;
+>         Cluster<T> selected = null;
+>         for (final Cluster<T> cluster : clusters) {
+> 
+>             
+>             final int number = cluster.getPoints().size();
+> 
+>             
+>             if (number > maxNumber) {
+>                 maxNumber = number;
+>                 selected = cluster;
+>             }
+> 
+>         }
+> 
+>         
+>         if (selected == null) {
+>             throw new ConvergenceException(LocalizedFormats.EMPTY_CLUSTER_IN_K_MEANS);
+>         }
+> 
+>         
+>         final List<T> selectedPoints = selected.getPoints();
+>         return selectedPoints.remove(random.nextInt(selectedPoints.size()));
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private T getFarthestPoint(final Collection<Cluster<T>> clusters) {
+> 
+>         double maxDistance = Double.NEGATIVE_INFINITY;
+>         Cluster<T> selectedCluster = null;
+>         int selectedPoint = -1;
+>         for (final Cluster<T> cluster : clusters) {
+> 
+>             
+>             final T center = cluster.getCenter();
+>             final List<T> points = cluster.getPoints();
+>             for (int i = 0; i < points.size(); ++i) {
+>                 final double distance = points.get(i).distanceFrom(center);
+>                 if (distance > maxDistance) {
+>                     maxDistance     = distance;
+>                     selectedCluster = cluster;
+>                     selectedPoint   = i;
+>                 }
+>             }
+> 
+>         }
+> 
+>         
+>         if (selectedCluster == null) {
+>             throw new ConvergenceException(LocalizedFormats.EMPTY_CLUSTER_IN_K_MEANS);
+>         }
+> 
+>         return selectedCluster.getPoints().remove(selectedPoint);

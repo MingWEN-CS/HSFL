@@ -1,0 +1,39 @@
+548,550c548
+<         (options.propertyRenaming != PropertyRenamingPolicy.HEURISTIC &&
+<          options.propertyRenaming !=
+<             PropertyRenamingPolicy.AGGRESSIVE_HEURISTIC)) {
+---
+>         !usingHeuristicRenaming()) {
+674a673,677
+>   private boolean usingHeuristicRenaming() {
+>     return options.propertyRenaming == PropertyRenamingPolicy.HEURISTIC ||
+>         options.propertyRenaming == PropertyRenamingPolicy.AGGRESSIVE_HEURISTIC;
+>   }
+> 
+732d734
+<       passes.add(removeUnusedClassProperties);
+1623a1626
+>       
+1626,1637c1629,1631
+<           !options.removeUnusedVars);
+<     }
+<   };
+< 
+<   
+< 
+< 
+<   final PassFactory removeUnusedClassProperties =
+<       new PassFactory("removeUnusedClassProperties", false) {
+<     @Override
+<     protected CompilerPass createInternal(AbstractCompiler compiler) {
+<       return new RemoveUnusedClassProperties(compiler);
+---
+>           !options.removeUnusedVars,
+>           !usingHeuristicRenaming(), 
+>           true); 
+2185,2187c2179
+<     return options.propertyRenaming == PropertyRenamingPolicy.HEURISTIC ||
+<         options.propertyRenaming ==
+<             PropertyRenamingPolicy.AGGRESSIVE_HEURISTIC;
+---
+>     return usingHeuristicRenaming();

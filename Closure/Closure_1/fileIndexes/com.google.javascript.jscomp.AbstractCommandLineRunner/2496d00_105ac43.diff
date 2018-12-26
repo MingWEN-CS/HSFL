@@ -1,0 +1,126 @@
+25a26
+> import com.google.common.io.Files;
+711a713
+>       outputBundle();
+780a783
+>       outputBundle();
+906,910d908
+<   private String expandManifest(JSModule forModule, String manifestName) {
+<     return expandCommandLinePath(manifestName, forModule);
+<   }
+< 
+<   
+1142c1140
+<   private boolean shouldGenerateManifestPerModule(String outputManifest) {
+---
+>   private boolean shouldGenerateOutputPerModule(String output) {
+1144,1145c1142
+<         && outputManifest != null
+<         && outputManifest.contains("%outname%");
+---
+>         && output != null && output.contains("%outname%");
+1153,1154c1150,1159
+<     List<String> outputManifests = config.outputManifests;
+<     if (outputManifests.isEmpty()) {
+---
+>     outputManifestOrBundle(config.outputManifests, true);
+>   }
+> 
+>   private void outputBundle() throws IOException {
+>     outputManifestOrBundle(config.outputBundles, false);
+>   }
+> 
+>   private void outputManifestOrBundle(List<String> outputFiles,
+>       boolean isManifest) throws IOException {
+>     if (outputFiles.isEmpty()) {
+1158,1159c1163,1164
+<     for (String outputManifest : outputManifests) {
+<       if (outputManifest.isEmpty()) {
+---
+>     for (String output : outputFiles) {
+>       if (output.isEmpty()) {
+1164c1169
+<       if (shouldGenerateManifestPerModule(outputManifest)) {
+---
+>       if (shouldGenerateOutputPerModule(output)) {
+1169,1170c1174,1179
+<               expandManifest(module, outputManifest));
+<           printManifestTo(module.getInputs(), out);
+---
+>               expandCommandLinePath(output, module));
+>           if (isManifest) {
+>             printManifestTo(module.getInputs(), out);
+>           } else {
+>             printBundleTo(module.getInputs(), out);
+>           }
+1176c1185
+<             expandManifest(null, outputManifest));
+---
+>             expandCommandLinePath(output, null));
+1178c1187,1191
+<           printManifestTo(compiler.getInputsInOrder(), out);
+---
+>           if (isManifest) {
+>             printManifestTo(compiler.getInputsInOrder(), out);
+>           } else {
+>             printBundleTo(compiler.getInputsInOrder(), out);
+>           }
+1180c1193
+<           printModuleGraphManifestTo(graph, out);
+---
+>           printModuleGraphManifestOrBundleTo(graph, out, isManifest);
+1191,1192c1204,1205
+<   void printModuleGraphManifestTo(
+<       JSModuleGraph graph, Appendable out) throws IOException {
+---
+>   void printModuleGraphManifestOrBundleTo(JSModuleGraph graph,
+>       Appendable out, boolean isManifest) throws IOException {
+1200,1207c1213,1224
+<       
+<       
+<       String dependencies = commas.join(module.getSortedDependencyNames());
+<       out.append(
+<           String.format("{%s%s}\n",
+<               module.getName(),
+<               dependencies.isEmpty() ? "" : ":" + dependencies));
+<       printManifestTo(module.getInputs(), out);
+---
+>       if (isManifest) {
+>         
+>         
+>         String dependencies = commas.join(module.getSortedDependencyNames());
+>         out.append(
+>             String.format("{%s%s}\n",
+>                 module.getName(),
+>                 dependencies.isEmpty() ? "" : ":" + dependencies));
+>         printManifestTo(module.getInputs(), out);
+>       } else {
+>         printBundleTo(module.getInputs(), out);
+>       }
+1225a1243,1257
+>   
+> 
+> 
+> 
+>   private void printBundleTo(Iterable<CompilerInput> inputs, Appendable out)
+>       throws IOException {
+>     for (CompilerInput input : inputs) {
+>       out.append("
+>       File file = new File(input.getName());
+>       for (String line : Files.readLines(file, Charsets.UTF_8)) {
+>         out.append(line + "\n");
+>       }
+>     }
+>   }
+> 
+1631a1664,1673
+>       return this;
+>     }
+> 
+>     private List<String> outputBundles = ImmutableList.of();
+> 
+>     
+> 
+> 
+>     CommandLineConfig setOutputBundle(List<String> outputBundles) {
+>       this.outputBundles = outputBundles;

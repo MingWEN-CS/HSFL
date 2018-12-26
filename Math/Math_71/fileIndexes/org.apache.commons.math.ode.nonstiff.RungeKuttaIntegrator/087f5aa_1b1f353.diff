@@ -1,0 +1,95 @@
+20d19
+< import java.util.Collection;
+21a21
+> import org.apache.commons.math.ode.AbstractIntegrator;
+24d23
+< import org.apache.commons.math.ode.FirstOrderIntegrator;
+26,27d24
+< import org.apache.commons.math.ode.events.EventHandler;
+< import org.apache.commons.math.ode.events.CombinedEventsManager;
+29d25
+< import org.apache.commons.math.ode.sampling.DummyStepHandler;
+31d26
+< import org.apache.commons.math.ode.sampling.StepHandler;
+58,59c53
+< public abstract class RungeKuttaIntegrator
+<   implements FirstOrderIntegrator {
+---
+> public abstract class RungeKuttaIntegrator extends AbstractIntegrator {
+70c64,66
+<   protected RungeKuttaIntegrator(final double[] c, final double[][] a, final double[] b,
+---
+> 
+>   protected RungeKuttaIntegrator(final String name,
+>                                  final double[] c, final double[][] a, final double[] b,
+72a69
+>     super(name);
+78,111d74
+<     handler         = DummyStepHandler.getInstance();
+<     eventsHandlersManager = new CombinedEventsManager();
+<     resetInternalState();
+<   }
+< 
+<   
+<   public abstract String getName();
+< 
+<   
+<   public void setStepHandler (final StepHandler handler) {
+<     this.handler = handler;
+<   }
+< 
+<   
+<   public StepHandler getStepHandler() {
+<     return handler;
+<   }
+< 
+<   
+<   public void addEventHandler(final EventHandler function,
+<                               final double maxCheckInterval,
+<                               final double convergence,
+<                               final int maxIterationCount) {
+<     eventsHandlersManager.addEventHandler(function, maxCheckInterval, convergence, maxIterationCount);
+<   }
+< 
+<   
+<   public Collection<EventHandler> getEventsHandlers() {
+<       return eventsHandlersManager.getEventsHandlers();
+<   }
+< 
+<   
+<   public void clearEventsHandlers() {
+<       eventsHandlersManager.clearEventsHandlers();
+261,277d223
+<     resetInternalState();
+<     return stopTime;
+< 
+<   }
+< 
+<   
+<   public double getCurrentStepStart() {
+<     return stepStart;
+<   }
+< 
+<   
+<   public double getCurrentSignedStepsize() {
+<     return stepSize;
+<   }
+< 
+<   
+<   private void resetInternalState() {
+279a226,227
+>     return stopTime;
+> 
+296,307d243
+< 
+<   
+<   private StepHandler handler;
+< 
+<   
+<   protected CombinedEventsManager eventsHandlersManager;
+< 
+<   
+<   private double stepStart;
+< 
+<   
+<   private double stepSize;

@@ -1,0 +1,45 @@
+359,360c359
+<     private void inline(Var v, Reference declaration,
+<                         Reference init, Reference reference) {
+---
+>     private void inline(Var v, Reference decl, Reference init, Reference ref) {
+366,367c365,370
+<       inlineValue(v, reference, value.detachFromParent());
+<       if (declaration != init) {
+---
+>       
+>       compiler.reportChangeToScope(compiler.getEnclosingScope(decl.getNode()));
+>       compiler.reportChangeToScope(compiler.getEnclosingScope(ref.getNode()));
+> 
+>       inlineValue(v, ref, value.detachFromParent());
+>       if (decl != init) {
+372d374
+< 
+375,377c377
+<         removeDeclaration(declaration);
+<       } else {
+<         compiler.reportCodeChange();
+---
+>         removeDeclaration(decl);
+415,419c415,417
+<     private void removeDeclaration(Reference declaration) {
+<       Node varNode = declaration.getParent();
+<       Node grandparent = declaration.getGrandparent();
+< 
+<       varNode.removeChild(declaration.getNode());
+---
+>     private void removeDeclaration(Reference decl) {
+>       Node varNode = decl.getParent();
+>       Node grandparent = decl.getGrandparent();
+420a419,420
+>       compiler.reportChangeToScope(compiler.getEnclosingScope(decl.getNode()));
+>       varNode.removeChild(decl.getNode());
+426,427d425
+< 
+<       compiler.reportCodeChange();
+438a437
+>       compiler.reportChangeToScope(compiler.getEnclosingScope(ref.getNode()));
+445d443
+< 
+447d444
+<       compiler.reportCodeChange();

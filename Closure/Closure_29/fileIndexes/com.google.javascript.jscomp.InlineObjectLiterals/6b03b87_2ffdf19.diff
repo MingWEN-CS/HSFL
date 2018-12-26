@@ -1,0 +1,54 @@
+20d19
+< import com.google.common.base.Predicates;
+66c65
+<         compiler, new InliningBehavior(), Predicates.<Var>alwaysTrue());
+---
+>         compiler, new InliningBehavior());
+158,163c157,163
+<         
+<         
+<         if (parent.getType() == Token.GETPROP &&
+<             (gramps.getType() != Token.CALL ||
+<              gramps.getFirstChild() != parent) &&
+<             parent.getFirstChild().isEquivalentTo(name)) {
+---
+>         if (parent.getType() == Token.GETPROP) {
+>           Preconditions.checkState(parent.getFirstChild() == name);
+>           
+>           if (gramps.getType() == Token.CALL
+>               && gramps.getFirstChild() == parent) {
+>             return false;
+>           }
+168,175c168,169
+<         if (!ref.isLvalue() && !ref.isInitializingDeclaration()) {
+<           if (parent.getType() != Token.VAR) {
+<             
+<             return false;
+<           }
+< 
+<           
+<           continue;
+---
+>         if (!isVarOrAssignExprLhs(name)) {
+>            return false;
+220,230d213
+<         
+<         
+<         
+<         
+<         
+<         Node p = parent;
+<         while ((p = p.getParent()) != null) {
+<           if (p.getType() == Token.GETPROP) {
+<             return false;
+<           }
+<         }
+237a221,228
+>     }
+> 
+>     private boolean isVarOrAssignExprLhs(Node n) {
+>       Node parent = n.getParent();
+>       return parent.getType() == Token.VAR ||
+>           (parent.getType() == Token.ASSIGN
+>               && parent.getFirstChild() == n
+>               && parent.getParent().getType() == Token.EXPR_RESULT);

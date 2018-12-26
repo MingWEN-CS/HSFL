@@ -1,0 +1,79 @@
+20a21,23
+> import org.apache.commons.math3.exception.NotPositiveException;
+> import org.apache.commons.math3.exception.util.LocalizedFormats;
+> 
+1148c1151
+<                 --exp;
+---
+>                 exp--;
+1168,1170c1171,1172
+<                 final double[] lnCoef_last = LN_QUICK_COEF[LN_QUICK_COEF.length - 1];
+<                 double ya = lnCoef_last[0];
+<                 double yb = lnCoef_last[1];
+---
+>                 double ya = LN_QUICK_COEF[LN_QUICK_COEF.length-1][0];
+>                 double yb = LN_QUICK_COEF[LN_QUICK_COEF.length-1][1];
+1182,1184c1184,1185
+<                     final double[] lnCoef_i = LN_QUICK_COEF[i];
+<                     aa = ya + lnCoef_i[0];
+<                     ab = yb + lnCoef_i[1];
+---
+>                     aa = ya + LN_QUICK_COEF[i][0];
+>                     ab = yb + LN_QUICK_COEF[i][1];
+1204c1205
+<         final double[] lnm = lnMant.LN_MANT[(int)((bits & 0x000ffc0000000000L) >> 42)];
+---
+>         double lnm[] = lnMant.LN_MANT[(int)((bits & 0x000ffc0000000000L) >> 42)];
+1215c1216
+<         final double epsilon = (bits & 0x3ffffffffffL) / (TWO_POWER_52 + (bits & 0x000ffc0000000000L));
+---
+>         double epsilon = (bits & 0x3ffffffffffL) / (TWO_POWER_52 + (bits & 0x000ffc0000000000L));
+1229,1230c1230,1231
+<             final double numer = bits & 0x3ffffffffffL;
+<             final double denom = TWO_POWER_52 + (bits & 0x000ffc0000000000L);
+---
+>             double numer = bits & 0x3ffffffffffL;
+>             double denom = TWO_POWER_52 + (bits & 0x000ffc0000000000L);
+1235,1237c1236,1237
+<             final double[] lnCoef_last = LN_HI_PREC_COEF[LN_HI_PREC_COEF.length-1];
+<             double ya = lnCoef_last[0];
+<             double yb = lnCoef_last[1];
+---
+>             double ya = LN_HI_PREC_COEF[LN_HI_PREC_COEF.length-1][0];
+>             double yb = LN_HI_PREC_COEF[LN_HI_PREC_COEF.length-1][1];
+1249,1251c1249,1250
+<                 final double[] lnCoef_i = LN_HI_PREC_COEF[i];
+<                 aa = ya + lnCoef_i[0];
+<                 ab = yb + lnCoef_i[1];
+---
+>                 aa = ya + LN_HI_PREC_COEF[i][0];
+>                 ab = yb + LN_HI_PREC_COEF[i][1];
+1582a1582,1609
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double pow(double d, int e) {
+>         if (e == 0) {
+>             return 1.0;
+>         } else if (e < 0) {
+>             e = -e;
+>             d = 1.0 / d;
+>         }
+> 
+>         double result = 1;
+>         double d2p    = d;
+>         while (e != 0) {
+>             if ((e & 0x1) != 0) {
+>                 result *= d2p;
+>             }
+>             d2p *= d2p;
+>             e = e >> 1;
+>         }
+> 
+>         return result;
+>     }

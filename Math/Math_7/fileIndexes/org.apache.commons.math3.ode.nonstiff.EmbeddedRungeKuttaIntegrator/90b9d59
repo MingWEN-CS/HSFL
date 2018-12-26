@@ -1,0 +1,383 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.ode.nonstiff;
+
+import org.apache.commons.math.exception.MathIllegalArgumentException;
+import org.apache.commons.math.exception.MathIllegalStateException;
+import org.apache.commons.math.ode.ExpandableFirstOrderDifferentialEquations;
+import org.apache.commons.math.ode.sampling.StepHandler;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class EmbeddedRungeKuttaIntegrator
+  extends AdaptiveStepsizeIntegrator {
+
+    
+    private final boolean fsal;
+
+    
+    private final double[] c;
+
+    
+    private final double[][] a;
+
+    
+    private final double[] b;
+
+    
+    private final RungeKuttaStepInterpolator prototype;
+
+    
+    private final double exp;
+
+    
+    private double safety;
+
+    
+    private double minReduction;
+
+    
+    private double maxGrowth;
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  protected EmbeddedRungeKuttaIntegrator(final String name, final boolean fsal,
+                                         final double[] c, final double[][] a, final double[] b,
+                                         final RungeKuttaStepInterpolator prototype,
+                                         final double minStep, final double maxStep,
+                                         final double scalAbsoluteTolerance,
+                                         final double scalRelativeTolerance) {
+
+    super(name, minStep, maxStep, scalAbsoluteTolerance, scalRelativeTolerance);
+
+    this.fsal      = fsal;
+    this.c         = c;
+    this.a         = a;
+    this.b         = b;
+    this.prototype = prototype;
+
+    exp = -1.0 / getOrder();
+
+    
+    setSafety(0.9);
+    setMinReduction(0.2);
+    setMaxGrowth(10.0);
+
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  protected EmbeddedRungeKuttaIntegrator(final String name, final boolean fsal,
+                                         final double[] c, final double[][] a, final double[] b,
+                                         final RungeKuttaStepInterpolator prototype,
+                                         final double   minStep, final double maxStep,
+                                         final double[] vecAbsoluteTolerance,
+                                         final double[] vecRelativeTolerance) {
+
+    super(name, minStep, maxStep, vecAbsoluteTolerance, vecRelativeTolerance);
+
+    this.fsal      = fsal;
+    this.c         = c;
+    this.a         = a;
+    this.b         = b;
+    this.prototype = prototype;
+
+    exp = -1.0 / getOrder();
+
+    
+    setSafety(0.9);
+    setMinReduction(0.2);
+    setMaxGrowth(10.0);
+
+  }
+
+  
+
+
+  public abstract int getOrder();
+
+  
+
+
+  public double getSafety() {
+    return safety;
+  }
+
+  
+
+
+  public void setSafety(final double safety) {
+    this.safety = safety;
+  }
+
+  
+  @Override
+  public double integrate(final ExpandableFirstOrderDifferentialEquations equations,
+                          final double t0, final double[] z0,
+                          final double t, final double[] z)
+      throws MathIllegalStateException, MathIllegalArgumentException {
+
+    sanityChecks(equations, t0, z0, t, z);
+    setEquations(equations);
+    resetEvaluations();
+    final boolean forward = t > t0;
+
+    
+    final int totalDim = equations.getDimension();
+    final int mainDim  = equations.getMainSetDimension();
+    final double[] y0  = new double[totalDim];
+    final double[] y   = new double[totalDim];
+    System.arraycopy(z0, 0, y0, 0, mainDim);
+    System.arraycopy(equations.getCurrentAdditionalStates(), 0, y0, mainDim, totalDim - mainDim);
+    final int stages = c.length + 1;
+    if (y != y0) {
+      System.arraycopy(y0, 0, y, 0, totalDim);
+    }
+    final double[][] yDotK = new double[stages][totalDim];
+    final double[] yTmp    = new double[totalDim];
+    final double[] yDotTmp = new double[totalDim];
+
+    
+    final RungeKuttaStepInterpolator interpolator = (RungeKuttaStepInterpolator) prototype.copy();
+    interpolator.reinitialize(this, yTmp, yDotK, forward);
+    interpolator.storeTime(t0);
+
+    
+    stepStart         = t0;
+    double  hNew      = 0;
+    boolean firstTime = true;
+    for (StepHandler handler : stepHandlers) {
+        handler.reset();
+    }
+    setStateInitialized(false);
+
+    
+    isLastStep = false;
+    do {
+
+      interpolator.shift();
+
+      
+      double error = 10;
+      while (error >= 1.0) {
+
+        if (firstTime || !fsal) {
+          
+          computeDerivatives(stepStart, y, yDotK[0]);
+        }
+
+        if (firstTime) {
+          final double[] scale = new double[mainSetDimension];
+          if (vecAbsoluteTolerance == null) {
+              for (int i = 0; i < scale.length; ++i) {
+                scale[i] = scalAbsoluteTolerance + scalRelativeTolerance * FastMath.abs(y[i]);
+              }
+          } else {
+              for (int i = 0; i < scale.length; ++i) {
+                scale[i] = vecAbsoluteTolerance[i] + vecRelativeTolerance[i] * FastMath.abs(y[i]);
+              }
+          }
+          hNew = initializeStep(forward, getOrder(), scale,
+                                stepStart, y, yDotK[0], yTmp, yDotK[1]);
+          firstTime = false;
+        }
+
+        stepSize = hNew;
+
+        
+        for (int k = 1; k < stages; ++k) {
+
+          for (int j = 0; j < y0.length; ++j) {
+            double sum = a[k-1][0] * yDotK[0][j];
+            for (int l = 1; l < k; ++l) {
+              sum += a[k-1][l] * yDotK[l][j];
+            }
+            yTmp[j] = y[j] + stepSize * sum;
+          }
+
+          computeDerivatives(stepStart + c[k-1] * stepSize, yTmp, yDotK[k]);
+
+        }
+
+        
+        for (int j = 0; j < y0.length; ++j) {
+          double sum    = b[0] * yDotK[0][j];
+          for (int l = 1; l < stages; ++l) {
+            sum    += b[l] * yDotK[l][j];
+          }
+          yTmp[j] = y[j] + stepSize * sum;
+        }
+
+        
+        error = estimateError(yDotK, y, yTmp, stepSize);
+        if (error >= 1.0) {
+          
+          final double factor =
+              FastMath.min(maxGrowth,
+                           FastMath.max(minReduction, safety * FastMath.pow(error, exp)));
+          hNew = filterStep(stepSize * factor, forward, false);
+        }
+
+      }
+
+      
+      interpolator.storeTime(stepStart + stepSize);
+      System.arraycopy(yTmp, 0, y, 0, y0.length);
+      System.arraycopy(yDotK[stages - 1], 0, yDotTmp, 0, y0.length);
+      stepStart = acceptStep(interpolator, y, yDotTmp, t);
+
+      if (!isLastStep) {
+
+          
+          interpolator.storeTime(stepStart);
+
+          if (fsal) {
+              
+              System.arraycopy(yDotTmp, 0, yDotK[0], 0, y0.length);
+          }
+
+          
+          final double factor =
+              FastMath.min(maxGrowth, FastMath.max(minReduction, safety * FastMath.pow(error, exp)));
+          final double  scaledH    = stepSize * factor;
+          final double  nextT      = stepStart + scaledH;
+          final boolean nextIsLast = forward ? (nextT >= t) : (nextT <= t);
+          hNew = filterStep(scaledH, forward, nextIsLast);
+
+          final double  filteredNextT      = stepStart + hNew;
+          final boolean filteredNextIsLast = forward ? (filteredNextT >= t) : (filteredNextT <= t);
+          if (filteredNextIsLast) {
+              hNew = t - stepStart;
+          }
+
+      }
+
+    } while (!isLastStep);
+
+    
+    System.arraycopy(y, 0, z, 0, z.length);
+    equations.setCurrentAdditionalState(y);
+
+    final double stopTime = stepStart;
+    resetInternalState();
+    return stopTime;
+
+  }
+
+  
+
+
+  public double getMinReduction() {
+    return minReduction;
+  }
+
+  
+
+
+  public void setMinReduction(final double minReduction) {
+    this.minReduction = minReduction;
+  }
+
+  
+
+
+  public double getMaxGrowth() {
+    return maxGrowth;
+  }
+
+  
+
+
+  public void setMaxGrowth(final double maxGrowth) {
+    this.maxGrowth = maxGrowth;
+  }
+
+  
+
+
+
+
+
+
+  protected abstract double estimateError(double[][] yDotK,
+                                          double[] y0, double[] y1,
+                                          double h);
+
+}

@@ -1,0 +1,75 @@
+18a19
+> import com.google.common.annotations.VisibleForTesting;
+20a22
+> import com.google.common.collect.ImmutableList;
+21a24
+> import com.google.common.collect.Sets;
+25a29
+> import java.util.Set;
+33a38,49
+>   
+>   @VisibleForTesting
+>   static final List<String> OPTIMAL_ORDER = ImmutableList.of(
+>      "removeUnreachableCode",
+>      "removeUnusedVars",
+>      "foldConstants",
+>      "deadAssignmentsElimination",
+>      "inlineVariables",
+>      "inlineFunctions",
+>      "removeUnusedPrototypeProperties",
+>      "minimizeExitPoints");
+> 
+273a290
+>     private final Set<String> myNames = Sets.newHashSet();
+276a294,298
+>       String name = factory.getName();
+>       Preconditions.checkArgument(
+>           !myNames.contains(name),
+>           "Already a pass with name '" + name + "' in this loop");
+>       myNames.add(factory.getName());
+295,301c317,319
+<         List<NamedPass> mixedupPasses = Lists.newArrayList();
+<         Random random = new Random();
+<         while (myPasses.size() > 0) {
+<           mixedupPasses.add(
+<               myPasses.remove(random.nextInt(myPasses.size())));
+<         }
+<         myPasses.addAll(mixedupPasses);
+---
+>         randomizePasses();
+>       } else {
+>         optimizePasses();
+329a348,380
+>     }
+> 
+>     
+>     private void randomizePasses() {
+>       List<NamedPass> mixedupPasses = Lists.newArrayList();
+>       Random random = new Random();
+>       while (myPasses.size() > 0) {
+>         mixedupPasses.add(
+>             myPasses.remove(random.nextInt(myPasses.size())));
+>       }
+>       myPasses.addAll(mixedupPasses);
+>     }
+> 
+>     
+>     private void optimizePasses() {
+>       
+>       
+>       
+>       
+>       
+>       
+>       List<NamedPass> optimalPasses = Lists.newArrayList();
+>       for (String passName : OPTIMAL_ORDER) {
+>         for (NamedPass pass : myPasses) {
+>           if (pass.name.equals(passName)) {
+>             optimalPasses.add(pass);
+>             break;
+>           }
+>         }
+>       }
+> 
+>       myPasses.removeAll(optimalPasses);
+>       myPasses.addAll(optimalPasses);

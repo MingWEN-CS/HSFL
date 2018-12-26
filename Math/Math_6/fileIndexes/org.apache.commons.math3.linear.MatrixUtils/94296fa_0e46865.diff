@@ -1,0 +1,68 @@
+44a45,47
+>     public static RealMatrix createRealMatrix(final int rows, final int columns) {
+>         return new DenseRealMatrix(rows, columns);
+>     }
+45a49
+>     
+48,50d51
+<     public static RealMatrix createRealMatrix(double[][] data) {
+<         return new RealMatrixImpl(data);
+<     }
+52d52
+<     
+59a60,62
+>     public static RealMatrix createRealMatrix(double[][] data) {
+>         return new DenseRealMatrix(data);
+>     }
+60a64
+>     
+68,69c72,77
+<     public static RealMatrix createRealMatrix(double[][] data, boolean copyArray) {
+<         return new RealMatrixImpl(data, copyArray);
+---
+>     public static RealMatrix createRealIdentityMatrix(int dimension) {
+>         final RealMatrix m = createRealMatrix(dimension, dimension);
+>         for (int i = 0; i < dimension; ++i) {
+>             m.setEntry(i, i, 1.0);
+>         }
+>         return m;
+71c79
+< 
+---
+>     
+80,83c88,91
+<     public static RealMatrix createRealIdentityMatrix(int dimension) {
+<         double[][] d = new double[dimension][dimension];
+<         for (int row = 0; row < dimension; row++) {
+<             d[row][row] = 1d;
+---
+>     public static RealMatrix createRealDiagonalMatrix(final double[] diagonal) {
+>         final RealMatrix m = createRealMatrix(diagonal.length, diagonal.length);
+>         for (int i = 0; i < diagonal.length; ++i) {
+>             m.setEntry(i, i, diagonal[i]);
+85c93
+<         return new RealMatrixImpl(d, false);
+---
+>         return m;
+173,175c181,185
+<         final double[][] data = new double[1][nCols];
+<         System.arraycopy(rowData, 0, data[0], 0, nCols);
+<         return new RealMatrixImpl(data, false);
+---
+>         final RealMatrix m = createRealMatrix(1, nCols);
+>         for (int i = 0; i < nCols; ++i) {
+>             m.setEntry(0, i, rowData[i]);
+>         }
+>         return m;
+241,243c251,253
+<         final double[][] data = new double[nRows][1];
+<         for (int row = 0; row < nRows; row++) {
+<             data[row][0] = columnData[row];
+---
+>         final RealMatrix m = createRealMatrix(nRows, 1);
+>         for (int i = 0; i < nRows; ++i) {
+>             m.setEntry(i, 0, columnData[i]);
+245c255
+<         return new RealMatrixImpl(data, false);
+---
+>         return m;

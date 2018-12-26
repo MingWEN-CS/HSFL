@@ -1,0 +1,183 @@
+27c27
+< import org.joda.time.DateTimeField;
+---
+> import org.joda.time.DateTime;
+30d29
+< import org.joda.time.DurationFieldType;
+32c31,33
+< import org.joda.time.field.RemainderDateTimeField;
+---
+> 
+> 
+> 
+156a158,165
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+177a187,189
+> 
+> 
+> 
+203,204c215,216
+<     public static DateTimeFormatter mediumDate() {
+<         return createFormatterForStyleIndex(MEDIUM, NONE);
+---
+>     public static DateTimeFormatter shortTime() {
+>         return createFormatterForStyleIndex(NONE, SHORT);
+215,216c227,228
+<     public static DateTimeFormatter longDate() {
+<         return createFormatterForStyleIndex(LONG, NONE);
+---
+>     public static DateTimeFormatter shortDateTime() {
+>         return createFormatterForStyleIndex(SHORT, SHORT);
+219a232
+>     
+227,228c240,241
+<     public static DateTimeFormatter fullDate() {
+<         return createFormatterForStyleIndex(FULL, NONE);
+---
+>     public static DateTimeFormatter mediumDate() {
+>         return createFormatterForStyleIndex(MEDIUM, NONE);
+232d244
+<     
+240,241c252,253
+<     public static DateTimeFormatter shortTime() {
+<         return createFormatterForStyleIndex(NONE, SHORT);
+---
+>     public static DateTimeFormatter mediumTime() {
+>         return createFormatterForStyleIndex(NONE, MEDIUM);
+252,253c264,265
+<     public static DateTimeFormatter mediumTime() {
+<         return createFormatterForStyleIndex(NONE, MEDIUM);
+---
+>     public static DateTimeFormatter mediumDateTime() {
+>         return createFormatterForStyleIndex(MEDIUM, MEDIUM);
+256a269
+>     
+264,265c277,278
+<     public static DateTimeFormatter longTime() {
+<         return createFormatterForStyleIndex(NONE, LONG);
+---
+>     public static DateTimeFormatter longDate() {
+>         return createFormatterForStyleIndex(LONG, NONE);
+276,277c289,290
+<     public static DateTimeFormatter fullTime() {
+<         return createFormatterForStyleIndex(NONE, FULL);
+---
+>     public static DateTimeFormatter longTime() {
+>         return createFormatterForStyleIndex(NONE, LONG);
+281d293
+<     
+289,290c301,302
+<     public static DateTimeFormatter shortDateTime() {
+<         return createFormatterForStyleIndex(SHORT, SHORT);
+---
+>     public static DateTimeFormatter longDateTime() {
+>         return createFormatterForStyleIndex(LONG, LONG);
+293a306
+>     
+301,302c314,315
+<     public static DateTimeFormatter mediumDateTime() {
+<         return createFormatterForStyleIndex(MEDIUM, MEDIUM);
+---
+>     public static DateTimeFormatter fullDate() {
+>         return createFormatterForStyleIndex(FULL, NONE);
+313,314c326,327
+<     public static DateTimeFormatter longDateTime() {
+<         return createFormatterForStyleIndex(LONG, LONG);
+---
+>     public static DateTimeFormatter fullTime() {
+>         return createFormatterForStyleIndex(NONE, FULL);
+399,404c412
+<                         type = new RemainderType(DateTimeFieldType.weekyear(),
+<                                                  DateTimeFieldType.weekyearOfCentury(), 100);
+<                         break;
+<                     case 'y': default:
+<                         type = new RemainderType(DateTimeFieldType.year(),
+<                                                  DateTimeFieldType.yearOfCentury(), 100);
+---
+>                         builder.appendTwoDigitWeekyear(new DateTime().getWeekyear() - 30);
+405a414
+>                     case 'y':
+407,408c416,417
+<                         type = new RemainderType(DateTimeFieldType.yearOfEra(),
+<                                                  DateTimeFieldType.yearOfCentury(), 100);
+---
+>                     default:
+>                         builder.appendTwoDigitYear(new DateTime().getYear() - 30);
+411d419
+<                     builder.appendDecimal(type, 2, 2);
+501c509,511
+<                 if (tokenLen >= 4) {
+---
+>                 if (tokenLen == 1) {
+>                     builder.appendTimeZoneOffset(null, false, 2, 2);
+>                 } else if (tokenLen == 2) {
+504c514
+<                     builder.appendTimeZoneOffset(null, false, 2, 2);
+---
+>                     builder.appendTimeZoneId();
+633c643
+<         if (pattern == null) {
+---
+>         if (pattern == null || pattern.length() == 0) {
+690c700
+<                 LengthLocaleFormatter llf = new LengthLocaleFormatter(
+---
+>                 StyleFormatter llf = new StyleFormatter(
+723,761c733
+<     
+< 
+< 
+<     static class RemainderType extends DateTimeFieldType {
+<         private final DateTimeFieldType iWrappedType;
+<         private final DateTimeFieldType iType;
+<         private final int iDivisor;
+< 
+<         private transient RemainderDateTimeField iRecent;
+< 
+<         RemainderType(DateTimeFieldType wrappedType, DateTimeFieldType type, int divisor) {
+<             super(type.getName());
+<             iWrappedType = wrappedType;
+<             iType = type;
+<             iDivisor = divisor;
+<         }
+< 
+<         public DurationFieldType getDurationType() {
+<             return iType.getDurationType();
+<         }
+< 
+<         public DurationFieldType getRangeDurationType() {
+<             return iType.getRangeDurationType();
+<         }
+< 
+<         public DateTimeField getField(Chronology chrono) {
+<             DateTimeField wrappedField = iWrappedType.getField(chrono);
+<             RemainderDateTimeField field = iRecent;
+<             if (field != null && field.getWrappedField() == wrappedField) {
+<                 return field;
+<             }
+<             field = new RemainderDateTimeField(wrappedField, iType, iDivisor);
+<             iRecent = field;
+<             return field;
+<         }
+<     }
+< 
+<     
+<     static class LengthLocaleFormatter
+---
+>     static class StyleFormatter
+770c742
+<         LengthLocaleFormatter(int dateStyle, int timeStyle, int type) {
+---
+>         StyleFormatter(int dateStyle, int timeStyle, int type) {
+815c787,788
+<             String key = Integer.toString(iType + iDateStyle << 4 + iTimeStyle << 8) + locale.toString();
+---
+>             locale = (locale == null ? Locale.getDefault() : locale);
+>             String key = Integer.toString(iType + (iDateStyle << 4) + (iTimeStyle << 8)) + locale.toString();

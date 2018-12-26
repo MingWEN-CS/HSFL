@@ -1,0 +1,23 @@
+41a42
+> import com.google.javascript.rhino.jstype.UnionType;
+175c176
+<     if (!anyObjectType.isSubtype(type)) {
+---
+>     if (!anyObjectType.isSubtype(type) && !type.isEmptyType()) {
+235c236,237
+<         type.isSubtype(nullOrUndefined)) {
+---
+>         type.isSubtype(nullOrUndefined) &&
+>         !containsForwardDeclaredUnresolvedName(type)) {
+256a259,269
+>   }
+> 
+>   private boolean containsForwardDeclaredUnresolvedName(JSType type) {
+>     if (type instanceof UnionType) {
+>       for (JSType alt : ((UnionType) type).getAlternates()) {
+>         if (containsForwardDeclaredUnresolvedName(alt)) {
+>           return true;
+>         }
+>       }
+>     }
+>     return type.isNoResolvedType();

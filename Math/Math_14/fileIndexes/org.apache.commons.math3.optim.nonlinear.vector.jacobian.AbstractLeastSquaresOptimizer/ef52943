@@ -1,0 +1,279 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optim.nonlinear.vector.jacobian;
+
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.TooManyEvaluationsException;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.DiagonalMatrix;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.QRDecomposition;
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.optim.OptimizationData;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.optim.nonlinear.vector.Weight;
+import org.apache.commons.math3.optim.nonlinear.vector.JacobianMultivariateVectorOptimizer;
+import org.apache.commons.math3.util.FastMath;
+
+
+
+
+
+
+
+
+public abstract class AbstractLeastSquaresOptimizer
+    extends JacobianMultivariateVectorOptimizer {
+    
+    private RealMatrix weightMatrixSqrt;
+    
+    private double cost;
+
+    
+
+
+    protected AbstractLeastSquaresOptimizer(ConvergenceChecker<PointVectorValuePair> checker) {
+        super(checker);
+    }
+
+    
+
+
+
+
+
+
+
+    protected RealMatrix computeWeightedJacobian(double[] params) {
+        return weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(computeJacobian(params)));
+    }
+
+    
+
+
+
+
+
+
+    protected double computeCost(double[] residuals) {
+        final ArrayRealVector r = new ArrayRealVector(residuals);
+        return FastMath.sqrt(r.dotProduct(getWeight().operate(r)));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public double getRMS() {
+        return FastMath.sqrt(getChiSquare() / getTargetSize());
+    }
+
+    
+
+
+
+
+
+    public double getChiSquare() {
+        return cost * cost;
+    }
+
+    
+
+
+
+
+    public RealMatrix getWeightSquareRoot() {
+        return weightMatrixSqrt.copy();
+    }
+
+    
+
+
+
+
+    protected void setCost(double cost) {
+        this.cost = cost;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double[][] computeCovariances(double[] params,
+                                         double threshold) {
+        
+        final RealMatrix j = computeWeightedJacobian(params);
+
+        
+        final RealMatrix jTj = j.transpose().multiply(j);
+
+        
+        final DecompositionSolver solver
+            = new QRDecomposition(jTj, threshold).getSolver();
+        return solver.getInverse().getData();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double[] computeSigma(double[] params,
+                                 double covarianceSingularityThreshold) {
+        final int nC = params.length;
+        final double[] sig = new double[nC];
+        final double[][] cov = computeCovariances(params, covarianceSingularityThreshold);
+        for (int i = 0; i < nC; ++i) {
+            sig[i] = FastMath.sqrt(cov[i][i]);
+        }
+        return sig;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public PointVectorValuePair optimize(OptimizationData... optData)
+        throws TooManyEvaluationsException {
+        
+        parseOptimizationData(optData);
+        
+        return super.optimize(optData);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected double[] computeResiduals(double[] objectiveValue) {
+        final double[] target = getTarget();
+        if (objectiveValue.length != target.length) {
+            throw new DimensionMismatchException(target.length,
+                                                 objectiveValue.length);
+        }
+
+        final double[] residuals = new double[target.length];
+        for (int i = 0; i < target.length; i++) {
+            residuals[i] = target[i] - objectiveValue[i];
+        }
+
+        return residuals;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private void parseOptimizationData(OptimizationData... optData) {
+        
+        
+        for (OptimizationData data : optData) {
+            if (data instanceof Weight) {
+                weightMatrixSqrt = squareRoot(((Weight) data).getWeight());
+                
+                
+                break;
+            }
+        }
+    }
+
+    
+
+
+
+
+
+    private RealMatrix squareRoot(RealMatrix m) {
+        if (m instanceof DiagonalMatrix) {
+            final int dim = m.getRowDimension();
+            final RealMatrix sqrtM = new DiagonalMatrix(dim);
+            for (int i = 0; i < dim; i++) {
+                sqrtM.setEntry(i, i, FastMath.sqrt(m.getEntry(i, i)));
+            }
+            return sqrtM;
+        } else {
+            final EigenDecomposition dec = new EigenDecomposition(m);
+            return dec.getSquareRoot();
+        }
+    }
+}

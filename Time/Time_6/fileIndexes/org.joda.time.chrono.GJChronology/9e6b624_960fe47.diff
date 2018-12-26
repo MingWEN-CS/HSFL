@@ -1,0 +1,21 @@
+407a408
+>     
+415c416,425
+<         return super.equals(obj);
+---
+>         if (this == obj) {
+>             return true;
+>         }
+>         if (obj instanceof GJChronology) {
+>             GJChronology chrono = (GJChronology) obj;
+>             return iCutoverMillis == chrono.iCutoverMillis &&
+>                     getMinimumDaysInFirstWeek() == chrono.getMinimumDaysInFirstWeek() &&
+>                     getZone().equals(chrono.getZone());
+>         }
+>         return false;
+425,426c435,436
+<         return "GJ".hashCode() * 11 + iJulianChronology.hashCode() +
+<             iGregorianChronology.hashCode() + iCutoverInstant.hashCode();
+---
+>         return "GJ".hashCode() * 11 + getZone().hashCode() +
+>                 getMinimumDaysInFirstWeek() + iCutoverInstant.hashCode();

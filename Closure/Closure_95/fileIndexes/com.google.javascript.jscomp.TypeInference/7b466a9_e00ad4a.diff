@@ -1,0 +1,64 @@
+31a32,33
+> import com.google.common.collect.HashMultimap;
+> import com.google.common.collect.ImmutableSet;
+32a35,36
+> import com.google.common.collect.Multimap;
+> import com.google.common.collect.Sets;
+48a53
+> import java.util.Collection;
+51c56
+< 
+---
+> import java.util.Set;
+79a85,96
+>   
+> 
+> 
+> 
+>   private final Multimap<Scope, Var> assignedOuterLocalVars =
+>       HashMultimap.create();
+> 
+>   
+> 
+> 
+>   private final Set<String> unflowableVarNames = Sets.newHashSet();
+> 
+82a100,110
+>     this(compiler, cfg, reverseInterpreter, functionScope,
+>          ImmutableSet.<Var>of());
+>   }
+> 
+>   
+> 
+> 
+>   
+>   TypeInference(AbstractCompiler compiler, ControlFlowGraph<Node> cfg,
+>                 ReverseAbstractInterpreter reverseInterpreter,
+>                 Scope functionScope, Collection<Var> unflowableVars) {
+88a117,121
+> 
+>     for (Var unflowableVar : unflowableVars) {
+>       this.unflowableVarNames.add(unflowableVar.getName());
+>     }
+> 
+91a125,127
+>       if (this.unflowableVarNames.contains(var.getName())) {
+>         continue;
+>       }
+117a154,161
+>   
+> 
+> 
+> 
+>   Multimap<Scope, Var> getAssignedOuterLocalVars() {
+>     return assignedOuterLocalVars;
+>   }
+> 
+449a494,496
+>         if (var != null && var.isLocal() && var.getScope() != syntacticScope) {
+>           assignedOuterLocalVars.put(var.getScope(), var);
+>         }
+1125a1173,1175
+>     }
+>     if (unflowableVarNames.contains(varName)) {
+>       return;

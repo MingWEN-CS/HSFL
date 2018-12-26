@@ -1,0 +1,110 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.genetics;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.math3.exception.OutOfRangeException;
+import org.apache.commons.math3.exception.util.LocalizedFormats;
+import org.apache.commons.math3.util.FastMath;
+
+
+
+
+
+
+
+
+public class ElitisticListPopulation extends ListPopulation {
+
+    
+    private double elitismRate = 0.9;
+
+    
+
+
+
+
+
+
+
+    public ElitisticListPopulation(final List<Chromosome> chromosomes,
+                                   final int populationLimit,
+                                   final double elitismRate) {
+        super(chromosomes, populationLimit);
+        this.elitismRate = elitismRate;
+    }
+
+    
+
+
+
+
+
+
+
+    public ElitisticListPopulation(final int populationLimit, final double elitismRate) {
+        super(populationLimit);
+        this.elitismRate = elitismRate;
+    }
+
+    
+
+
+
+
+
+    public Population nextGeneration() {
+        
+        ElitisticListPopulation nextGeneration = new ElitisticListPopulation(this.getPopulationLimit(), this.getElitismRate());
+
+        List<Chromosome> oldChromosomes = this.getChromosomes();
+        Collections.sort(oldChromosomes);
+
+        
+        int boundIndex = (int) FastMath.ceil((1.0 - this.getElitismRate()) * oldChromosomes.size());
+        for (int i=boundIndex; i<oldChromosomes.size(); i++) {
+            nextGeneration.addChromosome(oldChromosomes.get(i));
+        }
+        return nextGeneration;
+    }
+
+    
+
+
+
+
+
+
+
+    public void setElitismRate(final double elitismRate) {
+        if (elitismRate < 0 || elitismRate > 1) {
+            throw new OutOfRangeException(LocalizedFormats.ELITISM_RATE, elitismRate, 0, 1);
+        }
+        this.elitismRate = elitismRate;
+    }
+
+    
+
+
+
+    public double getElitismRate() {
+        return this.elitismRate;
+    }
+
+}

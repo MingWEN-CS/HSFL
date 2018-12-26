@@ -1,0 +1,71 @@
+26a27
+> import static com.google.javascript.rhino.jstype.JSTypeNative.U2U_CONSTRUCTOR_TYPE;
+429a431
+>         final TypeCheck outerThis = this;
+430a433
+>         final FunctionType functionType = (FunctionType) n.getJSType();
+879,880c882,883
+<         if (objectJsType != null && objectJsType.isFunctionType()) {
+<           FunctionType functionType = objectJsType.toMaybeFunctionType();
+---
+>         if (objectJsType instanceof FunctionType) {
+>           FunctionType functionType = (FunctionType) objectJsType;
+898,900c901,903
+<           JSType jsType = getJSType(object2);
+<           if (jsType.isFunctionType()) {
+<             FunctionType functionType = jsType.toMaybeFunctionType();
+---
+>           JSType jsType = object2.getJSType();
+>           if (jsType instanceof FunctionType) {
+>             FunctionType functionType = (FunctionType) jsType;
+1408,1416c1411,1414
+<     JSType type = getJSType(constructor).restrictByNotNullOrUndefined();
+<     if (type.isConstructor() || type.isEmptyType() || type.isUnknownType()) {
+<       FunctionType fnType = type.toMaybeFunctionType();
+<       if (fnType != null) {
+<         visitParameterList(t, n, fnType);
+<         ensureTyped(t, n, fnType.getInstanceType());
+<       } else {
+<         ensureTyped(t, n);
+<       }
+---
+>     FunctionType type = getFunctionType(constructor);
+>     if (type != null && type.isConstructor()) {
+>       visitParameterList(t, n, type);
+>       ensureTyped(t, n, type.getInstanceType());
+1479c1477
+<     FunctionType functionType = JSType.toMaybeFunctionType(n.getJSType());
+---
+>     FunctionType functionType = (FunctionType) n.getJSType();
+1561,1562c1559,1560
+<     if (childType.isFunctionType()) {
+<       FunctionType functionType = childType.toMaybeFunctionType();
+---
+>     if (childType instanceof FunctionType) {
+>       FunctionType functionType = (FunctionType) childType;
+1658,1659c1656,1657
+<     if (jsType.isFunctionType()) {
+<       FunctionType functionType = jsType.toMaybeFunctionType();
+---
+>     if (jsType instanceof FunctionType) {
+>       FunctionType functionType = (FunctionType) jsType;
+1812a1811,1825
+> 
+> 
+> 
+>   private FunctionType getFunctionType(Node n) {
+>     JSType type = getJSType(n).restrictByNotNullOrUndefined();
+>     if (type.isUnknownType()) {
+>       return typeRegistry.getNativeFunctionType(U2U_CONSTRUCTOR_TYPE);
+>     } else if (type instanceof FunctionType) {
+>       return (FunctionType) type;
+>     } else {
+>       return null;
+>     }
+>   }
+> 
+>   
+1851c1864
+<             type.isFunctionType() ||
+---
+>             type instanceof FunctionType ||

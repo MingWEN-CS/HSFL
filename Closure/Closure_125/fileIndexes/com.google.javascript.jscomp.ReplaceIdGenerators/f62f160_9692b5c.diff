@@ -1,0 +1,54 @@
+18a19
+> import com.google.common.collect.Lists;
+24a26
+> import java.util.List;
+46a49
+>   private final Map<String, List<Replacement>> idGeneratorMaps;
+51a55
+>     idGeneratorMaps = Maps.newLinkedHashMap();
+55a60
+>       idGeneratorMaps.put(idGenerator, Lists.<Replacement>newArrayList());
+73a79
+>       List<Replacement> idGeneratorMap = idGeneratorMaps.get(callName);
+89a96
+> 
+90a98,99
+>       idGeneratorMap.add(
+>           new Replacement(nextName, t.getSourceName(), t.getLineNumber()));
+92a102,137
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   public String getIdGeneratorMap() {
+>     StringBuilder sb = new StringBuilder();
+>     for (Map.Entry<String, List<Replacement>> entry :
+>         idGeneratorMaps.entrySet()) {
+>       sb.append("[");
+>       sb.append(entry.getKey());
+>       sb.append("]\n\n");
+>       for (Replacement replacement : entry.getValue()) {
+>         sb.append(replacement.toString());
+>         sb.append("\n");
+>       }
+>       sb.append("\n");
+>     }
+>     return sb.toString();
+>   }
+> 
+>   private static class Replacement {
+>     private final String name;
+>     private final String sourceName;
+>     private final int lineNumber;
+> 
+>     private Replacement(String name, String sourceName, int lineNumber) {
+>       this.name = name;
+>       this.sourceName = sourceName;
+>       this.lineNumber = lineNumber;
+>     }
+> 
+>     @Override
+>     public String toString() {
+>       return name + ":" + sourceName + ":" + lineNumber;

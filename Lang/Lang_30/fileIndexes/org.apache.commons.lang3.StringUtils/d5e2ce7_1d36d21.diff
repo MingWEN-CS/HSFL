@@ -1,0 +1,145 @@
+1146a1147,1150
+> 
+> 
+> 
+> 
+1148,1212c1152
+<         
+<         
+<         int sz = str.length();
+<         StringBuffer buffer = new StringBuffer(2 * sz);
+<         for (int i = 0; i < sz; i++) {
+<             char ch = str.charAt(i);
+< 
+<             
+<             if (ch > 0xfff) {
+<                 buffer.append("\\u" + Integer.toHexString(ch));
+<             } else if (ch > 0xff) {
+<                 buffer.append("\\u0" + Integer.toHexString(ch));
+<             } else if (ch > 0x7f) {
+<                 buffer.append("\\u00" + Integer.toHexString(ch));
+<             } else if (ch < 32) {
+<                 switch (ch) {
+<                     case '\b' :
+<                         buffer.append('\\');
+<                         buffer.append('b');
+<                         break;
+<                     case '\n' :
+<                         buffer.append('\\');
+<                         buffer.append('n');
+<                         break;
+<                     case '\t' :
+<                         buffer.append('\\');
+<                         buffer.append('t');
+<                         break;
+<                     case '\f' :
+<                         buffer.append('\\');
+<                         buffer.append('f');
+<                         break;
+<                     case '\r' :
+<                         buffer.append('\\');
+<                         buffer.append('r');
+<                         break;
+<                     default :
+<                         if (ch > 0xf) {
+<                             buffer.append("\\u00" + Integer.toHexString(ch));
+<                         } else {
+<                             buffer.append("\\u000" + Integer.toHexString(ch));
+<                         }
+<                         break;
+<                 }
+<             } else {
+<                 switch (ch) {
+<                     case '\'' :
+<                         buffer.append('\\');
+<                         buffer.append('\'');
+<                         break;
+<                     case '"' :
+<                         buffer.append('\\');
+<                         buffer.append('"');
+<                         break;
+<                     case '\\' :
+<                         buffer.append('\\');
+<                         buffer.append('\\');
+<                         break;
+<                     default :
+<                         buffer.append(ch);
+<                         break;
+<                 }
+<             }
+<         }
+<         return buffer.toString();
+---
+>         return StringEscapeUtils.escapeJava(str);
+1219a1160,1164
+> 
+> 
+> 
+> 
+> 
+1221,1283c1166
+<         int sz = str.length();
+<         StringBuffer buffer = new StringBuffer(sz);
+<         StringBuffer unicode = new StringBuffer(4);
+<         boolean hadSlash = false;
+<         boolean inUnicode = false;
+<         for (int i = 0; i < sz; i++) {
+<             char ch = str.charAt(i);
+<             if(inUnicode) {
+<                 
+<                 
+<                 if(unicode.length() == 4) {
+<                     
+<                     
+<                     try {
+<                         int value = Integer.parseInt(unicode.toString(), 16);
+<                         buffer.append( (char)value );
+<                         unicode.setLength(0);
+<                         unicode.setLength(4);
+<                         inUnicode = false;
+<                         hadSlash = false;
+<                     } catch(NumberFormatException nfe) {
+<                         throw new NestableRuntimeException("Unable to parse unicode value: "+unicode, nfe);
+<                     }
+<                 } else {
+<                     unicode.append(ch);
+<                     continue;
+<                 }
+<             }
+<             if(hadSlash) {
+<                 
+<                 hadSlash = false;
+<                 switch(ch) {
+<                     case '\\': buffer.append('\\'); break;
+<                     case '\'': buffer.append('\''); break;
+<                     case '\"': buffer.append('"'); break;
+<                     case 'r':  buffer.append('\r'); break;
+<                     case 'f':  buffer.append('\f'); break;
+<                     case 't':  buffer.append('\t'); break;
+<                     case 'n':  buffer.append('\n'); break;
+<                     case 'b':  buffer.append('\b'); break;
+<                     case 'u':  {
+<                         
+<                         inUnicode=true;
+<                         break;
+<                     }
+<                     default :
+<                         buffer.append(ch);
+<                         break;
+<                 }
+<                 continue;
+<             } else
+<             if(ch == '\\') {
+<                 hadSlash = true;
+<                 continue;
+<             } 
+<             buffer.append(ch);
+<         }
+<         if(hadSlash) {
+<             
+<             
+<             buffer.append('\\');
+<         }
+<         return buffer.toString();
+---
+>         return StringEscapeUtils.unescapeJava(str);

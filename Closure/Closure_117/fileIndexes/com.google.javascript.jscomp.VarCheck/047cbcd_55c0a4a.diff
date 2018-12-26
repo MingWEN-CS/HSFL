@@ -1,0 +1,43 @@
+69c69,70
+<   private final boolean nonStrictModuleChecks;
+---
+>   
+>   private final boolean sanityCheck;
+72c73
+<     this(compiler, true);
+---
+>     this(compiler, false);
+74,75c75,76
+<   
+<   VarCheck(AbstractCompiler compiler, boolean nonStrictModuleChecks) {
+---
+> 
+>   VarCheck(AbstractCompiler compiler, boolean sanityCheck) {
+77c78
+<     this.nonStrictModuleChecks = nonStrictModuleChecks;
+---
+>     this.sanityCheck = sanityCheck;
+121,127c122,132
+<         
+<         
+<         Node nameNode = Node.newString(Token.NAME, varName);
+<         getSynthesizedExternsRoot().addChildToBack(
+<             new Node(Token.VAR, nameNode));
+<         scope.declare(varName, nameNode,
+<             null, getSynthesizedExternsInput());
+---
+>         if (sanityCheck) {
+>           throw new IllegalStateException("Unexpected variable " + varName);
+>         } else {
+>           
+>           
+>           Node nameNode = Node.newString(Token.NAME, varName);
+>           getSynthesizedExternsRoot().addChildToBack(
+>               new Node(Token.VAR, nameNode));
+>           scope.declare(varName, nameNode,
+>               null, getSynthesizedExternsInput());
+>         }
+147c152
+<         if (nonStrictModuleChecks && scope.isGlobal()) {
+---
+>         if (!sanityCheck && scope.isGlobal()) {

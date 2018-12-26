@@ -1,0 +1,164 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.geometry.euclidean.threed;
+
+import org.apache.commons.math.geometry.Vector;
+import org.apache.commons.math.geometry.euclidean.oned.Euclidean1D;
+import org.apache.commons.math.geometry.euclidean.oned.Vector1D;
+import org.apache.commons.math.geometry.partitioning.Embedding;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Line implements Embedding<Euclidean3D, Euclidean1D> {
+
+    
+    private Vector3D direction;
+
+    
+    private Vector3D zero;
+
+    
+
+
+
+
+    public Line(final Vector3D p, final Vector3D direction) {
+        reset(p, direction);
+    }
+
+    
+
+
+
+
+    public void reset(final Vector3D p, final Vector3D dir) {
+        final double norm = dir.getNorm();
+        if (norm == 0.0) {
+            throw new IllegalArgumentException("null norm");
+        }
+        this.direction = new Vector3D(1.0 / norm, dir);
+        zero = new Vector3D(1.0, p, -Vector3D.dotProduct(p, this.direction), this.direction);
+    }
+
+    
+
+
+    public Line revert() {
+        return new Line(zero, direction.negate());
+    }
+
+    
+
+
+    public Vector3D getDirection() {
+        return direction;
+    }
+
+    
+
+
+    public Vector3D getOrigin() {
+        return zero;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Vector1D toSubSpace(final Vector<Euclidean3D> point) {
+        Vector3D p3 = (Vector3D) point;
+        return new Vector1D(Vector3D.dotProduct(p3.subtract(zero), direction));
+    }
+
+    
+
+
+
+
+
+    public Vector3D toSpace(final Vector<Euclidean1D> point) {
+        Vector1D p1 = (Vector1D) point;
+        return new Vector3D(1.0, zero, p1.getX(), direction);
+    }
+
+    
+
+
+
+
+
+
+    public boolean isSimilarTo(final Line line) {
+        final double angle = Vector3D.angle(direction, line.direction);
+        return ((angle < 1.0e-10) || (angle > (FastMath.PI - 1.0e-10))) && contains(line.zero);
+    }
+
+    
+
+
+
+    public boolean contains(final Vector3D p) {
+        return distance(p) < 1.0e-10;
+    }
+
+    
+
+
+
+    public double distance(final Vector3D p) {
+        final Vector3D d = p.subtract(zero);
+        final Vector3D n = new Vector3D(1.0, d, -Vector3D.dotProduct(d, direction), direction);
+        return n.getNorm();
+    }
+
+    
+
+
+
+    public double distance(final Line line) {
+
+        final Vector3D normal = Vector3D.crossProduct(direction, line.direction);
+        if (normal.getNorm() < 1.0e-10) {
+            
+            return distance(line.zero);
+        }
+
+        
+        final Plane middle = new Plane(new Vector3D(0.5, zero, 0.5, line.zero), normal);
+
+        
+        return 2 * FastMath.abs(middle.getOffset(zero));
+
+    }
+
+}

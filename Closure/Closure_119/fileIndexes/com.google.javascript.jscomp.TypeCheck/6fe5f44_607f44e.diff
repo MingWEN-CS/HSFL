@@ -1,0 +1,69 @@
+1066a1067,1069
+>     boolean superClassHasDeclaredProperty = superClass != null &&
+>         superClass.getInstanceType().isPropertyTypeDeclared(propertyName);
+> 
+1068c1071,1072
+<     boolean superInterfacesHasProperty = false;
+---
+>     boolean superInterfaceHasProperty = false;
+>     boolean superInterfaceHasDeclaredProperty = false;
+1071,1072c1075,1080
+<         superInterfacesHasProperty =
+<           superInterfacesHasProperty || interfaceType.hasProperty(propertyName);
+---
+>         superInterfaceHasProperty =
+>             superInterfaceHasProperty ||
+>             interfaceType.hasProperty(propertyName);
+>         superInterfaceHasDeclaredProperty =
+>             superInterfaceHasDeclaredProperty ||
+>             interfaceType.isPropertyTypeDeclared(propertyName);
+1087a1096
+> 
+1090,1092c1099,1103
+<         foundInterfaceProperty = foundInterfaceProperty || interfaceHasProperty;
+<         if (reportMissingOverride.isOn() && !declaredOverride &&
+<             interfaceHasProperty) {
+---
+>         foundInterfaceProperty = foundInterfaceProperty ||
+>             interfaceHasProperty;
+>         if (reportMissingOverride.isOn()
+>             && !declaredOverride
+>             && interfaceHasProperty) {
+1104c1115
+<         && !superInterfacesHasProperty) {
+---
+>         && !superInterfaceHasProperty) {
+1109c1120
+<     JSType topInstanceType = superClassHasProperty ?
+---
+>     ObjectType topInstanceType = superClassHasDeclaredProperty ?
+1111,1112c1122,1129
+<     if (reportMissingOverride.isOn() && ctorType.isConstructor() &&
+<         !declaredOverride && superClassHasProperty) {
+---
+>     boolean declaredLocally =
+>         ctorType.isConstructor() &&
+>         (ctorType.getPrototype().hasOwnProperty(propertyName) ||
+>          ctorType.getInstanceType().hasOwnProperty(propertyName));
+>     if (reportMissingOverride.isOn()
+>         && !declaredOverride
+>         && superClassHasDeclaredProperty
+>         && declaredLocally) {
+1121c1138
+<     if (superClassHasProperty) {
+---
+>     if (superClassHasDeclaredProperty) {
+1131c1148
+<     } else if (superInterfacesHasProperty) {
+---
+>     } else if (superInterfaceHasDeclaredProperty) {
+1136c1153
+<             interfaceType.getPropertyType(propertyName);
+---
+>               interfaceType.getPropertyType(propertyName);
+1148c1165,1167
+<     } else if (!foundInterfaceProperty) {
+---
+>     } else if (!foundInterfaceProperty
+>         && !superClassHasProperty
+>         && !superInterfaceHasProperty) {

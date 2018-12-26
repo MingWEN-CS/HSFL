@@ -1,0 +1,161 @@
+21,22d20
+< import com.google.common.collect.LinkedHashMultimap;
+< import com.google.common.collect.Multimap;
+72,73d69
+< import java.util.Collection;
+< import java.util.Iterator;
+93,107c89,92
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   private final Multimap<String, NodeWithJsDoc> nodesWithJsDoc =
+<       LinkedHashMultimap.create();
+---
+>   Node rootNodeJsDocHolder = new Node(Token.SCRIPT);
+>   Node.FileLevelJsDocBuilder fileLevelJsDocBuilder =
+>       rootNodeJsDocHolder.getJsDocBuilderForNode();
+>   JSDocInfo fileOverviewInfo = null;
+145,153c130
+<     
+<     
+<     Node.FileLevelJsDocBuilder fileLevelJsDocBuilder =
+<         irNode.getJsDocBuilderForNode();
+<     
+<     
+<     
+<     
+<     JSDocInfo fileOverviewInfo = null;
+---
+> 
+156,168c133,134
+<         if (comment.getCommentType() == JSDOC) {
+<           JsDocInfoParser jsDocParser =
+<               irFactory.createJsDocInfoParser(comment.getValue(),
+<                   comment.getLineno(), comment.getAbsolutePosition(),
+<                   fileLevelJsDocBuilder, fileOverviewInfo);
+<           if (jsDocParser.getFileOverviewJSDocInfo() != fileOverviewInfo) {
+<             fileOverviewInfo = jsDocParser.getFileOverviewJSDocInfo();
+<           } else {
+<             JSDocInfo info = jsDocParser.retrieveAndResetParsedJSDocInfo();
+<             if (info != null) {
+<               irFactory.attachJsDoc(comment, info);
+<             }
+<           }
+---
+>         if (comment.getCommentType() == JSDOC && !comment.isParsed()) {
+>           irFactory.handlePossibleFileOverviewJsDoc(comment);
+170a137
+>     }
+172,180c139,152
+<       
+<       
+<       
+<       if (fileOverviewInfo != null) {
+<         if ((irNode.getJSDocInfo() != null) &&
+<             (irNode.getJSDocInfo().getLicense() != null)) {
+<           fileOverviewInfo.setLicense(irNode.getJSDocInfo().getLicense());
+<         }
+<         irNode.setJSDocInfo(fileOverviewInfo);
+---
+>     irFactory.setFileOverviewJsDoc(irNode);
+> 
+>     return irNode;
+>   }
+> 
+>   private void setFileOverviewJsDoc(Node irNode) {
+>     
+>     
+>     
+>     irNode.setJSDocInfo(rootNodeJsDocHolder.getJSDocInfo());
+>     if (fileOverviewInfo != null) {
+>       if ((irNode.getJSDocInfo() != null) &&
+>           (irNode.getJSDocInfo().getLicense() != null)) {
+>         fileOverviewInfo.setLicense(irNode.getJSDocInfo().getLicense());
+181a154
+>       irNode.setJSDocInfo(fileOverviewInfo);
+183d155
+<     return irNode;
+202,207c174,199
+<   private Node transform(AstNode node) {
+<     String jsDoc = node.getJsDoc();
+<     NodeWithJsDoc nodeWithJsDoc = null;
+<     if (jsDoc != null) {
+<       nodeWithJsDoc = new NodeWithJsDoc();
+<       nodesWithJsDoc.put(jsDoc, nodeWithJsDoc);
+---
+>   
+> 
+> 
+>   private boolean handlePossibleFileOverviewJsDoc(
+>       JsDocInfoParser jsDocParser) {
+>     if (jsDocParser.getFileOverviewJSDocInfo() != fileOverviewInfo) {
+>       fileOverviewInfo = jsDocParser.getFileOverviewJSDocInfo();
+>       return true;
+>     }
+>     return false;
+>   }
+> 
+>   private void handlePossibleFileOverviewJsDoc(Comment comment) {
+>     JsDocInfoParser jsDocParser = createJsDocInfoParser(comment);
+>     comment.setParsed(true);
+>     handlePossibleFileOverviewJsDoc(jsDocParser);
+>   }
+> 
+>   private JSDocInfo handleJsDoc(AstNode node) {
+>     Comment comment = node.getJsDocNode();
+>     if (comment != null) {
+>       JsDocInfoParser jsDocParser = createJsDocInfoParser(comment);
+>       comment.setParsed(true);
+>       if (!handlePossibleFileOverviewJsDoc(jsDocParser)) {
+>         return jsDocParser.retrieveAndResetParsedJSDocInfo();
+>       }
+208a201,202
+>     return null;
+>   }
+209a204,205
+>   private Node transform(AstNode node) {
+>     JSDocInfo jsDocInfo = handleJsDoc(node);
+211,212c207,208
+<     if (nodeWithJsDoc != null) {
+<       nodeWithJsDoc.node = irNode;
+---
+>     if (jsDocInfo != null) {
+>       irNode.setJSDocInfo(jsDocInfo);
+243a240,243
+>   private JsDocInfoParser createJsDocInfoParser(Comment node) {
+>     String comment = node.getValue();
+>     int lineno = node.getLineno();
+>     int position = node.getAbsolutePosition();
+245,251d244
+< 
+< 
+< 
+<   private JsDocInfoParser createJsDocInfoParser(
+<       String comment, int lineno, int position,
+<       Node.FileLevelJsDocBuilder fileLevelJsDocBuilder,
+<       JSDocInfo fileOverviewInfo) {
+266,279d258
+<   }
+< 
+<   
+<   private void attachJsDoc(Comment comment, JSDocInfo info) {
+<     Collection<NodeWithJsDoc> candidates =
+<         nodesWithJsDoc.get(comment.getValue());
+<     if (candidates.isEmpty()) {
+<       return;
+<     }
+< 
+<     Iterator<NodeWithJsDoc> candidateIter = candidates.iterator();
+<     Node node = candidateIter.next().node;
+<     candidateIter.remove();
+<     node.setJSDocInfo(info);

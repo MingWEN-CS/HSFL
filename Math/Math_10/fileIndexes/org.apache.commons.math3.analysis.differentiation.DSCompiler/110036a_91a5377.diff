@@ -1,0 +1,39 @@
+1289,1295c1289,1304
+<         final double y0 = y[yOffset];
+<         final double x0 = x[xOffset];
+<         result[resultOffset] = FastMath.atan2(y0, x0);
+<         if (order > 0) {
+<             for (int i = 1; i <= order; ++i) {
+<                 
+<                 result[resultOffset + i] = Double.NaN;
+---
+>         
+>         double[] tmp1 = new double[getSize()];
+>         multiply(x, xOffset, x, xOffset, tmp1, 0);      
+>         double[] tmp2 = new double[getSize()];
+>         multiply(y, yOffset, y, yOffset, tmp2, 0);      
+>         add(tmp1, 0, tmp2, 0, tmp2, 0);                 
+>         rootN(tmp2, 0, 2, tmp1, 0);                     
+> 
+>         if (x[xOffset] >= 0) {
+> 
+>             
+>             add(tmp1, 0, x, xOffset, tmp2, 0);          
+>             divide(y, yOffset, tmp2, 0, tmp1, 0);       
+>             atan(tmp1, 0, tmp2, 0);                     
+>             for (int i = 0; i < tmp2.length; ++i) {
+>                 result[resultOffset + i] = 2 * tmp2[i]; 
+1296a1306,1318
+> 
+>         } else {
+> 
+>             
+>             subtract(tmp1, 0, x, xOffset, tmp2, 0);     
+>             divide(y, yOffset, tmp2, 0, tmp1, 0);       
+>             atan(tmp1, 0, tmp2, 0);                     
+>             result[resultOffset] =
+>                     ((tmp2[0] <= 0) ? -FastMath.PI : FastMath.PI) - 2 * tmp2[0]; 
+>             for (int i = 1; i < tmp2.length; ++i) {
+>                 result[resultOffset + i] = -2 * tmp2[i]; 
+>             }
+> 

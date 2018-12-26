@@ -1,0 +1,242 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.ode.events;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.math.ConvergenceException;
+import org.apache.commons.math.ode.DerivativeException;
+import org.apache.commons.math.ode.IntegratorException;
+import org.apache.commons.math.ode.sampling.StepInterpolator;
+
+
+
+
+
+
+
+
+
+public class CombinedEventsManager implements Serializable {
+
+    
+    private static final long serialVersionUID = -4151965151236441261L;
+
+    
+    private final List<EventState> states;
+
+    
+    private EventState first;
+
+    
+    private boolean initialized;
+
+    
+
+
+    public CombinedEventsManager() {
+        states      = new ArrayList<EventState>();
+        first       = null;
+        initialized = false;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public void addEventHandler(final EventHandler handler, final double maxCheckInterval,
+                                final double convergence, final int maxIterationCount) {
+        states.add(new EventState(handler, maxCheckInterval,
+                                   convergence, maxIterationCount));
+    }
+
+    
+
+
+
+
+    public Collection<EventHandler> getEventsHandlers() {
+        final List<EventHandler> list = new ArrayList<EventHandler>();
+        for (EventState state : states) {
+            list.add(state.getEventHandler());
+        }
+        return Collections.unmodifiableCollection(list);
+    }
+
+    
+
+
+
+    public void clearEventsHandlers() {
+        states.clear();
+    }
+
+    
+
+
+    public boolean isEmpty() {
+        return states.isEmpty();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public boolean evaluateStep(final StepInterpolator interpolator)
+    throws DerivativeException, IntegratorException {
+
+        try {
+
+            first = null;
+            if (states.isEmpty()) {
+                
+                
+                
+                return false;
+            }
+
+            if (! initialized) {
+
+                
+                final double t0 = interpolator.getPreviousTime();
+                interpolator.setInterpolatedTime(t0);
+                final double [] y = interpolator.getInterpolatedState();
+                for (EventState state : states) {
+                    state.reinitializeBegin(t0, y);
+                }
+
+                initialized = true;
+
+            }
+
+            
+            for (EventState state : states) {
+
+                if (state.evaluateStep(interpolator)) {
+                    if (first == null) {
+                        first = state;
+                    } else {
+                        if (interpolator.isForward()) {
+                            if (state.getEventTime() < first.getEventTime()) {
+                                first = state;
+                            }
+                        } else {
+                            if (state.getEventTime() > first.getEventTime()) {
+                                first = state;
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            return first != null;
+
+        } catch (EventException se) {
+            throw new IntegratorException(se);
+        } catch (ConvergenceException ce) {
+            throw new IntegratorException(ce);
+        }
+
+    }
+
+    
+
+
+
+
+
+    public double getEventTime() {
+        return (first == null) ? Double.NaN : first.getEventTime();
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void stepAccepted(final double t, final double[] y)
+    throws IntegratorException {
+        try {
+            for (EventState state : states) {
+                state.stepAccepted(t, y);
+            }
+        } catch (EventException se) {
+            throw new IntegratorException(se);
+        }
+    }
+
+    
+
+
+
+    public boolean stop() {
+        for (EventState state : states) {
+            if (state.stop()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public boolean reset(final double t, final double[] y)
+        throws IntegratorException {
+        try {
+            boolean resetDerivatives = false;
+            for (EventState state : states) {
+                if (state.reset(t, y)) {
+                    resetDerivatives = true;
+                }
+            }
+            return resetDerivatives;
+        } catch (EventException se) {
+            throw new IntegratorException(se);
+        }
+    }
+
+}

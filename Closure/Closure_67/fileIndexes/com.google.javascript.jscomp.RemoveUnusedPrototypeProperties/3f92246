@@ -1,0 +1,87 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.jscomp.AnalyzePrototypeProperties.NameInfo;
+import com.google.javascript.jscomp.AnalyzePrototypeProperties.Symbol;
+import com.google.javascript.rhino.Node;
+
+import java.util.Collection;
+import java.util.logging.Logger;
+
+
+
+
+
+
+
+class RemoveUnusedPrototypeProperties implements CompilerPass {
+
+  private static final Logger logger =
+    Logger.getLogger(RemoveUnusedPrototypeProperties.class.getName());
+
+  private final AbstractCompiler compiler;
+  private final boolean canModifyExterns;
+  private final boolean anchorUnusedVars;
+
+  
+
+
+
+
+
+
+
+
+
+  RemoveUnusedPrototypeProperties(AbstractCompiler compiler,
+      boolean canModifyExterns, boolean anchorUnusedVars) {
+    this.compiler = compiler;
+    this.canModifyExterns = canModifyExterns;
+    this.anchorUnusedVars = anchorUnusedVars;
+  }
+
+  public void process(Node externRoot, Node root) {
+    AnalyzePrototypeProperties analyzer =
+        new AnalyzePrototypeProperties(compiler,
+            null , canModifyExterns, anchorUnusedVars);
+    analyzer.process(externRoot, root);
+    removeUnusedSymbols(analyzer.getAllNameInfo());
+  }
+
+  
+
+
+
+  private void removeUnusedSymbols(Collection<NameInfo> allNameInfo) {
+    boolean changed = false;
+    for (NameInfo nameInfo : allNameInfo) {
+      if (!nameInfo.isReferenced()) {
+        for (Symbol declaration : nameInfo.getDeclarations()) {
+          declaration.remove();
+          changed = true;
+        }
+
+        logger.fine("Removed unused prototype property: " + nameInfo.name);
+      }
+    }
+
+    if (changed) {
+      compiler.reportCodeChange();
+    }
+  }
+}

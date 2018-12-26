@@ -1,0 +1,139 @@
+58a59,60
+> import javax.annotation.Nullable;
+> 
+128c130,131
+<   private static final String OUTPUT_WRAPPER_MARKER = "%output%";
+---
+>   private static final String OUTPUT_MARKER = "%output%";
+>   private static final String OUTPUT_MARKER_JS_STRING = "%output|jsstring%";
+672c675
+<         "%s");
+---
+>         "%s", null);
+680c683,685
+<       String wrapper, String codePlaceholder) throws IOException {
+---
+>       String wrapper, String codePlaceholder,
+>       @Nullable Function<String, String> escaper)
+>       throws IOException {
+690c695
+<       out.append(code);
+---
+>       out.append(escaper == null ? code : escaper.apply(code));
+848,850c853
+<         writeOutput(
+<             jsOutput, compiler, compiler.toSource(), config.outputWrapper,
+<             OUTPUT_WRAPPER_MARKER);
+---
+>         outputSingleBinary();
+855,896c858
+<         parsedModuleWrappers = parseModuleWrappers(
+<             config.moduleWrapper, modules);
+<         maybeCreateDirsForPath(config.moduleOutputPathPrefix);
+< 
+<         
+<         
+<         
+<         Writer mapOut = null;
+< 
+<         if (!shouldGenerateMapPerModule(options)) {
+<           mapOut = fileNameToOutputWriter2(expandSourceMapPath(options, null));
+<         }
+< 
+<         for (JSModule m : modules) {
+<           if (shouldGenerateMapPerModule(options)) {
+<             mapOut = fileNameToOutputWriter2(expandSourceMapPath(options, m));
+<           }
+< 
+<           Writer writer =
+<               fileNameToLegacyOutputWriter(getModuleOutputFileName(m));
+< 
+<           if (options.sourceMapOutputPath != null) {
+<             compiler.getSourceMap().reset();
+<           }
+< 
+<           writeModuleOutput(writer, m);
+< 
+<           if (options.sourceMapOutputPath != null) {
+<             compiler.getSourceMap().appendTo(mapOut, m.getName());
+<           }
+< 
+<           writer.close();
+< 
+<           if (shouldGenerateMapPerModule(options) && mapOut != null) {
+<             mapOut.close();
+<             mapOut = null;
+<           }
+<         }
+< 
+<         if (mapOut != null) {
+<           mapOut.close();
+<         }
+---
+>         outputModuleBinaryAndSourceMaps(modules, options);
+920a883,947
+>   }
+> 
+>   Function<String, String> getJavascriptEscaper() {
+>     throw new UnsupportedOperationException(
+>         "SourceCodeEscapers is not in the standard release of Guava yet :(");
+>   }
+> 
+>   void outputSingleBinary() throws IOException {
+>     Function<String, String> escaper = null;
+>     String marker = OUTPUT_MARKER;
+>     if (config.outputWrapper.contains(OUTPUT_MARKER_JS_STRING)) {
+>       marker = OUTPUT_MARKER_JS_STRING;
+>       escaper = getJavascriptEscaper();
+>     }
+> 
+>     writeOutput(
+>         jsOutput, compiler, compiler.toSource(), config.outputWrapper,
+>         marker, escaper);
+>   }
+> 
+>   private void outputModuleBinaryAndSourceMaps(
+>       List<JSModule> modules, B options)
+>       throws FlagUsageException, IOException {
+>     parsedModuleWrappers = parseModuleWrappers(
+>         config.moduleWrapper, modules);
+>     maybeCreateDirsForPath(config.moduleOutputPathPrefix);
+> 
+>     
+>     
+>     
+>     Writer mapOut = null;
+> 
+>     if (!shouldGenerateMapPerModule(options)) {
+>       mapOut = fileNameToOutputWriter2(expandSourceMapPath(options, null));
+>     }
+> 
+>     for (JSModule m : modules) {
+>       if (shouldGenerateMapPerModule(options)) {
+>         mapOut = fileNameToOutputWriter2(expandSourceMapPath(options, m));
+>       }
+> 
+>       Writer writer =
+>           fileNameToLegacyOutputWriter(getModuleOutputFileName(m));
+> 
+>       if (options.sourceMapOutputPath != null) {
+>         compiler.getSourceMap().reset();
+>       }
+> 
+>       writeModuleOutput(writer, m);
+> 
+>       if (options.sourceMapOutputPath != null) {
+>         compiler.getSourceMap().appendTo(mapOut, m.getName());
+>       }
+> 
+>       writer.close();
+> 
+>       if (shouldGenerateMapPerModule(options) && mapOut != null) {
+>         mapOut.close();
+>         mapOut = null;
+>       }
+>     }
+> 
+>     if (mapOut != null) {
+>       mapOut.close();
+>     }

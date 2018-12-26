@@ -1,0 +1,65 @@
+236c236,242
+<         Node value = init.getAssignedValue();
+---
+>         Node value;
+>         if (init != null) {
+>           value = init.getAssignedValue();
+>         } else {
+>           
+>           value = NodeUtil.newUndefinedNode();
+>         }
+309,310c315,318
+<       return compiler.getCodingConvention().isExported(var.name) ||
+<           staleVars.contains(var);
+---
+>       
+>       return compiler.getCodingConvention().isExported(var.name)
+>           || RenameProperties.RENAME_PROPERTY_FUNCTION_NAME.equals(var.name)
+>           || staleVars.contains(var);
+611,614c619,643
+<       Reference refInit = refInfo.getInitializingReference();
+<       if (!isValidInitialization(refInit)) {
+<         return false;
+<       }
+---
+>       boolean isNeverAssigned = refInfo.isNeverAssigned();
+>       
+>       
+>       if (!isNeverAssigned) {
+>         Reference refInit = refInfo.getInitializingReference();
+>         if (!isValidInitialization(refInit)) {
+>           return false;
+>         }
+> 
+>         if (refDecl != refInit) {
+>           Preconditions.checkState(refInit == refSet.get(1));
+>           startingReadRef = 2;
+>         }
+> 
+>         if (!refInfo.isWellDefined()) {
+>           return false;
+>         }
+>         
+>         Node value = refInit.getAssignedValue();
+>         Preconditions.checkNotNull(value);
+>         if (!(NodeUtil.isImmutableValue(value) &&
+>             (value.getType() != Token.STRING ||
+>              isStringWorthInlining(v, refInfo.references)))) {
+>           return false;
+>         }
+616,618d644
+<       if (refDecl != refInit) {
+<         Preconditions.checkState(refInit == refSet.get(1));
+<         startingReadRef = 2;
+628,636c654
+<       if (!refInfo.isWellDefined()) {
+<         return false;
+<       }
+< 
+<       Node value = refInit.getAssignedValue();
+<       Preconditions.checkNotNull(value);
+<       return NodeUtil.isImmutableValue(value) &&
+<           (value.getType() != Token.STRING ||
+<            isStringWorthInlining(v, refInfo.references));
+---
+>       return true;

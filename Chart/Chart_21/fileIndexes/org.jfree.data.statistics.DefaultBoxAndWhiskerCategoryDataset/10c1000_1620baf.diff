@@ -1,0 +1,114 @@
+54a55
+> 
+77c78,86
+<     private Number minimumRangeValue;
+---
+>     private double minimumRangeValue;
+>     
+>     
+>     private int minimumRangeValueRow;
+>     
+>     
+> 
+> 
+>     private int minimumRangeValueColumn;
+80c89
+<     private Number maximumRangeValue;
+---
+>     private double maximumRangeValue;
+82a92,99
+>     private int maximumRangeValueRow;
+>     
+>     
+> 
+> 
+>     private int maximumRangeValueColumn;
+>     
+>     
+90,91c107,112
+<         this.minimumRangeValue = null;
+<         this.maximumRangeValue = null;
+---
+>         this.minimumRangeValue = Double.NaN;
+>         this.minimumRangeValueRow = -1;
+>         this.minimumRangeValueColumn = -1;
+>         this.maximumRangeValue = Double.NaN;
+>         this.maximumRangeValueRow = -1;
+>         this.maximumRangeValueColumn = -1;
+122a144,157
+>         
+>         
+>         int r = this.data.getRowIndex(rowKey);
+>         int c = this.data.getColumnIndex(columnKey);
+>         if (this.maximumRangeValueRow == r 
+>                 && this.maximumRangeValueColumn == c) {
+>             this.maximumRangeValue = Double.NaN;
+>         }
+>         if (this.minimumRangeValueRow == r 
+>                 && this.minimumRangeValueColumn == c) {
+>             this.minimumRangeValue = Double.NaN;
+>         }
+>         
+>         
+132,136c167,175
+<         if (this.maximumRangeValue == null) {
+<             this.maximumRangeValue = new Double(maxval);
+<         }
+<         else if (maxval > this.maximumRangeValue.doubleValue()) {
+<             this.maximumRangeValue = new Double(maxval);
+---
+>         if (Double.isNaN(this.maximumRangeValue)) {
+>             this.maximumRangeValue = maxval;
+>             this.maximumRangeValueRow = r;
+>             this.maximumRangeValueColumn = c;
+>         }
+>         else if (maxval > this.maximumRangeValue) {
+>             this.maximumRangeValue = maxval;
+>             this.maximumRangeValueRow = r;
+>             this.maximumRangeValueColumn = c;
+139,143c178,186
+<         if (this.minimumRangeValue == null) {
+<             this.minimumRangeValue = new Double(minval);
+<         }
+<         else if (minval < this.minimumRangeValue.doubleValue()) {
+<             this.minimumRangeValue = new Double(minval);
+---
+>         if (Double.isNaN(this.minimumRangeValue)) {
+>             this.minimumRangeValue = minval;
+>             this.minimumRangeValueRow = r;
+>             this.minimumRangeValueColumn = c;
+>         }
+>         else if (minval < this.minimumRangeValue) {
+>             this.minimumRangeValue = minval;
+>             this.minimumRangeValueRow = r;
+>             this.minimumRangeValueColumn = c;
+146,147c189,190
+<         this.rangeBounds = new Range(this.minimumRangeValue.doubleValue(),
+<               this.maximumRangeValue.doubleValue());
+---
+>         this.rangeBounds = new Range(this.minimumRangeValue,
+>               this.maximumRangeValue);
+172a216,218
+> 
+> 
+> 
+184a231,233
+> 
+> 
+> 
+424,428c473
+<         double result = Double.NaN;
+<         if (this.minimumRangeValue != null) {
+<             result = this.minimumRangeValue.doubleValue();
+<         }
+<         return result;
+---
+>         return this.minimumRangeValue;
+440,444c485
+<         double result = Double.NaN;
+<         if (this.maximumRangeValue != null) {
+<             result = this.maximumRangeValue.doubleValue();
+<         }
+<         return result;
+---
+>         return this.maximumRangeValue;

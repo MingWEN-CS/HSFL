@@ -1,0 +1,34 @@
+66a67
+>   private final boolean reportUnnecessaryCasts;
+84a86,91
+>   static final DiagnosticType UNNECESSARY_CAST =
+>       DiagnosticType.disabled("JSC_UNNECESSARY_CAST",
+>           "unnecessary cast\n" +
+>           "from: {0}\n" +
+>           "to  : {1}");
+> 
+144a152,153
+>     this.reportUnnecessaryCasts = ((Compiler) compiler).getOptions().enables(
+>         DiagnosticGroups.UNNECESSARY_CASTS);
+506a516,536
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   void expectCastIsNecessary(NodeTraversal t, Node n, JSType castType, JSType type) {
+>     if (!reportUnnecessaryCasts) {
+>       return;
+>     }
+> 
+>     if (type.isEquivalentTo(castType) ||
+>         (type.isSubtype(castType) && !castType.isSubtype(type))) {
+>       report(t.makeError(n, UNNECESSARY_CAST,
+>           type.toString(), castType.toString()));

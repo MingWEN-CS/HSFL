@@ -1,0 +1,23 @@
+24a25
+> import com.google.javascript.rhino.InputId;
+47a49
+>   final private InputId id;
+73a76
+>     this.id = ast.getInputId();
+92a96,101
+>   public InputId getInputId() {
+>     return id;
+>   }
+> 
+>   
+>   @Override
+106c115,121
+<     return ast.getAstRoot(compiler);
+---
+>     Node root = ast.getAstRoot(compiler);
+>     
+>     if (root != null) {
+>       Preconditions.checkState(root.getType() == Token.SCRIPT);
+>       Preconditions.checkNotNull(root.getInputId());
+>     }
+>     return root;

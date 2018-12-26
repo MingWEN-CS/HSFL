@@ -1,0 +1,47 @@
+461a462,470
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+467,477c476,480
+<     if (comp.hasScopeChanged(jsRoot)) {
+<       cb.visit(comp, jsRoot);
+<     }
+<     traverse(comp, jsRoot,
+<         new AbstractPreOrderCallback() {
+<           @Override
+<           public final boolean shouldTraverse(NodeTraversal t, Node n, Node p) {
+<             if (n.isFunction() && comp.hasScopeChanged(n)) {
+<               cb.visit(comp, n);
+<             }
+<             return true;
+---
+>     NodeTraversal t = new NodeTraversal(comp, new AbstractPreOrderCallback() {
+>         @Override
+>         public final boolean shouldTraverse(NodeTraversal t, Node n, Node p) {
+>           if ((n == jsRoot || n.isFunction()) && comp.hasScopeChanged(n)) {
+>             cb.visit(comp, n);
+479c482,485
+<         });
+---
+>           return true;
+>         }
+>       });
+>     t.traverse(jsRoot);
+543d548
+< 
+621,622c626,627
+<     if (!scopes.isEmpty()) {
+<       compiler.setScope(scopes.peek().getRootNode());
+---
+>     if (hasScope()) {
+>       compiler.setScope(getScopeRoot());
+639c644
+< 
+---
+>     

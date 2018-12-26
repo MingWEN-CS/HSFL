@@ -1,0 +1,19 @@
+947,948c947
+<       NamedType namedType =
+<           new NamedType(this, jsTypeName, sourceName, lineno, charno);
+---
+>       NamedType namedType = createNamedType(jsTypeName, sourceName, lineno, charno);
+1554c1553
+<   public JSType createNamedType(String reference,
+---
+>   public NamedType createNamedType(String reference,
+1556c1555,1559
+<     return new NamedType(this, reference, sourceName, lineno, charno);
+---
+>     if (reference.endsWith(".")) {
+>       return new NamespaceType(this, reference, sourceName, lineno, charno);
+>     } else {
+>       return new NamedType(this, reference, sourceName, lineno, charno);
+>     }
+1650a1654
+>             !(namedType instanceof NamespaceType) &&

@@ -1,0 +1,46 @@
+159,163c159,163
+<           v[0][i] = h * (b_01 * yDot1  + b_06 * yDot6 + b_07 * yDot7 +
+<                          b_08 * yDot8  + b_09 * yDot9 + b_10 * yDot10 +
+<                          b_11 * yDot11 + b_12 * yDot12);
+<           v[1][i] = h * yDot1 - v[0][i];
+<           v[2][i] = v[0][i] - v[1][i] - h * yDotK[12][i];
+---
+>           v[0][i] = b_01 * yDot1  + b_06 * yDot6 + b_07 * yDot7 +
+>                     b_08 * yDot8  + b_09 * yDot9 + b_10 * yDot10 +
+>                     b_11 * yDot11 + b_12 * yDot12;
+>           v[1][i] = yDot1 - v[0][i];
+>           v[2][i] = v[0][i] - v[1][i] - yDotK[12][i];
+165,168c165,168
+<               v[k+3][i] = h * (d[k][0] * yDot1  + d[k][1]  * yDot6  + d[k][2]  * yDot7  +
+<                                d[k][3] * yDot8  + d[k][4]  * yDot9  + d[k][5]  * yDot10 +
+<                                d[k][6] * yDot11 + d[k][7]  * yDot12 + d[k][8]  * yDot13 +
+<                                d[k][9] * yDot14 + d[k][10] * yDot15 + d[k][11] * yDot16);
+---
+>               v[k+3][i] = d[k][0] * yDot1  + d[k][1]  * yDot6  + d[k][2]  * yDot7  +
+>                           d[k][3] * yDot8  + d[k][4]  * yDot9  + d[k][5]  * yDot10 +
+>                           d[k][6] * yDot11 + d[k][7]  * yDot12 + d[k][8]  * yDot13 +
+>                           d[k][9] * yDot14 + d[k][10] * yDot15 + d[k][11] * yDot16;
+176c176
+<     final double eta      = oneMinusThetaH / h;
+---
+>     final double eta      = 1 - theta;
+187,193c187,197
+<       interpolatedState[i] =
+<           currentState[i] - eta * (v[0][i] - theta * (v[1][i] +
+<                   theta * (v[2][i] + eta * (v[3][i] + theta * (v[4][i] +
+<                           eta * (v[5][i] + theta * (v[6][i])))))));
+<       interpolatedDerivatives[i] = 
+<           (v[0][i] + dot1 * v[1][i] + dot2 * v[2][i] + dot3 * v[3][i] +
+<                      dot4 * v[4][i] + dot5 * v[5][i] + dot6 * v[6][i]) / h;
+---
+>       interpolatedState[i] = currentState[i] -
+>                              oneMinusThetaH * (v[0][i] -
+>                                                theta * (v[1][i] +
+>                                                         theta * (v[2][i] +
+>                                                                  eta * (v[3][i] +
+>                                                                         theta * (v[4][i] +
+>                                                                                  eta * (v[5][i] +
+>                                                                                         theta * (v[6][i])))))));
+>       interpolatedDerivatives[i] =  v[0][i] + dot1 * v[1][i] + dot2 * v[2][i] +
+>                                     dot3 * v[3][i] + dot4 * v[4][i] +
+>                                     dot5 * v[5][i] + dot6 * v[6][i];

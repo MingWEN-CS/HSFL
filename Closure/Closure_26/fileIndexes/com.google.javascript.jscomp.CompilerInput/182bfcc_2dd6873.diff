@@ -1,0 +1,42 @@
+28d27
+< import com.google.javascript.rhino.jstype.StaticSourceFile;
+43c42,43
+<     implements SourceAst, DependencyInfo, StaticSourceFile {
+---
+>     implements SourceAst, DependencyInfo {
+> 
+48d47
+<   final private String name;
+71c70,74
+<     this(ast, ast.getSourceFile().getName(), isExtern);
+---
+>     this(ast, ast.getInputId(), isExtern);
+>   }
+> 
+>   public CompilerInput(SourceAst ast, String inputId, boolean isExtern) {
+>     this(ast, new InputId(inputId), isExtern);
+74c77
+<   public CompilerInput(SourceAst ast, String inputName, boolean isExtern) {
+---
+>   public CompilerInput(SourceAst ast, InputId inputId, boolean isExtern) {
+76,77c79
+<     this.id = ast.getInputId();
+<     this.name = inputName;
+---
+>     this.id = inputId;
+91c93
+<     this(new JsAst(file), file.getName(), isExtern);
+---
+>     this(new JsAst(file), isExtern);
+103c105,109
+<     return name;
+---
+>     return id.getIdName();
+>   }
+> 
+>   public SourceAst getAst() {
+>     return ast;
+312d317
+<   @Override
+327d331
+<   @Override

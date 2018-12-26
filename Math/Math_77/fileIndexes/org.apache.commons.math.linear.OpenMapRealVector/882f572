@@ -1,0 +1,1310 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.linear;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.util.OpenIntToDoubleHashMap;
+import org.apache.commons.math.util.OpenIntToDoubleHashMap.Iterator;
+
+
+
+
+
+
+public class OpenMapRealVector implements SparseRealVector, Serializable {
+
+    
+    private static final long serialVersionUID = 8772222695580707260L;
+
+    
+    public static final double DEFAULT_ZERO_TOLERANCE = 1.0e-12;
+
+    
+    private final OpenIntToDoubleHashMap entries;
+
+    
+    private final int virtualSize;
+
+    
+    private double epsilon;
+
+    
+
+
+
+
+
+
+
+
+    public OpenMapRealVector() {
+        this(0, DEFAULT_ZERO_TOLERANCE);
+    }
+
+    
+
+
+
+    public OpenMapRealVector(int dimension) {
+        this(dimension, DEFAULT_ZERO_TOLERANCE);
+    }
+
+    
+
+
+
+
+    public OpenMapRealVector(int dimension, double epsilon) {
+        virtualSize = dimension;
+        entries = new OpenIntToDoubleHashMap(0.0);
+        this.epsilon = epsilon;
+    }
+
+    
+
+
+
+
+    protected OpenMapRealVector(OpenMapRealVector v, int resize) {
+        virtualSize = v.getDimension() + resize;
+        entries = new OpenIntToDoubleHashMap(v.entries);
+        epsilon = v.getEpsilon();
+    }
+
+    
+
+
+
+
+    public OpenMapRealVector(int dimension, int expectedSize) {
+        this(dimension, expectedSize, DEFAULT_ZERO_TOLERANCE);
+    }
+
+    
+
+
+
+
+
+    public OpenMapRealVector(int dimension, int expectedSize, double epsilon) {
+        virtualSize = dimension;
+        entries = new OpenIntToDoubleHashMap(expectedSize, 0.0);
+        this.epsilon = epsilon;
+    }
+
+    
+
+
+
+
+    public OpenMapRealVector(double[] values) {
+        this(values, DEFAULT_ZERO_TOLERANCE);
+    }
+
+    
+
+
+
+
+
+    public OpenMapRealVector(double[] values, double epsilon) {
+        virtualSize = values.length;
+        entries = new OpenIntToDoubleHashMap(0.0);
+        this.epsilon = epsilon;
+        for (int key = 0; key < values.length; key++) {
+            double value = values[key];
+            if (!isZero(value)) {
+                entries.put(key, value);
+            }
+        }
+    }
+
+    
+
+
+
+
+    public OpenMapRealVector(Double[] values) {
+        this(values, DEFAULT_ZERO_TOLERANCE);
+    }
+
+    
+
+
+
+
+
+    public OpenMapRealVector(Double[] values, double epsilon) {
+        virtualSize = values.length;
+        entries = new OpenIntToDoubleHashMap(0.0);
+        this.epsilon = epsilon;
+        for (int key = 0; key < values.length; key++) {
+            double value = values[key].doubleValue();
+            if (!isZero(value)) {
+                entries.put(key, value);
+            }
+        }
+    }
+
+    
+
+
+
+    public OpenMapRealVector(OpenMapRealVector v) {
+        virtualSize = v.getDimension();
+        entries = new OpenIntToDoubleHashMap(v.getEntries());
+        epsilon = v.getEpsilon();
+    }
+
+    
+
+
+
+    public OpenMapRealVector(RealVector v) {
+        virtualSize = v.getDimension();
+        entries = new OpenIntToDoubleHashMap(0.0);
+        epsilon = DEFAULT_ZERO_TOLERANCE;
+        for (int key = 0; key < virtualSize; key++) {
+            double value = v.getEntry(key);
+            if (!isZero(value)) {
+                entries.put(key, value);
+            }
+        }
+    }
+
+    
+
+
+
+    private OpenIntToDoubleHashMap getEntries() {
+        return entries;
+    }
+
+    
+
+
+
+
+    protected boolean isZero(double value) {
+        return value > -epsilon && value < epsilon;
+    }
+
+    
+
+
+
+    public double getEpsilon() {
+        return epsilon;
+    }
+
+    
+
+
+
+    public void setEpsilon(double epsilon) {
+        this.epsilon = epsilon;
+    }
+
+    
+    public OpenMapRealVector add(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        if (v instanceof OpenMapRealVector) {
+            return add((OpenMapRealVector) v);
+        }
+        return add(v.getData());
+    }
+
+    
+
+
+
+
+
+    public OpenMapRealVector add(OpenMapRealVector v) throws IllegalArgumentException{
+        checkVectorDimensions(v.getDimension());
+        OpenMapRealVector res = (OpenMapRealVector)copy();
+        Iterator iter = v.getEntries().iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int key = iter.key();
+            if (entries.containsKey(key)) {
+                res.setEntry(key, entries.get(key) + iter.value());
+            } else {
+                res.setEntry(key, iter.value());
+            }
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector add(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        OpenMapRealVector res = new OpenMapRealVector(getDimension());
+        for (int i = 0; i < v.length; i++) {
+            res.setEntry(i, v[i] + getEntry(i));
+        }
+        return res;
+    }
+
+    
+
+
+
+
+    public OpenMapRealVector append(OpenMapRealVector v) {
+        OpenMapRealVector res = new OpenMapRealVector(this, v.getDimension());
+        Iterator iter = v.entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res.setEntry(iter.key() + virtualSize, iter.value());
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector append(RealVector v) {
+        if (v instanceof OpenMapRealVector) {
+            return append((OpenMapRealVector) v);
+        }
+        return append(v.getData());
+    }
+
+    
+    public OpenMapRealVector append(double d) {
+        OpenMapRealVector res = new OpenMapRealVector(this, 1);
+        res.setEntry(virtualSize, d);
+        return res;
+    }
+
+    
+    public OpenMapRealVector append(double[] a) {
+        OpenMapRealVector res = new OpenMapRealVector(this, a.length);
+        for (int i = 0; i < a.length; i++) {
+            res.setEntry(i + virtualSize, a[i]);
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector copy() {
+        return new OpenMapRealVector(this);
+    }
+
+    
+    public double dotProduct(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        double res = 0;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res += v.getEntry(iter.key()) * iter.value();
+        }
+        return res;
+    }
+
+    
+    public double dotProduct(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        double res = 0;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            int idx = iter.key();
+            double value = 0;
+            if (idx < v.length) {
+                value = v[idx];
+            }
+            res += value * iter.value();
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector ebeDivide(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        OpenMapRealVector res = new OpenMapRealVector(this);
+        Iterator iter = res.entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res.setEntry(iter.key(), iter.value() / v.getEntry(iter.key()));
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector ebeDivide(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        OpenMapRealVector res = new OpenMapRealVector(this);
+        Iterator iter = res.entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res.setEntry(iter.key(), iter.value() / v[iter.key()]);
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector ebeMultiply(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        OpenMapRealVector res = new OpenMapRealVector(this);
+        Iterator iter = res.entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res.setEntry(iter.key(), iter.value() * v.getEntry(iter.key()));
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector ebeMultiply(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        OpenMapRealVector res = new OpenMapRealVector(this);
+        Iterator iter = res.entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res.setEntry(iter.key(), iter.value() * v[iter.key()]);
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector getSubVector(int index, int n) throws MatrixIndexException {
+        checkIndex(index);
+        checkIndex(index + n - 1);
+        OpenMapRealVector res = new OpenMapRealVector(n);
+        int end = index + n;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int key = iter.key();
+            if (key >= index && key < end) {
+                res.setEntry(key - index, iter.value());
+            }
+        }
+        return res;
+    }
+
+    
+    public double[] getData() {
+        double[] res = new double[virtualSize];
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res[iter.key()] = iter.value();
+        }
+        return res;
+    }
+
+    
+    public int getDimension() {
+        return virtualSize;
+    }
+
+    
+
+
+
+
+
+    public double getDistance(OpenMapRealVector v) throws IllegalArgumentException {
+        Iterator iter = entries.iterator();
+        double res = 0;
+        while (iter.hasNext()) {
+            iter.advance();
+            int key = iter.key();
+            double delta;
+            delta = iter.value() - v.getEntry(key);
+            res += delta * delta;
+        }
+        iter = v.getEntries().iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int key = iter.key();
+            if (!entries.containsKey(key)) {
+                final double value = iter.value();
+                res += value * value;
+            }
+        }
+        return Math.sqrt(res);
+    }
+
+    
+    public double getDistance(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        if (v instanceof OpenMapRealVector) {
+            return getDistance((OpenMapRealVector) v);
+        }
+        return getDistance(v.getData());
+    }
+
+    
+    public double getDistance(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        double res = 0;
+        for (int i = 0; i < v.length; i++) {
+            double delta = entries.get(i) - v[i];
+            res += delta * delta;
+        }
+        return Math.sqrt(res);
+    }
+
+    
+    public double getEntry(int index) throws MatrixIndexException {
+        checkIndex(index);
+        return entries.get(index);
+    }
+
+    
+
+
+
+
+
+
+
+    public double getL1Distance(OpenMapRealVector v) {
+        double max = 0;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            double delta = Math.abs(iter.value() - v.getEntry(iter.key()));
+            max += delta;
+        }
+        iter = v.getEntries().iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int key = iter.key();
+            if (!entries.containsKey(key)) {
+                double delta = Math.abs(iter.value());
+                max +=  Math.abs(delta);
+            }
+        }
+        return max;
+    }
+
+    
+    public double getL1Distance(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        if (v instanceof OpenMapRealVector) {
+            return getL1Distance((OpenMapRealVector) v);
+        }
+        return getL1Distance(v.getData());
+    }
+
+    
+    public double getL1Distance(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        double max = 0;
+        for (int i = 0; i < v.length; i++) {
+            double delta = Math.abs(getEntry(i) - v[i]);
+            max += delta;
+        }
+        return max;
+    }
+
+    
+    public double getL1Norm() {
+        double res = 0;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res += Math.abs(iter.value());
+        }
+        return res;
+    }
+
+    
+
+
+
+
+    private double getLInfDistance(OpenMapRealVector v) {
+        double max = 0;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            double delta = Math.abs(iter.value() - v.getEntry(iter.key()));
+            if (delta > max) {
+                max = delta;
+            }
+        }
+        iter = v.getEntries().iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int key = iter.key();
+            if (!entries.containsKey(key)) {
+                if (iter.value() > max) {
+                    max = iter.value();
+                }
+            }
+        }
+        return max;
+    }
+
+    
+    public double getLInfDistance(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        if (v instanceof OpenMapRealVector) {
+            return getLInfDistance((OpenMapRealVector) v);
+        }
+        return getLInfDistance(v.getData());
+    }
+
+    
+    public double getLInfDistance(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        double max = 0;
+        for (int i = 0; i < v.length; i++) {
+            double delta = Math.abs(getEntry(i) - v[i]);
+            if (delta > max) {
+                max = delta;
+            }
+        }
+        return max;
+    }
+
+    
+    public double getLInfNorm() {
+        double max = 0;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            max += iter.value();
+        }
+        return max;
+    }
+
+    
+    public double getNorm() {
+        double res = 0;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            res += iter.value() * iter.value();
+        }
+        return Math.sqrt(res);
+    }
+
+    
+    public boolean isInfinite() {
+        boolean infiniteFound = false;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            final double value = iter.value();
+            if (Double.isNaN(value)) {
+                return false;
+            }
+            if (Double.isInfinite(value)) {
+                infiniteFound = true;
+            }
+        }
+        return infiniteFound;
+    }
+
+    
+    public boolean isNaN() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            if (Double.isNaN(iter.value())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+    public OpenMapRealVector mapAbs() {
+        return copy().mapAbsToSelf();
+    }
+
+    
+    public OpenMapRealVector mapAbsToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.abs(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapAcos() {
+        return copy().mapAcosToSelf();
+    }
+
+    
+    public OpenMapRealVector mapAcosToSelf() {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, Math.acos(getEntry(i)));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapAdd(double d) {
+        return copy().mapAddToSelf(d);
+    }
+
+    
+    public OpenMapRealVector mapAddToSelf(double d) {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, getEntry(i) + d);
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapAsin() {
+        return copy().mapAsinToSelf();
+    }
+
+    
+    public OpenMapRealVector mapAsinToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.asin(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapAtan() {
+        return copy().mapAtanToSelf();
+    }
+
+    
+    public OpenMapRealVector mapAtanToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.atan(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapCbrt() {
+        return copy().mapCbrtToSelf();
+    }
+
+    
+    public OpenMapRealVector mapCbrtToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.cbrt(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapCeil() {
+        return copy().mapCeilToSelf();
+    }
+
+    
+    public OpenMapRealVector mapCeilToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.ceil(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapCos() {
+        return copy().mapCosToSelf();
+    }
+
+    
+    public OpenMapRealVector mapCosToSelf() {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, Math.cos(getEntry(i)));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapCosh() {
+        return copy().mapCoshToSelf();
+    }
+
+    
+    public OpenMapRealVector mapCoshToSelf() {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, Math.cosh(getEntry(i)));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapDivide(double d) {
+        return copy().mapDivideToSelf(d);
+    }
+
+    
+    public OpenMapRealVector mapDivideToSelf(double d) {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), iter.value() / d);
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapExp() {
+        return copy().mapExpToSelf();
+    }
+
+    
+    public OpenMapRealVector mapExpToSelf() {
+        for (int i = 0; i < virtualSize; i++) {
+            entries.put(i, Math.exp(entries.get(i)));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapExpm1() {
+        return copy().mapExpm1ToSelf();
+    }
+
+    
+    public OpenMapRealVector mapExpm1ToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.expm1(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapFloor() {
+        return copy().mapFloorToSelf();
+    }
+
+    
+    public OpenMapRealVector mapFloorToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.floor(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapInv() {
+        return copy().mapInvToSelf();
+    }
+
+    
+    public OpenMapRealVector mapInvToSelf() {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, 1.0/getEntry(i));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapLog() {
+        return copy().mapLogToSelf();
+    }
+
+    
+    public OpenMapRealVector mapLog10() {
+        return copy().mapLog10ToSelf();
+    }
+
+    
+    public OpenMapRealVector mapLog10ToSelf() {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, Math.log10(getEntry(i)));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapLog1p() {
+        return copy().mapLog1pToSelf();
+    }
+
+    
+    public OpenMapRealVector mapLog1pToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.log1p(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapLogToSelf() {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, Math.log(getEntry(i)));
+        }
+       return this;
+    }
+
+    
+    public OpenMapRealVector mapMultiply(double d) {
+        return copy().mapMultiplyToSelf(d);
+    }
+
+    
+    public OpenMapRealVector mapMultiplyToSelf(double d) {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), iter.value() * d);
+        }
+        return this;
+    }
+    
+    public OpenMapRealVector mapPow(double d) {
+        return copy().mapPowToSelf(d);
+    }
+
+    
+    public OpenMapRealVector mapPowToSelf(double d) {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.pow(iter.value(), d));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapRint() {
+        return copy().mapRintToSelf();
+    }
+
+    
+    public OpenMapRealVector mapRintToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.rint(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapSignum() {
+        return copy().mapSignumToSelf();
+    }
+
+    
+    public OpenMapRealVector mapSignumToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.signum(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapSin() {
+        return copy().mapSinToSelf();
+    }
+
+    
+    public OpenMapRealVector mapSinToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.sin(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapSinh() {
+        return copy().mapSinhToSelf();
+    }
+
+    
+    public OpenMapRealVector mapSinhToSelf() {
+
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.sinh(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapSqrt() {
+        return copy().mapSqrtToSelf();
+    }
+
+    
+    public OpenMapRealVector mapSqrtToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.sqrt(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapSubtract(double d) {
+        return copy().mapSubtractToSelf(d);
+    }
+
+    
+    public OpenMapRealVector mapSubtractToSelf(double d) {
+        return mapAddToSelf(-d);
+    }
+
+    
+    public OpenMapRealVector mapTan() {
+        return copy().mapTanToSelf();
+    }
+
+    
+    public OpenMapRealVector mapTanToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.tan(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapTanh() {
+        return copy().mapTanhToSelf();
+    }
+
+    
+    public OpenMapRealVector mapTanhToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.tanh(iter.value()));
+        }
+        return this;
+    }
+
+    
+    public OpenMapRealVector mapUlp() {
+        return copy().mapUlpToSelf();
+    }
+
+    
+    public OpenMapRealVector mapUlpToSelf() {
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), Math.ulp(iter.value()));
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+    public OpenMapRealMatrix outerproduct(OpenMapRealVector v) throws IllegalArgumentException{
+        checkVectorDimensions(v.getDimension());
+        OpenMapRealMatrix res = new OpenMapRealMatrix(virtualSize, virtualSize);
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            Iterator iter2 = v.getEntries().iterator();
+            while (iter2.hasNext()) {
+                iter2.advance();
+                res.setEntry(iter.key(), iter2.key(), iter.value()*iter2.value());
+            }
+        }
+        return res;
+    }
+
+    
+    public RealMatrix outerProduct(RealVector v)
+            throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        if (v instanceof OpenMapRealVector) {
+            return outerproduct((OpenMapRealVector)v);
+        }
+        RealMatrix res = new OpenMapRealMatrix(virtualSize, virtualSize);
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int row = iter.key();
+            for (int col = 0; col < virtualSize; col++) {
+                res.setEntry(row, col, iter.value()*v.getEntry(col));
+            }
+        }
+        return res;
+    }
+
+    
+    public RealMatrix outerProduct(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        RealMatrix res = new OpenMapRealMatrix(virtualSize, virtualSize);
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int row = iter.key();
+            double value = iter.value();
+            for (int col = 0; col < virtualSize; col++) {
+                res.setEntry(row, col, value * v[col]);
+            }
+        }
+        return res;
+    }
+
+    
+    public RealVector projection(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        return v.mapMultiply(dotProduct(v) / v.dotProduct(v));
+    }
+
+    
+    public OpenMapRealVector projection(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        return (OpenMapRealVector) projection(new OpenMapRealVector(v));
+    }
+
+    
+    public void setEntry(int index, double value) throws MatrixIndexException {
+        checkIndex(index);
+        if (!isZero(value)) {
+            entries.put(index, value);
+        } else if (entries.containsKey(index)) {
+            entries.remove(index);
+        }
+    }
+
+    
+    public void setSubVector(int index, RealVector v) throws MatrixIndexException {
+        checkIndex(index);
+        checkIndex(index + v.getDimension() - 1);
+        setSubVector(index, v.getData());
+    }
+
+    
+    public void setSubVector(int index, double[] v) throws MatrixIndexException {
+        checkIndex(index);
+        checkIndex(index + v.length - 1);
+        for (int i = 0; i < v.length; i++) {
+            setEntry(i + index, v[i]);
+        }
+    }
+
+    
+    public void set(double value) {
+        for (int i = 0; i < virtualSize; i++) {
+            setEntry(i, value);
+        }
+    }
+
+    
+
+
+
+
+
+    public OpenMapRealVector subtract(OpenMapRealVector v) throws IllegalArgumentException{
+        checkVectorDimensions(v.getDimension());
+        OpenMapRealVector res = (OpenMapRealVector)copy();
+        Iterator iter = v.getEntries().iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            int key = iter.key();
+            if (entries.containsKey(key)) {
+                res.setEntry(key, entries.get(key) - iter.value());
+            } else {
+                res.setEntry(key, -iter.value());
+            }
+        }
+        return res;
+    }
+
+    
+    public OpenMapRealVector subtract(RealVector v) throws IllegalArgumentException {
+        checkVectorDimensions(v.getDimension());
+        if (v instanceof OpenMapRealVector) {
+            return subtract((OpenMapRealVector) v);
+        }
+        return subtract(v.getData());
+    }
+
+    
+    public OpenMapRealVector subtract(double[] v) throws IllegalArgumentException {
+        checkVectorDimensions(v.length);
+        OpenMapRealVector res = new OpenMapRealVector(this);
+        for (int i = 0; i < v.length; i++) {
+            if (entries.containsKey(i)) {
+                res.setEntry(i, entries.get(i) - v[i]);
+            } else {
+                res.setEntry(i, -v[i]);
+            }
+        }
+        return res;
+    }
+
+
+    
+    public OpenMapRealVector unitVector() {
+        OpenMapRealVector res = copy();
+        res.unitize();
+        return res;
+    }
+
+    
+    public void unitize() {
+        double norm = getNorm();
+        if (isZero(norm)) {
+            throw  MathRuntimeException.createArithmeticException("cannot normalize a zero norm vector");
+        }
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            entries.put(iter.key(), iter.value() / norm);
+        }
+
+    }
+
+    
+
+
+
+
+
+
+
+    private void checkIndex(final int index) throws MatrixIndexException {
+        if (index < 0 || index >= getDimension()) {
+            throw new MatrixIndexException(
+                    "index {0} out of allowed range [{1}, {2}]",
+                    index, 0, getDimension() - 1);
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    protected void checkVectorDimensions(int n) throws IllegalArgumentException {
+        if (getDimension() != n) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                    "vector length mismatch: got {0} but expected {1}",
+                    getDimension(), n);
+        }
+    }
+
+    
+    public double[] toArray() {
+        return getData();
+    }
+
+    
+
+
+
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(epsilon);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + virtualSize;
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            temp = Double.doubleToLongBits(iter.value());
+            result = prime * result + (int) (temp ^ (temp >>32));
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof OpenMapRealVector)) {
+            return false;
+        }
+        OpenMapRealVector other = (OpenMapRealVector) obj;
+        if (virtualSize != other.virtualSize) {
+            return false;
+        }
+        if (Double.doubleToLongBits(epsilon) !=
+            Double.doubleToLongBits(other.epsilon)) {
+            return false;
+        }
+        Iterator iter = entries.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            double test = other.getEntry(iter.key());
+            if (Double.doubleToLongBits(test) != Double.doubleToLongBits(iter.value())) {
+                return false;
+            }
+        }
+        iter = other.getEntries().iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            double test = iter.value();
+            if (Double.doubleToLongBits(test) != Double.doubleToLongBits(getEntry(iter.key()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    
+
+
+
+    public double getSparcity() {
+        return (double)entries.size()/(double)getDimension();
+    }
+
+}

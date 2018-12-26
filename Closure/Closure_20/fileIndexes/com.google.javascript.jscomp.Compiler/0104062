@@ -1,0 +1,1754 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.javascript.jscomp.CompilerOptions.DevMode;
+import com.google.javascript.jscomp.CompilerOptions.TracerMode;
+import com.google.javascript.jscomp.mozilla.rhino.ErrorReporter;
+import com.google.javascript.jscomp.parsing.Config;
+import com.google.javascript.jscomp.parsing.ParserRunner;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.jstype.JSTypeRegistry;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Compiler extends AbstractCompiler {
+  CompilerOptions options = null;
+
+  private PassConfig passes = null;
+
+  
+  private List<CompilerInput> externs;
+
+  
+  private List<JSModule> modules;
+
+  
+  private JSModuleGraph moduleGraph;
+
+  
+  private List<CompilerInput> inputs;
+
+  
+  private ErrorManager errorManager;
+
+  
+  private SymbolTable symbolTable = null;
+
+  
+  Node externsRoot;
+  Node jsRoot;
+  Node externAndJsRoot;
+
+  private Map<String, CompilerInput> inputsByName;
+
+  
+  private SourceMap sourceMap;
+
+  
+  private String externExports = null;
+
+  
+
+
+
+  private int uniqueNameId = 0;
+
+  
+
+
+
+  private boolean normalized = false;
+
+  
+  private boolean useThreads = true;
+
+  
+
+
+
+  private boolean hasRegExpGlobalReferences = true;
+  
+  
+  private FunctionInformationMap functionInformationMap;
+
+  
+  private final StringBuilder debugLog = new StringBuilder();
+
+  
+  CodingConvention defaultCodingConvention = new GoogleCodingConvention();
+
+  private JSTypeRegistry typeRegistry;
+  private Config parserConfig = null;
+
+  private ReverseAbstractInterpreter abstractInterpreter;
+  private final TypeValidator typeValidator;
+
+  public PerformanceTracker tracker;
+
+  
+  private final com.google.javascript.rhino.ErrorReporter oldErrorReporter =
+      RhinoErrorReporter.forOldRhino(this);
+
+  
+  private final ErrorReporter defaultErrorReporter =
+      RhinoErrorReporter.forNewRhino(this);
+
+  
+  public static final DiagnosticType OPTIMIZE_LOOP_ERROR = DiagnosticType.error(
+      "JSC_OPTIMIZE_LOOP_ERROR",
+      "Exceeded max number of optimization iterations: {0}");
+  public static final DiagnosticType MOTION_ITERATIONS_ERROR =
+      DiagnosticType.error("JSC_OPTIMIZE_LOOP_ERROR",
+          "Exceeded max number of code motion iterations: {0}");
+
+  private static final long COMPILER_STACK_SIZE = 1048576L;
+
+
+  
+
+
+
+
+  private static final Logger logger =
+      Logger.getLogger("com.google.javascript.jscomp");
+
+  private final PrintStream outStream;
+
+  
+
+
+  public Compiler() {
+    this((PrintStream) null);
+  }
+
+  
+
+
+
+  public Compiler(PrintStream stream) {
+    addChangeHandler(recentChange);
+    this.typeValidator = new TypeValidator(this);
+    outStream = stream;
+  }
+
+  
+
+
+  public Compiler(ErrorManager errorManager) {
+    this();
+    setErrorManager(errorManager);
+  }
+
+  
+
+
+  @Override
+  SymbolTable acquireSymbolTable() {
+    if (symbolTable == null) {
+      symbolTable = new SymbolTable(this);
+    }
+    symbolTable.acquire();
+    return symbolTable;
+  }
+
+  
+
+
+
+
+  public void setErrorManager(ErrorManager errorManager) {
+    Preconditions.checkNotNull(
+        errorManager, "the error manager cannot be null");
+    this.errorManager = errorManager;
+  }
+
+  
+
+
+
+  private MessageFormatter createMessageFormatter() {
+    boolean colorize = options.shouldColorizeErrorOutput();
+    return options.errorFormat.toFormatter(this, colorize);
+  }
+
+  
+
+
+
+  public void initOptions(CompilerOptions options) {
+    this.options = options;
+    if (errorManager == null) {
+      if (outStream == null) {
+        setErrorManager(
+            new LoggerErrorManager(createMessageFormatter(), logger));
+      } else {
+        PrintStreamErrorManager printer =
+            new PrintStreamErrorManager(createMessageFormatter(), outStream);
+        printer.setSummaryDetailLevel(options.summaryDetailLevel);
+        setErrorManager(printer);
+      }
+    }
+  }
+
+  
+
+
+  public void init(JSSourceFile[] externs, JSSourceFile[] inputs,
+      CompilerOptions options) {
+    init(Lists.<JSSourceFile>newArrayList(externs),
+        Lists.<JSSourceFile>newArrayList(inputs), options);
+  }
+
+  
+
+
+  public void init(List<JSSourceFile> externs, List<JSSourceFile> inputs,
+      CompilerOptions options) {
+    initOptions(options);
+    
+    this.externs = makeCompilerInput(externs, true);
+    this.modules = null;
+    this.moduleGraph = null;
+    this.inputs = makeCompilerInput(inputs, false);
+    initBasedOnOptions();
+
+    initInputsByNameMap();
+  }
+
+  static final DiagnosticType MODULE_DEPENDENCY_ERROR =
+      DiagnosticType.error("JSC_MODULE_DEPENDENCY_ERROR",
+          "Bad dependency: {0} -> {1}. "
+              + "Modules must be listed in dependency order.");
+
+  
+
+
+
+  public void init(JSSourceFile[] externs, JSModule[] modules,
+      CompilerOptions options) {
+    initModules(Lists.<JSSourceFile>newArrayList(externs),
+         Lists.<JSModule>newArrayList(modules), options);
+  }
+  
+  
+
+
+
+  public void initModules(
+      List<JSSourceFile> externs, List<JSModule> modules,
+      CompilerOptions options) {
+    initOptions(options);
+
+    checkFirstModule(modules);
+    fillEmptyModules(modules);
+
+    this.externs = makeCompilerInput(externs, true);
+    this.modules = modules;
+    
+    
+    try {
+      this.moduleGraph = new JSModuleGraph(modules);
+    } catch (JSModuleGraph.ModuleDependenceException e) {
+      
+      
+      report(JSError.make(MODULE_DEPENDENCY_ERROR,
+          e.getModule().getName(), e.getDependentModule().getName()));
+      return;
+    }
+    this.inputs = getAllInputsFromModules();
+    initBasedOnOptions();
+
+    initInputsByNameMap();
+  }
+
+  
+
+
+  private void initBasedOnOptions() {
+    
+    if (options.sourceMapOutputPath != null) {
+      sourceMap = new SourceMap();
+    }
+  }
+
+  private List<CompilerInput> makeCompilerInput(
+      List<JSSourceFile> files, boolean isExtern) {
+    List<CompilerInput> inputs = Lists.newArrayList();
+    for (JSSourceFile file : files) {
+      inputs.add(new CompilerInput(file, isExtern));
+    }
+    return inputs;
+  }
+
+  private static final DiagnosticType EMPTY_MODULE_LIST_ERROR =
+      DiagnosticType.error("JSC_EMPTY_MODULE_LIST_ERROR",
+          "At least one module must be provided");
+
+  private static final DiagnosticType EMPTY_ROOT_MODULE_ERROR =
+      DiagnosticType.error("JSC_EMPTY_ROOT_MODULE_ERROR",
+          "Root module '{0}' must contain at least one source code input");
+
+  
+
+
+
+  private void checkFirstModule(List<JSModule> modules) {
+    if (modules.isEmpty()) {
+      report(JSError.make(EMPTY_MODULE_LIST_ERROR));
+    } else if (modules.get(0).getInputs().isEmpty()) {
+      report(JSError.make(EMPTY_ROOT_MODULE_ERROR,
+          modules.get(0).getName()));
+    }
+  }
+  
+  
+
+
+
+  private void fillEmptyModules(List<JSModule> modules) {
+    for (JSModule module : modules) {
+      if (module.getInputs().isEmpty()) {
+        module.add(JSSourceFile.fromCode("[" + module.getName() + "]", ""));
+      }
+    }
+  }
+  
+  static final DiagnosticType DUPLICATE_INPUT_IN_MODULES =
+      DiagnosticType.error("JSC_DUPLICATE_INPUT_IN_MODULES_ERROR",
+          "Two modules cannot contain the same input, but module {0} and {1} "
+              + "both include \"{2}\"");
+
+  
+
+
+
+
+  public void rebuildInputsFromModules() {
+    inputs = getAllInputsFromModules();
+    initInputsByNameMap();
+  }
+
+  
+
+
+
+  private List<CompilerInput> getAllInputsFromModules() {
+    List<CompilerInput> inputs = Lists.newArrayList();
+    Map<String, JSModule> inputMap = Maps.newHashMap();
+    for (JSModule module : modules) {
+      for (CompilerInput input : module.getInputs()) {
+        String inputName = input.getName();
+        JSModule firstModule = inputMap.get(inputName);
+        if (firstModule == null) {
+          inputs.add(input);
+          inputMap.put(inputName, module);
+        } else {
+          report(JSError.make(DUPLICATE_INPUT_IN_MODULES,
+              firstModule.getName(), module.getName(), inputName));
+        }
+      }
+    }
+    if (hasErrors()) {
+
+      
+      return ImmutableList.of();
+    }
+
+    return inputs;
+  }
+
+  static final DiagnosticType DUPLICATE_INPUT =
+      DiagnosticType.error("JSC_DUPLICATE_INPUT", "Duplicate input: {0}");
+  static final DiagnosticType DUPLICATE_EXTERN_INPUT =
+      DiagnosticType.error("JSC_DUPLICATE_EXTERN_INPUT",
+          "Duplicate extern input: {0}");
+
+  
+
+
+
+  void initInputsByNameMap() {
+    inputsByName = new HashMap<String, CompilerInput>();
+    for (CompilerInput input : externs) {
+      String name = input.getName();
+      if (!inputsByName.containsKey(name)) {
+        inputsByName.put(name, input);
+      } else {
+        report(JSError.make(DUPLICATE_EXTERN_INPUT, name));
+      }
+    }
+    for (CompilerInput input : inputs) {
+      String name = input.getName();
+      if (!inputsByName.containsKey(name)) {
+        inputsByName.put(name, input);
+      } else {
+        report(JSError.make(DUPLICATE_INPUT, name));
+      }
+    }
+  }
+
+  public Result compile(
+      JSSourceFile extern, JSSourceFile input, CompilerOptions options) {
+     return compile(extern, new JSSourceFile[] { input }, options);
+  }
+
+  public Result compile(
+      JSSourceFile extern, JSSourceFile[] input, CompilerOptions options) {
+     return compile(new JSSourceFile[] { extern }, input, options);
+  }
+
+  public Result compile(
+      JSSourceFile extern, JSModule[] modules, CompilerOptions options) {
+     return compile(new JSSourceFile[] { extern }, modules, options);
+  }
+
+  
+
+
+  public Result compile(JSSourceFile[] externs,
+                        JSSourceFile[] inputs,
+                        CompilerOptions options) {
+    return compile(Lists.<JSSourceFile>newArrayList(externs),
+        Lists.<JSSourceFile>newArrayList(inputs),
+        options);
+  }
+  
+  
+
+
+  public Result compile(List<JSSourceFile> externs,
+      List<JSSourceFile> inputs, CompilerOptions options) {
+    
+    Preconditions.checkState(jsRoot == null);
+
+    try {
+      init(externs, inputs, options);
+      if (hasErrors()) {
+        return getResult();
+      }
+      return compile();
+    } finally {
+      Tracer t = newTracer("generateReport");
+      errorManager.generateReport();
+      stopTracer(t, "generateReport");
+    }
+  }
+
+  
+
+
+  public Result compile(JSSourceFile[] externs,
+                        JSModule[] modules,
+                        CompilerOptions options) {
+    return compileModules(Lists.<JSSourceFile>newArrayList(externs),
+        Lists.<JSModule>newArrayList(modules),
+        options);
+  }
+
+  
+
+
+  public Result compileModules(List<JSSourceFile> externs,
+      List<JSModule> modules, CompilerOptions options) {
+    
+    Preconditions.checkState(jsRoot == null);
+
+    try {
+      initModules(externs, modules, options);
+      if (hasErrors()) {
+        return getResult();
+      }
+      return compile();
+    } finally {
+      Tracer t = newTracer("generateReport");
+      errorManager.generateReport();
+      stopTracer(t, "generateReport");
+    }
+  }
+
+  private Result compile() {
+    return runInCompilerThread(new Callable<Result>() {
+      public Result call() throws Exception {
+        compileInternal();
+        return getResult();
+      }
+    });
+  }
+
+  
+
+
+
+  public void disableThreads() {
+    useThreads = false;
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T runInCompilerThread(final Callable<T> callable) {
+
+    
+    
+    
+    
+    
+
+    final boolean dumpTraceReport = options.tracer.isOn();
+    final Object[] result = new Object[1];
+    final Throwable[] exception = new Throwable[1];
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          if (dumpTraceReport) {
+            Tracer.initCurrentThreadTrace();
+          }
+          result[0] = callable.call();
+        } catch (Throwable e) {
+          exception[0] = e;
+        } finally {
+          if (dumpTraceReport) {
+            Tracer.logAndClearCurrentThreadTrace();
+          }
+        }
+      }
+    };
+
+    if (useThreads) {
+      Thread th = new Thread(null, runnable, "jscompiler", COMPILER_STACK_SIZE);
+      th.start();
+      while (true) {
+        try {
+          th.join();
+          break;
+        } catch (InterruptedException ignore) {
+          
+        }
+      }
+    } else {
+      runnable.run();
+    }
+
+    
+    if (exception[0] != null) {
+      throw new RuntimeException(exception[0]);
+    }
+
+    return (T) result[0];
+  }
+
+  private void compileInternal() {
+    parse();
+    if (hasErrors()) {
+      return;
+    }
+
+    if (!precheck()) {
+      return;
+    }
+
+    if (options.nameAnonymousFunctionsOnly) {
+      
+      check();
+      return;
+    }
+
+    if (!options.skipAllPasses) {
+      check();
+      if (hasErrors()) {
+        return;
+      }
+
+      if (options.externExportsPath != null) {
+        externExports();
+      }
+
+      
+      if (!options.ideMode) {
+        optimize();
+      }
+    }
+
+    if (options.recordFunctionInformation) {
+      recordFunctionInformation();
+    }
+
+    if (options.devMode == DevMode.START_AND_END) {
+      runSanityCheck();
+    }
+  }
+
+  public void parse() {
+    parseInputs();
+  }
+
+  PassConfig getPassConfig() {
+    if (passes == null) {
+      passes = createPassConfigInternal();
+    }
+    return passes;
+  }
+
+  
+
+
+
+  PassConfig createPassConfigInternal() {
+    return new DefaultPassConfig(options);
+  }
+
+  
+
+
+
+
+  public void setPassConfig(PassConfig passes) {
+    
+    
+    
+    
+    
+    Preconditions.checkNotNull(passes);
+
+    if (this.passes != null) {
+      throw new IllegalStateException("this.passes has already been assigned");
+    }
+    this.passes = passes;
+  }
+
+  
+
+
+
+
+
+  boolean precheck() {
+    return true;
+  }
+
+  public void check() {
+    runCustomPasses(CustomPassExecutionTime.BEFORE_CHECKS);
+
+    PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker);
+    if (options.devMode == DevMode.EVERY_PASS) {
+      phaseOptimizer.setSanityCheck(sanityCheck);
+    }
+    phaseOptimizer.consume(getPassConfig().getChecks());
+    phaseOptimizer.process(externsRoot, jsRoot);
+    if (hasErrors()) {
+      return;
+    }
+
+    
+    if (options.nameAnonymousFunctionsOnly) {
+      return;
+    }
+
+    if (options.removeTryCatchFinally) {
+      removeTryCatchFinally();
+    }
+
+    if (!options.stripTypes.isEmpty() ||
+        !options.stripNameSuffixes.isEmpty() ||
+        !options.stripTypePrefixes.isEmpty() ||
+        !options.stripNamePrefixes.isEmpty()) {
+      stripCode(options.stripTypes, options.stripNameSuffixes,
+          options.stripTypePrefixes, options.stripNamePrefixes);
+    }
+
+    runCustomPasses(CustomPassExecutionTime.BEFORE_OPTIMIZATIONS);
+
+    
+    
+    
+    
+    
+    normalize();
+  }
+
+  private void externExports() {
+    logger.info("Creating extern file for exports");
+    startPass("externExports");
+
+    ExternExportsPass pass = new ExternExportsPass(this);
+    process(pass);
+
+    externExports = pass.getGeneratedExterns();
+
+    endPass();
+  }
+
+  void process(CompilerPass p) {
+    p.process(externsRoot, jsRoot);
+  }
+
+  private final PassFactory sanityCheck =
+      new PassFactory("sanityCheck", false) {
+    @Override
+    protected CompilerPass createInternal(AbstractCompiler compiler) {
+      return new SanityCheck(compiler);
+    }
+  };
+
+  private void maybeSanityCheck() {
+    if (options.devMode == DevMode.EVERY_PASS) {
+      runSanityCheck();
+    }
+  }
+
+  private void runSanityCheck() {
+    sanityCheck.create(this).process(externsRoot, jsRoot);
+  }
+
+  
+
+
+  void removeTryCatchFinally() {
+    logger.info("Remove try/catch/finally");
+    startPass("removeTryCatchFinally");
+    RemoveTryCatch r = new RemoveTryCatch(this);
+    process(r);
+    endPass();
+  }
+
+  
+
+
+
+  void stripCode(Set<String> stripTypes, Set<String> stripNameSuffixes,
+      Set<String> stripTypePrefixes, Set<String> stripNamePrefixes) {
+    logger.info("Strip code");
+    startPass("stripCode");
+    StripCode r = new StripCode(this, stripTypes, stripNameSuffixes,
+        stripTypePrefixes, stripNamePrefixes);
+    process(r);
+    endPass();
+  }
+
+  
+
+
+  private void runCustomPasses(CustomPassExecutionTime executionTime) {
+    if (options.customPasses != null) {
+      Tracer t = newTracer("runCustomPasses");
+      try {
+        for (CompilerPass p : options.customPasses.get(executionTime)) {
+          process(p);
+        }
+      } finally {
+        stopTracer(t, "runCustomPasses");
+      }
+    }
+  }
+
+  private Tracer currentTracer = null;
+  private String currentPassName = null;
+
+  
+
+
+  void startPass(String passName) {
+    Preconditions.checkState(currentTracer == null);
+    currentPassName = passName;
+    currentTracer = newTracer(passName);
+  }
+
+  
+
+
+  void endPass() {
+    Preconditions.checkState(currentTracer != null,
+        "Tracer should not be null at the end of a pass.");
+    stopTracer(currentTracer, currentPassName);
+    String passToCheck = currentPassName;
+    currentPassName = null;
+    currentTracer = null;
+
+    maybeSanityCheck();
+  }
+
+  
+
+
+  Tracer newTracer(String passName) {
+    String comment = passName
+        + (recentChange.hasCodeChanged() ? " on recently changed AST" : "");
+    if (options.tracer.isOn()) {
+      tracker.recordPassStart(passName);
+    }
+    return new Tracer("Compiler", comment);
+  }
+
+  void stopTracer(Tracer t, String passName) {
+    long result = t.stop();
+    if (options.tracer.isOn()) {
+      tracker.recordPassStop(passName, result);
+    }
+  }
+
+  
+
+
+  public Result getResult() {
+    PassConfig.State state = getPassConfig().getIntermediateState();
+    return new Result(getErrors(), getWarnings(), debugLog.toString(),
+        state.variableMap, state.propertyMap,
+        state.anonymousFunctionNameMap, functionInformationMap,
+        sourceMap, externExports, state.cssNames);
+  }
+
+  
+
+
+  public JSError[] getMessages() {
+    return getErrors();
+  }
+
+  
+
+
+  public JSError[] getErrors() {
+    return errorManager.getErrors();
+  }
+
+  
+
+
+  public JSError[] getWarnings() {
+    return errorManager.getWarnings();
+  }
+
+  
+
+
+  public Node getRoot() {
+    return externAndJsRoot;
+  }
+
+  
+
+
+  private int nextUniqueNameId() {
+    return uniqueNameId++;
+  }
+
+  
+
+
+  @VisibleForTesting
+  void resetUniqueNameId() {
+    uniqueNameId = 0;
+  }
+
+  @Override
+  Supplier<String> getUniqueNameIdSupplier() {
+    final Compiler self = this;
+    return new Supplier<String>() {
+      public String get() {
+        return String.valueOf(self.nextUniqueNameId());
+      }
+    };
+  }
+
+  
+
+
+
+  @Override
+  void setNormalized() {
+    normalized = true;
+  }
+
+  
+
+
+
+  @Override
+  void setUnnormalized() {
+    normalized = false;
+  }
+
+  @Override
+  boolean isNormalized() {
+    return normalized;
+  }
+
+  @Override
+  boolean areNodesEqualForInlining(Node n1, Node n2) {
+    if (options.ambiguateProperties ||
+        options.disambiguateProperties) {
+      
+      
+      return n1.checkTreeTypeAwareEqualsSilent(n2);
+    } else {
+      return n1.checkTreeEqualsSilent(n2);
+    }
+  }
+
+  
+  
+  
+
+  
+  
+
+  @Override
+  public CompilerInput getInput(String name) {
+    return inputsByName.get(name);
+  }
+
+  @Override
+  public CompilerInput newExternInput(String name) {
+    if (inputsByName.containsKey(name)) {
+      throw new IllegalArgumentException("Conflicting externs name: " + name);
+    }
+    SourceAst ast = new SyntheticAst(name);
+    CompilerInput input = new CompilerInput(ast, name, true);
+    inputsByName.put(name, input);
+    externsRoot.addChildToFront(ast.getAstRoot(this));
+    return input;
+  }
+
+  
+  void addIncrementalSourceAst(JsAst ast) {
+    String sourceName = ast.getSourceFile().getName();
+    Preconditions.checkState(
+        getInput(sourceName) == null,
+        "Duplicate input of name " + sourceName);
+    inputsByName.put(sourceName, new CompilerInput(ast));
+  }
+
+  @Override
+  JSModuleGraph getModuleGraph() {
+    return moduleGraph;
+  }
+
+  @Override
+  public JSTypeRegistry getTypeRegistry() {
+    if (typeRegistry == null) {
+      typeRegistry = new JSTypeRegistry(oldErrorReporter);
+    }
+    return typeRegistry;
+  }
+
+  @Override
+  ScopeCreator getScopeCreator() {
+    return getPassConfig().getScopeCreator();
+  }
+
+  @Override
+  public Scope getTopScope() {
+    return getPassConfig().getTopScope();
+  }
+
+  @Override
+  public ReverseAbstractInterpreter getReverseAbstractInterpreter() {
+    if (abstractInterpreter == null) {
+      ChainableReverseAbstractInterpreter interpreter =
+          new SemanticReverseAbstractInterpreter(
+              getCodingConvention(), getTypeRegistry());
+      if (options.closurePass) {
+        interpreter = new ClosureReverseAbstractInterpreter(
+            getCodingConvention(), getTypeRegistry())
+            .append(interpreter).getFirst();
+      }
+      abstractInterpreter = interpreter;
+    }
+    return abstractInterpreter;
+  }
+
+  @Override
+  TypeValidator getTypeValidator() {
+    return typeValidator;
+  }
+
+  
+  
+  
+
+  
+
+
+
+
+
+  Node parseInputs() {
+    boolean devMode = options.devMode != DevMode.OFF;
+
+    
+    
+    if (externsRoot != null) {
+      externsRoot.detachChildren();
+    }
+    if (jsRoot != null) {
+      jsRoot.detachChildren();
+    }
+
+    
+    jsRoot = new Node(Token.BLOCK);
+    jsRoot.setIsSyntheticBlock(true);
+
+    if (options.tracer.isOn()) {
+      tracker = new PerformanceTracker(jsRoot,
+          options.tracer == TracerMode.ALL);
+      addChangeHandler(tracker.getCodeChangeHandler());
+    }
+
+    Tracer tracer = newTracer("parseInputs");
+
+    try {
+      
+      externsRoot = new Node(Token.BLOCK);
+      externsRoot.setIsSyntheticBlock(true);
+      for (CompilerInput input : externs) {
+        Node n = input.getAstRoot(this);
+        if (hasErrors()) {
+          return null;
+        }
+        externsRoot.addChildToBack(n);
+      }
+
+      for (CompilerInput input : inputs) {
+        Node n = input.getAstRoot(this);
+        if (hasErrors()) {
+          return null;
+        }
+
+        
+        if (n == null) {
+          continue;
+        }
+
+        if (devMode) {
+          runSanityCheck();
+          if (hasErrors()) {
+            return null;
+          }
+        }
+
+        if (options.sourceMapOutputPath != null ||
+            options.nameReferenceReportPath != null) {
+
+          
+          
+          SourceInformationAnnotator sia =
+              new SourceInformationAnnotator(input.getName());
+          NodeTraversal.traverse(this, n, sia);
+        }
+
+        jsRoot.addChildToBack(n);
+      }
+
+      externAndJsRoot = new Node(Token.BLOCK, externsRoot, jsRoot);
+      externAndJsRoot.setIsSyntheticBlock(true);
+
+      return externAndJsRoot;
+    } finally {
+      stopTracer(tracer, "parseInputs");
+    }
+  }
+
+  public Node parse(JSSourceFile file) {
+    initCompilerOptionsIfTesting();
+    addToDebugLog("Parsing: " + file.getName());
+    return new JsAst(file).getAstRoot(this);
+  }
+
+  @Override
+  Node parseSyntheticCode(String js) {
+    CompilerInput input = new CompilerInput(
+        JSSourceFile.fromCode(" [synthetic] ", js));
+    inputsByName.put(input.getName(), input);
+    return input.getAstRoot(this);
+  }
+
+  void initCompilerOptionsIfTesting() {
+    if (options == null) {
+      
+      
+      initOptions(new CompilerOptions());
+    }
+  }
+
+  @Override
+  Node parseSyntheticCode(String fileName, String js) {
+    initCompilerOptionsIfTesting();
+    return parse(JSSourceFile.fromCode(fileName, js));
+  }
+
+  Node parseTestCode(String js) {
+    initCompilerOptionsIfTesting();
+    CompilerInput input = new CompilerInput(
+        JSSourceFile.fromCode(" [testcode] ", js));
+    if (inputsByName == null) {
+      inputsByName = Maps.newHashMap();
+    }
+    inputsByName.put(input.getName(), input);
+    return input.getAstRoot(this);
+  }
+
+  @Override
+  ErrorReporter getDefaultErrorReporter() {
+    return defaultErrorReporter;
+  }
+
+  
+  
+  
+
+  
+
+
+  public String toSource() {
+    return runInCompilerThread(new Callable<String>() {
+      public String call() throws Exception {
+        Tracer tracer = newTracer("toSource");
+        try {
+          CodeBuilder cb = new CodeBuilder();
+          if (jsRoot != null) {
+            int i = 0;
+            for (Node scriptNode = jsRoot.getFirstChild();
+                 scriptNode != null;
+                 scriptNode = scriptNode.getNext()) {
+              toSource(cb, i++, scriptNode);
+            }
+          }
+          return cb.toString();
+        } finally {
+          stopTracer(tracer, "toSource");
+        }
+      }
+    });
+  }
+
+  
+
+
+  public String[] toSourceArray() {
+    return runInCompilerThread(new Callable<String[]>() {
+      public String[] call() throws Exception {
+        Tracer tracer = newTracer("toSourceArray");
+        try {
+          int numInputs = inputs.size();
+          String[] sources = new String[numInputs];
+          CodeBuilder cb = new CodeBuilder();
+          for (int i = 0; i < numInputs; i++) {
+            Node scriptNode = inputs.get(i).getAstRoot(Compiler.this);
+            cb.reset();
+            toSource(cb, i, scriptNode);
+            sources[i] = cb.toString();
+          }
+          return sources;
+        } finally {
+          stopTracer(tracer, "toSourceArray");
+        }
+      }
+    });
+  }
+
+  
+
+
+  public String toSource(final JSModule module) {
+    return runInCompilerThread(new Callable<String>() {
+      public String call() throws Exception {
+        List<CompilerInput> inputs = module.getInputs();
+        int numInputs = inputs.size();
+        if (numInputs == 0) {
+          return "";
+        }
+        CodeBuilder cb = new CodeBuilder();
+        for (int i = 0; i < numInputs; i++) {
+          Node scriptNode = inputs.get(i).getAstRoot(Compiler.this);
+          if (scriptNode == null) {
+            throw new IllegalArgumentException(
+                "Bad module: " + module.getName());
+          }
+          toSource(cb, i, scriptNode);
+        }
+        return cb.toString();
+      }
+    });
+  }
+
+
+  
+
+
+  public String[] toSourceArray(final JSModule module) {
+    return runInCompilerThread(new Callable<String[]>() {
+      public String[] call() throws Exception {
+        List<CompilerInput> inputs = module.getInputs();
+        int numInputs = inputs.size();
+        if (numInputs == 0) {
+          return new String[0];
+        }
+
+        String[] sources = new String[numInputs];
+        CodeBuilder cb = new CodeBuilder();
+        for (int i = 0; i < numInputs; i++) {
+          Node scriptNode = inputs.get(i).getAstRoot(Compiler.this);
+          if (scriptNode == null) {
+            throw new IllegalArgumentException(
+                "Bad module input: " + inputs.get(i).getName());
+          }
+
+          cb.reset();
+          toSource(cb, i, scriptNode);
+          sources[i] = cb.toString();
+        }
+        return sources;
+      }
+    });
+  }
+
+  
+
+
+
+
+
+
+  public void toSource(final CodeBuilder cb,
+                       final int inputSeqNum,
+                       final Node root) {
+    runInCompilerThread(new Callable<Void>() {
+      public Void call() throws Exception {
+        if (options.printInputDelimiter) {
+          if ((cb.getLength() > 0) && !cb.endsWith("\n")) {
+            cb.append("\n");  
+          }
+          Preconditions.checkState(root.getType() == Token.SCRIPT);
+          
+          String delimiter = options.inputDelimiter;
+          
+          String sourceName = (String)root.getProp(Node.SOURCENAME_PROP);
+          Preconditions.checkState(sourceName != null);
+          Preconditions.checkState(!sourceName.isEmpty());
+          
+          delimiter = delimiter.replaceAll("%name%", sourceName)
+            .replaceAll("%num%", String.valueOf(inputSeqNum));
+
+          cb.append(delimiter)
+            .append("\n");
+        }
+        if (root.getJSDocInfo() != null &&
+            root.getJSDocInfo().getLicense() != null) {
+          cb.append("
+
+\n");
+        }
+
+        
+        
+        if (options.sourceMapOutputPath != null) {
+          sourceMap.setStartingPosition(
+              cb.getLineIndex(), cb.getColumnIndex());
+        }
+
+        String code = toSource(root);
+        if (!code.isEmpty()) {
+          cb.append(code);
+          if (!code.endsWith(";")) {
+            cb.append(";");
+          }
+        }
+        return null;
+      }
+    });
+  }
+
+  
+
+
+  @Override
+  String toSource(Node n) {
+    initCompilerOptionsIfTesting();
+    
+    CodePrinter.Builder builder = new CodePrinter.Builder(n);
+    builder.setPrettyPrint(options.prettyPrint);
+    builder.setLineBreak(options.lineBreak);
+    builder.setSourceMap(sourceMap);
+    builder.setOutputCharset(options.outputCharset);
+    return builder.build();
+  }
+
+  
+
+
+
+  public static class CodeBuilder {
+    private final StringBuilder sb = new StringBuilder();
+    private int lineCount = 0;
+
+    
+    void reset() {
+      sb.setLength(0);
+    }
+
+    
+    CodeBuilder append(String str) {
+      sb.append(str);
+
+      
+      int index = -1;
+      while ((index = str.indexOf('\n', index + 1)) >= 0) {
+        ++lineCount;
+      }
+
+      return this;
+    }
+
+    
+    @Override
+    public String toString() {
+      return sb.toString();
+    }
+
+    
+    public int getLength() {
+      return sb.length();
+    }
+
+    
+    int getLineIndex() {
+      return lineCount;
+    }
+
+    
+    int getColumnIndex() {
+      int index = sb.lastIndexOf("\n");
+      return (index >= 0) ? sb.length() - (index + 1) : sb.length();
+    }
+
+    
+    boolean endsWith(String suffix) {
+      return (sb.length() > suffix.length())
+          && suffix.equals(sb.substring(sb.length() - suffix.length()));
+    }
+  }
+
+  
+  
+  
+
+  public void optimize() {
+    PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker);
+    if (options.devMode == DevMode.EVERY_PASS) {
+      phaseOptimizer.setSanityCheck(sanityCheck);
+    }
+    phaseOptimizer.consume(getPassConfig().getOptimizations());
+    phaseOptimizer.process(externsRoot, jsRoot);
+    if (hasErrors()) {
+      return;
+    }
+  }
+
+  @Override
+  void setCssRenamingMap(CssRenamingMap map) {
+    options.cssRenamingMap = map;
+  }
+
+  @Override
+  CssRenamingMap getCssRenamingMap() {
+    return options.cssRenamingMap;
+  }
+
+  
+
+
+
+
+
+
+  public void processDefines() {
+    (new DefaultPassConfig(options)).processDefines.create(this)
+        .process(externsRoot, jsRoot);
+  }
+
+  boolean isInliningForbidden() {
+    return options.propertyRenaming == PropertyRenamingPolicy.HEURISTIC ||
+        options.propertyRenaming ==
+            PropertyRenamingPolicy.AGGRESSIVE_HEURISTIC;
+  }
+
+  
+  ControlFlowGraph<Node> computeCFG() {
+    logger.info("Computing Control Flow Graph");
+    Tracer tracer = newTracer("computeCFG");
+    ControlFlowAnalysis cfa = new ControlFlowAnalysis(this, true);
+    process(cfa);
+    stopTracer(tracer, "computeCFG");
+    return cfa.getCfg();
+  }
+
+  public void normalize() {
+    logger.info("Normalizing");
+    startPass("normalize");
+    process(new Normalize(this, false));
+    setNormalized();
+    endPass();
+  }
+
+  @Override
+  void prepareAst(Node root) {
+    Tracer tracer = newTracer("prepareAst");
+    CompilerPass pass = new PrepareAst(this);
+    pass.process(null, root);
+    stopTracer(tracer, "prepareAst");
+  }
+
+  void recordFunctionInformation() {
+    logger.info("Recording function information");
+    startPass("recordFunctionInformation");
+    RecordFunctionInformation recordFunctionInfoPass =
+        new RecordFunctionInformation(
+            this, getPassConfig().getIntermediateState().functionNames);
+    process(recordFunctionInfoPass);
+    functionInformationMap = recordFunctionInfoPass.getMap();
+    endPass();
+  }
+
+  protected final CodeChangeHandler.RecentChange recentChange =
+      new CodeChangeHandler.RecentChange();
+  private final List<CodeChangeHandler> codeChangeHandlers =
+      Lists.<CodeChangeHandler>newArrayList();
+
+  @Override
+  void addChangeHandler(CodeChangeHandler handler) {
+    codeChangeHandlers.add(handler);
+  }
+
+  @Override
+  void removeChangeHandler(CodeChangeHandler handler) {
+    codeChangeHandlers.remove(handler);
+  }
+
+  
+
+
+
+
+  @Override
+  public void reportCodeChange() {
+    for (CodeChangeHandler handler : codeChangeHandlers) {
+      handler.reportChange();
+    }
+  }
+
+  @Override
+  public CodingConvention getCodingConvention() {
+    CodingConvention convention = options.getCodingConvention();
+    convention = convention != null ? convention : defaultCodingConvention;
+    return convention;
+  }
+
+  @Override
+  public boolean isIdeMode() {
+    return options.ideMode;
+  }
+
+  @Override
+  Config getParserConfig() {
+    if (parserConfig == null) {
+      parserConfig = ParserRunner.createConfig(
+          getTypeRegistry(), isIdeMode());
+    }
+    return parserConfig;
+  }
+
+  @Override
+  public boolean isTypeCheckingEnabled() {
+    return options.checkTypes;
+  }
+
+
+  
+  
+  
+
+  @Override
+  public void report(JSError error) {
+    CheckLevel level = error.level;
+    WarningsGuard guard = options.getWarningsGuard();
+    if (guard != null) {
+      CheckLevel newLevel = guard.level(error);
+      if (newLevel != null) {
+        level = newLevel;
+      }
+    }
+
+    if (level.isOn()) {
+      errorManager.report(level, error);
+    }
+  }
+
+  
+
+
+  @Override
+  void throwInternalError(String message, Exception cause) {
+    String finalMessage =
+      "INTERNAL COMPILER ERROR.\n" +
+      "Please report this problem.\n" + message;
+
+    RuntimeException e = new RuntimeException(finalMessage, cause);
+    if (cause != null) {
+      e.setStackTrace(cause.getStackTrace());
+    }
+    throw e;
+  }
+
+
+  
+
+
+  public int getErrorCount() {
+    return errorManager.getErrorCount();
+  }
+
+  
+
+
+  public int getWarningCount() {
+    return errorManager.getWarningCount();
+  }
+
+  @Override
+  boolean hasHaltingErrors() {
+    return !isIdeMode() && getErrorCount() > 0;
+  }
+
+  
+
+
+
+
+
+
+
+
+  public boolean hasErrors() {
+    return hasHaltingErrors();
+  }
+
+  
+  @Override
+  void addToDebugLog(String str) {
+    debugLog.append(str);
+    debugLog.append('\n');
+    logger.fine(str);
+  }
+
+  private SourceFile getSourceFileByName(String sourceName) {
+    if (inputsByName.containsKey(sourceName)) {
+      return inputsByName.get(sourceName).getSourceFile();
+    }
+    return null;
+  }
+
+  public String getSourceLine(String sourceName, int lineNumber) {
+    if (lineNumber < 1) {
+      return null;
+    }
+    SourceFile input = getSourceFileByName(sourceName);
+    if (input != null) {
+      return input.getLine(lineNumber);
+    }
+    return null;
+  }
+
+  public Region getSourceRegion(String sourceName, int lineNumber) {
+    if (lineNumber < 1) {
+      return null;
+    }
+    SourceFile input = getSourceFileByName(sourceName);
+    if (input != null) {
+      return input.getRegion(lineNumber);
+    }
+    return null;
+  }
+
+  
+  
+  
+
+  @Override
+  Node getNodeForCodeInsertion(JSModule module) {
+    if (module == null) {
+      if (inputs.isEmpty()) {
+        throw new IllegalStateException("No inputs");
+      }
+
+      return inputs.get(0).getAstRoot(this);
+    }
+
+    List<CompilerInput> moduleInputs = module.getInputs();
+    if (moduleInputs.size() > 0) {
+      return moduleInputs.get(0).getAstRoot(this);
+    }
+    throw new IllegalStateException("Root module has no inputs");
+  }
+
+  public SourceMap getSourceMap() {
+    return sourceMap;
+  }
+
+  VariableMap getVariableMap() {
+    return getPassConfig().getIntermediateState().variableMap;
+  }
+
+  VariableMap getPropertyMap() {
+    return getPassConfig().getIntermediateState().propertyMap;
+  }
+
+  CompilerOptions getOptions() {
+    return options;
+  }
+
+  FunctionInformationMap getFunctionalInformationMap() {
+    return functionInformationMap;
+  }
+
+  
+
+
+  public static void setLoggingLevel(Level level) {
+    logger.setLevel(level);
+  }
+
+  
+  public String getAstDotGraph() throws IOException {
+    if (jsRoot != null) {
+      ControlFlowAnalysis cfa = new ControlFlowAnalysis(this, true);
+      cfa.process(null, jsRoot);
+      return DotFormatter.toDot(jsRoot, cfa.getCfg());
+    } else {
+      return "";
+    }
+  }
+
+  @Override
+  public ErrorManager getErrorManager() {
+    if (options == null) {
+      initOptions(new CompilerOptions());
+    }
+    return errorManager;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  public static class IntermediateState implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    Node externsRoot;
+    private Node jsRoot;
+    private List<CompilerInput> externs;
+    private List<CompilerInput> inputs;
+    private List<JSModule> modules;
+    private PassConfig.State passConfigState;
+    private JSTypeRegistry typeRegistry;
+    private boolean normalized;
+
+    private IntermediateState() {}
+  }
+
+  
+
+
+  public IntermediateState getState() {
+    IntermediateState state = new IntermediateState();
+    state.externsRoot = externsRoot;
+    state.jsRoot = jsRoot;
+    state.externs = externs;
+    state.inputs = inputs;
+    state.modules = modules;
+    state.passConfigState = getPassConfig().getIntermediateState();
+    state.typeRegistry = typeRegistry;
+    state.normalized = normalized;
+
+    return state;
+  }
+
+  
+
+
+
+  public void setState(IntermediateState state) {
+    externsRoot = state.externsRoot;
+    jsRoot = state.jsRoot;
+    externs = state.externs;
+    inputs = state.inputs;
+    modules = state.modules;
+    passes = createPassConfigInternal();
+    getPassConfig().setIntermediateState(state.passConfigState);
+    typeRegistry = state.typeRegistry;
+    normalized = state.normalized;
+  }
+
+  @Override
+  boolean hasRegExpGlobalReferences() {
+    return hasRegExpGlobalReferences;
+  }
+
+  @Override
+  void setHasRegExpGlobalReferences(boolean references) {
+    hasRegExpGlobalReferences = references;
+  }
+}

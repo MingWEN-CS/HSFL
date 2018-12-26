@@ -1,0 +1,39 @@
+48d47
+< import java.util.StringTokenizer;
+571a571,594
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private List<String> tokenizeKeepingQuotedStrings(List<String> lines) {
+>     List<String> tokens = Lists.newArrayList();
+>     Pattern tokenPattern =
+>         Pattern.compile("(?:[^ \t\f\\x0B'\"]|(?:'[^']*'|\"[^\"]*\"))+");
+> 
+>     for (String line : lines) {
+>       Matcher matcher = tokenPattern.matcher(line);
+>       while (matcher.find()) {
+>         tokens.add(matcher.group(0));
+>       }
+>     }
+>     return tokens;
+>   }
+> 
+602d624
+<     List<String> argsInFile = Lists.newArrayList();
+604,609c626,627
+<     StringTokenizer tokenizer = new StringTokenizer(
+<         Files.toString(flagFileInput, Charset.defaultCharset()));
+< 
+<     while (tokenizer.hasMoreTokens()) {
+<         argsInFile.add(tokenizer.nextToken());
+<     }
+---
+>     List<String> argsInFile = tokenizeKeepingQuotedStrings(
+>         Files.readLines(flagFileInput, Charset.defaultCharset()));

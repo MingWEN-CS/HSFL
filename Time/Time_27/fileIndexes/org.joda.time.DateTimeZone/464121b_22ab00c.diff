@@ -1,0 +1,39 @@
+147,155c147
+<             try {
+<                 Method[] ms = TimeZone.class.getDeclaredMethods();
+<                 m = TimeZone.class.getDeclaredMethod("getOffsets", new Class[] {Long.TYPE, int[].class});
+<                 m.setAccessible(true);
+<             } catch (SecurityException e) {
+<                 
+<             } catch (NoSuchMethodException e) {
+<                 
+<             }
+---
+>             
+914,919c906,908
+<                 long offset = zone.getRawOffset();
+<                 if (zone.inDaylightTime(new Date(instant)))  {
+<                     offset += zone.getDSTSavings();
+<                 }
+<                 long millisLocal = instant - offset;
+<                 return millisLocal + getOffsetFromLocal(millisLocal);
+---
+>                 long millisLocal = instant + getOffset(instant);
+>                 long jdkOffset = getJDKOffset(zone, millisLocal - getJDKOffset(zone, millisLocal));
+>                 return millisLocal - jdkOffset;
+931a921
+>         
+933a924,936
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private long getJDKOffset(SimpleTimeZone zone, long instant) {
+>         long offset = zone.getRawOffset();
+>         if (zone.inDaylightTime(new Date(instant)))  {
+>             offset += zone.getDSTSavings();
+>         }
+>         return offset;

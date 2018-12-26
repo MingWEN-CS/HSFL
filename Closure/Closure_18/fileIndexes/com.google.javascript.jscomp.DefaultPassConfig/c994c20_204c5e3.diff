@@ -1,0 +1,29 @@
+242c242
+<     if (options.checkTypes) {
+---
+>     if (options.checkTypes || options.inferTypes) {
+245c245,249
+<       checks.add(checkTypes.makeOneTimePass());
+---
+>       if (options.checkTypes) {
+>         checks.add(checkTypes.makeOneTimePass());
+>       } else {
+>         checks.add(inferJsDocInfo.makeOneTimePass());
+>       }
+1021a1026,1041
+> 
+>   final PassFactory inferJsDocInfo =
+>     new PassFactory("inferJsDocInfo", false) {
+>   @Override
+>   protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>     return new CompilerPass() {
+>       @Override
+>       public void process(Node externs, Node root) {
+>         Preconditions.checkNotNull(topScope);
+>         Preconditions.checkNotNull(getTypedScopeCreator());
+> 
+>         makeInferJsDocInfo(compiler).process(externs, root);
+>       }
+>     };
+>   }
+> };

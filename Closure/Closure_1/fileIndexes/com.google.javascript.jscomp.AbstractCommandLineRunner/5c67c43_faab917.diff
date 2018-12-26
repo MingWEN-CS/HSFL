@@ -1,0 +1,58 @@
+210a211,240
+>   static DependencyOptions createDependencyOptions(
+>       boolean manageClosureDependencies,
+>       boolean onlyClosureDependencies,
+>       List<String> closureEntryPoints)
+>       throws FlagUsageException {
+>     if (onlyClosureDependencies) {
+>       if (closureEntryPoints.isEmpty()) {
+>         throw new FlagUsageException("When only_closure_dependencies is "
+>           + "on, you must specify at least one closure_entry_point");
+>       }
+> 
+>       return new DependencyOptions()
+>           .setDependencyPruning(true)
+>           .setDependencySorting(true)
+>           .setMoocherDropping(true)
+>           .setEntryPoints(closureEntryPoints);
+>     } else if (manageClosureDependencies ||
+>         closureEntryPoints.size() > 0) {
+>       return new DependencyOptions()
+>           .setDependencyPruning(true)
+>           .setDependencySorting(true)
+>           .setMoocherDropping(false)
+>           .setEntryPoints(closureEntryPoints);
+>     }
+>     return null;
+>   }
+> 
+>   
+> 
+> 
+235,253c265,270
+<     
+<     if (config.onlyClosureDependencies) {
+<       if (config.closureEntryPoints.isEmpty()) {
+<         throw new FlagUsageException("When only_closure_dependencies is "
+<           + "on, you must specify at least one closure_entry_point");
+<       }
+< 
+<       options.setDependencyOptions(new DependencyOptions()
+<           .setDependencyPruning(true)
+<           .setDependencySorting(true)
+<           .setMoocherDropping(true)
+<           .setEntryPoints(config.closureEntryPoints));
+<     } else if (config.manageClosureDependencies ||
+<         config.closureEntryPoints.size() > 0) {
+<       options.setDependencyOptions(new DependencyOptions()
+<           .setDependencyPruning(true)
+<           .setDependencySorting(true)
+<           .setMoocherDropping(false)
+<           .setEntryPoints(config.closureEntryPoints));
+---
+>     DependencyOptions depOptions = createDependencyOptions(
+>         config.manageClosureDependencies,
+>         config.onlyClosureDependencies,
+>         config.closureEntryPoints);
+>     if (depOptions != null) {
+>       options.setDependencyOptions(depOptions);

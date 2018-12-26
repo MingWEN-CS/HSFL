@@ -1,0 +1,119 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat.descriptive.moment;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.stat.descriptive.AbstractStorelessUnivariateStatistic;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class FirstMoment extends AbstractStorelessUnivariateStatistic 
+    implements Serializable {
+
+    
+    static final long serialVersionUID = -803343206421984070L; 
+    
+    
+    protected long n;
+
+    
+    protected double m1;
+    
+    
+
+
+
+    protected double dev;
+    
+    
+
+
+
+
+    protected double nDev;
+
+    
+
+
+    public FirstMoment() {
+        n = 0;
+        m1 = Double.NaN;
+        dev = Double.NaN;
+        nDev = Double.NaN;
+    }
+    
+    
+
+
+    public void increment(final double d) {
+        if (n == 0) {
+            m1 = 0.0;
+        }
+        n++;
+        double n0 = (double) n;
+        dev = d - m1;
+        nDev = dev / n0;
+        m1 += nDev;
+    }
+
+    
+
+
+    public void clear() {
+        m1 = Double.NaN;
+        n = 0;
+        dev = Double.NaN;
+        nDev = Double.NaN;
+    }
+
+    
+
+
+    public double getResult() {
+        return m1;
+    }
+
+    
+
+
+    public long getN() {
+        return n;
+    }
+}

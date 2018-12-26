@@ -1,0 +1,38 @@
+19a20
+> import com.google.javascript.rhino.InputId;
+35c36
+<   private String sourceName;
+---
+>   private InputId inputId;
+68c69
+<     sourceName = null;
+---
+>     inputId = null;
+77c78
+<     sourceName = null;
+---
+>     inputId = null;
+85c86,89
+<       sourceName = n.getSourceFileName();
+---
+>       if (inputId == null) {
+>         inputId = NodeUtil.getInputId(n);
+>         Preconditions.checkNotNull(inputId);
+>       }
+157c161,162
+<         sourceName = n.getSourceFileName();
+---
+>         inputId = n.getInputId();
+>         Preconditions.checkNotNull(inputId);
+204c209
+<               JSError.make(sourceName, n,
+---
+>               JSError.make(NodeUtil.getSourceName(n), n,
+215c220
+<             JSError.make(sourceName, n,
+---
+>             JSError.make(NodeUtil.getSourceName(n), n,
+229c234
+<     CompilerInput input = compiler.getInput(sourceName);
+---
+>     CompilerInput input = compiler.getInput(inputId);

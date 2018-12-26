@@ -1,0 +1,293 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.*;
+import java.util.logging.Logger;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class RemoveUnusedVars implements CompilerPass {
+  private static final Logger logger =
+    Logger.getLogger(RemoveUnusedVars.class.getName());
+
+  private final AbstractCompiler compiler;
+
+  
+  private int numRemoved = 0;
+
+  private final boolean removeGlobals;
+
+  private boolean preserveFunctionExpressionNames;
+
+  
+
+
+  private final Set<Var> referenced = Sets.newHashSet();
+
+  RemoveUnusedVars(
+      AbstractCompiler compiler,
+      boolean removeGlobals,
+      boolean preserveFunctionExpressionNames) {
+    this.compiler = compiler;
+    this.removeGlobals = removeGlobals;
+    this.preserveFunctionExpressionNames = preserveFunctionExpressionNames;
+  }
+
+  
+
+
+
+  public void process(Node externs, Node root) {
+    numRemoved = 0;
+    referenced.clear();
+
+    traverseAndRemoveUnusedReferences(root);
+
+    if (numRemoved > 0) {
+      compiler.reportCodeChange();
+    }
+  }
+
+  
+
+
+  private void traverseAndRemoveUnusedReferences(Node root) {
+    Scope scope = new SyntacticScopeCreator(compiler).createScope(root, null);
+    traverseNode(root, null, scope);
+
+    if (removeGlobals) {
+      removeUnreferencedVars(scope);
+    }
+  }
+
+  
+
+
+
+
+  private void traverseNode(Node n, Node parent, Scope scope) {
+    int type = n.getType();
+    switch (type) {
+      
+      
+      
+      
+      
+      
+      
+      
+      case Token.FUNCTION:
+        
+        
+        if (traverseFunctionWhenFirstSeen(n, scope)) {
+          traverseFunction(n, scope);
+        }
+        return;
+
+      case Token.NAME:
+        if (parent.getType() != Token.VAR) {
+          
+          Var var = scope.getVar(n.getString());
+          if (var != null) {
+            markReferencedVar(var);
+          }
+        }
+        break;
+    }
+
+    for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+      traverseNode(c, n, scope);
+    }
+  }
+
+  
+
+
+
+  private boolean traverseFunctionWhenFirstSeen(Node n, Scope scope) {
+    return NodeUtil.isFunctionExpression(n) || isExportedFunction(n, scope);
+  }
+
+  
+
+
+
+  private boolean isExportedFunction(Node n, Scope scope) {
+    Preconditions.checkState(NodeUtil.isFunctionDeclaration(n));
+    
+    
+    return (!removeGlobals && scope.isGlobal()) ||
+        compiler.getCodingConvention().isExported(
+           n.getFirstChild().getString());
+  }
+
+  
+
+
+
+
+
+
+
+  private void traverseFunction(Node n, Scope scope) {
+    Preconditions.checkState(n.getChildCount() == 3);
+    Preconditions.checkState(n.getType() == Token.FUNCTION);
+
+    final Node body = n.getLastChild();
+    Preconditions.checkState(body.getNext() == null &&
+            body.getType() == Token.BLOCK);
+
+    Scope fnScope = new SyntacticScopeCreator(compiler).createScope(n, scope);
+    traverseNode(body, n, fnScope);
+
+    removeUnreferencedFunctionArgs(n, fnScope);
+    removeUnreferencedVars(fnScope);
+  }
+
+  
+
+
+
+
+
+  private void removeUnreferencedFunctionArgs(Node function, Scope fnScope) {
+    
+    Node argList = function.getFirstChild().getNext();
+    Node lastArg;
+    while ((lastArg = argList.getLastChild()) != null) {
+      Var var = fnScope.getVar(lastArg.getString());
+      if (!referenced.contains(var)) {
+        if (var == null) {
+          throw new IllegalStateException(
+              "Function parameter not declared in scope: "
+              + lastArg.getString());
+        }
+        argList.removeChild(lastArg);
+        fnScope.undeclare(var);
+        numRemoved++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  
+
+
+  private void markReferencedVar(Var var) {
+    if (referenced.contains(var)) {
+      
+      return;
+    }
+    referenced.add(var);
+
+    Node parent = var.getParentNode();
+    if (parent.getType() == Token.FUNCTION) {
+      
+      
+      if (!traverseFunctionWhenFirstSeen(parent, var.getScope())) {
+        traverseFunction(parent, var.scope);
+      }
+    }
+  }
+
+  
+
+
+  private void removeUnreferencedVars(Scope scope) {
+    CodingConvention convention = compiler.getCodingConvention();
+
+    for (Iterator<Var> it = scope.getVars(); it.hasNext(); ) {
+      Var var = it.next();
+
+      if (!referenced.contains(var) &&
+          (var.isLocal() || !convention.isExported(var.name))) {
+
+        compiler.addToDebugLog("Unreferenced var: " + var.name);
+        Node nameNode = var.nameNode;
+        Node toRemove = nameNode.getParent();
+        Node parent = toRemove.getParent();
+
+        Preconditions.checkState(
+            toRemove.getType() == Token.VAR ||
+            toRemove.getType() == Token.FUNCTION ||
+            toRemove.getType() == Token.LP &&
+            parent.getType() == Token.FUNCTION,
+            "We should only declare vars and functions and function args");
+
+        if (toRemove.getType() == Token.LP &&
+            parent.getType() == Token.FUNCTION) {
+          
+          
+        } else if (NodeUtil.isFunctionExpression(toRemove)) {
+          if (!preserveFunctionExpressionNames) {
+            toRemove.getFirstChild().setString("");
+            compiler.reportCodeChange();
+          }
+          
+        } else if (parent != null &&
+            parent.getType() == Token.FOR &&
+            parent.getChildCount() < 4) {
+          
+        } else if (toRemove.getType() == Token.VAR &&
+                   nameNode.hasChildren() &&
+                   NodeUtil.mayHaveSideEffects(nameNode.getFirstChild())) {
+          
+          
+          
+          if (toRemove.getChildCount() == 1) {
+            parent.replaceChild(toRemove,
+                new Node(Token.EXPR_RESULT, nameNode.removeFirstChild()));
+            numRemoved++;
+          }
+        } else if (toRemove.getType() == Token.VAR &&
+                   toRemove.getChildCount() > 1) {
+          
+          
+          toRemove.removeChild(nameNode);
+          numRemoved++;
+        } else if (parent != null) {
+          NodeUtil.removeChild(parent, toRemove);
+          numRemoved++;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+291c291
+<     if (info.getType() != null) {
+---
+>     if (info.hasType()) {
+356a357
+>       irNode = maybeInjectCastNode(node, jsDocInfo, irNode);
+359a361,371
+>     return irNode;
+>   }
+> 
+>   private Node maybeInjectCastNode(AstNode node, JSDocInfo info, Node irNode) {
+>     if (node.getType() == com.google.javascript.rhino.head.Token.LP
+>         && node instanceof ParenthesizedExpression
+>         && info.hasType()
+>         
+>         && !irNode.isObjectLit()) {
+>       irNode = newNode(Token.CAST, irNode);
+>     }

@@ -1,0 +1,104 @@
+59a60,63
+> 
+> 
+> 
+> 
+62,63c66,106
+<             
+<         return solve(min, max);
+---
+> 
+>         if (((initial - min) * (max -initial)) < 0) {
+>             throw new IllegalArgumentException("Initial guess is not in search"
+>                     + " interval." + "  Initial: " + initial
+>                     +  "  Endpoints: [" + min + "," + max + "]");
+>         }
+> 
+>         
+>         double yInitial = f.value(initial);
+>         if (Math.abs(yInitial) <= functionValueAccuracy) {
+>             setResult(initial, 0);
+>             return result;
+>         }
+> 
+>         
+>         double yMin = f.value(min);
+>         if (Math.abs(yMin) <= functionValueAccuracy) {
+>             setResult(yMin, 0);
+>             return result;
+>         }
+> 
+>         
+>         if (yInitial * yMin < 0) {
+>             return solve(min, yMin, initial, yInitial, min, yMin);
+>         }
+> 
+>         
+>         double yMax = f.value(max);
+>         if (Math.abs(yMax) <= functionValueAccuracy) {
+>             setResult(yMax, 0);
+>             return result;
+>         }
+> 
+>         
+>         if (yInitial * yMax < 0) {
+>             return solve(initial, yInitial, max, yMax, initial, yInitial);
+>         }
+> 
+>         
+>         return solve(min, yMin, max, yMax, initial, yInitial);
+> 
+87a131,132
+>         double yMin = f.value(min);
+>         double yMax = f.value(max);
+90,99c135
+<         
+<         double x0 = min;
+<         double x1 = max;
+<         double y0;
+<         double y1;
+<         y0 = f.value(x0);
+<         y1 = f.value(x1);
+<         
+<         
+<         if (y0 * y1 >= 0) {
+---
+>         if (yMin * yMax >= 0) {
+103c139
+<                     "  Values: [" + y0 + "," + y1 + "]");       
+---
+>                     "  Values: [" + yMin + "," + yMax + "]");       
+105,107c141,167
+<    
+<         double x2 = x0;
+<         double y2 = y0;
+---
+> 
+>         
+>         return solve(min, yMin, max, yMax, min, yMin);
+> 
+>     }
+>         
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private double solve(double x0, double y0,
+>                          double x1, double y1,
+>                          double x2, double y2)
+>     throws MaxIterationsExceededException, FunctionEvaluationException {
+> 
+113a174
+>                 

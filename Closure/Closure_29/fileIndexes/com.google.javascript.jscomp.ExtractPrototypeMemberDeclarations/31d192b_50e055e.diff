@@ -1,0 +1,145 @@
+76d75
+< class ExtractPrototypeMemberDeclarations implements CompilerPass {
+78d76
+<   private static final int GLOBAL_VAR_DECL_OVERHEAD = "var t;".length();
+80,83d77
+<   
+<   
+<   private static final int PER_EXTRACTION_INSTANCE_OVERHEAD =
+<       "t=y.prototype;".length();
+85,87c79,86
+<   
+<   private static final int PER_PROTOTYPE_MEMBER_DELTA =
+<       "t.y=".length() - "x[p].y=".length();
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class ExtractPrototypeMemberDeclarations implements CompilerPass {
+95c94,132
+<   public ExtractPrototypeMemberDeclarations(AbstractCompiler compiler) {
+---
+>   private final Pattern pattern;
+> 
+>   enum Pattern {
+>     USE_GLOBAL_TEMP(
+>         
+>         
+>         "var t;".length(),
+>         
+>         
+>         
+>         "t=y.prototype;".length(),
+>         
+>         
+>         
+>         "t.y=".length() - "x[p].y=".length()),
+> 
+>     USE_ANON_FUNCTION(
+>        
+>        0,
+>        
+>        
+>        "(function(t){})(y.prototype);".length(),
+>        
+>        
+>        "t.y=".length() - "x.prototype.y=".length());
+> 
+> 
+>     private final int globalOverhead;
+>     private final int perExtractionOverhead;
+>     private final int perMemberOverhead;
+> 
+>     Pattern(int globalOverHead, int perExtractionOverhead, int perMemberOverhead) {
+>       this.globalOverhead = globalOverHead;
+>       this.perExtractionOverhead = perExtractionOverhead;
+>       this.perMemberOverhead = perMemberOverhead;
+>     }
+>   }
+> 
+>   ExtractPrototypeMemberDeclarations(AbstractCompiler compiler, Pattern pattern) {
+96a134
+>     this.pattern = pattern;
+114,115d151
+<     
+<     Node injectionPoint = compiler.getNodeForCodeInsertion(null);
+117,118c153,155
+<     Node var = NodeUtil.newVarNode(prototypeAlias, null)
+<         .copyInformationFromForTree(injectionPoint);
+---
+>     
+>     if (pattern == Pattern.USE_GLOBAL_TEMP) {
+>       Node injectionPoint = compiler.getNodeForCodeInsertion(null);
+120c157,158
+<     injectionPoint.addChildrenToFront(var);
+---
+>       Node var = NodeUtil.newVarNode(prototypeAlias, null)
+>           .copyInformationFromForTree(injectionPoint);
+121a160,161
+>       injectionPoint.addChildrenToFront(var);
+>     }
+134d173
+<     
+137,146c176,206
+<     Node stmt = new Node(first.node.getType(),
+<         new Node(Token.ASSIGN,
+<             Node.newString(Token.NAME, prototypeAlias),
+<             NodeUtil.newQualifiedNameNode(
+<                 compiler.getCodingConvention(), className + ".prototype",
+<                 instance.parent, className + ".prototype")))
+<         .copyInformationFromForTree(first.node);
+< 
+<     instance.parent.addChildBefore(stmt, first.node);
+< 
+---
+>     if (pattern == Pattern.USE_GLOBAL_TEMP) {
+>       
+>       Node stmt = new Node(first.node.getType(),
+>           new Node(Token.ASSIGN,
+>               Node.newString(Token.NAME, prototypeAlias),
+>               NodeUtil.newQualifiedNameNode(
+>                   compiler.getCodingConvention(), className + ".prototype",
+>                   instance.parent, className + ".prototype")))
+>           .copyInformationFromForTree(first.node);
+> 
+>       instance.parent.addChildBefore(stmt, first.node);
+>     } else if (pattern == Pattern.USE_ANON_FUNCTION){
+>       Node block = new Node(Token.BLOCK);
+>       Node func = new Node(Token.FUNCTION,
+>            Node.newString(Token.NAME, ""),
+>            new Node(Token.LP, Node.newString(Token.NAME, prototypeAlias)),
+>            block);
+> 
+>       Node call = new Node(Token.CALL,func,
+>            NodeUtil.newQualifiedNameNode(
+>                compiler.getCodingConvention(), className + ".prototype",
+>                instance.parent, className + ".prototype"));
+>       call.putIntProp(Node.FREE_CALL, 1);
+> 
+>       Node stmt = new Node(first.node.getType(), call);
+>       stmt.copyInformationFromForTree(first.node);
+>       instance.parent.addChildBefore(stmt, first.node);
+>       for (PrototypeMemberDeclaration declar : instance.declarations) {
+>         block.addChildToBack(declar.node.detachFromParent());
+>       }
+>     }
+193c253
+<     private int totalDelta = GLOBAL_VAR_DECL_OVERHEAD;
+---
+>     private int totalDelta = pattern.globalOverhead;
+233c293
+<   private static class ExtractionInstance {
+---
+>   private class ExtractionInstance {
+241c301
+<       delta = PER_EXTRACTION_INSTANCE_OVERHEAD + PER_PROTOTYPE_MEMBER_DELTA;
+---
+>       delta = pattern.perExtractionOverhead + pattern.perMemberOverhead;
+259c319
+<         delta += PER_PROTOTYPE_MEMBER_DELTA;
+---
+>         delta += pattern.perMemberOverhead;

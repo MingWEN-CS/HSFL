@@ -1,0 +1,38 @@
+21a22
+> import org.apache.commons.math.MathRuntimeException;
+189a191,210
+>                     if (ga * gb > 0) {
+>                         
+>                         
+>                         
+>                         
+>                         
+>                         
+>                         
+>                         final double epsilon = (forward ? 0.25 : -0.25) * convergence;
+>                         for (int k = 0; (k < 4) && (ga * gb > 0); ++k) {
+>                             ta += epsilon;
+>                             interpolator.setInterpolatedTime(ta);
+>                             ga = handler.g(ta, interpolator.getInterpolatedState());
+>                         }
+>                         if (ga * gb > 0) {
+>                             
+>                             throw MathRuntimeException.createInternalError(null);
+>                         }
+>                     }
+>                          
+208,217c229,231
+<                     double root;
+<                     try {
+<                         root = (ta <= tb) ? solver.solve(f, ta, tb) : solver.solve(f, tb, ta);
+<                     } catch (IllegalArgumentException iae) {
+<                         
+<                         root = Double.NaN;
+<                     }
+<                     if (Double.isNaN(root) ||
+<                         ((Math.abs(root - ta) <= convergence) &&
+<                          (Math.abs(root - previousEventTime) <= convergence))) {
+---
+>                     final double root = (ta <= tb) ? solver.solve(f, ta, tb) : solver.solve(f, tb, ta);
+>                     if ((Math.abs(root - ta) <= convergence) &&
+>                          (Math.abs(root - previousEventTime) <= convergence)) {

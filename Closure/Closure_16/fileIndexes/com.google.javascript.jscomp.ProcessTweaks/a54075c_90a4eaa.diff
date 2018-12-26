@@ -1,0 +1,87 @@
+55,61d54
+<   
+< 
+< 
+< 
+<   private static final String DEFAULT_VALUES_VAR_NAME =
+<       "__JSCOMPILER_TWEAK_DEFAULT_VALUE_OVERRIDES";
+<   
+117a111
+>     GET_COMPILER_OVERRIDES("goog.tweak.getCompilerOverrides_"),
+210,211c204,205
+<     Map<String, TweakInfo> tweakInfos = collectTweaks(root);
+<     applyCompilerDefaultValueOverrides(tweakInfos);
+---
+>     CollectTweaksResult result = collectTweaks(root);
+>     applyCompilerDefaultValueOverrides(result.tweakInfos);
+216c210
+<       changed = stripAllCalls(tweakInfos);
+---
+>       changed = stripAllCalls(result.tweakInfos);
+218,223c212
+<       
+<       
+<       Node varNode = createCompilerDefaultValueOverridesVarNode(
+<           root.getFirstChild());
+<       root.getFirstChild().addChildToFront(varNode);
+<       changed = true;
+---
+>       changed = replaceGetCompilerOverridesCalls(result.getOverridesCalls);
+233a223,236
+>   private boolean replaceGetCompilerOverridesCalls(
+>       List<TweakFunctionCall> calls) {
+>     for (TweakFunctionCall call : calls) {
+>       Node callNode = call.callNode;
+>       Node objNode = createCompilerDefaultValueOverridesVarNode(callNode);
+>       callNode.getParent().replaceChild(callNode, objNode);
+>     }
+>     return !calls.isEmpty();
+>   }
+> 
+>   
+> 
+> 
+> 
+268,269d270
+< 
+< 
+272,275d272
+<     Node varNode = new Node(Token.VAR)
+<         .copyInformationFrom(sourceInformationNode);
+<     Node nameNode = Node.newString(Token.NAME, DEFAULT_VALUES_VAR_NAME)
+<         .copyInformationFrom(sourceInformationNode);
+278,279d274
+<     varNode.addChildToBack(nameNode);
+<     nameNode.addChildToBack(objNode);
+288c283
+<     return varNode;
+---
+>     return objNode;
+310c305
+<   private Map<String, TweakInfo> collectTweaks(Node root) {
+---
+>   private CollectTweaksResult collectTweaks(Node root) {
+318c313,324
+<     return tweakInfos;
+---
+>     return new CollectTweaksResult(tweakInfos, pass.getOverridesCalls);
+>   }
+>   
+>   private final static class CollectTweaksResult {
+>     final Map<String, TweakInfo> tweakInfos;
+>     final List<TweakFunctionCall> getOverridesCalls;
+>     
+>     CollectTweaksResult(Map<String, TweakInfo> tweakInfos,
+>         List<TweakFunctionCall> getOverridesCalls) {
+>       this.tweakInfos = tweakInfos;
+>       this.getOverridesCalls = getOverridesCalls;
+>     }
+325a332
+>     final List<TweakFunctionCall> getOverridesCalls = Lists.newArrayList();
+335a343,348
+>         return;
+>       }
+>       
+>       if (tweakFunc == TweakFunction.GET_COMPILER_OVERRIDES) {
+>         getOverridesCalls.add(
+>             new TweakFunctionCall(t.getSourceName(), tweakFunc, n));

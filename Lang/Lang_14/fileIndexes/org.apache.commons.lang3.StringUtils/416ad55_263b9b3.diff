@@ -1,0 +1,749 @@
+645,646d644
+<     
+<     
+658,659c656
+<                 throw new UnsupportedOperationException("The stripAccents(CharSequence) method requires at least "
+<                         + "Java 1.6 or a Sun JVM");
+---
+>                 throw new UnsupportedOperationException("The stripAccents(CharSequence) method requires at least Java 1.6 or a Sun JVM");
+679,685c676
+< 
+< 
+< 
+< 
+< 
+<     private static String removeAccentsJava6(CharSequence text)
+<         throws IllegalAccessException, InvocationTargetException {
+---
+>     private static String removeAccentsJava6(CharSequence text) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+702,709c693
+< 
+< 
+< 
+< 
+< 
+< 
+<     private static String removeAccentsSUN(CharSequence text)
+<         throws IllegalAccessException, InvocationTargetException {
+---
+>     private static String removeAccentsSUN(CharSequence text) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+737,738c721
+<             Class<?> normalizerFormClass = Thread.currentThread().getContextClassLoader()
+<                 .loadClass("java.text.Normalizer$Form");
+---
+>             Class<?> normalizerFormClass = Thread.currentThread().getContextClassLoader().loadClass("java.text.Normalizer$Form");
+740,743c723,724
+<             Class<?> normalizerClass = Thread.currentThread().getContextClassLoader()
+<                 .loadClass("java.text.Normalizer");
+<             java6NormalizeMethod = normalizerClass.getMethod("normalize",
+<                     new Class[] {CharSequence.class, normalizerFormClass});
+---
+>             Class<?> normalizerClass = Thread.currentThread().getContextClassLoader().loadClass("java.text.Normalizer");
+>             java6NormalizeMethod = normalizerClass.getMethod("normalize", new Class[] {CharSequence.class, normalizerFormClass});
+757,760c738,739
+<             Class<?> normalizerClass = Thread.currentThread().getContextClassLoader()
+<                 .loadClass("sun.text.Normalizer");
+<             sunDecomposeMethod = normalizerClass.getMethod("decompose",
+<                     new Class[] {String.class, Boolean.TYPE, Integer.TYPE});
+---
+>             Class<?> normalizerClass = Thread.currentThread().getContextClassLoader().loadClass("sun.text.Normalizer");
+>             sunDecomposeMethod = normalizerClass.getMethod("decompose", new Class[] {String.class, Boolean.TYPE, Integer.TYPE});
+842,843c821,822
+<     public static int indexOf(CharSequence seq, int searchChar) {
+<         if (isEmpty(seq)) {
+---
+>     public static int indexOf(String str, int searchChar) {
+>         if (isEmpty(str)) {
+846c825
+<         return StringUtils.indexOfSequence(seq, searchChar, 0);
+---
+>         return str.indexOf(searchChar);
+874,875c853,854
+<     public static int indexOf(CharSequence seq, int searchChar, int startPos) {
+<         if (isEmpty(seq)) {
+---
+>     public static int indexOf(String str, int searchChar, int startPos) {
+>         if (isEmpty(str)) {
+878c857
+<         return StringUtils.indexOfSequence(seq, searchChar, startPos);
+---
+>         return str.indexOf(searchChar, startPos);
+904,905c883,884
+<     public static int indexOf(CharSequence seq, CharSequence searchSeq) {
+<         if (seq == null || searchSeq == null) {
+---
+>     public static int indexOf(String str, String searchStr) {
+>         if (str == null || searchStr == null) {
+908c887
+<         return StringUtils.indexOfSequence(seq, searchSeq, 0);
+---
+>         return str.indexOf(searchStr);
+943,944c922,923
+<     public static int indexOf(CharSequence seq, CharSequence searchSeq, int startPos) {
+<         if (seq == null || searchSeq == null) {
+---
+>     public static int indexOf(String str, String searchStr, int startPos) {
+>         if (str == null || searchStr == null) {
+947c926
+<         return StringUtils.indexOfSequence(seq, searchSeq, startPos);
+---
+>         return str.indexOf(searchStr, startPos);
+1126,1127c1105,1106
+<     public static int lastIndexOf(CharSequence seq, int searchChar) {
+<         if (isEmpty(seq)) {
+---
+>     public static int lastIndexOf(String str, int searchChar) {
+>         if (isEmpty(str)) {
+1130c1109
+<         return StringUtils.lastIndexOfSequence(seq, searchChar, seq.length());
+---
+>         return str.lastIndexOf(searchChar);
+1160,1161c1139,1140
+<     public static int lastIndexOf(CharSequence seq, int searchChar, int startPos) {
+<         if (isEmpty(seq)) {
+---
+>     public static int lastIndexOf(String str, int searchChar, int startPos) {
+>         if (isEmpty(str)) {
+1164c1143
+<         return StringUtils.lastIndexOfSequence(seq, searchChar, startPos);
+---
+>         return str.lastIndexOf(searchChar, startPos);
+1189,1190c1168,1169
+<     public static int lastIndexOf(CharSequence seq, CharSequence searchSeq) {
+<         if (seq == null || searchSeq == null) {
+---
+>     public static int lastIndexOf(String str, String searchStr) {
+>         if (str == null || searchStr == null) {
+1193c1172
+<         return StringUtils.lastIndexOfSequence(seq, searchSeq, seq.length());
+---
+>         return str.lastIndexOf(searchStr);
+1261,1262c1240,1241
+<     public static int lastIndexOf(CharSequence seq, CharSequence searchSeq, int startPos) {
+<         if (seq == null || searchSeq == null) {
+---
+>     public static int lastIndexOf(String str, String searchStr, int startPos) {
+>         if (str == null || searchStr == null) {
+1265c1244
+<         return StringUtils.lastIndexOfSequence(seq, searchSeq, startPos);
+---
+>         return str.lastIndexOf(searchStr, startPos);
+1368,1369c1347,1348
+<     public static boolean contains(CharSequence seq, int searchChar) {
+<         if (isEmpty(seq)) {
+---
+>     public static boolean contains(String str, int searchChar) {
+>         if (isEmpty(str)) {
+1372c1351
+<         return indexOfSequence(seq, searchChar, 0) >= 0;
+---
+>         return str.indexOf(searchChar) >= 0;
+1396,1397c1375,1376
+<     public static boolean contains(CharSequence seq, CharSequence searchSeq) {
+<         if (seq == null || searchSeq == null) {
+---
+>     public static boolean contains(String str, String searchStr) {
+>         if (str == null || searchStr == null) {
+1400c1379
+<         return indexOfSequence(seq, searchSeq, 0) >= 0;
+---
+>         return str.indexOf(searchStr) >= 0;
+1449,1450c1428,1429
+<     public static boolean containsWhitespace(CharSequence seq) {
+<         if (isEmpty(seq)) {
+---
+>     public static boolean containsWhitespace(String str) {
+>         if (isEmpty(str)) {
+1453c1432
+<         int strLen = seq.length();
+---
+>         int strLen = str.length();
+1455c1434
+<             if (Character.isWhitespace(seq.charAt(i))) {
+---
+>             if (Character.isWhitespace(str.charAt(i))) {
+1536c1515
+<     public static int indexOfAny(CharSequence cs, CharSequence searchChars) {
+---
+>     public static int indexOfAny(CharSequence cs, String searchChars) {
+1540c1519
+<         return indexOfAny(cs, toCharArraySequence(searchChars));
+---
+>         return indexOfAny(cs, searchChars.toCharArray());
+1568c1547
+<     public static boolean containsAny(CharSequence cs, char[] searchChars) {
+---
+>     public static boolean containsAny(String cs, char[] searchChars) {
+1625c1604
+<     public static boolean containsAny(CharSequence cs, CharSequence searchChars) {
+---
+>     public static boolean containsAny(String cs, String searchChars) {
+1629c1608
+<         return containsAny(cs, toCharArraySequence(searchChars));
+---
+>         return containsAny(cs, searchChars.toCharArray());
+1707,1708c1686,1687
+<     public static int indexOfAnyBut(CharSequence seq, CharSequence searchChars) {
+<         if (isEmpty(seq) || isEmpty(searchChars)) {
+---
+>     public static int indexOfAnyBut(String str, String searchChars) {
+>         if (isEmpty(str) || isEmpty(searchChars)) {
+1711c1690
+<         int strLen = seq.length();
+---
+>         int strLen = str.length();
+1713,1714c1692,1693
+<             char ch = seq.charAt(i);
+<             boolean chFound = indexOfSequence(searchChars, ch, 0) >= 0;
+---
+>             char ch = str.charAt(i);
+>             boolean chFound = searchChars.indexOf(ch) >= 0;
+1716,1717c1695,1696
+<                 char ch2 = seq.charAt(i + 1);
+<                 if (chFound && indexOfSequence(searchChars, ch2, 0) < 0) {
+---
+>                 char ch2 = str.charAt(i + 1);
+>                 if (chFound && searchChars.indexOf(ch2) < 0) {
+1790c1769
+<     public static boolean containsOnly(CharSequence cs, CharSequence validChars) {
+---
+>     public static boolean containsOnly(CharSequence cs, String validChars) {
+1794c1773
+<         return containsOnly(cs, toCharArraySequence(validChars));
+---
+>         return containsOnly(cs, validChars.toCharArray());
+1875c1854
+<     public static boolean containsNone(CharSequence cs, CharSequence invalidChars) {
+---
+>     public static boolean containsNone(CharSequence cs, String invalidChars) {
+1879c1858
+<         return containsNone(cs, toCharArraySequence(invalidChars));
+---
+>         return containsNone(cs, invalidChars.toCharArray());
+1910c1889
+<     public static int indexOfAny(CharSequence str, CharSequence[] searchStrs) {
+---
+>     public static int indexOfAny(String str, String[] searchStrs) {
+1921c1900
+<             CharSequence search = searchStrs[i];
+---
+>             String search = searchStrs[i];
+1925c1904
+<             tmp = indexOfSequence(str, search, 0);
+---
+>             tmp = str.indexOf(search);
+1963c1942
+<     public static int lastIndexOfAny(CharSequence str, CharSequence[] searchStrs) {
+---
+>     public static int lastIndexOfAny(String str, String[] searchStrs) {
+1971c1950
+<             CharSequence search = searchStrs[i];
+---
+>             String search = searchStrs[i];
+1975c1954
+<             tmp = lastIndexOfSequence(str, search, str.length());
+---
+>             tmp = str.lastIndexOf(search);
+2009c1988
+<     public static String substring(CharSequence str, int start) {
+---
+>     public static String substring(String str, int start) {
+2026c2005
+<         return str.subSequence(start, str.length()).toString();
+---
+>         return str.substring(start);
+2064c2043
+<     public static String substring(CharSequence str, int start, int end) {
+---
+>     public static String substring(String str, int start, int end) {
+2094c2073
+<         return str.subSequence(start, end).toString();
+---
+>         return str.substring(start, end);
+2119,2120c2098,2099
+<     public static String left(CharSequence seq, int len) {
+<         if (seq == null) {
+---
+>     public static String left(String str, int len) {
+>         if (str == null) {
+2126,2127c2105,2106
+<         if (seq.length() <= len) {
+<             return seq.toString();
+---
+>         if (str.length() <= len) {
+>             return str;
+2129c2108
+<         return seq.subSequence(0, len).toString();
+---
+>         return str.substring(0, len);
+2152,2153c2131,2132
+<     public static String right(CharSequence seq, int len) {
+<         if (seq == null) {
+---
+>     public static String right(String str, int len) {
+>         if (str == null) {
+2159,2160c2138,2139
+<         if (seq.length() <= len) {
+<             return seq.toString();
+---
+>         if (str.length() <= len) {
+>             return str;
+2162c2141
+<         return StringUtils.subSequence(seq, seq.length() - len).toString();
+---
+>         return str.substring(str.length() - len);
+2190,2191c2169,2170
+<     public static String mid(CharSequence seq, int pos, int len) {
+<         if (seq == null) {
+---
+>     public static String mid(String str, int pos, int len) {
+>         if (str == null) {
+2194c2173
+<         if (len < 0 || pos > seq.length()) {
+---
+>         if (len < 0 || pos > str.length()) {
+2200,2201c2179,2180
+<         if (seq.length() <= (pos + len)) {
+<             return StringUtils.subSequence(seq, pos).toString();
+---
+>         if (str.length() <= (pos + len)) {
+>             return str.substring(pos);
+2203c2182
+<         return seq.subSequence(pos, pos + len).toString();
+---
+>         return str.substring(pos, pos + len);
+4584,4585c4563,4564
+<     public static String rightPad(CharSequence seq, int size) {
+<         return rightPad(seq, size, ' ');
+---
+>     public static String rightPad(String str, int size) {
+>         return rightPad(str, size, ' ');
+4609,4610c4588,4589
+<     public static String rightPad(CharSequence seq, int size, char padChar) {
+<         if (seq == null) {
+---
+>     public static String rightPad(String str, int size, char padChar) {
+>         if (str == null) {
+4613c4592
+<         int pads = size - seq.length();
+---
+>         int pads = size - str.length();
+4615c4594
+<             return seq.toString(); 
+---
+>             return str; 
+4618c4597
+<             return rightPad(seq, size, String.valueOf(padChar));
+---
+>             return rightPad(str, size, String.valueOf(padChar));
+4620c4599
+<         return seq.toString().concat(padding(pads, padChar));
+---
+>         return str.concat(padding(pads, padChar));
+4646,4647c4625,4626
+<     public static String rightPad(CharSequence seq, int size, CharSequence padStr) {
+<         if (seq == null) {
+---
+>     public static String rightPad(String str, int size, String padStr) {
+>         if (str == null) {
+4654c4633
+<         int strLen = seq.length();
+---
+>         int strLen = str.length();
+4657c4636
+<             return seq.toString(); 
+---
+>             return str; 
+4660c4639
+<             return rightPad(seq, size, padStr.charAt(0));
+---
+>             return rightPad(str, size, padStr.charAt(0));
+4664c4643
+<             return seq.toString().concat(padStr.toString());
+---
+>             return str.concat(padStr);
+4666c4645
+<             return seq.toString().concat(padStr.subSequence(0, pads).toString());
+---
+>             return str.concat(padStr.substring(0, pads));
+4669c4648
+<             char[] padChars = padStr.toString().toCharArray();
+---
+>             char[] padChars = padStr.toCharArray();
+4673c4652
+<             return seq.toString().concat(new String(padding));
+---
+>             return str.concat(new String(padding));
+4696,4697c4675,4676
+<     public static String leftPad(CharSequence seq, int size) {
+<         return leftPad(seq, size, ' ');
+---
+>     public static String leftPad(String str, int size) {
+>         return leftPad(str, size, ' ');
+4721,4722c4700,4701
+<     public static String leftPad(CharSequence seq, int size, char padChar) {
+<         if (seq == null) {
+---
+>     public static String leftPad(String str, int size, char padChar) {
+>         if (str == null) {
+4725c4704
+<         int pads = size - seq.length();
+---
+>         int pads = size - str.length();
+4727c4706
+<             return seq.toString(); 
+---
+>             return str; 
+4730c4709
+<             return leftPad(seq, size, String.valueOf(padChar));
+---
+>             return leftPad(str, size, String.valueOf(padChar));
+4732c4711
+<         return padding(pads, padChar).concat(seq.toString());
+---
+>         return padding(pads, padChar).concat(str);
+4758,4759c4737,4738
+<     public static String leftPad(CharSequence seq, int size, CharSequence padStr) {
+<         if (seq == null) {
+---
+>     public static String leftPad(String str, int size, String padStr) {
+>         if (str == null) {
+4766c4745
+<         int strLen = seq.length();
+---
+>         int strLen = str.length();
+4769c4748
+<             return seq.toString(); 
+---
+>             return str; 
+4772c4751
+<             return leftPad(seq, size, padStr.charAt(0));
+---
+>             return leftPad(str, size, padStr.charAt(0));
+4776c4755
+<             return padStr.toString().concat(seq.toString());
+---
+>             return padStr.concat(str);
+4778c4757
+<             return padStr.subSequence(0, pads).toString().concat(seq.toString());
+---
+>             return padStr.substring(0, pads).concat(str);
+4781c4760
+<             char[] padChars = padStr.toString().toCharArray();
+---
+>             char[] padChars = padStr.toCharArray();
+4785c4764
+<             return new String(padding).concat(seq.toString());
+---
+>             return new String(padding).concat(str);
+4829,4830c4808,4809
+<     public static String center(CharSequence seq, int size) {
+<         return center(seq, size, ' ');
+---
+>     public static String center(String str, int size) {
+>         return center(str, size, ' ');
+4857,4862c4836,4838
+<     public static String center(CharSequence seq, int size, char padChar) {
+<         if (seq == null) {
+<             return null;
+<         }
+<         if (size <= 0) {
+<             return seq.toString();
+---
+>     public static String center(String str, int size, char padChar) {
+>         if (str == null || size <= 0) {
+>             return str;
+4864c4840
+<         int strLen = seq.length();
+---
+>         int strLen = str.length();
+4867c4843
+<             return seq.toString();
+---
+>             return str;
+4869,4871c4845,4847
+<         String tmp = leftPad(seq, strLen + pads / 2, padChar);
+<         tmp = rightPad(tmp, size, padChar);
+<         return tmp;
+---
+>         str = leftPad(str, strLen + pads / 2, padChar);
+>         str = rightPad(str, size, padChar);
+>         return str;
+4900,4905c4876,4878
+<     public static String center(CharSequence seq, int size, CharSequence padStr) {
+<         if (seq == null) {
+<             return null;
+<         }
+<         if (size <= 0) {
+<             return seq.toString();
+---
+>     public static String center(String str, int size, String padStr) {
+>         if (str == null || size <= 0) {
+>             return str;
+4910c4883
+<         int strLen = seq.length();
+---
+>         int strLen = str.length();
+4913c4886
+<             return seq.toString();
+---
+>             return str;
+4915,4917c4888,4890
+<         String tmp = leftPad(seq, strLen + pads / 2, padStr);
+<         tmp = rightPad(tmp, size, padStr);
+<         return tmp;
+---
+>         str = leftPad(str, strLen + pads / 2, padStr);
+>         str = rightPad(str, size, padStr);
+>         return str;
+4941,4942c4914,4915
+<     public static String upperCase(CharSequence seq) {
+<         if (seq == null) {
+---
+>     public static String upperCase(String str) {
+>         if (str == null) {
+4945c4918
+<         return seq.toString().toUpperCase();
+---
+>         return str.toUpperCase();
+4964,4965c4937,4938
+<     public static String upperCase(CharSequence seq, Locale locale) {
+<         if (seq == null) {
+---
+>     public static String upperCase(String str, Locale locale) {
+>         if (str == null) {
+4968c4941
+<         return seq.toString().toUpperCase(locale);
+---
+>         return str.toUpperCase(locale);
+4990,4991c4963,4964
+<     public static String lowerCase(CharSequence seq) {
+<         if (seq == null) {
+---
+>     public static String lowerCase(String str) {
+>         if (str == null) {
+4994c4967
+<         return seq.toString().toLowerCase();
+---
+>         return str.toLowerCase();
+5013,5014c4986,4987
+<     public static String lowerCase(CharSequence seq, Locale locale) {
+<         if (seq == null) {
+---
+>     public static String lowerCase(String str, Locale locale) {
+>         if (str == null) {
+5017c4990
+<         return seq.toString().toLowerCase(locale);
+---
+>         return str.toLowerCase(locale);
+5117c5090
+<     public static String swapCase(CharSequence seq) {
+---
+>     public static String swapCase(String str) {
+5119,5123c5092,5093
+<         if (seq == null) {
+<             return null;
+<         }
+<         if ( (strLen = seq.length()) == 0) {
+<             return seq.toString();
+---
+>         if (str == null || (strLen = str.length()) == 0) {
+>             return str;
+5129c5099
+<             ch = seq.charAt(i);
+---
+>             ch = str.charAt(i);
+5698,5699c5668,5669
+<     public static String abbreviate(CharSequence seq, int maxWidth) {
+<         return abbreviate(seq, 0, maxWidth);
+---
+>     public static String abbreviate(String str, int maxWidth) {
+>         return abbreviate(str, 0, maxWidth);
+5737,5738c5707,5708
+<     public static String abbreviate(CharSequence seq, int offset, int maxWidth) {
+<         if (seq == null) {
+---
+>     public static String abbreviate(String str, int offset, int maxWidth) {
+>         if (str == null) {
+5744,5745c5714,5715
+<         if (seq.length() <= maxWidth) {
+<             return seq.toString();
+---
+>         if (str.length() <= maxWidth) {
+>             return str;
+5747,5748c5717,5718
+<         if (offset > seq.length()) {
+<             offset = seq.length();
+---
+>         if (offset > str.length()) {
+>             offset = str.length();
+5750,5751c5720,5721
+<         if ((seq.length() - offset) < (maxWidth - 3)) {
+<             offset = seq.length() - (maxWidth - 3);
+---
+>         if ((str.length() - offset) < (maxWidth - 3)) {
+>             offset = str.length() - (maxWidth - 3);
+5755c5725
+<             return seq.subSequence(0, maxWidth - 3) + abrevMarker;
+---
+>             return str.substring(0, maxWidth - 3) + abrevMarker;
+5760,5761c5730,5731
+<         if ((offset + (maxWidth - 3)) < seq.length()) {
+<             return abrevMarker + abbreviate(StringUtils.subSequence(seq, offset), maxWidth - 3);
+---
+>         if ((offset + (maxWidth - 3)) < str.length()) {
+>             return abrevMarker + abbreviate(str.substring(offset), maxWidth - 3);
+5763c5733
+<         return abrevMarker + StringUtils.subSequence(seq, seq.length() - (maxWidth - 3));
+---
+>         return abrevMarker + str.substring(str.length() - (maxWidth - 3));
+5795,5800c5765,5767
+<     public static String abbreviateMiddle(CharSequence seq, CharSequence middle, int length) {
+<         if (seq == null) {
+<             return null;
+<         }
+<         if (isEmpty(seq) || isEmpty(middle)) {
+<             return seq.toString();
+---
+>     public static String abbreviateMiddle(String str, String middle, int length) {
+>         if (isEmpty(str) || isEmpty(middle)) {
+>             return str;
+5803,5804c5770,5771
+<         if (length >= seq.length() || length < (middle.length()+2)) {
+<             return seq.toString();
+---
+>         if (length >= str.length() || length < (middle.length()+2)) {
+>             return str;
+5809c5776
+<         int endOffset = seq.length()-targetSting/2;
+---
+>         int endOffset = str.length()-targetSting/2;
+5812c5779
+<         builder.append(seq.subSequence(0,startOffset));
+---
+>         builder.append(str.substring(0,startOffset));
+5814c5781
+<         builder.append(StringUtils.subSequence(seq, endOffset));
+---
+>         builder.append(str.substring(endOffset));
+5884d5850
+< 
+6084d6049
+< 
+6440,6555d6404
+<     }
+< 
+<     
+<     
+<     
+<     
+<     
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     static int indexOfSequence(CharSequence cs, int searchChar, int start) {
+<         if (cs instanceof String) {
+<             return ((String) cs).indexOf(searchChar, start);
+<         } else {
+<             int sz = cs.length();
+<             if ( start < 0 ) {
+<                 start = 0;
+<             }
+<             for ( int i=start; i < sz; i++ ) {
+<                 if ( cs.charAt(i) == searchChar) {
+<                     return i;
+<                 }
+<             }
+<             return -1;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     static int indexOfSequence(CharSequence cs, CharSequence searchChar, int start) {
+<         if (cs instanceof String && searchChar instanceof String) {
+<             
+<             
+<             
+<             return ((String) cs).indexOf( (String) searchChar, start);
+<         } else {
+<             
+<             return cs.toString().indexOf(searchChar.toString(), start);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     static int lastIndexOfSequence(CharSequence cs, int searchChar, int start) {
+<         if (cs instanceof String) {
+<             return ((String) cs).lastIndexOf(searchChar, start);
+<         } else {
+<             int sz = cs.length();
+<             if ( start < 0 ) {
+<                 return -1;
+<             }
+<             if ( start >= sz ) {
+<                 start = sz - 1;
+<             }
+<             for ( int i=start; i >= 0; --i ) {
+<                 if ( cs.charAt(i) == searchChar) {
+<                     return i;
+<                 }
+<             }
+<             return -1;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     static int lastIndexOfSequence(CharSequence cs, CharSequence searchChar, int start) {
+<         if (cs instanceof String && searchChar instanceof String) {
+<             
+<             
+<             
+<             return ((String) cs).lastIndexOf( (String) searchChar, start);
+<         } else {
+<             
+<             return cs.toString().lastIndexOf(searchChar.toString(), start);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     
+<     static char[] toCharArraySequence(CharSequence cs) {
+<         if (cs instanceof String) {
+<             return ((String) cs).toCharArray();
+<         } else {
+<             
+<             return cs.toString().toCharArray();
+<         }

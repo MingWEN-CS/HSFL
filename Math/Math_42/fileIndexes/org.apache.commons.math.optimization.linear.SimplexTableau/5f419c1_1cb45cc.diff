@@ -1,0 +1,169 @@
+115,116c115
+<         this.tableau = new Array2DRowRealMatrix(createTableau(goalType == GoalType.MAXIMIZE));
+<         initialize();
+---
+>         this.tableau = createTableau(goalType == GoalType.MAXIMIZE);
+124c123
+<     protected double[][] createTableau(final boolean maximize) {
+---
+>     protected RealMatrix createTableau(final boolean maximize) {
+130c129
+<         double[][] matrix = new double[height][width];
+---
+>         Array2DRowRealMatrix matrix = new Array2DRowRealMatrix(height, width);
+134c133
+<             matrix[0][0] = -1;
+---
+>             matrix.setEntry(0, 0, -1);
+137c136
+<         matrix[zIndex][zIndex] = maximize ? 1 : -1;
+---
+>         matrix.setEntry(zIndex, zIndex, maximize ? 1 : -1);
+140,142c139,141
+<         copyArray(objectiveCoefficients.getData(), matrix[zIndex]);
+<         matrix[zIndex][width - 1] =
+<             maximize ? f.getConstantTerm() : -1 * f.getConstantTerm();
+---
+>         copyArray(objectiveCoefficients.getData(), matrix.getDataRef()[zIndex]);
+>         matrix.setEntry(zIndex, width - 1,
+>             maximize ? f.getConstantTerm() : -1 * f.getConstantTerm());
+145,146c144,145
+<             matrix[zIndex][getSlackVariableOffset() - 1] =
+<                 getInvertedCoeffiecientSum(objectiveCoefficients);
+---
+>             matrix.setEntry(zIndex, getSlackVariableOffset() - 1,
+>                 getInvertedCoeffiecientSum(objectiveCoefficients));
+157c156
+<             copyArray(constraint.getCoefficients().getData(), matrix[row]);
+---
+>             copyArray(constraint.getCoefficients().getData(), matrix.getDataRef()[row]);
+161,162c160,161
+<                 matrix[row][getSlackVariableOffset() - 1] =
+<                     getInvertedCoeffiecientSum(constraint.getCoefficients());
+---
+>                 matrix.setEntry(row, getSlackVariableOffset() - 1,
+>                     getInvertedCoeffiecientSum(constraint.getCoefficients()));
+166c165
+<             matrix[row][width - 1] = constraint.getValue();
+---
+>             matrix.setEntry(row, width - 1, constraint.getValue());
+170c169
+<                 matrix[row][getSlackVariableOffset() + slackVar++] = 1;  
+---
+>                 matrix.setEntry(row, getSlackVariableOffset() + slackVar++, 1);  
+172c171
+<                 matrix[row][getSlackVariableOffset() + slackVar++] = -1; 
+---
+>                 matrix.setEntry(row, getSlackVariableOffset() + slackVar++, -1); 
+178,179c177,179
+<                 matrix[0][getArtificialVariableOffset() + artificialVar] = 1;
+<                 matrix[row][getArtificialVariableOffset() + artificialVar++] = 1;
+---
+>                 matrix.setEntry(0, getArtificialVariableOffset() + artificialVar, 1);
+>                 matrix.setEntry(row, getArtificialVariableOffset() + artificialVar++, 1);
+>                 matrix.setRowVector(0, matrix.getRowVector(0).subtract(matrix.getRowVector(row)));
+184d183
+< 
+242,252d240
+<     private void initialize() {
+<         for (int artificialVar = 0; artificialVar < numArtificialVariables; artificialVar++) {
+<             int row = getBasicRow(getArtificialVariableOffset() + artificialVar);
+<             subtractRow(0, row, 1.0);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+267,287c255
+<     Integer getBasicRow(final int col) {
+<         return getBasicRow(col, true);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private Integer getBasicRowForSolution(final int col) {
+<         return getBasicRow(col, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     private Integer getBasicRow(final int col, boolean ignoreObjectiveRows) {
+---
+>     protected Integer getBasicRow(final int col) {
+289,290c257
+<         int start = ignoreObjectiveRows ? getNumObjectiveFunctions() : 0;
+<         for (int i = start; i < getHeight(); i++) {
+---
+>         for (int i = 0; i < getHeight(); i++) {
+303,304c270,272
+<     protected void discardArtificialVariables() {
+<         if (numArtificialVariables == 0) {
+---
+> 
+>     protected void dropPhase1Objective() {
+>         if (getNumObjectiveFunctions() == 1) {
+307,312c275,299
+<         int width = getWidth() - numArtificialVariables - 1;
+<         int height = getHeight() - 1;
+<         double[][] matrix = new double[height][width];
+<         for (int i = 0; i < height; i++) {
+<             for (int j = 0; j < width - 1; j++) {
+<                 matrix[i][j] = getEntry(i + 1, j + 1);
+---
+> 
+>         List<Integer> columnsToDrop = new ArrayList<Integer>();
+>         columnsToDrop.add(0);
+> 
+>         
+>         for (int i = getNumObjectiveFunctions(); i < getArtificialVariableOffset(); i++) {
+>           if (MathUtils.compareTo(tableau.getEntry(0, i), 0, epsilon) > 0) {
+>             columnsToDrop.add(i);
+>           }
+>         }
+> 
+>         
+>         for (int i = 0; i < getNumArtificialVariables(); i++) {
+>           int col = i + getArtificialVariableOffset();
+>           if (getBasicRow(col) == null) {
+>             columnsToDrop.add(col);
+>           }
+>         }
+> 
+>         double[][] matrix = new double[getHeight() - 1][getWidth() - columnsToDrop.size()];
+>         for (int i = 1; i < getHeight(); i++) {
+>           int col = 0;
+>           for (int j = 0; j < getWidth(); j++) {
+>             if (!columnsToDrop.contains(j)) {
+>               matrix[i - 1][col++] = tableau.getEntry(i, j);
+314c301
+<             matrix[i][width - 1] = getEntry(i + 1, getRhsOffset());
+---
+>           }
+315a303
+> 
+348c336
+<       Integer negativeVarBasicRow = getBasicRowForSolution(getNegativeDecisionVariableOffset());
+---
+>       Integer negativeVarBasicRow = getBasicRow(getNegativeDecisionVariableOffset());
+352c340
+<           Integer basicRow = getBasicRowForSolution(getNumObjectiveFunctions() + i);
+---
+>           Integer basicRow = getBasicRow(getNumObjectiveFunctions() + i);
+394,397c382,383
+<         for (int j = 0; j < getWidth(); j++) {
+<             tableau.setEntry(minuendRow, j, tableau.getEntry(minuendRow, j) -
+<                              multiple * tableau.getEntry(subtrahendRow, j));
+<         }
+---
+>         tableau.setRowVector(minuendRow, tableau.getRowVector(minuendRow)
+>             .subtract(tableau.getRowVector(subtrahendRow).mapMultiply(multiple)));

@@ -1,0 +1,35 @@
+19a20
+> import com.google.common.collect.Maps;
+86c87,89
+<   private final Map<Node, String> pseudoNameMap;
+---
+>   private final Map<Node, String> oldPseudoNameMap;
+>   private final Map<Node, String> deltaPseudoNameMap;
+> 
+102c105,106
+<     this.pseudoNameMap = pseudoNameMap;
+---
+>     this.oldPseudoNameMap = pseudoNameMap;
+>     this.deltaPseudoNameMap = Maps.newLinkedHashMap();
+105d108
+< 
+114a118,119
+>     
+>     
+116a122,125
+> 
+>     if (oldPseudoNameMap != null) {
+>       oldPseudoNameMap.putAll(deltaPseudoNameMap);
+>     }
+209c218
+<         if (pseudoNameMap != null) {
+---
+>         if (oldPseudoNameMap != null) {
+211c220
+<             pseudoNameMap.get(s.getVar(bestShadow.oldName).nameNode);
+---
+>             oldPseudoNameMap.get(s.getVar(bestShadow.oldName).nameNode);
+213c222
+<             pseudoNameMap.put(use, targetPseudoName);
+---
+>             deltaPseudoNameMap.put(use, targetPseudoName);

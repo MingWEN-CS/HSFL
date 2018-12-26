@@ -1,0 +1,28 @@
+20a21
+> import com.google.common.collect.Maps;
+28a30
+> import java.util.Map;
+35a38,39
+>   
+>   private final Map<String, String> ESCAPED_JS_STRINGS = Maps.newHashMap();
+352c356
+<             add(jsString(n.getString(), outputCharsetEncoder));
+---
+>             addJsString(n.getString());
+634c638
+<         add(jsString(n.getString(), outputCharsetEncoder));
+---
+>         addJsString(n.getString());
+943c947,956
+<   static String jsString(String s, CharsetEncoder outputCharsetEncoder) {
+---
+>   void addJsString(String s) {
+>     String cached = ESCAPED_JS_STRINGS.get(s);
+>     if (cached == null) {
+>       cached = jsString(s);
+>       ESCAPED_JS_STRINGS.put(s, cached);
+>     }
+>     add(cached);
+>   }
+> 
+>   String jsString(String s) {

@@ -1,0 +1,313 @@
+40a41,48
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+42a51,63
+>     private static final String DEFAULT_IS_NULL_EXCEPTION_MESSAGE = "The validated object is null";
+>     private static final String DEFAULT_IS_TRUE_EXCEPTION_MESSAGE = "The validated expression is false";
+>     private static final String DEFAULT_NO_NULL_ELEMENTS_ARRAY_EXCEPTION_MESSAGE = "The validated array contains null element at index: %d";
+>     private static final String DEFAULT_NO_NULL_ELEMENTS_COLLECTION_EXCEPTION_MESSAGE = "The validated collection contains null element at index: %d";
+>     private static final String DEFAULT_NOT_BLANK_EXCEPTION_MESSAGE = "The validated character sequence is blank";
+>     private static final String DEFAULT_NOT_EMPTY_ARRAY_EXCEPTION_MESSAGE = "The validated array is empty";
+>     private static final String DEFAULT_NOT_EMPTY_CHAR_SEQUENCE_EXCEPTION_MESSAGE = "The validated character sequence is empty";
+>     private static final String DEFAULT_NOT_EMPTY_COLLECTION_EXCEPTION_MESSAGE = "The validated collection is empty";
+>     private static final String DEFAULT_NOT_EMPTY_MAP_EXCEPTION_MESSAGE = "The validated map is empty";
+>     private static final String DEFAULT_VALID_INDEX_ARRAY_EXCEPTION_MESSAGE = "The validated array index is invalid: %d";
+>     private static final String DEFAULT_VALID_INDEX_CHAR_SEQUENCE_EXCEPTION_MESSAGE = "The validated character sequence is invalid: %d";
+>     private static final String DEFAULT_VALID_INDEX_COLLECTION_EXCEPTION_MESSAGE = "The validated collection index is invalid: %d";
+> 
+73d93
+< 
+76c96
+<             throw new IllegalArgumentException(message + value);
+---
+>             throw new IllegalArgumentException(String.format(message, value));
+102c122
+<             throw new IllegalArgumentException(message + value);
+---
+>             throw new IllegalArgumentException(String.format(message, value));
+126d145
+< 
+129c148
+<             throw new IllegalArgumentException(message + value);
+---
+>             throw new IllegalArgumentException(String.format(message, value));
+154c173,174
+<     public static void isTrue(boolean expression, String message) {
+---
+> 
+>     public static void isTrue(boolean expression, String message, Object... values) {
+156c176
+<             throw new IllegalArgumentException(message);
+---
+>             throw new IllegalArgumentException(String.format(message, values));
+177a198,199
+> 
+> 
+180c202
+<             throw new IllegalArgumentException("The validated expression is false");
+---
+>             throw new IllegalArgumentException(DEFAULT_IS_TRUE_EXCEPTION_MESSAGE);
+201,205c223,225
+<     public static <T> T notNull(T object, String message) {
+<         if (object == null) {
+<             throw new IllegalArgumentException(message);
+<         }
+<         return object;
+---
+> 
+>     public static <T> T notNull(T object) {
+>         return notNull(object, DEFAULT_IS_NULL_EXCEPTION_MESSAGE);
+222,223c242,246
+<     public static <T> T notNull(T object) {
+<         return notNull(object, "The validated object is null");
+---
+>     public static <T> T notNull(T object, String message, Object... values) {
+>         if (object == null) {
+>             throw new NullPointerException(String.format(message, values));
+>         }
+>         return object;
+242,244c265,272
+<     public static <T> T[] notEmpty(T[] array, String message) {
+<         if (array == null || array.length == 0) {
+<             throw new IllegalArgumentException(message);
+---
+> 
+> 
+>     public static <T> T[] notEmpty(T[] array, String message, Object... values) {
+>         if (array == null) {
+>             throw new NullPointerException(String.format(message, values));
+>         }
+>         if (array.length == 0) {
+>             throw new IllegalArgumentException(String.format(message, values));
+262a291,292
+> 
+> 
+264c294
+<         return notEmpty(array, "The validated array is empty");
+---
+>         return notEmpty(array, DEFAULT_NOT_EMPTY_ARRAY_EXCEPTION_MESSAGE);
+283,285c313,320
+<     public static <T extends Collection<?>> T notEmpty(T collection, String message) {
+<         if (collection == null || collection.size() == 0) {
+<             throw new IllegalArgumentException(message);
+---
+> 
+> 
+>     public static <T extends Collection<?>> T notEmpty(T collection, String message, Object... values) {
+>         if (collection == null) {
+>             throw new NullPointerException(String.format(message, values));
+>         }
+>         if (collection.size() == 0) {
+>             throw new IllegalArgumentException(String.format(message, values));
+303a339,340
+> 
+> 
+305c342
+<         return notEmpty(collection, "The validated collection is empty");
+---
+>         return notEmpty(collection, DEFAULT_NOT_EMPTY_COLLECTION_EXCEPTION_MESSAGE);
+324,326c361,368
+<     public static <T extends Map<?, ?>> T notEmpty(T map, String message) {
+<         if (map == null || map.size() == 0) {
+<             throw new IllegalArgumentException(message);
+---
+> 
+> 
+>     public static <T extends Map<?, ?>> T notEmpty(T map, String message, Object... values) {
+>         if (map == null) {
+>             throw new NullPointerException(String.format(message, values));
+>         }
+>         if (map.size() == 0) {
+>             throw new IllegalArgumentException(String.format(message, values));
+344a387,388
+> 
+> 
+346c390
+<         return notEmpty(map, "The validated map is empty");
+---
+>         return notEmpty(map, DEFAULT_NOT_EMPTY_MAP_EXCEPTION_MESSAGE);
+365,367c409,416
+<     public static <T extends CharSequence> T notEmpty(T string, String message) {
+<         if (string == null || string.length() == 0) {
+<             throw new IllegalArgumentException(message);
+---
+> 
+> 
+>     public static <T extends CharSequence> T notEmpty(T chars, String message, Object... values) {
+>         if (chars == null) {
+>             throw new NullPointerException(String.format(message, values));
+>         }
+>         if (chars.length() == 0) {
+>             throw new IllegalArgumentException(String.format(message, values));
+369c418
+<         return string;
+---
+>         return chars;
+386,387c435,439
+<     public static <T extends CharSequence> T notEmpty(T string) {
+<         return notEmpty(string, "The validated string is empty");
+---
+> 
+> 
+> 
+>     public static <T extends CharSequence> T notEmpty(T chars) {
+>         return notEmpty(chars, DEFAULT_NOT_EMPTY_CHAR_SEQUENCE_EXCEPTION_MESSAGE);
+407,409c459,466
+<     public static <T extends CharSequence> T notBlank(T string, String message) {
+<         if (StringUtils.isBlank(string)) {
+<             throw new IllegalArgumentException(message);
+---
+> 
+> 
+>     public static <T extends CharSequence> T notBlank(T chars, String message, Object... values) {
+>         if (chars == null) {
+>             throw new NullPointerException(String.format(message, values));
+>         }
+>         if (StringUtils.isBlank(chars)) {
+>             throw new IllegalArgumentException(String.format(message, values));
+411c468
+<         return string;
+---
+>         return chars;
+429,430c486,489
+<     public static <T extends CharSequence> T notBlank(T string) {
+<         return notBlank(string, "The validated string is blank");
+---
+> 
+> 
+>     public static <T extends CharSequence> T notBlank(T chars) {
+>         return notBlank(chars, DEFAULT_NOT_BLANK_EXCEPTION_MESSAGE);
+454c513,516
+<     public static <T> T[] noNullElements(T[] array, String message) {
+---
+> 
+> 
+> 
+>     public static <T> T[] noNullElements(T[] array, String message, Object... values) {
+458c520,521
+<                 throw new IllegalArgumentException(message);
+---
+>                 Object[] values2 = ArrayUtils.add(values, i);
+>                 throw new IllegalArgumentException(String.format(message, values2));
+482a546,547
+> 
+> 
+484,490c549
+<         Validate.notNull(array);
+<         for (int i = 0; i < array.length; i++) {
+<             if (array[i] == null) {
+<                 throw new IllegalArgumentException("The validated array contains null element at index: " + i);
+<             }
+<         }
+<         return array;
+---
+>         return noNullElements(array, DEFAULT_NO_NULL_ELEMENTS_ARRAY_EXCEPTION_MESSAGE);
+514c573,576
+<     public static <T extends Collection<?>> T noNullElements(T collection, String message) {
+---
+> 
+> 
+> 
+>     public static <T extends Collection<?>> T noNullElements(T collection, String message, Object... values) {
+516c578,579
+<         for (Iterator<?> it = collection.iterator(); it.hasNext();) {
+---
+>         int i = 0;
+>         for (Iterator<?> it = collection.iterator(); it.hasNext(); i++) {
+518c581,582
+<                 throw new IllegalArgumentException(message);
+---
+>                 Object[] values2 = ArrayUtils.addAll(values, i);
+>                 throw new IllegalArgumentException(String.format(message, values2));
+541a606,608
+> 
+> 
+> 
+543,550c610
+<         Validate.notNull(collection);
+<         int i = 0;
+<         for (Iterator<?> it = collection.iterator(); it.hasNext(); i++) {
+<             if (it.next() == null) {
+<                 throw new IllegalArgumentException("The validated collection contains null element at index: " + i);
+<             }
+<         }
+<         return collection;
+---
+>         return noNullElements(collection, DEFAULT_NO_NULL_ELEMENTS_COLLECTION_EXCEPTION_MESSAGE);
+571c631,634
+<     public static <T> T[] validIndex(T[] array, int index, String message) {
+---
+> 
+> 
+> 
+>     public static <T> T[] validIndex(T[] array, int index, String message, Object... values) {
+574c637
+<             throw new IllegalArgumentException(message + index);
+---
+>             throw new IndexOutOfBoundsException(String.format(message, values));
+595a659,662
+> 
+> 
+> 
+> 
+597c664
+<         return validIndex(array, index, "The validated array index is invalid: ");
+---
+>         return validIndex(array, index, DEFAULT_VALID_INDEX_ARRAY_EXCEPTION_MESSAGE, index);
+618,621c685,691
+<     public static <T extends Collection<?>> T validIndex(T coll, int index, String message) {
+<         Validate.notNull(coll);
+<         if (index < 0 || index >= coll.size()) {
+<             throw new IllegalArgumentException(message + index);
+---
+> 
+> 
+> 
+>     public static <T extends Collection<?>> T validIndex(T collection, int index, String message, Object... values) {
+>         Validate.notNull(collection);
+>         if (index < 0 || index >= collection.size()) {
+>             throw new IndexOutOfBoundsException(String.format(message, values));
+623c693
+<         return coll;
+---
+>         return collection;
+643,644c713,715
+<     public static <T extends Collection<?>> T validIndex(T coll, int index) {
+<         return validIndex(coll, index, "The validated collection index is invalid: ");
+---
+> 
+>     public static <T extends Collection<?>> T validIndex(T collection, int index) {
+>         return validIndex(collection, index, DEFAULT_VALID_INDEX_COLLECTION_EXCEPTION_MESSAGE, index);
+666,669c737,743
+<     public static <T extends CharSequence> T validIndex(T str, int index, String message) {
+<         Validate.notNull(str);
+<         if (index < 0 || index >= str.length()) {
+<             throw new IllegalArgumentException(message + index);
+---
+> 
+> 
+> 
+>     public static <T extends CharSequence> T validIndex(T chars, int index, String message, Object... values) {
+>         Validate.notNull(chars);
+>         if (index < 0 || index >= chars.length()) {
+>             throw new IndexOutOfBoundsException(String.format(message, values));
+671c745
+<         return str;
+---
+>         return chars;
+692,693c766,771
+<     public static <T extends CharSequence> T validIndex(T str, int index) {
+<         return validIndex(str, index, "The validated string index is invalid: ");
+---
+> 
+> 
+> 
+> 
+>     public static <T extends CharSequence> T validIndex(T chars, int index) {
+>         return validIndex(chars, index, DEFAULT_VALID_INDEX_CHAR_SEQUENCE_EXCEPTION_MESSAGE, index);

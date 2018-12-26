@@ -1,0 +1,39 @@
+280a281,283
+>         if (valueToAdd == 0) {
+>             return values;
+>         }
+291c294
+<                 return values;
+---
+>                 break;
+311c314
+<                 return values;
+---
+>                 break;
+326c329,330
+<         return values;
+---
+>         
+>         return set(instant, fieldIndex, values, values[fieldIndex]);  
+391c395
+<         return set(instant, fieldIndex, values, wrapped);
+---
+>         return set(instant, fieldIndex, values, wrapped);  
+478c482
+<         FieldUtils.verifyValueBounds(this, newValue, getMinimumValue(instant), getMaximumValue(instant));
+---
+>         FieldUtils.verifyValueBounds(this, newValue, getMinimumValue(instant, values), getMaximumValue(instant, values));
+479a484,496
+>         
+>         
+>         if (fieldIndex < instant.getFieldSize()) {
+>             for (int i = fieldIndex + 1; i < instant.getFieldSize(); i++) {
+>                 DateTimeField field = instant.getField(i);
+>                 if (values[i] > field.getMaximumValue(instant, values)) {
+>                     values[i] = field.getMaximumValue(instant, values);
+>                 }
+>                 if (values[i] < field.getMinimumValue(instant, values)) {
+>                     values[i] = field.getMinimumValue(instant, values);
+>                 }
+>             }
+>         }

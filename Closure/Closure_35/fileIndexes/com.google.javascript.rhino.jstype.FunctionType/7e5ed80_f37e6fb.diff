@@ -1,0 +1,106 @@
+479a480,484
+>       FunctionType other = null;
+>       if (that instanceof FunctionType) {
+>         other = (FunctionType) that;
+>       }
+> 
+483,493c488,504
+<       if (isOrdinaryFunction() && that.isOrdinaryFunction() &&
+<           that instanceof FunctionType) {
+<         FunctionType other = (FunctionType) that;
+<         if (call.hasEqualParameters(other.call) &&
+<             isEquivalent(typeOfThis, other.typeOfThis)) {
+<           JSType newReturnType = leastSuper ?
+<               call.returnType.getLeastSupertype(other.call.returnType) :
+<               call.returnType.getGreatestSubtype(other.call.returnType);
+<           return cloneWithNewReturnType(
+<               newReturnType,
+<               call.returnTypeInferred || other.call.returnTypeInferred);
+---
+>       
+>       if (other != null &&
+>           isOrdinaryFunction() && that.isOrdinaryFunction() &&
+>           !this.call.hasUnknownParamsOrReturn() &&
+>           !other.call.hasUnknownParamsOrReturn()) {
+> 
+>         
+>         if (this.isSubtype(that)) {
+>           return leastSuper ? that : this;
+>         } else if (that.isSubtype(this)) {
+>           return leastSuper ? this : that;
+>         }
+> 
+>         
+>         FunctionType merged = tryMergeFunctionPiecewise(other, leastSuper);
+>         if (merged != null) {
+>           return merged;
+496a508,509
+>       
+>       
+505,507c518,528
+<       return leastSuper ?
+<           registry.getNativeType(JSTypeNative.U2U_CONSTRUCTOR_TYPE) :
+<           registry.getNativeType(JSTypeNative.NO_OBJECT_TYPE);
+---
+>       
+>       
+>       
+>       
+>       
+>       
+>       FunctionType greatestFn =
+>           registry.getNativeFunctionType(JSTypeNative.U2U_CONSTRUCTOR_TYPE);
+>       FunctionType leastFn =
+>           registry.getNativeFunctionType(JSTypeNative.LEAST_FUNCTION_TYPE);
+>       return leastSuper ? greatestFn : leastFn;
+515c536,573
+<   FunctionType cloneWithNewReturnType(JSType newReturnType, boolean inferred) {
+---
+>   
+> 
+> 
+> 
+>   private FunctionType tryMergeFunctionPiecewise(
+>       FunctionType other, boolean leastSuper) {
+>     Node newParamsNode = null;
+>     if (call.hasEqualParameters(other.call)) {
+>       newParamsNode = call.parameters;
+>     } else {
+>       
+>       
+>       return null;
+>     }
+> 
+>     JSType newReturnType = leastSuper ?
+>         call.returnType.getLeastSupertype(other.call.returnType) :
+>         call.returnType.getGreatestSubtype(other.call.returnType);
+> 
+>     ObjectType newTypeOfThis = null;
+>     if (isEquivalent(typeOfThis, other.typeOfThis)) {
+>       newTypeOfThis = typeOfThis;
+>     } else {
+>       JSType maybeNewTypeOfThis = leastSuper ?
+>           typeOfThis.getLeastSupertype(other.typeOfThis) :
+>           typeOfThis.getGreatestSubtype(other.typeOfThis);
+>       if (maybeNewTypeOfThis instanceof ObjectType) {
+>         newTypeOfThis = (ObjectType) maybeNewTypeOfThis;
+>       } else {
+>         newTypeOfThis = leastSuper ?
+>             registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE) :
+>             registry.getNativeObjectType(JSTypeNative.NO_OBJECT_TYPE);
+>       }
+>     }
+> 
+>     boolean newReturnTypeInferred =
+>         call.returnTypeInferred || other.call.returnTypeInferred;
+> 
+517c575
+<         registry, null, source,
+---
+>         registry, null, null,
+519,520c577,578
+<             registry, call.parameters, newReturnType, inferred),
+<         typeOfThis, null, false, false);
+---
+>             registry, newParamsNode, newReturnType, newReturnTypeInferred),
+>         newTypeOfThis, null, false, false);

@@ -1,0 +1,61 @@
+43a44
+> import com.google.javascript.rhino.jstype.TemplateType;
+91c92,93
+<   private ImmutableList<String> templateTypeNames = ImmutableList.of();
+---
+>   private ImmutableList<TemplateType> templateTypeNames = ImmutableList.of();
+>   private ImmutableList<String> classTypeParameterNames = ImmutableList.of();;
+113a116,120
+>   static final DiagnosticType CLASS_TEMPLATE_WITHOUT_CONSTRUCTOR =
+>       DiagnosticType.warning(
+>           "JSC_CLASS_TEMPLATE_WITHOUT_CONSTRUCTOR",
+>           "@classTemplate used without @constructor or @interface for {0}");
+> 
+371a379,388
+> 
+>       ImmutableList<String> typeParameters = info.getClassTemplateTypeNames();
+>       if (!typeParameters.isEmpty()) {
+>         if (isConstructor || isInterface) {
+>           this.classTypeParameterNames = typeParameters;
+>         } else {
+>           reportWarning(CLASS_TEMPLATE_WITHOUT_CONSTRUCTOR,
+>               formatFnName());
+>         }
+>       }
+536,539c553,578
+<   FunctionTypeBuilder inferTemplateTypeName(@Nullable JSDocInfo info) {
+<     if (info != null) {
+<       templateTypeNames = info.getTemplateTypeNames();
+<       typeRegistry.setTemplateTypeNames(templateTypeNames);
+---
+>   FunctionTypeBuilder inferTemplateTypeName(
+>       @Nullable JSDocInfo info, JSType ownerType) {
+>     if (info != null &&  !info.getTemplateTypeNames().isEmpty()) {
+>       ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+>       for (String key : info.getTemplateTypeNames()) {
+>         builder.add(typeRegistry.createTemplateType(key));
+>       }
+>       templateTypeNames = builder.build();
+>     } else {
+>       templateTypeNames = ImmutableList.of();
+>     }
+> 
+>     ImmutableList<TemplateType> keys = templateTypeNames;
+>     if (ownerType != null) {
+>       ImmutableList<TemplateType> ownerTypeKeys =
+>           ownerType.getTemplateTypeMap().getTemplateKeys();
+>       if (!ownerTypeKeys.isEmpty()) {
+>         ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+>         builder.addAll(templateTypeNames);
+>         builder.addAll(ownerTypeKeys);
+>         keys = builder.build();
+>       }
+>     }
+> 
+>     if (!keys.isEmpty()) {
+>       typeRegistry.setTemplateTypeNames(keys);
+674c713,714
+<         fnName, contents.getSourceNode(), parametersNode, returnType, null);
+---
+>         fnName, contents.getSourceNode(), parametersNode, returnType,
+>         classTypeParameterNames);

@@ -1,0 +1,40 @@
+68a69,71
+>   private int[] lineOffsets = null;
+> 
+>   
+91a95,129
+> 
+>   @Override
+>   public int getLineOffset(int lineno) {
+>     if (lineOffsets == null) {
+>       findLineOffsets();
+>     }
+>     if (lineno < 1 || lineno > lineOffsets.length) {
+>       throw new IllegalArgumentException(
+>           "Expected line number between 1 and " + lineOffsets.length);
+>     }
+>     return lineOffsets[lineno - 1];
+>   }
+> 
+>   
+>   int getNumLines() {
+>     if (lineOffsets == null) {
+>       findLineOffsets();
+>     }
+>     return lineOffsets.length;
+>   }
+> 
+>   private void findLineOffsets() {
+>     try {
+>       String[] sourceLines = getCode().split("\n");
+>       lineOffsets = new int[sourceLines.length];
+>       for (int ii = 1; ii < sourceLines.length; ++ii) {
+>         lineOffsets[ii] =
+>             lineOffsets[ii - 1] + sourceLines[ii - 1].length() + 1;
+>       }
+>     } catch (IOException e) {
+>       lineOffsets = new int[1];
+>       lineOffsets[0] = 0;
+>     }
+>   }
+> 

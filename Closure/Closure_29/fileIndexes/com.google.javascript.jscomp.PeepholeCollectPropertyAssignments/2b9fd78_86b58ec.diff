@@ -1,0 +1,91 @@
+43a44
+>     
+46c47
+<       if (child.getType() != Token.VAR) {
+---
+>       if (child.getType() != Token.VAR && !NodeUtil.isExprAssign(child)) {
+49c50
+<       if (!isPropertyAssignmentToVar(child.getNext())) {
+---
+>       if (!isPropertyAssignmentToName(child.getNext())) {
+55,57c56,63
+<       Node var = child.getFirstChild();
+<       Node varValue = var.getFirstChild();
+<       if (varValue == null) {  
+---
+>       Node name = getName(child);
+>       if (name.getType() != Token.NAME) {
+>         
+>         continue;
+>       }
+>       Node value = getValue(child);
+>       if (value == null || !isInterestingValue(value)) {
+>         
+65c71
+<         if (!collectProperty(propertyCandidate, var)) {
+---
+>         if (!collectProperty(propertyCandidate, name.getString(), value)) {
+78c84,106
+<   private boolean isPropertyAssignmentToVar(Node propertyCandidate) {
+---
+>   private Node getName(Node n) {
+>     if (n.getType() == Token.VAR) {
+>       return n.getFirstChild();
+>     } else if (NodeUtil.isExprAssign(n)) {
+>       return n.getFirstChild().getFirstChild();
+>     }
+>     throw new IllegalStateException();
+>   }
+> 
+>   private Node getValue(Node n) {
+>     if (n.getType() == Token.VAR) {
+>       return n.getFirstChild().getFirstChild();
+>     } else if (NodeUtil.isExprAssign(n)) {
+>       return n.getFirstChild().getLastChild();
+>     }
+>     throw new IllegalStateException();
+>   }
+> 
+>   boolean isInterestingValue(Node n) {
+>     return n.getType() == Token.OBJECTLIT || n.getType() == Token.ARRAYLIT;
+>   }
+> 
+>   private boolean isPropertyAssignmentToName(Node propertyCandidate) {
+102,103c130,132
+<   private boolean collectProperty(Node propertyCandidate, Node var) {
+<     if (!isPropertyAssignmentToVar(propertyCandidate)) {
+---
+>   private boolean collectProperty(
+>       Node propertyCandidate, String name, Node value) {
+>     if (!isPropertyAssignmentToName(propertyCandidate)) {
+107,108d135
+<     String varName = var.getString();
+< 
+111c138
+<     if (!varName.equals(lhs.getFirstChild().getString())) {
+---
+>     if (!name.equals(lhs.getFirstChild().getString())) {
+122c149
+<     if (mightContainForwardReference(rhs, varName)) {
+---
+>     if (mightContainForwardReference(rhs, name)) {
+126,129c153
+<     
+<     
+<     Node varValue = var.getFirstChild();
+<     switch (varValue.getType()) {
+---
+>     switch (value.getType()) {
+131c155
+<         if (!collectArrayProperty(varValue, propertyCandidate)) {
+---
+>         if (!collectArrayProperty(value, propertyCandidate)) {
+136c160
+<         if (!collectObjectProperty(varValue, propertyCandidate)) {
+---
+>         if (!collectObjectProperty(value, propertyCandidate)) {
+140c164,165
+<       default: return false;
+---
+>       default:
+>         throw new IllegalStateException();

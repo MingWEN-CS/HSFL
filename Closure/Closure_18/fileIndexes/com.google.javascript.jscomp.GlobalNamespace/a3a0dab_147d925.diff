@@ -1,0 +1,44 @@
+33a34
+> import com.google.javascript.rhino.jstype.StaticSymbolTable;
+35a37
+> import java.util.Collections;
+46c48,50
+< class GlobalNamespace implements StaticScope<JSType> {
+---
+> class GlobalNamespace
+>     implements StaticScope<JSType>,
+>     StaticSymbolTable<GlobalNamespace.Name, GlobalNamespace.Ref> {
+115,116c119,123
+<   
+< 
+---
+>   @Override
+>   public Iterable<Ref> getReferences(Name slot) {
+>     ensureGenerated();
+>     return Collections.unmodifiableList(slot.getRefs());
+>   }
+117a125,129
+>   @Override
+>   public Iterable<Name> getAllSymbols() {
+>     ensureGenerated();
+>     return Collections.unmodifiableCollection(getNameIndex().values());
+>   }
+119c131
+<   List<Name> getNameForest() {
+---
+>   private void ensureGenerated() {
+122a135,142
+>   }
+> 
+>   
+> 
+> 
+> 
+>   List<Name> getNameForest() {
+>     ensureGenerated();
+131,133c151
+<     if (!generated) {
+<       process();
+<     }
+---
+>     ensureGenerated();

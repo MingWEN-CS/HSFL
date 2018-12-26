@@ -1,0 +1,297 @@
+30a31,36
+> import com.google.javascript.jscomp.graph.DiGraph;
+> import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+> import com.google.javascript.jscomp.graph.FixedPointGraphTraversal;
+> import com.google.javascript.jscomp.graph.FixedPointGraphTraversal.EdgeCallback;
+> 
+> import com.google.javascript.jscomp.graph.LinkedDirectedGraph;
+80a87,88
+>   private DiGraph<JsName, RefType> referenceGraph =
+>       new LinkedDirectedGraph<JsName, RefType>();
+81a90
+>   
+87,91d95
+<   private final Map<Node, NameInformation> scopes = Maps.newHashMap();
+< 
+<   
+< 
+< 
+93c97
+<   private final List<Set<JsName>> generations = Lists.newArrayList();
+---
+>   private final Map<Node, NameInformation> scopes = Maps.newHashMap();
+131a136,162
+> 
+>   private static enum RefType {
+>     REGULAR,
+>     INHERITANCE,
+>   }
+> 
+>   
+> 
+> 
+>   private static class ReferencePropagationCallback
+>       implements EdgeCallback<JsName, RefType> {
+>     public boolean traverseEdge(JsName from,
+>                                 RefType callSite,
+>                                 JsName to) {
+>       if (from.referenced && !to.referenced) {
+>         to.referenced = true;
+>         return true;
+>       } else {
+>         return false;
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+163,168d193
+<     Set<String> refersTo = Sets.newHashSet();
+< 
+<     
+<     Set<String> referencedBy = Sets.newHashSet();
+< 
+<     
+178,180d202
+<     int generation = 0;
+< 
+<     
+202,210d223
+<       if (refersTo.size() > 0) {
+<         out.append("\n - REFERS TO: ");
+<         out.append(Joiner.on(", ").join(refersTo));
+<       }
+< 
+<       if (referencedBy.size() > 0) {
+<         out.append("\n - REFERENCED BY: ");
+<         out.append(Joiner.on(", ").join(referencedBy));
+<       }
+735c748,750
+<         recordReference(nameInfo.name, nameInfo.superclass);
+---
+>         recordReference(nameInfo.name,
+>                         nameInfo.superclass,
+>                         RefType.INHERITANCE);
+742c757,759
+<           recordReference(nameInfo.name, nodeName);
+---
+>           recordReference(nameInfo.name,
+>                           nodeName,
+>                           RefType.REGULAR);
+774c791,792
+<         recordReference(WINDOW, name);
+---
+>         recordReference(WINDOW, name,
+>                         RefType.REGULAR);
+782c800
+<           recordReference(referringName, name);
+---
+>           recordReference(referringName, name, RefType.REGULAR);
+790c808
+<           recordReference(functionScope.name, name);
+---
+>           recordReference(functionScope.name, name, RefType.REGULAR);
+792c810
+<           recordReference(WINDOW, name);
+---
+>           recordReference(WINDOW, name, RefType.REGULAR);
+795c813
+<         recordReference(referringName, name);
+---
+>         recordReference(referringName, name, RefType.REGULAR);
+804c822
+<             recordReference(WINDOW, name);
+---
+>             recordReference(WINDOW, name, RefType.REGULAR);
+814,823d831
+<     private void recordReference(String fromName, String toName) {
+<       JsName from = getName(fromName, true);
+<       JsName to = getName(toName, true);
+<       from.refersTo.add(toName);
+<       to.referencedBy.add(fromName);
+<     }
+< 
+<     
+< 
+< 
+909a918,931
+>   private void recordReference(String fromName, String toName,
+>                                RefType depType) {
+>     JsName from = getName(fromName, true);
+>     JsName to = getName(toName, true);
+>     referenceGraph.createNode(from);
+>     referenceGraph.createNode(to);
+>     if (!referenceGraph.isConnectedInDirection(from, to)) {
+>       referenceGraph.connect(from, depType, to);
+>     }
+>   }
+> 
+>   
+> 
+> 
+929,963d950
+<   String getStringReport() {
+<     StringBuilder sb = new StringBuilder();
+<     sb.append("TOTAL NAMES: " + countOf(TriState.BOTH, TriState.BOTH) + "\n");
+<     sb.append("TOTAL CLASSES: " + countOf(TriState.TRUE, TriState.BOTH) + "\n");
+<     sb.append("TOTAL STATIC FUNCTIONS: "
+<         + countOf(TriState.FALSE, TriState.BOTH) + "\n");
+<     sb.append("REFERENCED NAMES: " + countOf(TriState.BOTH, TriState.TRUE)
+<         + "\n");
+<     sb.append("REFERENCED CLASSES: " + countOf(TriState.TRUE, TriState.TRUE)
+<         + "\n");
+<     sb.append("REFERENCED STATIC FUNCTIONS: "
+<         + countOf(TriState.FALSE, TriState.TRUE) + "\n");
+< 
+< 
+<     for (int i = 0; i < generations.size(); i++) {
+<       Set<JsName> gen = generations.get(i);
+<       sb.append("GENERATION " + i + ": " + gen.size() + " names\n");
+<       for (JsName jsName : gen) {
+<         sb.append(" - " + jsName.name + "\n");
+<       }
+<     }
+< 
+<     sb.append("ALL NAMES\n");
+<     for (JsName node : allNames.values()) {
+<       sb.append(node + "\n");
+<     }
+< 
+<     return sb.toString();
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+985,994d971
+< 
+<     for (int i = 0; i < generations.size(); i++) {
+<       Set<JsName> gen = generations.get(i);
+<       sb.append("GENERATION " + i + ": " + gen.size() + " names\n<ul>");
+<       for (JsName jsName : gen) {
+<         appendListItem(sb, nameLink(jsName.name));
+<       }
+<       sb.append("</ul>");
+<     }
+< 
+1008,1014c985,996
+<       if (node.refersTo.size() > 0) {
+<         sb.append("<li>REFERS TO: ");
+<         Iterator<String> toIter = node.refersTo.iterator();
+<         while (toIter.hasNext()) {
+<           sb.append(nameLink(toIter.next()));
+<           if (toIter.hasNext()) {
+<             sb.append(", ");
+---
+> 
+>       if (referenceGraph.hasNode(node)) {
+>         List<DiGraphEdge<JsName, RefType>> refersTo =
+>             referenceGraph.getOutEdges(node);
+>         if (refersTo.size() > 0) {
+>           sb.append("<li>REFERS TO: ");
+>           Iterator<DiGraphEdge<JsName, RefType>> toIter = refersTo.iterator();
+>           while (toIter.hasNext()) {
+>             sb.append(nameLink(toIter.next().getDestination().getValue().name));
+>             if (toIter.hasNext()) {
+>               sb.append(", ");
+>             }
+1017,1024c999,1010
+<       }
+<       if (node.referencedBy.size() > 0) {
+<         sb.append("<li>REFERENCED BY: ");
+<         Iterator<String> fromIter = node.referencedBy.iterator();
+<         while (fromIter.hasNext()) {
+<           sb.append(nameLink(fromIter.next()));
+<           if (fromIter.hasNext()) {
+<             sb.append(", ");
+---
+> 
+>         List<DiGraphEdge<JsName, RefType>> referencedBy =
+>             referenceGraph.getInEdges(node);
+>         if (referencedBy.size() > 0) {
+>           sb.append("<li>REFERENCED BY: ");
+>           Iterator<DiGraphEdge<JsName, RefType>> fromIter = refersTo.iterator();
+>           while (fromIter.hasNext()) {
+>             sb.append(
+>                 nameLink(fromIter.next().getDestination().getValue().name));
+>             if (fromIter.hasNext()) {
+>               sb.append(", ");
+>             }
+1095d1080
+<           JsName parentJsName = getName(parentName, true);
+1097,1098c1082
+<           curJsName.refersTo.add(parentName);
+<           parentJsName.referencedBy.add(curName);
+---
+>           JsName parentJsName = getName(parentName, true);
+1100,1101c1084,1085
+<           parentJsName.refersTo.add(curName);
+<           curJsName.referencedBy.add(parentName);
+---
+>           recordReference(curJsName.name, parentJsName.name, RefType.REGULAR);
+>           recordReference(parentJsName.name, curJsName.name, RefType.REGULAR);
+1304d1287
+< 
+1306,1309d1288
+<     
+< 
+<     Set<JsName> curGeneration = Sets.newHashSet();
+< 
+1311d1289
+<     window.generation = 0;
+1313d1290
+<     curGeneration.add(window);
+1315d1291
+<     function.generation = 0;
+1317,1327d1292
+<     curGeneration.add(function);
+< 
+<     for (String s : externalNames) {
+<       JsName jsn = getName(s, true);
+<       if (jsn.refersTo.size() > 0) {
+<         jsn.generation = 0;
+<         jsn.referenced = true;
+<         curGeneration.add(jsn);
+<       }
+<     }
+<     generations.add(curGeneration);
+1330,1336c1295,1296
+<     
+<     int iters = 0;
+<     while (curGeneration.size() > 0 && iters < 100) {
+<       curGeneration = referenceMore(curGeneration);
+<       generations.add(curGeneration);
+<       iters++;
+<     }
+---
+>     FixedPointGraphTraversal.newTraversal(new ReferencePropagationCallback())
+>         .computeFixedPoint(referenceGraph);
+1339,1361d1298
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private Set<JsName> referenceMore(Set<JsName> lastGen) {
+<     Set<JsName> referenced = Sets.newTreeSet();
+<     for (JsName src : lastGen) {
+<       for (String s : src.refersTo) {
+<         JsName target = allNames.get(s);
+<         if (target != null && !target.referenced) {
+<           target.referenced = true;
+<           target.generation = src.generation + 1;
+<           referenced.add(target);
+<         }
+<       }
+<     }
+<     return referenced;
+<   }

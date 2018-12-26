@@ -1,0 +1,117 @@
+27a28
+> import com.google.javascript.jscomp.CompilerOptions.TweakProcessing;
+201c202,205
+<     createDefineReplacements(config.define, options);
+---
+>     createDefineOrTweakReplacements(config.define, options, false);
+> 
+>     options.setTweakProcessing(config.tweakProcessing);
+>     createDefineOrTweakReplacements(config.tweak, options, true);
+990,991c994,995
+<   static void createDefineReplacements(List<String> definitions,
+<       CompilerOptions options) {
+---
+>   static void createDefineOrTweakReplacements(List<String> definitions,
+>       CompilerOptions options, boolean tweaks) {
+998,1002c1002
+<         if (assignment.length == 1) {
+<           options.setDefineToBooleanLiteral(defName, true);
+<           continue;
+<         } else {
+<           String defValue = assignment[1];
+---
+>         String defValue = assignment.length == 1 ? "true" : assignment[1];
+1004,1019c1004,1025
+<           if (defValue.equals("true")) {
+<             options.setDefineToBooleanLiteral(defName, true);
+<             continue;
+<           } else if (defValue.equals("false")) {
+<             options.setDefineToBooleanLiteral(defName, false);
+<             continue;
+<           } else if (defValue.length() > 1
+<               && ((defValue.charAt(0) == '\'' &&
+<                   defValue.charAt(defValue.length() - 1) == '\'')
+<                   || (defValue.charAt(0) == '\"' &&
+<                       defValue.charAt(defValue.length() - 1) == '\"'))) {
+<             
+<             
+<             String maybeStringVal =
+<                 defValue.substring(1, defValue.length() - 1);
+<             if (maybeStringVal.indexOf(defValue.charAt(0)) == -1) {
+---
+>         boolean isTrue = defValue.equals("true");
+>         boolean isFalse = defValue.equals("false");
+>         if (isTrue || isFalse) {
+>           if (tweaks) {
+>             options.setTweakToBooleanLiteral(defName, isTrue);
+>           } else {
+>             options.setDefineToBooleanLiteral(defName, isTrue);
+>           }
+>           continue;
+>         } else if (defValue.length() > 1
+>             && ((defValue.charAt(0) == '\'' &&
+>                 defValue.charAt(defValue.length() - 1) == '\'')
+>                 || (defValue.charAt(0) == '\"' &&
+>                     defValue.charAt(defValue.length() - 1) == '\"'))) {
+>           
+>           
+>           String maybeStringVal =
+>               defValue.substring(1, defValue.length() - 1);
+>           if (maybeStringVal.indexOf(defValue.charAt(0)) == -1) {
+>             if (tweaks) {
+>               options.setTweakToStringLiteral(defName, maybeStringVal);
+>             } else {
+1021d1026
+<               continue;
+1023,1029c1028,1036
+<           } else {
+<             try {
+<               options.setDefineToDoubleLiteral(defName,
+<                   Double.parseDouble(defValue));
+<               continue;
+<             } catch (NumberFormatException e) {
+<               
+---
+>             continue;
+>           }
+>         } else {
+>           try {
+>             double value = Double.parseDouble(defValue);
+>             if (tweaks) {
+>               options.setTweakToDoubleLiteral(defName, value);
+>             } else {
+>               options.setDefineToDoubleLiteral(defName, value);
+1030a1038,1040
+>             continue;
+>           } catch (NumberFormatException e) {
+>             
+1034a1045,1048
+>       if (tweaks) {
+>         throw new RuntimeException(
+>             "--tweak flag syntax invalid: " + override);
+>       }
+1491a1506,1529
+>       return this;
+>     }
+> 
+>     private final List<String> tweak = Lists.newArrayList();
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     CommandLineConfig setTweak(List<String> tweak) {
+>       this.tweak.clear();
+>       this.tweak.addAll(tweak);
+>       return this;
+>     }
+> 
+>     private TweakProcessing tweakProcessing = TweakProcessing.OFF;
+>     
+>     
+> 
+> 
+>     CommandLineConfig setTweakProcessing(TweakProcessing tweakProcessing) {
+>       this.tweakProcessing = tweakProcessing;

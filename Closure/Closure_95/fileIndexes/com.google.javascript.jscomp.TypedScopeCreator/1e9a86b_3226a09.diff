@@ -1,0 +1,89 @@
+107c107
+<   private Map<ObjectType, ObjectType> delegateProxyMap = Maps.newHashMap();
+---
+>   private Map<ObjectType, FunctionType> delegateProxyMap = Maps.newHashMap();
+895,935c895
+<             ObjectType delegatorObject = ObjectType.cast(
+<                 typeRegistry.getType(delegateRelationship.delegator));
+<             ObjectType delegateBaseObject = ObjectType.cast(
+<                 typeRegistry.getType(delegateRelationship.delegateBase));
+<             ObjectType delegateSuperObject = ObjectType.cast(
+<                 typeRegistry.getType(
+<                     codingConvention.getDelegateSuperclassName()));
+<             if (delegatorObject != null &&
+<                 delegateBaseObject != null &&
+<                 delegateSuperObject != null) {
+<               FunctionType delegatorCtor = delegatorObject.getConstructor();
+<               FunctionType delegateBaseCtor =
+<                   delegateBaseObject.getConstructor();
+<               FunctionType delegateSuperCtor =
+<                   delegateSuperObject.getConstructor();
+< 
+<               if (delegatorCtor != null && delegateBaseCtor != null &&
+<                   delegateSuperCtor != null) {
+<                 FunctionParamBuilder functionParamBuilder =
+<                     new FunctionParamBuilder(typeRegistry);
+<                 functionParamBuilder.addRequiredParams(
+<                     typeRegistry.getNativeType(U2U_CONSTRUCTOR_TYPE));
+<                 FunctionType findDelegate = typeRegistry.createFunctionType(
+<                     typeRegistry.createDefaultObjectUnion(
+<                         delegateBaseObject),
+<                     functionParamBuilder.build());
+< 
+<                 FunctionType delegateProxy =
+<                     typeRegistry.createConstructorType(
+<                         delegateBaseObject.getReferenceName(), null, null,
+<                         null);
+<                 delegateProxy.setPrototypeBasedOn(delegateBaseCtor);
+< 
+<                 codingConvention.applyDelegateRelationship(
+<                     delegateSuperObject, delegateBaseObject, delegatorObject,
+<                     delegateProxy, findDelegate);
+<                 delegateProxyMap.put(
+<                     delegateProxy.getPrototype(),
+<                     delegateBaseCtor.getPrototype());
+<               }
+<             }
+---
+>             applyDelegateRelationship(delegateRelationship);
+1002a963,1002
+>       }
+>     }
+> 
+>     private void applyDelegateRelationship(
+>         DelegateRelationship delegateRelationship) {
+>       ObjectType delegatorObject = ObjectType.cast(
+>           typeRegistry.getType(delegateRelationship.delegator));
+>       ObjectType delegateBaseObject = ObjectType.cast(
+>           typeRegistry.getType(delegateRelationship.delegateBase));
+>       ObjectType delegateSuperObject = ObjectType.cast(
+>           typeRegistry.getType(codingConvention.getDelegateSuperclassName()));
+>       if (delegatorObject != null &&
+>           delegateBaseObject != null &&
+>           delegateSuperObject != null) {
+>         FunctionType delegatorCtor = delegatorObject.getConstructor();
+>         FunctionType delegateBaseCtor = delegateBaseObject.getConstructor();
+>         FunctionType delegateSuperCtor = delegateSuperObject.getConstructor();
+> 
+>         if (delegatorCtor != null && delegateBaseCtor != null &&
+>             delegateSuperCtor != null) {
+>           FunctionParamBuilder functionParamBuilder =
+>               new FunctionParamBuilder(typeRegistry);
+>           functionParamBuilder.addRequiredParams(
+>               typeRegistry.getNativeType(U2U_CONSTRUCTOR_TYPE));
+>           FunctionType findDelegate = typeRegistry.createFunctionType(
+>               typeRegistry.createDefaultObjectUnion(delegateBaseObject),
+>               functionParamBuilder.build());
+> 
+>           
+>           
+>           FunctionType delegateProxy = typeRegistry.createConstructorType(
+>               delegateBaseObject.getReferenceName() + "(Proxy)",
+>               null, null, null);
+>           delegateProxy.setPrototypeBasedOn(delegateBaseObject);
+> 
+>           codingConvention.applyDelegateRelationship(
+>               delegateSuperObject, delegateBaseObject, delegatorObject,
+>               delegateProxy, findDelegate);
+>           delegateProxyMap.put(delegateProxy.getPrototype(), delegateBaseCtor);
+>         }

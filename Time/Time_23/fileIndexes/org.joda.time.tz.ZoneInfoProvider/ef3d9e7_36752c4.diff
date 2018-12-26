@@ -1,0 +1,46 @@
+26d25
+< import java.util.TreeMap;
+27a27
+> import java.util.concurrent.ConcurrentHashMap;
+49c49
+<     private final Map iZoneInfoMap;
+---
+>     private final Map<String, Object> iZoneInfoMap;
+135c135
+<     public synchronized DateTimeZone getZone(String id) {
+---
+>     public DateTimeZone getZone(String id) {
+150,151c150,153
+<         if (obj instanceof SoftReference) {
+<             DateTimeZone tz = (DateTimeZone)((SoftReference)obj).get();
+---
+>         if (obj instanceof SoftReference<?>) {
+>             @SuppressWarnings("unchecked")
+>             SoftReference<DateTimeZone> ref = (SoftReference<DateTimeZone>) obj;
+>             DateTimeZone tz = ref.get();
+168c170
+<     public synchronized Set getAvailableIDs() {
+---
+>     public Set<String> getAvailableIDs() {
+172c174
+<         return new TreeSet(iZoneInfoMap.keySet());
+---
+>         return new TreeSet<String>(iZoneInfoMap.keySet());
+226c228
+<             iZoneInfoMap.put(id, new SoftReference(tz));
+---
+>             iZoneInfoMap.put(id, new SoftReference<DateTimeZone>(tz));
+249,250c251,252
+<     private static Map loadZoneInfoMap(InputStream in) throws IOException {
+<         Map map = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+---
+>     private static Map<String, Object> loadZoneInfoMap(InputStream in) throws IOException {
+>         Map<String, Object> map = new ConcurrentHashMap<String, Object>();
+260c262
+<         map.put("UTC", new SoftReference(DateTimeZone.UTC));
+---
+>         map.put("UTC", new SoftReference<DateTimeZone>(DateTimeZone.UTC));
+270c272
+<     private static void readZoneInfoMap(DataInputStream din, Map zimap) throws IOException {
+---
+>     private static void readZoneInfoMap(DataInputStream din, Map<String, Object> zimap) throws IOException {

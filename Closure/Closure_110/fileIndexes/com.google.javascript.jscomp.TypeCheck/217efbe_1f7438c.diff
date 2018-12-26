@@ -1,0 +1,43 @@
+1023,1029d1022
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+1032c1025
+<       Node obj = lvalue.getFirstChild();
+---
+>       JSType objType = getJSType(lvalue.getFirstChild());
+1034,1038c1027,1028
+<       JSType objType = getJSType(obj);
+<       String pname = prop.getString();
+< 
+<       if (!objType.isStruct() || objType.hasProperty(pname)) {
+<         return;
+---
+>       if (objType.isStruct() && !objType.hasProperty(prop.getString())) {
+>         report(t, prop, ILLEGAL_PROPERTY_CREATION);
+1040,1060d1029
+<       Scope s = t.getScope();
+<       if (obj.isThis() && getJSType(s.getRootNode()).isConstructor()) {
+<         return;
+<       }
+<       
+<       Node assgnExp = lvalue.getParent();
+<       Node assgnStm = assgnExp.getParent();
+<       if (objType instanceof ObjectType &&
+<           s.isGlobal() &&
+<           NodeUtil.isPrototypePropertyDeclaration(assgnStm)) {
+<         ObjectType instance =
+<             objType.toObjectType().getOwnerFunction().getInstanceType();
+<         String file = lvalue.getSourceFileName();
+<         Node ctor = instance.getConstructor().getSource();
+<         if (ctor != null && ctor.getSourceFileName().equals(file)) {
+<           JSType rvalueType = assgnExp.getLastChild().getJSType();
+<           instance.defineInferredProperty(pname, rvalueType, lvalue);
+<           return;
+<         }
+<       }
+<       report(t, prop, ILLEGAL_PROPERTY_CREATION);

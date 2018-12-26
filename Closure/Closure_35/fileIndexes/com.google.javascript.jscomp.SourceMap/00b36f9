@@ -1,0 +1,122 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Predicate;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.io.IOException;
+
+
+
+
+
+
+
+
+
+
+public interface SourceMap {
+
+  enum Format {
+     LEGACY {
+       @Override SourceMap getInstance() {
+         return new SourceMapLegacy();
+       }
+     },
+     EXPERIMENTIAL {
+       @Override SourceMap getInstance() {
+         return new SourceMap2();
+       }
+     };
+     abstract SourceMap getInstance();
+  }
+
+  
+
+
+  public enum DetailLevel implements Predicate<Node> {
+    
+    
+    ALL {
+      @Override public boolean apply(Node node) {
+        return true;
+      }
+    },
+    
+    
+    SYMBOLS {
+      @Override public boolean apply(Node node) {
+        return NodeUtil.isCall(node)
+            || NodeUtil.isNew(node)
+            || NodeUtil.isFunction(node)
+            || NodeUtil.isName(node)
+            || NodeUtil.isGet(node)
+            || (NodeUtil.isString(node) &&
+                (node.getParent().getType() == Token.OBJECTLIT ||
+                 NodeUtil.isGet(node.getParent())));
+      }
+    };
+  }
+
+  
+
+
+
+
+
+
+  void appendTo(Appendable out, String name) throws IOException;
+
+  
+
+
+
+  void reset();
+
+  
+
+
+
+
+
+
+  void addMapping(Node node, Position startPosition, Position endPosition);
+
+  
+
+
+
+
+
+
+  void setWrapperPrefix(String prefix);
+
+  
+
+
+
+
+
+
+
+
+
+  void setStartingPosition(int offsetLine, int offsetIndex);
+
+}

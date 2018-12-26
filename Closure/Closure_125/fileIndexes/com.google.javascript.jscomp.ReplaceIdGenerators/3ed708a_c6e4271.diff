@@ -1,0 +1,145 @@
+23a24
+> import com.google.debugging.sourcemap.Base64;
+56c57
+<           "Id generator can only be consistent or inconsistent");
+---
+>           "Id generator can only be one of consistent, inconsistent, or stable.");
+65d65
+<   private final Map<String, NameSupplier> consistNameGenerators;
+80d79
+<     consistNameGenerators = Maps.newLinkedHashMap();
+90c89,90
+<         nameGenerators.put(gen, createNameSupplier(previousMap.get(gen)));
+---
+>         nameGenerators.put(
+>             gen, createNameSupplier(RenameStrategy.INCONSISTENT, previousMap.get(gen)));
+95a96,101
+>   private enum RenameStrategy {
+>     CONSISTENT,
+>     INCONSISTENT,
+>     STABLE
+>   }
+> 
+97a104
+>     RenameStrategy getRenameStrategy();
+103c110,113
+<     public ObfuscatedNameSuppier(BiMap<String, String> previousMappings) {
+---
+>     private RenameStrategy renameStrategy;
+> 
+>     public ObfuscatedNameSuppier(
+>         RenameStrategy renameStrategy, BiMap<String, String> previousMappings) {
+106a117
+>       this.renameStrategy = renameStrategy;
+116a128,132
+> 
+>     @Override
+>     public RenameStrategy getRenameStrategy() {
+>       return renameStrategy;
+>     }
+120a137,142
+>     private RenameStrategy renameStrategy;
+> 
+>     public PseudoNameSuppier(RenameStrategy renameStrategy) {
+>       this.renameStrategy = renameStrategy;
+>     }
+> 
+123c145,164
+<       return name + "$" + counter++;
+---
+>       if (renameStrategy == RenameStrategy.INCONSISTENT) {
+>         return name + "$" + counter++;
+>       }
+>       return name + "$0";
+>     }
+> 
+>     @Override
+>     public RenameStrategy getRenameStrategy() {
+>       return renameStrategy;
+>     }
+>   }
+> 
+>   private static class StableNameSupplier implements NameSupplier {
+>     @Override
+>     public String getName(String id, String name) {
+>       return Base64.base64EncodeInt(name.hashCode());
+>     }
+>     @Override
+>     public RenameStrategy getRenameStrategy() {
+>       return RenameStrategy.STABLE;
+128c169
+<       BiMap<String, String> previousMappings) {
+---
+>       RenameStrategy renameStrategy, BiMap<String, String> previousMappings) {
+132,133c173,176
+<     if (generatePseudoNames) {
+<       return new PseudoNameSuppier();
+---
+>     if (renameStrategy == RenameStrategy.STABLE) {
+>       return new StableNameSupplier();
+>     } else if (generatePseudoNames) {
+>       return new PseudoNameSuppier(renameStrategy);
+135c178
+<       return new ObfuscatedNameSuppier(previousMappings);
+---
+>       return new ObfuscatedNameSuppier(renameStrategy, previousMappings);
+148,149c191,195
+<       if (!doc.isConsistentIdGenerator() &&
+<           !doc.isIdGenerator()) {
+---
+>       int numGeneratorAnnotations =
+>           (doc.isConsistentIdGenerator() ? 1 : 0) +
+>           (doc.isIdGenerator() ? 1 : 0) +
+>           (doc.isStableIdGenerator() ? 1 : 0);
+>       if (numGeneratorAnnotations == 0) {
+151,153c197
+<       }
+< 
+<       if (doc.isConsistentIdGenerator() && doc.isIdGenerator()) {
+---
+>       } else if (numGeneratorAnnotations > 1) {
+169,171d212
+<       
+<       
+< 
+173,174d213
+<         consistNameGenerators.put(
+<             name, createNameSupplier(previousMap.get(name)));
+175a215,219
+>         nameGenerators.put(
+>             name, createNameSupplier(RenameStrategy.CONSISTENT, previousMap.get(name)));
+>       } else if (doc.isStableIdGenerator()) {
+>         nameGenerators.put(
+>             name, createNameSupplier(RenameStrategy.STABLE, previousMap.get(name)));
+177c221,222
+<         nameGenerators.put(name, createNameSupplier(previousMap.get(name)));
+---
+>         nameGenerators.put(
+>             name, createNameSupplier(RenameStrategy.INCONSISTENT, previousMap.get(name)));
+186c231
+<     if (!nameGenerators.isEmpty() || !this.consistNameGenerators.isEmpty()) {
+---
+>     if (!nameGenerators.isEmpty()) {
+199d243
+<       boolean consistent = false;
+202,205d245
+<         nameGenerator = consistNameGenerators.get(callName);
+<         consistent = true;
+<       }
+<       if (nameGenerator == null) {
+209c249,250
+<       if (!t.inGlobalScope() && !consistent) {
+---
+>       if (!t.inGlobalScope() &&
+>           nameGenerator.getRenameStrategy() == RenameStrategy.INCONSISTENT) {
+215c256
+<       if (!consistent) {
+---
+>       if (nameGenerator.getRenameStrategy() == RenameStrategy.INCONSISTENT) {
+236,237c277,279
+<       String instanceId = getIdForGeneratorNode(consistent, id);
+<       if (consistent) {
+---
+>       String instanceId = getIdForGeneratorNode(
+>           nameGenerator.getRenameStrategy() == RenameStrategy.CONSISTENT, id);
+>       if (nameGenerator.getRenameStrategy() == RenameStrategy.CONSISTENT) {

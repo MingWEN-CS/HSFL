@@ -1,0 +1,38 @@
+556c556
+<   public void matchConstraint(ObjectType constraintObj) {
+---
+>   public void matchConstraint(JSType constraint) {
+571,580c571,576
+<     if (constraintObj.isRecordType()) {
+<       for (String prop : constraintObj.getOwnPropertyNames()) {
+<         JSType propType = constraintObj.getPropertyType(prop);
+<         if (!isPropertyTypeDeclared(prop)) {
+<           JSType typeToInfer = propType;
+<           if (!hasProperty(prop)) {
+<             typeToInfer = getNativeType(JSTypeNative.VOID_TYPE)
+<                 .getLeastSupertype(propType);
+<           }
+<           defineInferredProperty(prop, typeToInfer, null);
+---
+>     if (constraint.isRecordType()) {
+>       matchRecordTypeConstraint(constraint.toObjectType());
+>     } else if (constraint.isUnionType()) {
+>       for (JSType alt : constraint.toMaybeUnionType().getAlternates()) {
+>         if (alt.isRecordType()) {
+>           matchRecordTypeConstraint(alt.toObjectType());
+584a581,595
+> 
+>   public void matchRecordTypeConstraint(ObjectType constraintObj) {
+>     for (String prop : constraintObj.getOwnPropertyNames()) {
+>       JSType propType = constraintObj.getPropertyType(prop);
+>       if (!isPropertyTypeDeclared(prop)) {
+>         JSType typeToInfer = propType;
+>         if (!hasProperty(prop)) {
+>           typeToInfer = getNativeType(JSTypeNative.VOID_TYPE)
+>               .getLeastSupertype(propType);
+>         }
+>         defineInferredProperty(prop, typeToInfer, null);
+>       }
+>     }
+>   }
+> 

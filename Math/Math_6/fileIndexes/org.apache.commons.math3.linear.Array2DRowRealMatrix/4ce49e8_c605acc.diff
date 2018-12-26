@@ -1,0 +1,229 @@
+22c22,25
+< import org.apache.commons.math.MathRuntimeException;
+---
+> import org.apache.commons.math.exception.DimensionMismatchException;
+> import org.apache.commons.math.exception.NullArgumentException;
+> import org.apache.commons.math.exception.ZeroException;
+> import org.apache.commons.math.exception.MathIllegalStateException;
+54d56
+< 
+57d58
+< 
+64,65c65
+<     public Array2DRowRealMatrix() {
+<     }
+---
+>     public Array2DRowRealMatrix() {}
+114,115c114,116
+<     public Array2DRowRealMatrix(final double[][] d, final boolean copyArray)
+<         throws IllegalArgumentException, NullPointerException {
+---
+> 
+> 
+>     public Array2DRowRealMatrix(final double[][] d, final boolean copyArray) {
+120c121
+<                 throw new NullPointerException();
+---
+>                 throw new NullArgumentException();
+124,125c125
+<                 throw MathRuntimeException.createIllegalArgumentException(
+<                       LocalizedFormats.AT_LEAST_ONE_ROW);
+---
+>                 throw new ZeroException(LocalizedFormats.AT_LEAST_ONE_ROW);
+129,130c129
+<                 throw MathRuntimeException.createIllegalArgumentException(
+<                       LocalizedFormats.AT_LEAST_ONE_COLUMN);
+---
+>                 throw new ZeroException(LocalizedFormats.AT_LEAST_ONE_COLUMN);
+134,135c133
+<                     throw MathRuntimeException.createIllegalArgumentException(
+<                           LocalizedFormats.DIFFERENT_ROWS_LENGTHS, nCols, d[r].length);
+---
+>                     throw new DimensionMismatchException(d[r].length, nCols);
+160,161c158,159
+<     public RealMatrix createMatrix(final int rowDimension, final int columnDimension)
+<         throws IllegalArgumentException {
+---
+>     public RealMatrix createMatrix(final int rowDimension,
+>                                    final int columnDimension) {
+172,182d169
+<     @Override
+<     public RealMatrix add(final RealMatrix m)
+<         throws IllegalArgumentException {
+<         try {
+<             return add((Array2DRowRealMatrix) m);
+<         } catch (ClassCastException cce) {
+<             return super.add(m);
+<         }
+<     }
+< 
+<     
+189,190d175
+<     public Array2DRowRealMatrix add(final Array2DRowRealMatrix m)
+<         throws IllegalArgumentException {
+191a177
+>     public Array2DRowRealMatrix add(final Array2DRowRealMatrix m) {
+208,219d193
+< 
+<     }
+< 
+<     
+<     @Override
+<     public RealMatrix subtract(final RealMatrix m)
+<         throws IllegalArgumentException {
+<         try {
+<             return subtract((Array2DRowRealMatrix) m);
+<         } catch (ClassCastException cce) {
+<             return super.subtract(m);
+<         }
+229,230d202
+<     public Array2DRowRealMatrix subtract(final Array2DRowRealMatrix m)
+<         throws IllegalArgumentException {
+231a204
+>     public Array2DRowRealMatrix subtract(final Array2DRowRealMatrix m) {
+248d220
+< 
+252,260d223
+<     @Override
+<     public RealMatrix multiply(final RealMatrix m)
+<         throws IllegalArgumentException {
+<         try {
+<             return multiply((Array2DRowRealMatrix) m);
+<         } catch (ClassCastException cce) {
+<             return super.multiply(m);
+<         }
+<     }
+262d224
+<     
+269,270d230
+<     public Array2DRowRealMatrix multiply(final Array2DRowRealMatrix m)
+<         throws IllegalArgumentException {
+271a232
+>     public Array2DRowRealMatrix multiply(final Array2DRowRealMatrix m) {
+306,307d266
+< 
+< 
+314,315c273,274
+<     public void setSubMatrix(final double[][] subMatrix, final int row, final int column)
+<     throws MatrixIndexException {
+---
+>     public void setSubMatrix(final double[][] subMatrix,
+>                              final int row, final int column) {
+318,319c277
+<                 throw MathRuntimeException.createIllegalStateException(
+<                       LocalizedFormats.FIRST_ROWS_NOT_INITIALIZED_YET, row);
+---
+>                 throw new MathIllegalStateException(LocalizedFormats.FIRST_ROWS_NOT_INITIALIZED_YET, row);
+322,323c280
+<                 throw MathRuntimeException.createIllegalStateException(
+<                       LocalizedFormats.FIRST_COLUMNS_NOT_INITIALIZED_YET, column);
+---
+>                 throw new MathIllegalStateException(LocalizedFormats.FIRST_COLUMNS_NOT_INITIALIZED_YET, column);
+327,328c284
+<                 throw MathRuntimeException.createIllegalArgumentException(
+<                       LocalizedFormats.AT_LEAST_ONE_ROW);
+---
+>                 throw new ZeroException(LocalizedFormats.AT_LEAST_ONE_ROW);
+333,334c289
+<                 throw MathRuntimeException.createIllegalArgumentException(
+<                       LocalizedFormats.AT_LEAST_ONE_COLUMN);
+---
+>                 throw new ZeroException(LocalizedFormats.AT_LEAST_ONE_COLUMN);
+339,340c294
+<                     throw MathRuntimeException.createIllegalArgumentException(
+<                           LocalizedFormats.DIFFERENT_ROWS_LENGTHS, nCols, subMatrix[i].length);
+---
+>                     throw new DimensionMismatchException(subMatrix[i].length, nCols);
+352,359c306,308
+<     public double getEntry(final int row, final int column)
+<         throws MatrixIndexException {
+<         try {
+<             return data[row][column];
+<         } catch (ArrayIndexOutOfBoundsException e) {
+<             throw new MatrixIndexException(
+<                       LocalizedFormats.NO_SUCH_MATRIX_ENTRY, row, column, getRowDimension(), getColumnDimension());
+<         }
+---
+>     public double getEntry(final int row, final int column) {
+>         MatrixUtils.checkMatrixIndex(this, row, column);
+>         return data[row][column];
+364,371c313,315
+<     public void setEntry(final int row, final int column, final double value)
+<         throws MatrixIndexException {
+<         try {
+<             data[row][column] = value;
+<         } catch (ArrayIndexOutOfBoundsException e) {
+<             throw new MatrixIndexException(
+<                       LocalizedFormats.NO_SUCH_MATRIX_ENTRY, row, column, getRowDimension(), getColumnDimension());
+<         }
+---
+>     public void setEntry(final int row, final int column, final double value) {
+>         MatrixUtils.checkMatrixIndex(this, row, column);
+>         data[row][column] = value;
+376,383c320,322
+<     public void addToEntry(final int row, final int column, final double increment)
+<         throws MatrixIndexException {
+<         try {
+<             data[row][column] += increment;
+<         } catch (ArrayIndexOutOfBoundsException e) {
+<             throw new MatrixIndexException(
+<                       LocalizedFormats.NO_SUCH_MATRIX_ENTRY, row, column, getRowDimension(), getColumnDimension());
+<         }
+---
+>     public void addToEntry(final int row, final int column, final double increment) {
+>         MatrixUtils.checkMatrixIndex(this, row, column);
+>         data[row][column] += increment;
+388,395c327,329
+<     public void multiplyEntry(final int row, final int column, final double factor)
+<         throws MatrixIndexException {
+<         try {
+<             data[row][column] *= factor;
+<         } catch (ArrayIndexOutOfBoundsException e) {
+<             throw new MatrixIndexException(
+<                       LocalizedFormats.NO_SUCH_MATRIX_ENTRY, row, column, getRowDimension(), getColumnDimension());
+<         }
+---
+>     public void multiplyEntry(final int row, final int column, final double factor) {
+>         MatrixUtils.checkMatrixIndex(this, row, column);
+>         data[row][column] *= factor;
+400c334
+<     public int getRowDimension() {
+---
+>         public int getRowDimension() {
+412,413c346
+<     public double[] operate(final double[] v)
+<         throws IllegalArgumentException {
+---
+>     public double[] operate(final double[] v) {
+417,418c350
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.VECTOR_LENGTH_MISMATCH, v.length, nCols);
+---
+>             throw new DimensionMismatchException(v.length, nCols);
+434,436c366
+<     public double[] preMultiply(final double[] v)
+<         throws IllegalArgumentException {
+< 
+---
+>     public double[] preMultiply(final double[] v) {
+440,441c370
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.VECTOR_LENGTH_MISMATCH, v.length, nRows);
+---
+>             throw new DimensionMismatchException(v.length, nRows);
+494c423
+<         throws MatrixIndexException, MatrixVisitorException {
+---
+>         throws MatrixVisitorException {
+512c441
+<         throws MatrixIndexException, MatrixVisitorException {
+---
+>         throws MatrixVisitorException {
+561c490
+<         throws MatrixIndexException, MatrixVisitorException {
+---
+>         throws MatrixVisitorException {
+579c508
+<         throws MatrixIndexException, MatrixVisitorException {
+---
+>         throws MatrixVisitorException {

@@ -1,0 +1,69 @@
+20a21
+> import com.google.javascript.rhino.IR;
+267,277c268
+<     Node replacement;
+<     if (Double.isNaN(value)) {
+<       replacement = Node.newString(Token.NAME, "NaN");
+<     } else if (value == Double.POSITIVE_INFINITY) {
+<       replacement = Node.newString(Token.NAME, "Infinity");
+<     } else if (value == Double.NEGATIVE_INFINITY) {
+<       replacement = new Node(Token.NEG, Node.newString(Token.NAME, "Infinity"));
+<       replacement.copyInformationFromForTree(n);
+<     } else {
+<       replacement = Node.newNumber(value);
+<     }
+---
+>     Node replacement = NodeUtil.numberNode(value, n);
+364,365c355
+<         int result = leftVal.toBoolean(true) ? Token.FALSE : Token.TRUE;
+<         Node replacementNode = new Node(result);
+---
+>         Node replacementNode = NodeUtil.booleanNode(!leftVal.toBoolean(true));
+449c439
+<         replacementNode = new Node(Token.FALSE);
+---
+>         replacementNode = IR.falseNode();
+452c442
+<         replacementNode = new Node(Token.TRUE);
+---
+>         replacementNode = IR.trueNode();
+557c547
+<     Node replacement = new Node(Token.ASSIGN, left.detachFromParent(),
+---
+>     Node replacement = IR.assign(left.detachFromParent(),
+559c549
+<             .useSourceInfoFrom(n));
+---
+>             .srcref(n));
+771,772c761,762
+<     if (String.valueOf(result).length() <=
+<         String.valueOf(lval).length() + String.valueOf(rval).length() + 1 &&
+---
+>     if ((String.valueOf(result).length() <=
+>         String.valueOf(lval).length() + String.valueOf(rval).length() + 1
+776,784c766,770
+<         Math.abs(result) <= MAX_FOLD_NUMBER) {
+<       Node newNumber = Node.newNumber(result);
+<       return newNumber;
+<     } else if (Double.isNaN(result)) {
+<       return Node.newString(Token.NAME, "NaN");
+<     } else if (result == Double.POSITIVE_INFINITY) {
+<       return Node.newString(Token.NAME, "Infinity");
+<     } else if (result == Double.NEGATIVE_INFINITY) {
+<       return new Node(Token.NEG, Node.newString(Token.NAME, "Infinity"));
+---
+>         && Math.abs(result) <= MAX_FOLD_NUMBER)
+>         || Double.isNaN(result)
+>         || result == Double.POSITIVE_INFINITY
+>         || result == Double.NEGATIVE_INFINITY) {
+>       return NodeUtil.numberNode(result, null);
+786d771
+< 
+1157c1142
+<     Node newNode = new Node(result ? Token.TRUE : Token.FALSE);
+---
+>     Node newNode = NodeUtil.booleanNode(result);
+1537c1522
+<       replacement = new Node(Token.CALL, replacement);
+---
+>       replacement = IR.call(replacement);

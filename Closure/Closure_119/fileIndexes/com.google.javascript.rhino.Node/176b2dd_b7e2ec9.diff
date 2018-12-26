@@ -1,0 +1,144 @@
+42a43
+> import com.google.common.annotations.VisibleForTesting;
+344a346
+>   
+348,351c350,369
+<     PropListItem next;
+<     int type;
+<     int intValue;
+<     Object objectValue;
+---
+>     final PropListItem next;
+>     final int type;
+>     final int intValue;
+>     final Object objectValue;
+> 
+>     PropListItem(int type, int intValue, PropListItem next) {
+>       this(type, intValue, null, next);
+>     }
+> 
+>     PropListItem(int type, Object objectValue, PropListItem next) {
+>       this(type, 0, objectValue, next);
+>     }
+> 
+>     PropListItem(
+>         int type, int intValue, Object objectValue, PropListItem next) {
+>       this.type = type;
+>       this.intValue = intValue;
+>       this.objectValue = objectValue;
+>       this.next = next;
+>     }
+726c744,745
+<   private PropListItem lookupProperty(int propType) {
+---
+>   @VisibleForTesting
+>   PropListItem lookupProperty(int propType) {
+734,740c753,756
+<   private PropListItem ensureProperty(int propType) {
+<     PropListItem item = lookupProperty(propType);
+<     if (item == null) {
+<       item = new PropListItem();
+<       item.type = propType;
+<       item.next = propListHead;
+<       propListHead = item;
+---
+>   public void removeProp(int propType) {
+>     PropListItem result = removeProp(propListHead, propType);
+>     if (result != propListHead) {
+>       propListHead = result;
+742d757
+<     return item;
+745,757c760,775
+<   public void removeProp(int propType) {
+<     PropListItem x = propListHead;
+<     if (x != null) {
+<       PropListItem prev = null;
+<       while (x.type != propType) {
+<         prev = x;
+<         x = x.next;
+<         if (x == null) {
+<           return;
+<         }
+<       }
+<       if (prev == null) {
+<         propListHead = x.next;
+---
+>   
+> 
+> 
+> 
+> 
+> 
+>   private PropListItem removeProp(PropListItem item, int propType) {
+>     if (item == null) {
+>       return null;
+>     } else if (item.type == propType) {
+>       return item.next;
+>     } else {
+>       PropListItem result = removeProp(item.next, propType);
+>       if (result != item.next) {
+>         return new PropListItem(
+>             item.type, item.intValue, item.objectValue, result);
+759c777
+<         prev.next = x.next;
+---
+>         return item;
+773c791
+<     return getIntProp(propType, 0) != 0;
+---
+>     return getIntProp(propType) != 0;
+776c794,798
+<   public int getIntProp(int propType, int defaultValue) {
+---
+>   
+> 
+> 
+> 
+>   public int getIntProp(int propType) {
+779c801
+<       return defaultValue;
+---
+>       return 0;
+792,797c814,817
+<   public void putProp(int propType, Object prop) {
+<     if (prop == null) {
+<       removeProp(propType);
+<     } else {
+<       PropListItem item = ensureProperty(propType);
+<       item.objectValue = prop;
+---
+>   public void putProp(int propType, Object value) {
+>     removeProp(propType);
+>     if (value != null) {
+>       propListHead = new PropListItem(propType, value, propListHead);
+801,802c821,822
+<   public void putBooleanProp(int propType, boolean prop) {
+<     putIntProp(propType, prop ? 1 : 0);
+---
+>   public void putBooleanProp(int propType, boolean value) {
+>     putIntProp(propType, value ? 1 : 0);
+805,807c825,829
+<   public void putIntProp(int propType, int prop) {
+<     PropListItem item = ensureProperty(propType);
+<     item.intValue = prop;
+---
+>   public void putIntProp(int propType, int value) {
+>     removeProp(propType);
+>     if (value != 0) {
+>       propListHead = new PropListItem(propType, value, propListHead);
+>     }
+1588,1589c1610,1611
+<       int post1 = this.getIntProp(INCRDECR_PROP, 0);
+<       int post2 = node.getIntProp(INCRDECR_PROP, 0);
+---
+>       int post1 = this.getIntProp(INCRDECR_PROP);
+>       int post2 = node.getIntProp(INCRDECR_PROP);
+1594,1595c1616,1617
+<       int quoted1 = this.getIntProp(QUOTED_PROP, 0);
+<       int quoted2 = node.getIntProp(QUOTED_PROP, 0);
+---
+>       int quoted1 = this.getIntProp(QUOTED_PROP);
+>       int quoted2 = node.getIntProp(QUOTED_PROP);
+1818a1841,1842
+>       
+>       

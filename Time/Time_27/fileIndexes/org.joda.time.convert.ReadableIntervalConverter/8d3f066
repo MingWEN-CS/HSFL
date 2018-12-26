@@ -1,0 +1,147 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.Chronology;
+import org.joda.time.ReadWritableInterval;
+import org.joda.time.ReadWritablePeriod;
+import org.joda.time.ReadableInterval;
+
+
+
+
+
+
+
+class ReadableIntervalConverter extends AbstractConverter
+        implements IntervalConverter, DurationConverter, PeriodConverter {
+
+    
+
+
+    static final ReadableIntervalConverter INSTANCE = new ReadableIntervalConverter();
+
+    
+
+
+    protected ReadableIntervalConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+    public long getDurationMillis(Object object) {
+        return (((ReadableInterval) object)).toDurationMillis();
+    }
+
+    
+    
+
+
+
+
+
+
+    public void setInto(ReadWritablePeriod writablePeriod, Object object, Chronology chrono) {
+        ReadableInterval interval = (ReadableInterval) object;
+        writablePeriod.setPeriod(interval, chrono);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public boolean isReadableInterval(Object object, Chronology chrono) {
+        return true;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void setInto(ReadWritableInterval writableInterval, Object object, Chronology chrono) {
+        ReadableInterval input = (ReadableInterval) object;
+        writableInterval.setInterval(input);
+        if (chrono != null) {
+            writableInterval.setChronology(chrono);
+        } else {
+            writableInterval.setChronology(input.getChronology());
+        }
+    }
+
+    
+    
+
+
+    public Class getSupportedType() {
+        return ReadableInterval.class;
+    }
+
+}

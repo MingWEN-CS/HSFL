@@ -1,0 +1,147 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+
+
+
+
+
+
+
+
+
+
+
+public class MathException extends Exception {
+    
+    
+    static final long serialVersionUID = -8594613561393443827L;
+    
+    
+
+
+    private static final boolean JDK_SUPPORTS_NESTED;
+    
+    static {
+        boolean flag = false;
+        try {
+            Throwable.class.getDeclaredMethod("getCause", new Class[0]);
+            flag = true;
+        } catch (NoSuchMethodException ex) {
+            flag = false;
+        }
+        JDK_SUPPORTS_NESTED = flag;
+    }
+    
+    
+
+
+    private final Throwable rootCause;
+    
+    
+
+
+
+    public MathException() {
+        super();
+        this.rootCause = null;
+    }
+    
+    
+
+
+
+
+
+    public MathException(String msg) {
+        super(msg);
+        this.rootCause = null;
+    }
+    
+    
+
+
+
+
+
+
+    public MathException(Throwable rootCause) {
+        super((rootCause == null ? null : rootCause.getMessage()));
+        this.rootCause = rootCause;
+    }
+    
+    
+
+
+
+
+
+
+
+    public MathException(String msg, Throwable rootCause) {
+        super(msg);
+        this.rootCause = rootCause;
+    }
+    
+    
+
+
+
+
+    public Throwable getCause() {
+        return rootCause;
+    }
+    
+    
+
+
+    public void printStackTrace() {
+        printStackTrace(System.err);
+    }
+    
+    
+
+
+
+
+    public void printStackTrace(PrintStream out) {
+        synchronized (out) {
+            PrintWriter pw = new PrintWriter(out, false);
+            printStackTrace(pw);
+            
+            pw.flush();
+        }
+    }
+    
+    
+
+
+
+
+    public void printStackTrace(PrintWriter out) {
+        synchronized (out) {
+            super.printStackTrace(out);
+            if (rootCause != null && JDK_SUPPORTS_NESTED == false) {
+                out.print("Caused by: ");
+                rootCause.printStackTrace(out);
+            }
+        }
+    }
+
+}

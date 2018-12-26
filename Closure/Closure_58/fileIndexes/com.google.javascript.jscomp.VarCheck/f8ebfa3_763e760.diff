@@ -1,0 +1,31 @@
+34c34,38
+< class VarCheck extends AbstractPostOrderCallback implements CompilerPass {
+---
+> class VarCheck extends AbstractPostOrderCallback implements CompilerPass,
+>     HotSwapCompilerPass {
+> 
+>   
+>   static final String SYNTHETIC_VARS_DECLAR = "{SyntheticVarsDeclar}";
+75c79
+<   private Set<String> varsToDeclareInExterns = Sets.newHashSet();
+---
+>   private final Set<String> varsToDeclareInExterns = Sets.newHashSet();
+83c87
+<   private boolean strictExternCheck;
+---
+>   private final boolean strictExternCheck;
+112a117,126
+>   public void hotSwapScript(Node root, Scope globalScope) {
+>     Preconditions.checkState(root.getType() == Token.SCRIPT);
+>     NodeTraversal t = new NodeTraversal(compiler, this);
+>     
+>     
+>     t.traverseWithScope(root, globalScope);
+>     
+>   }
+> 
+>   @Override
+265c279
+<           compiler.newExternInput("{SyntheticVarsDeclar}");
+---
+>           compiler.newExternInput(SYNTHETIC_VARS_DECLAR);

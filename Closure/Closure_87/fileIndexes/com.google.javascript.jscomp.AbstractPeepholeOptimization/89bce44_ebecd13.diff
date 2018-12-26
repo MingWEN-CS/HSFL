@@ -1,0 +1,24 @@
+18a19
+> import com.google.common.annotations.VisibleForTesting;
+20a22
+> import com.google.javascript.rhino.Token;
+117a120,138
+>   }
+> 
+>   
+> 
+> 
+>   @VisibleForTesting
+>   static Node validateResult(Node n) {
+>     done: {
+>       if (n != null && n.getType() != Token.SCRIPT
+>           && (n.getType() != Token.BLOCK || !n.isSyntheticBlock())) {
+>         for (Node parent : n.getAncestors()) {
+>           if (parent.getType() == Token.SCRIPT) {
+>             break done;
+>           }
+>         }
+>         Preconditions.checkState(false);
+>       }
+>     }
+>     return n;

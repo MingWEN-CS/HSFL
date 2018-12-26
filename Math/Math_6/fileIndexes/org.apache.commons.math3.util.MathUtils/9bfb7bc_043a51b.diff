@@ -1,0 +1,105 @@
+484a485,533
+>     public static double nextAfter(double d, double direction) {
+> 
+>         
+>         if (Double.isNaN(d) || Double.isInfinite(d)) {
+>                 return d;
+>         } else if (d == 0) {
+>                 return (direction < 0) ? -Double.MIN_VALUE : Double.MIN_VALUE;
+>         }
+>         
+>         
+> 
+>         
+>         long bits     = Double.doubleToLongBits(d);
+>         long sign     = bits & 0x8000000000000000L;
+>         long exponent = bits & 0x7ff0000000000000L;
+>         long mantissa = bits & 0x000fffffffffffffL;
+> 
+>         if (d * (direction - d) >= 0) {
+>                 
+>                 if (mantissa == 0x000fffffffffffffL) {
+>                         return Double.longBitsToDouble(sign |
+>                                         (exponent + 0x0010000000000000L));
+>                 } else {
+>                         return Double.longBitsToDouble(sign |
+>                                         exponent | (mantissa + 1));
+>                 }
+>         } else {
+>                 
+>                 if (mantissa == 0L) {
+>                         return Double.longBitsToDouble(sign |
+>                                         (exponent - 0x0010000000000000L) |
+>                                         0x000fffffffffffffL);
+>                 } else {
+>                         return Double.longBitsToDouble(sign |
+>                                         exponent | (mantissa - 1));
+>                 }
+>         }
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+502,504c551,562
+<         double sign = indicator(x);
+<         double factor = Math.pow(10.0, scale) * sign;
+<         return roundUnscaled(x * factor, sign, roundingMethod) / factor;
+---
+>         try {
+>             return (new BigDecimal
+>                    (new Double(x).toString())
+>                    .setScale(scale, roundingMethod))
+>                    .doubleValue();
+>         } catch (NumberFormatException ex) {
+>             if (Double.isInfinite(x)) {
+>                 return x;          
+>             } else {
+>                 return Double.NaN;
+>             }
+>         }
+555c613
+<                 unscaled = Math.floor(unscaled);
+---
+>                 unscaled = Math.floor(nextAfter(unscaled, Double.NEGATIVE_INFINITY));
+557c615
+<                 unscaled = Math.ceil(unscaled);
+---
+>                 unscaled = Math.ceil(nextAfter(unscaled, Double.POSITIVE_INFINITY));
+561c619
+<             unscaled = Math.floor(unscaled);
+---
+>             unscaled = Math.floor(nextAfter(unscaled, Double.NEGATIVE_INFINITY));
+565c623
+<                 unscaled = Math.ceil(unscaled);
+---
+>                 unscaled = Math.ceil(nextAfter(unscaled, Double.POSITIVE_INFINITY));
+567c625
+<                 unscaled = Math.floor(unscaled);
+---
+>                 unscaled = Math.floor(nextAfter(unscaled, Double.NEGATIVE_INFINITY));
+571c629,630
+<             double fraction = Math.abs(unscaled - Math.floor(unscaled));
+---
+>             unscaled = nextAfter(unscaled, Double.NEGATIVE_INFINITY);
+>             double fraction = unscaled - Math.floor(unscaled);
+580c639
+<             double fraction = Math.abs(unscaled - Math.floor(unscaled));
+---
+>             double fraction = unscaled - Math.floor(unscaled);
+596c655,656
+<             double fraction = Math.abs(unscaled - Math.floor(unscaled));
+---
+>             unscaled = nextAfter(unscaled, Double.POSITIVE_INFINITY);
+>             double fraction = unscaled - Math.floor(unscaled);
+610c670
+<             unscaled = Math.ceil(unscaled);
+---
+>             unscaled = Math.ceil(nextAfter(unscaled,  Double.POSITIVE_INFINITY));

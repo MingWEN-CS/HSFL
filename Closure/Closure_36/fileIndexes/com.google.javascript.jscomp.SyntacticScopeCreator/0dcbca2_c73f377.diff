@@ -1,0 +1,45 @@
+198,212c198
+<         boolean allowDupe = false;
+<         JSDocInfo info = n.getJSDocInfo();
+<         if (info == null) {
+<           info = parent.getJSDocInfo();
+<         }
+<         allowDupe =
+<             info != null && info.getSuppressions().contains("duplicate");
+< 
+<         info = origVar.nameNode.getJSDocInfo();
+<         if (info == null) {
+<           info = origParent.getJSDocInfo();
+<         }
+< 
+<         allowDupe |=
+<             info != null && info.getSuppressions().contains("duplicate");
+---
+>         boolean allowDupe = hasDuplicateDeclarationSuppression(n, origVar);
+251a238,263
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   static boolean hasDuplicateDeclarationSuppression(Node n, Scope.Var origVar) {
+>     Preconditions.checkState(n.getType() == Token.NAME);
+>     Node parent = n.getParent();
+>     Node origParent = origVar.getParentNode();
+> 
+>     JSDocInfo info = n.getJSDocInfo();
+>     if (info == null) {
+>       info = parent.getJSDocInfo();
+>     }
+>     if (info != null && info.getSuppressions().contains("duplicate")) {
+>       return true;
+>     }
+> 
+>     info = origVar.nameNode.getJSDocInfo();
+>     if (info == null) {
+>       info = origParent.getJSDocInfo();
+>     }
+>     return (info != null && info.getSuppressions().contains("duplicate"));
+>   }

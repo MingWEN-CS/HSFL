@@ -1,0 +1,98 @@
+135,137c135,137
+<         this.x = a1 * u1.x + a2 * u2.x;
+<         this.y = a1 * u1.y + a2 * u2.y;
+<         this.z = a1 * u1.z + a2 * u2.z;
+---
+>         this.x = MathUtils.linearCombination(a1, u1.x, a2, u2.x);
+>         this.y = MathUtils.linearCombination(a1, u1.y, a2, u2.y);
+>         this.z = MathUtils.linearCombination(a1, u1.z, a2, u2.z);
+152,154c152,154
+<         this.x = a1 * u1.x + a2 * u2.x + a3 * u3.x;
+<         this.y = a1 * u1.y + a2 * u2.y + a3 * u3.y;
+<         this.z = a1 * u1.z + a2 * u2.z + a3 * u3.z;
+---
+>         this.x = MathUtils.linearCombination(a1, u1.x, a2, u2.x, a3, u3.x);
+>         this.y = MathUtils.linearCombination(a1, u1.y, a2, u2.y, a3, u3.y);
+>         this.z = MathUtils.linearCombination(a1, u1.z, a2, u2.z, a3, u3.z);
+171,173c171,173
+<         this.x = a1 * u1.x + a2 * u2.x + a3 * u3.x + a4 * u4.x;
+<         this.y = a1 * u1.y + a2 * u2.y + a3 * u3.y + a4 * u4.y;
+<         this.z = a1 * u1.z + a2 * u2.z + a3 * u3.z + a4 * u4.z;
+---
+>         this.x = MathUtils.linearCombination(a1, u1.x, a2, u2.x, a3, u3.x, a4, u4.x);
+>         this.y = MathUtils.linearCombination(a1, u1.y, a2, u2.y, a3, u3.y, a4, u4.y);
+>         this.z = MathUtils.linearCombination(a1, u1.z, a2, u2.z, a3, u3.z, a4, u4.z);
+216a217
+>         
+221a223
+>         
+254,255c256
+<         final Vector3D v3 = (Vector3D) v;
+<         return new Vector3D(x + factor * v3.x, y + factor * v3.y, z + factor * v3.z);
+---
+>         return new Vector3D(1, this, factor, (Vector3D) v);
+266,267c267
+<         final Vector3D v3 = (Vector3D) v;
+<         return new Vector3D(x - factor * v3.x, y - factor * v3.y, z - factor * v3.z);
+---
+>         return new Vector3D(1, this, -factor, (Vector3D) v);
+331c331
+<         double dot = dotProduct(v1, v2);
+---
+>         double dot = v1.dotProduct(v2);
+420,423d419
+<     public double dotProduct(final Vector<Euclidean3D> v) {
+<         final Vector3D v3 = (Vector3D) v;
+<         return x * v3.x + y * v3.y + z * v3.z;
+<     }
+425d420
+<     
+429,430d423
+<     public Vector3D crossProduct(final Vector<Euclidean3D> v) {
+<         final Vector3D v3 = (Vector3D) v;
+432,436d424
+<         final double n1 = getNormSq();
+<         final double n2 = v.getNormSq();
+<         if ((n1 * n2) < MathUtils.SAFE_MIN) {
+<             return ZERO;
+<         }
+438,446d425
+<         
+<         
+<         final int deltaExp = (FastMath.getExponent(n1) - FastMath.getExponent(n2)) / 4;
+<         final double x1    = FastMath.scalb(x,   -deltaExp);
+<         final double y1    = FastMath.scalb(y,   -deltaExp);
+<         final double z1    = FastMath.scalb(z,   -deltaExp);
+<         final double x2    = FastMath.scalb(v3.x, deltaExp);
+<         final double y2    = FastMath.scalb(v3.y, deltaExp);
+<         final double z2    = FastMath.scalb(v3.z, deltaExp);
+448,452c427,430
+<         
+<         
+<         
+<         
+<         
+---
+>     public double dotProduct(final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         return MathUtils.linearCombination(x, v3.x, y, v3.y, z, v3.z);
+>     }
+454,456c432
+<         
+<         final double ratio = (x1 * x2 + y1 * y2 + z1 * z2) / FastMath.scalb(n2, 2 * deltaExp);
+<         final double rho   = FastMath.rint(256 * ratio) / 256;
+---
+>     
+458,460d433
+<         final double x3 = x1 - rho * x2;
+<         final double y3 = y1 - rho * y2;
+<         final double z3 = z1 - rho * z2;
+462,463d434
+<         
+<         return new Vector3D(y3 * z2 - z3 * y2, z3 * x2 - x3 * z2, x3 * y2 - y3 * x2);
+464a436,440
+>     public Vector3D crossProduct(final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         return new Vector3D(MathUtils.linearCombination(y, v3.z, -z, v3.y),
+>                             MathUtils.linearCombination(z, v3.x, -x, v3.z),
+>                             MathUtils.linearCombination(x, v3.y, -y, v3.x));

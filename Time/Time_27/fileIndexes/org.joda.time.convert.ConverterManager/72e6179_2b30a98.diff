@@ -1,0 +1,104 @@
+91a92,98
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+107a115
+>     private ConverterSet iIntervalConverters;
+129a138,142
+> 
+>         iIntervalConverters = new ConverterSet(new Converter[] {
+>             ReadableIntervalConverter.INSTANCE,
+>             StringConverter.INSTANCE,
+>         });
+299a313,394
+> 
+> 
+> 
+> 
+> 
+> 
+>     public IntervalConverter getIntervalConverter(Object object) {
+>         IntervalConverter converter =
+>             (IntervalConverter)iIntervalConverters.select(object == null ? null : object.getClass());
+>         if (converter != null) {
+>             return converter;
+>         }
+>         throw new IllegalArgumentException("No interval converter found for type: " +
+>             (object == null ? "null" : object.getClass().getName()));
+>     }
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+>     public IntervalConverter[] getIntervalConverters() {
+>         ConverterSet set = iIntervalConverters;
+>         IntervalConverter[] converters = new IntervalConverter[set.size()];
+>         set.copyInto(converters);
+>         return converters;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public IntervalConverter addIntervalConverter(IntervalConverter converter) {
+>         if (converter == null) {
+>             return null;
+>         }
+>         IntervalConverter[] removed = new IntervalConverter[1];
+>         iIntervalConverters = iIntervalConverters.add(converter, removed);
+>         return removed[0];
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public IntervalConverter removeIntervalConverter(IntervalConverter converter) {
+>         if (converter == null) {
+>             return null;
+>         }
+>         IntervalConverter[] removed = new IntervalConverter[1];
+>         iIntervalConverters = iIntervalConverters.remove(converter, removed);
+>         return removed[0];
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public IntervalConverter removeIntervalConverter(int index) {
+>         IntervalConverter[] removed = new IntervalConverter[1];
+>         iIntervalConverters = iIntervalConverters.remove(index, removed);
+>         return removed[0];
+>     }
+> 
+>     
+>     
+> 
+> 
+303c398,399
+<             iDurationConverters.size() + " duration converters]";
+---
+>             iDurationConverters.size() + " duration converters," +
+>             iIntervalConverters.size() + " interval converters]";

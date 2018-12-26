@@ -1,0 +1,37 @@
+213c213,214
+<     return NodeUtil.isNullOrUndefined(n) ? "" : getStringValue(n);
+---
+>     return (NodeUtil.isNullOrUndefined(n) || n.getType() == Token.EMPTY)
+>         ? "" : getStringValue(n);
+218d218
+<     int[] skipIndexes = (int[]) literal.getProp(Node.SKIP_INDEXES_PROP);
+223,231d222
+<       while (skipIndexes != null && nextSkipSlot < skipIndexes.length) {
+<         if (nextSlot == skipIndexes[nextSkipSlot]) {
+<           result.append(',');
+<           nextSlot++;
+<           nextSkipSlot++;
+<         } else {
+<           break;
+<         }
+<       }
+508a500,508
+>         for (Node child = n.getFirstChild(); child != null;
+>              child = child.getNext()) {
+>           if (child.getType() != Token.EMPTY
+>               && !isLiteralValue(child, includeFunctions)) {
+>             return false;
+>           }
+>         }
+>         return true;
+> 
+1850,1858d1849
+<   }
+< 
+<   
+< 
+< 
+<   static boolean isSparseArray(Node node) {
+<     Preconditions.checkArgument(isArrayLiteral(node));
+<     int[] skipList = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
+<     return skipList != null && skipList.length > 0;

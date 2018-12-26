@@ -1,0 +1,181 @@
+343c343,352
+<   private static class PropListItem implements Serializable {
+---
+>   private interface PropListItem {
+>     int getType();
+>     PropListItem getNext();
+>     void setNext(PropListItem next);
+>     Object getObjectValue();
+>     int getIntValue();
+>   }
+> 
+>   private static abstract class AbstractPropListItem
+>       implements PropListItem, Serializable {
+346,349c355,356
+<     final PropListItem next;
+<     final int type;
+<     final int intValue;
+<     final Object objectValue;
+---
+>     private PropListItem next;
+>     private final int propType;
+351,352c358,360
+<     PropListItem(int type, int intValue, PropListItem next) {
+<       this(type, intValue, null, next);
+---
+>     AbstractPropListItem(int propType, PropListItem next) {
+>       this.propType = propType;
+>       this.next = next;
+355,356c363,364
+<     PropListItem(int type, Object objectValue, PropListItem next) {
+<       this(type, 0, objectValue, next);
+---
+>     public int getType() {
+>       return propType;
+359,363c367,371
+<     PropListItem(
+<         int type, int intValue, Object objectValue, PropListItem next) {
+<       this.type = type;
+<       this.intValue = intValue;
+<       this.objectValue = objectValue;
+---
+>     public PropListItem getNext() {
+>       return next;
+>     }
+> 
+>     public void setNext(PropListItem next) {
+367a376,429
+>   
+>   private static class ObjectPropListItem
+>       extends AbstractPropListItem {
+>     private static final long serialVersionUID = 1L;
+> 
+>     private final Object objectValue;
+> 
+>     ObjectPropListItem(int propType, Object objectValue, PropListItem next) {
+>       super(propType, next);
+>       this.objectValue = objectValue;
+>     }
+> 
+>     @Override
+>     public int getIntValue() {
+>       throw new UnsupportedOperationException();
+>     }
+> 
+>     @Override
+>     public Object getObjectValue() {
+>       return objectValue;
+>     }
+> 
+>     @Override
+>     public String toString() {
+>       return objectValue == null ? "null" : objectValue.toString();
+>     }
+>   }
+> 
+>   
+>   private static class IntPropListItem extends AbstractPropListItem {
+>     private static final long serialVersionUID = 1L;
+> 
+>     final int intValue;
+> 
+>     IntPropListItem(int propType, int intValue, PropListItem next) {
+>       super(propType, next);
+>       this.intValue = intValue;
+>     }
+> 
+>     @Override
+>     public int getIntValue() {
+>       return intValue;
+>     }
+> 
+>     @Override
+>     public Object getObjectValue() {
+>       throw new UnsupportedOperationException();
+>     }
+> 
+>     @Override
+>     public String toString() {
+>       return String.valueOf(intValue);
+>     }
+>   }
+743,744c805,806
+<     while (x != null && propType != x.type) {
+<       x = x.next;
+---
+>     while (x != null && propType != x.getType()) {
+>       x = x.getNext();
+779,780c841,842
+<     } else if (item.type == propType) {
+<       return item.next;
+---
+>     } else if (item.getType() == propType) {
+>       return item.getNext();
+782,785c844,847
+<       PropListItem result = removeProp(item.next, propType);
+<       if (result != item.next) {
+<         return new PropListItem(
+<             item.type, item.intValue, item.objectValue, result);
+---
+>       PropListItem result = removeProp(item.getNext(), propType);
+>       if (result != item.getNext()) {
+>         item.setNext(result);
+>         return item;
+797c859
+<     return item.objectValue;
+---
+>     return item.getObjectValue();
+813c875
+<     return item.intValue;
+---
+>     return item.getIntValue();
+821c883
+<     return item.intValue;
+---
+>     return item.getIntValue();
+827c889
+<       propListHead = new PropListItem(propType, value, propListHead);
+---
+>       propListHead = createProp(propType, value, propListHead);
+838c900
+<       propListHead = new PropListItem(propType, value, propListHead);
+---
+>       propListHead = createProp(propType, value, propListHead);
+841a904,911
+>   PropListItem createProp(int propType, Object value, PropListItem next) {
+>     return new ObjectPropListItem(propType, value, next);
+>   }
+> 
+>   PropListItem createProp(int propType, int value, PropListItem next) {
+>     return new IntPropListItem(propType, value, next);
+>   }
+> 
+845c915
+<     for (PropListItem x = propListHead; x != null; x = x.next) {
+---
+>     for (PropListItem x = propListHead; x != null; x = x.getNext()) {
+850c920
+<     for (PropListItem x = propListHead; x != null; x = x.next) {
+---
+>     for (PropListItem x = propListHead; x != null; x = x.getNext()) {
+852c922
+<       keys[count] = x.type;
+---
+>       keys[count] = x.getType();
+995c1065
+<               switch (x.intValue) {
+---
+>               switch (x.getIntValue()) {
+1010c1080
+<               switch (x.intValue) {
+---
+>               switch (x.getIntValue()) {
+1023,1028c1093
+<               Object obj = x.objectValue;
+<               if (obj != null) {
+<                 value = obj.toString();
+<               } else {
+<                 value = String.valueOf(x.intValue);
+<               }
+---
+>               value = x.toString();

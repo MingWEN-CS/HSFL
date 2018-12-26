@@ -1,0 +1,86 @@
+18,19d17
+< import java.lang.reflect.InvocationTargetException;
+< import java.lang.reflect.Method;
+21d18
+< import java.util.Date;
+24d20
+< import java.util.TimeZone;
+52,73d47
+<     private static final Method OFFSET_METHOD;
+<     static {
+<         Method m = null;
+<         try {
+<             m = TimeZone.class.getDeclaredMethod("getOffset", new Class[] {Long.TYPE});
+<         } catch (SecurityException ex) {
+<             
+<         } catch (NoSuchMethodException ex) {
+<             try {
+<                 m = TimeZone.class.getDeclaredMethod("getOffsets", new Class[] {Long.TYPE, int[].class});
+<                 m.setAccessible(true);
+<             } catch (SecurityException e) {
+<                 
+<             } catch (NoSuchMethodException e) {
+<                 
+<             }
+<         }
+<         OFFSET_METHOD = m;
+<     }
+< 
+<     
+<     
+277,288d250
+<     public Date toDate() {
+<         long millis = getMillis();
+<         millis = fixMillisForTimeZone(millis, TimeZone.getDefault());
+<         return new Date(millis);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+302c264
+<         cal.setTime(convertToDate(cal));
+---
+>         cal.setTime(toDate());
+315a278,281
+> 
+> 
+> 
+> 
+319c285
+<         cal.setTime(convertToDate(cal));
+---
+>         cal.setTime(toDate());
+321,349d286
+<     }
+< 
+<     private Date convertToDate(Calendar cal) {
+<         long millis = getMillis();
+<         millis = fixMillisForTimeZone(millis, cal.getTimeZone());
+<         return new Date(millis);
+<     }
+< 
+<     private long fixMillisForTimeZone(long millis, TimeZone zone) {
+<         if (OFFSET_METHOD == null) {
+<             return millis;
+<         }
+<         Integer val;
+<         try {
+<             if ("getOffset".equals(OFFSET_METHOD.getName())) {
+<                 val = (Integer) OFFSET_METHOD.invoke(
+<                         zone, new Object[] {new Long(millis)});
+<             } else {
+<                 val = (Integer) OFFSET_METHOD.invoke(
+<                         zone, new Object[] {new Long(millis), null});
+<             }
+<         } catch (IllegalAccessException ex) {
+<             return millis;
+<         } catch (InvocationTargetException ex) {
+<             return millis;
+<         }
+<         
+<         long millisLocal = millis - val.intValue();
+<         return millisLocal + getZone().getOffsetFromLocal(millisLocal);

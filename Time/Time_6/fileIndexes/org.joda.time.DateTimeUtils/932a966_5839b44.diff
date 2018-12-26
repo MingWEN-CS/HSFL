@@ -1,0 +1,59 @@
+19a20,22
+> import java.util.Collections;
+> import java.util.HashMap;
+> import java.util.LinkedHashMap;
+20a24
+> import java.util.Map;
+37a42,67
+>     
+>     private static volatile Map<String, DateTimeZone> cZoneNames;
+>     static {
+>         
+>         
+>         Map<String, DateTimeZone> map = new LinkedHashMap<String, DateTimeZone>();
+>         map.put("UT", DateTimeZone.UTC);
+>         map.put("UTC", DateTimeZone.UTC);
+>         map.put("GMT", DateTimeZone.UTC);
+>         put(map, "EST", "America/New_York");
+>         put(map, "EDT", "America/New_York");
+>         put(map, "CST", "America/Chigaco");
+>         put(map, "CDT", "America/Chigaco");
+>         put(map, "MST", "America/Denver");
+>         put(map, "MDT", "America/Denver");
+>         put(map, "PST", "America/Los_Angeles");
+>         put(map, "PDT", "America/Los_Angeles");
+>         cZoneNames = Collections.unmodifiableMap(map);
+>     }
+>     private static void put(Map<String, DateTimeZone> map, String name, String id) {
+>         try {
+>             map.put(name, DateTimeZone.forID(id));
+>         } catch (RuntimeException ex) {
+>             
+>         }
+>     }
+369a400,424
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static final Map<String, DateTimeZone> getDefaultTimeZoneNames() {
+>         return cZoneNames;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static final void setDefaultTimeZoneNames(Map<String, DateTimeZone> names) {
+>         cZoneNames = Collections.unmodifiableMap(new HashMap<String, DateTimeZone>(names));

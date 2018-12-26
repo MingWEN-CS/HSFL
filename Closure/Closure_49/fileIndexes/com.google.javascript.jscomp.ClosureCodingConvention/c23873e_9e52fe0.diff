@@ -1,0 +1,45 @@
+84,85c84,86
+<       if (callNode.getChildCount() == 2 &&
+<           callName.getType() == Token.GETPROP) {
+---
+>       boolean isDeprecatedCall = callNode.getChildCount() == 2 &&
+>           callName.getType() == Token.GETPROP;
+>       if (isDeprecatedCall) {
+92a94,108
+>       if (type == SubclassType.MIXIN) {
+>         
+>         if (!endsWithPrototype(superclass)) {
+>           return null;
+>         }
+>         if (!isDeprecatedCall) {
+>           if (!endsWithPrototype(subclass)) {
+>             return null;
+>           }
+>           
+>           subclass = subclass.getFirstChild();
+>         }
+>         superclass = superclass.getFirstChild();
+>       }
+> 
+100,105c116
+<         
+<         
+<         return new SubclassRelationship(
+<             type,
+<             stripPrototype(subclass),
+<             stripPrototype(superclass));
+---
+>         return new SubclassRelationship(type, subclass, superclass);
+151,158c162,164
+< 
+<   private Node stripPrototype(Node qualifiedName) {
+<     if (qualifiedName.getType() == Token.GETPROP &&
+<         qualifiedName.getLastChild().getString().equals("prototype")) {
+<       return qualifiedName.getFirstChild();
+<     }
+< 
+<     return qualifiedName;
+---
+>   private boolean endsWithPrototype(Node qualifiedName) {
+>     return qualifiedName.getType() == Token.GETPROP &&
+>         qualifiedName.getLastChild().getString().equals("prototype");

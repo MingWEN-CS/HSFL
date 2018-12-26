@@ -1,0 +1,60 @@
+140a141
+>             boolean infinite = false;
+143,150c144,152
+<                 if (a != 0.0) {
+<                     p2 = p1 + (b / a * p0);
+<                     q2 = q1 + (b / a * q0);
+<                 } else if (b != 0) {
+<                     p2 = (a / b * p1) + p0;
+<                     q2 = (a / b * q1) + q0;
+<                 } else {
+<                     
+---
+> 
+> 
+> 
+> 
+>                 double scaleFactor = 1d;
+>                 double lastScaleFactor = 1d;
+>                 final int maxPower = 5;
+>                 final double scale = Math.max(a,b);
+>                 if (scale <= 0) {  
+152,153c154,155
+<                         "Continued fraction convergents diverged to +/- infinity for value {0}",
+<                         x);
+---
+>                             "Continued fraction convergents diverged to +/- infinity for value {0}",
+>                              x);
+154a157,179
+>                 infinite = true;
+>                 for (int i = 0; i < maxPower; i++) {
+>                     lastScaleFactor = scaleFactor;
+>                     scaleFactor *= scale;
+>                     if (a != 0.0 && a > b) {
+>                         p2 = p1 / lastScaleFactor + (b / scaleFactor * p0);
+>                         q2 = q1 / lastScaleFactor + (b / scaleFactor * q0);
+>                     } else if (b != 0) {
+>                         p2 = (a / scaleFactor * p1) + p0 / lastScaleFactor;
+>                         q2 = (a / scaleFactor * q1) + q0 / lastScaleFactor;
+>                     }
+>                     infinite = Double.isInfinite(p2) || Double.isInfinite(q2);
+>                     if (!infinite) {
+>                         break;
+>                     }
+>                 }
+>             }
+> 
+>             if (infinite) {
+>                
+>                throw new ConvergenceException(
+>                  "Continued fraction convergents diverged to +/- infinity for value {0}",
+>                   x);
+155a181
+> 
+156a183,188
+> 
+>             if (Double.isNaN(r)) {
+>                 throw new ConvergenceException(
+>                   "Continued fraction diverged to NaN for value {0}",
+>                   x);
+>             }

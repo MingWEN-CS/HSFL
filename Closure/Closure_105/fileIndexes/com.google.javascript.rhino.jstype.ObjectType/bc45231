@@ -1,0 +1,440 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.FALSE;
+import static com.google.javascript.rhino.jstype.TernaryValue.UNKNOWN;
+
+import com.google.common.collect.Sets;
+
+import com.google.javascript.rhino.JSDocInfo;
+
+import java.util.HashSet;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class ObjectType extends JSType {
+  private boolean visited;
+  private JSDocInfo docInfo = null;
+  private boolean unknown = true;
+
+  ObjectType(JSTypeRegistry registry) {
+    super(registry);
+  }
+
+  
+
+
+
+  public JSType getParameterType() {
+    return null;
+  }
+
+  
+
+
+
+  public JSType getIndexType() {
+    return null;
+  }
+
+  
+
+
+  @Override public JSDocInfo getJSDocInfo() {
+    if (docInfo != null) {
+      return docInfo;
+    } else if (getImplicitPrototype() != null) {
+      return getImplicitPrototype().getJSDocInfo();
+    } else {
+      return super.getJSDocInfo();
+    }
+  }
+
+  
+
+
+
+  public void setJSDocInfo(JSDocInfo info) {
+    docInfo = info;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  final boolean detectImplicitPrototypeCycle() {
+    
+    this.visited = true;
+    ObjectType p = getImplicitPrototype();
+    while (p != null) {
+      if (p.visited) {
+        return true;
+      } else {
+        p.visited = true;
+      }
+      p = p.getImplicitPrototype();
+    }
+
+    
+    p = this;
+    do {
+      p.visited = false;
+      p = p.getImplicitPrototype();
+    } while (p != null);
+    return false;
+  }
+
+  
+
+
+
+
+
+
+  public abstract String getReferenceName();
+
+  
+
+
+
+  public boolean hasReferenceName() {
+    return false;
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    
+    TernaryValue result = super.testForEquality(that);
+    if (result != null) {
+      return result;
+    }
+    
+    if (that.isSubtype(
+            getNativeType(JSTypeNative.OBJECT_NUMBER_STRING_BOOLEAN))) {
+      return UNKNOWN;
+    } else {
+      return FALSE;
+    }
+  }
+
+  
+
+
+
+
+  public abstract FunctionType getConstructor();
+
+  
+
+
+  public abstract ObjectType getImplicitPrototype();
+
+  
+
+
+
+
+
+
+
+
+  public final boolean defineDeclaredProperty(String propertyName,
+      JSType type, boolean inExterns) {
+    
+    
+    registry.registerPropertyOnType(propertyName, this);
+
+    return defineProperty(propertyName, type, false, inExterns);
+  }
+
+  
+
+
+
+
+
+
+
+
+  public final boolean defineInferredProperty(String propertyName,
+      JSType type, boolean inExterns) {
+    
+    
+    registry.registerPropertyOnType(propertyName, this);
+
+    if (hasProperty(propertyName)) {
+      JSType originalType = getPropertyType(propertyName);
+      type = originalType == null ? type :
+          originalType.getLeastSupertype(type);
+    }
+
+    return defineProperty(propertyName, type, true, inExterns);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  abstract boolean defineProperty(String propertyName, JSType type,
+      boolean inferred, boolean inExterns);
+
+  
+
+
+
+
+  public JSDocInfo getOwnPropertyJSDocInfo(String propertyName) {
+    return null;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  public void setPropertyJSDocInfo(String propertyName, JSDocInfo info,
+                                   boolean inExterns) {
+    
+  }
+
+  @Override
+  public JSType findPropertyType(String propertyName) {
+    return hasProperty(propertyName) ?
+        getPropertyType(propertyName) : null;
+  }
+
+  
+
+
+
+
+
+
+
+  public abstract JSType getPropertyType(String propertyName);
+
+  
+
+
+
+  public abstract boolean hasProperty(String propertyName);
+
+  
+
+
+
+  public boolean hasOwnProperty(String propertyName) {
+    return hasProperty(propertyName);
+  }
+
+  
+  public Set<String> getOwnPropertyNames() {
+    return new HashSet<String>();
+  }
+
+  
+
+
+  public abstract boolean isPropertyTypeInferred(String propertyName);
+
+  
+
+
+  public abstract boolean isPropertyTypeDeclared(String propertyName);
+
+  
+
+
+  boolean hasOwnDeclaredProperty(String name) {
+    return hasOwnProperty(name) && isPropertyTypeDeclared(name);
+  }
+
+  
+  public boolean isPropertyInExterns(String propertyName) {
+    return false;
+  }
+
+  
+
+
+  public abstract int getPropertiesCount();
+
+  
+
+
+
+  public Set<String> getPropertyNames() {
+    Set<String> props = Sets.newHashSet();
+    collectPropertyNames(props);
+    return props;
+  }
+
+  
+
+
+  abstract void collectPropertyNames(Set<String> props);
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseObjectType(this);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  final boolean isImplicitPrototype(ObjectType prototype) {
+    for (ObjectType current = this;
+         current != null;
+         current = current.getImplicitPrototype()) {
+      if (current.equals(prototype)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public BooleanLiteralSet getPossibleToBooleanOutcomes() {
+    return BooleanLiteralSet.TRUE;
+  }
+
+  
+
+
+
+  @Override
+  public boolean isUnknownType() {
+    
+    
+    if (unknown) {
+      ObjectType implicitProto = getImplicitPrototype();
+      if (implicitProto == null ||
+          implicitProto.isNativeObjectType()) {
+        unknown = false;
+      } else {
+        unknown = implicitProto.isUnknownType();
+      }
+    }
+    return unknown;
+  }
+
+  @Override
+  public boolean isObject() {
+    return true;
+  }
+
+  
+
+
+
+
+  public boolean hasCachedValues() {
+    return !unknown;
+  }
+
+  
+  public boolean isNativeObjectType() {
+    return false;
+  }
+
+  
+
+
+  public static ObjectType cast(JSType type) {
+    return type == null ? null : type.toObjectType();
+  }
+}

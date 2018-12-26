@@ -1,0 +1,58 @@
+43c43,45
+<     private static final List<Locale> cAvailableLocaleList;
+---
+>     
+>     private static List<Locale> cAvailableLocaleList; 
+> 
+46c48,49
+<     private static Set<Locale> cAvailableLocaleSet; 
+---
+>     private static Set<Locale> cAvailableLocaleSet;   
+> 
+48a52
+> 
+51,54d54
+<     static {
+<         List<Locale> list = Arrays.asList(Locale.getAvailableLocales());
+<         cAvailableLocaleList = Collections.unmodifiableList(list);
+<     }
+195a196,198
+>         if(cAvailableLocaleList == null) { 
+>             initAvailableLocaleList(); 
+>         }
+199a203,214
+> 
+> 
+> 
+> 
+>     private static synchronized void initAvailableLocaleList() {
+>         if(cAvailableLocaleList == null) {
+>             List<Locale> list = Arrays.asList(Locale.getAvailableLocales());
+>             cAvailableLocaleList = Collections.unmodifiableList(list);
+>         }
+>     }
+> 
+>     
+210,214c225,238
+<         Set<Locale> set = cAvailableLocaleSet;
+<         if (set == null) {
+<             set = new HashSet<Locale>(availableLocaleList());
+<             set = Collections.unmodifiableSet(set);
+<             cAvailableLocaleSet = set;
+---
+>         if(cAvailableLocaleSet == null) { 
+>             initAvailableLocaleSet(); 
+>         }
+>         return cAvailableLocaleSet;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private static synchronized void initAvailableLocaleSet() {
+>         if(cAvailableLocaleSet == null) {
+>             cAvailableLocaleSet = Collections.unmodifiableSet( new HashSet<Locale>(availableLocaleList()) );
+216d239
+<         return set;

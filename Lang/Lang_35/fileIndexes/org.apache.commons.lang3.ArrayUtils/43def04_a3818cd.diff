@@ -1,0 +1,268 @@
+2812,2814c2812,3043
+<     public static Object[] add(Object[] array, Object element) {
+<         Object joinedArray;
+<         int elementPos;
+---
+>     public static Object[] add(final Object[] array, final Object element) {
+>         Object newArray = copyArrayGrow1(array, element != null ? element.getClass() : Object.class);
+>         Array.set(newArray, lastIndex(newArray), element);
+>         return (Object[]) newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean[] add(final boolean[] array, final boolean element) {
+>         boolean[] newArray = (boolean[])copyArrayGrow1(array, Boolean.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static byte[] add(final byte[] array, final byte element) {
+>         byte[] newArray = (byte[])copyArrayGrow1(array, Byte.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static char[] add(final char[] array, final char element) {
+>         char[] newArray = (char[])copyArrayGrow1(array, Character.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double[] add(final double[] array, final double element) {
+>         double[] newArray = (double[])copyArrayGrow1(array, Double.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static float[] add(final float[] array, final float element) {
+>         float[] newArray = (float[])copyArrayGrow1(array, Float.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int[] add(final int[] array, final int element) {
+>         int[] newArray = (int[])copyArrayGrow1(array, Integer.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static long[] add(final long[] array, final long element) {
+>         long[] newArray = (long[])copyArrayGrow1(array, Long.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static short[] add(final short[] array, final short element) {
+>         short[] newArray = (short[])copyArrayGrow1(array, Short.TYPE);
+>         newArray[lastIndex(newArray)] = element;
+>         return newArray;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     
+>     private static Object copyArrayGrow1(final Object array, Class newArrayComponentType) {
+2816,2818c3045,3048
+<             joinedArray = Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+<             System.arraycopy(array, 0, joinedArray, 0, array.length);
+<             elementPos = array.length;
+---
+>             int arrayLength = Array.getLength(array);
+>             Object newArray = Array.newInstance(array.getClass().getComponentType(), arrayLength + 1);
+>             System.arraycopy(array, 0, newArray, 0, arrayLength);
+>             return newArray;
+2820,2822c3050
+<             
+<             joinedArray = Array.newInstance(element != null ? element.getClass() : Object.class, 1);
+<             elementPos = 0;
+---
+>             return Array.newInstance(newArrayComponentType, 1);
+2824,2825d3051
+<         Array.set(joinedArray, elementPos, element);
+<         return (Object[]) joinedArray;
+2826a3053,3055
+>     
+>     
+> 
+2827a3057,3064
+> 
+> 
+> 
+> 
+>     public static int lastIndex(final Object array) {
+>         return Array.getLength(array) - 1;
+>     }
+>     

@@ -1,0 +1,434 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.field;
+
+import java.io.Serializable;
+import java.util.Locale;
+
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeFieldType;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DurationField;
+import org.joda.time.ReadableInstant;
+import org.joda.time.ReadablePartial;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class AbstractReadableInstantFieldProperty implements Serializable {
+
+    
+    private static final long serialVersionUID = 1971226328211649661L;
+
+    
+
+
+    public AbstractReadableInstantFieldProperty() {
+        super();
+    }
+
+    
+    
+
+
+
+
+    public abstract DateTimeField getField();
+
+    
+
+
+
+
+    public DateTimeFieldType getFieldType() {
+        return getField().getType();
+    }
+
+    
+
+
+
+
+    public String getName() {
+        return getField().getName();
+    }
+
+    
+
+
+
+
+    protected abstract long getMillis();
+
+    
+    
+
+
+
+
+
+    public int get() {
+        return getField().get(getMillis());
+    }
+
+    
+
+
+
+
+
+
+    public String getAsText(Locale locale) {
+        return getField().getAsText(getMillis(), locale);
+    }
+
+    
+
+
+
+
+
+    public final String getAsText() {
+        return getAsText(null);
+    }
+
+    
+
+
+
+
+
+
+    public String getAsShortText(Locale locale) {
+        return getField().getAsShortText(getMillis(), locale);
+    }
+
+    
+
+
+
+
+
+    public final String getAsShortText() {
+        return getAsShortText(null);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public int getDifference(ReadableInstant instant) {
+        if (instant == null) {
+            return getField().getDifference(getMillis(), DateTimeUtils.currentTimeMillis());
+        }
+        return getField().getDifference(getMillis(), instant.getMillis());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public long getDifferenceAsLong(ReadableInstant instant) {
+        if (instant == null) {
+            return getField().getDifferenceAsLong(getMillis(), DateTimeUtils.currentTimeMillis());
+        }
+        return getField().getDifferenceAsLong(getMillis(), instant.getMillis());
+    }
+
+    
+    
+
+
+
+
+
+    public DurationField getDurationField() {
+        return getField().getDurationField();
+    }
+
+    
+
+
+
+
+
+    public DurationField getRangeDurationField() {
+        return getField().getRangeDurationField();
+    }
+
+    
+
+
+
+
+
+    public boolean isLeap() {
+        return getField().isLeap(getMillis());
+    }
+
+    
+
+
+
+
+
+    public int getLeapAmount() {
+        return getField().getLeapAmount(getMillis());
+    }
+
+    
+
+
+
+    public DurationField getLeapDurationField() {
+        return getField().getLeapDurationField();
+    }
+
+    
+    
+
+
+
+
+
+    public int getMinimumValueOverall() {
+        return getField().getMinimumValue();
+    }
+
+    
+
+
+
+
+
+    public int getMinimumValue() {
+        return getField().getMinimumValue(getMillis());
+    }
+
+    
+
+
+
+
+
+    public int getMaximumValueOverall() {
+        return getField().getMaximumValue();
+    }
+
+    
+
+
+
+
+
+    public int getMaximumValue() {
+        return getField().getMaximumValue(getMillis());
+    }
+
+    
+
+
+
+
+
+
+    public int getMaximumTextLength(Locale locale) {
+        return getField().getMaximumTextLength(locale);
+    }
+
+    
+
+
+
+
+
+
+    public int getMaximumShortTextLength(Locale locale) {
+        return getField().getMaximumShortTextLength(locale);
+    }
+
+
+    
+
+
+
+
+
+    public long remainder() {
+        return getField().remainder(getMillis());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public int compareTo(ReadableInstant instant) {
+        if (instant == null) {
+            throw new IllegalArgumentException("The instant must not be null");
+        }
+        int thisValue = get();
+        int otherValue = instant.get(getFieldType());
+        if (thisValue < otherValue) {
+            return -1;
+        } else if (thisValue > otherValue) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public int compareTo(ReadablePartial partial) {
+        if (partial == null) {
+            throw new IllegalArgumentException("The partial must not be null");
+        }
+        int thisValue = get();
+        int otherValue = partial.get(getFieldType());
+        if (thisValue < otherValue) {
+            return -1;
+        } else if (thisValue > otherValue) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object instanceof AbstractReadableInstantFieldProperty) {
+            AbstractReadableInstantFieldProperty other = (AbstractReadableInstantFieldProperty) object;
+            if (get() == other.get() &&
+                getField().equals(other.getField())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+    public int hashCode() {
+        return get() * 17 + getField().hashCode();
+    }
+
+    
+    
+
+
+
+
+    public String toString() {
+        return "Property[" + getName() + "]";
+    }
+
+}

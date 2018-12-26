@@ -1,0 +1,186 @@
+60,62d59
+< import org.joda.time.convert.ConverterManager;
+< import org.joda.time.convert.DurationConverter;
+< import org.joda.time.convert.InstantConverter;
+400d396
+<     
+441,445c437,439
+< 
+< 
+<     public void setMillis(Object instant) {
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+<         setMillis(converter.getInstantMillis(instant));  
+---
+>     public void setMillis(ReadableInstant instant) {
+>         long instantMillis = DateTimeUtils.getInstantMillis(instant);
+>         setMillis(instantMillis);  
+450d443
+<     
+467a461,463
+>     public void add(ReadableDuration duration) {
+>         add(duration, 1);
+>     }
+468a465
+>     
+473,474c470,477
+<     public void add(Object duration) {
+<         add(duration, 1);
+---
+> 
+> 
+> 
+> 
+>     public void add(ReadableDuration duration, int scalar) {
+>         if (duration != null) {
+>             add(FieldUtils.safeMultiply(duration.getMillis(), scalar));
+>         }
+484a488,492
+>     public void add(ReadablePeriod period) {
+>         add(period, 1);
+>     }
+> 
+>     
+491,497c499,503
+<     public void add(Object duration, int scalar) {
+<         if (duration instanceof ReadablePeriod) {
+<             ReadablePeriod d = (ReadablePeriod) duration;
+<             d.addInto(this, scalar);
+<         } else {
+<             DurationConverter converter = ConverterManager.getInstance().getDurationConverter(duration);
+<             add(FieldUtils.safeMultiply(converter.getDurationMillis(duration), scalar));
+---
+> 
+> 
+>     public void add(ReadablePeriod period, int scalar) {
+>         if (period != null) {
+>             setMillis(period.addTo(getMillis(), scalar));  
+503d508
+<     
+516d520
+<     
+563d566
+<     
+598,620d600
+< 
+< 
+<     public void add(final DateTimeField field, final int value) {
+<         if (field == null) {
+<             throw new IllegalArgumentException("The DateTimeField must not be null");
+<         }
+<         setMillis(field.add(getMillis(), value));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+629,650d608
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public void addWrapField(final DateTimeField field, final int value) {
+<         if (field == null) {
+<             throw new IllegalArgumentException("The DateTimeField must not be null");
+<         }
+<         setMillis(field.addWrapField(getMillis(), value));
+<     }
+< 
+<     
+<     
+777d734
+<     
+894d850
+<     
+912,915c868
+< 
+< 
+< 
+<     public void setDate(final Object instant) {
+---
+>     public void setDate(final ReadableInstant instant) {
+917,918c870,871
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+<         setDate(converter.getInstantMillis(instant));
+---
+>         long instantMillis = DateTimeUtils.getInstantMillis(instant);
+>         setDate(instantMillis);
+959,965c912,915
+< 
+< 
+< 
+<     public void setTime(final Object instant) {
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+<         long millis = converter.getInstantMillis(instant);
+<         DateTimeZone zone = converter.getChronology(instant).getZone();
+---
+>     public void setTime(final ReadableInstant instant) {
+>         long instantMillis = DateTimeUtils.getInstantMillis(instant);
+>         Chronology instantChrono = DateTimeUtils.getInstantChronology(instant);
+>         DateTimeZone zone = instantChrono.getZone();
+967c917
+<             millis = zone.getMillisKeepLocal(DateTimeZone.UTC, millis);
+---
+>             instantMillis = zone.getMillisKeepLocal(DateTimeZone.UTC, instantMillis);
+969c919
+<         setTime(millis);
+---
+>         setTime(instantMillis);
+993,1018d942
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public void setDateTime(final long instant) {
+<         setMillis(instant);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public void setDateTime(final Object instant) {
+<         setMillis(instant);
+<     }
+< 
+<     
+1040c964
+<         setDateTime(instant);
+---
+>         setMillis(instant);
+1045d968
+<     
+1150d1072
+<     
+1215d1136
+<     
+1224d1144
+<     

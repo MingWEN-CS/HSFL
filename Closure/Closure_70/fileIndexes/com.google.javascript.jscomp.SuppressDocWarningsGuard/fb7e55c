@@ -1,0 +1,96 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.collect.Maps;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Map;
+
+
+
+
+
+class SuppressDocWarningsGuard extends WarningsGuard {
+  private static final long serialVersionUID = 1L;
+
+  
+  private final Map<String, DiagnosticGroupWarningsGuard> suppressors =
+      Maps.newHashMap();
+
+  
+
+
+  SuppressDocWarningsGuard(Map<String, DiagnosticGroup> suppressableGroups) {
+    for (Map.Entry<String, DiagnosticGroup> entry :
+             suppressableGroups.entrySet()) {
+      suppressors.put(
+          entry.getKey(),
+          new DiagnosticGroupWarningsGuard(
+              entry.getValue(),
+              CheckLevel.OFF));
+    }
+  }
+
+  @Override
+  public CheckLevel level(JSError error) {
+    Node node = error.node;
+    if (node != null) {
+      for (Node current = node;
+           current != null;
+           current = current.getParent()) {
+        int type = current.getType();
+        JSDocInfo info = null;
+
+        
+        
+        
+        
+        if (type == Token.FUNCTION) {
+          info = NodeUtil.getFunctionJSDocInfo(current);
+        } else if (type == Token.SCRIPT) {
+          info = current.getJSDocInfo();
+        }
+
+        if (info != null) {
+          for (String suppressor : info.getSuppressions()) {
+            WarningsGuard guard = suppressors.get(suppressor);
+
+            
+            
+            if (guard != null) {
+              CheckLevel newLevel = guard.level(error);
+              if (newLevel != null) {
+                return newLevel;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public int getPriority() {
+    
+    
+    return WarningsGuard.Priority.SUPPRESS_DOC.value;
+  }
+}

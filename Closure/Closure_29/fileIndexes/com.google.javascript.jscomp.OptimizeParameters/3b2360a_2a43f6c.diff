@@ -1,0 +1,95 @@
+60c60
+<     process(defFinder);
+---
+>     process(externs, root, defFinder);
+64c64,65
+<   public void process(SimpleDefinitionFinder definitions) {
+---
+>   public void process(
+>       Node externs, Node root, SimpleDefinitionFinder definitions) {
+100c101
+<     if (!OptimizeReturns.isSimpleFunctionDeclaration(rValue)) {
+---
+>     if (!SimpleDefinitionFinder.isSimpleFunctionDeclaration(rValue)) {
+105c106
+<     if (OptimizeReturns.maybeExported(compiler, definition)) {
+---
+>     if (SimpleDefinitionFinder.maybeExported(compiler, definition)) {
+119c120
+<       if (!isCallSite(site.node)) {
+---
+>       if (!SimpleDefinitionFinder.isCallOrNewSite(site)) {
+122a124
+> 
+152c154
+<       Preconditions.checkState(isCallSite(site.node));
+---
+>       Preconditions.checkState(SimpleDefinitionFinder.isCallOrNewSite(site));
+185c187
+<       Preconditions.checkState(isCallSite(site.node));
+---
+>       Preconditions.checkState(SimpleDefinitionFinder.isCallOrNewSite(site));
+201c203
+<       Preconditions.checkState(isCallSite(site.node));
+---
+>       Preconditions.checkState(SimpleDefinitionFinder.isCallOrNewSite(site));
+265,287d266
+<   private boolean isCallSite(Node fn) {
+<     Node call = fn.getParent();
+<     
+<     
+<     
+<     return isCallOrNew(call) && call.getFirstChild() == fn;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   private boolean isCallOrNew(Node node) {
+<     return NodeUtil.isCall(node) || NodeUtil.isNew(node);
+<   }
+< 
+<   
+< 
+< 
+< 
+347d325
+< 
+378,393d355
+< 
+<   private Node getArgumentAtIndex(Node firstArg, int argIndex) {
+<     Node formalArgPtr = firstArg;
+<     while (argIndex != 0 && formalArgPtr != null) {
+<       formalArgPtr = formalArgPtr.getNext();
+<       argIndex--;
+<     }
+<     return formalArgPtr;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+398,399c360,361
+<     Node formalArgPtr = getArgumentAtIndex(
+<         function.getFirstChild().getNext().getFirstChild(), argIndex);
+---
+>     Node formalArgPtr = NodeUtil.getArgumentForFunction(
+>         function, argIndex);
+414c376,377
+<     Preconditions.checkArgument(isCallOrNew(call), "Node must be a call.");
+---
+>     Preconditions.checkArgument(
+>         NodeUtil.isCallOrNew(call), "Node must be a call or new.");
+416,417c379,380
+<     Node formalArgPtr = getArgumentAtIndex(
+<         call.getFirstChild().getNext(), argIndex);
+---
+>     Node formalArgPtr = NodeUtil.getArgumentForCallOrNew(
+>         call, argIndex);

@@ -1,0 +1,51 @@
+1261,1266c1261,1272
+<     if (thisType.isTemplatizedType() && thatType.isTemplatizedType()) {
+<       JSType rawThisType = thisType.toMaybeTemplatizedType().getReferencedType();
+<       JSType rawThatType = thatType.toMaybeTemplatizedType().getReferencedType();
+<       if (!rawThisType.isSubtype(rawThatType)) {
+<         return false;
+<       }
+---
+>     
+>     
+>     TemplateTypeMap thisTypeParams = thisType.getTemplateTypeMap();
+>     TemplateTypeMap thatTypeParams = thatType.getTemplateTypeMap();
+>     boolean templateMatch = true;
+>     if (isExemptFromTemplateTypeInvariance(thatType)) {
+>       
+>       
+>       
+>       TemplateType key = thisType.registry.getObjectElementKey();
+>       JSType thisElement = thisTypeParams.getTemplateType(key);
+>       JSType thatElement = thatTypeParams.getTemplateType(key);
+1268,1285c1274,1281
+<       TemplateTypeMap thisTypeParams = thisType.getTemplateTypeMap();
+<       TemplateTypeMap thatTypeParams = thatType.getTemplateTypeMap();
+< 
+<       if (thisTypeParams.checkEquivalenceHelper(
+<           thatTypeParams, EquivalenceMethod.INVARIANT)) {
+<         return true;
+<       } else if (isExemptFromTemplateTypeInvariance(thatType)) {
+<         
+<         
+<         TemplateType key = thisType.registry.getObjectElementKey();
+<         JSType thisElement = thisTypeParams.getTemplateType(key);
+<         JSType thatElement = thatTypeParams.getTemplateType(key);
+< 
+<         return thisElement.isSubtype(thatElement)
+<             || thatElement.isSubtype(thisElement);
+<       } else {
+<         return false;
+<       }
+---
+>       templateMatch = thisElement.isSubtype(thatElement)
+>           || thatElement.isSubtype(thisElement);
+>     } else {
+>       templateMatch = thisTypeParams.checkEquivalenceHelper(
+>           thatTypeParams, EquivalenceMethod.INVARIANT);
+>     }
+>     if (!templateMatch) {
+>       return false;
+1287a1284,1285
+>     
+>     

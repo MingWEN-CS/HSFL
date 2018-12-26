@@ -1,0 +1,27 @@
+51a52,55
+>   static final DiagnosticType AMBIGUOUS_FUNCTION_DECL =
+>     DiagnosticType.warning("AMBIGUIOUS_FUNCTION_DECL",
+>         "Ambiguious use of a named function: {0}.");
+> 
+97a102
+>       boolean isUnhoistedNamedFunction = false;
+106a112,114
+>         } else if (NodeUtil.isFunctionDeclaration(
+>             reference.getNameNode().getParent())) {
+>           isUnhoistedNamedFunction = true;
+127a136,150
+>               break;
+>             }
+>           }
+>         }
+> 
+>         if (!isDeclaration && isDeclaredInScope && isUnhoistedNamedFunction) {
+>           
+>           
+>           for (BasicBlock declaredBlock : blocksWithDeclarations) {
+>             if (!declaredBlock.provablyExecutesBefore(basicBlock)) {
+>               compiler.report(
+>                   JSError.make(reference.getSourceName(),
+>                       reference.getNameNode(),
+>                       checkLevel,
+>                       AMBIGUOUS_FUNCTION_DECL, v.name));

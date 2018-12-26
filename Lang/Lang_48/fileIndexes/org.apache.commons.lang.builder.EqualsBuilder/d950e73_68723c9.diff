@@ -1,0 +1,111 @@
+111a112
+> 
+149c150
+<         return reflectionEquals(lhs, rhs, false);
+---
+>         return reflectionEquals(lhs, rhs, false, null);
+171,172c172,198
+<     public static boolean reflectionEquals(Object lhs, Object rhs,
+<             boolean testTransients) {
+---
+>     public static boolean reflectionEquals(Object lhs, Object rhs, boolean testTransients) {
+>         return reflectionEquals(lhs, rhs, testTransients, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean reflectionEquals(Object lhs, Object rhs, boolean testTransients, Class reflectUpToClass) {
+179,180c205,225
+<         Class c1 = lhs.getClass();
+<         if (!c1.isInstance(rhs)) {
+---
+>         
+>         
+>         
+>         
+>         Class lhsClass = lhs.getClass();
+>         Class rhsClass = rhs.getClass();
+>         Class testClass;
+>         if (lhsClass.isInstance(rhs)) {
+>             testClass = lhsClass;
+>             if (!rhsClass.isInstance(lhs)) {
+>                 
+>                 testClass = rhsClass;
+>             }
+>         } else if (rhsClass.isInstance(lhs)) {
+>             testClass = rhsClass;
+>             if (!lhsClass.isInstance(rhs)) {
+>                 
+>                 testClass = lhsClass;
+>             }
+>         } else {
+>             
+183,184d227
+<         Field[] fields = c1.getDeclaredFields();
+<         Field.setAccessible(fields, true);
+186c229,259
+<         for (int i = 0; i < fields.length && equalsBuilder.isEquals; ++i) {
+---
+>         try {
+>             reflectionAppend(lhs, rhs, testClass, equalsBuilder, testTransients);
+>             while (testClass.getSuperclass() != null && testClass != reflectUpToClass) {
+>                 testClass = testClass.getSuperclass();
+>                 reflectionAppend(lhs, rhs, testClass, equalsBuilder, testTransients);
+>             }
+>         } catch (IllegalArgumentException e) {
+>             
+>             
+>             
+>             
+>             
+>             return false;
+>         }
+>         return equalsBuilder.isEquals();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void reflectionAppend(Object lhs, Object rhs, Class clazz, EqualsBuilder builder, boolean useTransients) {
+>         Field[] fields = clazz.getDeclaredFields();
+>         Field.setAccessible(fields, true);
+>         for (int i = 0; i < fields.length && builder.isEquals; i++) {
+188c261
+<             if (testTransients || !Modifier.isTransient(f.getModifiers())) {
+---
+>             if (useTransients || !Modifier.isTransient(f.getModifiers())) {
+191c264
+<                         equalsBuilder.append(f.get(lhs), f.get(rhs));
+---
+>                         builder.append(f.get(lhs), f.get(rhs));
+195d267
+<                         throw new InternalError("Unexpected IllegalAccessException");
+200d271
+<         return equalsBuilder.isEquals();

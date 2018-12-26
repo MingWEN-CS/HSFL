@@ -1,0 +1,224 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeZone;
+import org.joda.time.ReadWritableDuration;
+import org.joda.time.ReadWritableInterval;
+import org.joda.time.ReadableDuration;
+import org.joda.time.chrono.ISOChronology;
+import org.joda.time.format.DateTimeParser;
+import org.joda.time.format.DurationFormatter;
+import org.joda.time.format.DurationParser;
+import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.format.ISODurationFormat;
+
+
+
+
+
+
+
+
+class StringConverter extends AbstractConverter
+    implements InstantConverter, DurationConverter, IntervalConverter {
+    
+    
+
+
+    static final StringConverter INSTANCE = new StringConverter();
+    
+    
+
+
+    protected StringConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, DateTimeZone zone) {
+        String str = (String) object;
+        Chronology chrono = ISOChronology.getInstance(zone);
+        DateTimeParser p = ISODateTimeFormat.getInstance(chrono).dateTimeParser();
+        return p.parseMillis(str);
+    }
+    
+    
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, Chronology chrono) {
+        String str = (String) object;
+        chrono = getChronology(object, chrono);
+        DateTimeParser p = ISODateTimeFormat.getInstance(chrono).dateTimeParser();
+        return p.parseMillis(str);
+    }
+    
+    
+    
+
+
+    public boolean isPrecise(Object object) {
+        return false;
+    }
+
+    
+
+
+    public long getDurationMillis(Object object) {
+        throw new UnsupportedOperationException();
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void setInto(ReadWritableDuration duration, Object object) {
+        String str = (String) object;
+        DurationParser parser = ISODurationFormat.getInstance().standard();
+        int pos = parser.parseInto(duration, str, 0);
+        if (pos < str.length()) {
+            if (pos < 0) {
+                
+                parser.parseMutableDuration(duration.getDurationType(), str);
+            }
+            throw new IllegalArgumentException("Invalid format: \"" + str + '"');
+        }
+    }
+
+    
+
+
+
+
+
+    public void setInto(ReadWritableInterval writableInterval, Object object) {
+        String str = (String) object;
+
+        int separator = str.indexOf('/');
+        if (separator < 0) {
+            throw new IllegalArgumentException("Format requires a '/' separator: " + str);
+        }
+
+        String leftStr = str.substring(0, separator);
+        if (leftStr.length() <= 0) {
+            throw new IllegalArgumentException("Format invalid: " + str);
+        }
+        String rightStr = str.substring(separator + 1);
+        if (rightStr.length() <= 0) {
+            throw new IllegalArgumentException("Format invalid: " + str);
+        }
+
+        DateTimeParser dateTimeParser = ISODateTimeFormat.getInstance().dateTimeParser();
+        DurationFormatter durationParser = ISODurationFormat.getInstance().standard();
+        long startInstant;
+        ReadableDuration duration;
+
+        char c = leftStr.charAt(0);
+        if (c == 'P' || c == 'p') {
+            startInstant = 0;
+            duration = durationParser.parseDuration(getDurationType(leftStr, false), leftStr);
+        } else {
+            startInstant = dateTimeParser.parseMillis(leftStr);
+            duration = null;
+        }
+
+        c = rightStr.charAt(0);
+        if (c == 'P' || c == 'p') {
+            if (duration != null) {
+                throw new IllegalArgumentException("Interval composed of two durations: " + str);
+            }
+            duration = durationParser.parseDuration(getDurationType(rightStr, false), rightStr);
+            writableInterval.setStartMillis(startInstant);
+            writableInterval.setDurationAfterStart(duration);
+        } else {
+            long endInstant = dateTimeParser.parseMillis(rightStr);
+            writableInterval.setEndMillis(endInstant);
+            if (duration == null) {
+                writableInterval.setStartMillis(startInstant);
+            } else {
+                writableInterval.setDurationBeforeEnd(duration);
+            }
+        }
+    }
+
+    
+    
+
+
+
+
+    public Class getSupportedType() {
+        return String.class;
+    }
+
+}

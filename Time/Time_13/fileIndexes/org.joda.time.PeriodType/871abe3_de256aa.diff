@@ -1,0 +1,99 @@
+58a59,60
+> import org.joda.time.field.FieldUtils;
+> 
+83a86,94
+>     static int YEAR_INDEX = 0;
+>     static int MONTH_INDEX = 1;
+>     static int WEEK_INDEX = 2;
+>     static int DAY_INDEX = 3;
+>     static int HOUR_INDEX = 4;
+>     static int MINUTE_INDEX = 5;
+>     static int SECOND_INDEX = 6;
+>     static int MILLI_INDEX = 7;
+>     
+521,551d531
+<     public int getYears(ReadablePeriod period) {
+<         int index = iIndices[0];
+<         return (index == -1 ? 0 : period.getValue(index));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     public int getMonths(ReadablePeriod period) {
+<         int index = iIndices[1];
+<         return (index == -1 ? 0 : period.getValue(index));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     public int getWeeks(ReadablePeriod period) {
+<         int index = iIndices[2];
+<         return (index == -1 ? 0 : period.getValue(index));
+<     }
+< 
+<     
+< 
+< 
+< 
+553,556c533,535
+< 
+<     public int getDays(ReadablePeriod period) {
+<         int index = iIndices[3];
+<         return (index == -1 ? 0 : period.getValue(index));
+---
+>     int getIndexedField(ReadablePeriod period, int index) {
+>         int realIndex = iIndices[index];
+>         return (realIndex == -1 ? 0 : period.getValue(realIndex));
+560d538
+<     
+566,571d543
+<     public int getHours(ReadablePeriod period) {
+<         int index = iIndices[4];
+<         return (index == -1 ? 0 : period.getValue(index));
+<     }
+< 
+<     
+575,579c547,553
+< 
+< 
+<     public int getMinutes(ReadablePeriod period) {
+<         int index = iIndices[5];
+<         return (index == -1 ? 0 : period.getValue(index));
+---
+>     boolean setIndexedField(ReadablePeriod period, int index, int[] values, int newValue) {
+>         int realIndex = iIndices[index];
+>         if (realIndex == -1) {
+>             throw new UnsupportedOperationException("Field is not supported");
+>         }
+>         values[realIndex] = newValue;
+>         return true;
+588,591d561
+<     public int getSeconds(ReadablePeriod period) {
+<         int index = iIndices[6];
+<         return (index == -1 ? 0 : period.getValue(index));
+<     }
+593d562
+<     
+596,601c565,571
+< 
+< 
+< 
+<     public int getMillis(ReadablePeriod period) {
+<         int index = iIndices[7];
+<         return (index == -1 ? 0 : period.getValue(index));
+---
+>     boolean addIndexedField(ReadablePeriod period, int index, int[] values, int valueToAdd) {
+>         int realIndex = iIndices[index];
+>         if (realIndex == -1) {
+>             throw new UnsupportedOperationException("Field is not supported");
+>         }
+>         values[realIndex] = FieldUtils.safeAdd(values[realIndex], valueToAdd);
+>         return true;

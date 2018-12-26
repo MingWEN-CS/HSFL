@@ -1,0 +1,56 @@
+428c428
+<       attachLiteralTypes(n);
+---
+>       attachLiteralTypes(t, n);
+480c480
+<     private void attachLiteralTypes(Node n) {
+---
+>     private void attachLiteralTypes(NodeTraversal t, Node n) {
+512c512
+<           processObjectLit(n);
+---
+>           processObjectLit(t, n);
+520c520
+<     private void processObjectLit(Node objectLit) {
+---
+>     private void processObjectLit(NodeTraversal t, Node objectLit) {
+546a547,577
+> 
+>       processObjectLitProperties(
+>           t, objectLit, ObjectType.cast(objectLit.getJSType()));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     void processObjectLitProperties(
+>         NodeTraversal t, Node objLit, ObjectType objLitType) {
+>       
+>       
+>       if (objLitType == null) {
+>         return;
+>       }
+> 
+>       for (Node name = objLit.getFirstChild(); name != null;
+>            name = name.getNext()) {
+>         Node value = name.getFirstChild();
+>         String memberName = NodeUtil.getStringValue(name);
+>         JSType type = getDeclaredTypeInAnnotation(
+>             t, name, name.getJSDocInfo());
+>         if (type != null) {
+>           boolean isExtern = t.getInput() != null && t.getInput().isExtern();
+>           objLitType.defineDeclaredProperty(
+>               memberName, type, isExtern, name);
+>         }
+>       }
+563,564c594,597
+<       Node objNode = node.getType() == Token.GETPROP ?
+<           node.getFirstChild() : null;
+---
+>       Node objNode =
+>           node.getType() == Token.GETPROP ? node.getFirstChild() :
+>           NodeUtil.isObjectLitKey(node, node.getParent()) ? node.getParent() :
+>           null;

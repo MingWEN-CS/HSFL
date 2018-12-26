@@ -1,0 +1,371 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.ode.events;
+
+import org.apache.commons.math.ConvergenceException;
+import org.apache.commons.math.exception.MathUserException;
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.analysis.solvers.BrentSolver;
+import org.apache.commons.math.ode.sampling.StepInterpolator;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class EventState {
+
+    
+    private final EventHandler handler;
+
+    
+    private final double maxCheckInterval;
+
+    
+    private final double convergence;
+
+    
+    private final int maxIterationCount;
+
+    
+    private double t0;
+
+    
+    private double g0;
+
+    
+    private boolean g0Positive;
+
+    
+    private boolean pendingEvent;
+
+    
+    private double pendingEventTime;
+
+    
+    private double previousEventTime;
+
+    
+    private boolean forward;
+
+    
+
+
+    private boolean increasing;
+
+    
+    private int nextAction;
+
+    
+
+
+
+
+
+
+
+
+    public EventState(final EventHandler handler, final double maxCheckInterval,
+                      final double convergence, final int maxIterationCount) {
+        this.handler           = handler;
+        this.maxCheckInterval  = maxCheckInterval;
+        this.convergence       = FastMath.abs(convergence);
+        this.maxIterationCount = maxIterationCount;
+
+        
+        t0                = Double.NaN;
+        g0                = Double.NaN;
+        g0Positive        = true;
+        pendingEvent      = false;
+        pendingEventTime  = Double.NaN;
+        previousEventTime = Double.NaN;
+        increasing        = true;
+        nextAction        = EventHandler.CONTINUE;
+
+    }
+
+    
+
+
+    public EventHandler getEventHandler() {
+        return handler;
+    }
+
+    
+
+
+    public double getMaxCheckInterval() {
+        return maxCheckInterval;
+    }
+
+    
+
+
+    public double getConvergence() {
+        return convergence;
+    }
+
+    
+
+
+    public int getMaxIterationCount() {
+        return maxIterationCount;
+    }
+
+    
+
+
+
+
+    public void reinitializeBegin(final StepInterpolator interpolator)
+        throws EventException {
+        try {
+            
+            
+            
+            
+            
+            
+            
+            
+
+            
+            
+            
+            
+            
+            
+            
+            
+            
+
+            final double ignoreZone = interpolator.isForward() ? getConvergence() : -getConvergence();
+            t0 = interpolator.getPreviousTime() + ignoreZone;
+            interpolator.setInterpolatedTime(t0);
+            g0 = handler.g(t0, interpolator.getInterpolatedState());
+            if (g0 == 0) {
+                
+                
+                final double tStart = interpolator.getPreviousTime();
+                interpolator.setInterpolatedTime(tStart);
+                g0Positive = handler.g(tStart, interpolator.getInterpolatedState()) <= 0;
+            } else {
+                g0Positive = g0 >= 0;
+            }
+
+        } catch (MathUserException mue) {
+            throw new EventException(mue);
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public boolean evaluateStep(final StepInterpolator interpolator)
+        throws MathUserException, EventException, ConvergenceException {
+
+        try {
+
+            forward = interpolator.isForward();
+            final double t1 = interpolator.getCurrentTime();
+            final int    n  = FastMath.max(1, (int) FastMath.ceil(FastMath.abs(t1 - t0) / maxCheckInterval));
+            final double h  = (t1 - t0) / n;
+
+            double ta = t0;
+            double ga = g0;
+            double tb = t0 + (interpolator.isForward() ? convergence : -convergence);
+            for (int i = 0; i < n; ++i) {
+
+                
+                tb += h;
+                interpolator.setInterpolatedTime(tb);
+                final double gb = handler.g(tb, interpolator.getInterpolatedState());
+
+                
+                if (g0Positive ^ (gb >= 0)) {
+                    
+
+                    if (ga * gb > 0) {
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        final double epsilon = (forward ? 0.25 : -0.25) * convergence;
+                        for (int k = 0; (k < 4) && (ga * gb > 0); ++k) {
+                            ta += epsilon;
+                            interpolator.setInterpolatedTime(ta);
+                            ga = handler.g(ta, interpolator.getInterpolatedState());
+                        }
+                        if (ga * gb > 0) {
+                            
+                            throw MathRuntimeException.createInternalError(null);
+                        }
+                    }
+
+                    
+                    increasing = gb >= ga;
+
+                    final UnivariateRealFunction f = new UnivariateRealFunction() {
+                        public double value(final double t) throws MathUserException {
+                            try {
+                                interpolator.setInterpolatedTime(t);
+                                return handler.g(t, interpolator.getInterpolatedState());
+                            } catch (EventException e) {
+                                throw new MathUserException(e);
+                            }
+                        }
+                    };
+                    final BrentSolver solver = new BrentSolver(convergence);
+                    solver.setMaxEvaluations(maxIterationCount);
+                    final double root = (ta <= tb) ? solver.solve(f, ta, tb) : solver.solve(f, tb, ta);
+                    if ((FastMath.abs(root - ta) <= convergence) &&
+                         (FastMath.abs(root - previousEventTime) <= convergence)) {
+                        
+                        ta = tb;
+                        ga = gb;
+                    } else if (Double.isNaN(previousEventTime) ||
+                               (FastMath.abs(previousEventTime - root) > convergence)) {
+                        pendingEventTime = root;
+                        if (pendingEvent && (FastMath.abs(t1 - pendingEventTime) <= convergence)) {
+                            
+                            
+                            
+                            
+                            return false;
+                        }
+                        
+                        
+                        pendingEvent = true;
+                        return true;
+                    }
+
+                } else {
+                    
+                    ta = tb;
+                    ga = gb;
+                }
+
+            }
+
+            
+            pendingEvent     = false;
+            pendingEventTime = Double.NaN;
+            return false;
+
+        } catch (MathUserException mue) {
+            final Throwable cause = mue.getCause();
+            if ((cause != null) && (cause instanceof EventException)) {
+                throw (EventException) cause;
+            }
+            throw mue;
+        }
+
+    }
+
+    
+
+
+
+
+    public double getEventTime() {
+        return pendingEventTime;
+    }
+
+    
+
+
+
+
+
+
+
+    public void stepAccepted(final double t, final double[] y)
+        throws EventException {
+
+        t0 = t;
+        g0 = handler.g(t, y);
+
+        if (pendingEvent) {
+            
+            previousEventTime = t;
+            g0Positive        = increasing;
+            nextAction        = handler.eventOccurred(t, y, !(increasing ^ forward));
+        } else {
+            g0Positive = g0 >= 0;
+            nextAction = EventHandler.CONTINUE;
+        }
+    }
+
+    
+
+
+
+    public boolean stop() {
+        return nextAction == EventHandler.STOP;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public boolean reset(final double t, final double[] y)
+        throws EventException {
+
+        if (! pendingEvent) {
+            return false;
+        }
+
+        if (nextAction == EventHandler.RESET_STATE) {
+            handler.resetState(t, y);
+        }
+        pendingEvent      = false;
+        pendingEventTime  = Double.NaN;
+
+        return (nextAction == EventHandler.RESET_STATE) ||
+               (nextAction == EventHandler.RESET_DERIVATIVES);
+
+    }
+
+}

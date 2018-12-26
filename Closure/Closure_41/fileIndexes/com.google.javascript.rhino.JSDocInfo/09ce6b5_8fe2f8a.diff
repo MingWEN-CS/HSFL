@@ -1,0 +1,89 @@
+41a42
+> import com.google.common.base.Preconditions;
+130a132,145
+> 
+>   static class TrimmedStringPosition extends StringPosition {
+>     @Override public void setItem(String item) {
+>       Preconditions.checkArgument(
+>           item.charAt(0) != ' ' &&
+>           item.charAt(item.length() - 1) != ' ',
+>           "String has leading or trailing whitespace");
+>       super.setItem(item);
+>     }
+>   }
+> 
+>   
+> 
+> 
+132c147,156
+<     public boolean hasBrackets = false;
+---
+>     private boolean brackets = false;
+> 
+>     
+>     public boolean hasBrackets() {
+>       return brackets;
+>     }
+> 
+>     void setHasBrackets(boolean newVal) {
+>       brackets = newVal;
+>     }
+146,149c170,217
+<     public StringPosition annotation = null;
+<     public StringPosition name = null;
+<     public StringPosition description = null;
+<     public TypePosition type = null;
+---
+>     private TrimmedStringPosition annotation = null;
+>     private TrimmedStringPosition name = null;
+>     private StringPosition description = null;
+>     private TypePosition type = null;
+> 
+>     
+> 
+> 
+>     public StringPosition getAnnotation() {
+>       return annotation;
+>     }
+> 
+>     void setAnnotation(TrimmedStringPosition p) {
+>       annotation = p;
+>     }
+> 
+>     
+> 
+> 
+>     public StringPosition getName() {
+>       return name;
+>     }
+> 
+>     void setName(TrimmedStringPosition p) {
+>       name = p;
+>     }
+> 
+>     
+> 
+> 
+>     public StringPosition getDescription() {
+>       return description;
+>     }
+> 
+>     void setDescription(StringPosition p) {
+>       description = p;
+>     }
+> 
+>     
+> 
+> 
+>     public TypePosition getType() {
+>       return type;
+>     }
+> 
+>     void setType(TypePosition p) {
+>       type = p;
+>     }
+1309c1377,1378
+<     return documentation == null ? null : documentation.markers;
+---
+>     return documentation == null
+>         ? ImmutableList.<Marker>of() : documentation.markers;

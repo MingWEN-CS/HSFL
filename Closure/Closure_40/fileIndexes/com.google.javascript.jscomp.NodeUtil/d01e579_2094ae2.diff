@@ -1,0 +1,70 @@
+72c72
+<   static TernaryValue getExpressionBooleanValue(Node n) {
+---
+>   static TernaryValue getImpureBooleanValue(Node n) {
+77c77
+<         return getExpressionBooleanValue(n.getLastChild());
+---
+>         return getImpureBooleanValue(n.getLastChild());
+79c79
+<         TernaryValue value = getExpressionBooleanValue(n.getLastChild());
+---
+>         TernaryValue value = getImpureBooleanValue(n.getLastChild());
+82,83c82,83
+<         TernaryValue lhs = getExpressionBooleanValue(n.getFirstChild());
+<         TernaryValue rhs = getExpressionBooleanValue(n.getLastChild());
+---
+>         TernaryValue lhs = getImpureBooleanValue(n.getFirstChild());
+>         TernaryValue rhs = getImpureBooleanValue(n.getLastChild());
+87,88c87,88
+<         TernaryValue lhs = getExpressionBooleanValue(n.getFirstChild());
+<         TernaryValue rhs = getExpressionBooleanValue(n.getLastChild());
+---
+>         TernaryValue lhs = getImpureBooleanValue(n.getFirstChild());
+>         TernaryValue rhs = getImpureBooleanValue(n.getLastChild());
+92c92
+<         TernaryValue trueValue = getExpressionBooleanValue(
+---
+>         TernaryValue trueValue = getImpureBooleanValue(
+94c94
+<         TernaryValue falseValue = getExpressionBooleanValue(n.getLastChild());
+---
+>         TernaryValue falseValue = getImpureBooleanValue(n.getLastChild());
+100a101,105
+>       case Token.ARRAYLIT:
+>       case Token.OBJECTLIT:
+>         
+>         return TernaryValue.TRUE;
+> 
+102c107
+<         return getBooleanValue(n);
+---
+>         return getPureBooleanValue(n);
+110c115,117
+<   static TernaryValue getBooleanValue(Node n) {
+---
+> 
+> 
+>   static TernaryValue getPureBooleanValue(Node n) {
+119c126
+<         return getBooleanValue(n.getLastChild()).not();
+---
+>         return getPureBooleanValue(n.getLastChild()).not();
+139,140d145
+<       case Token.ARRAYLIT:
+<       case Token.OBJECTLIT:
+142a148,153
+> 
+>       case Token.ARRAYLIT:
+>       case Token.OBJECTLIT:
+>         if (!mayHaveSideEffects(n)) {
+>           return TernaryValue.TRUE;
+>         }
+189c200
+<         TernaryValue child = getBooleanValue(n.getFirstChild());
+---
+>         TernaryValue child = getPureBooleanValue(n.getFirstChild());
+283c294
+<         TernaryValue child = getBooleanValue(n.getFirstChild());
+---
+>         TernaryValue child = getPureBooleanValue(n.getFirstChild());

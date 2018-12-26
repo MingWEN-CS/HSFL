@@ -1,0 +1,185 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+
+
+
+
+
+
+
+
+public final class DateTimeUtils {
+
+    
+    private static final SystemMillisProvider SYSTEM_MILLIS_PROVIDER = new SystemMillisProvider();
+    
+    
+    private static MillisProvider cMillisProvider = SYSTEM_MILLIS_PROVIDER;
+
+    
+
+
+    private DateTimeUtils() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public static long currentTimeMillis() {
+        return cMillisProvider.getMillis();
+    }
+
+    
+
+
+
+
+
+    public static void setCurrentMillisSystem() throws SecurityException {
+        checkPermission();
+        cMillisProvider = SYSTEM_MILLIS_PROVIDER;
+    }
+
+    
+
+
+
+
+
+
+
+    public static void setCurrentMillisFixed(long fixedMillis) throws SecurityException {
+        checkPermission();
+        cMillisProvider = new FixedMillisProvider(fixedMillis);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public static void setCurrentMillisOffset(long offsetMillis) throws SecurityException {
+        checkPermission();
+        cMillisProvider = new OffsetMillisProvider(offsetMillis);
+    }
+
+    
+
+
+
+
+    private static void checkPermission() throws SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new JodaTimePermission("CurrentTime.setProvider"));
+        }
+    }
+
+    
+    
+
+
+    static abstract class MillisProvider {
+        abstract long getMillis();
+    }
+
+    
+
+
+    static class SystemMillisProvider extends MillisProvider {
+        long getMillis() {
+            return System.currentTimeMillis();
+        }
+    }
+
+    
+
+
+    static class FixedMillisProvider extends MillisProvider {
+        private final long iMillis;
+        FixedMillisProvider(long fixedMillis) {
+            iMillis = fixedMillis;
+        }
+        long getMillis() {
+            return iMillis;
+        }
+    }
+
+    
+
+
+    static class OffsetMillisProvider extends MillisProvider {
+        private final long iMillis;
+        OffsetMillisProvider(long offsetMillis) {
+            iMillis = offsetMillis;
+        }
+        long getMillis() {
+            return System.currentTimeMillis() + iMillis;
+        }
+    }
+
+}

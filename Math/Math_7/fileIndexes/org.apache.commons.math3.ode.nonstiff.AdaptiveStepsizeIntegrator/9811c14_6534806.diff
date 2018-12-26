@@ -1,0 +1,45 @@
+21a22
+> import org.apache.commons.math.ode.ExtendedFirstOrderDifferentialEquations;
+54a56,63
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+78a88,90
+>     
+>     protected int mainSetDimension;
+> 
+174c186,192
+<       if ((vecAbsoluteTolerance != null) && (vecAbsoluteTolerance.length != y0.length)) {
+---
+>       if (equations instanceof ExtendedFirstOrderDifferentialEquations) {
+>           mainSetDimension = ((ExtendedFirstOrderDifferentialEquations) equations).getMainSetDimension();
+>       } else {
+>           mainSetDimension = equations.getDimension();
+>       }
+> 
+>       if ((vecAbsoluteTolerance != null) && (vecAbsoluteTolerance.length != mainSetDimension)) {
+176c194
+<                   LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, y0.length, vecAbsoluteTolerance.length);
+---
+>                   LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, mainSetDimension, vecAbsoluteTolerance.length);
+179c197
+<       if ((vecRelativeTolerance != null) && (vecRelativeTolerance.length != y0.length)) {
+---
+>       if ((vecRelativeTolerance != null) && (vecRelativeTolerance.length != mainSetDimension)) {
+181c199
+<                   LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, y0.length, vecRelativeTolerance.length);
+---
+>                   LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, mainSetDimension, vecRelativeTolerance.length);
+216c234
+<     for (int j = 0; j < y0.length; ++j) {
+---
+>     for (int j = 0; j < scale.length; ++j) {
+237c255
+<     for (int j = 0; j < y0.length; ++j) {
+---
+>     for (int j = 0; j < scale.length; ++j) {

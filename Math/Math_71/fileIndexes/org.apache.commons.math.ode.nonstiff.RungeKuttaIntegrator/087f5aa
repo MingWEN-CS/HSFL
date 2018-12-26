@@ -1,0 +1,309 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.ode.nonstiff;
+
+import java.util.Collection;
+
+import org.apache.commons.math.ode.DerivativeException;
+import org.apache.commons.math.ode.FirstOrderDifferentialEquations;
+import org.apache.commons.math.ode.FirstOrderIntegrator;
+import org.apache.commons.math.ode.IntegratorException;
+import org.apache.commons.math.ode.events.EventHandler;
+import org.apache.commons.math.ode.events.CombinedEventsManager;
+import org.apache.commons.math.ode.sampling.AbstractStepInterpolator;
+import org.apache.commons.math.ode.sampling.DummyStepHandler;
+import org.apache.commons.math.ode.sampling.DummyStepInterpolator;
+import org.apache.commons.math.ode.sampling.StepHandler;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class RungeKuttaIntegrator
+  implements FirstOrderIntegrator {
+
+  
+
+
+
+
+
+
+
+
+  protected RungeKuttaIntegrator(final double[] c, final double[][] a, final double[] b,
+                                 final RungeKuttaStepInterpolator prototype,
+                                 final double step) {
+    this.c          = c;
+    this.a          = a;
+    this.b          = b;
+    this.prototype  = prototype;
+    this.step       = step;
+    handler         = DummyStepHandler.getInstance();
+    eventsHandlersManager = new CombinedEventsManager();
+    resetInternalState();
+  }
+
+  
+  public abstract String getName();
+
+  
+  public void setStepHandler (final StepHandler handler) {
+    this.handler = handler;
+  }
+
+  
+  public StepHandler getStepHandler() {
+    return handler;
+  }
+
+  
+  public void addEventHandler(final EventHandler function,
+                              final double maxCheckInterval,
+                              final double convergence,
+                              final int maxIterationCount) {
+    eventsHandlersManager.addEventHandler(function, maxCheckInterval, convergence, maxIterationCount);
+  }
+
+  
+  public Collection<EventHandler> getEventsHandlers() {
+      return eventsHandlersManager.getEventsHandlers();
+  }
+
+  
+  public void clearEventsHandlers() {
+      eventsHandlersManager.clearEventsHandlers();
+  }
+
+  
+
+
+
+
+
+
+
+  private void sanityChecks(final FirstOrderDifferentialEquations equations,
+                            final double t0, final double[] y0, final double t, final double[] y)
+    throws IntegratorException {
+    if (equations.getDimension() != y0.length) {
+      throw new IntegratorException("dimensions mismatch: ODE problem has dimension {0}," +
+                                    " initial state vector has dimension {1}",
+                                    new Object[] {
+                                      Integer.valueOf(equations.getDimension()),
+                                      Integer.valueOf(y0.length)
+                                    });
+    }
+    if (equations.getDimension() != y.length) {
+        throw new IntegratorException("dimensions mismatch: ODE problem has dimension {0}," +
+                                      " final state vector has dimension {1}",
+                                      new Object[] {
+                                        Integer.valueOf(equations.getDimension()),
+                                        Integer.valueOf(y.length)
+                                      });
+      }
+    if (Math.abs(t - t0) <= 1.0e-12 * Math.max(Math.abs(t0), Math.abs(t))) {
+      throw new IntegratorException("too small integration interval: length = {0}",
+                                    new Object[] { Double.valueOf(Math.abs(t - t0)) });
+    }      
+  }
+
+  
+  public double integrate(final FirstOrderDifferentialEquations equations,
+                          final double t0, final double[] y0,
+                          final double t, final double[] y)
+  throws DerivativeException, IntegratorException {
+
+    sanityChecks(equations, t0, y0, t, y);
+    final boolean forward = (t > t0);
+
+    
+    final int stages = c.length + 1;
+    if (y != y0) {
+      System.arraycopy(y0, 0, y, 0, y0.length);
+    }
+    final double[][] yDotK = new double[stages][];
+    for (int i = 0; i < stages; ++i) {
+      yDotK [i] = new double[y0.length];
+    }
+    final double[] yTmp = new double[y0.length];
+
+    
+    AbstractStepInterpolator interpolator;
+    if (handler.requiresDenseOutput() || (! eventsHandlersManager.isEmpty())) {
+      final RungeKuttaStepInterpolator rki = (RungeKuttaStepInterpolator) prototype.copy();
+      rki.reinitialize(equations, yTmp, yDotK, forward);
+      interpolator = rki;
+    } else {
+      interpolator = new DummyStepInterpolator(yTmp, forward);
+    }
+    interpolator.storeTime(t0);
+
+    
+    long    nbStep    = Math.max(1l, Math.abs(Math.round((t - t0) / step)));
+    boolean lastStep  = false;
+    stepStart = t0;
+    stepSize  = (t - t0) / nbStep;
+    handler.reset();
+    for (long i = 0; ! lastStep; ++i) {
+
+      interpolator.shift();
+
+      boolean needUpdate = false;
+      for (boolean loop = true; loop;) {
+
+        
+        equations.computeDerivatives(stepStart, y, yDotK[0]);
+
+        
+        for (int k = 1; k < stages; ++k) {
+
+          for (int j = 0; j < y0.length; ++j) {
+            double sum = a[k-1][0] * yDotK[0][j];
+            for (int l = 1; l < k; ++l) {
+              sum += a[k-1][l] * yDotK[l][j];
+            }
+            yTmp[j] = y[j] + stepSize * sum;
+          }
+
+          equations.computeDerivatives(stepStart + c[k-1] * stepSize, yTmp, yDotK[k]);
+
+        }
+
+        
+        for (int j = 0; j < y0.length; ++j) {
+          double sum    = b[0] * yDotK[0][j];
+          for (int l = 1; l < stages; ++l) {
+            sum    += b[l] * yDotK[l][j];
+          }
+          yTmp[j] = y[j] + stepSize * sum;
+        }
+
+        
+        interpolator.storeTime(stepStart + stepSize);
+        if (eventsHandlersManager.evaluateStep(interpolator)) {
+          needUpdate = true;
+          stepSize = eventsHandlersManager.getEventTime() - stepStart;
+        } else {
+          loop = false;
+        }
+
+      }
+
+      
+      final double nextStep = stepStart + stepSize;
+      System.arraycopy(yTmp, 0, y, 0, y0.length);
+      eventsHandlersManager.stepAccepted(nextStep, y);
+      if (eventsHandlersManager.stop()) {
+        lastStep = true;
+      } else {
+        lastStep = (i == (nbStep - 1));
+      }
+
+      
+      interpolator.storeTime(nextStep);
+      handler.handleStep(interpolator, lastStep);
+      stepStart = nextStep;
+
+      if (eventsHandlersManager.reset(stepStart, y) && ! lastStep) {
+        
+        
+        equations.computeDerivatives(stepStart, y, yDotK[0]);
+      }
+
+      if (needUpdate) {
+        
+        
+        nbStep = Math.max(1l, Math.abs(Math.round((t - stepStart) / step)));
+        stepSize = (t - stepStart) / nbStep;
+        i = -1;
+      }
+
+    }
+
+    final double stopTime = stepStart;
+    resetInternalState();
+    return stopTime;
+
+  }
+
+  
+  public double getCurrentStepStart() {
+    return stepStart;
+  }
+
+  
+  public double getCurrentSignedStepsize() {
+    return stepSize;
+  }
+
+  
+  private void resetInternalState() {
+    stepStart = Double.NaN;
+    stepSize  = Double.NaN;
+  }
+
+  
+  private double[] c;
+
+  
+  private double[][] a;
+
+  
+  private double[] b;
+
+  
+  private RungeKuttaStepInterpolator prototype;
+                                         
+  
+  private double step;
+
+  
+  private StepHandler handler;
+
+  
+  protected CombinedEventsManager eventsHandlersManager;
+
+  
+  private double stepStart;
+
+  
+  private double stepSize;
+
+}

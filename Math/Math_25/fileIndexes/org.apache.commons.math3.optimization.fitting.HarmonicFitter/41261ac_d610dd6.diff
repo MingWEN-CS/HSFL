@@ -1,0 +1,30 @@
+298,299c298
+<                 a = 0;
+< 
+---
+>                 final int last = observations.length - 1;
+302,305c301,302
+<                 final double range = observations[observations.length - 1].getX() -
+<                     observations[0].getX();
+< 
+<                 if (range == 0) {
+---
+>                 final double xRange = observations[last].getX() - observations[0].getX();
+>                 if (xRange == 0) {
+308c305,318
+<                 omega = 2 * Math.PI / range;
+---
+>                 omega = 2 * Math.PI / xRange;
+> 
+>                 double yMin = Double.POSITIVE_INFINITY;
+>                 double yMax = Double.NEGATIVE_INFINITY;
+>                 for (int i = 1; i < observations.length; ++i) {
+>                     final double y = observations[i].getY();
+>                     if (y < yMin) {
+>                         yMin = y;
+>                     }
+>                     if (y > yMax) {
+>                         yMax = y;
+>                     }
+>                 }
+>                 a = 0.5 * (yMax - yMin);

@@ -1,0 +1,260 @@
+158,165c158,160
+<         if (size >= 2 && formatters.get(1) instanceof Separator) {
+<             PeriodFormatter before = (PeriodFormatter) formatters.get(0);
+<             if (size == 2) {
+<                 
+<                 return before;
+<             }
+<             return ((Separator) formatters.get(1)).finish
+<                 (before, toFormatter(formatters.subList(2, size)));
+---
+>         if (size >= 1 && formatters.get(0) instanceof Separator) {
+>             Separator sep = (Separator) formatters.get(0);
+>             return sep.finish(toFormatter(formatters.subList(1, size)));
+535a531,537
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+537c539,558
+<         return appendSeparator(text, text);
+---
+>         return appendSeparator(text, text, true, true);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSeparatorIfFieldsAfter(String text) {
+>         return appendSeparator(text, text, false, true);
+554,555c575,605
+<     public PeriodFormatterBuilder appendSeparator(String text,
+<                                                     String finalText) {
+---
+> 
+>     public PeriodFormatterBuilder appendSeparatorIfFieldsBefore(String text) {
+>         return appendSeparator(text, text, true, false);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSeparator(String text, String finalText) {
+>         return appendSeparator(text, finalText, true, true);
+>     }
+> 
+>     private PeriodFormatterBuilder appendSeparator(String text, String finalText, boolean useBefore, boolean useAfter) {
+561c611,612
+< 
+---
+>         
+>         
+563d613
+< 
+565c615,617
+<             
+---
+>             if (useAfter && useBefore == false) {
+>                 formatters.add(new Separator(text, finalText, Literal.EMPTY, useBefore, useAfter));
+>             }
+568c620
+< 
+---
+>         
+579c631,632
+< 
+---
+>         
+>         
+581,582c634
+<             
+<             iFormatters.set(i, lastSeparator.merge(text, finalText));
+---
+>             throw new IllegalStateException("Cannot have two adjacent separators");
+586,589c638
+<             formatters.add(composite);
+<             
+<             
+<             formatters.add(new Separator(text, finalText));
+---
+>             formatters.add(new Separator(text, finalText, composite, useBefore, useAfter));
+591c640
+<             
+---
+>         
+639,642c688,694
+<         if (formatters.size() == 1) {
+<             return (PeriodFormatter)formatters.get(0);
+<         } else {
+<             return new Composite(formatters);
+---
+>         switch (formatters.size()) {
+>             case 0:
+>                 return Literal.EMPTY;
+>             case 1:
+>                 return (PeriodFormatter) formatters.get(0);
+>             default:
+>                 return new Composite(formatters);
+1231a1284
+>         static final Literal EMPTY = new Literal("");
+1274,1275c1327,1328
+<         private final PeriodFormatter iBefore;
+<         private final PeriodFormatter iAfter;
+---
+>         private final boolean iUseBefore;
+>         private final boolean iUseAfter;
+1277,1279c1330,1331
+<         Separator(String text, String finalText) {
+<             this(text, finalText, null, null);
+<         }
+---
+>         private PeriodFormatter iBefore;
+>         private PeriodFormatter iAfter;
+1281,1282c1333
+<         Separator(String text, String finalText,
+<                   PeriodFormatter before, PeriodFormatter after) {
+---
+>         Separator(String text, String finalText, PeriodFormatter before, boolean useBefore, boolean useAfter) {
+1286c1337,1338
+<             iAfter = after;
+---
+>             iUseBefore = useBefore;
+>             iUseAfter = useAfter;
+1298,1304c1350,1365
+<             int sum = iBefore.calculatePrintedLength(period)
+<                 + iAfter.calculatePrintedLength(period);
+< 
+<             if (iBefore.countFieldsToPrint(period, 1) > 0) {
+<                 int afterCount = iAfter.countFieldsToPrint(period, 2);
+<                 if (afterCount > 0) {
+<                     sum += (afterCount > 1 ? iText : iFinalText).length();
+---
+>             PeriodPrinter before = iBefore;
+>             PeriodPrinter after = iAfter;
+>             
+>             int sum = before.calculatePrintedLength(period)
+>                     + after.calculatePrintedLength(period);
+>             
+>             if (iUseBefore) {
+>                 if (before.countFieldsToPrint(period, 1) > 0) {
+>                     if (iUseAfter) {
+>                         int afterCount = after.countFieldsToPrint(period, 2);
+>                         if (afterCount > 0) {
+>                             sum += (afterCount > 1 ? iText : iFinalText).length();
+>                         }
+>                     } else {
+>                         sum += iText.length();
+>                     }
+1305a1367,1368
+>             } else if (iUseAfter && after.countFieldsToPrint(period, 1) > 0) {
+>                 sum += iText.length();
+1307c1370
+< 
+---
+>             
+1314c1377
+< 
+---
+>             
+1316,1320c1379,1388
+< 
+<             if (before.countFieldsToPrint(period, 1) > 0) {
+<                 int afterCount = after.countFieldsToPrint(period, 2);
+<                 if (afterCount > 0) {
+<                     buf.append(afterCount > 1 ? iText : iFinalText);
+---
+>             if (iUseBefore) {
+>                 if (before.countFieldsToPrint(period, 1) > 0) {
+>                     if (iUseAfter) {
+>                         int afterCount = after.countFieldsToPrint(period, 2);
+>                         if (afterCount > 0) {
+>                             buf.append(afterCount > 1 ? iText : iFinalText);
+>                         }
+>                     } else {
+>                         buf.append(iText);
+>                     }
+1321a1390,1391
+>             } else if (iUseAfter && after.countFieldsToPrint(period, 1) > 0) {
+>                 buf.append(iText);
+1323d1392
+< 
+1330c1399
+< 
+---
+>             
+1332,1336c1401,1410
+< 
+<             if (before.countFieldsToPrint(period, 1) > 0) {
+<                 int afterCount = after.countFieldsToPrint(period, 2);
+<                 if (afterCount > 0) {
+<                     out.write(afterCount > 1 ? iText : iFinalText);
+---
+>             if (iUseBefore) {
+>                 if (before.countFieldsToPrint(period, 1) > 0) {
+>                     if (iUseAfter) {
+>                         int afterCount = after.countFieldsToPrint(period, 2);
+>                         if (afterCount > 0) {
+>                             out.write(afterCount > 1 ? iText : iFinalText);
+>                         }
+>                     } else {
+>                         out.write(iText);
+>                     }
+1337a1412,1413
+>             } else if (iUseAfter && after.countFieldsToPrint(period, 1) > 0) {
+>                 out.write(iText);
+1339d1414
+< 
+1348d1422
+< 
+1352d1425
+< 
+1363,1368c1436,1437
+< 
+<             return iAfter.parseInto(period, periodStr, position);
+<         }
+< 
+<         Separator merge(String text, String finalText) {
+<             return new Separator(iText + text, iFinalText + finalText, iBefore, iAfter);
+---
+>             position = iAfter.parseInto(period, periodStr, position);
+>             return position;
+1371,1372c1440,1442
+<         Separator finish(PeriodFormatter before, PeriodFormatter after) {
+<             return new Separator(iText, iFinalText, before, after);
+---
+>         Separator finish(PeriodFormatter after) {
+>             iAfter = after;
+>             return this;

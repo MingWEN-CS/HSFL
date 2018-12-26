@@ -1,0 +1,87 @@
+2089d2088
+< 
+2103a2103,2106
+>   public void setSideEffectFlags(SideEffectFlags flags) {
+>     setSideEffectFlags(flags.valueOf());
+>   }
+> 
+2108a2112,2190
+>   }
+> 
+>   
+> 
+> 
+> 
+>   public static class SideEffectFlags {
+>     private int value = Node.SIDE_EFFECTS_ALL;
+> 
+>     public SideEffectFlags() {
+>     }
+> 
+>     public SideEffectFlags(int value) {
+>       this.value = value;
+>     }
+> 
+>     public int valueOf() {
+>       return value;
+>     }
+> 
+>     
+>     public void setAllFlags() {
+>       value = Node.SIDE_EFFECTS_ALL;
+>     }
+> 
+>     
+>     public void clearAllFlags() {
+>       value = Node.NO_SIDE_EFFECTS | Node.FLAG_LOCAL_RESULTS;
+>     }
+> 
+>     public boolean areAllFlagsSet() {
+>       return value == Node.SIDE_EFFECTS_ALL;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public void clearSideEffectFlags() {
+>       value |= Node.NO_SIDE_EFFECTS;
+>     }
+> 
+>     public void setMutatesGlobalState() {
+>       
+>       removeFlag(Node.FLAG_GLOBAL_STATE_UNMODIFIED);
+>       removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+>       removeFlag(Node.FLAG_THIS_UNMODIFIED);
+>     }
+> 
+>     public void setThrows() {
+>       removeFlag(Node.FLAG_NO_THROWS);
+>     }
+> 
+>     public void setMutatesThis() {
+>       removeFlag(Node.FLAG_THIS_UNMODIFIED);
+>     }
+> 
+>     public void setMutatesArguments() {
+>       removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+>     }
+> 
+>     public void setReturnsTainted() {
+>       removeFlag(Node.FLAG_LOCAL_RESULTS);
+>     }
+> 
+>     private void removeFlag(int flag) {
+>       value &= ~flag;
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   public boolean isOnlyModifiesThisCall() {
+>     return areBitFlagsSet(
+>         getSideEffectFlags() & Node.NO_SIDE_EFFECTS,
+>         Node.FLAG_GLOBAL_STATE_UNMODIFIED
+>             | Node.FLAG_ARGUMENTS_UNMODIFIED
+>             | Node.FLAG_NO_THROWS);

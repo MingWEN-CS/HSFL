@@ -1,0 +1,37 @@
+114c114
+<         return duration / iUnitMillis;
+---
+>         return duration / iUnitMillis;  
+126c126
+<         return value * iUnitMillis;
+---
+>         return value * iUnitMillis;  
+138c138
+<         return value * iUnitMillis;
+---
+>         return FieldUtils.safeMultiply(value, iUnitMillis);
+142c142,143
+<         return instant + value * iUnitMillis;
+---
+>         long addition = value * iUnitMillis;  
+>         return FieldUtils.safeAdd(instant, addition);
+146c147,148
+<         return instant + value * iUnitMillis;
+---
+>         long addition = FieldUtils.safeMultiply(value, iUnitMillis);
+>         return FieldUtils.safeAdd(instant, addition);
+150c152,153
+<         return (minuendInstant - subtrahendInstant) / iUnitMillis;
+---
+>         long difference = FieldUtils.safeSubtract(minuendInstant, subtrahendInstant);
+>         return difference / iUnitMillis;
+166c169
+<             return (iUnitMillis == other.iUnitMillis);
+---
+>             return (getType() == other.getType()) && (iUnitMillis == other.iUnitMillis);
+178c181,183
+<         return (int) (millis ^ (millis >>> 32));
+---
+>         int hash = (int) (millis ^ (millis >>> 32));
+>         hash += getType().hashCode();
+>         return hash;

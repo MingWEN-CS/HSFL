@@ -1,0 +1,84 @@
+33a34
+> import java.util.Arrays;
+71,76d71
+<   
+<   
+<   
+<   private int lastOffset;
+<   private int lastLine;
+< 
+91,93d85
+<     
+<     this.lastOffset = 0;
+<     this.lastLine = 1;
+98,100c90
+<     if (lineOffsets == null) {
+<       findLineOffsets();
+<     }
+---
+>     findLineOffsets();
+111,113c101
+<     if (lineOffsets == null) {
+<       findLineOffsets();
+<     }
+---
+>     findLineOffsets();
+116a105
+> 
+117a107,109
+>     if (lineOffsets != null) {
+>       return;
+>     }
+196a189,206
+>   @Override
+>   public int getLineOfOffset(int offset) {
+>     findLineOffsets();
+>     int search = Arrays.binarySearch(lineOffsets, offset);
+>     if (search >= 0) {
+>       return search + 1; 
+>     } else {
+>       int insertionPoint = -1 * (search + 1);
+>       return Math.min(insertionPoint - 1, lineOffsets.length - 1) + 1;
+>     }
+>   }
+> 
+>   @Override
+>   public int getColumnOfOffset(int offset) {
+>     int line = getLineOfOffset(offset);
+>     return offset - lineOffsets[line - 1];
+>   }
+> 
+205a216,225
+>     findLineOffsets();
+>     if (lineNumber > lineOffsets.length) {
+>       return null;
+>     }
+> 
+>     if (lineNumber < 1) {
+>       lineNumber = 1;
+>     }
+> 
+>     int pos = lineOffsets[lineNumber - 1];
+215,236d234
+< 
+<     int pos = 0;
+<     int startLine = 1;
+< 
+<     
+<     
+<     if (lineNumber >= lastLine) {
+<       pos = lastOffset;
+<       startLine = lastLine;
+<     }
+< 
+<     for (int n = startLine; n < lineNumber; n++) {
+<       int nextpos = js.indexOf('\n', pos);
+<       if (nextpos == -1) {
+<         return null;
+<       }
+<       pos = nextpos + 1;
+<     }
+< 
+<     
+<     lastOffset = pos;
+<     lastLine = lineNumber;

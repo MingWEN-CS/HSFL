@@ -1,0 +1,44 @@
+20a21
+> import com.google.common.base.Preconditions;
+657a659
+>         Node value = transform(el.getRight());
+659a662,665
+>           Preconditions.checkState(value.getType() == Token.FUNCTION);
+>           if (getFnParamNode(value).hasChildren()) {
+>             reportGetterParam(el.getLeft());
+>           }
+661a668,671
+>           Preconditions.checkState(value.getType() == Token.FUNCTION);
+>           if (!getFnParamNode(value).hasOneChild()) {
+>             reportSetterParam(el.getLeft());
+>           }
+663c673
+<         key.addChildToFront(transform(el.getRight()));
+---
+>         key.addChildToFront(value);
+668a679,688
+>     
+> 
+> 
+> 
+>    Node getFnParamNode(Node fnNode) {
+>      
+>      Preconditions.checkArgument(fnNode.getType() == Token.FUNCTION);
+>      return fnNode.getFirstChild().getNext();
+>    }
+> 
+896a917,930
+>           sourceName,
+>           node.getLineno(), "", 0);
+>     }
+> 
+>     void reportGetterParam(AstNode node) {
+>       errorReporter.error(
+>           "getters may not have parameters",
+>           sourceName,
+>           node.getLineno(), "", 0);
+>     }
+> 
+>     void reportSetterParam(AstNode node) {
+>       errorReporter.error(
+>           "setters must have exactly one parameter",

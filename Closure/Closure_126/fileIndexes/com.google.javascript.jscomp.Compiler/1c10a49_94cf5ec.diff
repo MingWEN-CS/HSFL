@@ -1,0 +1,141 @@
+257,263c257,260
+<     initOptions(options);
+< 
+<     this.externs = makeCompilerInput(externs, true);
+<     this.modules = null;
+<     this.moduleGraph = null;
+<     this.inputs = makeCompilerInput(inputs, false);
+<     initBasedOnOptions();
+---
+>     JSModule module = new JSModule("[singleton]");
+>     for (JSSourceFile input : inputs) {
+>       module.add(input);
+>     }
+265c262
+<     initInputsByNameMap();
+---
+>     initModules(externs, Lists.newArrayList(module), options);
+296c293
+<     this.modules = modules;
+---
+> 
+299,306c296,308
+<     try {
+<       this.moduleGraph = new JSModuleGraph(modules);
+<     } catch (JSModuleGraph.ModuleDependenceException e) {
+<       
+<       
+<       report(JSError.make(MODULE_DEPENDENCY_ERROR,
+<           e.getModule().getName(), e.getDependentModule().getName()));
+<       return;
+---
+>     this.modules = modules;
+>     if (modules.size() > 1) {
+>       try {
+>         this.moduleGraph = new JSModuleGraph(modules);
+>       } catch (JSModuleGraph.ModuleDependenceException e) {
+>         
+>         
+>         report(JSError.make(MODULE_DEPENDENCY_ERROR,
+>                 e.getModule().getName(), e.getDependentModule().getName()));
+>         return;
+>       }
+>     } else {
+>       this.moduleGraph = null;
+308c310,311
+<     this.inputs = getAllInputsFromModules();
+---
+> 
+>     this.inputs = getAllInputsFromModules(modules);
+348c351,352
+<     } else if (modules.get(0).getInputs().isEmpty()) {
+---
+>     } else if (modules.get(0).getInputs().isEmpty() && modules.size() > 1) {
+>       
+358c362
+<   private void fillEmptyModules(List<JSModule> modules) {
+---
+>   private static void fillEmptyModules(List<JSModule> modules) {
+366,370d369
+<   static final DiagnosticType DUPLICATE_INPUT_IN_MODULES =
+<       DiagnosticType.error("JSC_DUPLICATE_INPUT_IN_MODULES_ERROR",
+<           "Two modules cannot contain the same input, but module {0} and {1} "
+<               + "both include \"{2}\"");
+< 
+377c376
+<     inputs = getAllInputsFromModules();
+---
+>     inputs = getAllInputsFromModules(modules);
+385c384,385
+<   private List<CompilerInput> getAllInputsFromModules() {
+---
+>   private static List<CompilerInput> getAllInputsFromModules(
+>       List<JSModule> modules) {
+391,401d390
+<         JSModule firstModule = inputMap.get(inputName);
+<         if (firstModule == null) {
+<           inputs.add(input);
+<           inputMap.put(inputName, module);
+<         } else {
+<           report(JSError.make(DUPLICATE_INPUT_IN_MODULES,
+<               firstModule.getName(), module.getName(), inputName));
+<         }
+<       }
+<     }
+<     if (hasErrors()) {
+403,404c392,397
+<       
+<       return ImmutableList.of();
+---
+>         
+>         
+>         
+>         inputs.add(input);
+>         inputMap.put(inputName, module);
+>       }
+406d398
+< 
+1054a1047
+>       
+1067,1070c1060,1062
+<       List<CompilerInput> annotatedExterns = Lists.newArrayList();
+<       Iterator<CompilerInput> inputIterator = inputs.iterator();
+<       while (inputIterator.hasNext()) {
+<         CompilerInput input = inputIterator.next();
+---
+>       
+>       boolean liftedExterns = false;
+>       for (CompilerInput input : inputs) {
+1087c1079,1083
+<           inputIterator.remove();
+---
+> 
+>           
+>           
+>           input.getModule().remove(input);
+> 
+1088a1085,1097
+>           liftedExterns = true;
+>         }
+>       }
+> 
+>       if (liftedExterns) {
+>         fillEmptyModules(modules);
+>         rebuildInputsFromModules();
+>       }
+> 
+>       
+>       for (CompilerInput input : inputs) {
+>         Node n = input.getAstRoot(this);
+>         if (n == null) {
+1772a1782,1791
+>   }
+> 
+>   @VisibleForTesting
+>   List<CompilerInput> getInputsForTesting() {
+>     return inputs;
+>   }
+> 
+>   @VisibleForTesting
+>   List<CompilerInput> getExternsForTesting() {
+>     return externs;

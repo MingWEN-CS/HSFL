@@ -1,0 +1,95 @@
+46a47
+> import org.apache.commons.math.util.ResizableDoubleArray;
+110a112,126
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static double[] EXPONENTIAL_SA_QI = null;
+> 
+>     
+118a135,163
+>     static {
+>         
+> 
+> 
+> 
+>         final double LN2 = FastMath.log(2);
+>         double qi = 0;
+>         int i = 1;
+> 
+>         
+> 
+> 
+> 
+> 
+> 
+>         final ResizableDoubleArray ra = new ResizableDoubleArray(20);
+> 
+>         while (qi < 1) {
+>             qi += FastMath.pow(LN2, i) / MathUtils.factorial(i);
+>             ra.addElement(qi);
+>             ++i;
+>         }
+> 
+>         EXPONENTIAL_SA_QI = ra.getElements();
+>     }
+> 
+>     
+> 
+> 
+481a527
+> 
+486,489c532,548
+<         final RandomGenerator generator = getRan();
+<         double unif = generator.nextDouble();
+<         while (unif == 0.0d) {
+<             unif = generator.nextDouble();
+---
+> 
+>         
+>         double a = 0;
+>         double u = this.nextUniform(0, 1);
+> 
+>         
+>         while (u < 0.5) {
+>             a += EXPONENTIAL_SA_QI[0];
+>             u *= 2;
+>         }
+> 
+>         
+>         u += u - 1;
+> 
+>         
+>         if (u <= EXPONENTIAL_SA_QI[0]) {
+>             return mean * (a + u);
+491c550,568
+<         return -mean * FastMath.log(unif);
+---
+> 
+>         
+>         int i = 0; 
+>         double u2 = this.nextUniform(0, 1);
+>         double umin = u2;
+> 
+>         
+>         do {
+>             ++i;
+>             u2 = this.nextUniform(0, 1);
+> 
+>             if (u2 < umin) {
+>                 umin = u2;
+>             }
+> 
+>             
+>         } while (u > EXPONENTIAL_SA_QI[i]); 
+> 
+>         return mean * (a + umin * EXPONENTIAL_SA_QI[0]);

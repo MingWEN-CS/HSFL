@@ -1,0 +1,115 @@
+59c59
+< import com.google.javascript.rhino.SimpleErrorReporter;
+---
+> import com.google.javascript.rhino.ScriptRuntime;
+86,87d85
+<   private TemplateType objectIndexTemplateKey;
+< 
+94,95d91
+<   private TemplateType objectElementTemplateKey;
+< 
+227c223
+<         this, ImmutableList.<TemplateType>of(), ImmutableList.<JSType>of());
+---
+>         this, ImmutableList.<String>of(), ImmutableList.<JSType>of());
+238,254d233
+<   public TemplateType getObjectElementKey() {
+<     return this.objectElementTemplateKey;
+<   }
+< 
+<   
+< 
+< 
+< 
+<   public TemplateType getObjectIndexKey() {
+<     Preconditions.checkNotNull(objectIndexTemplateKey);
+<     return objectIndexTemplateKey;
+<   }
+< 
+<   
+< 
+< 
+< 
+284,286d262
+<     objectIndexTemplateKey = new TemplateType(this, OBJECT_INDEX_TEMPLATE);
+<     objectElementTemplateKey = new TemplateType(this, OBJECT_ELEMENT_TEMPLATE);
+< 
+326c302
+<                 objectIndexTemplateKey, objectElementTemplateKey), null),
+---
+>                 OBJECT_INDEX_TEMPLATE, OBJECT_ELEMENT_TEMPLATE), null),
+366c342
+<               objectElementTemplateKey), null),
+---
+>               OBJECT_ELEMENT_TEMPLATE), null),
+964,978c940
+<     
+<     JSType type = null;
+<     JSType thisType = null;
+<     if (scope != null && scope.getTypeOfThis() != null) {
+<       thisType = scope.getTypeOfThis().toObjectType();
+<     }
+<     if (thisType != null) {
+<       type = thisType.getTemplateTypeMap().getTemplateTypeKeyByName(jsTypeName);
+<       if (type != null) {
+<         Preconditions.checkState(type.isTemplateType(), "expected:" + type);
+<         return type;
+<       }
+<     }
+< 
+<     type = getType(jsTypeName);
+---
+>     JSType type = getType(jsTypeName);
+1485,1491c1447
+<       Node parameters, JSType returnType, ImmutableList<String> templateKeyNames) {
+<     return createConstructorTypeInternal(name, source, parameters, returnType,
+<         createTemplateMapKeys(templateKeyNames));
+<   }
+< 
+<   private FunctionType createConstructorTypeInternal(String name, Node source,
+<       Node parameters, JSType returnType, ImmutableList<TemplateType> templateKeys) {
+---
+>       Node parameters, JSType returnType, ImmutableList<String> templateKeys) {
+1497,1506d1452
+<   ImmutableList<TemplateType> createTemplateMapKeys(ImmutableList<String> keys) {
+<     ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+<     if (keys != null) {
+<       for (String key : keys) {
+<         builder.add(new TemplateType(this, key));
+<       }
+<     }
+<     return builder.build();
+<   }
+< 
+1517,1520d1462
+<   public TemplateType createTemplateType(String name) {
+<     return new TemplateType(this, name);
+<   }
+< 
+1526c1468
+<       ImmutableList<TemplateType> templateKeys,
+---
+>       ImmutableList<String> templateKeys,
+1529c1471
+<         ImmutableList.<TemplateType>of() : templateKeys;
+---
+>         ImmutableList.<String>of() : templateKeys;
+1735c1677
+<                 SimpleErrorReporter.getMessage0(
+---
+>                 ScriptRuntime.getMessage0(
+1767,1768c1709
+<                       SimpleErrorReporter.getMessage0(
+<                           "msg.jsdoc.function.varargs"),
+---
+>                       ScriptRuntime.getMessage0("msg.jsdoc.function.varargs"),
+1856,1859c1797,1800
+<   public void setTemplateTypeNames(List<TemplateType> keys) {
+<     Preconditions.checkNotNull(keys);
+<     for (TemplateType key : keys) {
+<       templateTypes.put(key.getReferenceName(), key);
+---
+>   public void setTemplateTypeNames(List<String> names) {
+>     Preconditions.checkNotNull(names);
+>     for (String name : names) {
+>       templateTypes.put(name, new TemplateType(this, name));

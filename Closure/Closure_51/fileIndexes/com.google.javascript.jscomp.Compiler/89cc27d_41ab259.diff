@@ -1,0 +1,30 @@
+1055c1055
+<   ScopeCreator getTypedScopeCreator() {
+---
+>   MemoizedScopeCreator getTypedScopeCreator() {
+1056a1057,1081
+>   }
+> 
+>   @SuppressWarnings("unchecked")
+>   DefaultPassConfig ensureDefaultPassConfig() {
+>     PassConfig passes = getPassConfig().getBasePassConfig();
+>     Preconditions.checkState(passes instanceof DefaultPassConfig,
+>         "PassConfigs must eventually delegate to the DefaultPassConfig");
+>     return (DefaultPassConfig) passes;
+>   }
+> 
+>   SymbolTable buildKnownSymbolTable() {
+>     SymbolTable symbolTable = new SymbolTable();
+> 
+>     MemoizedScopeCreator typedScopeCreator = getTypedScopeCreator();
+>     if (typedScopeCreator != null) {
+>       symbolTable.addSymbolsFrom(typedScopeCreator);
+>     }
+> 
+>     GlobalNamespace globalNamespace =
+>         ensureDefaultPassConfig().getGlobalNamespace();
+>     if (globalNamespace != null) {
+>       symbolTable.addSymbolsFrom(globalNamespace);
+>     }
+> 
+>     return symbolTable;

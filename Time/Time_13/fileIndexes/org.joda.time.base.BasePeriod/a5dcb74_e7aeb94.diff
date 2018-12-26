@@ -1,0 +1,88 @@
+55a56,66
+>     
+>     private static final ReadablePeriod DUMMY_PERIOD = new AbstractPeriod() {
+>         @Override
+>         public int getValue(int index) {
+>             return 0;
+>         }
+>         @Override
+>         public PeriodType getPeriodType() {
+>             return PeriodType.time();
+>         }
+>     };
+58c69
+<     private PeriodType iType;
+---
+>     private final PeriodType iType;
+60c71
+<     private int[] iValues;
+---
+>     private final int[] iValues;
+84c95
+<         setPeriodInternal(years, months, weeks, days, hours, minutes, seconds, millis); 
+---
+>         iValues = setPeriodInternal(years, months, weeks, days, hours, minutes, seconds, millis); 
+224,225c235,236
+<         iType = PeriodType.time();
+<         int[] values = ISOChronology.getInstanceUTC().get(this, duration);
+---
+>         
+>         
+226a238
+>         int[] values = ISOChronology.getInstanceUTC().get(DUMMY_PERIOD, duration);
+312,332d323
+<     
+< 
+< 
+< 
+< 
+<     public int size() {
+<         return iType.size();
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public DurationFieldType getFieldType(int index) {
+<         return iType.getFieldType(index);
+<     }
+< 
+<     
+437c428
+<         iValues = newValues;
+---
+>         setValues(newValues);
+455c446,447
+<         setPeriodInternal(years, months, weeks, days, hours, minutes, seconds, millis);
+---
+>         int[] newValues = setPeriodInternal(years, months, weeks, days, hours, minutes, seconds, millis);
+>         setValues(newValues);
+461c453
+<     private void setPeriodInternal(int years, int months, int weeks, int days,
+---
+>     private int[] setPeriodInternal(int years, int months, int weeks, int days,
+472c464
+<         iValues = newValues;
+---
+>         return newValues;
+546c538
+<             iValues = mergePeriodInto(getValues(), period);
+---
+>             setValues(mergePeriodInto(getValues(), period));
+575c567
+<             iValues = addPeriodInto(getValues(), period);
+---
+>             setValues(addPeriodInto(getValues(), period));
+620a613,616
+> 
+> 
+> 
+> 
+622c618
+<         iValues = values;
+---
+>         System.arraycopy(values, 0, iValues, 0, iValues.length);

@@ -1,0 +1,77 @@
+139a140,144
+>           Renamer renamer = nameStack.peek();
+>           if (renamer.stripConstIfReplaced()) {
+>             
+>             n.removeProp(Node.IS_CONSTANT_NAME);
+>           }
+212a218,222
+>     boolean stripConstIfReplaced();
+> 
+>     
+> 
+> 
+231d240
+<       new UndoConstantRenaming(compiler).process(externs, js);
+278,321d286
+<   static class UndoConstantRenaming extends AbstractPostOrderCallback
+<       implements CompilerPass {
+<     private AbstractCompiler compiler;
+< 
+<     
+< 
+< 
+< 
+< 
+<     private Map<String, String> constantRenamingCache =
+<         Maps.newHashMap();
+< 
+<     UndoConstantRenaming(AbstractCompiler compiler) {
+<       this.compiler = compiler;
+<     }
+< 
+<     @Override
+<     public void process(Node externs, Node js) {
+<       NodeTraversal.traverse(compiler, js, this);
+<     }
+< 
+<     @Override
+<     public void visit(NodeTraversal t, Node node, Node parent) {
+<       if (node.getType() == Token.NAME) {
+<         String name = node.getString();
+<         if (name.contains(NodeUtil.CONSTANT_MARKER)) {
+<           
+<           
+<           Preconditions.checkState(name.indexOf(NodeUtil.CONSTANT_MARKER) ==
+<               name.lastIndexOf(NodeUtil.CONSTANT_MARKER));
+< 
+<           String constantFreeName = constantRenamingCache.get(name);
+<           if (constantFreeName == null) {
+<             constantFreeName = name.replace(NodeUtil.CONSTANT_MARKER, "");
+<             constantRenamingCache.put(name, constantFreeName);
+<           }
+<           node.setString(constantFreeName);
+<           node.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+<           compiler.reportCodeChange();
+<         }
+<       }
+<     }
+<   }
+< 
+397a363,367
+> 
+>     @Override
+>     public boolean stripConstIfReplaced() {
+>       return false;
+>     }
+435,439d404
+<       if (removeConstness) {
+<         
+<         
+<         name = name.replace(NodeUtil.CONSTANT_MARKER, "");
+<       }
+450a416,420
+>     }
+> 
+>     @Override
+>     public boolean stripConstIfReplaced() {
+>       return removeConstness;

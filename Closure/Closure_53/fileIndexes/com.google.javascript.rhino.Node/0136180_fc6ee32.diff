@@ -1,0 +1,36 @@
+346c346
+<     void setNext(PropListItem next);
+---
+>     PropListItem chain(PropListItem next);
+355c355
+<     private PropListItem next;
+---
+>     private final PropListItem next;
+371,373c371
+<     public void setNext(PropListItem next) {
+<       this.next = next;
+<     }
+---
+>     public abstract PropListItem chain(PropListItem next);
+401a400,404
+> 
+>     @Override
+>     public PropListItem chain(PropListItem next) {
+>       return new ObjectPropListItem(getType(), objectValue, next);
+>     }
+428a432,436
+> 
+>     @Override
+>     public PropListItem chain(PropListItem next) {
+>       return new IntPropListItem(getType(), intValue, next);
+>     }
+846,847c854
+<         item.setNext(result);
+<         return item;
+---
+>         return item.chain(result);
+1345a1353,1356
+> 
+>   PropListItem getPropListHeadForTesting() {
+>     return propListHead;
+>   }

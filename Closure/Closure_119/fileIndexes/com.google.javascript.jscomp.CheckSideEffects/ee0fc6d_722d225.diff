@@ -1,0 +1,68 @@
+98,113c98,103
+<     int pt = parent.getType();
+<     if (pt == Token.COMMA) {
+<       Node gramps = parent.getParent();
+<       if (gramps.isCall() &&
+<           parent == gramps.getFirstChild()) {
+<         
+<         
+<         
+<         
+<         if (n == parent.getFirstChild() &&
+<             parent.getChildCount() == 2 &&
+<             n.getNext().isName() &&
+<             "eval".equals(n.getNext().getString())) {
+<           return;
+<         }
+<       }
+---
+>     
+>     
+>     
+>     if (n.isExprResult() || n.isBlock()) {
+>       return;
+>     }
+115,135c105,108
+<       if (n == parent.getLastChild()) {
+<         for (Node an : parent.getAncestors()) {
+<           int ancestorType = an.getType();
+<           if (ancestorType == Token.COMMA)
+<             continue;
+<           if (ancestorType != Token.EXPR_RESULT &&
+<               ancestorType != Token.BLOCK)
+<             return;
+<           else
+<             break;
+<         }
+<       }
+<     } else if (pt != Token.EXPR_RESULT && pt != Token.BLOCK) {
+<       if (pt == Token.FOR && parent.getChildCount() == 4 &&
+<           (n == parent.getFirstChild() ||
+<            n == parent.getFirstChild().getNext().getNext())) {
+<         
+<         
+<       } else {
+<         return;  
+<       }
+---
+>     
+>     
+>     if (n.isQualifiedName() && n.getJSDocInfo() != null) {
+>       return;
+137a111
+>     boolean isResultUsed = NodeUtil.isExpressionResultUsed(n);
+139,149c113,114
+<     if (isSimpleOp ||
+<         !NodeUtil.mayHaveSideEffects(n, t.getCompiler())) {
+<       if (n.isQualifiedName() && n.getJSDocInfo() != null) {
+<         
+<         
+<         return;
+<       } else if (n.isExprResult()) {
+<         
+<         return;
+<       }
+< 
+---
+>     if (!isResultUsed &&
+>         (isSimpleOp || !NodeUtil.mayHaveSideEffects(n, t.getCompiler()))) {

@@ -1,0 +1,74 @@
+61a62
+>   private boolean shouldReport = true;
+131a133,136
+>   void setShouldReport(boolean report) {
+>     this.shouldReport = report;
+>   }
+> 
+381,384c386,391
+<       compiler.report(
+<           t.makeError(n, HIDDEN_PROPERTY_MISMATCH,
+<               propertyName, ownerType.toString(),
+<               hiddenType.toString(), overridingType.toString()));
+---
+>       if (shouldReport) {
+>         compiler.report(
+>             t.makeError(n, HIDDEN_PROPERTY_MISMATCH,
+>                 propertyName, ownerType.toString(),
+>                 hiddenType.toString(), overridingType.toString()));
+>       }
+403,405c410,414
+<         compiler.report(
+<             t.makeError(n, MISSING_EXTENDS_TAG_WARNING,
+<                 subObject.toString()));
+---
+>         if (shouldReport) {
+>           compiler.report(
+>               t.makeError(n, MISSING_EXTENDS_TAG_WARNING,
+>                   subObject.toString()));
+>         }
+434,436c443,447
+<       compiler.report(
+<           t.makeError(n, INVALID_CAST,
+<               castType.toString(), type.toString()));
+---
+>       if (shouldReport) {
+>         compiler.report(
+>             t.makeError(n, INVALID_CAST,
+>                 castType.toString(), type.toString()));
+>       }
+497,501c508,514
+<           compiler.report(
+<               JSError.make(sourceName, n, DUP_VAR_DECLARATION,
+<                   variableName, newType.toString(), var.getInputName(),
+<                   String.valueOf(var.nameNode.getLineno()),
+<                   varType.toString()));
+---
+>           if (shouldReport) {
+>             compiler.report(
+>                 JSError.make(sourceName, n, DUP_VAR_DECLARATION,
+>                     variableName, newType.toString(), var.getInputName(),
+>                     String.valueOf(var.nameNode.getLineno()),
+>                     varType.toString()));
+>           }
+522,525c535,539
+< 
+<             compiler.report(JSError.make(sourceName, source,
+<                 INTERFACE_METHOD_NOT_IMPLEMENTED,
+<                 prop, implemented.toString(), instance.toString()));
+---
+>             if (shouldReport) {
+>               compiler.report(JSError.make(sourceName, source,
+>                   INTERFACE_METHOD_NOT_IMPLEMENTED,
+>                   prop, implemented.toString(), instance.toString()));
+>             }
+549,551c563,567
+<     compiler.report(
+<         JSError.make(sourceName, n, TYPE_MISMATCH_WARNING,
+<                      formatFoundRequired(msg, found, required)));
+---
+>     if (shouldReport) {
+>       compiler.report(
+>           JSError.make(sourceName, n, TYPE_MISMATCH_WARNING,
+>                        formatFoundRequired(msg, found, required)));
+>     }

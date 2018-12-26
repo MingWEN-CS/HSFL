@@ -1,0 +1,126 @@
+883,884c883,886
+<     if (!NodeUtil.isLiteralValue(left, false) ||
+<         !NodeUtil.isLiteralValue(right, false)) {
+---
+>     boolean leftLiteral = NodeUtil.isLiteralValue(left, true);
+>     boolean rightLiteral = NodeUtil.isLiteralValue(right, true);
+> 
+>     if (!leftLiteral || !rightLiteral) {
+894,900c896,897
+<     
+< 
+<     boolean rightLiteral = NodeUtil.isLiteralValue(right, false);
+<     boolean undefinedRight = ((Token.NAME == right.getType()
+<           && right.getString().equals("undefined"))
+<           || (Token.VOID == right.getType()
+<               && NodeUtil.isLiteralValue(right.getFirstChild(), false)));
+---
+>     boolean undefinedRight = NodeUtil.isUndefined(right) && rightLiteral;
+>     boolean nullRight = NodeUtil.isNull(right);
+905c902
+<         if (!NodeUtil.isLiteralValue(left.getFirstChild(), false)) {
+---
+>         if (!leftLiteral) {
+913d909
+< 
+914a911,915
+>         if (rightLiteral && isEqualityOp(op)) {
+>           result = compareToNull(right, op);
+>           break;
+>         }
+>         
+982a984,987
+>         if (nullRight && isEqualityOp(op)) {
+>           result = compareToNull(left, op);
+>           break;
+>         }
+1006a1012,1015
+>         if (nullRight && isEqualityOp(op)) {
+>           result = compareToNull(left, op);
+>           break;
+>         }
+1019c1028
+<         if (undefinedRight) {
+---
+>         if (leftLiteral && undefinedRight) {
+1029a1039,1042
+>           if (leftLiteral && nullRight && isEqualityOp(op)) {
+>             result = compareToNull(left, op);
+>             break;
+>           }
+1052a1066,1096
+>       case Token.NEG:
+>         if (leftLiteral) {
+>           if (undefinedRight) {
+>             result = compareToUndefined(left, op);
+>             break;
+>           }
+>           if (nullRight && isEqualityOp(op)) {
+>             result = compareToNull(left, op);
+>             break;
+>           }
+>         }
+>         
+>         return n;
+> 
+>       case Token.ARRAYLIT:
+>       case Token.OBJECTLIT:
+>       case Token.REGEXP:
+>       case Token.FUNCTION:
+>         if (leftLiteral) {
+>           if (undefinedRight) {
+>             result = compareToUndefined(left, op);
+>             break;
+>           }
+>           if (nullRight && isEqualityOp(op)) {
+>             result = compareToNull(left, op);
+>             break;
+>           }
+>         }
+>         
+>         return n;
+> 
+1129,1132c1173,1174
+<     boolean valueUndefined = ((Token.NAME == value.getType()
+<         && value.getString().equals("undefined"))
+<         || (Token.VOID == value.getType()
+<             && NodeUtil.isLiteralValue(value.getFirstChild(), false)));
+---
+>     Preconditions.checkState(NodeUtil.isLiteralValue(value, true));
+>     boolean valueUndefined = NodeUtil.isUndefined(value);
+1149a1192,1226
+>       default:
+>         throw new IllegalStateException("unexpected.");
+>     }
+>   }
+> 
+>   private boolean isEqualityOp(int op) {
+>     switch (op) {
+>       case Token.EQ:
+>       case Token.NE:
+>       case Token.SHEQ:
+>       case Token.SHNE:
+>         return true;
+>     }
+>     return false;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private boolean compareToNull(Node value, int op) {
+>     boolean valueUndefined = NodeUtil.isUndefined(value);
+>     boolean valueNull = (Token.NULL == value.getType());
+>     boolean equivalent = valueUndefined || valueNull;
+>     switch (op) {
+>       case Token.EQ:
+>         
+>         return equivalent;
+>       case Token.NE:
+>         return !equivalent;
+>       case Token.SHEQ:
+>         return valueNull;
+>       case Token.SHNE:
+>         return !valueNull;

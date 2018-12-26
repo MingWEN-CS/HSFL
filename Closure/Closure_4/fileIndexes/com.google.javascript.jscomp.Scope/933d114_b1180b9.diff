@@ -1,0 +1,60 @@
+19,20d18
+< import static com.google.javascript.rhino.jstype.JSTypeNative.GLOBAL_THIS;
+< 
+64,66d61
+<   private final ObjectType thisType;
+< 
+<   
+397,402d391
+<     JSType nodeType = rootNode.getJSType();
+<     if (nodeType != null && nodeType.isFunctionType()) {
+<       thisType = nodeType.toMaybeFunctionType().getTypeOfThis();
+<     } else {
+<       thisType = parent.thisType;
+<     }
+407d395
+< 
+412c400,402
+<   Scope(Node rootNode, AbstractCompiler compiler) {
+---
+> 
+> 
+>   private Scope(Node rootNode, boolean isBottom) {
+415,416c405
+<     thisType = compiler.getTypeRegistry().getNativeObjectType(GLOBAL_THIS);
+<     this.isBottom = false;
+---
+>     this.isBottom = isBottom;
+420,423c409,411
+<   
+< 
+< 
+< 
+---
+>   static Scope createGlobalScope(Node rootNode) {
+>     return new Scope(rootNode, false);
+>   }
+425,430c413,414
+<   Scope(Node rootNode, ObjectType thisType) {
+<     this.parent = null;
+<     this.rootNode = rootNode;
+<     this.thisType = thisType;
+<     this.isBottom = true;
+<     this.depth = 0;
+---
+>   static Scope createLatticeBottom(Node rootNode) {
+>     return new Scope(rootNode, true);
+474c458,468
+<     return thisType;
+---
+>     if (isGlobal()) {
+>       return ObjectType.cast(rootNode.getJSType());
+>     }
+> 
+>     Preconditions.checkState(rootNode.isFunction());
+>     JSType nodeType = rootNode.getJSType();
+>     if (nodeType != null && nodeType.isFunctionType()) {
+>       return nodeType.toMaybeFunctionType().getTypeOfThis();
+>     } else {
+>       return parent.getTypeOfThis();
+>     }

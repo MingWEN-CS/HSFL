@@ -1,0 +1,655 @@
+24d23
+< import com.google.javascript.jscomp.CodingConvention.ObjectLiteralCast;
+30d28
+< import com.google.javascript.rhino.IR;
+40,41c38
+< 
+< import javax.annotation.Nullable;
+---
+> import java.util.Stack;
+62,63c59
+<   private final boolean doNotPinExternsPropertiesOnPrototypes;
+<   private final boolean trackThisPropertiesDefinitions;
+---
+>   private final boolean canModifyExterns;
+65d60
+<   private final boolean anchorObjectLiteralProperties;
+110,119d104
+<   
+<   private final Set<String> deferredExternPropNames = Sets.newHashSet();
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+130,134c115,116
+<       JSModuleGraph moduleGraph,
+<       boolean doNotPinExternsPropertiesOnPrototypes,
+<       boolean anchorUnusedVars,
+<       boolean trackThisPropertiesDefinitions,
+<       boolean pinPropertiesDefinedOnObjectLiterals) {
+---
+>       JSModuleGraph moduleGraph, boolean canModifyExterns,
+>       boolean anchorUnusedVars) {
+137,139c119
+<     this.doNotPinExternsPropertiesOnPrototypes =
+<          doNotPinExternsPropertiesOnPrototypes;
+<     this.trackThisPropertiesDefinitions = trackThisPropertiesDefinitions;
+---
+>     this.canModifyExterns = canModifyExterns;
+141d120
+<     this.anchorObjectLiteralProperties = pinPropertiesDefinedOnObjectLiterals;
+168,169c147,150
+<     NodeTraversal.traverse(compiler, externRoot,
+<         new ProcessExternProperties());
+---
+>     if (!canModifyExterns) {
+>       NodeTraversal.traverse(compiler, externRoot,
+>           new ProcessExternProperties());
+>     }
+218,221c199
+<     private ArrayDeque<NameContext> symbolStack = new ArrayDeque<NameContext>();
+<     
+<     
+<     private ArrayDeque<NameContext> scopeStack = new ArrayDeque<NameContext>();
+---
+>     private Stack<NameContext> symbolStack = new Stack<NameContext>();
+226d203
+<       NameContext nameContext;
+228c205,211
+<         if (isGlobalFunctionDeclaration(t, n)) {
+---
+>         String propName = getPrototypePropertyNameFromRValue(n);
+>         if (propName != null) {
+>           symbolStack.push(
+>               new NameContext(
+>                   getNameInfoForName(propName, PROPERTY),
+>                   t.getScope()));
+>         } else if (isGlobalFunctionDeclaration(t, n)) {
+233,237c216,217
+<           nameContext =
+<               new NameContext(
+<                   symbolStack.peek(),
+<                   getNameInfoForName(name, VAR), t.getScope(),
+<                    false);
+---
+>           symbolStack.push(
+>               new NameContext(getNameInfoForName(name, VAR), t.getScope()));
+242,244c222,224
+<           nameContext = new NameContext(
+<               symbolStack.peek(), anonymousNode, t.getScope(),
+<                true);
+---
+>           
+>           
+>           symbolStack.push(new NameContext(anonymousNode, t.getScope()));
+248,249c228
+<         nameContext = new NameContext(
+<             null, globalNode, t.getScope(),  false);
+---
+>         symbolStack.push(new NameContext(globalNode, t.getScope()));
+251,253d229
+< 
+<       symbolStack.push(nameContext);
+<       scopeStack.push(nameContext);
+259d234
+<       scopeStack.pop();
+264,280d238
+<       NameContext context = maybeGetContextForNode(n, true);
+<       if (context != null) {
+<         symbolStack.push(context);
+<       }
+<       return true;
+<     }
+< 
+<     private NameContext maybeGetContextForNode(
+<         Node n, boolean checkSideEffects) {
+<       NameContext context = null;
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+282,314c240
+<       
+<       if (n.isHook() || n.isOr() || n.isAnd()) {
+<         if (checkSideEffects && NodeUtil.mayHaveSideEffects(n, compiler)) {
+<           
+<           
+<           context = scopeStack.peek();
+<         } else {
+<           
+<           context = symbolStack.peek();
+<         }
+<       } else if (NodeUtil.nodeTypeMayHaveSideEffects(n, compiler)) {
+<         
+<         String propName = null;
+<         if (isUnpinnedPropertyUseParent(n)) {
+<           propName = getPrototypePropertyName(n.getFirstChild());
+<         }
+<         context = getContextForPropName(propName,
+<             NodeUtil.isExpressionResultUsed(n));
+<       } else if (NodeUtil.isObjectLitKey(n, n.getParent())) {
+<         
+<         String propName = getPrototypePropertyName(n);
+<         context = getContextForPropName(propName, false);
+<       }
+<       return context;
+<     }
+< 
+<     private boolean isContextIntroducingNode(Node n) {
+<       return maybeGetContextForNode(n, false) != null;
+<     }
+< 
+<     private NameContext getContextForPropName(
+<         String propName, boolean resultUsed) {
+<       NameContext context;
+---
+>       String propName = processNonFunctionPrototypeAssign(n, parent);
+316,323c242,244
+<         context = new NameContext(
+<             symbolStack.peek(),
+<             getNameInfoForName(propName, PROPERTY), null,
+<             resultUsed);
+<       } else {
+<         
+<         
+<         context = scopeStack.peek();
+---
+>         symbolStack.push(
+>             new NameContext(
+>                 getNameInfoForName(propName, PROPERTY), null));
+325c246
+<       return context;
+---
+>       return true;
+330,362c251,252
+<       switch (n.getType()) {
+<         case Token.GETPROP:
+<           
+<           visitGetProp(t, n);
+<           break;
+<         case Token.OBJECTLIT:
+<           
+<           visitObjectLit(t, n);
+<           break;
+<         case Token.NAME:
+<           
+<           visitName(t, n);
+<           break;
+<         case Token.CALL:
+<           
+<           visitCall(t, n);
+<           break;
+<       }
+< 
+<       if (isContextIntroducingNode(n)) {
+<         symbolStack.pop();
+<       }
+<     }
+< 
+<     private void visitGetProp(NodeTraversal t, Node n) {
+<       if (n.getFirstChild().isThis()) {
+<         if (processThisRef(t, n.getFirstChild())) {
+<           return;
+<         }
+<       }
+< 
+<       String propName = n.getFirstChild().getNext().getString();
+<       boolean isPinningUse = isPinningPropertyUse(n);
+---
+>       if (n.isGetProp()) {
+>         String propName = n.getFirstChild().getNext().getString();
+364,377c254,256
+<       if (n.isQualifiedName()) {
+<         if (propName.equals("prototype")) {
+<           if (processPrototypeRef(t, n)) {
+<             return;
+<           }
+<         } else if (compiler.getCodingConvention().isExported(propName)) {
+<           addGlobalUseOfSymbol(propName, t.getModule(), PROPERTY);
+<           return;
+<         } else {
+<           
+<           
+<           if (!isPinningUse) {
+<             String lValueName = getPrototypePropertyName(n);
+<             if (lValueName != null) {
+---
+>         if (n.isQualifiedName()) {
+>           if (propName.equals("prototype")) {
+>             if (processPrototypeRef(t, n)) {
+379a259,269
+>           } else if (compiler.getCodingConvention().isExported(propName)) {
+>             addGlobalUseOfSymbol(propName, t.getModule(), PROPERTY);
+>             return;
+>           } else {
+>             
+>             if (n.getParent().isAssign() && n.getNext() != null) {
+>               String rValueName = getPrototypePropertyNameFromRValue(n);
+>               if (rValueName != null) {
+>                 return;
+>               }
+>             }
+382d271
+<       }
+384d272
+<       if (isPinningUse) {
+386,390c274
+<       }
+<     }
+< 
+<     private void visitObjectLit(NodeTraversal t, Node n) {
+<       if (anchorObjectLiteralProperties) {
+---
+>       } else if (n.isObjectLit()) {
+400,402c284,294
+<         pinObjectLiteralProperties(n, t.getModule());
+<       }
+<     }
+---
+>         
+>         
+>         for (Node propNameNode = n.getFirstChild(); propNameNode != null;
+>              propNameNode = propNameNode.getNext()) {
+>           
+>           if (!propNameNode.isQuotedString()) {
+>             addSymbolUse(propNameNode.getString(), t.getModule(), PROPERTY);
+>           }
+>         }
+>       } else if (n.isName()) {
+>         String name = n.getString();
+404,405c296,309
+<     private void visitName(NodeTraversal t, Node n) {
+<       String name = n.getString();
+---
+>         Var var = t.getScope().getVar(name);
+>         if (var != null) {
+>           
+>           if (var.isGlobal()) {
+>             if (var.getInitialValue() != null &&
+>                 var.getInitialValue().isFunction()) {
+>               if (t.inGlobalScope()) {
+>                 if (!processGlobalFunctionDeclaration(t, n, var)) {
+>                   addGlobalUseOfSymbol(name, t.getModule(), VAR);
+>                 }
+>               } else {
+>                 addSymbolUse(name, t.getModule(), VAR);
+>               }
+>             }
+407,415c311,318
+<       Var var = t.getScope().getVar(name);
+<       if (var != null) {
+<         
+<         if (var.isGlobal()) {
+<           if (var.getInitialValue() != null &&
+<               var.getInitialValue().isFunction()) {
+<             if (t.inGlobalScope()) {
+<               if (!processGlobalFunctionDeclaration(t, n, var)) {
+<                 addGlobalUseOfSymbol(name, t.getModule(), VAR);
+---
+>           
+>           
+>           
+>           } else if (var.getScope() != t.getScope()){
+>             for (int i = symbolStack.size() - 1; i >= 0; i--) {
+>               NameContext context = symbolStack.get(i);
+>               if (context.scope == var.getScope()) {
+>                 break;
+417,418c320,321
+<             } else {
+<               addSymbolUse(name, t.getModule(), VAR);
+---
+> 
+>               context.name.readClosureVariables = true;
+421,426d323
+< 
+<         
+<         
+<         
+<         } else if (var.getScope() != t.getScope()){
+<           handleScopeReference(var.getScope());
+429d325
+<     }
+431d326
+<     private void visitCall(NodeTraversal t, Node n) {
+433,448c328,329
+<       Node target = n.getFirstChild();
+<       if (n.hasMoreThanOneChild()
+<           && target.isName()
+<           && target.getString().equals(NodeUtil.JSC_PROPERTY_NAME_FN)) {
+<         Node propNode = target.getNext();
+<         if (propNode.isString()) {
+<           String propName = propNode.getString();
+<           addSymbolUse(propName, t.getModule(), PROPERTY);
+<         }
+<       } else {
+<         
+<         ObjectLiteralCast cast = compiler.getCodingConvention()
+<             .getObjectLiteralCast(t, n);
+<         if (cast != null) {
+<           pinObjectLiteralProperties(cast.objectNode, t.getModule());
+<         }
+---
+>       if (processNonFunctionPrototypeAssign(n, parent) != null) {
+>         symbolStack.pop();
+452,470c333,339
+<     
+< 
+< 
+< 
+<     private void handleScopeReference(Scope scope) {
+<       NameContext context = symbolStack.peek();
+<       while (context != null) {
+<         context.name.readClosureVariables = true;
+<         if (context.parent != null && context.parent.scope == scope) {
+<           break;
+<         }
+<         context = context.parent;
+<       }
+< 
+<       while (context != null && context.resultUsed) {
+<         context.name.readClosureVariables = true;
+<         
+<         
+<         if (context.parent == null || context.parent.name == anonymousNode) {
+---
+>     private void addSymbolUse(String name, JSModule module, SymbolType type) {
+>       NameInfo info = getNameInfoForName(name, type);
+>       NameInfo def = null;
+>       
+>       for (int i = symbolStack.size() - 1; i >= 0; i--) {
+>         def = symbolStack.get(i).name;
+>         if (def != anonymousNode) {
+473d341
+<         context = context.parent;
+475,491c343,344
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private void pinObjectLiteralProperties(Node n, JSModule module) {
+<       Preconditions.checkArgument(n.isObjectLit());
+< 
+<       
+<       
+<       for (Node key = n.getFirstChild(); key != null; key = key.getNext()) {
+<         
+<         if (!key.isQuotedString()) {
+<           addSymbolUse(key.getString(), module, PROPERTY);
+<         }
+---
+>       if (!def.equals(info)) {
+>         symbolGraph.connect(def, module, info);
+498,525d350
+<     private boolean isPinningPropertyUse(Node n) {
+<       
+<       
+<       
+<       
+<       
+< 
+<       Node parent = n.getParent();
+<       if (n == parent.getFirstChild()) {
+<         if (parent.isAssign()) {
+<           
+<           return false;
+<         } else if (NodeUtil.isAssignmentOp(parent)
+<               || parent.isInc() || parent.isDec()) {
+<           
+<           
+<           
+<           
+<           
+<           
+<           return NodeUtil.isExpressionResultUsed(parent);
+<         }
+<       }
+<       return true;
+<     }
+< 
+<     
+< 
+527,530c352,354
+<     private boolean isUnpinnedPropertyUseParent(Node n) {
+<       if (n.hasChildren()) {
+<         
+<         return !isPinningPropertyUse(n.getFirstChild());
+---
+>     private String processNonFunctionPrototypeAssign(Node n, Node parent) {
+>       if (isAssignRValue(n, parent) && !n.isFunction()) {
+>         return getPrototypePropertyNameFromRValue(n);
+532,539c356
+<       return false;
+<     }
+< 
+<     private void addSymbolUse(String name, JSModule module, SymbolType type) {
+<       NameInfo info = getNameInfoForName(name, type);
+<       NameContext context = symbolStack.peek();
+< 
+<       context.connect(symbolGraph, module, info);
+---
+>       return null;
+555d371
+<       
+562a379,381
+>     private boolean isAssignRValue(Node n, Node parent) {
+>       return parent != null && parent.isAssign() && parent.getFirstChild() != n;
+>     }
+563a383
+>     
+567,569c387,396
+<     private String getPrototypePropertyName(Node lValue) {
+<       String lValueName = NodeUtil.getBestLValueName(lValue);
+<       if (lValueName == null) {
+---
+> 
+> 
+> 
+>     private String getPrototypePropertyNameFromRValue(Node rValue) {
+>       Node lValue = NodeUtil.getBestLValue(rValue);
+>       if (lValue == null ||
+>           lValue.getParent() == null ||
+>           lValue.getParent().getParent() == null ||
+>           !(NodeUtil.isObjectLitKey(lValue, lValue.getParent()) ||
+>             NodeUtil.isExprAssign(lValue.getParent().getParent()))) {
+572a400,404
+>       String lValueName =
+>           NodeUtil.getBestLValueName(NodeUtil.getBestLValue(rValue));
+>       if (lValueName == null) {
+>         return null;
+>       }
+579,580c411
+<       if (!firstPart.endsWith(".prototype")
+<           && !(trackThisPropertiesDefinitions && firstPart.equals("this"))) {
+---
+>       if (!firstPart.endsWith(".prototype")) {
+630,635c461,476
+<           
+<           
+<           
+<           
+<           return processGetProp(t, n, root,
+<                false);
+---
+>           Node dest = n.getFirstChild().getNext();
+>           Node parent = n.getParent();
+>           Node grandParent = parent.getParent();
+> 
+>           if (dest.isString() &&
+>               NodeUtil.isExprAssign(grandParent) &&
+>               NodeUtil.isVarOrSimpleAssignLhs(n, parent)) {
+>             String name = dest.getString();
+>             Property prop = new AssignmentProperty(
+>                 grandParent,
+>                 maybeGetVar(t, root),
+>                 t.getModule());
+>             getNameInfoForName(name, PROPERTY).getDeclarations().add(prop);
+>             return true;
+>           }
+>           break;
+658,704c499,500
+<     
+< 
+< 
+< 
+< 
+< 
+<     private boolean processThisRef(NodeTraversal t, Node ref) {
+<       if (trackThisPropertiesDefinitions) {
+<         Node n = ref.getParent();
+<         
+<         if (n.isGetProp()) {
+<           
+<           
+<           
+<           
+<           return processGetProp(t, n, null,
+<                true);
+<         }
+<       }
+<       return false;
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private boolean processGetProp(NodeTraversal t, Node n, Node rootName,
+<         boolean checkDeferredExterns) {
+<       Node dest = n.getFirstChild().getNext();
+<       Node parent = n.getParent();
+<       Preconditions.checkState(dest.isString());
+<       if (!isPinningPropertyUse(n)) {
+<         String name = dest.getString();
+<         if (!checkDeferredExterns || !deferredExternPropNames.contains(name)) {
+<           Property prop = new AssignmentProperty(
+<               parent,
+<               maybeGetVar(t, rootName),
+<               t.getModule());
+<           getNameInfoForName(name, PROPERTY).getDeclarations().add(prop);
+<         }
+<         return true;
+<       }
+<       return false;
+<     }
+< 
+<     private Var maybeGetVar(NodeTraversal t, @Nullable Node maybeName) {
+<       return (maybeName != null && maybeName.isName())
+---
+>     private Var maybeGetVar(NodeTraversal t, Node maybeName) {
+>       return maybeName.isName()
+718,722c514,515
+<         if (doNotPinExternsPropertiesOnPrototypes) {
+<           deferredExternPropNames.add(n.getLastChild().getString());
+<         } else {
+<           connectExternProp(n.getLastChild().getString());
+<         }
+---
+>         symbolGraph.connect(externNode, firstModule,
+>             getNameInfoForName(n.getLastChild().getString(), PROPERTY));
+727,731d519
+<   private void connectExternProp(String propName) {
+<     symbolGraph.connect(externNode, firstModule,
+<         getNameInfoForName(propName, PROPERTY));
+<   }
+< 
+760c548
+<     void remove(CodeChangeHandler reporter);
+---
+>     void remove();
+781c569
+<   static class GlobalFunction implements Symbol {
+---
+>   class GlobalFunction implements Symbol {
+802c590
+<     public void remove(CodeChangeHandler reporter) {
+---
+>     public void remove() {
+849c637
+<     private final Node assignNode;
+---
+>     private final Node exprNode;
+857c645
+<       this.assignNode = node;
+---
+>       this.exprNode = node;
+868,896c656,657
+<     public void remove(CodeChangeHandler reporter) {
+<       
+<       if (NodeUtil.isAssignmentOp(assignNode)) {
+<         Node value = getAssignNode().getLastChild();
+<         Node exprParent = assignNode.getParent();
+<         if (exprParent.isExprResult()
+<             && !NodeUtil.mayHaveSideEffects(value)) {
+<           NodeUtil.removeChild(exprParent.getParent(), exprParent);
+<         } else {
+<           if (!NodeUtil.isExpressionResultUsed(assignNode)) {
+<             Node result = NodeUtil.trySimplifyUnusedResult(value, reporter);
+<             if (result == null) {
+<               
+<               
+<               
+<               value = IR.number(0);
+<             } else {
+<               value = result.detachFromParent();
+<             }
+<           } else {
+<             value.detachFromParent();
+<           }
+<           exprParent.replaceChild(getAssignNode(), value);
+<         }
+<       } else if (assignNode.isInc() || assignNode.isDec()) {
+<         assignNode.getParent().replaceChild(assignNode, IR.number(0));
+<       } else {
+<         throw new IllegalStateException("unexpected: "+ assignNode);
+<       }
+---
+>     public void remove() {
+>       NodeUtil.removeChild(exprNode.getParent(), exprNode);
+910c671
+<       return assignNode;
+---
+>       return exprNode.getFirstChild();
+949c710
+<     public void remove(CodeChangeHandler reporter) {
+---
+>     public void remove() {
+975d735
+<     final NameContext parent;
+981,990c741
+<     
+<     
+<     
+<     
+<     
+<     final boolean resultUsed;
+< 
+<     NameContext(
+<         NameContext parent, NameInfo name, Scope scope, boolean resultUsed) {
+<       this.parent = parent;
+---
+>     NameContext(NameInfo name, Scope scope) {
+993,1006d743
+<       this.resultUsed = resultUsed;
+<     }
+< 
+<     void connect(
+<         LinkedDirectedGraph<NameInfo, JSModule> symbolGraph,
+<         JSModule module, NameInfo info) {
+<       NameInfo def = this.name;
+<       
+<       if (def != anonymousNode && !info.equals(def)) {
+<         symbolGraph.connect(this.name, module, info);
+<       }
+<       if (this.resultUsed) {
+<         this.parent.connect(symbolGraph, module, info);
+<       }

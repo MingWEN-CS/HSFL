@@ -1,0 +1,132 @@
+41a42,43
+> import static com.google.javascript.rhino.jstype.JSTypeNative.UNKNOWN_TYPE;
+> 
+62,63c64,69
+<     this.parameters = parameters;
+<     this.returnType = returnType;
+---
+> 
+>     this.parameters = parameters == null ?
+>         registry.createParametersWithVarArgs(getNativeType(UNKNOWN_TYPE)) :
+>         parameters;
+>     this.returnType = returnType == null ?
+>         getNativeType(UNKNOWN_TYPE) : returnType;
+75,79c81
+<     
+<     
+<     if (this.returnType != null &&
+<         that.returnType != null &&
+<         !this.returnType.isSubtype(that.returnType)) {
+---
+>     if (!this.returnType.isSubtype(that.returnType)) {
+86,113c88,96
+<     
+<     
+<     
+<     if (this.parameters != null && that.parameters != null) {
+<       Node thisParam = parameters.getFirstChild();
+<       Node thatParam = that.parameters.getFirstChild();
+<       while (thisParam != null && thatParam != null) {
+<         JSType thisParamType = thisParam.getJSType();
+<         if (thisParamType != null) {
+<           JSType thatParamType = thatParam.getJSType();
+<           if (thatParamType == null ||
+<               !thatParamType.isSubtype(thisParamType)) {
+<             return false;
+<           }
+<         }
+<         boolean thisIsVarArgs = thisParam.isVarArgs();
+<         boolean thatIsVarArgs = thatParam.isVarArgs();
+<         
+<         if (!thisIsVarArgs) {
+<           thisParam = thisParam.getNext();
+<         }
+<         if (!thatIsVarArgs) {
+<           thatParam = thatParam.getNext();
+<         }
+<         
+<         if (thisIsVarArgs && thatIsVarArgs) {
+<           thisParam = null;
+<           thatParam = null;
+---
+>     Node thisParam = parameters.getFirstChild();
+>     Node thatParam = that.parameters.getFirstChild();
+>     while (thisParam != null && thatParam != null) {
+>       JSType thisParamType = thisParam.getJSType();
+>       if (thisParamType != null) {
+>         JSType thatParamType = thatParam.getJSType();
+>         if (thatParamType == null ||
+>             !thatParamType.isSubtype(thisParamType)) {
+>           return false;
+116,131c99,100
+< 
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+---
+>       boolean thisIsVarArgs = thisParam.isVarArgs();
+>       boolean thatIsVarArgs = thatParam.isVarArgs();
+132a102,107
+>       if (!thisIsVarArgs) {
+>         thisParam = thisParam.getNext();
+>       }
+>       if (!thatIsVarArgs) {
+>         thatParam = thatParam.getNext();
+>       }
+133a109,112
+>       if (thisIsVarArgs && thatIsVarArgs) {
+>         thisParam = null;
+>         thatParam = null;
+>       }
+135a115,131
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+146,162c142
+<     
+<     if (returnType == null) {
+<       if (that.returnType != null) {
+<         return false;
+<       }
+<     } else {
+<       if (that.returnType == null) {
+<         return false;
+<       }
+<       if (!returnType.equals(that.returnType)) {
+<         return false;
+<       }
+<     }
+<     
+<     if (parameters == null) {
+<       return that.parameters == null;
+<     } else if (that.parameters == null) {
+---
+>     if (!returnType.equals(that.returnType)) {
+164a145
+> 

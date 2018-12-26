@@ -1,0 +1,100 @@
+62a63
+> import org.joda.time.DateTimeUtils;
+204,206c205,208
+<     public static GJChronology getInstance(DateTimeZone zone,
+<                                            ReadableInstant gregorianCutover) 
+<     {
+---
+>     public static GJChronology getInstance(
+>             DateTimeZone zone,
+>             ReadableInstant gregorianCutover) {
+>         
+218,224c220,225
+<     public static synchronized GJChronology getInstance(DateTimeZone zone,
+<                                                         ReadableInstant gregorianCutover,
+<                                                         int minDaysInFirstWeek)
+<     {
+<         if (zone == null) {
+<             zone = DateTimeZone.getDefault();
+<         }
+---
+>     public static synchronized GJChronology getInstance(
+>             DateTimeZone zone,
+>             ReadableInstant gregorianCutover,
+>             int minDaysInFirstWeek) {
+>         
+>         zone = DateTimeUtils.getZone(zone);
+276,279c277,281
+<     public static synchronized GJChronology getInstance(DateTimeZone zone,
+<                                                         long gregorianCutover,
+<                                                         int minDaysInFirstWeek)
+<     {
+---
+>     public static GJChronology getInstance(
+>             DateTimeZone zone,
+>             long gregorianCutover,
+>             int minDaysInFirstWeek) {
+>         
+288a291
+>     
+293,294c296,297
+<     long iCutoverMillis;
+<     long iGapDuration;
+---
+>     private long iCutoverMillis;
+>     private long iGapDuration;
+420c423,428
+<     public final int getMinimumDaysInFirstWeek() {
+---
+>     
+> 
+> 
+> 
+> 
+>     public int getMinimumDaysInFirstWeek() {
+433c441
+<         sb.append("GJCutoverChronology");
+---
+>         sb.append("GJChronology");
+436,444c444,459
+<         sb.append(", ");
+< 
+<         sb.append("cutover=");
+<         ISODateTimeFormat format = ISODateTimeFormat.getInstance(withUTC());
+<         DateTimePrinter printer;
+<         if (withUTC().dayOfYear().remainder(iCutoverMillis) == 0) {
+<             printer = format.date();
+<         } else {
+<             printer = format.dateTime();
+---
+>         
+>         if (iCutoverMillis != DEFAULT_CUTOVER.getMillis()) {
+>             sb.append(",cutover=");
+>             ISODateTimeFormat format = ISODateTimeFormat.getInstance(withUTC());
+>             DateTimePrinter printer;
+>             if (withUTC().dayOfYear().remainder(iCutoverMillis) == 0) {
+>                 printer = format.date();
+>             } else {
+>                 printer = format.dateTime();
+>             }
+>             printer.printTo(sb, iCutoverMillis);
+>         }
+>         
+>         if (getMinimumDaysInFirstWeek() != 4) {
+>             sb.append(",mdfw=");
+>             sb.append(getMinimumDaysInFirstWeek());
+446,449d460
+<         printer.printTo(sb, iCutoverMillis);
+< 
+<         sb.append(", mdfw=");
+<         sb.append(getMinimumDaysInFirstWeek());
+451c462
+< 
+---
+>         
+569a581
+>     
+850a863
+>     
+1008a1022
+>     

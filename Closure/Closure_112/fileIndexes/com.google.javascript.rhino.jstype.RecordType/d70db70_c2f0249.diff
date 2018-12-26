@@ -1,0 +1,58 @@
+42,43d41
+< import com.google.common.collect.Maps;
+< import com.google.javascript.rhino.ErrorReporter;
+49d46
+< import java.util.SortedMap;
+67d63
+<   private final SortedMap<String, JSType> properties = Maps.newTreeMap();
+119,121c115,117
+<     Set<String> keySet = properties.keySet();
+<     Map<String, JSType> otherProps = otherRecord.properties;
+<     if (!otherProps.keySet().equals(keySet)) {
+---
+>     Set<String> keySet = getOwnPropertyNames();
+>     Set<String> otherKeySet = otherRecord.getOwnPropertyNames();
+>     if (!otherKeySet.equals(keySet)) {
+125,126c121,122
+<       if (!otherProps.get(key).checkEquivalenceHelper(
+<               properties.get(key), eqMethod)) {
+---
+>       if (!otherRecord.getPropertyType(key).checkEquivalenceHelper(
+>               getPropertyType(key), eqMethod)) {
+145,148d140
+<     if (!inferred) {
+<       properties.put(propertyName, type);
+<     }
+< 
+162c154
+<       for (String property : properties.keySet()) {
+---
+>       for (String property : getOwnPropertyNames()) {
+173c165
+<       for (String property : thatRecord.properties.keySet()) {
+---
+>       for (String property : thatRecord.getOwnPropertyNames()) {
+195,197c187,188
+<       for (Map.Entry<String, JSType> entry : properties.entrySet()) {
+<         String propName = entry.getKey();
+<         JSType propType = entry.getValue();
+---
+>       for (String propName : getOwnPropertyNames()) {
+>         JSType propType = getPropertyType(propName);
+260c251
+<     for (String property : typeB.properties.keySet()) {
+---
+>     for (String property : typeB.getOwnPropertyNames()) {
+283,294d273
+<   }
+< 
+<   @Override
+<   JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+<     for (Map.Entry<String, JSType> entry : properties.entrySet()) {
+<       JSType type = entry.getValue();
+<       JSType resolvedType = type.resolve(t, scope);
+<       if (type != resolvedType) {
+<         properties.put(entry.getKey(), resolvedType);
+<       }
+<     }
+<     return super.resolveInternal(t, scope);

@@ -1,0 +1,87 @@
+37a38
+> import com.google.javascript.rhino.Token;
+1129c1130
+<   MemoizedScopeCreator getTypedScopeCreator() {
+---
+>   public MemoizedScopeCreator getTypedScopeCreator() {
+2273a2275,2354
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   public void replaceScript(JsAst ast) {
+>     CompilerInput input = this.getInput(ast.getInputId());
+>     if (!replaceIncrementalSourceAst(ast)) {
+>       return;
+>     }
+>     Node originalRoot = input.getAstRoot(this);
+> 
+>     processNewScript(ast, originalRoot);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   public void addNewScript(JsAst ast) {
+>     if (!addNewSourceAst(ast)) {
+>       return;
+>     }
+>     Node emptyScript = new Node(Token.SCRIPT);
+>     InputId inputId = ast.getInputId();
+>     emptyScript.setInputId(inputId);
+>     emptyScript.setStaticSourceFile(
+>         JSSourceFile.fromCode(inputId.getIdName(), ""));
+> 
+>     processNewScript(ast, emptyScript);
+>   }
+> 
+>   private void processNewScript(JsAst ast, Node originalRoot) {
+>     Node js = ast.getAstRoot(this);
+>     Preconditions.checkNotNull(js);
+> 
+>     runHotSwap(originalRoot, js, this.getCleanupPassConfig());
+>     
+>     
+>     runHotSwapPass(null, null, ensureDefaultPassConfig().garbageCollectChecks);
+> 
+>     this.getTypeRegistry().clearNamedTypes();
+>     this.removeSyntheticVarsInput();
+> 
+>     runHotSwap(originalRoot, js, this.ensureDefaultPassConfig());
+>   }
+> 
+>   
+> 
+> 
+>   private void runHotSwap(
+>       Node originalRoot, Node js, PassConfig passConfig) {
+>     for (PassFactory passFactory : passConfig.getChecks()) {
+>       runHotSwapPass(originalRoot, js, passFactory);
+>     }
+>   }
+> 
+>   private void runHotSwapPass(
+>       Node originalRoot, Node js, PassFactory passFactory) {
+>     HotSwapCompilerPass pass = passFactory.getHotSwapPass(this);
+>     if (pass != null) {
+>       logger.info("Performing HotSwap for pass " + passFactory.getName());
+>       pass.hotSwapScript(js, originalRoot);
+>     }
+>   }
+> 
+>   private PassConfig getCleanupPassConfig() {
+>     return new CleanupPasses(getOptions());
+>   }
+> 
+>   private void removeSyntheticVarsInput() {
+>     String sourceName = Compiler.SYNTHETIC_EXTERNS;
+>     removeExternInput(new InputId(sourceName));

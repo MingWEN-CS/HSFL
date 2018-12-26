@@ -1,0 +1,66 @@
+21,22d20
+< import com.google.common.base.Preconditions;
+< import com.google.common.collect.HashMultimap;
+24d21
+< import com.google.common.collect.Lists;
+79d75
+< import java.util.List;
+176a173,187
+>   private Node transformBlock(AstNode node) {
+>     Node irNode = transform(node);
+>     if (irNode.getType() != Token.BLOCK) {
+>       if (irNode.getType() == Token.EMPTY) {
+>         irNode.setType(Token.BLOCK);
+>         irNode.setWasEmptyNode(true);
+>       } else {
+>         Node newBlock = new Node(Token.BLOCK, irNode,
+>             irNode.getLineno(), irNode.getCharno());
+>         irNode = newBlock;
+>       }
+>     }
+>     return irNode;
+>   }
+> 
+425c436
+<       node.addChildToBack(transform(clauseNode.getBody()));
+---
+>       node.addChildToBack(transformBlock(clauseNode.getBody()));
+451c462
+<           transform(loopNode.getBody()),
+---
+>           transformBlock(loopNode.getBody()),
+482c493
+<           transform(loopNode.getBody()));
+---
+>           transformBlock(loopNode.getBody()));
+492c503
+<       node.addChildToBack(transform(loopNode.getBody()));
+---
+>       node.addChildToBack(transformBlock(loopNode.getBody()));
+568c579
+<       node.addChildToBack(transform(statementNode.getThenPart()));
+---
+>       node.addChildToBack(transformBlock(statementNode.getThenPart()));
+570c581
+<         node.addChildToBack(transform(statementNode.getElsePart()));
+---
+>         node.addChildToBack(transformBlock(statementNode.getElsePart()));
+751c762,763
+<       Node node = new Node(Token.TRY, transform(statementNode.getTryBlock()));
+---
+>       Node node = new Node(Token.TRY,
+>           transformBlock(statementNode.getTryBlock()));
+768c780
+<         node.addChildToBack(transform(finallyBlock));
+---
+>         node.addChildToBack(transformBlock(finallyBlock));
+815c827
+<           transform(loopNode.getBody()));
+---
+>           transformBlock(loopNode.getBody()));
+823c835
+<           transform(statementNode.getStatement()));
+---
+>           transformBlock(statementNode.getStatement()));
+1108d1119
+<         return Token.EXPR_VOID;

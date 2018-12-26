@@ -1,0 +1,680 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.FALSE;
+import static com.google.javascript.rhino.jstype.TernaryValue.UNKNOWN;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.jstype.StaticReference;
+import com.google.javascript.rhino.jstype.StaticSlot;
+
+import java.io.Serializable;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class ObjectType extends JSType implements StaticScope<JSType> {
+  private boolean visited;
+  private JSDocInfo docInfo = null;
+  private boolean unknown = true;
+
+  ObjectType(JSTypeRegistry registry) {
+    super(registry);
+  }
+
+  ObjectType(JSTypeRegistry registry, ImmutableList<String> templateKeys,
+      ImmutableList<JSType> templatizedTypes) {
+    super(registry, templateKeys, templatizedTypes);
+  }
+
+  @Override
+  public Node getRootNode() { return null; }
+
+  @Override
+  public ObjectType getParentScope() {
+    return getImplicitPrototype();
+  }
+
+  @Override
+  public abstract Property getSlot(String name);
+
+  @Override
+  public Property getOwnSlot(String name) {
+    if (hasOwnProperty(name)) {
+      return getSlot(name);
+    }
+    return null;
+  }
+
+  @Override
+  public ObjectType getTypeOfThis() {
+    return null;
+  }
+
+  
+
+
+
+  public JSType getParameterType() {
+    return null;
+  }
+
+  
+
+
+
+  public JSType getIndexType() {
+    return null;
+  }
+
+  
+
+
+  @Override
+  public JSDocInfo getJSDocInfo() {
+    if (docInfo != null) {
+      return docInfo;
+    } else if (getImplicitPrototype() != null) {
+      return getImplicitPrototype().getJSDocInfo();
+    } else {
+      return super.getJSDocInfo();
+    }
+  }
+
+  
+
+
+
+  public void setJSDocInfo(JSDocInfo info) {
+    docInfo = info;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  final boolean detectImplicitPrototypeCycle() {
+    
+    this.visited = true;
+    ObjectType p = getImplicitPrototype();
+    while (p != null) {
+      if (p.visited) {
+        return true;
+      } else {
+        p.visited = true;
+      }
+      p = p.getImplicitPrototype();
+    }
+
+    
+    p = this;
+    do {
+      p.visited = false;
+      p = p.getImplicitPrototype();
+    } while (p != null);
+    return false;
+  }
+
+  
+
+
+
+
+
+
+  public abstract String getReferenceName();
+
+  
+
+
+
+
+
+
+
+
+  public String getNormalizedReferenceName() {
+    String name = getReferenceName();
+    if (name != null) {
+      int pos = name.indexOf("(");
+      if (pos != -1) {
+        return name.substring(0, pos);
+      }
+    }
+    return name;
+  }
+
+  @Override
+  public String getDisplayName() {
+    return getNormalizedReferenceName();
+  }
+
+  
+
+
+
+  public static String createDelegateSuffix(String suffix) {
+    return "(" + suffix + ")";
+  }
+
+  
+
+
+
+  public boolean hasReferenceName() {
+    return false;
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    
+    TernaryValue result = super.testForEquality(that);
+    if (result != null) {
+      return result;
+    }
+    
+    if (that.isSubtype(
+            getNativeType(JSTypeNative.OBJECT_NUMBER_STRING_BOOLEAN))) {
+      return UNKNOWN;
+    } else {
+      return FALSE;
+    }
+  }
+
+  
+
+
+
+
+  public abstract FunctionType getConstructor();
+
+  
+
+
+  public abstract ObjectType getImplicitPrototype();
+
+  
+
+
+
+
+
+
+  public final boolean defineDeclaredProperty(String propertyName,
+      JSType type, Node propertyNode) {
+    boolean result = defineProperty(propertyName, type, false,
+        propertyNode);
+
+    
+    
+    
+    
+    registry.registerPropertyOnType(propertyName, this);
+
+    return result;
+  }
+
+  
+
+
+
+
+  public final boolean defineSynthesizedProperty(String propertyName,
+      JSType type, Node propertyNode) {
+    return defineProperty(propertyName, type, false, propertyNode);
+  }
+
+  
+
+
+
+
+
+
+  public final boolean defineInferredProperty(String propertyName,
+      JSType type, Node propertyNode) {
+    StaticSlot<JSType> originalSlot = getSlot(propertyName);
+    if (hasProperty(propertyName)) {
+      if (isPropertyTypeDeclared(propertyName)) {
+        
+        return true;
+      }
+      JSType originalType = getPropertyType(propertyName);
+      type = originalType == null ? type :
+          originalType.getLeastSupertype(type);
+    }
+
+    boolean result = defineProperty(propertyName, type, true,
+        propertyNode);
+
+    
+    
+    
+    
+    registry.registerPropertyOnType(propertyName, this);
+
+    return result;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  abstract boolean defineProperty(String propertyName, JSType type,
+      boolean inferred, Node propertyNode);
+
+  
+
+
+
+
+
+
+  public boolean removeProperty(String propertyName) {
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public Node getPropertyNode(String propertyName) {
+    return null;
+  }
+
+  
+
+
+
+
+  public JSDocInfo getOwnPropertyJSDocInfo(String propertyName) {
+    return null;
+  }
+
+  
+
+
+
+
+
+  public void setPropertyJSDocInfo(String propertyName, JSDocInfo info) {
+    
+  }
+
+  @Override
+  public JSType findPropertyType(String propertyName) {
+    return hasProperty(propertyName) ?
+        getPropertyType(propertyName) : null;
+  }
+
+  
+
+
+
+
+
+
+
+  public abstract JSType getPropertyType(String propertyName);
+
+  
+
+
+
+  public boolean hasOwnProperty(String propertyName) {
+    return hasProperty(propertyName);
+  }
+
+  
+  public Set<String> getOwnPropertyNames() {
+    return ImmutableSet.of();
+  }
+
+  
+
+
+  public abstract boolean isPropertyTypeInferred(String propertyName);
+
+  
+
+
+  public abstract boolean isPropertyTypeDeclared(String propertyName);
+
+  
+
+
+  boolean hasOwnDeclaredProperty(String name) {
+    return hasOwnProperty(name) && isPropertyTypeDeclared(name);
+  }
+
+  
+  public boolean isPropertyInExterns(String propertyName) {
+    return false;
+  }
+
+  
+
+
+  public abstract int getPropertiesCount();
+
+  
+
+
+
+  public Set<String> getPropertyNames() {
+    Set<String> props = Sets.newTreeSet();
+    collectPropertyNames(props);
+    return props;
+  }
+
+  
+
+
+  abstract void collectPropertyNames(Set<String> props);
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseObjectType(this);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  final boolean isImplicitPrototype(ObjectType prototype) {
+    for (ObjectType current = this;
+         current != null;
+         current = current.getImplicitPrototype()) {
+      if (current.isEquivalentTo(prototype)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public BooleanLiteralSet getPossibleToBooleanOutcomes() {
+    return BooleanLiteralSet.TRUE;
+  }
+
+  
+
+
+
+  @Override
+  public boolean isUnknownType() {
+    
+    
+    if (unknown) {
+      ObjectType implicitProto = getImplicitPrototype();
+      if (implicitProto == null ||
+          implicitProto.isNativeObjectType()) {
+        unknown = false;
+        for (ObjectType interfaceType : getCtorExtendedInterfaces()) {
+          if (interfaceType.isUnknownType()) {
+            unknown = true;
+            break;
+          }
+        }
+      } else {
+        unknown = implicitProto.isUnknownType();
+      }
+    }
+    return unknown;
+  }
+
+  @Override
+  public boolean isObject() {
+    return true;
+  }
+
+  
+
+
+
+
+  public boolean hasCachedValues() {
+    return !unknown;
+  }
+
+  
+
+
+
+  public void clearCachedValues() {
+    unknown = true;
+  }
+
+  
+  public boolean isNativeObjectType() {
+    return false;
+  }
+
+  
+
+
+  public static ObjectType cast(JSType type) {
+    return type == null ? null : type.toObjectType();
+  }
+
+  @Override
+  public final boolean isFunctionPrototypeType() {
+    return getOwnerFunction() != null;
+  }
+
+  
+  public FunctionType getOwnerFunction() {
+    return null;
+  }
+
+  
+  void setOwnerFunction(FunctionType type) {}
+
+  
+
+
+
+  public Iterable<ObjectType> getCtorImplementedInterfaces() {
+    return ImmutableSet.of();
+  }
+
+  
+
+
+
+  public Iterable<ObjectType> getCtorExtendedInterfaces() {
+    return ImmutableSet.of();
+  }
+
+  public static final class Property
+      implements Serializable, StaticSlot<JSType>, StaticReference<JSType> {
+    private static final long serialVersionUID = 1L;
+
+    
+
+
+    private final String name;
+
+    
+
+
+    private JSType type;
+
+    
+
+
+    private final boolean inferred;
+
+    
+
+
+
+    private Node propertyNode;
+
+    
+    private JSDocInfo docInfo = null;
+
+    Property(String name, JSType type, boolean inferred,
+        Node propertyNode) {
+      this.name = name;
+      this.type = type;
+      this.inferred = inferred;
+      this.propertyNode = propertyNode;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public Node getNode() {
+      return propertyNode;
+    }
+
+    @Override
+    public StaticSourceFile getSourceFile() {
+      return propertyNode == null ? null : propertyNode.getStaticSourceFile();
+    }
+
+    @Override
+    public Property getSymbol() {
+      return this;
+    }
+
+    @Override
+    public Property getDeclaration() {
+      return propertyNode == null ? null : this;
+    }
+
+    @Override
+    public JSType getType() {
+      return type;
+    }
+
+    @Override
+    public boolean isTypeInferred() {
+      return inferred;
+    }
+
+    boolean isFromExterns() {
+      return propertyNode == null ? false : propertyNode.isFromExterns();
+    }
+
+    void setType(JSType type) {
+      this.type = type;
+    }
+
+    @Override public JSDocInfo getJSDocInfo() {
+      return this.docInfo;
+    }
+
+    void setJSDocInfo(JSDocInfo info) {
+      this.docInfo = info;
+    }
+
+    public void setNode(Node n) {
+      this.propertyNode = n;
+    }
+  }
+}

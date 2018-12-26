@@ -1,0 +1,334 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.ErrorReporter;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class NamedType extends ProxyObjectType {
+  private static final long serialVersionUID = 1L;
+
+  private final String reference;
+  private final String sourceName;
+  private final int lineno;
+  private final int charno;
+
+  
+
+
+
+
+
+
+
+
+
+  private boolean forgiving = false;
+
+  
+
+
+  NamedType(JSTypeRegistry registry, String reference,
+      String sourceName, int lineno, int charno) {
+    super(registry, registry.getNativeObjectType(JSTypeNative.UNKNOWN_TYPE));
+
+    Preconditions.checkNotNull(reference);
+    this.reference = reference;
+    this.sourceName = sourceName;
+    this.lineno = lineno;
+    this.charno = charno;
+  }
+
+  @Override
+  void forgiveUnknownNames() {
+    forgiving = true;
+  }
+
+  
+  public JSType getReferencedType() {
+    return referencedType;
+  }
+
+  @Override
+  public String getReferenceName() {
+    return reference;
+  }
+
+  @Override
+  public String toString() {
+    return reference;
+  }
+
+  @Override
+  public boolean hasReferenceName() {
+    return true;
+  }
+
+  @Override
+  boolean isNamedType() {
+    return true;
+  }
+
+  @Override
+  public boolean isNominalType() {
+    return true;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  @Override
+  public boolean isEquivalentTo(JSType that) {
+    if (this == that) {
+      return true;
+    }
+
+    ObjectType objType = ObjectType.cast(that);
+    if (objType != null) {
+      return objType.isNominalType() &&
+          reference.equals(objType.getReferenceName());
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return reference.hashCode();
+  }
+
+  
+
+
+  @Override
+  JSType resolveInternal(ErrorReporter t, StaticScope<JSType> enclosing) {
+    
+    
+    
+    
+    boolean resolved = resolveViaRegistry(t, enclosing);
+    if (detectImplicitPrototypeCycle()) {
+      handleTypeCycle(t);
+    }
+
+    if (resolved) {
+      super.resolveInternal(t, enclosing);
+      return referencedType;
+    }
+
+    resolveViaProperties(t, enclosing);
+    if (detectImplicitPrototypeCycle()) {
+      handleTypeCycle(t);
+    }
+
+    super.resolveInternal(t, enclosing);
+    return referencedType;
+  }
+
+  
+
+
+
+  private boolean resolveViaRegistry(
+      ErrorReporter t, StaticScope<JSType> enclosing) {
+    ObjectType type = ObjectType.cast(registry.getType(reference));
+    if (type != null) {
+      setReferencedType(type, t, enclosing);
+      return true;
+    }
+    return false;
+  }
+
+  
+
+
+
+
+  private void resolveViaProperties(ErrorReporter t,
+                                    StaticScope<JSType> enclosing) {
+    JSType value = lookupViaProperties(t, enclosing);
+    
+    if ((value instanceof FunctionType) &&
+        (value.isConstructor() || value.isInterface())) {
+      FunctionType functionType = (FunctionType) value;
+      setReferencedType(functionType.getInstanceType(), t, enclosing);
+    } else if (value instanceof EnumType) {
+      setReferencedType(((EnumType) value).getElementsType(), t, enclosing);
+    } else {
+      
+      
+      
+      
+      
+      
+      handleUnresolvedType(t, value == null || value.isUnknownType());
+    }
+  }
+
+  
+
+
+
+
+
+  private JSType lookupViaProperties( ErrorReporter t,
+      StaticScope<JSType> enclosing) {
+    String[] componentNames = reference.split("\\.", -1);
+    if (componentNames[0].length() == 0) {
+      return null;
+    }
+    StaticSlot<JSType> slot = enclosing.getSlot(componentNames[0]);
+    if (slot == null) {
+      return null;
+    }
+    
+    
+    
+    JSType slotType = slot.getType();
+    if (slotType == null || slotType.isAllType() || slotType.isNoType()) {
+      return null;
+    }
+    JSType value = getTypedefType(t, slot, componentNames[0]);
+    if (value == null) {
+      return null;
+    }
+
+    
+    for (int i = 1; i < componentNames.length; i++) {
+      ObjectType parentClass = ObjectType.cast(value);
+      if (parentClass == null) {
+        return null;
+      }
+      if (componentNames[i].length() == 0) {
+        return null;
+      }
+      value = parentClass.getPropertyType(componentNames[i]);
+    }
+    return value;
+  }
+
+  private void setReferencedType(ObjectType type, ErrorReporter t,
+      StaticScope<JSType> enclosing) {
+    referencedType = type;
+    checkEnumElementCycle(t);
+    setResolvedTypeInternal(referencedType);
+  }
+
+  private void handleTypeCycle(ErrorReporter t) {
+    referencedType = registry.getNativeObjectType(JSTypeNative.UNKNOWN_TYPE);
+    t.warning("Cycle detected in inheritance chain of type " + reference,
+        sourceName, lineno, null, charno);
+    setResolvedTypeInternal(referencedType);
+  }
+
+  private void checkEnumElementCycle(ErrorReporter t) {
+    if (referencedType instanceof EnumElementType &&
+        ((EnumElementType) referencedType).getPrimitiveType() == this) {
+      handleTypeCycle(t);
+    }
+  }
+
+  
+  
+  private void handleUnresolvedType(
+      ErrorReporter t, boolean ignoreForwardReferencedTypes) {
+    boolean beForgiving = forgiving ||
+        (ignoreForwardReferencedTypes &&
+         registry.isForwardDeclaredType(reference));
+    if (!beForgiving && registry.isLastGeneration()) {
+      t.warning("Unknown type " + reference, sourceName, lineno, null,
+          charno);
+    } else {
+      referencedType = registry.getNativeObjectType(
+          JSTypeNative.CHECKED_UNKNOWN_TYPE);
+    }
+
+    setResolvedTypeInternal(referencedType);
+  }
+
+  JSType getTypedefType(ErrorReporter t, StaticSlot<JSType> slot, String name) {
+    JSType type = slot.getType();
+    if (type != null) {
+      return type;
+    }
+    handleUnresolvedType(t, true);
+    return null;
+  }
+}

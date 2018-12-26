@@ -1,0 +1,124 @@
+101c101,110
+<   private String outputCharset;
+---
+> 
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   private Charset outputCharset2;
+>   private String legacyOutputCharset;
+224c233,234
+<     outputCharset = options.outputCharset = getOutputCharset();
+---
+>     legacyOutputCharset = options.outputCharset = getLegacyOutputCharset();
+>     outputCharset2 = getOutputCharset2();
+687c697
+<       jsOutput = fileNameToOutputWriter(options.jsOutputFile);
+---
+>       jsOutput = fileNameToLegacyOutputWriter(options.jsOutputFile);
+689c699
+<       jsOutput = streamToOutputWriter((OutputStream) jsOutput);
+---
+>       jsOutput = streamToLegacyOutputWriter((OutputStream) jsOutput);
+788c798
+<           mapOut = fileNameToOutputWriter(expandSourceMapPath(options, null));
+---
+>           mapOut = fileNameToOutputWriter2(expandSourceMapPath(options, null));
+793c803
+<             mapOut = fileNameToOutputWriter(expandSourceMapPath(options, m));
+---
+>             mapOut = fileNameToOutputWriter2(expandSourceMapPath(options, m));
+796c806,807
+<           Writer writer = fileNameToOutputWriter(getModuleOutputFileName(m));
+---
+>           Writer writer =
+>               fileNameToLegacyOutputWriter(getModuleOutputFileName(m));
+871c882
+<   private String getOutputCharset() throws FlagUsageException {
+---
+>   private String getLegacyOutputCharset() throws FlagUsageException {
+881a893,907
+>   
+> 
+> 
+> 
+>   private Charset getOutputCharset2() throws FlagUsageException {
+>     if (!config.charset.isEmpty()) {
+>       if (!Charset.isSupported(config.charset)) {
+>         throw new FlagUsageException(config.charset +
+>             " is not a valid charset name.");
+>       }
+>       return Charset.forName(config.charset);
+>     }
+>     return Charsets.UTF_8;
+>   }
+> 
+919c945
+<     return fileNameToOutputWriter(exPath);
+---
+>     return fileNameToOutputWriter2(exPath);
+963c989,1004
+<   private Writer fileNameToOutputWriter(String fileName) throws IOException {
+---
+>   private Writer fileNameToLegacyOutputWriter(String fileName) throws IOException {
+>     if (fileName == null) {
+>       return null;
+>     }
+>     if (testMode) {
+>       return new StringWriter();
+>     }
+> 
+>     return streamToLegacyOutputWriter(filenameToOutputStream(fileName));
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private Writer fileNameToOutputWriter2(String fileName) throws IOException {
+971c1012
+<     return streamToOutputWriter(filenameToOutputStream(fileName));
+---
+>     return streamToOutputWriter2(filenameToOutputStream(fileName));
+989c1030,1044
+<   private Writer streamToOutputWriter(OutputStream stream)
+---
+>   private Writer streamToLegacyOutputWriter(OutputStream stream)
+>       throws IOException {
+>     if (legacyOutputCharset == null) {
+>       return new BufferedWriter(
+>           new OutputStreamWriter(stream));
+>     } else {
+>       return new BufferedWriter(
+>           new OutputStreamWriter(stream, legacyOutputCharset));
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private Writer streamToOutputWriter2(OutputStream stream)
+991c1046
+<     if (outputCharset == null) {
+---
+>     if (outputCharset2 == null) {
+996c1051
+<           new OutputStreamWriter(stream, outputCharset));
+---
+>           new OutputStreamWriter(stream, outputCharset2));
+1013c1068
+<     Writer out = fileNameToOutputWriter(outName);
+---
+>     Writer out = fileNameToOutputWriter2(outName);
+1224c1279
+<           Writer out = fileNameToOutputWriter(
+---
+>           Writer out = fileNameToOutputWriter2(
+1235c1290
+<         Writer out = fileNameToOutputWriter(
+---
+>         Writer out = fileNameToOutputWriter2(

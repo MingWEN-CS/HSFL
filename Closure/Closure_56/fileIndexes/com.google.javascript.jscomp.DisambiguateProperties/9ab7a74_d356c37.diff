@@ -1,0 +1,22 @@
+759,761c759,771
+<       while (objType != null && objType.getImplicitPrototype() != objType) {
+<         if (objType.hasOwnProperty(field)) {
+<           foundType = objType;
+---
+>       if (objType != null && objType.getConstructor() != null
+>           && objType.getConstructor().isInterface()) {
+>         ObjectType topInterface = FunctionType.getTopDefiningInterface(
+>             objType, field);
+>         if (topInterface != null && topInterface.getConstructor() != null) {
+>           foundType = topInterface.getConstructor().getPrototype();
+>         }
+>       } else {
+>         while (objType != null && objType.getImplicitPrototype() != objType) {
+>           if (objType.hasOwnProperty(field)) {
+>             foundType = objType;
+>           }
+>           objType = objType.getImplicitPrototype();
+763d772
+<         objType = objType.getImplicitPrototype();
+764a774
+> 

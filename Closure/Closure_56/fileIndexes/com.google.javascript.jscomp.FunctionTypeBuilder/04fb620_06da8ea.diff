@@ -1,0 +1,17 @@
+437,442c437,445
+<       ObjectType ownerType = ObjectType.cast(
+<           typeRegistry.getForgivingType(
+<               scope, ownerTypeName, sourceName,
+<               owner.getLineno(), owner.getCharno()));
+<       if (ownerType != null) {
+<         thisType = ownerType;
+---
+>       Var ownerVar = scope.getVar(ownerTypeName);
+>       JSType ownerType = ownerVar == null ? null : ownerVar.getType();
+>       FunctionType ownerFnType = ownerType instanceof FunctionType ?
+>           (FunctionType) ownerType : null;
+>       ObjectType instType =
+>           ownerFnType == null || ownerFnType.isOrdinaryFunction() ?
+>           null : ownerFnType.getInstanceType();
+>       if (instType != null) {
+>         thisType = instType;

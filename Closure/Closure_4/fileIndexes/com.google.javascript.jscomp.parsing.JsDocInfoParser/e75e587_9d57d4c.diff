@@ -1,0 +1,180 @@
+142c142
+<     JsDocToken token = next();
+---
+>     skipEOLs();
+144,145c144
+<     ExtractionInfo blockInfo = extractBlockComment(token);
+<     token = blockInfo.token;
+---
+>     JsDocToken token = next();
+148,149c147,159
+<     if (blockInfo.string.length() > 0) {
+<       jsdocBuilder.recordBlockDescription(blockInfo.string);
+---
+>     if (jsdocBuilder.shouldParseDocumentation()) {
+>       ExtractionInfo blockInfo = extractBlockComment(token);
+>       token = blockInfo.token;
+>       if (!blockInfo.string.isEmpty()) {
+>         jsdocBuilder.recordBlockDescription(blockInfo.string);
+>       }
+>     } else {
+>       if (token != JsDocToken.ANNOTATION &&
+>           token != JsDocToken.EOC) {
+>         
+>         
+>         jsdocBuilder.recordBlockDescription("");
+>       }
+172,173c182,184
+<                   ExtractionInfo authorInfo = extractSingleLineBlock();
+<                   String author = authorInfo.string;
+---
+>                   if (jsdocBuilder.shouldParseDocumentation()) {
+>                     ExtractionInfo authorInfo = extractSingleLineBlock();
+>                     String author = authorInfo.string;
+175,176c186,187
+<                   if (author.length() == 0) {
+<                     parser.addWarning("msg.jsdoc.authormissing",
+---
+>                     if (author.length() == 0) {
+>                       parser.addWarning("msg.jsdoc.authormissing",
+177a189,192
+>                     } else {
+>                       jsdocBuilder.addAuthor(author);
+>                     }
+>                     token = authorInfo.token;
+179c194
+<                     jsdocBuilder.addAuthor(author);
+---
+>                     token = eatTokensUntilEOL(token);
+181,182d195
+< 
+<                   token = authorInfo.token;
+256,258c269,273
+<                   ExtractionInfo fileOverviewInfo =
+<                       extractMultilineTextualBlock(token,
+<                                                    WhitespaceOption.TRIM);
+---
+>                   String fileOverview = "";
+>                   if (jsdocBuilder.shouldParseDocumentation()) {
+>                     ExtractionInfo fileOverviewInfo =
+>                         extractMultilineTextualBlock(token,
+>                             WhitespaceOption.TRIM);
+260c275,280
+<                   String fileOverview = fileOverviewInfo.string;
+---
+>                     fileOverview = fileOverviewInfo.string;
+> 
+>                     token = fileOverviewInfo.token;
+>                   } else {
+>                     token = eatTokensUntilEOL(token);
+>                   }
+267d286
+<                   token = fileOverviewInfo.token;
+469,470c488,490
+<                   ExtractionInfo descriptionInfo =
+<                       extractMultilineTextualBlock(token);
+---
+>                   if (jsdocBuilder.shouldParseDocumentation()) {
+>                     ExtractionInfo descriptionInfo =
+>                         extractMultilineTextualBlock(token);
+472c492
+<                   String description = descriptionInfo.string;
+---
+>                     String description = descriptionInfo.string;
+474,476c494,496
+<                   if (description.length() > 0) {
+<                     jsdocBuilder.recordThrowDescription(type, description);
+<                   }
+---
+>                     if (description.length() > 0) {
+>                       jsdocBuilder.recordThrowDescription(type, description);
+>                     }
+478c498,501
+<                   token = descriptionInfo.token;
+---
+>                     token = descriptionInfo.token;
+>                   } else {
+>                     token = eatTokensUntilEOL(token);
+>                   }
+561,562c584,586
+<                   ExtractionInfo paramDescriptionInfo =
+<                       extractMultilineTextualBlock(token);
+---
+>                   if (jsdocBuilder.shouldParseDocumentation()) {
+>                     ExtractionInfo paramDescriptionInfo =
+>                         extractMultilineTextualBlock(token);
+564c588
+<                   String paramDescription = paramDescriptionInfo.string;
+---
+>                     String paramDescription = paramDescriptionInfo.string;
+566,569c590,593
+<                   if (paramDescription.length() > 0) {
+<                     jsdocBuilder.recordParameterDescription(name,
+<                                                             paramDescription);
+<                   }
+---
+>                     if (paramDescription.length() > 0) {
+>                       jsdocBuilder.recordParameterDescription(name,
+>                           paramDescription);
+>                     }
+571c595,598
+<                   token = paramDescriptionInfo.token;
+---
+>                     token = paramDescriptionInfo.token;
+>                   } else {
+>                     token = eatTokensUntilEOL(token);
+>                   }
+631,632c658,660
+<                   ExtractionInfo referenceInfo = extractSingleLineBlock();
+<                   String reference = referenceInfo.string;
+---
+>                   if (jsdocBuilder.shouldParseDocumentation()) {
+>                     ExtractionInfo referenceInfo = extractSingleLineBlock();
+>                     String reference = referenceInfo.string;
+634,635c662,663
+<                   if (reference.length() == 0) {
+<                     parser.addWarning("msg.jsdoc.seemissing",
+---
+>                     if (reference.length() == 0) {
+>                       parser.addWarning("msg.jsdoc.seemissing",
+636a665,669
+>                     } else {
+>                       jsdocBuilder.addReference(reference);
+>                     }
+> 
+>                     token = referenceInfo.token;
+638c671
+<                     jsdocBuilder.addReference(reference);
+---
+>                     token = eatTokensUntilEOL(token);
+640,641d672
+< 
+<                   token = referenceInfo.token;
+725,732c756,770
+<                         ExtractionInfo returnDescriptionInfo =
+<                             extractMultilineTextualBlock(token);
+< 
+<                         String returnDescription = returnDescriptionInfo.string;
+< 
+<                         if (returnDescription.length() > 0) {
+<                           jsdocBuilder.recordReturnDescription(
+<                               returnDescription);
+---
+>                         if (jsdocBuilder.shouldParseDocumentation()) {
+>                           ExtractionInfo returnDescriptionInfo =
+>                               extractMultilineTextualBlock(token);
+> 
+>                           String returnDescription =
+>                               returnDescriptionInfo.string;
+> 
+>                           if (returnDescription.length() > 0) {
+>                             jsdocBuilder.recordReturnDescription(
+>                                 returnDescription);
+>                           }
+> 
+>                           token = returnDescriptionInfo.token;
+>                         } else {
+>                           token = eatTokensUntilEOL(token);
+734,735d771
+< 
+<                         token = returnDescriptionInfo.token;

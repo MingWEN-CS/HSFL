@@ -1,0 +1,118 @@
+125,135d124
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+137,186c126
+<       Node parameters, JSType returnType) {
+<     this(registry, name, source, parameters, returnType, null, null, false,
+<          false);
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   FunctionType(JSTypeRegistry registry, String name, Node source,
+<       Node parameters, JSType returnType, ObjectType typeOfThis) {
+<     this(registry, name, source, parameters, returnType, typeOfThis,
+<         null, false, false);
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   FunctionType(JSTypeRegistry registry, String name, Node source,
+<       Node parameters, JSType returnType, ObjectType typeOfThis,
+<       String templateTypeName) {
+<     this(registry, name, source, parameters, returnType, typeOfThis,
+<         templateTypeName, false, false);
+<   }
+< 
+<   
+<   FunctionType(JSTypeRegistry registry, String name, Node source,
+<       Node parameters, JSType returnType, ObjectType typeOfThis,
+---
+>       ArrowType arrowType, ObjectType typeOfThis,
+203,206c143
+<     
+<     
+<     this.call = new ArrowType(registry, parameters,
+<         (returnType == null ? getReturnType() : returnType));
+---
+>     this.call = arrowType;
+211c148
+<   FunctionType(JSTypeRegistry registry, String name, Node source) {
+---
+>   private FunctionType(JSTypeRegistry registry, String name, Node source) {
+222a160,165
+>   
+>   static FunctionType forInterface(
+>       JSTypeRegistry registry, String name, Node source) {
+>     return new FunctionType(registry, name, source);
+>   }
+> 
+304a248,252
+>   ArrowType getInternalArrowType() {
+>     return call;
+>   }
+> 
+>   
+429,430c377,379
+<                 new FunctionType(registry, null, null,
+<                     null, getReturnType()),
+---
+>                 new FunctionBuilder(registry)
+>                     .withReturnType(getReturnType())
+>                     .build(),
+441,442c390,393
+<                 new FunctionType(registry, null, null,
+<                     params, getReturnType()),
+---
+>                 new FunctionBuilder(registry)
+>                     .withParamsNode(params)
+>                     .withReturnType(getReturnType())
+>                     .build(),
+459,460c410,413
+<               new FunctionType(registry, null, null,
+<                   builder.build(), getReturnType()),
+---
+>               new FunctionBuilder(registry)
+>                   .withParams(builder)
+>                   .withReturnType(getReturnType())
+>                   .build(),
+852a806,810
+>   }
+> 
+>   
+>   private ArrowType createArrowType(Node parameters, JSType returnType) {
+>     return registry.createArrowType(parameters, returnType);

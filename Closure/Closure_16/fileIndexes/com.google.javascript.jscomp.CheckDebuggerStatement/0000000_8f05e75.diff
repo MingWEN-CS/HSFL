@@ -1,0 +1,56 @@
+1a2,56
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.jscomp.DiagnosticType;
+> import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+> import com.google.javascript.rhino.Node;
+> import com.google.javascript.rhino.Token;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class CheckDebuggerStatement extends AbstractPostOrderCallback
+>     implements CompilerPass {
+> 
+>   static final DiagnosticType DEBUGGER_STATEMENT_PRESENT =
+>     DiagnosticType.disabled("JSC_DEBUGGER_STATEMENT_PRESENT",
+>         "Using the debugger statement can halt your application if the user " +
+>         "has a JavaScript debugger running.");
+> 
+>   private final AbstractCompiler compiler;
+> 
+>   public CheckDebuggerStatement(AbstractCompiler compiler) {
+>     this.compiler = compiler;
+>   }
+> 
+>   @Override
+>   public void process(Node externs, Node root) {
+>     NodeTraversal.traverse(compiler, root, this);
+>   }
+> 
+>   @Override
+>   public void visit(NodeTraversal t, Node n, Node parent) {
+>     if (n.getType() == Token.DEBUGGER) {
+>       t.report(n, DEBUGGER_STATEMENT_PRESENT);
+>     }
+>   }
+> }

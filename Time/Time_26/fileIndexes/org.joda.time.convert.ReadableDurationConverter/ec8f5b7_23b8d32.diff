@@ -1,0 +1,14 @@
+56a57
+> import org.joda.time.DateTimeUtils;
+108,109c109,116
+<     public void setInto(ReadWritablePeriod duration, Object object, Chronology chrono) {
+<         duration.setPeriod((ReadableDuration) object, chrono);
+---
+>     public void setInto(ReadWritablePeriod writablePeriod, Object object, Chronology chrono) {
+>         ReadableDuration dur = (ReadableDuration) object;
+>         chrono = DateTimeUtils.getChronology(chrono);
+>         long duration = dur.getMillis();
+>         int[] values = chrono.get(writablePeriod, duration);
+>         for (int i = 0; i < values.length; i++) {
+>             writablePeriod.setValue(i, values[i]);
+>         }

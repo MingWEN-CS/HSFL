@@ -1,0 +1,149 @@
+60a61
+> import org.joda.time.DateTimeConstants;
+422a424,447
+> 
+> 
+>     public PeriodFormatterBuilder appendSecondsWithMillis() {
+>         appendField(9);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSecondsWithOptionalMillis() {
+>         appendField(10);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+940c965
+<             if (iPrintZeroSetting == PRINT_ZERO_ALWAYS || getFieldValue(period) >= 0) {
+---
+>             if (iPrintZeroSetting == PRINT_ZERO_ALWAYS || getFieldValue(period) != Long.MAX_VALUE) {
+952c977
+<             if (valueLong < 0) {
+---
+>             if (valueLong == Long.MAX_VALUE) {
+956,962c981,987
+<             int value = (int)valueLong;
+< 
+<             int sum = Math.max
+<                 (FormatUtils.calculateDigitCount(value), iMinPrintedDigits);
+<             if (value < 0) {
+<                 
+<                 sum++;
+---
+>             int sum = Math.max(FormatUtils.calculateDigitCount(valueLong), iMinPrintedDigits);
+>             if (iFieldType >= 9) {
+>                 sum++; 
+>                 if (iFieldType == 10 && (Math.abs(valueLong) % DateTimeConstants.MILLIS_PER_SECOND) == 0) {
+>                     sum -= 4; 
+>                 }
+>                 valueLong = valueLong / DateTimeConstants.MILLIS_PER_SECOND;
+963a989
+>             int value = (int) valueLong;
+978c1004
+<             if (valueLong < 0) {
+---
+>             if (valueLong == Long.MAX_VALUE) {
+981c1007,1010
+<             int value = (int)valueLong;
+---
+>             int value = (int) valueLong;
+>             if (iFieldType >= 9) {
+>                 value = (int) (valueLong / DateTimeConstants.MILLIS_PER_SECOND);
+>             }
+992a1022,1028
+>             if (iFieldType >= 9) {
+>                 int dp = (int) (Math.abs(valueLong) % DateTimeConstants.MILLIS_PER_SECOND);
+>                 if (iFieldType == 9 || dp > 0) {
+>                     buf.append('.');
+>                     FormatUtils.appendPaddedInteger(buf, dp, 3);
+>                 }
+>             }
+1000c1036
+<             if (valueLong < 0) {
+---
+>             if (valueLong == Long.MAX_VALUE) {
+1003c1039,1042
+<             int value = (int)valueLong;
+---
+>             int value = (int) valueLong;
+>             if (iFieldType >= 9) {
+>                 value = (int) (valueLong / DateTimeConstants.MILLIS_PER_SECOND);
+>             }
+1014a1054,1060
+>             if (iFieldType >= 9) {
+>                 int dp = (int) (Math.abs(valueLong) % DateTimeConstants.MILLIS_PER_SECOND);
+>                 if (iFieldType == 9 || dp > 0) {
+>                     out.write('.');
+>                     FormatUtils.writePaddedInteger(out, dp, 3);
+>                 }
+>             }
+1147d1192
+< 
+1160c1205
+<                 return -1;
+---
+>                 return Long.MAX_VALUE;
+1163c1208
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1169c1214
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1175c1220
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1181c1226
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1187c1232
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1193c1238
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1199c1244
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1205c1250
+<                     return -1;
+---
+>                     return Long.MAX_VALUE;
+1208a1254,1260
+>             case 9: 
+>             case 10:
+>                 if (type != null && type.seconds().isSupported() == false && type.millis().isSupported() == false) {
+>                     return Long.MAX_VALUE;
+>                 }
+>                 value = period.getSeconds() * DateTimeConstants.MILLIS_PER_SECOND + period.getMillis();
+>                 break;
+1212c1264
+<                 return -1;
+---
+>                 return Long.MAX_VALUE;
+1215c1267
+<             return value & 0xffffffffL;
+---
+>             return value;
+1237a1290,1292
+>             case 9: 
+>             case 10:
+>                 return type.seconds().isSupported() ||  type.millis().isSupported();

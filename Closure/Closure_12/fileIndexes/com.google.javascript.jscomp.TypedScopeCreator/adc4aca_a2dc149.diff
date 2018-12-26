@@ -1,0 +1,53 @@
+491c491,494
+<           n.setJSType(getNativeType(STRING_TYPE));
+---
+>           
+>           if (!NodeUtil.isObjectLitKey(n, n.getParent())) {
+>             n.setJSType(getNativeType(STRING_TYPE));
+>           }
+495c498,501
+<           n.setJSType(getNativeType(NUMBER_TYPE));
+---
+>           
+>           if (!NodeUtil.isObjectLitKey(n, n.getParent())) {
+>             n.setJSType(getNativeType(NUMBER_TYPE));
+>           }
+560,565d565
+<       
+<       
+<       if (objLitType == null) {
+<         return;
+<       }
+< 
+569,570c569,570
+<         String memberName = NodeUtil.getStringValue(name);
+<         JSType type = getDeclaredTypeInAnnotation(
+---
+>         String memberName = NodeUtil.getObjectLitKeyName(name);
+>         JSType valueType = getDeclaredTypeInAnnotation(
+572,575c572,582
+<         if (type != null) {
+<           boolean isExtern = t.getInput() != null && t.getInput().isExtern();
+<           objLitType.defineDeclaredProperty(
+<               memberName, type, isExtern, name);
+---
+>         JSType keyType = NodeUtil.getObjectLitKeyTypeFromValueType(
+>             name, valueType);
+>         if (keyType != null) {
+>           name.setJSType(keyType);
+>           
+>           
+>           if (objLitType != null) {
+>             boolean isExtern = t.getInput() != null && t.getInput().isExtern();
+>             objLitType.defineDeclaredProperty(
+>                 memberName, keyType, isExtern, name);
+>           }
+920,921c927,931
+< 
+<             if (enumType.hasOwnProperty(keyName)) {
+---
+>             if (keyName == null) {
+>               
+>               compiler.report(
+>                   JSError.make(sourceName, key, ENUM_NOT_CONSTANT, keyName));
+>             } else if (enumType.hasOwnProperty(keyName)) {

@@ -1,0 +1,71 @@
+41a42
+> import static com.google.javascript.rhino.jstype.JSTypeNative.OBJECT_TYPE;
+86c87
+<   private FunctionPrototypeType prototype;
+---
+>   private PrototypeObjectType prototype;
+303c304
+<   public FunctionPrototypeType getPrototype() {
+---
+>   public ObjectType getPrototype() {
+306c307,312
+<       setPrototype(new FunctionPrototypeType(registry, this, null));
+---
+>       setPrototype(
+>           new PrototypeObjectType(
+>               registry,
+>               this.getReferenceName() + ".prototype",
+>               registry.getNativeObjectType(OBJECT_TYPE),
+>               isNativeObjectType()));
+317,322c323,347
+<     if (prototype == null) {
+<       setPrototype(
+<           new FunctionPrototypeType(
+<               registry, this, baseType, isNativeObjectType()));
+<     } else {
+<       prototype.setImplicitPrototype(baseType);
+---
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     if (baseType.hasReferenceName() ||
+>         baseType.isUnknownType() ||
+>         isNativeObjectType() ||
+>         baseType.isFunctionPrototypeType() ||
+>         !(baseType instanceof PrototypeObjectType)) {
+> 
+>       baseType = new PrototypeObjectType(
+>           registry, this.getReferenceName() + ".prototype", baseType);
+323a349
+>     setPrototype((PrototypeObjectType) baseType);
+331c357
+<   public boolean setPrototype(FunctionPrototypeType prototype) {
+---
+>   public boolean setPrototype(PrototypeObjectType prototype) {
+342a369
+>     this.prototype.setOwnerFunction(this);
+527,529c554,555
+<         return setPrototype(
+<             new FunctionPrototypeType(
+<                 registry, this, objType, isNativeObjectType()));
+---
+>         this.setPrototypeBasedOn(objType);
+>         return true;
+987c1013
+<     prototype = (FunctionPrototypeType) safeResolve(prototype, t, scope);
+---
+>     prototype = (PrototypeObjectType) safeResolve(prototype, t, scope);

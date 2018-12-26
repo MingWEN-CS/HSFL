@@ -1,0 +1,86 @@
+18a19
+> import com.google.common.base.Charsets;
+24a26,27
+> import java.nio.charset.Charset;
+> import java.nio.charset.CharsetEncoder;
+37c40,42
+<   CodeGenerator(CodeConsumer consumer) {
+---
+>   private final CharsetEncoder outputCharsetEncoder;
+> 
+>   CodeGenerator(CodeConsumer consumer, Charset outputCharset) {
+38a44,56
+>     if (outputCharset == null || outputCharset == Charsets.US_ASCII) {
+>       
+>       
+>       
+>       
+>       this.outputCharsetEncoder = null;
+>     } else {
+>       this.outputCharsetEncoder = outputCharset.newEncoder();
+>     }
+>   }
+> 
+>   CodeGenerator(CodeConsumer consumer) {
+>     this(consumer, null);
+224c242
+<         String regexp = regexpEscape(first.getString());
+---
+>         String regexp = regexpEscape(first.getString(), outputCharsetEncoder);
+498c516
+<         add(jsString(n.getString()));
+---
+>         add(jsString(n.getString(), outputCharsetEncoder));
+733c751
+<   static String jsString(String s) {
+---
+>   static String jsString(String s, CharsetEncoder outputCharsetEncoder) {
+758c776,777
+<     return strEscape(s, quote, doublequote, singlequote, "\\\\");
+---
+>     return strEscape(s, quote, doublequote, singlequote, "\\\\",
+>         outputCharsetEncoder);
+761a781,787
+>   static String regexpEscape(String s, CharsetEncoder outputCharsetEncoder) {
+>     return strEscape(s, '/', "\"", "'", "\\", outputCharsetEncoder);
+>   }
+> 
+>   
+> 
+> 
+763c789
+<     return strEscape(s, '/', "\"", "'", "\\");
+---
+>     return regexpEscape(s, null);
+770c796,797
+<                           String backslashEscape) {
+---
+>                           String backslashEscape,
+>                           CharsetEncoder outputCharsetEncoder) {
+802,804c829,836
+<           if (c > 0x1F && c < 0x7F) {
+<             
+<             sb.append(c);
+---
+>           
+>           if (outputCharsetEncoder != null) {
+>             if (outputCharsetEncoder.canEncode(c)) {
+>               sb.append(c);
+>             } else {
+>               
+>               StringUtil.appendHexJavaScriptRepresentation(sb, c);
+>             }
+809c841,848
+<             StringUtil.appendHexJavaScriptRepresentation(sb, c);
+---
+>             if (c > 0x1f && c <= 0x7f) {
+>               sb.append(c);
+>             } else {
+>               
+>               
+>               
+>               StringUtil.appendHexJavaScriptRepresentation(sb, c);
+>             }
+826a866,867
+>       
+>       

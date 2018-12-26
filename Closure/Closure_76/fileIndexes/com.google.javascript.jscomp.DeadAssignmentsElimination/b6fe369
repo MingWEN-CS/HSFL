@@ -1,0 +1,345 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.javascript.jscomp.ControlFlowGraph.Branch;
+import com.google.javascript.jscomp.DataFlowAnalysis.FlowState;
+import com.google.javascript.jscomp.LiveVariablesAnalysis.LiveVariableLattice;
+import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+
+
+
+
+
+
+
+class DeadAssignmentsElimination extends AbstractPostOrderCallback implements
+    CompilerPass, ScopedCallback {
+
+  private final AbstractCompiler compiler;
+  private LiveVariablesAnalysis liveness;
+
+  
+  
+  
+  private static final Predicate<Node> matchRemovableAssigns =
+      new Predicate<Node>() {
+    @Override
+    public boolean apply(Node n) {
+      return (NodeUtil.isAssignmentOp(n) &&
+              n.getFirstChild().getType() == Token.NAME) ||
+          n.getType() == Token.INC || n.getType() == Token.DEC;
+    }
+  };
+
+  public DeadAssignmentsElimination(AbstractCompiler compiler) {
+    this.compiler = compiler;
+  }
+
+  @Override
+  public void process(Node externs, Node root) {
+    Preconditions.checkNotNull(externs);
+    Preconditions.checkNotNull(root);
+    NodeTraversal.traverse(compiler, root, this);
+  }
+
+  @Override
+  public void enterScope(NodeTraversal t) {
+    Scope scope = t.getScope();
+    
+    
+    
+    if (scope.isGlobal()) {
+      return;
+    }
+
+    
+    
+    
+    Node fnBlock = t.getScopeRoot().getLastChild();
+    if (NodeUtil.containsFunction(fnBlock)) {
+      return;
+    }
+
+    
+    
+    if (!NodeUtil.has(fnBlock, matchRemovableAssigns,
+            Predicates.<Node>alwaysTrue())) {
+      return;
+    }
+
+    
+    ControlFlowGraph<Node> cfg = t.getControlFlowGraph();
+    liveness = new LiveVariablesAnalysis(cfg, scope, compiler);
+    liveness.analyze();
+    tryRemoveDeadAssignments(t, cfg);
+  }
+
+  @Override
+  public void exitScope(NodeTraversal t) {
+  }
+
+  @Override
+  public void visit(NodeTraversal t, Node n, Node parent) {
+  }
+
+  
+
+
+
+
+
+
+
+  private void tryRemoveDeadAssignments(NodeTraversal t,
+      ControlFlowGraph<Node> cfg) {
+    Iterable<DiGraphNode<Node, Branch>> nodes = cfg.getDirectedGraphNodes();
+
+    for (DiGraphNode<Node, Branch> cfgNode : nodes) {
+      FlowState<LiveVariableLattice> state =
+          cfgNode.getAnnotation();
+      Node n = cfgNode.getValue();
+      if (n == null) {
+        continue;
+      }
+      switch (n.getType()) {
+        case Token.IF:
+        case Token.WHILE:
+        case Token.DO:
+          tryRemoveAssignment(t, NodeUtil.getConditionExpression(n), state);
+          continue;
+        case Token.FOR:
+          if (!NodeUtil.isForIn(n)) {
+            tryRemoveAssignment(
+                t, NodeUtil.getConditionExpression(n), state);
+          }
+          continue;
+        case Token.SWITCH:
+        case Token.CASE:
+        case Token.RETURN:
+          if (n.hasChildren()) {
+            tryRemoveAssignment(t, n.getFirstChild(), state);
+          }
+          continue;
+        
+      }
+
+      tryRemoveAssignment(t, n, state);
+    }
+  }
+
+  private void tryRemoveAssignment(NodeTraversal t, Node n,
+      FlowState<LiveVariableLattice> state) {
+    tryRemoveAssignment(t, n, n, state);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  private void tryRemoveAssignment(NodeTraversal t, Node n, Node exprRoot,
+      FlowState<LiveVariableLattice> state) {
+
+    Node parent = n.getParent();
+
+    if (NodeUtil.isAssignmentOp(n) ||
+        n.getType() == Token.INC || n.getType() == Token.DEC) {
+
+      Node lhs = n.getFirstChild();
+      Node rhs = lhs.getNext();
+
+      
+      
+      if (rhs != null) {
+        tryRemoveAssignment(t, rhs, exprRoot, state);
+        rhs = lhs.getNext();
+      }
+
+      Scope scope = t.getScope();
+      if (!NodeUtil.isName(lhs)) {
+        return; 
+      }
+      String name = lhs.getString();
+      if (!scope.isDeclared(name, false)) {
+        return;
+      }
+      Var var = scope.getVar(name);
+
+      if (liveness.getEscapedLocals().contains(var)) {
+        return; 
+      }
+
+      
+      
+      
+      if (rhs != null &&
+          NodeUtil.isName(rhs) &&
+          rhs.getString().equals(var.name) &&
+          NodeUtil.isAssign(n)) {
+        n.removeChild(rhs);
+        n.getParent().replaceChild(n, rhs);
+        compiler.reportCodeChange();
+        return;
+      }
+
+      if (state.getOut().isLive(var)) {
+        return; 
+      }
+
+      if (state.getIn().isLive(var) &&
+          isVariableStillLiveWithinExpression(n, exprRoot, var.name)) {
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        return;
+      }
+
+      if (NodeUtil.isAssign(n)) {
+        n.removeChild(rhs);
+        n.getParent().replaceChild(n, rhs);
+      } else if (NodeUtil.isAssignmentOp(n)) {
+        n.removeChild(rhs);
+        n.removeChild(lhs);
+        Node op = new Node(NodeUtil.getOpFromAssignmentOp(n), lhs, rhs);
+        parent.replaceChild(n, op);
+      } else if (n.getType() == Token.INC || n.getType() == Token.DEC) {
+        if (NodeUtil.isExpressionNode(parent)) {
+          parent.replaceChild(n,
+              new Node(Token.VOID, Node.newNumber(0).copyInformationFrom(n)));
+        } else if(n.getType() == Token.COMMA && n != parent.getLastChild()) {
+          parent.removeChild(n);
+        } else if (parent.getType() == Token.FOR && !NodeUtil.isForIn(parent) &&
+            NodeUtil.getConditionExpression(parent) != n) {
+          parent.replaceChild(n, new Node(Token.EMPTY));
+        } else {
+          
+          
+          return;
+        }
+      } else {
+        
+        Preconditions.checkState(false, "Unknown statement");
+      }
+
+      compiler.reportCodeChange();
+      return;
+
+    } else {
+      for (Node c = n.getFirstChild(); c != null;) {
+        Node next = c.getNext();
+        if (!ControlFlowGraph.isEnteringNewCfgNode(c)) {
+          tryRemoveAssignment(t, c, exprRoot, state);
+        }
+        c = next;
+      }
+      return;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private boolean isVariableStillLiveWithinExpression(
+      Node n, Node exprRoot, String variable) {
+    while (n != exprRoot) {
+      for(Node sibling = n.getNext(); sibling != null;
+          sibling = sibling.getNext()) {
+        if (!ControlFlowGraph.isEnteringNewCfgNode(sibling)) {
+          VariableLiveness state = readVariableBeforeKilling(sibling, variable);
+
+          
+          if (state == VariableLiveness.READ) {
+            return true;
+          } else if (state == VariableLiveness.KILL) {
+            return false;
+          }
+        }
+      }
+      n = n.getParent();
+    }
+    return false;
+  }
+
+  
+  private enum VariableLiveness {
+    MAYBE_LIVE, 
+    READ, 
+    KILL, 
+  }
+
+  
+
+
+
+
+
+
+
+  private VariableLiveness readVariableBeforeKilling(Node n, String variable) {
+    if (NodeUtil.isName(n) && variable.equals(n.getString())) {
+      if (NodeUtil.isLhs(n, n.getParent())) {
+        return VariableLiveness.KILL;
+      } else {
+        return VariableLiveness.READ;
+      }
+    }
+    for (Node child = n.getFirstChild();
+        child != null; child = child.getNext()) {
+      if (!ControlFlowGraph.isEnteringNewCfgNode(child)) {
+        VariableLiveness state = readVariableBeforeKilling(child, variable);
+        if (state != VariableLiveness.MAYBE_LIVE) {
+          return state;
+        }
+      }
+    }
+    return VariableLiveness.MAYBE_LIVE;
+  }
+}

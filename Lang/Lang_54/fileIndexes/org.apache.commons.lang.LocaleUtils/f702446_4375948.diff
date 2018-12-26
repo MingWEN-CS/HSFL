@@ -1,0 +1,179 @@
+18a19,21
+> import java.util.Arrays;
+> import java.util.Collections;
+> import java.util.HashMap;
+21a25
+> import java.util.Map;
+37a42,54
+>     private static final List cAvailableLocaleList;
+>     
+>     private static Set cAvailableLocaleSet;
+>     
+>     private static final Map cLanguagesByCountry = Collections.synchronizedMap(new HashMap());
+>     
+>     private static final Map cCountriesByLanguage = Collections.synchronizedMap(new HashMap());
+>     static {
+>         List list = Arrays.asList(Locale.getAvailableLocales());
+>         cAvailableLocaleList = Collections.unmodifiableList(list);
+>     }
+> 
+>     
+64a82,88
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+69,71c93,94
+<         if (str.length() != 2 &&
+<             str.length() != 5 &&
+<             str.length() < 7) {
+---
+>         int len = str.length();
+>         if (len != 2 && len != 5 && len < 7) {
+74,75c97,99
+<         if (Character.isLowerCase(str.charAt(0)) == false ||
+<             Character.isLowerCase(str.charAt(1)) == false) {
+---
+>         char ch0 = str.charAt(0);
+>         char ch1 = str.charAt(1);
+>         if (ch0 < 'a' || ch0 > 'z' || ch1 < 'a' || ch1 > 'z') {
+78c102
+<         if (str.length() == 2) {
+---
+>         if (len == 2) {
+81,82c105,110
+<             if (Character.isUpperCase(str.charAt(3)) == false ||
+<                 Character.isUpperCase(str.charAt(4)) == false) {
+---
+>             if (str.charAt(2) != '_') {
+>                 throw new IllegalArgumentException("Invalid locale format: " + str);
+>             }
+>             char ch3 = str.charAt(3);
+>             char ch4 = str.charAt(4);
+>             if (ch3 < 'A' || ch3 > 'Z' || ch4 < 'A' || ch4 > 'Z') {
+85c113
+<             if (str.length() == 5) {
+---
+>             if (len == 5) {
+87a116,118
+>                 if (str.charAt(5) != '_') {
+>                     throw new IllegalArgumentException("Invalid locale format: " + str);
+>                 }
+126a158
+> 
+141c173
+<         return list;
+---
+>         return Collections.unmodifiableList(list);
+154,161c186,241
+<     public static Set languagesByCountry(String countryCode) {
+<         Set set = new HashSet();
+<         Locale[] array = Locale.getAvailableLocales();
+<         if (countryCode != null) {
+<             for (int i = 0; i < array.length; i++) {
+<                 if (countryCode.equals(array[i].getCountry()) &&
+<                         array[i].getVariant().length() == 0) {
+<                     set.add(array[i]);
+---
+>     public static List availableLocaleList() {
+>         return cAvailableLocaleList;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Set availableLocaleSet() {
+>         Set set = cAvailableLocaleSet;
+>         if (set == null) {
+>             set = new HashSet(availableLocaleList());
+>             set = Collections.unmodifiableSet(set);
+>             cAvailableLocaleSet = set;
+>         }
+>         return set;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+>     public static boolean isAvailableLocale(Locale locale) {
+>         return cAvailableLocaleSet.contains(locale);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static List languagesByCountry(String countryCode) {
+>         List langs = (List) cLanguagesByCountry.get(countryCode);
+>         if (langs == null) {
+>             if (countryCode != null) {
+>                 langs = new ArrayList();
+>                 List locales = availableLocaleList();
+>                 for (int i = 0; i < locales.size(); i++) {
+>                     Locale locale = (Locale) locales.get(i);
+>                     if (countryCode.equals(locale.getCountry()) &&
+>                             locale.getVariant().length() == 0) {
+>                         langs.add(locale);
+>                     }
+162a243,245
+>                 langs = Collections.unmodifiableList(langs);
+>             } else {
+>                 langs = Collections.EMPTY_LIST;
+163a247
+>             cLanguagesByCountry.put(countryCode, langs);
+165c249
+<         return set;
+---
+>         return langs;
+178,185c262,274
+<     public static Set countriesByLanguage(String languageCode) {
+<         Set set = new HashSet();
+<         Locale[] array = Locale.getAvailableLocales();
+<         if (languageCode != null) {
+<             for (int i = 0; i < array.length; i++) {
+<                 if (languageCode.equals(array[i].getLanguage()) &&
+<                         array[i].getVariant().length() == 0) {
+<                     set.add(array[i]);
+---
+>     public static List countriesByLanguage(String languageCode) {
+>         List countries = (List) cCountriesByLanguage.get(languageCode);
+>         if (countries == null) {
+>             if (languageCode != null) {
+>                 countries = new ArrayList();
+>                 List locales = availableLocaleList();
+>                 for (int i = 0; i < locales.size(); i++) {
+>                     Locale locale = (Locale) locales.get(i);
+>                     if (languageCode.equals(locale.getLanguage()) &&
+>                             locale.getCountry().length() != 0 &&
+>                             locale.getVariant().length() == 0) {
+>                         countries.add(locale);
+>                     }
+186a276,278
+>                 countries = Collections.unmodifiableList(countries);
+>             } else {
+>                 countries = Collections.EMPTY_LIST;
+187a280
+>             cCountriesByLanguage.put(languageCode, countries);
+189c282
+<         return set;
+---
+>         return countries;

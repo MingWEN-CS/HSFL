@@ -1,0 +1,194 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat.descriptive.moment;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.stat.descriptive.AbstractStorelessUnivariateStatistic;
+import org.apache.commons.math.stat.descriptive.summary.Sum;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Mean extends AbstractStorelessUnivariateStatistic 
+    implements Serializable {
+
+    
+    private static final long serialVersionUID = -1296043746617791564L;    
+    
+    
+    protected FirstMoment moment;
+
+    
+
+
+
+
+
+    protected boolean incMoment;
+
+    
+    public Mean() {
+        incMoment = true;
+        moment = new FirstMoment();
+    }
+
+    
+
+
+
+
+    public Mean(final FirstMoment m1) {
+        this.moment = m1;
+        incMoment = false;
+    }
+    
+    
+
+
+
+
+
+    public Mean(Mean original) {
+        copy(original, this);
+    }
+
+    
+
+
+    @Override
+    public void increment(final double d) {
+        if (incMoment) {
+            moment.increment(d);
+        }
+    }
+
+    
+
+
+    @Override
+    public void clear() {
+        if (incMoment) {
+            moment.clear();
+        }
+    }
+
+    
+
+
+    @Override
+    public double getResult() {
+        return moment.m1;
+    }
+
+    
+
+
+    public long getN() {
+        return moment.getN();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public double evaluate(final double[] values,final int begin, final int length) {
+        if (test(values, begin, length)) {
+            Sum sum = new Sum();
+            double sampleSize = (double) length;
+            
+            
+            double xbar = sum.evaluate(values, begin, length) / sampleSize;
+            
+            
+            double correction = 0;
+            for (int i = begin; i < begin + length; i++) {
+                correction += (values[i] - xbar);
+            }
+            return xbar + (correction/sampleSize);
+        }
+        return Double.NaN;
+    }
+    
+    
+
+
+    @Override
+    public Mean copy() {
+        Mean result = new Mean();
+        copy(this, result);
+        return result;
+    }
+    
+    
+    
+
+
+
+
+
+
+
+    public static void copy(Mean source, Mean dest) {
+        dest.incMoment = source.incMoment;
+        dest.moment = (FirstMoment) source.moment.copy();
+    }
+}

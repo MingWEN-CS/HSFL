@@ -1,0 +1,56 @@
+546a547
+>       boolean createdEnumType = false;
+548a550
+>         createdEnumType = true;
+557,558c559,563
+<       processObjectLitProperties(
+<           t, objectLit, ObjectType.cast(objectLit.getJSType()));
+---
+>       
+>       if (!createdEnumType) {
+>         processObjectLitProperties(
+>             t, objectLit, ObjectType.cast(objectLit.getJSType()));
+>       }
+1130,1134c1135,1144
+<       } else if (info != null && info.hasEnumParameterType()) {
+<         if (rValue != null && rValue.getType() == Token.OBJECTLIT) {
+<           return rValue.getJSType();
+<         } else {
+<           return createEnumTypeFromNodes(
+---
+>       } else if (info != null) {
+>         if (info.hasEnumParameterType()) {
+>           if (rValue != null && rValue.getType() == Token.OBJECTLIT) {
+>             return rValue.getJSType();
+>           } else {
+>             return createEnumTypeFromNodes(
+>                 rValue, lValue.getQualifiedName(), info, lValue);
+>           }
+>         } else if (info.isConstructor() || info.isInterface()) {
+>           return createFunctionTypeFromNodes(
+1135a1146,1149
+>         } else if (info.isConstant() && rValue != null
+>             && rValue.getJSType() != null
+>             && !rValue.getJSType().isUnknownType()) {
+>           return rValue.getJSType();
+1137,1142d1150
+<       } else if (info != null &&
+<                  (info.isConstructor() || info.isInterface())) {
+<         return createFunctionTypeFromNodes(
+<             rValue, lValue.getQualifiedName(), info, lValue);
+<       } else {
+<         return getDeclaredTypeInAnnotation(sourceName, lValue, info);
+1143a1152,1153
+> 
+>       return getDeclaredTypeInAnnotation(sourceName, lValue, info);
+1299a1310
+>       
+1322,1323c1333,1337
+<         inferred = !(info.hasType() || info.hasEnumParameterType() ||
+<             FunctionTypeBuilder.isFunctionTypeDeclaration(info));
+---
+>         inferred = !(info.hasType()
+>             || info.hasEnumParameterType()
+>             || (info.isConstant() && valueType != null
+>                 && !valueType.isUnknownType())
+>             || FunctionTypeBuilder.isFunctionTypeDeclaration(info));

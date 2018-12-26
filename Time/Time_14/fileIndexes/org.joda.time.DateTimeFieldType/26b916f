@@ -1,0 +1,418 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
+
+
+
+
+
+
+public class DateTimeFieldType implements Serializable {
+
+    
+    private static final long serialVersionUID = -42615285973990L;
+
+    
+    private static Map cCache = new HashMap();
+    
+    private static final DateTimeFieldType ERA = new DateTimeFieldType("era");
+    
+    private static final DateTimeFieldType YEAR_OF_ERA = new DateTimeFieldType("yearOfEra");
+    
+    private static final DateTimeFieldType CENTURY_OF_ERA = new DateTimeFieldType("centuryOfEra");
+    
+    private static final DateTimeFieldType YEAR_OF_CENTURY = new DateTimeFieldType("yearOfCentury");
+    
+    private static final DateTimeFieldType YEAR = new DateTimeFieldType("year");
+    
+    private static final DateTimeFieldType DAY_OF_YEAR = new DateTimeFieldType("dayOfYear");
+    
+    private static final DateTimeFieldType MONTH_OF_YEAR = new DateTimeFieldType("monthOfYear");
+    
+    private static final DateTimeFieldType DAY_OF_MONTH = new DateTimeFieldType("dayOfMonth");
+    
+    private static final DateTimeFieldType WEEKYEAR_OF_CENTURY = new DateTimeFieldType("weekyearOfCentury");
+    
+    private static final DateTimeFieldType WEEKYEAR = new DateTimeFieldType("weekyear");
+    
+    private static final DateTimeFieldType WEEK_OF_WEEKYEAR = new DateTimeFieldType("weekOfWeekyear");
+    
+    private static final DateTimeFieldType DAY_OF_WEEK = new DateTimeFieldType("dayOfWeek");
+
+    
+    private static final DateTimeFieldType HALFDAY_OF_DAY = new DateTimeFieldType("halfdayOfDay");
+    
+    private static final DateTimeFieldType HOUR_OF_HALFDAY = new DateTimeFieldType("hourOfHalfday");
+    
+    private static final DateTimeFieldType CLOCKHOUR_OF_HALFDAY = new DateTimeFieldType("clockhourOfHalfday");
+    
+    private static final DateTimeFieldType CLOCKHOUR_OF_DAY = new DateTimeFieldType("clockhourOfDay");
+    
+    private static final DateTimeFieldType HOUR_OF_DAY = new DateTimeFieldType("hourOfDay");
+    
+    private static final DateTimeFieldType MINUTE_OF_DAY = new DateTimeFieldType("minuteOfDay");
+    
+    private static final DateTimeFieldType MINUTE_OF_HOUR = new DateTimeFieldType("minuteOfHour");
+    
+    private static final DateTimeFieldType SECOND_OF_DAY = new DateTimeFieldType("secondOfDay");
+    
+    private static final DateTimeFieldType SECOND_OF_MINUTE = new DateTimeFieldType("secondOfMinute");
+    
+    private static final DateTimeFieldType MILLIS_OF_DAY = new DateTimeFieldType("millisOfDay");
+    
+    private static final DateTimeFieldType MILLIS_OF_SECOND = new DateTimeFieldType("millisOfSecond");
+
+    
+    private final String iName;
+
+    
+    
+
+
+
+
+
+
+
+
+    public static synchronized DateTimeFieldType getInstance(String name) {
+        DateTimeFieldType type = (DateTimeFieldType) cCache.get(name);
+        if (type == null) {
+            throw new IllegalArgumentException("The field '" + name + "' is unknown");
+        }
+        return type;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static synchronized DateTimeFieldType define(String name) {
+        DateTimeFieldType type = (DateTimeFieldType) cCache.get(name);
+        if (type == null) {
+            return new DateTimeFieldType(name);
+        }
+        return type;
+    }
+
+    
+    
+
+
+
+
+    private DateTimeFieldType(String name) {
+        super();
+        iName = name;
+        cCache.put(name, this);
+    }
+
+    
+
+
+
+
+    private Object readResolve() {
+        return getInstance(iName);
+    }
+
+    
+    
+
+
+
+
+    public static DateTimeFieldType millisOfSecond() {
+        return MILLIS_OF_SECOND;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType millisOfDay() {
+        return MILLIS_OF_DAY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType secondOfMinute() {
+        return SECOND_OF_MINUTE;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType secondOfDay() {
+        return SECOND_OF_DAY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType minuteOfHour() {
+        return MINUTE_OF_HOUR;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType minuteOfDay() {
+        return MINUTE_OF_DAY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType hourOfDay() {
+        return HOUR_OF_DAY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType clockhourOfDay() {
+        return CLOCKHOUR_OF_DAY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType hourOfHalfday() {
+        return HOUR_OF_HALFDAY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType clockhourOfHalfday() {
+        return CLOCKHOUR_OF_HALFDAY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType halfdayOfDay() {
+        return HALFDAY_OF_DAY;
+    }
+
+    
+    
+
+
+
+
+    public static DateTimeFieldType dayOfWeek() {
+        return DAY_OF_WEEK;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType dayOfMonth() {
+        return DAY_OF_MONTH;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType dayOfYear() {
+        return DAY_OF_YEAR;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType weekOfWeekyear() {
+        return WEEK_OF_WEEKYEAR;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType weekyear() {
+        return WEEKYEAR;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType weekyearOfCentury() {
+        return WEEKYEAR_OF_CENTURY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType monthOfYear() {
+        return MONTH_OF_YEAR;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType year() {
+        return YEAR;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType yearOfEra() {
+        return YEAR_OF_ERA;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType yearOfCentury() {
+        return YEAR_OF_CENTURY;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType centuryOfEra() {
+        return CENTURY_OF_ERA;
+    }
+
+    
+
+
+
+
+    public static DateTimeFieldType era() {
+        return ERA;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public String getName() {
+        return iName;
+    }
+
+    
+
+
+
+
+    public String toString() {
+        return getName();
+    }
+
+}

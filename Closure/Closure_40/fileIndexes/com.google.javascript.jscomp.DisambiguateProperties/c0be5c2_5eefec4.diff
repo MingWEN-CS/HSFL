@@ -1,0 +1,100 @@
+21a22
+> import com.google.common.collect.LinkedHashMultimap;
+82a84
+>     
+86c88
+<         + "because of type {1} node {2}");
+---
+>         + "because of type {1} node {2}. {3}");
+93a96,102
+>   
+> 
+> 
+> 
+> 
+>   private Multimap<Object, JSError> invalidationMap;
+> 
+279a289,293
+>     if (this.showInvalidationWarnings) {
+>       this.invalidationMap = LinkedHashMultimap.create();
+>     } else {
+>       this.invalidationMap = null;
+>     }
+286a301,302
+>       recordInvalidationError(mis.typeA, mis.src);
+>       recordInvalidationError(mis.typeB, mis.src);
+294a311,325
+>   private void recordInvalidationError(JSType t, JSError error) {
+>     if (!t.isObject()) {
+>       return;
+>     }
+>     if (t.isUnionType()) {
+>       for (JSType alt : ((UnionType) t).getAlternates()) {
+>         recordInvalidationError(alt, error);
+>       }
+>       return;
+>     }
+>     if (invalidationMap != null) {
+>       invalidationMap.put(t, error);
+>     }
+>   }
+> 
+411a443,463
+>           String suggestion = "";
+>           if (type instanceof JSType) {
+>             JSType jsType = (JSType) type;
+>             String qName = n.getFirstChild().getQualifiedName();
+>             if (jsType.isAllType() || jsType.isUnknownType()) {
+>               if (n.getFirstChild().getType() == Token.THIS) {
+>                 suggestion = "The \"this\" object is unknown in the function,"+
+>                     "consider using @this";
+>               } else {
+>                 suggestion = "Consider casting " + qName +
+>                     " if you know it's type.";
+>               }
+>             } else {
+>               StringBuilder sb = new StringBuilder();
+>               printErrorLocations(sb, jsType);
+>               if (sb.length() != 0) {
+>                 suggestion = "Consider fixing errors for the following types: ";
+>                 suggestion += sb.toString();
+>               }
+>             }
+>           }
+414c466,467
+<               (type == null ? "null" : type.toString()), n.toString()));
+---
+>               (type == null ? "null" : type.toString()), n.toString(),
+>               suggestion));
+433a487,488
+>           
+>           
+437c492
+<                 (type == null ? "null" : type.toString()), n.toString()));
+---
+>                 (type == null ? "null" : type.toString()), n.toString(), ""));
+440d494
+< 
+441a496,517
+>       }
+>     }
+> 
+>     private void printErrorLocations(StringBuilder sb, JSType t) {
+>       if (!t.isObject() || t.isAllType() || t.isUnionType()) {
+>         return;
+>       }
+>       if (t.isUnionType()) {
+>         for (JSType alt : ((UnionType) t).getAlternates()) {
+>           printErrorLocations(sb, alt);
+>         }
+>         return;
+>       }
+>       for (JSError error : invalidationMap.get(t)) {
+>         if(sb.length() != 0) {
+>           sb.append(", ");
+>         }
+>         sb.append(t.toString());
+>         sb.append(" at ");
+>         sb.append(error.sourceName);
+>         sb.append(":");
+>         sb.append(error.lineNumber);

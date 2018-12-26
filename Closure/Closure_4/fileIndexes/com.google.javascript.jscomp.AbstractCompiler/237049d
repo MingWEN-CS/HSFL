@@ -1,0 +1,267 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Supplier;
+import com.google.javascript.jscomp.mozilla.rhino.ErrorReporter;
+import com.google.javascript.jscomp.parsing.Config;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.jstype.JSTypeRegistry;
+
+import java.util.List;
+
+
+
+
+
+
+
+
+
+public abstract class AbstractCompiler implements SourceExcerptProvider {
+  static final DiagnosticType READ_ERROR = DiagnosticType.error(
+      "JSC_READ_ERROR", "Cannot read: {0}");
+
+  private LifeCycleStage stage = LifeCycleStage.RAW;
+
+  
+  
+  
+
+  
+
+
+  public abstract CompilerInput getInput(String sourceName);
+
+  
+
+
+
+
+
+  abstract CompilerInput newExternInput(String name);
+
+  
+
+
+
+  abstract JSModuleGraph getModuleGraph();
+
+  
+
+
+
+  abstract List<CompilerInput> getInputsInOrder();
+
+  
+
+
+  public abstract JSTypeRegistry getTypeRegistry();
+
+  
+
+
+  abstract ScopeCreator getScopeCreator();
+
+  
+
+
+  public abstract Scope getTopScope();
+
+  
+
+
+  public abstract void report(JSError error);
+
+  
+
+
+  abstract void throwInternalError(String msg, Exception cause);
+
+  
+
+
+  public abstract CodingConvention getCodingConvention();
+
+  
+
+
+  public abstract void reportCodeChange();
+
+  
+
+
+  abstract void addToDebugLog(String message);
+
+  
+
+
+  abstract void setCssRenamingMap(CssRenamingMap map);
+
+  
+
+
+  abstract CssRenamingMap getCssRenamingMap();
+
+  
+
+
+
+
+
+
+
+
+
+
+  abstract Node getNodeForCodeInsertion(JSModule module);
+
+  
+
+
+  abstract TypeValidator getTypeValidator();
+
+  
+
+
+  abstract Node parseSyntheticCode(String code);
+
+  
+
+
+  abstract Node parseSyntheticCode(String filename, String code);
+
+  
+
+
+  abstract Node parseTestCode(String code);
+
+  
+
+
+  abstract String toSource(Node root);
+
+  
+
+
+  abstract ErrorReporter getDefaultErrorReporter();
+
+  
+
+
+  public abstract ReverseAbstractInterpreter getReverseAbstractInterpreter();
+
+  
+
+
+  LifeCycleStage getLifeCycleStage() {
+    return stage;
+  }
+
+  
+
+
+  abstract Supplier<String> getUniqueNameIdSupplier();
+
+  
+
+
+
+  abstract boolean hasHaltingErrors();
+
+  
+
+
+  abstract void addChangeHandler(CodeChangeHandler handler);
+
+  
+
+
+  abstract void removeChangeHandler(CodeChangeHandler handler);
+
+  
+
+
+  abstract boolean isIdeMode();
+
+  
+
+
+  abstract boolean acceptEcmaScript5();
+
+  
+
+
+  abstract Config getParserConfig();
+
+  
+
+
+  abstract boolean isTypeCheckingEnabled();
+
+  
+
+
+
+
+  abstract void prepareAst(Node root);
+
+  
+
+
+  abstract public ErrorManager getErrorManager();
+
+  
+
+
+  void setLifeCycleStage(LifeCycleStage stage) {
+    this.stage = stage;
+  }
+
+  
+
+
+
+  abstract boolean areNodesEqualForInlining(Node n1, Node n2);
+
+  
+
+
+
+
+  abstract void setHasRegExpGlobalReferences(boolean references);
+
+  
+
+
+
+  abstract boolean hasRegExpGlobalReferences();
+
+  
+
+
+  abstract CheckLevel getErrorLevel(JSError error);
+
+  static enum LifeCycleStage {
+    RAW,
+    NORMALIZED;
+
+    boolean isNormalized() {
+      return this == NORMALIZED;
+    }
+  }
+}

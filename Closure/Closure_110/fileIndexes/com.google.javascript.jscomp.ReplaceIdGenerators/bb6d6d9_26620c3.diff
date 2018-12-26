@@ -1,0 +1,133 @@
+21a22
+> import com.google.javascript.rhino.JSDocInfo;
+46a48,52
+>   static final DiagnosticType CONFLICTING_GENERATOR_TYPE =
+>       DiagnosticType.error(
+>           "JSC_CONFLICTING_ID_GENERATOR_TYPE",
+>           "Id generator can only be consistent or inconsistent");
+> 
+48a55,57
+>   private final Map<String, NameGenerator> consistNameGenerators;
+>   private final Map<String, Map<String, String>> consistNameMap;
+> 
+51,52c60
+<   public ReplaceIdGenerators(AbstractCompiler compiler,
+<                              Set<String> idGenerators) {
+---
+>   public ReplaceIdGenerators(AbstractCompiler compiler, Set<String> idGens) {
+54c62,63
+<     nameGenerators = Maps.newHashMap();
+---
+>     nameGenerators = Maps.newLinkedHashMap();
+>     consistNameGenerators = Maps.newLinkedHashMap();
+56,58c65,113
+<     for (String idGenerator : idGenerators) {
+<       nameGenerators.put(
+<           idGenerator,
+---
+>     consistNameMap = Maps.newLinkedHashMap();
+> 
+>     if (idGens != null) {
+>       for(String gen : idGens) {
+>         nameGenerators.put(gen,
+>             new NameGenerator(Collections.<String>emptySet(), "", null));
+>         idGeneratorMaps.put(gen, Lists.<Replacement>newLinkedList());
+>       }
+>     }
+>   }
+> 
+>   private class GatherGenerators extends AbstractPostOrderCallback {
+> 
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       JSDocInfo doc = n.getJSDocInfo();
+>       if (doc == null) {
+>         return;
+>       }
+> 
+>       if (!doc.isConsistentIdGenerator() &&
+>           !doc.isIdGenerator()) {
+>         return;
+>       }
+> 
+>       if (doc.isConsistentIdGenerator() && doc.isIdGenerator()) {
+>         compiler.report(t.makeError(n, CONFLICTING_GENERATOR_TYPE));
+>       }
+> 
+>       String name = null;
+>       if (NodeUtil.isAssign(n)) {
+>         name = n.getFirstChild().getQualifiedName();
+>       } else if (NodeUtil.isVar(n)) {
+>         name = n.getFirstChild().getString();
+>       } else if (NodeUtil.isFunction(n)){
+>         name = n.getFirstChild().getString();
+>         if (name.isEmpty()) {
+>           return;
+>         }
+>       }
+> 
+>       
+>       
+>       if (doc.isConsistentIdGenerator()) {
+>         consistNameGenerators.put(name,
+>             new NameGenerator(Collections.<String>emptySet(), "", null));
+>         consistNameMap.put(name, Maps.<String, String>newLinkedHashMap());
+>       } else {
+>         nameGenerators.put(name,
+60c115,116
+<       idGeneratorMaps.put(idGenerator, Lists.<Replacement>newArrayList());
+---
+>       }
+>       idGeneratorMaps.put(name, Lists.<Replacement>newArrayList());
+63a120
+>   @Override
+65c122,123
+<     NodeTraversal.traverse(compiler, root, new Callback());
+---
+>     NodeTraversal.traverse(compiler, root, new GatherGenerators());
+>     NodeTraversal.traverse(compiler, root, new ReplaceGenerators());
+68c126,127
+<   private class Callback extends AbstractPostOrderCallback {
+---
+>   private class ReplaceGenerators extends AbstractPostOrderCallback {
+>     @Override
+74a134
+>       boolean consistent = false;
+76a137,140
+>         nameGenerator = consistNameGenerators.get(callName);
+>         consistent = true;
+>       }
+>       if (nameGenerator == null) {
+79d142
+<       List<Replacement> idGeneratorMap = idGeneratorMaps.get(callName);
+95c158,177
+<       String nextName = nameGenerator.generateNextName();
+---
+>       Node id = n.getFirstChild().getNext();
+> 
+>       
+>       if (!NodeUtil.isString(id)) {
+>         return;
+>       }
+> 
+>       List<Replacement> idGeneratorMap = idGeneratorMaps.get(callName);
+>       String rename = null;
+> 
+>       if (consistent) {
+>         Map<String, String> entry = consistNameMap.get(callName);
+>         rename = entry.get(id.getString());
+>         if (rename == null) {
+>           rename = nameGenerator.generateNextName();
+>           entry.put(id.getString(), rename);
+>         }
+>       } else {
+>         rename = nameGenerator.generateNextName();
+>       }
+97c179
+<       parent.replaceChild(n, Node.newString(nextName));
+---
+>       parent.replaceChild(n, Node.newString(rename));
+99c181
+<           new Replacement(nextName, t.getSourceName(), t.getLineNumber()));
+---
+>           new Replacement(rename, t.getSourceName(), t.getLineNumber()));

@@ -1,0 +1,101 @@
+360,362c360,362
+<             valueToAdd -= (max + 1) - values[fieldIndex];
+<             values = nextField.add(instant, fieldIndex - 1, values, 1);
+<             values[fieldIndex] = getMinimumValue(instant, values);
+---
+>             valueToAdd -= (max + 1) - values[fieldIndex];  
+>             values = nextField.add(instant, fieldIndex - 1, values, 1);  
+>             values[fieldIndex] = getMinimumValue(instant, values);  
+380,382c380,467
+<             valueToAdd -= (min - 1) - values[fieldIndex];
+<             values = nextField.add(instant, fieldIndex - 1, values, -1);
+<             values[fieldIndex] = getMaximumValue(instant, values);
+---
+>             valueToAdd -= (min - 1) - values[fieldIndex];  
+>             values = nextField.add(instant, fieldIndex - 1, values, -1);  
+>             values[fieldIndex] = getMaximumValue(instant, values);  
+>         }
+>         
+>         return set(instant, fieldIndex, values, values[fieldIndex]);  
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int[] addWrapPartial(ReadablePartial instant, int fieldIndex, int[] values, int valueToAdd) {
+>         if (valueToAdd == 0) {
+>             return values;
+>         }
+>         
+>         
+>         
+>         DateTimeField nextField = null;
+>         
+>         while (valueToAdd > 0) {
+>             int max = getMaximumValue(instant, values);
+>             long proposed = values[fieldIndex] + valueToAdd;
+>             if (proposed <= max) {
+>                 values[fieldIndex] = (int) proposed;
+>                 break;
+>             }
+>             if (nextField == null) {
+>                 if (fieldIndex == 0) {
+>                     valueToAdd -= (max + 1) - values[fieldIndex];
+>                     values[fieldIndex] = getMinimumValue(instant, values);
+>                     continue;
+>                 }
+>                 nextField = instant.getField(fieldIndex - 1);
+>                 
+>                 if (getRangeDurationField() != nextField.getDurationField()) {
+>                     throw new IllegalArgumentException("Fields invalid for add");
+>                 }
+>             }
+>             valueToAdd -= (max + 1) - values[fieldIndex];  
+>             values = nextField.addWrapPartial(instant, fieldIndex - 1, values, 1);  
+>             values[fieldIndex] = getMinimumValue(instant, values);  
+>         }
+>         while (valueToAdd < 0) {
+>             int min = getMinimumValue(instant, values);
+>             long proposed = values[fieldIndex] + valueToAdd;
+>             if (proposed >= min) {
+>                 values[fieldIndex] = (int) proposed;
+>                 break;
+>             }
+>             if (nextField == null) {
+>                 if (fieldIndex == 0) {
+>                     valueToAdd -= (min - 1) - values[fieldIndex];
+>                     values[fieldIndex] = getMaximumValue(instant, values);
+>                     continue;
+>                 }
+>                 nextField = instant.getField(fieldIndex - 1);
+>                 if (getRangeDurationField() != nextField.getDurationField()) {
+>                     throw new IllegalArgumentException("Fields invalid for add");
+>                 }
+>             }
+>             valueToAdd -= (min - 1) - values[fieldIndex];  
+>             values = nextField.addWrapPartial(instant, fieldIndex - 1, values, -1);  
+>             values[fieldIndex] = getMaximumValue(instant, values);  

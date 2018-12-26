@@ -1,0 +1,1460 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.jstype.TernaryValue;
+
+import java.util.regex.Pattern;
+
+
+
+
+
+
+
+class PeepholeSubstituteAlternateSyntax
+  extends AbstractPeepholeOptimization {
+
+  private static final int AND_PRECEDENCE = NodeUtil.precedence(Token.AND);
+  private static final int OR_PRECEDENCE = NodeUtil.precedence(Token.OR);
+  private static final int NOT_PRECEDENCE = NodeUtil.precedence(Token.NOT);
+
+  private final boolean doCommaSpliting;
+
+  static final DiagnosticType INVALID_REGULAR_EXPRESSION_FLAGS =
+    DiagnosticType.error(
+        "JSC_INVALID_REGULAR_EXPRESSION_FLAGS",
+        "Invalid flags to RegExp constructor: {0}");
+
+  static final Predicate<Node> DONT_TRAVERSE_FUNCTIONS_PREDICATE
+      = new Predicate<Node>() {
+    @Override
+    public boolean apply(Node input) {
+      return input.getType() != Token.FUNCTION;
+    }
+  };
+
+  PeepholeSubstituteAlternateSyntax(boolean doCommaSpliting) {
+    this.doCommaSpliting = doCommaSpliting;
+  }
+
+  
+
+
+  @Override
+  @SuppressWarnings("fallthrough")
+  public Node optimizeSubtree(Node node) {
+    switch(node.getType()) {
+      case Token.RETURN: {
+        Node result = tryRemoveRedundantExit(node);
+        if (result != node) {
+          return result;
+        }
+        result = tryReplaceExitWithBreak(node);
+        if (result != node) {
+          return result;
+        }
+        return tryReduceReturn(node);
+      }
+
+      case Token.THROW: {
+        Node result = tryRemoveRedundantExit(node);
+        if (result != node) {
+          return result;
+        }
+        return tryReplaceExitWithBreak(node);
+      }
+
+      
+      
+
+      case Token.NOT:
+        tryMinimizeCondition(node.getFirstChild());
+        return tryMinimizeNot(node);
+
+      case Token.IF:
+        tryMinimizeCondition(node.getFirstChild());
+        return tryMinimizeIf(node);
+
+      case Token.EXPR_RESULT:
+        tryMinimizeCondition(node.getFirstChild());
+        return node;
+
+      case Token.HOOK:
+        tryMinimizeCondition(node.getFirstChild());
+        return node;
+
+      case Token.WHILE:
+      case Token.DO:
+        tryMinimizeCondition(NodeUtil.getConditionExpression(node));
+        return node;
+
+      case Token.FOR:
+        if (!NodeUtil.isForIn(node)) {
+          tryMinimizeCondition(NodeUtil.getConditionExpression(node));
+        }
+        return node;
+
+
+      case Token.TRUE:
+      case Token.FALSE:
+        return reduceTrueFalse(node);
+
+      case Token.NEW:
+        node = tryFoldStandardConstructors(node);
+        if (node.getType() != Token.CALL) {
+          return node;
+        }
+        
+        
+      case Token.CALL:
+        return tryFoldLiteralConstructor(node);
+
+      case Token.COMMA:
+        return tryFoldComma(node);
+
+      case Token.NAME:
+        return tryReplaceUndefined(node);
+
+      case Token.BLOCK:
+        return tryReplaceIf(node);
+
+      default:
+        return node; 
+    }
+  }
+
+  private Node tryFoldComma(Node n) {
+    if (!doCommaSpliting) {
+      return n;
+    }
+    Node parent = n.getParent();
+    Node left = n.getFirstChild();
+    Node right = n.getLastChild();
+
+    if (parent.getType() == Token.EXPR_RESULT
+        && parent.getParent().getType() != Token.LABEL) {
+      
+      n.detachChildren();
+      
+      parent.replaceChild(n, left);
+      
+      Node newStatement = new Node(Token.EXPR_RESULT, right);
+      newStatement.copyInformationFrom(n);
+
+      
+      
+      parent.getParent().addChildAfter(newStatement, parent);
+      reportCodeChange();
+      return left;
+    } else {
+      return n;
+    }
+  }
+
+  
+
+
+  private Node tryReplaceIf(Node n) {
+
+    for (Node child = n.getFirstChild();
+         child != null; child = child.getNext()){
+      if (child.getType() == Token.IF){
+
+        Node cond = child.getFirstChild();
+        Node thenBranch = cond.getNext();
+        Node elseBranch = thenBranch.getNext();
+        Node nextNode = child.getNext();
+
+        if (nextNode != null && elseBranch == null &&
+            isReturnBlock(thenBranch) && isReturnExpression(nextNode)) {
+          Node thenExpr = null;
+          
+          if (isReturnExpressBlock(thenBranch)) {
+            thenExpr = getBlockReturnExpression(thenBranch);
+            thenExpr.detachFromParent();
+          } else {
+            thenExpr = NodeUtil.newUndefinedNode(child);
+          }
+
+          Node elseExpr = nextNode.getFirstChild();
+
+          cond.detachFromParent();
+          elseExpr.detachFromParent();
+
+          Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+                              .copyInformationFrom(child);
+          Node returnNode = new Node(Token.RETURN, hookNode);
+          n.replaceChild(child, returnNode);
+          n.removeChild(nextNode);
+          reportCodeChange();
+        }
+      }
+    }
+    return n;
+  }
+
+  
+
+
+  private Node tryReplaceUndefined(Node n) {
+    
+    if (isASTNormalized()
+        && NodeUtil.isUndefined(n)
+        && !NodeUtil.isLhs(n, n.getParent())) {
+      Node replacement = NodeUtil.newUndefinedNode(n);
+      n.getParent().replaceChild(n, replacement);
+      reportCodeChange();
+      return replacement;
+    }
+    return n;
+  }
+
+  
+
+
+
+
+  private Node tryReduceReturn(Node n) {
+    Node result = n.getFirstChild();
+
+    if (result != null) {
+      switch (result.getType()) {
+        case Token.VOID:
+          Node operand = result.getFirstChild();
+          if (!mayHaveSideEffects(operand)) {
+            n.removeFirstChild();
+            reportCodeChange();
+          }
+          break;
+        case Token.NAME:
+          String name = result.getString();
+          if (name.equals("undefined")) {
+            n.removeFirstChild();
+            reportCodeChange();
+          }
+          break;
+      }
+    }
+
+    return n;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  private Node tryReplaceExitWithBreak(Node n) {
+    Node result = n.getFirstChild();
+
+    
+    
+    Node breakTarget = n;
+    for (;!ControlFlowAnalysis.isBreakTarget(breakTarget, null );
+        breakTarget = breakTarget.getParent()) {
+      if (NodeUtil.isFunction(breakTarget) ||
+          breakTarget.getType() == Token.SCRIPT) {
+        
+        return n;
+      }
+    }
+
+    Node follow = ControlFlowAnalysis.computeFollowNode(breakTarget);
+
+    
+    
+    
+    
+    
+    
+    
+    
+
+    Node prefinallyFollows = follow;
+    follow = skipFinallyNodes(follow);
+
+    if (prefinallyFollows != follow) {
+      
+      if (!isPure(result)) {
+        
+        return n;
+      }
+    }
+
+    if (follow == null && (n.getType() == Token.THROW || result != null)) {
+      
+      return n;
+    }
+
+    
+    
+    if (follow == null || areMatchingExits(n, follow)) {
+      Node replacement = new Node(Token.BREAK);
+      n.getParent().replaceChild(n, replacement);
+      this.reportCodeChange();
+      return replacement;
+    }
+
+    return n;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  private Node tryRemoveRedundantExit(Node n) {
+    Node exitExpr = n.getFirstChild();
+
+    Node follow = ControlFlowAnalysis.computeFollowNode(n);
+
+    
+    
+    Node prefinallyFollows = follow;
+    follow = skipFinallyNodes(follow);
+    if (prefinallyFollows != follow) {
+      
+      if (!isPure(exitExpr)) {
+        
+        return n;
+      }
+    }
+
+    if (follow == null && (n.getType() == Token.THROW || exitExpr != null)) {
+      
+      return n;
+    }
+
+    
+    
+    if (follow == null || areMatchingExits(n, follow)) {
+      n.detachFromParent();
+      reportCodeChange();
+      return null;
+    }
+
+    return n;
+  }
+
+  
+
+
+
+  boolean isPure(Node n) {
+    return n == null
+        || (!NodeUtil.canBeSideEffected(n)
+            && !NodeUtil.mayHaveSideEffects(n));
+  }
+
+  
+
+
+  Node skipFinallyNodes(Node n) {
+    while (n != null && NodeUtil.isTryFinallyNode(n.getParent(), n)) {
+      n = ControlFlowAnalysis.computeFollowNode(n);
+    }
+    return n;
+  }
+
+  
+
+
+
+
+
+  boolean areMatchingExits(Node nodeThis, Node nodeThat) {
+    return nodeThis.isEquivalentTo(nodeThat)
+        && (!isExceptionPossible(nodeThis)
+            || getExceptionHandler(nodeThis) == getExceptionHandler(nodeThat));
+  }
+
+  boolean isExceptionPossible(Node n) {
+    
+    Preconditions.checkState(n.getType() == Token.RETURN
+        || n.getType() == Token.THROW);
+    return n.getType() == Token.THROW
+        || (n.hasChildren()
+            && !NodeUtil.isLiteralValue(n.getLastChild(), true));
+  }
+
+  Node getExceptionHandler(Node n) {
+    return ControlFlowAnalysis.getExceptionHandler(n);
+  }
+
+  
+
+
+
+
+  private Node tryMinimizeNot(Node n) {
+    Node parent = n.getParent();
+
+    Node notChild = n.getFirstChild();
+    
+    int complementOperator;
+    switch (notChild.getType()) {
+      case Token.EQ:
+        complementOperator = Token.NE;
+        break;
+      case Token.NE:
+        complementOperator = Token.EQ;
+        break;
+      case Token.SHEQ:
+        complementOperator = Token.SHNE;
+        break;
+      case Token.SHNE:
+        complementOperator = Token.SHEQ;
+        break;
+      
+      default:
+        return n;
+    }
+    Node newOperator = n.removeFirstChild();
+    newOperator.setType(complementOperator);
+    parent.replaceChild(n, newOperator);
+    reportCodeChange();
+    return newOperator;
+  }
+
+  
+
+
+
+
+
+  private Node tryMinimizeIf(Node n) {
+
+    Node parent = n.getParent();
+
+    Node cond = n.getFirstChild();
+
+    
+
+
+    if (NodeUtil.isLiteralValue(cond, true)) {
+      return n;
+    }
+
+    Node thenBranch = cond.getNext();
+    Node elseBranch = thenBranch.getNext();
+
+    if (elseBranch == null) {
+      if (isFoldableExpressBlock(thenBranch)) {
+        Node expr = getBlockExpression(thenBranch);
+        if (isPropertyAssignmentInExpression(expr)) {
+          
+          
+          return n;
+        }
+
+        if (cond.getType() == Token.NOT) {
+          
+          if (isLowerPrecedenceInExpression(cond, OR_PRECEDENCE) &&
+              isLowerPrecedenceInExpression(expr.getFirstChild(),
+                  OR_PRECEDENCE)) {
+            
+            return n;
+          }
+
+          Node or = new Node(Token.OR, cond.removeFirstChild(),
+          expr.removeFirstChild()).copyInformationFrom(n);
+          Node newExpr = NodeUtil.newExpr(or);
+          parent.replaceChild(n, newExpr);
+          reportCodeChange();
+
+          return newExpr;
+        }
+
+        
+        if (isLowerPrecedenceInExpression(cond, AND_PRECEDENCE) &&
+            isLowerPrecedenceInExpression(expr.getFirstChild(),
+                AND_PRECEDENCE)) {
+          
+          
+          
+          
+          return n;
+        }
+
+        n.removeChild(cond);
+        Node and = new Node(Token.AND, cond, expr.removeFirstChild())
+                       .copyInformationFrom(n);
+        Node newExpr = NodeUtil.newExpr(and);
+        parent.replaceChild(n, newExpr);
+        reportCodeChange();
+
+        return newExpr;
+      } else {
+
+        
+        if (NodeUtil.isStatementBlock(thenBranch) &&
+            thenBranch.hasOneChild()) {
+          Node innerIf = thenBranch.getFirstChild();
+
+          if (innerIf.getType() == Token.IF) {
+            Node innerCond = innerIf.getFirstChild();
+            Node innerThenBranch = innerCond.getNext();
+            Node innerElseBranch = innerThenBranch.getNext();
+
+            if (innerElseBranch == null &&
+                 !(isLowerPrecedenceInExpression(cond, AND_PRECEDENCE) &&
+                   isLowerPrecedenceInExpression(innerCond, AND_PRECEDENCE))) {
+              n.detachChildren();
+              n.addChildToBack(new Node(Token.AND, cond,
+                  innerCond.detachFromParent()).copyInformationFrom(cond));
+              n.addChildrenToBack(innerThenBranch.detachFromParent());
+              reportCodeChange();
+              
+              
+              return n;
+            }
+          }
+        }
+      }
+
+      return n;
+    }
+
+    
+
+
+    tryRemoveRepeatedStatements(n);
+
+    
+    
+    if (cond.getType() == Token.NOT && !consumesDanglingElse(elseBranch)) {
+      n.replaceChild(cond, cond.removeFirstChild());
+      n.removeChild(thenBranch);
+      n.addChildToBack(thenBranch);
+      reportCodeChange();
+      return n;
+    }
+
+    
+    if (isReturnExpressBlock(thenBranch) && isReturnExpressBlock(elseBranch)) {
+      Node thenExpr = getBlockReturnExpression(thenBranch);
+      Node elseExpr = getBlockReturnExpression(elseBranch);
+      n.removeChild(cond);
+      thenExpr.detachFromParent();
+      elseExpr.detachFromParent();
+
+      
+      
+      
+      Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+                          .copyInformationFrom(n);
+      Node returnNode = new Node(Token.RETURN, hookNode);
+      parent.replaceChild(n, returnNode);
+      reportCodeChange();
+      return returnNode;
+    }
+
+    boolean thenBranchIsExpressionBlock = isFoldableExpressBlock(thenBranch);
+    boolean elseBranchIsExpressionBlock = isFoldableExpressBlock(elseBranch);
+
+    if (thenBranchIsExpressionBlock && elseBranchIsExpressionBlock) {
+      Node thenOp = getBlockExpression(thenBranch).getFirstChild();
+      Node elseOp = getBlockExpression(elseBranch).getFirstChild();
+      if (thenOp.getType() == elseOp.getType()) {
+        
+        if (NodeUtil.isAssignmentOp(thenOp)) {
+          Node lhs = thenOp.getFirstChild();
+          if (areNodesEqualForInlining(lhs, elseOp.getFirstChild()) &&
+              
+              
+              
+              
+              !mayEffectMutableState(lhs)) {
+
+            n.removeChild(cond);
+            Node assignName = thenOp.removeFirstChild();
+            Node thenExpr = thenOp.removeFirstChild();
+            Node elseExpr = elseOp.getLastChild();
+            elseOp.removeChild(elseExpr);
+
+            Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+                                .copyInformationFrom(n);
+            Node assign = new Node(thenOp.getType(), assignName, hookNode)
+                              .copyInformationFrom(thenOp);
+            Node expr = NodeUtil.newExpr(assign);
+            parent.replaceChild(n, expr);
+            reportCodeChange();
+
+            return expr;
+          }
+        }
+      }
+      
+      n.removeChild(cond);
+      thenOp.detachFromParent();
+      elseOp.detachFromParent();
+      Node hookNode = new Node(Token.HOOK, cond, thenOp, elseOp)
+                          .copyInformationFrom(n);
+      Node expr = NodeUtil.newExpr(hookNode);
+      parent.replaceChild(n, expr);
+      reportCodeChange();
+      return expr;
+    }
+
+    boolean thenBranchIsVar = isVarBlock(thenBranch);
+    boolean elseBranchIsVar = isVarBlock(elseBranch);
+
+    
+    if (thenBranchIsVar && elseBranchIsExpressionBlock &&
+        NodeUtil.isAssign(getBlockExpression(elseBranch).getFirstChild())) {
+
+      Node var = getBlockVar(thenBranch);
+      Node elseAssign = getBlockExpression(elseBranch).getFirstChild();
+
+      Node name1 = var.getFirstChild();
+      Node maybeName2 = elseAssign.getFirstChild();
+
+      if (name1.hasChildren()
+          && maybeName2.getType() == Token.NAME
+          && name1.getString().equals(maybeName2.getString())) {
+        Node thenExpr = name1.removeChildren();
+        Node elseExpr = elseAssign.getLastChild().detachFromParent();
+        cond.detachFromParent();
+        Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+                            .copyInformationFrom(n);
+        var.detachFromParent();
+        name1.addChildrenToBack(hookNode);
+        parent.replaceChild(n, var);
+        reportCodeChange();
+        return var;
+      }
+
+    
+    } else if (elseBranchIsVar && thenBranchIsExpressionBlock &&
+        NodeUtil.isAssign(getBlockExpression(thenBranch).getFirstChild())) {
+
+      Node var = getBlockVar(elseBranch);
+      Node thenAssign = getBlockExpression(thenBranch).getFirstChild();
+
+      Node maybeName1 = thenAssign.getFirstChild();
+      Node name2 = var.getFirstChild();
+
+      if (name2.hasChildren()
+          && maybeName1.getType() == Token.NAME
+          && maybeName1.getString().equals(name2.getString())) {
+        Node thenExpr = thenAssign.getLastChild().detachFromParent();
+        Node elseExpr = name2.removeChildren();
+        cond.detachFromParent();
+        Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+                            .copyInformationFrom(n);
+        var.detachFromParent();
+        name2.addChildrenToBack(hookNode);
+        parent.replaceChild(n, var);
+        reportCodeChange();
+
+        return var;
+      }
+    }
+
+    return n;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private void tryRemoveRepeatedStatements(Node n) {
+    Preconditions.checkState(n.getType() == Token.IF);
+
+    Node parent = n.getParent();
+    if (!NodeUtil.isStatementBlock(parent)) {
+      
+      
+      return;
+    }
+
+    Node cond = n.getFirstChild();
+    Node trueBranch = cond.getNext();
+    Node falseBranch = trueBranch.getNext();
+    Preconditions.checkNotNull(trueBranch);
+    Preconditions.checkNotNull(falseBranch);
+
+    while (true) {
+      Node lastTrue = trueBranch.getLastChild();
+      Node lastFalse = falseBranch.getLastChild();
+      if (lastTrue == null || lastFalse == null
+          || !areNodesEqualForInlining(lastTrue, lastFalse)) {
+        break;
+      }
+      lastTrue.detachFromParent();
+      lastFalse.detachFromParent();
+      parent.addChildAfter(lastTrue, n);
+      reportCodeChange();
+    }
+  }
+
+  
+
+
+
+  private boolean isFoldableExpressBlock(Node n) {
+    if (n.getType() == Token.BLOCK) {
+      if (n.hasOneChild()) {
+        Node maybeExpr = n.getFirstChild();
+        if (maybeExpr.getType() == Token.EXPR_RESULT) {
+          
+          
+          
+          
+          
+          
+          if (maybeExpr.getFirstChild().getType() == Token.CALL) {
+            Node calledFn = maybeExpr.getFirstChild().getFirstChild();
+
+            
+            
+            if (calledFn.getType() == Token.GETELEM) {
+              return false;
+            } else if (calledFn.getType() == Token.GETPROP &&
+                       calledFn.getLastChild().getString().startsWith("on")) {
+              return false;
+            }
+          }
+
+          return true;
+        }
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+  private Node getBlockExpression(Node n) {
+    Preconditions.checkState(isFoldableExpressBlock(n));
+    return n.getFirstChild();
+  }
+
+  
+
+
+
+  private boolean isReturnBlock(Node n) {
+    if (n.getType() == Token.BLOCK) {
+      if (n.hasOneChild()) {
+        Node first = n.getFirstChild();
+        return first.getType() == Token.RETURN;
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+
+  private boolean isReturnExpressBlock(Node n) {
+    if (n.getType() == Token.BLOCK) {
+      if (n.hasOneChild()) {
+        Node first = n.getFirstChild();
+        if (first.getType() == Token.RETURN) {
+          return first.hasOneChild();
+        }
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+  private boolean isReturnExpression(Node n) {
+    if (n.getType() == Token.RETURN) {
+      return n.hasOneChild();
+    }
+    return false;
+  }
+
+  
+
+
+  private Node getBlockReturnExpression(Node n) {
+    Preconditions.checkState(isReturnExpressBlock(n));
+    return n.getFirstChild().getFirstChild();
+  }
+
+  
+
+
+
+  private boolean isVarBlock(Node n) {
+    if (n.getType() == Token.BLOCK) {
+      if (n.hasOneChild()) {
+        Node first = n.getFirstChild();
+        if (first.getType() == Token.VAR) {
+          return first.hasOneChild();
+        }
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+  private Node getBlockVar(Node n) {
+    Preconditions.checkState(isVarBlock(n));
+    return n.getFirstChild();
+  }
+
+  
+
+
+
+
+  private boolean consumesDanglingElse(Node n) {
+    while (true) {
+      switch (n.getType()) {
+        case Token.IF:
+          if (n.getChildCount() < 3) {
+            return true;
+          }
+          
+          n = n.getLastChild();
+          continue;
+        case Token.WITH:
+        case Token.WHILE:
+        case Token.FOR:
+          n = n.getLastChild();
+          continue;
+        default:
+          return false;
+      }
+    }
+  }
+
+  
+
+
+
+  private boolean isLowerPrecedenceInExpression(Node n,
+      final int precedence) {
+    Predicate<Node> isLowerPrecedencePredicate = new Predicate<Node>() {
+      @Override
+      public boolean apply(Node input) {
+        return NodeUtil.precedence(input.getType()) < precedence;
+      }
+    };
+
+    return NodeUtil.has(n, isLowerPrecedencePredicate,
+        DONT_TRAVERSE_FUNCTIONS_PREDICATE);
+  }
+
+  
+
+
+  private boolean isLowerPrecedence(Node n, final int precedence) {
+    return NodeUtil.precedence(n.getType()) < precedence;
+  }
+
+  
+
+
+  private boolean isHigherPrecedence(Node n, final int precedence) {
+    return NodeUtil.precedence(n.getType()) > precedence;
+  }
+  
+
+
+  private boolean isPropertyAssignmentInExpression(Node n) {
+    Predicate<Node> isPropertyAssignmentInExpressionPredicate =
+        new Predicate<Node>() {
+      @Override
+      public boolean apply(Node input) {
+        return (input.getType() == Token.GETPROP &&
+            input.getParent().getType() == Token.ASSIGN);
+      }
+    };
+
+    return NodeUtil.has(n, isPropertyAssignmentInExpressionPredicate,
+        DONT_TRAVERSE_FUNCTIONS_PREDICATE);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private Node tryMinimizeCondition(Node n) {
+    Node parent = n.getParent();
+
+    switch (n.getType()) {
+      case Token.NOT:
+        Node first = n.getFirstChild();
+        switch (first.getType()) {
+          case Token.NOT: {
+              Node newRoot = first.removeFirstChild();
+              parent.replaceChild(n, newRoot);
+              reportCodeChange();
+              
+              
+              return newRoot;
+            }
+          case Token.AND:
+          case Token.OR: {
+              
+              
+              
+              
+              
+              
+              
+              
+              Node leftParent = first.getFirstChild();
+              Node rightParent = first.getLastChild();
+              Node left, right;
+
+              
+              
+              
+              if (leftParent.getType() != Token.NOT
+                  && rightParent.getType() != Token.NOT) {
+                
+                
+                
+                int op_precedence = NodeUtil.precedence(first.getType());
+                if ((isLowerPrecedence(leftParent, NOT_PRECEDENCE)
+                    && isHigherPrecedence(leftParent, op_precedence))
+                    || (isLowerPrecedence(rightParent, NOT_PRECEDENCE)
+                    && isHigherPrecedence(rightParent, op_precedence))) {
+                  return n;
+                }
+              }
+
+              if (leftParent.getType() == Token.NOT) {
+                left = leftParent.removeFirstChild();
+              } else {
+                leftParent.detachFromParent();
+                left = new Node(Token.NOT, leftParent)
+                  .copyInformationFrom(leftParent);
+              }
+              if (rightParent.getType() == Token.NOT) {
+                right = rightParent.removeFirstChild();
+              } else {
+                rightParent.detachFromParent();
+                right = new Node(Token.NOT, rightParent)
+                  .copyInformationFrom(rightParent);
+              }
+
+              int newOp = (first.getType() == Token.AND) ? Token.OR : Token.AND;
+              Node newRoot = new Node(newOp, left, right);
+              parent.replaceChild(n, newRoot);
+              reportCodeChange();
+              
+              
+              return newRoot;
+            }
+
+           default:
+             TernaryValue nVal = NodeUtil.getPureBooleanValue(first);
+             if (nVal != TernaryValue.UNKNOWN) {
+               boolean result = nVal.not().toBoolean(true);
+               int equivalentResult = result ? 1 : 0;
+               return maybeReplaceChildWithNumber(n, parent, equivalentResult);
+             }
+        }
+        
+        
+        return n;
+
+      case Token.OR:
+      case Token.AND: {
+        Node left = n.getFirstChild();
+        Node right = n.getLastChild();
+
+        
+        
+        left = tryMinimizeCondition(left);
+        right = tryMinimizeCondition(right);
+
+        
+        
+        
+        
+        
+        
+        TernaryValue rightVal = NodeUtil.getPureBooleanValue(right);
+        if (NodeUtil.getPureBooleanValue(right) != TernaryValue.UNKNOWN) {
+          int type = n.getType();
+          Node replacement = null;
+          boolean rval = rightVal.toBoolean(true);
+
+          
+          
+          if (type == Token.OR && !rval ||
+              type == Token.AND && rval) {
+            replacement = left;
+          } else if (!mayHaveSideEffects(left)) {
+            replacement = right;
+          }
+
+          if (replacement != null) {
+            n.detachChildren();
+            parent.replaceChild(n, replacement);
+            reportCodeChange();
+            return replacement;
+          }
+        }
+        return n;
+      }
+
+      case Token.HOOK: {
+        Node condition = n.getFirstChild();
+        Node trueNode = n.getFirstChild().getNext();
+        Node falseNode = n.getLastChild();
+
+        
+        
+        
+        trueNode = tryMinimizeCondition(trueNode);
+        falseNode = tryMinimizeCondition(falseNode);
+
+        
+        
+        
+        
+        
+        Node replacement = null;
+        TernaryValue trueNodeVal = NodeUtil.getPureBooleanValue(trueNode);
+        TernaryValue falseNodeVal = NodeUtil.getPureBooleanValue(falseNode);
+        if (trueNodeVal == TernaryValue.TRUE
+            && falseNodeVal == TernaryValue.FALSE) {
+          
+          condition.detachFromParent();
+          replacement = condition;
+        } else if (trueNodeVal == TernaryValue.FALSE
+            && falseNodeVal == TernaryValue.TRUE) {
+          
+          condition.detachFromParent();
+          replacement = new Node(Token.NOT, condition);
+        } else if (trueNodeVal == TernaryValue.TRUE) {
+          
+          n.detachChildren();
+          replacement = new Node(Token.OR, condition, falseNode);
+        } else if (falseNodeVal == TernaryValue.FALSE) {
+          
+          n.detachChildren();
+          replacement = new Node(Token.AND, condition, trueNode);
+        }
+
+        if (replacement != null) {
+          parent.replaceChild(n, replacement);
+          n = replacement;
+          reportCodeChange();
+        }
+
+        return n;
+      }
+
+      default:
+        
+        TernaryValue nVal = NodeUtil.getPureBooleanValue(n);
+        if (nVal != TernaryValue.UNKNOWN) {
+          boolean result = nVal.toBoolean(true);
+          int equivalentResult = result ? 1 : 0;
+          return maybeReplaceChildWithNumber(n, parent, equivalentResult);
+        }
+        
+        return n;
+    }
+  }
+
+  
+
+
+
+
+
+  private Node maybeReplaceChildWithNumber(Node n, Node parent, int num) {
+    Node newNode = Node.newNumber(num);
+    if (!newNode.isEquivalentTo(n)) {
+      parent.replaceChild(n, newNode);
+      reportCodeChange();
+
+      return newNode;
+    }
+
+    return n;
+  }
+
+  private static final ImmutableSet<String> STANDARD_OBJECT_CONSTRUCTORS =
+    
+    
+    
+    ImmutableSet.of(
+      "Object",
+      "Array",
+      "RegExp",
+      "Error"
+      );
+
+  
+
+
+  private Node tryFoldStandardConstructors(Node n) {
+    Preconditions.checkState(n.getType() == Token.NEW);
+
+    
+    
+    
+    if (isASTNormalized()) {
+      if (n.getFirstChild().getType() == Token.NAME) {
+        String className = n.getFirstChild().getString();
+        if (STANDARD_OBJECT_CONSTRUCTORS.contains(className)) {
+          n.setType(Token.CALL);
+          reportCodeChange();
+        }
+      }
+    }
+
+    return n;
+  }
+
+  
+
+
+
+  private Node tryFoldLiteralConstructor(Node n) {
+    Preconditions.checkArgument(n.getType() == Token.CALL
+        || n.getType() == Token.NEW);
+
+    Node constructorNameNode = n.getFirstChild();
+
+    Node newLiteralNode = null;
+
+    
+    
+    
+
+    if (isASTNormalized() && Token.NAME == constructorNameNode.getType()) {
+
+      String className = constructorNameNode.getString();
+
+      if ("RegExp".equals(className)) {
+        
+        return tryFoldRegularExpressionConstructor(n);
+      } else {
+        boolean constructorHasArgs = constructorNameNode.getNext() != null;
+
+        if ("Object".equals(className) && !constructorHasArgs) {
+          
+          newLiteralNode = new Node(Token.OBJECTLIT);
+        } else if ("Array".equals(className)) {
+          
+          Node arg0 = constructorNameNode.getNext();
+          FoldArrayAction action = isSafeToFoldArrayConstructor(arg0);
+
+          if (action == FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS ||
+              action == FoldArrayAction.SAFE_TO_FOLD_WITHOUT_ARGS) {
+            newLiteralNode = new Node(Token.ARRAYLIT);
+            n.removeChildren();
+            if (action == FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS) {
+              newLiteralNode.addChildrenToFront(arg0);
+            }
+          }
+        }
+
+        if (newLiteralNode != null) {
+          n.getParent().replaceChild(n, newLiteralNode);
+          reportCodeChange();
+          return newLiteralNode;
+        }
+      }
+    }
+    return n;
+  }
+
+  private static enum FoldArrayAction {
+    NOT_SAFE_TO_FOLD, SAFE_TO_FOLD_WITH_ARGS, SAFE_TO_FOLD_WITHOUT_ARGS}
+
+  
+
+
+
+
+
+  private FoldArrayAction isSafeToFoldArrayConstructor(Node arg) {
+    FoldArrayAction action = FoldArrayAction.NOT_SAFE_TO_FOLD;
+
+    if (arg == null) {
+      action = FoldArrayAction.SAFE_TO_FOLD_WITHOUT_ARGS;
+    } else if (arg.getNext() != null) {
+      action = FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS;
+    } else {
+      switch (arg.getType()) {
+        case Token.STRING:
+          
+          action = FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS;
+          break;
+        case Token.NUMBER:
+          
+          if (arg.getDouble() == 0) {
+            action = FoldArrayAction.SAFE_TO_FOLD_WITHOUT_ARGS;
+          }
+          break;
+        case Token.ARRAYLIT:
+          
+          action = FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS;
+          break;
+        default:
+      }
+    }
+    return action;
+  }
+
+  private Node tryFoldRegularExpressionConstructor(Node n) {
+    Node parent = n.getParent();
+    Node constructor = n.getFirstChild();
+    Node pattern = constructor.getNext();  
+    Node flags = null != pattern ? pattern.getNext() : null;  
+
+    if (null == pattern || (null != flags && null != flags.getNext())) {
+      
+      return n;
+    }
+
+    if (
+        pattern.getType() == Token.STRING
+        
+        && !"".equals(pattern.getString())
+
+        
+        
+        && pattern.getString().length() < 100
+
+        && (null == flags || flags.getType() == Token.STRING)
+        
+        
+        && (isEcmaScript5OrGreater()
+            || !containsUnicodeEscape(pattern.getString()))) {
+
+      
+      
+      
+      
+      pattern = makeForwardSlashBracketSafe(pattern);
+
+      Node regexLiteral;
+      if (null == flags || "".equals(flags.getString())) {
+        
+        regexLiteral = new Node(Token.REGEXP, pattern);
+      } else {
+        
+        if (!areValidRegexpFlags(flags.getString())) {
+          error(INVALID_REGULAR_EXPRESSION_FLAGS, flags);
+          return n;
+        }
+        if (!areSafeFlagsToFold(flags.getString())) {
+          return n;
+        }
+        n.removeChild(flags);
+        regexLiteral = new Node(Token.REGEXP, pattern, flags);
+      }
+
+      parent.replaceChild(n, regexLiteral);
+      reportCodeChange();
+      return regexLiteral;
+    }
+
+    return n;
+  }
+
+  private Node reduceTrueFalse(Node n) {
+    Node not = new Node(Token.NOT,
+        Node.newNumber(n.getType() == Token.TRUE ? 0 : 1));
+    not.copyInformationFromForTree(n);
+    n.getParent().replaceChild(n, not);
+    reportCodeChange();
+    return not;
+  }
+
+  private static final Pattern REGEXP_FLAGS_RE = Pattern.compile("^[gmi]*$");
+
+  
+
+
+
+
+
+
+  private static boolean areValidRegexpFlags(String flags) {
+    return REGEXP_FLAGS_RE.matcher(flags).matches();
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private boolean areSafeFlagsToFold(String flags) {
+    return isEcmaScript5OrGreater() || flags.indexOf('g') < 0;
+  }
+
+  
+
+
+  private static Node makeForwardSlashBracketSafe(Node n) {
+    String s = n.getString();
+    
+    StringBuilder sb = null;
+    int pos = 0;
+    boolean isEscaped = false, inCharset = false;
+    for (int i = 0; i < s.length(); ++i) {
+      char ch = s.charAt(i);
+      switch (ch) {
+        case '\\':
+          isEscaped = !isEscaped;
+          continue;
+        case '/':
+          
+          
+          
+          
+          
+          
+          if (!isEscaped && !inCharset) {
+            if (null == sb) { sb = new StringBuilder(s.length() + 16); }
+            sb.append(s, pos, i).append('\\');
+            pos = i;
+          }
+          break;
+        case '[':
+          if (!isEscaped) {
+            inCharset = true;
+          }
+          break;
+        case ']':
+          if (!isEscaped) {
+            inCharset = false;
+          }
+          break;
+        case '\r': case '\n': case '\u2028': case '\u2029':
+          
+          
+          
+          
+          
+          
+          
+          if (null == sb) { sb = new StringBuilder(s.length() + 16); }
+          if (isEscaped) {
+            sb.append(s, pos, i - 1);
+          } else {
+            sb.append(s, pos, i);
+          }
+          switch (ch) {
+            case '\r': sb.append("\\r"); break;
+            case '\n': sb.append("\\n"); break;
+            case '\u2028': sb.append("\\u2028"); break;
+            case '\u2029': sb.append("\\u2029"); break;
+          }
+          pos = i + 1;
+          break;
+      }
+      isEscaped = false;
+    }
+
+    if (null == sb) { return n.cloneTree(); }
+
+    sb.append(s, pos, s.length());
+    return Node.newString(sb.toString()).copyInformationFrom(n);
+  }
+
+  
+
+
+
+  static boolean containsUnicodeEscape(String s) {
+    String esc = CodeGenerator.regexpEscape(s);
+    for (int i = -1; (i = esc.indexOf("\\u", i + 1)) >= 0;) {
+      int nSlashes = 0;
+      while (i - nSlashes > 0 && '\\' == esc.charAt(i - nSlashes - 1)) {
+        ++nSlashes;
+      }
+      
+      
+      if (0 == (nSlashes & 1)) { return true; }
+    }
+    return false;
+  }
+}

@@ -1,0 +1,192 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import com.google.javascript.rhino.ErrorReporter;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class NoObjectType extends FunctionType {
+  private static final long serialVersionUID = 1L;
+
+  NoObjectType(JSTypeRegistry registry) {
+    super(registry, null, null,
+          registry.createArrowType(null, null),
+          null, null, true, true);
+    getInternalArrowType().returnType = this;
+    this.setInstanceType(this);
+  }
+
+  @Override
+  public boolean isSubtype(JSType that) {
+    if (JSType.isSubtypeHelper(this, that)) {
+      return true;
+    } else {
+      return that.isObject() && !that.isNoType() && !that.isNoResolvedType();
+    }
+  }
+
+  @Override
+  public FunctionType toMaybeFunctionType() {
+    return null;
+  }
+
+  @Override
+  public boolean isNoObjectType() {
+    return true;
+  }
+
+  @Override
+  public ObjectType getImplicitPrototype() {
+    return null;
+  }
+
+  @Override
+  public String getReferenceName() {
+    return null;
+  }
+
+  @Override
+  public boolean matchesNumberContext() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesObjectContext() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesStringContext() {
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
+  }
+
+  @Override
+  public int getPropertiesCount() {
+    
+    
+    return Integer.MAX_VALUE;
+  }
+
+  @Override
+  public JSType getPropertyType(String propertyName) {
+    
+    return getNativeType(JSTypeNative.NO_TYPE);
+  }
+
+  @Override
+  public boolean hasProperty(String propertyName) {
+    
+    return true;
+  }
+
+  @Override
+  boolean defineProperty(String propertyName, JSType type,
+      boolean inferred, Node propertyNode) {
+    
+    return true;
+  }
+
+  @Override
+  public boolean removeProperty(String name) {
+    return false;
+  }
+
+  @Override
+  public JSDocInfo getOwnPropertyJSDocInfo(String propertyName) {
+    return null;
+  }
+
+  @Override
+  public void setPropertyJSDocInfo(String propertyName, JSDocInfo info) {
+    
+  }
+
+  @Override
+  public boolean isPropertyTypeInferred(String propertyName) {
+    return false;
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseNoObjectType();
+  }
+
+  @Override <T> T visit(RelationshipVisitor<T> visitor, JSType that) {
+    return visitor.caseNoObjectType(that);
+  }
+
+  @Override
+  String toStringHelper(boolean forAnnotations) {
+    return forAnnotations ? "?" : "NoObject";
+  }
+
+  @Override
+  public FunctionType getConstructor() {
+    return null;
+  }
+
+  @Override
+  JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+    return this;
+  }
+}

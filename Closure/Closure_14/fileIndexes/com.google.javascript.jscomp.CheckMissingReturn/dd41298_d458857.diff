@@ -1,0 +1,12 @@
+27a28
+> import com.google.javascript.rhino.jstype.TernaryValue;
+70,72c71,75
+<         if (condition != null && NodeUtil.isLiteralValue(condition) ) {
+<           return NodeUtil.getBooleanValue(condition) ==
+<             (Branch.ON_TRUE == branch);
+---
+>         if (condition != null) {
+>           TernaryValue val = NodeUtil.getBooleanValue(condition);
+>           if (val != TernaryValue.UNKNOWN) {
+>             return val.toBoolean(true) == (Branch.ON_TRUE == branch);
+>           }

@@ -1,0 +1,42 @@
+207a208,209
+>     checks.add(checkSideEffects);
+> 
+663a666,667
+>     passes.add(stripSideEffectProtection);
+> 
+737a742,774
+>   final HotSwapPassFactory checkSideEffects =
+>       new HotSwapPassFactory("checkSideEffects", true) {
+> 
+>     @Override
+>     protected HotSwapCompilerPass createInternal(final AbstractCompiler
+>         compiler) {
+>       
+>       
+>       
+>       boolean protectHiddenSideEffects =
+>           options.protectHiddenSideEffects && !options.ideMode;
+>       return new CheckSideEffects(compiler,
+>           options.checkSuspiciousCode ? CheckLevel.WARNING : CheckLevel.OFF,
+>               protectHiddenSideEffects);
+>     }
+>   };
+> 
+>   
+> 
+> 
+>   final PassFactory stripSideEffectProtection =
+>       new PassFactory("stripSideEffectProtection", true) {
+> 
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler
+>         compiler) {
+>       return new CheckSideEffects.StripProtection(compiler);
+>     }
+>   };
+> 
+>   
+> 
+> 
+748d784
+<         sharedCallbacks.add(new CheckSideEffects(CheckLevel.WARNING));

@@ -1,0 +1,81 @@
+1079a1080,1109
+> 
+>   static boolean valueCheck(Node n, Predicate<Node> p) {
+>     switch (n.getType()) {
+>       case Token.ASSIGN:
+>       case Token.COMMA:
+>         return valueCheck(n.getLastChild(), p);
+>       case Token.AND:
+>       case Token.OR:
+>         return valueCheck(n.getFirstChild(), p)
+>             && valueCheck(n.getLastChild(), p);
+>       case Token.HOOK:
+>         return valueCheck(n.getFirstChild().getNext(), p)
+>             && valueCheck(n.getLastChild(), p);
+>       default:
+>         return p.apply(n);
+>     }
+>   }
+> 
+>   static class NumbericResultPredicate implements Predicate<Node> {
+>     public boolean apply(Node n) {
+>       return isNumericResultHelper(n);
+>     }
+>   }
+> 
+>   static final NumbericResultPredicate NUMBERIC_RESULT_PREDICATE =
+>       new NumbericResultPredicate();
+> 
+>   
+> 
+> 
+1080a1111,1114
+>     return valueCheck(n, NUMBERIC_RESULT_PREDICATE);
+>   }
+> 
+>   static boolean isNumericResultHelper(Node n) {
+1082,1083c1116,1118
+<       
+<       
+---
+>       case Token.ADD:
+>         return !mayBeString(n.getFirstChild())
+>             && !mayBeString(n.getLastChild());
+1114a1150,1158
+>   static class BooleanResultPredicate implements Predicate<Node> {
+>     public boolean apply(Node n) {
+>       return isBooleanResultHelper(n);
+>     }
+>   }
+> 
+>   static final BooleanResultPredicate BOOLEAN_RESULT_PREDICATE =
+>       new BooleanResultPredicate();
+> 
+1118a1163,1166
+>     return valueCheck(n, BOOLEAN_RESULT_PREDICATE);
+>   }
+> 
+>   static boolean isBooleanResultHelper(Node n) {
+1158a1207,1215
+>   static class MayBeStringResultPredicate implements Predicate<Node> {
+>     public boolean apply(Node n) {
+>       return mayBeStringHelper(n);
+>     }
+>   }
+> 
+>   static final MayBeStringResultPredicate MAY_BE_STRING_PREDICATE =
+>       new MayBeStringResultPredicate();
+> 
+1162a1220,1231
+>     return mayBeString(n, true);
+>   }
+> 
+>   static boolean mayBeString(Node n, boolean recurse) {
+>     if (recurse) {
+>       return valueCheck(n, MAY_BE_STRING_PREDICATE);
+>     } else {
+>       return mayBeStringHelper(n);
+>     }
+>   }
+> 
+>   static boolean mayBeStringHelper(Node n) {

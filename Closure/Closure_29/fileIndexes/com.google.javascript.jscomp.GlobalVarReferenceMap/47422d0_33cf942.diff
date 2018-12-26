@@ -1,0 +1,69 @@
+25a26
+> import com.google.javascript.rhino.InputId;
+47c48
+<   private final Map<String, Integer> inputOrder;
+---
+>   private final Map<InputId, Integer> inputOrder;
+52,53c53
+<   GlobalVarReferenceMap(List<CompilerInput> inputs,
+<       List<CompilerInput> externs) {
+---
+>   GlobalVarReferenceMap(List<CompilerInput> inputs, List<CompilerInput> externs) {
+57c57
+<       inputOrder.put(extern.getName(), ind);
+---
+>       inputOrder.put(extern.getInputId(), ind);
+61c61
+<       inputOrder.put(input.getName(), ind);
+---
+>       inputOrder.put(input.getInputId(), ind);
+108,109c108,110
+<     String sourceName = NodeUtil.getSourceName(root);
+<     Preconditions.checkNotNull(sourceName);
+---
+> 
+>     InputId inputId = root.getInputId();
+>     Preconditions.checkNotNull(inputId);
+113c114
+<     removeScriptReferences(sourceName);
+---
+>     removeScriptReferences(inputId);
+117c118
+<         replaceReferences(var.getName(), sourceName, entry.getValue());
+---
+>         replaceReferences(var.getName(), inputId, entry.getValue());
+122c123,125
+<   private void removeScriptReferences(String sourceName) {
+---
+>   private void removeScriptReferences(InputId inputId) {
+>     Preconditions.checkNotNull(inputId);
+> 
+130c133
+<       SourceRefRange range = findSourceRefRange(oldRefs, sourceName);
+---
+>       SourceRefRange range = findSourceRefRange(oldRefs, inputId);
+137c140
+<   private void replaceReferences(String varName, String sourceName,
+---
+>   private void replaceReferences(String varName, InputId inputId,
+149c152
+<         sourceName);
+---
+>       inputId);
+161c164,166
+<       String sourceName) {
+---
+>       InputId inputId) {
+>     Preconditions.checkNotNull(inputId);
+> 
+167c172,174
+<     int sourceInputOrder = inputOrder.get(sourceName);
+---
+> 
+>     Preconditions.checkState(inputOrder.containsKey(inputId), inputId.getIdName());
+>     int sourceInputOrder = inputOrder.get(inputId);
+169c176,177
+<       int order = inputOrder.get(ref.getSourceFile().getName());
+---
+>       Preconditions.checkNotNull(ref.getInputId());
+>       int order = inputOrder.get(ref.getInputId());

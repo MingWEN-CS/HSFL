@@ -1,0 +1,12 @@
+19c19
+< import com.google.javascript.jscomp.mozilla.rhino.Token;
+---
+> import com.google.javascript.rhino.Token;
+57c57,61
+<         if (parent.getType() != Token.NEW || n != parent.getFirstChild()) {
+---
+>         int parentType = parent.getType();
+>         boolean first = (n == parent.getFirstChild()); 
+>         if (!((parentType == Token.NEW && first)
+>                || (parentType == Token.CALL && first)
+>                || (parentType == Token.INSTANCEOF && !first))) {

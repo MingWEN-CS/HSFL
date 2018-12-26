@@ -1,0 +1,57 @@
+17c17
+< package org.apache.commons.math.special;
+---
+> package org.apache.commons.math3.special;
+19c19
+< import org.apache.commons.math.util.FastMath;
+---
+> import org.apache.commons.math3.util.FastMath;
+27a28,40
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static final double X_CRIT = 0.4769362762044697;
+> 
+57,61c70,71
+<         double ret = Gamma.regularizedGammaP(0.5, x * x, 1.0e-15, 10000);
+<         if (x < 0) {
+<             ret = -ret;
+<         }
+<         return ret;
+---
+>         final double ret = Gamma.regularizedGammaP(0.5, x * x, 1.0e-15, 10000);
+>         return x < 0 ? -ret : ret;
+92a103,127
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double erf(double x1, double x2) {
+>         if(x1 > x2) {
+>             return -erf(x2, x1);
+>         }
+> 
+>         return
+>         x1 < -X_CRIT ?
+>             x2 < 0.0 ?
+>                 erfc(-x2) - erfc(-x1) :
+>                 erf(x2) - erf(x1) :
+>             x2 > X_CRIT && x1 > 0.0 ?
+>                 erfc(x1) - erfc(x2) :
+>                 erf(x2) - erf(x1);

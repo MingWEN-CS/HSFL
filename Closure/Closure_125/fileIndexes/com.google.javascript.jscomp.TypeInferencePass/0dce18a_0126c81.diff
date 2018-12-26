@@ -1,0 +1,30 @@
+22c22
+< import com.google.javascript.jscomp.NodeTraversal.AbstractScopedCallback;
+---
+> import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+99c99
+<   private class TypeInferringCallback extends AbstractScopedCallback {
+---
+>   private class TypeInferringCallback implements ScopedCallback {
+102c102,120
+<       inferTypes(t, t.getCurrentNode(), t.getScope());
+---
+>       Scope scope = t.getScope();
+>       Node node = t.getCurrentNode();
+>       if (scope.isGlobal()) {
+>         inferTypes(t, node, scope);
+>       }
+>     }
+> 
+>     @Override
+>     public void exitScope(NodeTraversal t) {
+>       Scope scope = t.getScope();
+>       Node node = t.getCurrentNode();
+>       if (scope.isLocal()) {
+>         inferTypes(t, node, scope);
+>       }
+>     }
+> 
+>     @Override
+>     public boolean shouldTraverse(NodeTraversal t, Node n, Node parent) {
+>       return true;

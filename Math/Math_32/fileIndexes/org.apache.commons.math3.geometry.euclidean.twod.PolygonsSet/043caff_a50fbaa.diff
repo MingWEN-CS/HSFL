@@ -1,0 +1,180 @@
+24a25,26
+> import org.apache.commons.math.geometry.euclidean.oned.Interval;
+> import org.apache.commons.math.geometry.euclidean.oned.IntervalsSet;
+25a28
+> import org.apache.commons.math.geometry.partitioning.AbstractSubHyperplane;
+26a30,31
+> import org.apache.commons.math.geometry.partitioning.BSPTreeVisitor;
+> import org.apache.commons.math.geometry.partitioning.BoundaryAttribute;
+29a35
+> import org.apache.commons.math.geometry.partitioning.utilities.OrderedTuple;
+205c211
+<                 final AVLTree<Segment> sorted = visitor.getSorted();
+---
+>                 final AVLTree<ComparableSegment> sorted = visitor.getSorted();
+209c215
+<                 final ArrayList<List<Segment>> loops = new ArrayList<List<Segment>>();
+---
+>                 final ArrayList<List<ComparableSegment>> loops = new ArrayList<List<ComparableSegment>>();
+211,212c217,218
+<                     final AVLTree<Segment>.Node node = sorted.getSmallest();
+<                     final List<Segment> loop = followLoop(node, sorted);
+---
+>                     final AVLTree<ComparableSegment>.Node node = sorted.getSmallest();
+>                     final List<ComparableSegment> loop = followLoop(node, sorted);
+222c228
+<                 for (final List<Segment> loop : loops) {
+---
+>                 for (final List<ComparableSegment> loop : loops) {
+283,284c289,290
+<     private List<Segment> followLoop(final AVLTree<Segment>.Node node,
+<                                      final AVLTree<Segment> sorted) {
+---
+>     private List<ComparableSegment> followLoop(final AVLTree<ComparableSegment>.Node node,
+>                                                final AVLTree<ComparableSegment> sorted) {
+286,287c292,293
+<         final ArrayList<Segment> loop = new ArrayList<Segment>();
+<         Segment segment = node.getElement();
+---
+>         final ArrayList<ComparableSegment> loop = new ArrayList<ComparableSegment>();
+>         ComparableSegment segment = node.getElement();
+299,304c305,310
+<             AVLTree<Segment>.Node selectedNode = null;
+<             Segment       selectedSegment  = null;
+<             double        selectedDistance = Double.POSITIVE_INFINITY;
+<             final Segment lowerLeft        = new Segment(end, -1.0e-10, -1.0e-10);
+<             final Segment upperRight       = new Segment(end, +1.0e-10, +1.0e-10);
+<             for (AVLTree<Segment>.Node n = sorted.getNotSmaller(lowerLeft);
+---
+>             AVLTree<ComparableSegment>.Node selectedNode = null;
+>             ComparableSegment       selectedSegment  = null;
+>             double                  selectedDistance = Double.POSITIVE_INFINITY;
+>             final ComparableSegment lowerLeft        = new ComparableSegment(end, -1.0e-10, -1.0e-10);
+>             final ComparableSegment upperRight       = new ComparableSegment(end, +1.0e-10, +1.0e-10);
+>             for (AVLTree<ComparableSegment>.Node n = sorted.getNotSmaller(lowerLeft);
+307c313
+<                 segment = (Segment) n.getElement();
+---
+>                 segment = n.getElement();
+338a345,465
+> 
+>     }
+> 
+>     private static class ComparableSegment extends Segment implements Comparable<ComparableSegment> {
+> 
+>         
+>         private OrderedTuple sortingKey;
+> 
+>         
+> 
+> 
+> 
+> 
+>         public ComparableSegment(final Vector2D start, final Vector2D end, final Line line) {
+>             super(start, end, line);
+>             sortingKey = (start == null) ?
+>                          new OrderedTuple(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY) :
+>                          new OrderedTuple(start.getX(), start.getY());
+>         }
+> 
+>         
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>         public ComparableSegment(final Vector2D start, final double dx, final double dy) {
+>             super(null, null, null);
+>             sortingKey = new OrderedTuple(start.getX() + dx, start.getY() + dy);
+>         }
+> 
+>         
+>         public int compareTo(final ComparableSegment o) {
+>             return sortingKey.compareTo(o.sortingKey);
+>         }
+> 
+>         
+>         @Override
+>         public boolean equals(final Object other) {
+>             if (this == other) {
+>                 return true;
+>             } else if (other instanceof ComparableSegment) {
+>                 return compareTo((ComparableSegment) other) == 0;
+>             } else {
+>                 return false;
+>             }
+>         }
+> 
+>         
+>         @Override
+>         public int hashCode() {
+>             return getStart().hashCode() ^ getEnd().hashCode() ^
+>                    getLine().hashCode() ^ sortingKey.hashCode();
+>         }
+> 
+>     }
+> 
+>     
+>     private static class SegmentsBuilder implements BSPTreeVisitor<Euclidean2D> {
+> 
+>         
+>         private AVLTree<ComparableSegment> sorted;
+> 
+>         
+>         public SegmentsBuilder() {
+>             sorted = new AVLTree<ComparableSegment>();
+>         }
+> 
+>         
+>         public Order visitOrder(final BSPTree<Euclidean2D> node) {
+>             return Order.MINUS_SUB_PLUS;
+>         }
+> 
+>         
+>         public void visitInternalNode(final BSPTree<Euclidean2D> node) {
+>             @SuppressWarnings("unchecked")
+>             final BoundaryAttribute<Euclidean2D> attribute = (BoundaryAttribute<Euclidean2D>) node.getAttribute();
+>             if (attribute.getPlusOutside() != null) {
+>                 addContribution(attribute.getPlusOutside(), false);
+>             }
+>             if (attribute.getPlusInside() != null) {
+>                 addContribution(attribute.getPlusInside(), true);
+>             }
+>         }
+> 
+>         
+>         public void visitLeafNode(final BSPTree<Euclidean2D> node) {
+>         }
+> 
+>         
+> 
+> 
+> 
+>         private void addContribution(final SubHyperplane<Euclidean2D> sub, final boolean reversed) {
+>             @SuppressWarnings("unchecked")
+>             final AbstractSubHyperplane<Euclidean2D, Euclidean1D> absSub =
+>                 (AbstractSubHyperplane<Euclidean2D, Euclidean1D>) sub;
+>             final Line line      = (Line) sub.getHyperplane();
+>             final List<Interval> intervals = ((IntervalsSet) absSub.getRemainingRegion()).asList();
+>             for (final Interval i : intervals) {
+>                 final Vector2D start = Double.isInfinite(i.getLower()) ?
+>                                       null : (Vector2D) line.toSpace(new Vector1D(i.getLower()));
+>                 final Vector2D end   = Double.isInfinite(i.getUpper()) ?
+>                                       null : (Vector2D) line.toSpace(new Vector1D(i.getUpper()));
+>                 if (reversed) {
+>                     sorted.insert(new ComparableSegment(end, start, line.getReverse()));
+>                 } else {
+>                     sorted.insert(new ComparableSegment(start, end, line));
+>                 }
+>             }
+>         }
+> 
+>         
+> 
+> 
+>         public AVLTree<ComparableSegment> getSorted() {
+>             return sorted;
+>         }

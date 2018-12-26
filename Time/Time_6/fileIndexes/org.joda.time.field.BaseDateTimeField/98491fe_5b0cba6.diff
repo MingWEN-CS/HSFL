@@ -1,0 +1,32 @@
+173c173
+<         return getAsText(partial, partial.get(this), locale);
+---
+>         return getAsText(partial, partial.get(getType()), locale);
+247c247
+<         return getAsShortText(partial, partial.get(this), locale);
+---
+>         return getAsShortText(partial, partial.get(getType()), locale);
+535,536c535,536
+<     public int[] set(ReadablePartial instant, int fieldIndex, int[] values, int newValue) {
+<         FieldUtils.verifyValueBounds(this, newValue, getMinimumValue(instant, values), getMaximumValue(instant, values));
+---
+>     public int[] set(ReadablePartial partial, int fieldIndex, int[] values, int newValue) {
+>         FieldUtils.verifyValueBounds(this, newValue, getMinimumValue(partial, values), getMaximumValue(partial, values));
+540,544c540,544
+<         if (fieldIndex < instant.getFieldSize()) {
+<             for (int i = fieldIndex + 1; i < instant.getFieldSize(); i++) {
+<                 DateTimeField field = instant.getField(i);
+<                 if (values[i] > field.getMaximumValue(instant, values)) {
+<                     values[i] = field.getMaximumValue(instant, values);
+---
+>         if (fieldIndex < partial.size()) {
+>             for (int i = fieldIndex + 1; i < partial.size(); i++) {
+>                 DateTimeField field = partial.getField(i);
+>                 if (values[i] > field.getMaximumValue(partial, values)) {
+>                     values[i] = field.getMaximumValue(partial, values);
+546,547c546,547
+<                 if (values[i] < field.getMinimumValue(instant, values)) {
+<                     values[i] = field.getMinimumValue(instant, values);
+---
+>                 if (values[i] < field.getMinimumValue(partial, values)) {
+>                     values[i] = field.getMinimumValue(partial, values);

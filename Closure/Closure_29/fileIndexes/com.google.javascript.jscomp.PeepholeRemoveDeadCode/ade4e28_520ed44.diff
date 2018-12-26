@@ -1,0 +1,23 @@
+41a42,43
+>       case Token.ASSIGN:
+>         return tryFoldAssignment(subtree);
+69a72,90
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private Node tryFoldAssignment(Node subtree) {
+>     Preconditions.checkState(subtree.getType() == Token.ASSIGN);
+>     Node left = subtree.getFirstChild();
+>     Node right = subtree.getLastChild();
+>     
+>     if (left.getType() == Token.NAME
+>         && right.getType() == Token.NAME
+>         && left.getString().equals(right.getString())) {
+>       subtree.getParent().replaceChild(subtree, right.detachFromParent());
+>       reportCodeChange();
+>       return right;
+>     }
+>     return subtree;

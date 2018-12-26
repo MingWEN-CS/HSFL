@@ -1,0 +1,830 @@
+89,90c89,90
+< 	
+< 	private static final long serialVersionUID = -626730818244969716L;
+---
+>     
+>     private static final long serialVersionUID = -626730818244969716L;
+92,93c92,93
+< 	
+< 	private RandomGenerator rand = null;
+---
+>     
+>     private RandomGenerator rand = null;
+95,96c95,96
+< 	
+< 	private SecureRandom secRand = null;
+---
+>     
+>     private SecureRandom secRand = null;
+98c98
+< 	
+---
+>     
+101,102c101,102
+< 	public RandomDataImpl() {
+< 	}
+---
+>     public RandomDataImpl() {
+>     }
+104c104
+< 	
+---
+>     
+112,115c112,115
+< 	public RandomDataImpl(RandomGenerator rand) {
+< 		super();
+< 		this.rand = rand;
+< 	}
+---
+>     public RandomDataImpl(RandomGenerator rand) {
+>         super();
+>         this.rand = rand;
+>     }
+117c117
+< 	
+---
+>     
+134,137c134,137
+< 	public String nextHexString(int len) {
+< 		if (len <= 0) {
+< 			throw new IllegalArgumentException("length must be positive");
+< 		}
+---
+>     public String nextHexString(int len) {
+>         if (len <= 0) {
+>             throw new IllegalArgumentException("length must be positive");
+>         }
+139,140c139,140
+< 		
+< 		RandomGenerator ran = getRan();
+---
+>         
+>         RandomGenerator ran = getRan();
+142,143c142,143
+< 		
+< 		StringBuffer outBuffer = new StringBuffer();
+---
+>         
+>         StringBuffer outBuffer = new StringBuffer();
+145,147c145,147
+< 		
+< 		byte[] randomBytes = new byte[(len / 2) + 1];
+< 		ran.nextBytes(randomBytes);
+---
+>         
+>         byte[] randomBytes = new byte[(len / 2) + 1];
+>         ran.nextBytes(randomBytes);
+149,151c149,151
+< 		
+< 		for (int i = 0; i < randomBytes.length; i++) {
+< 			Integer c = Integer.valueOf(randomBytes[i]);
+---
+>         
+>         for (int i = 0; i < randomBytes.length; i++) {
+>             Integer c = Integer.valueOf(randomBytes[i]);
+153c153
+< 			
+---
+>             
+158c158
+< 			String hex = Integer.toHexString(c.intValue() + 128);
+---
+>             String hex = Integer.toHexString(c.intValue() + 128);
+160,167c160,167
+< 			
+< 			if (hex.length() == 1) {
+< 				hex = "0" + hex;
+< 			}
+< 			outBuffer.append(hex);
+< 		}
+< 		return outBuffer.toString().substring(0, len);
+< 	}
+---
+>             
+>             if (hex.length() == 1) {
+>                 hex = "0" + hex;
+>             }
+>             outBuffer.append(hex);
+>         }
+>         return outBuffer.toString().substring(0, len);
+>     }
+169c169
+< 	
+---
+>     
+179,187c179,187
+< 	public int nextInt(int lower, int upper) {
+< 		if (lower >= upper) {
+< 			throw new IllegalArgumentException(
+< 					"upper bound must be > lower bound");
+< 		}
+< 		RandomGenerator rand = getRan();
+< 		double r = rand.nextDouble();
+< 		return (int) ((r * upper) + ((1.0 - r) * lower) + r);
+< 	}
+---
+>     public int nextInt(int lower, int upper) {
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException(
+>                     "upper bound must be > lower bound");
+>         }
+>         RandomGenerator rand = getRan();
+>         double r = rand.nextDouble();
+>         return (int) ((r * upper) + ((1.0 - r) * lower) + r);
+>     }
+189c189
+< 	
+---
+>     
+199,207c199,207
+< 	public long nextLong(long lower, long upper) {
+< 		if (lower >= upper) {
+< 			throw new IllegalArgumentException(
+< 					"upper bound must be > lower bound");
+< 		}
+< 		RandomGenerator rand = getRan();
+< 		double r = rand.nextDouble();
+< 		return (long) ((r * upper) + ((1.0 - r) * lower) + r);
+< 	}
+---
+>     public long nextLong(long lower, long upper) {
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException(
+>                     "upper bound must be > lower bound");
+>         }
+>         RandomGenerator rand = getRan();
+>         double r = rand.nextDouble();
+>         return (long) ((r * upper) + ((1.0 - r) * lower) + r);
+>     }
+209c209
+< 	
+---
+>     
+229,232c229,232
+< 	public String nextSecureHexString(int len) {
+< 		if (len <= 0) {
+< 			throw new IllegalArgumentException("length must be positive");
+< 		}
+---
+>     public String nextSecureHexString(int len) {
+>         if (len <= 0) {
+>             throw new IllegalArgumentException("length must be positive");
+>         }
+234,242c234,242
+< 		
+< 		SecureRandom secRan = getSecRan();
+< 		MessageDigest alg = null;
+< 		try {
+< 			alg = MessageDigest.getInstance("SHA-1");
+< 		} catch (NoSuchAlgorithmException ex) {
+< 			return null; 
+< 		}
+< 		alg.reset();
+---
+>         
+>         SecureRandom secRan = getSecRan();
+>         MessageDigest alg = null;
+>         try {
+>             alg = MessageDigest.getInstance("SHA-1");
+>         } catch (NoSuchAlgorithmException ex) {
+>             return null; 
+>         }
+>         alg.reset();
+244,245c244,245
+< 		
+< 		int numIter = (len / 40) + 1;
+---
+>         
+>         int numIter = (len / 40) + 1;
+247,251c247,251
+< 		StringBuffer outBuffer = new StringBuffer();
+< 		for (int iter = 1; iter < numIter + 1; iter++) {
+< 			byte[] randomBytes = new byte[40];
+< 			secRan.nextBytes(randomBytes);
+< 			alg.update(randomBytes);
+---
+>         StringBuffer outBuffer = new StringBuffer();
+>         for (int iter = 1; iter < numIter + 1; iter++) {
+>             byte[] randomBytes = new byte[40];
+>             secRan.nextBytes(randomBytes);
+>             alg.update(randomBytes);
+253,254c253,254
+< 			
+< 			byte hash[] = alg.digest();
+---
+>             
+>             byte hash[] = alg.digest();
+256,258c256,258
+< 			
+< 			for (int i = 0; i < hash.length; i++) {
+< 				Integer c = Integer.valueOf(hash[i]);
+---
+>             
+>             for (int i = 0; i < hash.length; i++) {
+>                 Integer c = Integer.valueOf(hash[i]);
+260c260
+< 				
+---
+>                 
+265c265
+< 				String hex = Integer.toHexString(c.intValue() + 128);
+---
+>                 String hex = Integer.toHexString(c.intValue() + 128);
+267,275c267,275
+< 				
+< 				if (hex.length() == 1) {
+< 					hex = "0" + hex;
+< 				}
+< 				outBuffer.append(hex);
+< 			}
+< 		}
+< 		return outBuffer.toString().substring(0, len);
+< 	}
+---
+>                 
+>                 if (hex.length() == 1) {
+>                     hex = "0" + hex;
+>                 }
+>                 outBuffer.append(hex);
+>             }
+>         }
+>         return outBuffer.toString().substring(0, len);
+>     }
+277c277
+< 	
+---
+>     
+288,295c288,295
+< 	public int nextSecureInt(int lower, int upper) {
+< 		if (lower >= upper) {
+< 			throw new IllegalArgumentException(
+< 					"lower bound must be < upper bound");
+< 		}
+< 		SecureRandom sec = getSecRan();
+< 		return lower + (int) (sec.nextDouble() * (upper - lower + 1));
+< 	}
+---
+>     public int nextSecureInt(int lower, int upper) {
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException(
+>                     "lower bound must be < upper bound");
+>         }
+>         SecureRandom sec = getSecRan();
+>         return lower + (int) (sec.nextDouble() * (upper - lower + 1));
+>     }
+297c297
+< 	
+---
+>     
+308,315c308,315
+< 	public long nextSecureLong(long lower, long upper) {
+< 		if (lower >= upper) {
+< 			throw new IllegalArgumentException(
+< 					"lower bound must be < upper bound");
+< 		}
+< 		SecureRandom sec = getSecRan();
+< 		return lower + (long) (sec.nextDouble() * (upper - lower + 1));
+< 	}
+---
+>     public long nextSecureLong(long lower, long upper) {
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException(
+>                     "lower bound must be < upper bound");
+>         }
+>         SecureRandom sec = getSecRan();
+>         return lower + (long) (sec.nextDouble() * (upper - lower + 1));
+>     }
+317c317
+< 	
+---
+>     
+346,349c346,349
+< 	public long nextPoisson(double mean) {
+< 		if (mean <= 0) {
+< 			throw new IllegalArgumentException("Poisson mean must be > 0");
+< 		}
+---
+>     public long nextPoisson(double mean) {
+>         if (mean <= 0) {
+>             throw new IllegalArgumentException("Poisson mean must be > 0");
+>         }
+351c351
+< 		RandomGenerator rand = getRan();
+---
+>         RandomGenerator rand = getRan();
+353,358c353,358
+< 		double pivot = 6.0;
+< 		if (mean < pivot) {
+< 			double p = Math.exp(-mean);
+< 			long n = 0;
+< 			double r = 1.0d;
+< 			double rnd = 1.0d;
+---
+>         double pivot = 6.0;
+>         if (mean < pivot) {
+>             double p = Math.exp(-mean);
+>             long n = 0;
+>             double r = 1.0d;
+>             double rnd = 1.0d;
+360,377c360,377
+< 			while (n < 1000 * mean) {
+< 				rnd = rand.nextDouble();
+< 				r = r * rnd;
+< 				if (r >= p) {
+< 					n++;
+< 				} else {
+< 					return n;
+< 				}
+< 			}
+< 			return n;
+< 		} else {
+< 			double mu = Math.floor(mean);
+< 			double delta = Math.floor(pivot + (mu - pivot) / 2.0); 
+< 			
+< 			
+< 			double mu2delta = 2.0 * mu + delta;
+< 			double muDeltaHalf = mu + delta / 2.0;
+< 			double logMeanMu = Math.log(mean / mu);
+---
+>             while (n < 1000 * mean) {
+>                 rnd = rand.nextDouble();
+>                 r = r * rnd;
+>                 if (r >= p) {
+>                     n++;
+>                 } else {
+>                     return n;
+>                 }
+>             }
+>             return n;
+>         } else {
+>             double mu = Math.floor(mean);
+>             double delta = Math.floor(pivot + (mu - pivot) / 2.0); 
+>             
+>             
+>             double mu2delta = 2.0 * mu + delta;
+>             double muDeltaHalf = mu + delta / 2.0;
+>             double logMeanMu = Math.log(mean / mu);
+379c379
+< 			double muFactorialLog = MathUtils.factorialLog((int) mu);
+---
+>             double muFactorialLog = MathUtils.factorialLog((int) mu);
+381,388c381,388
+< 			double c1 = Math.sqrt(Math.PI * mu / 2.0);
+< 			double c2 = c1
+< 					+ Math.sqrt(Math.PI * muDeltaHalf
+< 							/ (2.0 * Math.exp(1.0 / mu2delta)));
+< 			double c3 = c2 + 2.0;
+< 			double c4 = c3 + Math.exp(1.0 / 78.0);
+< 			double c = c4 + 2.0 / delta * mu2delta
+< 					* Math.exp(-delta / mu2delta * (1.0 + delta / 2.0));
+---
+>             double c1 = Math.sqrt(Math.PI * mu / 2.0);
+>             double c2 = c1
+>                     + Math.sqrt(Math.PI * muDeltaHalf
+>                             / (2.0 * Math.exp(1.0 / mu2delta)));
+>             double c3 = c2 + 2.0;
+>             double c4 = c3 + Math.exp(1.0 / 78.0);
+>             double c = c4 + 2.0 / delta * mu2delta
+>                     * Math.exp(-delta / mu2delta * (1.0 + delta / 2.0));
+390,392c390,392
+< 			double y = 0.0;
+< 			double x = 0.0;
+< 			double w = Double.POSITIVE_INFINITY;
+---
+>             double y = 0.0;
+>             double x = 0.0;
+>             double w = Double.POSITIVE_INFINITY;
+394,397c394,397
+< 			boolean accept = false;
+< 			while (!accept) {
+< 				double u = nextUniform(0.0, c);
+< 				double e = nextExponential(mean);
+---
+>             boolean accept = false;
+>             while (!accept) {
+>                 double u = nextUniform(0.0, c);
+>                 double e = nextExponential(mean);
+399,435c399,435
+< 				if (u <= c1) {
+< 					double z = nextGaussian(0.0, 1.0);
+< 					y = -Math.abs(z) * Math.sqrt(mu) - 1.0;
+< 					x = Math.floor(y);
+< 					w = -z * z / 2.0 - e - x * logMeanMu;
+< 					if (x < -mu) {
+< 						w = Double.POSITIVE_INFINITY;
+< 					}
+< 				} else if (c1 < u && u <= c2) {
+< 					double z = nextGaussian(0.0, 1.0);
+< 					y = 1.0 + Math.abs(z) * Math.sqrt(muDeltaHalf);
+< 					x = Math.ceil(y);
+< 					w = (-y * y + 2.0 * y) / mu2delta - e - x * logMeanMu;
+< 					if (x > delta) {
+< 						w = Double.POSITIVE_INFINITY;
+< 					}
+< 				} else if (c2 < u && u <= c3) {
+< 					x = 0.0;
+< 					w = -e;
+< 				} else if (c3 < u && u <= c4) {
+< 					x = 1.0;
+< 					w = -e - logMeanMu;
+< 				} else if (c4 < u) {
+< 					double v = nextExponential(mean);
+< 					y = delta + v * 2.0 / delta * mu2delta;
+< 					x = Math.ceil(y);
+< 					w = -delta / mu2delta * (1.0 + y / 2.0) - e - x * logMeanMu;
+< 				}
+< 				accept = (w <= x * Math.log(mu)
+< 						- MathUtils.factorialLog((int) (mu + x))
+< 						/ muFactorialLog);
+< 			}
+< 			
+< 			
+< 			return (long) (x + mu);
+< 		}
+< 	}
+---
+>                 if (u <= c1) {
+>                     double z = nextGaussian(0.0, 1.0);
+>                     y = -Math.abs(z) * Math.sqrt(mu) - 1.0;
+>                     x = Math.floor(y);
+>                     w = -z * z / 2.0 - e - x * logMeanMu;
+>                     if (x < -mu) {
+>                         w = Double.POSITIVE_INFINITY;
+>                     }
+>                 } else if (c1 < u && u <= c2) {
+>                     double z = nextGaussian(0.0, 1.0);
+>                     y = 1.0 + Math.abs(z) * Math.sqrt(muDeltaHalf);
+>                     x = Math.ceil(y);
+>                     w = (-y * y + 2.0 * y) / mu2delta - e - x * logMeanMu;
+>                     if (x > delta) {
+>                         w = Double.POSITIVE_INFINITY;
+>                     }
+>                 } else if (c2 < u && u <= c3) {
+>                     x = 0.0;
+>                     w = -e;
+>                 } else if (c3 < u && u <= c4) {
+>                     x = 1.0;
+>                     w = -e - logMeanMu;
+>                 } else if (c4 < u) {
+>                     double v = nextExponential(mean);
+>                     y = delta + v * 2.0 / delta * mu2delta;
+>                     x = Math.ceil(y);
+>                     w = -delta / mu2delta * (1.0 + y / 2.0) - e - x * logMeanMu;
+>                 }
+>                 accept = (w <= x * Math.log(mu)
+>                         - MathUtils.factorialLog((int) (mu + x))
+>                         / muFactorialLog);
+>             }
+>             
+>             
+>             return (long) (x + mu);
+>         }
+>     }
+437c437
+< 	
+---
+>     
+448,454c448,454
+< 	public double nextGaussian(double mu, double sigma) {
+< 		if (sigma <= 0) {
+< 			throw new IllegalArgumentException("Gaussian std dev must be > 0");
+< 		}
+< 		RandomGenerator rand = getRan();
+< 		return sigma * rand.nextGaussian() + mu;
+< 	}
+---
+>     public double nextGaussian(double mu, double sigma) {
+>         if (sigma <= 0) {
+>             throw new IllegalArgumentException("Gaussian std dev must be > 0");
+>         }
+>         RandomGenerator rand = getRan();
+>         return sigma * rand.nextGaussian() + mu;
+>     }
+456c456
+< 	
+---
+>     
+470,480c470,480
+< 	public double nextExponential(double mean) {
+< 		if (mean < 0.0) {
+< 			throw new IllegalArgumentException("Exponential mean must be >= 0");
+< 		}
+< 		RandomGenerator rand = getRan();
+< 		double unif = rand.nextDouble();
+< 		while (unif == 0.0d) {
+< 			unif = rand.nextDouble();
+< 		}
+< 		return -mean * Math.log(unif);
+< 	}
+---
+>     public double nextExponential(double mean) {
+>         if (mean < 0.0) {
+>             throw new IllegalArgumentException("Exponential mean must be >= 0");
+>         }
+>         RandomGenerator rand = getRan();
+>         double unif = rand.nextDouble();
+>         while (unif == 0.0d) {
+>             unif = rand.nextDouble();
+>         }
+>         return -mean * Math.log(unif);
+>     }
+482c482
+< 	
+---
+>     
+498,503c498,503
+< 	public double nextUniform(double lower, double upper) {
+< 		if (lower >= upper) {
+< 			throw new IllegalArgumentException(
+< 					"lower bound must be < upper bound");
+< 		}
+< 		RandomGenerator rand = getRan();
+---
+>     public double nextUniform(double lower, double upper) {
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException(
+>                     "lower bound must be < upper bound");
+>         }
+>         RandomGenerator rand = getRan();
+505,509c505,509
+< 		
+< 		double u = rand.nextDouble();
+< 		while (u <= 0.0) {
+< 			u = rand.nextDouble();
+< 		}
+---
+>         
+>         double u = rand.nextDouble();
+>         while (u <= 0.0) {
+>             u = rand.nextDouble();
+>         }
+511,512c511,512
+< 		return lower + u * (upper - lower);
+< 	}
+---
+>         return lower + u * (upper - lower);
+>     }
+514c514
+< 	
+---
+>     
+523,529c523,529
+< 	private RandomGenerator getRan() {
+< 		if (rand == null) {
+< 			rand = new JDKRandomGenerator();
+< 			rand.setSeed(System.currentTimeMillis());
+< 		}
+< 		return rand;
+< 	}
+---
+>     private RandomGenerator getRan() {
+>         if (rand == null) {
+>             rand = new JDKRandomGenerator();
+>             rand.setSeed(System.currentTimeMillis());
+>         }
+>         return rand;
+>     }
+531c531
+< 	
+---
+>     
+539,545c539,545
+< 	private SecureRandom getSecRan() {
+< 		if (secRand == null) {
+< 			secRand = new SecureRandom();
+< 			secRand.setSeed(System.currentTimeMillis());
+< 		}
+< 		return secRand;
+< 	}
+---
+>     private SecureRandom getSecRan() {
+>         if (secRand == null) {
+>             secRand = new SecureRandom();
+>             secRand.setSeed(System.currentTimeMillis());
+>         }
+>         return secRand;
+>     }
+547c547
+< 	
+---
+>     
+556,561c556,561
+< 	public void reSeed(long seed) {
+< 		if (rand == null) {
+< 			rand = new JDKRandomGenerator();
+< 		}
+< 		rand.setSeed(seed);
+< 	}
+---
+>     public void reSeed(long seed) {
+>         if (rand == null) {
+>             rand = new JDKRandomGenerator();
+>         }
+>         rand.setSeed(seed);
+>     }
+563c563
+< 	
+---
+>     
+570,575c570,575
+< 	public void reSeedSecure() {
+< 		if (secRand == null) {
+< 			secRand = new SecureRandom();
+< 		}
+< 		secRand.setSeed(System.currentTimeMillis());
+< 	}
+---
+>     public void reSeedSecure() {
+>         if (secRand == null) {
+>             secRand = new SecureRandom();
+>         }
+>         secRand.setSeed(System.currentTimeMillis());
+>     }
+577c577
+< 	
+---
+>     
+586,591c586,591
+< 	public void reSeedSecure(long seed) {
+< 		if (secRand == null) {
+< 			secRand = new SecureRandom();
+< 		}
+< 		secRand.setSeed(seed);
+< 	}
+---
+>     public void reSeedSecure(long seed) {
+>         if (secRand == null) {
+>             secRand = new SecureRandom();
+>         }
+>         secRand.setSeed(seed);
+>     }
+593c593
+< 	
+---
+>     
+597,602c597,602
+< 	public void reSeed() {
+< 		if (rand == null) {
+< 			rand = new JDKRandomGenerator();
+< 		}
+< 		rand.setSeed(System.currentTimeMillis());
+< 	}
+---
+>     public void reSeed() {
+>         if (rand == null) {
+>             rand = new JDKRandomGenerator();
+>         }
+>         rand.setSeed(System.currentTimeMillis());
+>     }
+604c604
+< 	
+---
+>     
+624,627c624,627
+< 	public void setSecureAlgorithm(String algorithm, String provider)
+< 			throws NoSuchAlgorithmException, NoSuchProviderException {
+< 		secRand = SecureRandom.getInstance(algorithm, provider);
+< 	}
+---
+>     public void setSecureAlgorithm(String algorithm, String provider)
+>             throws NoSuchAlgorithmException, NoSuchProviderException {
+>         secRand = SecureRandom.getInstance(algorithm, provider);
+>     }
+629c629
+< 	
+---
+>     
+657,663c657,663
+< 	public int[] nextPermutation(int n, int k) {
+< 		if (k > n) {
+< 			throw new IllegalArgumentException("permutation k exceeds n");
+< 		}
+< 		if (k == 0) {
+< 			throw new IllegalArgumentException("permutation k must be > 0");
+< 		}
+---
+>     public int[] nextPermutation(int n, int k) {
+>         if (k > n) {
+>             throw new IllegalArgumentException("permutation k exceeds n");
+>         }
+>         if (k == 0) {
+>             throw new IllegalArgumentException("permutation k must be > 0");
+>         }
+665,670c665,670
+< 		int[] index = getNatural(n);
+< 		shuffle(index, n - k);
+< 		int[] result = new int[k];
+< 		for (int i = 0; i < k; i++) {
+< 			result[i] = index[n - i - 1];
+< 		}
+---
+>         int[] index = getNatural(n);
+>         shuffle(index, n - k);
+>         int[] result = new int[k];
+>         for (int i = 0; i < k; i++) {
+>             result[i] = index[n - i - 1];
+>         }
+672,673c672,673
+< 		return result;
+< 	}
+---
+>         return result;
+>     }
+675c675
+< 	
+---
+>     
+691,699c691,699
+< 	public Object[] nextSample(Collection<?> c, int k) {
+< 		int len = c.size();
+< 		if (k > len) {
+< 			throw new IllegalArgumentException(
+< 					"sample size exceeds collection size");
+< 		}
+< 		if (k == 0) {
+< 			throw new IllegalArgumentException("sample size must be > 0");
+< 		}
+---
+>     public Object[] nextSample(Collection<?> c, int k) {
+>         int len = c.size();
+>         if (k > len) {
+>             throw new IllegalArgumentException(
+>                     "sample size exceeds collection size");
+>         }
+>         if (k == 0) {
+>             throw new IllegalArgumentException("sample size must be > 0");
+>         }
+701,708c701,708
+< 		Object[] objects = c.toArray();
+< 		int[] index = nextPermutation(len, k);
+< 		Object[] result = new Object[k];
+< 		for (int i = 0; i < k; i++) {
+< 			result[i] = objects[index[i]];
+< 		}
+< 		return result;
+< 	}
+---
+>         Object[] objects = c.toArray();
+>         int[] index = nextPermutation(len, k);
+>         Object[] result = new Object[k];
+>         for (int i = 0; i < k; i++) {
+>             result[i] = objects[index[i]];
+>         }
+>         return result;
+>     }
+710c710
+< 	
+---
+>     
+712c712
+< 	
+---
+>     
+721,733c721,733
+< 	private void shuffle(int[] list, int end) {
+< 		int target = 0;
+< 		for (int i = list.length - 1; i >= end; i--) {
+< 			if (i == 0) {
+< 				target = 0;
+< 			} else {
+< 				target = nextInt(0, i);
+< 			}
+< 			int temp = list[target];
+< 			list[target] = list[i];
+< 			list[i] = temp;
+< 		}
+< 	}
+---
+>     private void shuffle(int[] list, int end) {
+>         int target = 0;
+>         for (int i = list.length - 1; i >= end; i--) {
+>             if (i == 0) {
+>                 target = 0;
+>             } else {
+>                 target = nextInt(0, i);
+>             }
+>             int temp = list[target];
+>             list[target] = list[i];
+>             list[i] = temp;
+>         }
+>     }
+735c735
+< 	
+---
+>     
+742,748c742,748
+< 	private int[] getNatural(int n) {
+< 		int[] natural = new int[n];
+< 		for (int i = 0; i < n; i++) {
+< 			natural[i] = i;
+< 		}
+< 		return natural;
+< 	}
+---
+>     private int[] getNatural(int n) {
+>         int[] natural = new int[n];
+>         for (int i = 0; i < n; i++) {
+>             natural[i] = i;
+>         }
+>         return natural;
+>     }

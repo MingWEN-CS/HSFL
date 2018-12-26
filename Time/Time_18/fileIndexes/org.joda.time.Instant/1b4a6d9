@@ -1,0 +1,171 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.Serializable;
+
+import org.joda.time.convert.InstantConverter;
+import org.joda.time.convert.ConverterManager;
+import org.joda.time.format.ISODateTimeFormat;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public final class Instant extends AbstractInstant
+        implements ReadableInstant, Serializable {
+
+    
+    private static final long serialVersionUID = 3299096530934209741L;
+
+    
+    private final long iMillis;
+
+    
+    
+    
+
+
+    public Instant() {
+        super();
+        iMillis = DateTimeUtils.currentTimeMillis();
+    }
+
+    
+
+
+
+
+    public Instant(long instant) {
+        super();
+        iMillis = instant;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Instant(Object instant) {
+        super();
+        InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+        iMillis = converter.getInstantMillis(instant);
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public Instant withMillis(long newMillis) {
+        return newMillis == iMillis ? this : new Instant(newMillis);
+    }
+
+    
+    
+    
+
+
+
+
+    public long getMillis() {
+        return iMillis;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public Chronology getChronology() {
+        return null;
+    }
+
+    
+    
+    
+
+
+
+
+
+
+
+    public String toString() {
+        return ISODateTimeFormat.getInstanceUTC().dateTime().print(this);
+    }
+
+}

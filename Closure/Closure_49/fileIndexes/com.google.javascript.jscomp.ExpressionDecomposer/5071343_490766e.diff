@@ -1,0 +1,45 @@
+158c158,160
+<     for (Node child = nonconditionalExpr, parent = child.getParent();
+---
+>     for (Node grandchild = null,
+>             child = nonconditionalExpr,
+>             parent = child.getParent();
+160c162,164
+<          child = parent, parent = child.getParent()) {
+---
+>          grandchild = child,
+>              child = parent,
+>              parent = child.getParent()) {
+189a194,195
+>         Node functionExpression = parent.getFirstChild();
+>         decomposeSubExpressions(functionExpression.getNext(), child, state);
+191,198c197,199
+<         
+<         if (!maybeExternMethod(parent.getFirstChild())) {
+<           throw new IllegalStateException(
+<               "External object method calls can not be decomposed.");
+<         } else {
+<           Node functionExpression = parent.getFirstChild();
+<           decomposeSubExpressions(
+<               functionExpression.getNext(), child, state);
+---
+>         if (isExpressionTreeUnsafe(functionExpression, state.sideEffects)
+>             && functionExpression.getFirstChild() != grandchild) {
+>           
+200c201,204
+<           if (isExpressionTreeUnsafe(functionExpression, state.sideEffects)) {
+---
+>           if (true) {
+>             throw new IllegalStateException(
+>                 "Object method calls can not be decomposed.");
+>           } else {
+212,213c216
+<         decomposeObjectLiteralKeys(
+<             parent.getFirstChild(), child, state);
+---
+>         decomposeObjectLiteralKeys(parent.getFirstChild(), child, state);
+215,216c218
+<         decomposeSubExpressions(
+<             parent.getFirstChild(), child, state);
+---
+>         decomposeSubExpressions(parent.getFirstChild(), child, state);

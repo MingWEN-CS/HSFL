@@ -1,0 +1,39 @@
+108c108
+<   private ObjectType typeOfThis;
+---
+>   private JSType typeOfThis;
+135c135
+<                ArrowType arrowType, ObjectType typeOfThis,
+---
+>                ArrowType arrowType, JSType typeOfThis,
+795c795
+<     ObjectType newTypeOfThis = null;
+---
+>     JSType newTypeOfThis = null;
+802,808c802
+<       if (maybeNewTypeOfThis instanceof ObjectType) {
+<         newTypeOfThis = (ObjectType) maybeNewTypeOfThis;
+<       } else {
+<         newTypeOfThis = leastSuper ?
+<             registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE) :
+<             registry.getNativeObjectType(JSTypeNative.NO_OBJECT_TYPE);
+<       }
+---
+>       newTypeOfThis = maybeNewTypeOfThis;
+1030,1031c1024,1026
+<         (other.typeOfThis.getConstructor() != null &&
+<              other.typeOfThis.getConstructor().isInterface()) ||
+---
+>         (other.typeOfThis.toObjectType() != null &&
+>              other.typeOfThis.toObjectType().getConstructor() != null &&
+>              other.typeOfThis.toObjectType().getConstructor().isInterface()) ||
+1055c1050
+<     return typeOfThis;
+---
+>     return typeOfThis.toObjectType();
+1077,1078c1072,1073
+<   public ObjectType getTypeOfThis() {
+<     return typeOfThis.isNoObjectType() ?
+---
+>   public JSType getTypeOfThis() {
+>     return typeOfThis.isEmptyType() ?

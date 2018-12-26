@@ -1,0 +1,93 @@
+19a20,21
+> import com.google.common.collect.Sets;
+> import com.google.javascript.jscomp.CodingConvention.AssertionFunctionSpec;
+20a23
+> import com.google.javascript.jscomp.NodeTraversal.Callback;
+24a28,34
+> import java.util.Set;
+> 
+> 
+> 
+> 
+> 
+> 
+46a57,59
+>   private final boolean removeAbstractMethods;
+>   private final boolean removeAssertionCalls;
+> 
+53a67,71
+>   
+> 
+> 
+>   private final List<Node> assertionCalls = Lists.newArrayList();
+> 
+119,120d136
+< 
+< 
+125c141
+< 
+---
+>     @Override
+144a161,169
+>   private class FindAssertionCalls extends AbstractPostOrderCallback {
+>     Set<String> assertionNames = Sets.newHashSet();
+> 
+>     FindAssertionCalls() {
+>       for (AssertionFunctionSpec spec :
+>                compiler.getCodingConvention().getAssertionFunctions()) {
+>         assertionNames.add(spec.getFunctionName());
+>       }
+>     }
+147c172,192
+<   ClosureCodeRemoval(AbstractCompiler compiler) {
+---
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       if (n.getType() == Token.CALL) {
+>         String fnName = n.getFirstChild().getQualifiedName();
+>         if (assertionNames.contains(fnName)) {
+>           assertionCalls.add(n);
+>         }
+>       }
+>     }
+>   }
+> 
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   ClosureCodeRemoval(AbstractCompiler compiler, boolean removeAbstractMethods,
+>                      boolean removeAssertionCalls) {
+148a194,195
+>     this.removeAbstractMethods = removeAbstractMethods;
+>     this.removeAssertionCalls = removeAssertionCalls;
+153c200,207
+<     NodeTraversal.traverse(compiler, root, new FindAbstractMethods());
+---
+>     List<Callback> passes = Lists.newArrayList();
+>     if (removeAbstractMethods) {
+>       passes.add(new FindAbstractMethods());
+>     }
+>     if (removeAssertionCalls) {
+>       passes.add(new FindAssertionCalls());
+>     }
+>     CombinedCompilerPass.traverse(compiler, root, passes);
+156a211,224
+>     }
+> 
+>     for (Node call : assertionCalls) {
+>       
+>       Node parent = call.getParent();
+>       if (NodeUtil.isExpressionNode(parent)) {
+>         parent.getParent().removeChild(parent);
+>       } else {
+>         
+>         
+>         parent.replaceChild(
+>             call, call.getFirstChild().getNext().detachFromParent());
+>       }
+>       compiler.reportCodeChange();

@@ -1,0 +1,74 @@
+29a30,31
+> import com.google.common.collect.Multimap;
+> import com.google.common.collect.HashMultimap;
+98a101,105
+>   static final DiagnosticType CONST_PROPERTY_REASSIGNED_VALUE =
+>       DiagnosticType.disabled(
+>         "JSC_CONSTANT_PROPERTY_REASSIGNED_VALUE",
+>         "constant property {0} assigned a value more than once");
+> 
+106a114,115
+>   private final Multimap<String, String> initializedConstantProperties;
+> 
+109a119
+>     this.initializedConstantProperties = HashMultimap.create();
+210a221
+>         checkConstantProperty(t, n);
+326a338,394
+>         }
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private void checkConstantProperty(NodeTraversal t,
+>       Node getprop) {
+>     
+>     Node parent = getprop.getParent();
+>     if (!(NodeUtil.isAssignmentOp(parent) && parent.getFirstChild() == getprop)
+>         && (parent.getType() != Token.INC) && (parent.getType() != Token.DEC)) {
+>       return;
+>     }
+> 
+>     ObjectType objectType =
+>       ObjectType.cast(dereference(getprop.getFirstChild().getJSType()));
+>     String propertyName = getprop.getLastChild().getString();
+> 
+>     
+>     if (objectType != null) {
+>       ObjectType oType = objectType;
+>       while (oType != null) {
+>         if (oType.hasReferenceName()) {
+>           if (initializedConstantProperties.containsEntry(
+>                   oType.getReferenceName(), propertyName)) {
+>             compiler.report(
+>                 t.makeError(getprop, CONST_PROPERTY_REASSIGNED_VALUE,
+>                     propertyName));
+>             break;
+>           }
+>         }
+>         oType = oType.getImplicitPrototype();
+>       }
+> 
+>       JSDocInfo info = objectType.getOwnPropertyJSDocInfo(propertyName);
+>       if (info != null && info.isConstant()
+>           && objectType.hasReferenceName()) {
+>         initializedConstantProperties.put(objectType.getReferenceName(),
+>             propertyName);
+>       }
+> 
+>       
+>       if (objectType.isInstanceType()) {
+>         ObjectType prototype = objectType.getImplicitPrototype();
+>         if (prototype != null) {
+>           JSDocInfo prototypeInfo
+>             = prototype.getOwnPropertyJSDocInfo(propertyName);
+>           if (prototypeInfo != null && prototypeInfo.isConstant()
+>               && prototype.hasReferenceName()) {
+>             initializedConstantProperties.put(prototype.getReferenceName(),
+>                 propertyName);
+>           }

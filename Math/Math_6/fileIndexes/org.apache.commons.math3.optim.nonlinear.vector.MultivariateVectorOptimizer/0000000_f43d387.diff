@@ -1,0 +1,164 @@
+1a2,164
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math3.optim.nonlinear.vector;
+> 
+> import org.apache.commons.math3.exception.TooManyEvaluationsException;
+> import org.apache.commons.math3.exception.DimensionMismatchException;
+> import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+> import org.apache.commons.math3.optim.OptimizationData;
+> import org.apache.commons.math3.optim.BaseMultivariateOptimizer;
+> import org.apache.commons.math3.optim.ConvergenceChecker;
+> import org.apache.commons.math3.optim.PointVectorValuePair;
+> import org.apache.commons.math3.linear.RealMatrix;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public abstract class MultivariateVectorOptimizer
+>     extends BaseMultivariateOptimizer<PointVectorValuePair> {
+>     
+>     private double[] target;
+>     
+>     private RealMatrix weightMatrix;
+>     
+>     private MultivariateVectorFunction model;
+> 
+>     
+> 
+> 
+>     protected MultivariateVectorOptimizer(ConvergenceChecker<PointVectorValuePair> checker) {
+>         super(checker);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected double[] computeObjectiveValue(double[] params) {
+>         super.incrementEvaluationCount();
+>         return model.value(params);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PointVectorValuePair optimize(OptimizationData... optData)
+>         throws TooManyEvaluationsException,
+>                DimensionMismatchException {
+>         
+>         parseOptimizationData(optData);
+>         
+>         checkParameters();
+>         
+>         return super.optimize(optData);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public RealMatrix getWeight() {
+>         return weightMatrix.copy();
+>     }
+>     
+> 
+> 
+> 
+> 
+> 
+>     public double[] getTarget() {
+>         return target.clone();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public int getTargetSize() {
+>         return target.length;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private void parseOptimizationData(OptimizationData... optData) {
+>         
+>         
+>         for (OptimizationData data : optData) {
+>             if (data instanceof ModelFunction) {
+>                 model = ((ModelFunction) data).getModelFunction();
+>                 continue;
+>             }
+>             if (data instanceof Target) {
+>                 target = ((Target) data).getTarget();
+>                 continue;
+>             }
+>             if (data instanceof Weight) {
+>                 weightMatrix = ((Weight) data).getWeight();
+>                 continue;
+>             }
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private void checkParameters() {
+>         if (target.length != weightMatrix.getColumnDimension()) {
+>             throw new DimensionMismatchException(target.length,
+>                                                  weightMatrix.getColumnDimension());
+>         }
+>     }
+> }

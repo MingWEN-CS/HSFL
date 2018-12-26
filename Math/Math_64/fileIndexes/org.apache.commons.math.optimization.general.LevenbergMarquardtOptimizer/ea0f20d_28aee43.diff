@@ -1,0 +1,46 @@
+102a103
+> 
+153a155,159
+> 
+> 
+> 
+> 
+> 
+159a166
+>         setConvergenceChecker(null);
+184a192
+> 
+194a203
+> 
+204a214
+> 
+237a248
+>         VectorialPointValuePair current = new VectorialPointValuePair(point, objective);
+242a254
+>             VectorialPointValuePair previous = current;
+294c306
+<                 return new VectorialPointValuePair(point, objective);
+---
+>                 return current;
+335a348
+>                 current = new VectorialPointValuePair(point, objective);
+404,406c417,426
+<                 if (((Math.abs(actRed) <= costRelativeTolerance) &&
+<                         (preRed <= costRelativeTolerance) &&
+<                         (ratio <= 2.0)) ||
+---
+>                 if (checker != null) {
+>                     
+>                     if (checker.converged(getIterations(), previous, current)) {
+>                         return current;                        
+>                     }
+>                 } else {
+>                     
+>                     if (((Math.abs(actRed) <= costRelativeTolerance) &&
+>                          (preRed <= costRelativeTolerance) &&
+>                          (ratio <= 2.0)) ||
+408c428,429
+<                     return new VectorialPointValuePair(point, objective);
+---
+>                         return current;
+>                     }

@@ -1,0 +1,56 @@
+218,223c218,220
+<           JSType maybeBaseType = info.getBaseType().evaluate(scope);
+<           if (maybeBaseType instanceof ObjectType) {
+<             baseType = (ObjectType) maybeBaseType;
+<           } else {
+<             reportWarning(EXTENDS_NON_OBJECT,
+<                 fnName, maybeBaseType.toString());
+---
+>           baseType = ObjectType.cast(info.getBaseType().evaluate(scope));
+>           if (baseType == null) {
+>             reportWarning(EXTENDS_NON_OBJECT, fnName, baseType.toString());
+234,236c231,233
+<           JSType interType = t.evaluate(scope);
+<           if (interType instanceof ObjectType) {
+<             implementedInterfaces.add((ObjectType) interType);
+---
+>           ObjectType interType = ObjectType.cast(t.evaluate(scope));
+>           if (interType != null) {
+>             implementedInterfaces.add(interType);
+262,264c259,261
+<     if (type instanceof ObjectType &&
+<         (info == null || !info.hasType())) {
+<       thisType = (ObjectType) type;
+---
+>     ObjectType objType = ObjectType.cast(type);
+>     if (objType != null && (info == null || !info.hasType())) {
+>       thisType = objType;
+278c275
+<     JSType maybeThisType = null;
+---
+>     ObjectType maybeThisType = null;
+280c277
+<       maybeThisType = info.getThisType().evaluate(scope);
+---
+>       maybeThisType = ObjectType.cast(info.getThisType().evaluate(scope));
+282c279
+<     if (maybeThisType != null && maybeThisType instanceof ObjectType) {
+---
+>     if (maybeThisType != null) {
+289c286
+<       thisType = (ObjectType) maybeThisType;
+---
+>       thisType = maybeThisType;
+299,303c296,301
+<       JSType ownerType = typeRegistry.getType(
+<           scope, ownerTypeName, sourceName,
+<           owner.getLineno(), owner.getCharno());
+<       if (ownerType instanceof ObjectType) {
+<         thisType = (ObjectType) ownerType;
+---
+>       ObjectType ownerType = ObjectType.cast(
+>           typeRegistry.getType(
+>               scope, ownerTypeName, sourceName,
+>               owner.getLineno(), owner.getCharno()));
+>       if (ownerType != null) {
+>         thisType = ownerType;

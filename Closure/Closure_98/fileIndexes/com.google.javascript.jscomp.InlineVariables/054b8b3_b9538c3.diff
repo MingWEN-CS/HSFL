@@ -1,0 +1,28 @@
+330a331,332
+>       
+>       boolean isFunctionDeclaration = NodeUtil.isFunctionDeclaration(value);
+338c340,346
+<       removeDeclaration(declaration);
+---
+> 
+>       
+>       if (!isFunctionDeclaration) {
+>         removeDeclaration(declaration);
+>       } else {
+>         compiler.reportCodeChange();
+>       }
+589d596
+< 
+591,592c598,600
+<       return declaration.getParent().getType() == Token.VAR
+<           && declaration.getGrandparent().getType() != Token.FOR;
+---
+>       return (declaration.getParent().getType() == Token.VAR
+>           && declaration.getGrandparent().getType() != Token.FOR)
+>           || NodeUtil.isFunctionDeclaration(declaration.getParent());
+603c611,613
+<         return initialization.getNameNode().getFirstChild() != null;
+---
+>         
+>         return NodeUtil.isFunctionDeclaration(initialization.getParent())
+>             || initialization.getNameNode().getFirstChild() != null;

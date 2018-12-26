@@ -1,0 +1,76 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.javascript.jscomp.graph.LatticeElement;
+
+import java.util.List;
+
+
+
+
+interface JoinOp<L extends LatticeElement> extends Function<List<L>, L> {
+
+  
+
+
+
+  static abstract class BinaryJoinOp<L extends LatticeElement>
+      implements JoinOp<L> {
+    @Override
+    public final L apply(List<L> values) {
+      Preconditions.checkArgument(!values.isEmpty());
+      int size = values.size();
+      if (size == 1) {
+        return values.get(0);
+      } else if (size == 2) {
+        return apply(values.get(0), values.get(1));
+      } else {
+        int mid = computeMidPoint(size);
+        return apply(
+            apply(values.subList(0, mid)),
+            apply(values.subList(mid, size)));
+      }
+    }
+
+    
+
+
+
+
+    abstract L apply(L latticeA, L latticeB);
+
+    
+
+
+
+
+
+
+    static int computeMidPoint(int size) {
+      int midpoint = size >>> 1;
+      if (size > 4) {
+        
+
+        midpoint &= -2; 
+      }
+      return midpoint;
+    }
+  }
+}

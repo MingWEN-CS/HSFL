@@ -1,0 +1,50 @@
+373a374,395
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private Node transformParameter(AstNode node) {
+>     Node irNode = justTransform(node);
+>     Comment comment = node.getJsDocNode();
+>     if (comment != null) {
+>       JSDocInfo info = parseInlineTypeDoc(comment, irNode);
+>       if (info != null) {
+>         irNode.setJSDocInfo(info);
+>       }
+>     }
+>     setSourceInfo(irNode, node);
+>     return irNode;
+>   }
+> 
+451a474,495
+> 
+> 
+>   private JSDocInfo parseInlineTypeDoc(Comment node, Node irNode) {
+>     String comment = node.getValue();
+>     int lineno = node.getLineno();
+>     int position = node.getAbsolutePosition();
+> 
+>     
+>     int numOpeningChars = 3;
+>     JsDocInfoParser parser =
+>       new JsDocInfoParser(
+>           new JsDocTokenStream(comment.substring(numOpeningChars),
+>                                lineno,
+>                                position2charno(position) + numOpeningChars),
+>           node,
+>           irNode,
+>           config,
+>           errorReporter);
+>     return parser.parseInlineTypeDoc();
+>   }
+> 
+>   
+761c805
+<         Node paramNode = transform(param);
+---
+>         Node paramNode = transformParameter(param);

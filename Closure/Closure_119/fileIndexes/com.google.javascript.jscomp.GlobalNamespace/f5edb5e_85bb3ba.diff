@@ -1,0 +1,79 @@
+566c566
+<       } else if (isConstructorOrEnumDeclaration(n, parent)) {
+---
+>       } else if (isTypeDeclaration(n, parent)) {
+568c568
+<         nameObj.setIsClassOrEnum();
+---
+>         nameObj.setDeclaredType();
+582,605c582,584
+<     private boolean isConstructorOrEnumDeclaration(Node n, Node parent) {
+<       JSDocInfo info;
+<       int valueNodeType;
+<       switch (parent.getType()) {
+<         case Token.ASSIGN:
+<           info = parent.getJSDocInfo();
+<           valueNodeType = n.getNext().getType();
+<           break;
+<         case Token.VAR:
+<           info = n.getJSDocInfo();
+<           if (info == null) {
+<             info = parent.getJSDocInfo();
+<           }
+<           Node valueNode = n.getFirstChild();
+<           valueNodeType = valueNode != null ? valueNode.getType() : Token.VOID;
+<           break;
+<         default:
+<           if (NodeUtil.isFunctionDeclaration(parent)) {
+<             info = parent.getJSDocInfo();
+<             valueNodeType = Token.FUNCTION;
+<             break;
+<           }
+<           return false;
+<       }
+---
+>     private boolean isTypeDeclaration(Node n, Node parent) {
+>       Node valueNode = NodeUtil.getRValueOfLValue(n);
+>       JSDocInfo info = NodeUtil.getBestJSDocInfo(n);
+607,609c586,589
+<       return info != null &&
+<              (info.isConstructor() && valueNodeType == Token.FUNCTION ||
+<               info.hasEnumParameterType() && valueNodeType == Token.OBJECTLIT);
+---
+>       return info != null && valueNode != null &&
+>              (info.isConstructor() && valueNode.isFunction() ||
+>               info.isInterface() && valueNode.isFunction() ||
+>               info.hasEnumParameterType() && valueNode.isObjectLit());
+892,893c872,873
+<     private boolean isClassOrEnum = false;
+<     private boolean hasClassOrEnumDescendant = false;
+---
+>     private boolean declaredType = false;
+>     private boolean hasDeclaredTypeDescendant = false;
+1062c1042
+<       return !inExterns && !isGetOrSetDefinition() && (isClassOrEnum ||
+---
+>       return !inExterns && !isGetOrSetDefinition() && (declaredType ||
+1086c1066
+<       if (isClassOrEnum) {
+---
+>       if (declaredType) {
+1113,1114c1093,1094
+<     void setIsClassOrEnum() {
+<       isClassOrEnum = true;
+---
+>     void setDeclaredType() {
+>       declaredType = true;
+1117c1097
+<         ancestor.hasClassOrEnumDescendant = true;
+---
+>         ancestor.hasDeclaredTypeDescendant = true;
+1120a1101,1104
+>     boolean isDeclaredType() {
+>       return declaredType;
+>     }
+> 
+1130c1114
+<       return hasClassOrEnumDescendant && type == Type.OBJECTLIT;
+---
+>       return hasDeclaredTypeDescendant && type == Type.OBJECTLIT;

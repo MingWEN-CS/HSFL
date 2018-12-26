@@ -1,0 +1,48 @@
+512c512
+<         TernaryValue value = NodeUtil.getExpressionBooleanValue(rhsAssign);
+---
+>         TernaryValue value = NodeUtil.getImpureBooleanValue(rhsAssign);
+650c650
+<     TernaryValue condValue = NodeUtil.getExpressionBooleanValue(cond);
+---
+>     TernaryValue condValue = NodeUtil.getImpureBooleanValue(cond);
+717c717
+<     TernaryValue condValue = NodeUtil.getExpressionBooleanValue(cond);
+---
+>     TernaryValue condValue = NodeUtil.getImpureBooleanValue(cond);
+745c745
+<     if (NodeUtil.getBooleanValue(cond) != TernaryValue.FALSE) {
+---
+>     if (NodeUtil.getPureBooleanValue(cond) != TernaryValue.FALSE) {
+782c782
+<     if (NodeUtil.getBooleanValue(cond) != TernaryValue.FALSE) {
+---
+>     if (NodeUtil.getImpureBooleanValue(cond) != TernaryValue.FALSE) {
+787c787,793
+<     NodeUtil.removeChild(n.getParent(), n);
+---
+>     if (!mayHaveSideEffects(cond)) {
+>       NodeUtil.removeChild(n.getParent(), n);
+>     } else {
+>       Node statement = new Node(Token.EXPR_RESULT, cond.detachFromParent())
+>           .copyInformationFrom(cond);
+>       n.getParent().replaceChild(n, statement);
+>     }
+801c807
+<     if (NodeUtil.getBooleanValue(cond) != TernaryValue.FALSE) {
+---
+>     if (NodeUtil.getImpureBooleanValue(cond) != TernaryValue.FALSE) {
+815c821,827
+<     n.getParent().replaceChild(n, block);
+---
+>     Node parent =  n.getParent();
+>     parent.replaceChild(n, block);
+>     if (mayHaveSideEffects(cond)) {
+>       Node condStatement = new Node(Token.EXPR_RESULT, cond.detachFromParent())
+>           .copyInformationFrom(cond);
+>       parent.addChildAfter(condStatement, block);
+>     }
+840c852
+<     if (NodeUtil.getBooleanValue(forCondition) == TernaryValue.TRUE) {
+---
+>     if (NodeUtil.getPureBooleanValue(forCondition) == TernaryValue.TRUE) {

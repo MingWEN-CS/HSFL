@@ -1,0 +1,67 @@
+23d22
+< import com.google.javascript.rhino.jstype.JSType;
+95c94
+<         declareVar(fnName, fnNameNode, n, null, null, n);
+---
+>         declareVar(fnNameNode);
+103c102
+<         declareVar(a.getString(), a, args, n, null, n);
+---
+>         declareVar(a);
+125,128c124
+<           Preconditions.checkState(child.getType() == Token.NAME);
+< 
+<           String name = child.getString();
+<           declareVar(name, child, n, parent, null, n);
+---
+>           declareVar(child);
+143c139
+<         declareVar(fnName, n.getFirstChild(), n, parent, null, n);
+---
+>         declareVar(n.getFirstChild());
+155c151
+<         declareVar(var.getString(), var, n, parent, null, n);
+---
+>         declareVar(var);
+181,182c177
+<         Scope s, String name,
+<         Node n, Node parent, Node gramps, Node nodeWithLineNumber);
+---
+>         Scope s, String name, Node n, CompilerInput input);
+190,191c185,187
+<         Scope s, String name,
+<         Node n, Node parent, Node gramps, Node nodeWithLineNumber) {
+---
+>         Scope s, String name, Node n, CompilerInput input) {
+>       Node parent = n.getParent();
+> 
+212c208
+<               JSError.make(sourceName, nodeWithLineNumber,
+---
+>               JSError.make(sourceName, n,
+223c219
+<             JSError.make(sourceName, nodeWithLineNumber,
+---
+>             JSError.make(sourceName, n,
+234a231,232
+>   private void declareVar(Node n) {
+>     Preconditions.checkState(n.getType() == Token.NAME);
+236,242c234,235
+< 
+< 
+< 
+< 
+<   private void declareVar(String name, Node n, Node parent,
+<                           Node gramps, JSType declaredType,
+<                           Node nodeWithLineNumber) {
+---
+>     CompilerInput input = compiler.getInput(sourceName);
+>     String name = n.getString();
+246c239
+<           scope, name, n, parent, gramps, nodeWithLineNumber);
+---
+>           scope, name, n, input);
+248c241
+<       scope.declare(name, n, declaredType, compiler.getInput(sourceName));
+---
+>       scope.declare(name, n, null, input);

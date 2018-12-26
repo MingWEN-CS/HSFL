@@ -1,0 +1,26 @@
+666a667,668
+>   private static final Set<String> OBJECT_METHODS_WITHOUT_SIDEEFFECTS =
+>       ImmutableSet.of("toString", "valueOf");
+708a711,716
+>       if (callNode.hasOneChild()
+>           && OBJECT_METHODS_WITHOUT_SIDEEFFECTS.contains(
+>                 nameNode.getLastChild().getString())) {
+>         return false;
+>       }
+> 
+2374c2382,2384
+<         return callHasLocalResult(value) || locals.apply(value);
+---
+>         return callHasLocalResult(value)
+>             || isToStringMethodCall(value)
+>             || locals.apply(value);
+2433a2444,2452
+>   }
+> 
+>   private static boolean isToStringMethodCall(Node call) {
+>     Node getNode = call.getFirstChild();
+>     if (isGet(getNode)) {
+>       Node propNode = getNode.getLastChild();
+>       return isString(propNode) && "toString".equals(propNode.getString());
+>     }
+>     return false;

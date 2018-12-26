@@ -1,0 +1,30 @@
+155,160c155,163
+<           valueParent.replaceChild(value,
+<               
+<               new Node(Token.CALL,
+<                       Node.newString(Token.NAME, STUB_METHOD_NAME),
+<                       Node.newNumber(stubId))
+<                   .copyInformationFromForTree(value));
+---
+>           Node stubCall = new Node(Token.CALL,
+>               Node.newString(Token.NAME, STUB_METHOD_NAME),
+>               Node.newNumber(stubId))
+>               .copyInformationFromForTree(value);
+>           stubCall.putBooleanProp(Node.FREE_CALL, true);
+> 
+>           
+>           
+>           valueParent.replaceChild(value, stubCall);
+164a168,172
+>           Node unstubCall = new Node(Token.CALL,
+>               Node.newString(Token.NAME, UNSTUB_METHOD_NAME),
+>               Node.newNumber(stubId),
+>               value);
+>           unstubCall.putBooleanProp(Node.FREE_CALL, true);
+172,175c180
+<                       new Node(Token.CALL,
+<                           Node.newString(Token.NAME, UNSTUB_METHOD_NAME),
+<                           Node.newNumber(stubId),
+<                           value)))
+---
+>                       unstubCall))

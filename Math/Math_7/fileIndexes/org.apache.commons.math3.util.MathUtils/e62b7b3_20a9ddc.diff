@@ -1,0 +1,123 @@
+543,544c543,553
+<     public static int gcd(int a, int b) {
+<         int ret;
+---
+> 
+> 
+> 
+> 
+>     public static int gcd(int u, int v) {
+>         if (u * v == 0) {
+>             return (Math.abs(u) + Math.abs(v));
+>         }
+>         
+>         
+>         
+546,559c555,575
+<         if (a == 0) {
+<             ret = Math.abs(b);
+<         } else if (b == 0) {
+<             ret = Math.abs(a);
+<         } else if (a < 0) {
+<             ret = gcd(-a, b);
+<         } else if (b < 0) {
+<             ret = gcd(a, -b);
+<         } else {
+<             int r = 0;
+<             while(b > 0){
+<                 r = a % b;
+<                 a = b;
+<                 b = r;
+---
+>         
+>         if (u>0) { u=-u; } 
+>         if (v>0) { v=-v; } 
+>         
+>         int k=0;
+>         while ((u&1)==0 && (v&1)==0 && k<31) { 
+>             u/=2; v/=2; k++; 
+>         }
+>         if (k==31) {
+>             throw new ArithmeticException("overflow: gcd is 2^31");
+>         }
+>         
+>         
+>         int t = ((u&1)==1) ? v : -(u/2);
+>         
+>         
+>         do {
+>             
+>             
+>             while ((t&1)==0) { 
+>                 t/=2; 
+561c577,640
+<             ret = a;
+---
+>             
+>             if (t>0) {
+>                 u = -t;
+>             } else {
+>                 v = t;
+>             }
+>             
+>             t = (v - u)/2;
+>             
+>             
+>         } while (t!=0);
+>         return -u*(1<<k); 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int mulAndCheck(int x, int y) {
+>         long m = ((long)x)*((long)y);
+>         if (m < Integer.MIN_VALUE ||
+>                 m > Integer.MAX_VALUE) {
+>             throw new ArithmeticException("overflow: mul");
+>         }
+>         return (int)m;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int addAndCheck(int x, int y) {
+>         long s = (long)x+(long)y;
+>         if (s < Integer.MIN_VALUE ||
+>                 s > Integer.MAX_VALUE) {
+>             throw new ArithmeticException("overflow: add");
+>         }
+>         return (int)s;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int subAndCheck(int x, int y) {
+>         long s = (long)x-(long)y;
+>         if (s < Integer.MIN_VALUE ||
+>                 s > Integer.MAX_VALUE) {
+>             throw new ArithmeticException("overflow: add");
+563c642
+<         return ret;
+---
+>         return (int)s;

@@ -1,0 +1,748 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang.math;
+
+import java.io.Serializable;
+
+
+
+
+
+
+
+
+
+
+
+
+
+public final class Fraction extends Number implements Serializable, Comparable {
+
+    private static final long serialVersionUID = 65382027393090L;
+
+    public static final Fraction ZERO = new Fraction(0, 1);
+    public static final Fraction ONE = new Fraction(1, 1);
+
+    public static final Fraction ONE_HALF = new Fraction(1, 2);
+
+    public static final Fraction ONE_THIRD = new Fraction(1, 3);
+    public static final Fraction TWO_THIRDS = new Fraction(2, 3);
+
+    public static final Fraction ONE_QUARTER = new Fraction(1, 4);
+    public static final Fraction TWO_QUARTERS = new Fraction(2, 4);
+    public static final Fraction THREE_QUARTERS = new Fraction(3, 4);
+
+    public static final Fraction ONE_FIFTH = new Fraction(1, 5);
+    public static final Fraction TWO_FIFTHS = new Fraction(2, 5);
+    public static final Fraction THREE_FIFTHS = new Fraction(3, 5);
+    public static final Fraction FOUR_FIFTHS = new Fraction(4, 5);
+
+
+    
+
+
+    private final int numerator;
+    
+
+
+    private final int denominator;
+
+    
+
+
+    private transient int hashCode = 0;
+    
+
+
+    private transient String toString = null;
+    
+
+
+    private transient String toProperString = null;
+
+    
+
+
+
+
+
+
+    private Fraction(int numerator, int denominator) {
+        super();
+        this.numerator = numerator;
+        this.denominator = denominator;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static Fraction getFraction(int numerator, int denominator) {
+        if (denominator == 0) {
+            throw new ArithmeticException("The denominator must not be zero");
+        }
+        if (denominator < 0) {
+            numerator = -numerator;
+            denominator = -denominator;
+        }
+        return new Fraction(numerator, denominator);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Fraction getFraction(int whole, int numerator, int denominator) {
+        if (denominator == 0) {
+            throw new ArithmeticException("The denominator must not be zero");
+        }
+        if (denominator < 0) {
+            throw new ArithmeticException("The denominator must not be negative");
+        }
+        if (numerator < 0) {
+            throw new ArithmeticException("The numerator must not be negative");
+        }
+        if (whole < 0) {
+            numerator = whole * denominator - numerator;
+        } else {
+            numerator = whole * denominator + numerator;
+        }
+        return new Fraction(numerator, denominator);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static Fraction getReducedFraction(int numerator, int denominator) {
+        if (denominator == 0) {
+            throw new ArithmeticException("The denominator must not be zero");
+        }
+        if (denominator < 0) {
+            numerator = -numerator;
+            denominator = -denominator;
+        }
+        int gcd = greatestCommonDenominator(Math.abs(numerator), denominator);
+        if (gcd == 0) {
+            return new Fraction(numerator, denominator);
+        }
+        return new Fraction(numerator / gcd, denominator / gcd);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static Fraction getFraction(double value) {
+        if (Double.isInfinite(value) || Double.isNaN(value)) {
+            throw new ArithmeticException("The value must not be infinite or NaN");
+        }
+        int sign = (value < 0 ? -1 : 1);
+        value = Math.abs(value);
+        int wholeNumber = (int) value;
+        value -= wholeNumber;
+
+        
+        int numer0 = 0;  
+        int denom0 = 1;  
+        int numer1 = 1;  
+        int denom1 = 0;  
+        int numer2 = 0;  
+        int denom2 = 0;  
+        int a1 = (int) value;
+        int a2 = 0;
+        double x1 = 1;
+        double x2 = 0;
+        double y1 = value - a1;
+        double y2 = 0;
+        double delta1, delta2 = Double.MAX_VALUE;
+        double fraction;
+        int i = 1;
+
+        do {
+            delta1 = delta2;
+            a2 = (int) (x1 / y1);
+            x2 = y1;
+            y2 = x1 - a2 * y1;
+            numer2 = a1 * numer1 + numer0;
+            denom2 = a1 * denom1 + denom0;
+            fraction = (double) numer2 / (double) denom2;
+            delta2 = Math.abs(value - fraction);
+
+            a1 = a2;
+            x1 = x2;
+            y1 = y2;
+            numer0 = numer1;
+            denom0 = denom1;
+            numer1 = numer2;
+            denom1 = denom2;
+            i++;
+
+        } while ((delta1 > delta2) && (denom2 <= 10000) && (denom2 > 0) && (i < 25));
+        if (i == 25) {
+            throw new ArithmeticException("Unable to convert double to fraction");
+        }
+        return getReducedFraction((numer0 + wholeNumber * denom0) * sign, denom0);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Fraction getFraction(String str) {
+        if (str == null) {
+            throw new IllegalArgumentException("The string must not be null");
+        }
+        
+        int pos = str.indexOf('.');
+        if (pos >= 0) {
+            return getFraction(Double.parseDouble(str));
+        }
+
+        
+        pos = str.indexOf(' ');
+        if (pos > 0) {
+            int whole = Integer.parseInt(str.substring(0, pos));
+            str = str.substring(pos + 1);
+            pos = str.indexOf('/');
+            if (pos < 0) {
+                throw new NumberFormatException("The fraction could not be parsed as the format X Y/Z");
+            } else {
+                int denom = Integer.parseInt(str.substring(pos + 1));
+                return getFraction(
+                    Integer.parseInt(str.substring(0, pos)) + whole * denom,
+                    denom
+                );
+            }
+        }
+
+        
+        pos = str.indexOf('/');
+        if (pos < 0) {
+            
+            return getFraction(Integer.parseInt(str), 1);
+        } else {
+            return getFraction(
+                Integer.parseInt(str.substring(0, pos)),
+                Integer.parseInt(str.substring(pos + 1))
+            );
+        }
+    }
+
+    
+    
+
+    
+
+
+
+
+
+
+
+    public int getNumerator() {
+        return numerator;
+    }
+
+    
+
+
+
+
+    public int getDenominator() {
+        return denominator;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public int getProperNumerator() {
+        return Math.abs(numerator % denominator);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public int getProperWhole() {
+        return numerator / denominator;
+    }
+
+    
+    
+
+    
+
+
+
+
+
+    public int intValue() {
+        return numerator / denominator;
+    }
+
+    
+
+
+
+
+
+    public long longValue() {
+        return (long) numerator / denominator;
+    }
+
+    
+
+
+
+
+
+    public float floatValue() {
+        return ((float) numerator) / ((float) denominator);
+    }
+
+    
+
+
+
+
+
+    public double doubleValue() {
+        return ((double) numerator) / ((double) denominator);
+    }
+
+    
+    
+
+    
+
+
+
+
+
+    public Fraction reduce() {
+        int gcd = greatestCommonDenominator(Math.abs(numerator), denominator);
+        if (gcd == 0) {
+            return this;
+        }
+        return Fraction.getFraction(numerator / gcd, denominator / gcd);
+    }
+
+    
+
+
+
+
+
+
+
+    public Fraction invert() {
+        if (numerator == 0) {
+            throw new ArithmeticException("Unable to invert a fraction with a zero numerator");
+        }
+        return getFraction(denominator, numerator);
+    }
+
+    
+
+
+
+
+
+
+    public Fraction negate() {
+        return getFraction(-numerator, denominator);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Fraction abs() {
+        if (numerator >= 0) {
+            return this;
+        }
+        return getFraction(-numerator, denominator);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Fraction pow(int power) {
+        if (power == 1) {
+            return this;
+        } else if (power == 0) {
+            return ONE;
+        } else if (power < 0) {
+            return getFraction((int) Math.pow(denominator, -power), (int) Math.pow(numerator, -power));
+        }
+        return getFraction((int) Math.pow(numerator, power), (int) Math.pow(denominator, power));
+    }
+
+    
+
+
+
+
+
+
+    private static int greatestCommonDenominator(int number1, int number2) {
+        int remainder = number1 % number2;
+        while (remainder != 0) {
+            number1 = number2;
+            number2 = remainder;
+            remainder = number1 % number2;
+        }
+        return number2;
+    }
+
+    
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+    public Fraction add(Fraction fraction) {
+        if (fraction == null) {
+            throw new IllegalArgumentException("The fraction must not be null");
+        }
+        if (numerator == 0) {
+            return fraction;
+        }
+        if (fraction.numerator == 0) {
+            return this;
+        }
+        if (denominator == fraction.denominator) {
+            return getReducedFraction(numerator + fraction.numerator, denominator);
+        }
+        return getReducedFraction(
+            numerator * fraction.denominator + denominator * fraction.numerator,
+            denominator * fraction.denominator
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public Fraction subtract(Fraction fraction) {
+        if (fraction == null) {
+            throw new IllegalArgumentException("The fraction must not be null");
+        }
+        if (numerator == 0) {
+            return fraction.negate();
+        }
+        if (fraction.numerator == 0) {
+            return this;
+        }
+        if (denominator == fraction.denominator) {
+            return getReducedFraction(numerator - fraction.numerator, denominator);
+        }
+        return getReducedFraction(
+            numerator * fraction.denominator - denominator * fraction.numerator,
+            denominator * fraction.denominator
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public Fraction multiplyBy(Fraction fraction) {
+        if (fraction == null) {
+            throw new IllegalArgumentException("The fraction must not be null");
+        }
+        if (numerator == 0 || fraction.numerator == 0) {
+            return ZERO;
+        }
+        return getReducedFraction(
+            numerator * fraction.numerator,
+            denominator * fraction.denominator
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public Fraction divideBy(Fraction fraction) {
+        if (fraction == null) {
+            throw new IllegalArgumentException("The fraction must not be null");
+        }
+        if (fraction.numerator == 0) {
+            throw new ArithmeticException("The fraction to divide by must not be zero");
+        }
+        if (numerator == 0) {
+            return ZERO;
+        }
+        return getReducedFraction(
+            numerator * fraction.denominator,
+            denominator * fraction.numerator
+        );
+    }
+
+    
+    
+
+    
+
+
+
+
+
+
+
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj instanceof Fraction == false) {
+            return false;
+        }
+        Fraction other = (Fraction) obj;
+        return (numerator == other.numerator &&
+                denominator == other.denominator);
+    }
+
+    
+
+
+
+
+    public int hashCode() {
+        if (hashCode == 0) {
+            hashCode = 17;
+            hashCode = 37 * hashCode + numerator;
+            hashCode = 37 * hashCode + denominator;
+        }
+        return hashCode;
+    }
+
+    
+
+
+
+
+
+
+
+    public int compareTo(Object object) {
+        Fraction other = (Fraction) object;
+        if (numerator == other.numerator && denominator == other.denominator) {
+            return 0;
+        }
+
+        
+        long first = (long) numerator * (long) other.denominator;
+        long second = (long) other.numerator * (long) denominator;
+        if (first == second) {
+            return 0;
+        } else if (first < second) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+    
+
+
+
+
+
+
+    public String toString() {
+        if (toString == null) {
+            toString = new StringBuffer(32)
+                .append(numerator)
+                .append('/')
+                .append(denominator).toString();
+        }
+        return toString;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public String toProperString() {
+        if (toProperString == null) {
+            if (numerator == 0) {
+                toProperString = "0";
+            } else if (numerator == denominator) {
+                toProperString = "1";
+            } else if (Math.abs(numerator) > denominator) {
+                int properNumerator = getProperNumerator();
+                if (properNumerator == 0) {
+                    toProperString = Integer.toString(getProperWhole());
+                } else {
+                    toProperString = new StringBuffer(32)
+                        .append(getProperWhole()).append(' ')
+                        .append(properNumerator).append('/')
+                        .append(denominator).toString();
+                }
+            } else {
+                toProperString = new StringBuffer(32)
+                    .append(numerator).append('/')
+                    .append(denominator).toString();
+            }
+        }
+        return toProperString;
+    }
+
+}

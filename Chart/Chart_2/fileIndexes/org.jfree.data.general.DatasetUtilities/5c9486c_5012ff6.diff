@@ -1,0 +1,343 @@
+110a111,114
+> 
+> 
+> 
+> 
+138c142
+<     
+---
+> 
+187c191
+<     public static PieDataset createPieDatasetForRow(CategoryDataset dataset, 
+---
+>     public static PieDataset createPieDatasetForRow(CategoryDataset dataset,
+202c206
+<     public static PieDataset createPieDatasetForRow(CategoryDataset dataset, 
+---
+>     public static PieDataset createPieDatasetForRow(CategoryDataset dataset,
+237c241
+<     public static PieDataset createPieDatasetForColumn(CategoryDataset dataset, 
+---
+>     public static PieDataset createPieDatasetForColumn(CategoryDataset dataset,
+261c265
+<     public static PieDataset createConsolidatedPieDataset(PieDataset source, 
+---
+>     public static PieDataset createConsolidatedPieDataset(PieDataset source,
+289c293
+<         
+---
+> 
+315c319
+<                 if (otherKeys.contains(currentKey) 
+---
+>                 if (otherKeys.contains(currentKey)
+440c444
+<         
+---
+> 
+463c467
+<     public static CategoryDataset createCategoryDataset(Comparable rowKey, 
+---
+>     public static CategoryDataset createCategoryDataset(Comparable rowKey,
+493c497
+<     public static XYDataset sampleFunction2D(Function2D f, double start, 
+---
+>     public static XYDataset sampleFunction2D(Function2D f, double start,
+497c501
+<             throw new IllegalArgumentException("Null 'f' argument.");   
+---
+>             throw new IllegalArgumentException("Null 'f' argument.");
+625c629
+<     public static Range findDomainBounds(XYDataset dataset, 
+---
+>     public static Range findDomainBounds(XYDataset dataset,
+642c646
+<         
+---
+> 
+670c674
+<     public static Range iterateDomainBounds(XYDataset dataset, 
+---
+>     public static Range iterateDomainBounds(XYDataset dataset,
+673c677
+<             throw new IllegalArgumentException("Null 'dataset' argument.");   
+---
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+710c714
+<     
+---
+> 
+721c725
+<     
+---
+> 
+731c735
+<     public static Range findRangeBounds(CategoryDataset dataset, 
+---
+>     public static Range findRangeBounds(CategoryDataset dataset,
+746c750
+<     
+---
+> 
+758c762
+<     
+---
+> 
+769c773
+<     public static Range findRangeBounds(XYDataset dataset, 
+---
+>     public static Range findRangeBounds(XYDataset dataset,
+811c815
+<     public static Range iterateRangeBounds(CategoryDataset dataset, 
+---
+>     public static Range iterateRangeBounds(CategoryDataset dataset,
+815,816d818
+<         boolean interval = includeInterval 
+<                            && dataset instanceof IntervalCategoryDataset;
+819,825c821,827
+<         for (int row = 0; row < rowCount; row++) {
+<             for (int column = 0; column < columnCount; column++) {
+<                 Number lvalue;
+<                 Number uvalue;
+<                 if (interval) {
+<                     IntervalCategoryDataset icd 
+<                         = (IntervalCategoryDataset) dataset;
+---
+>         if (includeInterval && dataset instanceof IntervalCategoryDataset) {
+>             
+>             
+>             IntervalCategoryDataset icd = (IntervalCategoryDataset) dataset;
+>             Number lvalue, uvalue;
+>             for (int row = 0; row < rowCount; row++) {
+>                 for (int column = 0; column < columnCount; column++) {
+827a830,835
+>                     if (lvalue != null) {
+>                         minimum = Math.min(minimum, lvalue.doubleValue());
+>                     }
+>                     if (uvalue != null) {
+>                         maximum = Math.max(maximum, uvalue.doubleValue());
+>                     }
+829,837c837,848
+<                 else {
+<                     lvalue = dataset.getValue(row, column);
+<                     uvalue = lvalue;
+<                 }
+<                 if (lvalue != null) {
+<                     minimum = Math.min(minimum, lvalue.doubleValue());
+<                 }
+<                 if (uvalue != null) {
+<                     maximum = Math.max(maximum, uvalue.doubleValue());
+---
+>             }
+>         }
+>         else {
+>             
+>             for (int row = 0; row < rowCount; row++) {
+>                 for (int column = 0; column < columnCount; column++) {
+>                     Number value = dataset.getValue(row, column);
+>                     if (value != null) {
+>                     	double v = value.doubleValue();
+>                         minimum = Math.min(minimum, v);
+>                         maximum = Math.max(maximum, v);
+>                     }
+848c859
+<     
+---
+> 
+862c873
+<     
+---
+> 
+876c887
+<     public static Range iterateRangeBounds(XYDataset dataset, 
+---
+>     public static Range iterateRangeBounds(XYDataset dataset,
+881,899c892,907
+<         for (int series = 0; series < seriesCount; series++) {
+<             int itemCount = dataset.getItemCount(series);
+<             for (int item = 0; item < itemCount; item++) {
+<                 double lvalue;
+<                 double uvalue;
+<                 if (includeInterval && dataset instanceof IntervalXYDataset) {
+<                     IntervalXYDataset intervalXYData 
+<                         = (IntervalXYDataset) dataset;
+<                     lvalue = intervalXYData.getStartYValue(series, item);
+<                     uvalue = intervalXYData.getEndYValue(series, item);
+<                 }
+<                 else if (includeInterval && dataset instanceof OHLCDataset) {
+<                     OHLCDataset highLowData = (OHLCDataset) dataset;
+<                     lvalue = highLowData.getLowValue(series, item);
+<                     uvalue = highLowData.getHighValue(series, item);
+<                 }
+<                 else {
+<                     lvalue = dataset.getYValue(series, item);
+<                     uvalue = lvalue;
+---
+> 
+>         
+>         if (includeInterval && dataset instanceof IntervalXYDataset) {
+>             
+>             IntervalXYDataset ixyd = (IntervalXYDataset) dataset;
+>             for (int series = 0; series < seriesCount; series++) {
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double lvalue = ixyd.getStartYValue(series, item);
+>                     double uvalue = ixyd.getEndYValue(series, item);
+>                     if (!Double.isNaN(lvalue)) {
+>                         minimum = Math.min(minimum, lvalue);
+>                     }
+>                     if (!Double.isNaN(uvalue)) {
+>                         maximum = Math.max(maximum, uvalue);
+>                     }
+901,902c909,924
+<                 if (!Double.isNaN(lvalue)) {
+<                     minimum = Math.min(minimum, lvalue);
+---
+>             }
+>         }
+>         else if (includeInterval && dataset instanceof OHLCDataset) {
+>             
+>             OHLCDataset ohlc = (OHLCDataset) dataset;
+>             for (int series = 0; series < seriesCount; series++) {
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double lvalue = ohlc.getLowValue(series, item);
+>                     double uvalue = ohlc.getHighValue(series, item);
+>                     if (!Double.isNaN(lvalue)) {
+>                         minimum = Math.min(minimum, lvalue);
+>                     }
+>                     if (!Double.isNaN(uvalue)) {
+>                         maximum = Math.max(maximum, uvalue);
+>                     }
+904,905c926,937
+<                 if (!Double.isNaN(uvalue)) {     
+<                     maximum = Math.max(maximum, uvalue);
+---
+>             }
+>         }
+>         else {
+>             
+>             for (int series = 0; series < seriesCount; series++) {
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double value = dataset.getYValue(series, item);
+>                     if (!Double.isNaN(value)) {
+>                         minimum = Math.min(minimum, value);
+>                         maximum = Math.max(maximum, value);
+>                     }
+949c981
+<                         IntervalXYDataset intervalXYData 
+---
+>                         IntervalXYDataset intervalXYData
+972c1004
+<     
+---
+> 
+1006c1038
+<                         IntervalXYDataset intervalXYData 
+---
+>                         IntervalXYDataset intervalXYData
+1026c1058
+<         
+---
+> 
+1064c1096
+<                         IntervalCategoryDataset icd 
+---
+>                         IntervalCategoryDataset icd
+1121c1153
+<                         IntervalXYDataset intervalXYData 
+---
+>                         IntervalXYDataset intervalXYData
+1182c1214
+<                         IntervalCategoryDataset icd 
+---
+>                         IntervalCategoryDataset icd
+1238c1270
+<                         IntervalXYDataset intervalXYData 
+---
+>                         IntervalXYDataset intervalXYData
+1286c1318
+<     public static Range findStackedRangeBounds(CategoryDataset dataset, 
+---
+>     public static Range findStackedRangeBounds(CategoryDataset dataset,
+1307c1339
+<                         negative = negative + value;  
+---
+>                         negative = negative + value;
+1334c1366
+<     
+---
+> 
+1337c1369
+<             
+---
+> 
+1343c1375
+<                 );   
+---
+>                 );
+1345c1377
+<             
+---
+> 
+1350c1382
+<             
+---
+> 
+1361c1393
+<                             positive[groupIndex[series]] 
+---
+>                             positive[groupIndex[series]]
+1365c1397
+<                             negative[groupIndex[series]] 
+---
+>                             negative[groupIndex[series]]
+1409c1441
+<                             total = total + value;  
+---
+>                             total = total + value;
+1470c1502
+<     
+---
+> 
+1480c1512
+<     public static Range findStackedRangeBounds(TableXYDataset dataset, 
+---
+>     public static Range findStackedRangeBounds(TableXYDataset dataset,
+1504c1536
+<             } 
+---
+>             }
+1507c1539
+<             } 
+---
+>             }
+1513c1545
+<             return null;   
+---
+>             return null;
+1516c1548
+<     
+---
+> 
+1551c1583
+<         
+---
+> 
+1555c1587
+<         
+---
+> 
+1562c1594
+<             for (int column = 0; column <= dataset.getColumnCount() - 1; 
+---
+>             for (int column = 0; column <= dataset.getColumnCount() - 1;
+1572c1604
+<             }    
+---
+>             }
+1580c1612
+<         
+---
+> 

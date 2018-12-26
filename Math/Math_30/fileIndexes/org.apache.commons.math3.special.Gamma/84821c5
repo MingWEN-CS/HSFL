@@ -1,0 +1,199 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.special;
+
+import org.apache.commons.math.ConvergenceException;
+
+
+
+
+
+
+
+public class Gamma {
+    
+    
+    
+    private static final int MAXIMUM_ITERATIONS = 100;
+
+    
+    private static final double EPSILON = 10e-9;
+
+    
+
+
+    private Gamma() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double regularizedGammaP(double a, double x) {
+        double ret;
+
+        if (a <= 0.0) {
+            throw new IllegalArgumentException("a must be positive");
+        } else if (x <= 0.0) {
+            throw new IllegalArgumentException("x must be non-negative");
+        } else {
+            
+            double n = 0.0; 
+            double an = 1.0 / a; 
+            double sum = an; 
+            while (Math.abs(an) > EPSILON && n < MAXIMUM_ITERATIONS) {
+                
+                n = n + 1.0;
+                an = an * (x / (a + n));
+
+                
+                sum = sum + an;
+            }
+            if (n >= MAXIMUM_ITERATIONS) {
+                throw new ConvergenceException(
+                    "maximum number of iterations reached");
+            } else {
+                ret = Math.exp(-x + (a * Math.log(x)) - logGamma(a)) * sum;
+            }
+        }
+
+        return ret;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double logGamma(double x) {
+        double ret;
+
+        if (x <= 0.0) {
+            throw new IllegalArgumentException(
+                "x must be non-negative");
+        } else {
+            double g = 607.0 / 128.0;
+
+            
+            double[] c =
+                {
+                    0.99999999999999709182,
+                    57.156235665862923517,
+                    -59.597960355475491248,
+                    14.136097974741747174,
+                    -0.49191381609762019978,
+                    .33994649984811888699e-4,
+                    .46523628927048575665e-4,
+                    -.98374475304879564677e-4,
+                    .15808870322491248884e-3,
+                    -.21026444172410488319e-3,
+                    .21743961811521264320e-3,
+                    -.16431810653676389022e-3,
+                    .84418223983852743293e-4,
+                    -.26190838401581408670e-4,
+                    .36899182659531622704e-5,
+                    };
+
+            double sum = 0.0;
+            for (int i = 1; i < c.length; ++i) {
+                sum = sum + (c[i] / (x + i));
+            }
+            sum = sum + c[0];
+
+            double tmp = x + g + .5;
+            ret = ((x + .5) * Math.log(tmp)) - tmp
+                + (.5 * Math.log(2.0 * Math.PI)) + Math.log(sum) - Math.log(x);
+        }
+
+        return ret;
+    }
+}

@@ -1,0 +1,38 @@
+153a154,157
+>   public boolean isNoResolvedType() {
+>     return false;
+>   }
+> 
+159c163
+<     return isNoType() || isNoObjectType();
+---
+>     return isNoType() || isNoObjectType() || isNoResolvedType();
+513,514c517,520
+<     if (bType.isAllType() || bType.isEmptyType() || bType.isUnknownType() ||
+<         aType.isAllType() || aType.isEmptyType() || aType.isUnknownType()) {
+---
+>     if (bType.isAllType() || bType.isUnknownType() ||
+>         bType.isNoResolvedType() ||
+>         aType.isAllType() || aType.isUnknownType() ||
+>         aType.isNoResolvedType()) {
+516a523,533
+> 
+>     boolean aIsEmpty = aType.isEmptyType();
+>     boolean bIsEmpty = bType.isEmptyType();
+>     if (aIsEmpty || bIsEmpty) {
+>       if (aIsEmpty && bIsEmpty) {
+>         return TernaryValue.TRUE;
+>       } else {
+>         return UNKNOWN;
+>       }
+>     }
+> 
+581,583c598,599
+<     if (thatType.isEmptyType() || thatType.isAllType()) {
+<       
+<       
+---
+>     if (thatType.isAllType() ||
+>         (thatType.isEmptyType() && !thatType.isNamedType())) {
+586d601
+< 

@@ -1,0 +1,183 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.util;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.ConvergenceException;
+import org.apache.commons.math.MathException;
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class ContinuedFraction implements Serializable {
+    
+    private static final double DEFAULT_EPSILON = 10e-9;
+
+    
+
+
+    protected ContinuedFraction() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+    protected abstract double getA(int n, double x);
+
+    
+
+
+
+
+
+
+    protected abstract double getB(int n, double x);
+
+    
+
+
+
+
+
+    public double evaluate(double x) throws MathException {
+        return evaluate(x, DEFAULT_EPSILON, Integer.MAX_VALUE);
+    }
+
+    
+
+
+
+
+
+
+    public double evaluate(double x, double epsilon) throws MathException {
+        return evaluate(x, epsilon, Integer.MAX_VALUE);
+    }
+
+    
+
+
+
+
+
+
+    public double evaluate(double x, int maxIterations) throws MathException {
+        return evaluate(x, DEFAULT_EPSILON, maxIterations);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(double x, double epsilon, int maxIterations)
+        throws MathException
+    {
+        double[][] f = new double[2][2];
+        double[][] a = new double[2][2];
+        double[][] an = new double[2][2];
+
+        a[0][0] = getA(0, x);
+        a[0][1] = 1.0;
+        a[1][0] = 1.0;
+        a[1][1] = 0.0;
+
+        return evaluate(1, x, a, an, f, epsilon, maxIterations);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private double evaluate(
+        int n,
+        double x,
+        double[][] a,
+        double[][] an,
+        double[][] f,
+        double epsilon,
+        int maxIterations) throws MathException 
+    {
+        double ret;
+
+        
+        an[0][0] = getA(n, x);
+        an[0][1] = 1.0;
+        an[1][0] = getB(n, x);
+        an[1][1] = 0.0;
+
+        
+        f[0][0] = (a[0][0] * an[0][0]) + (a[0][1] * an[1][0]);
+        f[0][1] = (a[0][0] * an[0][1]) + (a[0][1] * an[1][1]);
+        f[1][0] = (a[1][0] * an[0][0]) + (a[1][1] * an[1][0]);
+        f[1][1] = (a[1][0] * an[0][1]) + (a[1][1] * an[1][1]);
+
+        
+        if (Math.abs((f[0][0] * f[1][1]) - (f[1][0] * f[0][1])) <
+            Math.abs(epsilon * f[1][0] * f[1][1]))
+        {
+            ret = f[0][0] / f[1][0];
+        } else {
+            if (n >= maxIterations) {
+                throw new ConvergenceException(
+                    "Continued fraction convergents failed to converge.");
+            }
+            
+            ret = evaluate(n + 1, x, f 
+            , an 
+            , a 
+            , epsilon, maxIterations);
+        }
+
+        return ret;
+    }
+}

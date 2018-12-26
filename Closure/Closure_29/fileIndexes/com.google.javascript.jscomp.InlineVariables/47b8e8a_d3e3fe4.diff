@@ -1,0 +1,18 @@
+652,653c652,655
+<         return NodeUtil.isFunctionDeclaration(initialization.getParent())
+<             || initialization.getNode().getFirstChild() != null;
+---
+>         if (!NodeUtil.isFunctionDeclaration(initialization.getParent())
+>             && initialization.getNode().getFirstChild() == null) {
+>           return false;
+>         }
+659d660
+<         return true;
+660a662,668
+> 
+>       Node n = initialization.getAssignedValue();
+>       if (n.isFunction()) {
+>         return compiler.getCodingConvention().isInlinableFunction(n);
+>       }
+> 
+>       return true;

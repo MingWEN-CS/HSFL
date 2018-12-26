@@ -1,0 +1,88 @@
+20a21
+> import org.joda.time.chrono.ISOChronology;
+1441a1443,1527
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period normalizedStandard() {
+>         return normalizedStandard(PeriodType.standard());
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period normalizedStandard(PeriodType type) {
+>         long millis = getMillis();  
+>         millis += (((long) getSeconds()) * ((long) DateTimeConstants.MILLIS_PER_SECOND));
+>         millis += (((long) getMinutes()) * ((long) DateTimeConstants.MILLIS_PER_MINUTE));
+>         millis += (((long) getHours()) * ((long) DateTimeConstants.MILLIS_PER_HOUR));
+>         millis += (((long) getDays()) * ((long) DateTimeConstants.MILLIS_PER_DAY));
+>         millis += (((long) getWeeks()) * ((long) DateTimeConstants.MILLIS_PER_WEEK));
+>         Period result = new Period(millis, DateTimeUtils.getPeriodType(type), ISOChronology.getInstanceUTC());
+>         int years = getYears();
+>         int months = getMonths();
+>         if (years != 0 || months != 0) {
+>             years = FieldUtils.safeAdd(years, months / 12);
+>             months = months % 12;
+>             if (years != 0) {
+>                 result = result.withYears(years);
+>             }
+>             if (months != 0) {
+>                 result = result.withMonths(months);
+>             }
+>         }
+>         return result;

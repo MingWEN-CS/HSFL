@@ -1,0 +1,101 @@
+149a150
+>         dye, 
+214a216,217
+> 
+> 
+236a240,241
+> 
+> 
+252a258,261
+>                     .toParser(),
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     .append(yearElement())
+>                     .append(dayOfYearElement())
+268a278,280
+> 
+> 
+> 
+289a302,304
+> 
+> 
+> 
+291a307,318
+>             
+>             DateTimeParser decimalPoint = new DateTimeFormatterBuilder(iChrono)
+>                 .append(null, new DateTimeParser[] {
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     .appendLiteral('.')
+>                     .toParser(),
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     .appendLiteral(',')
+>                     .toParser()
+>                 })
+>                 .toParser();
+> 
+292a320
+>                 
+294,302c322,352
+<                 .appendOptional
+<                 (new DateTimeFormatterBuilder(iChrono)
+<                  .append(minuteElement())
+<                  .appendOptional
+<                  (new DateTimeFormatterBuilder(iChrono)
+<                   .append(secondElement())
+<                   .appendOptional(fractionElement())
+<                   .toParser())
+<                  .toParser())
+---
+>                 .append
+>                 (null, new DateTimeParser[] {
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     
+>                     .append(minuteElement())
+>                     .append
+>                     (null, new DateTimeParser[] {
+>                         new DateTimeFormatterBuilder(iChrono)
+>                         
+>                         .append(secondElement())
+>                         
+>                         .appendOptional(new DateTimeFormatterBuilder(iChrono)
+>                                         .append(decimalPoint)
+>                                         .appendFractionOfSecond(1, 9)
+>                                         .toParser())
+>                         .toParser(),
+>                         
+>                         new DateTimeFormatterBuilder(iChrono)
+>                         .append(decimalPoint)
+>                         .appendFractionOfMinute(1, 9)
+>                         .toParser(),
+>                         null
+>                     })
+>                     .toParser(),
+>                     
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     .append(decimalPoint)
+>                     .appendFractionOfHour(1, 9)
+>                     .toParser(),
+>                     null
+>                 })
+319a370,374
+> 
+> 
+> 
+> 
+> 
+738a794,803
+>     private DateTimeFormatter dayOfYearElement() {
+>         if (dye == null) {
+>             dye = new DateTimeFormatterBuilder(iChrono)
+>                 .appendLiteral('-')
+>                 .appendDayOfYear(3)
+>                 .toFormatter();
+>         }
+>         return dye;
+>     }
+> 
+783c848
+<                 .appendTimeZoneOffset("Z", true, 2, 2)
+---
+>                 .appendTimeZoneOffset("Z", true, 2, 4)
+787a853
+>     

@@ -1,0 +1,27 @@
+1458a1459
+>         boolean isConstructor = false;
+1460,1461c1461,1463
+<         if (current.getType() == Token.THIS) {
+<           Node thisNode = current.getFirstChild();
+---
+>         if (current.getType() == Token.THIS ||
+>             current.getType() == Token.NEW) {
+>           Node contextNode = current.getFirstChild();
+1465c1467
+<                       thisNode, sourceName, scope, false)
+---
+>                       contextNode, sourceName, scope, false)
+1469,1470c1471,1476
+<                 ScriptRuntime.getMessage0("msg.jsdoc.function.thisnotobject"),
+<                 sourceName, thisNode.getLineno(), "", thisNode.getCharno());
+---
+>                 ScriptRuntime.getMessage0(
+>                     current.getType() == Token.THIS ?
+>                     "msg.jsdoc.function.thisnotobject" :
+>                     "msg.jsdoc.function.newnotobject"),
+>                 sourceName,
+>                 contextNode.getLineno(), "", contextNode.getCharno());
+1472a1479
+>           isConstructor = current.getType() == Token.NEW;
+1514a1522
+>             .setIsConstructor(isConstructor)

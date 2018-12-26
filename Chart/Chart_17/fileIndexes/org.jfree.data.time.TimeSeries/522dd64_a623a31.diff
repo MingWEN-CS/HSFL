@@ -1,0 +1,29 @@
+78a79
+> 
+1008,1009c1009,1011
+<         int result;
+<         result = (this.domain != null ? this.domain.hashCode() : 0);
+---
+>         int result = super.hashCode();
+>         result = 29 * result + (this.domain != null ? this.domain.hashCode() 
+>                 : 0);
+1012,1013c1014,1029
+<                     ? this.timePeriodClass.hashCode() : 0);
+<         result = 29 * result + this.data.hashCode();
+---
+>                 ? this.timePeriodClass.hashCode() : 0);
+>         
+>         
+>         int count = getItemCount();
+>         if (count > 0) {
+>             TimeSeriesDataItem item = getDataItem(0);
+>             result = 29 * result + item.hashCode();
+>         }
+>         if (count > 1) {
+>             TimeSeriesDataItem item = getDataItem(count - 1);
+>             result = 29 * result + item.hashCode();
+>         }
+>         if (count > 2) {
+>             TimeSeriesDataItem item = getDataItem(count / 2);
+>             result = 29 * result + item.hashCode();
+>         }

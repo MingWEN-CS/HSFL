@@ -1,0 +1,84 @@
+24a25
+> import org.apache.commons.math.exception.NonMonotonousSequenceException;
+1868a1870,1876
+>     public static class Order {
+>         public static enum Direction {
+>                 INCREASING,
+>                 DECREASING
+>         };
+>     }
+> 
+1877c1885
+<     public static void checkOrder(double[] val, int dir, boolean strict) {
+---
+>     public static void checkOrder(double[] val, Order.Direction dir, boolean strict) {
+1878a1887
+>         boolean ok = true;
+1882c1891,1892
+<             if (dir > 0) {
+---
+>             switch (dir) {
+>             case INCREASING:
+1885,1886c1895
+<                         throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NOT_STRICTLY_INCREASING_NUMBER_OF_POINTS,
+<                                                                                   i - 1, i, previous, val[i]);
+---
+>                         ok = false;
+1890,1891c1899
+<                         throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NOT_INCREASING_NUMBER_OF_POINTS,
+<                                                                                   i - 1, i, previous, val[i]);
+---
+>                         ok = false;
+1894c1902,1903
+<             } else {
+---
+>                 break;
+>             case DECREASING:
+1897,1898c1906
+<                         throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NOT_STRICTLY_DECREASING_NUMBER_OF_POINTS,
+<                                                                                   i - 1, i, previous, val[i]);
+---
+>                         ok = false;
+1902,1903c1910
+<                         throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NOT_DECREASING_NUMBER_OF_POINTS,
+<                                                                                   i - 1, i, previous, val[i]);
+---
+>                         ok = false;
+1905a1913,1916
+>                 break;
+>             default:
+>                 
+>                 throw new IllegalArgumentException();
+1907a1919,1921
+>             if (!ok) {
+>                 throw new NonMonotonousSequenceException(val[i], previous, i, dir, strict);
+>             }
+1908a1923,1950
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public static void checkOrder(double[] val) {
+>         checkOrder(val, Order.Direction.INCREASING, true);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void checkOrder(double[] val, int dir, boolean strict) {
+>         if (dir > 0) {
+>             checkOrder(val, Order.Direction.INCREASING, strict);
+>         } else {
+>             checkOrder(val, Order.Direction.DECREASING, strict);

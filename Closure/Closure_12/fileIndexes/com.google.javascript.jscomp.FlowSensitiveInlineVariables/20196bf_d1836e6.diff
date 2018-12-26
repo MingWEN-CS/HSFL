@@ -1,0 +1,94 @@
+22a23
+> import com.google.common.collect.Sets;
+25a27
+> import com.google.javascript.jscomp.MustBeReachingVariableDef.Definition;
+29a32
+> import com.google.javascript.jscomp.Scope.Var;
+36a40
+> import java.util.Set;
+72a77
+>   private final Set<Var> inlinedNewDependencies = Sets.newHashSet();
+151a157,167
+> 
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         if (!c.defMetadata.depends.isEmpty()) {
+>           inlinedNewDependencies.add(t.getScope().getVar(c.varName));
+>         }
+216c232
+<             Node defNode = reachingDef.getDef(name, cfgNode);
+---
+>             Definition def = reachingDef.getDef(name, cfgNode);
+219,221c235,237
+<             if (defNode != null &&
+<                 !reachingDef.dependsOnOuterScopeVars(name, cfgNode)) {
+<               candidates.add(new Candidate(name, defNode, n, cfgNode));
+---
+>             if (def != null &&
+>                 !reachingDef.dependsOnOuterScopeVars(def)) {
+>               candidates.add(new Candidate(name, def, n, cfgNode));
+241c257
+<     private final Node defCfgNode;
+---
+>     private final Definition defMetadata;
+251c267,268
+<     Candidate(String varName, Node defCfgNode, Node use, Node useCfgNode) {
+---
+>     Candidate(String varName, Definition defMetadata,
+>         Node use, Node useCfgNode) {
+254c271
+<       this.defCfgNode = defCfgNode;
+---
+>       this.defMetadata = defMetadata;
+259c276,278
+<     private boolean canInline() {
+---
+>     private Node getDefCfgNode() {
+>       return defMetadata.node;
+>     }
+260a280
+>     private boolean canInline() {
+262c282
+<       if (defCfgNode.isFunction()) {
+---
+>       if (getDefCfgNode().isFunction()) {
+266c286,295
+<       getDefinition(defCfgNode, null);
+---
+>       
+>       
+>       
+>       for (Var dependency : defMetadata.depends) {
+>         if (inlinedNewDependencies.contains(dependency)) {
+>           return false;
+>         }
+>       }
+> 
+>       getDefinition(getDefCfgNode(), null);
+280d308
+< 
+284c312
+<       if (checkRightOf(def, defCfgNode, SIDE_EFFECT_PREDICATE)) {
+---
+>       if (checkRightOf(def, getDefCfgNode(), SIDE_EFFECT_PREDICATE)) {
+295d322
+< 
+318c345
+<       Collection<Node> uses = reachingUses.getUses(varName, defCfgNode);
+---
+>       Collection<Node> uses = reachingUses.getUses(varName, getDefCfgNode());
+359,360c386,387
+<       if (NodeUtil.isStatementBlock(defCfgNode.getParent()) &&
+<           defCfgNode.getNext() != useCfgNode) {
+---
+>       if (NodeUtil.isStatementBlock(getDefCfgNode().getParent()) &&
+>           getDefCfgNode().getNext() != useCfgNode) {
+367c394
+<                  cfg.getDirectedGraphNode(defCfgNode),
+---
+>                  cfg.getDirectedGraphNode(getDefCfgNode()),

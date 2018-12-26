@@ -1,0 +1,239 @@
+1a2,239
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.lang.time;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class StopWatch {
+>     
+>     private static final int MILLIS_IN_HOUR = 60 * 60 * 1000;
+>     private static final int MILLIS_IN_MINUTE = 60 * 1000;
+> 
+>     
+>     private long startTime = -1;
+>     
+>     private long stopTime = -1;
+> 
+>     
+> 
+> 
+>     public StopWatch() {
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public void start() {
+>         stopTime = -1;
+>         startTime = System.currentTimeMillis();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public void stop() {
+>         stopTime = System.currentTimeMillis();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public void reset() {
+>         startTime = -1;
+>         stopTime = -1;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void split() {
+>         stopTime = System.currentTimeMillis();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public void unsplit() {
+>         stopTime = -1;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public void suspend() {
+>         stopTime = System.currentTimeMillis();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public void resume() {
+>         startTime += (System.currentTimeMillis() - stopTime);
+>         stopTime = -1;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getTime() {
+>         if (stopTime == -1) {
+>             if (startTime == -1) {
+>                 return 0;
+>             }
+>             return (System.currentTimeMillis() - this.startTime);
+>         }
+>         return (this.stopTime - this.startTime);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public String toString() {
+>         return StopWatch.toString(getTime());
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String toString(long time) {
+>         int hours, minutes, seconds, milliseconds;
+>         hours = (int) (time / MILLIS_IN_HOUR);
+>         time = time - (hours * MILLIS_IN_HOUR);
+>         minutes = (int) (time / MILLIS_IN_MINUTE);
+>         time = time - (minutes * MILLIS_IN_MINUTE);
+>         seconds = (int) (time / 1000);
+>         time = time - (seconds * 1000);
+>         milliseconds = (int) time;
+> 
+>         StringBuffer buf = new StringBuffer(32);
+>         buf.append(hours);
+>         buf.append(':');
+>         if (minutes < 10) {
+>             buf.append('0');
+>         }
+>         buf.append(minutes);
+>         buf.append(':');
+>         if (seconds < 10) {
+>             buf.append('0');
+>         }
+>         buf.append(seconds);
+>         buf.append('.');
+>         if (milliseconds < 10) {
+>             buf.append("00");
+>         } else if (milliseconds < 100) {
+>             buf.append('0');
+>         }
+>         buf.append(milliseconds);
+>         return buf.toString();
+>     }
+> 
+> }

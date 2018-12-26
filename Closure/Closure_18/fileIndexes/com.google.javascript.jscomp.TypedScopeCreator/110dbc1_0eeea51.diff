@@ -1,0 +1,108 @@
+648c648,649
+<           defineSlot(keyNode, objLit, qualifiedName, keyType, keyType == null);
+---
+>           boolean inferred = keyType == null;
+>           defineSlot(keyNode, objLit, qualifiedName, keyType, inferred);
+1487,1530c1488,1489
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       boolean inferred = true;
+<       if (info != null) {
+<         
+<         inferred = !(info.hasType()
+<             || info.hasEnumParameterType()
+<             || (info.isConstant() && valueType != null
+<                 && !valueType.isUnknownType())
+<             || FunctionTypeBuilder.isFunctionTypeDeclaration(info));
+<       }
+< 
+<       if (inferred && rhsValue != null && rhsValue.isFunction()) {
+<         
+<         if (info != null) {
+<           inferred = false;
+<         } else if (!scope.isDeclared(qName, false) &&
+<                    n.isUnscopedQualifiedName()) {
+<           inferred = false;
+<         }
+<       }
+< 
+---
+>       boolean inferred = isQualifiedNameInferred(
+>           qName, n, info, rhsValue, valueType);
+1563a1523,1576
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private boolean isQualifiedNameInferred(
+>         String qName, Node n, JSDocInfo info,
+>         Node rhsValue, JSType valueType) {
+>       if (valueType == null) {
+>         return true;
+>       }
+> 
+>       boolean inferred = true;
+>       if (info != null) {
+>         inferred = !(info.hasType()
+>             || info.hasEnumParameterType()
+>             || (info.isConstant() && valueType != null
+>                 && !valueType.isUnknownType())
+>             || FunctionTypeBuilder.isFunctionTypeDeclaration(info));
+>       }
+> 
+>       if (inferred && rhsValue != null && rhsValue.isFunction()) {
+>         if (info != null) {
+>           inferred = false;
+>         } else if (!scope.isDeclared(qName, false) &&
+>                    n.isUnscopedQualifiedName()) {
+>           inferred = false;
+>         }
+>       }
+>       return inferred;

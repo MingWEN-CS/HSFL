@@ -1,0 +1,70 @@
+1a2,70
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.rhino.Node;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class ReorderConstantExpression implements CompilerPass {
+> 
+>   private AbstractCompiler compiler;
+> 
+>   ReorderConstantExpression(AbstractCompiler compiler) {
+>     this.compiler = compiler;
+>   }
+> 
+>   @Override
+>   public void process(Node externs, Node node) {
+>     
+>     if (NodeUtil.isSymmetricOperation(node)
+>         || NodeUtil.isRelationalOperation(node)) {
+>       
+>       if (NodeUtil.isImmutableValue(node.getLastChild())
+>           && !NodeUtil.isImmutableValue(node.getFirstChild())) {
+> 
+>         
+>         if (NodeUtil.isRelationalOperation(node)){
+>           int inverseOperator = NodeUtil.getInverseOperator(node.getType());
+>           node.setType(inverseOperator);
+>         }
+> 
+>         
+>         Node firstNode = node.getFirstChild().detachFromParent();
+>         Node lastNode = node.getLastChild().detachFromParent();
+> 
+>         node.addChildrenToFront(lastNode);
+>         node.addChildrenToBack(firstNode);
+>         this.compiler.reportCodeChange();
+>       }
+>     }
+> 
+>     
+>     if (node.hasChildren()) {
+>       Node child = node.getFirstChild();
+>       while (child != null) {
+>         process(externs, child);
+>         child = child.getNext();
+>       }
+>     }
+>   }
+> }

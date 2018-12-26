@@ -1,0 +1,98 @@
+18a19,20
+> import org.apache.commons.math.exception.MathArithmeticException;
+> import org.apache.commons.math.exception.util.LocalizedFormats;
+23a26
+> import org.apache.commons.math.util.MathUtils;
+58a62,71
+>     public Line(final Line line) {
+>         this.direction = line.direction;
+>         this.zero      = line.zero;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+62c75
+<             throw new IllegalArgumentException("null norm");
+---
+>             throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+65c78
+<         zero = new Vector3D(1.0, p, -Vector3D.dotProduct(p, this.direction), this.direction);
+---
+>         zero = new Vector3D(1.0, p, -p.dotProduct(this.direction), this.direction);
+95a109,114
+>     public double getAbscissa(final Vector3D point) {
+>         return point.subtract(zero).dotProduct(direction);
+>     }
+> 
+>     
+> 
+98,100c117,118
+<     public Vector1D toSubSpace(final Vector<Euclidean3D> point) {
+<         Vector3D p3 = (Vector3D) point;
+<         return new Vector1D(Vector3D.dotProduct(p3.subtract(zero), direction));
+---
+>     public Vector3D pointAt(final double abscissa) {
+>         return new Vector3D(1.0, zero, abscissa, direction);
+105a124,126
+>     public Vector1D toSubSpace(final Vector<Euclidean3D> point) {
+>         return new Vector1D(getAbscissa((Vector3D) point));
+>     }
+106a128
+>     
+110,111c132
+<         Vector1D p1 = (Vector1D) point;
+<         return new Vector3D(1.0, zero, p1.getX(), direction);
+---
+>         return pointAt(((Vector1D) point).getX());
+140c161
+<         final Vector3D n = new Vector3D(1.0, d, -Vector3D.dotProduct(d, direction), direction);
+---
+>         final Vector3D n = new Vector3D(1.0, d, -d.dotProduct(direction), direction);
+151c172,173
+<         if (normal.getNorm() < 1.0e-10) {
+---
+>         final double n = normal.getNorm();
+>         if (n < MathUtils.SAFE_MIN) {
+157c179,208
+<         final Plane middle = new Plane(new Vector3D(0.5, zero, 0.5, line.zero), normal);
+---
+>         final double offset = line.zero.subtract(zero).dotProduct(normal) / n;
+> 
+>         return FastMath.abs(offset);
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public Vector3D closestPoint(final Line line) {
+> 
+>         final double cos = direction.dotProduct(line.direction);
+>         final double n = 1 - cos * cos;
+>         if (n < MathUtils.EPSILON) {
+>             
+>             return zero;
+>         }
+> 
+>         final Vector3D delta0 = line.zero.subtract(zero);
+>         final double a        = delta0.dotProduct(direction);
+>         final double b        = delta0.dotProduct(line.direction);
+> 
+>         return new Vector3D(1, zero, (a - b * cos) / n, direction);
+> 
+>     }
+> 
+>     
+> 
+> 
+159,160d209
+<         
+<         return 2 * FastMath.abs(middle.getOffset(zero));
+161a211,213
+>     public Vector3D intersection(final Line line) {
+>         final Vector3D closest = closestPoint(line);
+>         return line.contains(closest) ? closest : null;

@@ -1,0 +1,160 @@
+1a2,160
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+> import com.google.javascript.rhino.Node;
+> import com.google.javascript.rhino.Token;
+> 
+> import java.util.ArrayDeque;
+> import java.util.Deque;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class CreateSyntheticBlocks implements CompilerPass {
+>   static final DiagnosticType UNMATCHED_START_MARKER = DiagnosticType.warning(
+>       "JSC_UNMATCHED_START_MARKER", "Unmatched {0}");
+> 
+>   static final DiagnosticType UNMATCHED_END_MARKER = DiagnosticType.warning(
+>       "JSC_UNMATCHED_END_MARKER", "Unmatched {1} - {0} not in the same block");
+> 
+>   private static class StartMarker {
+>     
+>     final String sourceName;
+> 
+>     
+>     final Node node;
+> 
+>     
+> 
+> 
+>     final Node ancestorBlockChild;
+> 
+>     
+>     final Node ancestorBlock;
+> 
+>     private StartMarker(String sourceName, Node n, Node ancestorBlockChild,
+>         Node ancestorBlock) {
+>       this.sourceName = sourceName;
+>       node = n;
+>       this.ancestorBlockChild = ancestorBlockChild;
+>       this.ancestorBlock = ancestorBlock;
+>     }
+>   }
+> 
+>   private final AbstractCompiler compiler;
+> 
+>   
+>   private final String startMarkerName;
+> 
+>   
+>   private final String endMarkerName;
+> 
+>   
+> 
+> 
+>   private Deque<StartMarker> startMarkerStack;
+> 
+>   public CreateSyntheticBlocks(AbstractCompiler compiler,
+>       String startMarkerName, String endMarkerName) {
+>     this.compiler = compiler;
+>     this.startMarkerName = startMarkerName;
+>     this.endMarkerName = endMarkerName;
+>     startMarkerStack = new ArrayDeque<StartMarker>();
+>   }
+> 
+>   @Override
+>   public void process(Node externs, Node root) {
+>     NodeTraversal.traverse(compiler, root, new Callback());
+> 
+>     for (StartMarker startMarker : startMarkerStack) {
+>       compiler.report(JSError.make(startMarker.sourceName, startMarker.node,
+>           UNMATCHED_START_MARKER, startMarkerName));
+>     }
+>   }
+> 
+>   private class Callback extends AbstractPostOrderCallback {
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       if (n.getType() != Token.NAME || parent.getType() != Token.CALL) {
+>         return;
+>       }
+> 
+>       if (startMarkerName.equals(n.getString())) {
+>         
+>         
+>         Node ancestorBlockChild = n;
+>         Node ancestorBlock = null;
+>         for (Node ancestor : n.getAncestors()) {
+>           int type = ancestor.getType();
+>           if (type == Token.SCRIPT || type == Token.BLOCK) {
+>             ancestorBlock = ancestor;
+>             break;
+>           }
+>           ancestorBlockChild = ancestor;
+>         }
+> 
+>         startMarkerStack.push(new StartMarker(t.getSourceName(), n,
+>             ancestorBlockChild, ancestorBlock));
+>       }
+> 
+>       if (!endMarkerName.equals(n.getString())) {
+>         return;
+>       }
+> 
+>       if (startMarkerStack.isEmpty()) {
+>         compiler.report(JSError.make(t, n, UNMATCHED_END_MARKER,
+>             startMarkerName, endMarkerName));
+>         return;
+>       }
+> 
+>       StartMarker startMarker = startMarkerStack.pop();
+> 
+>       Node endMarkerAncestorBlockChild = n;
+>       for (Node ancestor : n.getAncestors()) {
+>         int type = ancestor.getType();
+>         if (type == Token.SCRIPT || type == Token.BLOCK) {
+>           if (ancestor != startMarker.ancestorBlock) {
+>             
+>             compiler.report(JSError.make(t, n, UNMATCHED_END_MARKER,
+>                 startMarkerName, endMarkerName));
+>             return;
+>           }
+>           break;
+>         }
+>         endMarkerAncestorBlockChild = ancestor;
+>       }
+> 
+>       Node block = new Node(Token.BLOCK);
+>       block.setIsSyntheticBlock(true);
+>       startMarker.ancestorBlock.addChildAfter(block,
+>           startMarker.ancestorBlockChild);
+>       Node removedNode = null;
+>       do {
+>         
+>         removedNode = startMarker.ancestorBlock.removeChildAfter(block);
+>         block.addChildToBack(removedNode);
+>       } while (removedNode != endMarkerAncestorBlockChild);
+> 
+>       compiler.reportCodeChange();
+>     }
+>   }
+> }

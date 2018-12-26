@@ -1,0 +1,89 @@
+507,508c507,508
+<               JSType ownerType = var.getType();
+<               if (ownerType instanceof ObjectType) {
+---
+>               ObjectType ownerType = ObjectType.cast(var.getType());
+>               if (ownerType != null) {
+510,511c510
+<                 JSType propType =
+<                     ((ObjectType) ownerType).getPropertyType(propName);
+---
+>                 JSType propType = ownerType.getPropertyType(propName);
+738,747c737,743
+<             JSType superClass =
+<                 typeRegistry.getType(relationship.superclassName);
+<             JSType subClass = typeRegistry.getType(relationship.subclassName);
+<             if (superClass instanceof ObjectType &&
+<                 subClass instanceof ObjectType) {
+<               ObjectType superObject = (ObjectType) superClass;
+<               ObjectType subObject = (ObjectType) subClass;
+< 
+<               FunctionType superCtor = superObject.getConstructor();
+<               FunctionType subCtor = subObject.getConstructor();
+---
+>             ObjectType superClass = ObjectType.cast(
+>                 typeRegistry.getType(relationship.superclassName));
+>             ObjectType subClass = ObjectType.cast(
+>                 typeRegistry.getType(relationship.subclassName));
+>             if (superClass != null && subClass != null) {
+>               FunctionType superCtor = superClass.getConstructor();
+>               FunctionType subCtor = subClass.getConstructor();
+750c746
+<                 validator.expectSuperType(t, n, superObject, subObject);
+---
+>                 validator.expectSuperType(t, n, superClass, subClass);
+763,765c759,761
+<             JSType classType = typeRegistry.getType(singletonGetterClassName);
+<             if (classType instanceof ObjectType) {
+<               ObjectType objectType = (ObjectType) classType;
+---
+>             ObjectType objectType = ObjectType.cast(
+>                 typeRegistry.getType(singletonGetterClassName));
+>             if (objectType != null) {
+782,794c778,787
+<             JSType delegatorClass =
+<                 typeRegistry.getType(delegateRelationship.delegator);
+<             JSType delegateBaseClass =
+<                 typeRegistry.getType(delegateRelationship.delegateBase);
+<             JSType delegateSuperClass = typeRegistry.getType(
+<                 codingConvention.getDelegateSuperclassName());
+<             if (delegatorClass instanceof ObjectType &&
+<                 delegateBaseClass instanceof ObjectType &&
+<                 delegateSuperClass instanceof ObjectType) {
+<               ObjectType delegatorObject = (ObjectType) delegatorClass;
+<               ObjectType delegateBaseObject = (ObjectType) delegateBaseClass;
+<               ObjectType delegateSuperObject = (ObjectType) delegateSuperClass;
+< 
+---
+>             ObjectType delegatorObject = ObjectType.cast(
+>                 typeRegistry.getType(delegateRelationship.delegator));
+>             ObjectType delegateBaseObject = ObjectType.cast(
+>                 typeRegistry.getType(delegateRelationship.delegateBase));
+>             ObjectType delegateSuperObject = ObjectType.cast(
+>                 typeRegistry.getType(
+>                     codingConvention.getDelegateSuperclassName()));
+>             if (delegatorObject != null &&
+>                 delegateBaseObject != null &&
+>                 delegateSuperObject != null) {
+809c802
+<                     typeRegistry.createNullableType(delegateBaseClass), null);
+---
+>                     typeRegistry.createNullableType(delegateBaseObject), null);
+830,832c823,825
+<             JSType type = typeRegistry.getType(objectLiteralCast.typeName);
+<             if (type instanceof ObjectType &&
+<                 ((ObjectType) type).getConstructor() != null) {
+---
+>             ObjectType type = ObjectType.cast(
+>                 typeRegistry.getType(objectLiteralCast.typeName));
+>             if (type != null && type.getConstructor() != null) {
+1082,1087c1075,1076
+<         ownerVarType = ownerVarType == null ?
+<             null : ownerVarType.restrictByNotNullOrUndefined();
+< 
+<         if (ownerVarType instanceof ObjectType) {
+<           return (ObjectType) ownerVarType;
+<         }
+---
+>         return ObjectType.cast(ownerVarType == null ?
+>             null : ownerVarType.restrictByNotNullOrUndefined());

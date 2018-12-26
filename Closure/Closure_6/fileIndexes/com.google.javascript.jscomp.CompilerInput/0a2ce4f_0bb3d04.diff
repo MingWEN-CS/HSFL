@@ -1,0 +1,48 @@
+58,61c58
+<   private ErrorManager errorManager;
+< 
+<   
+<   private AbstractCompiler compiler;
+---
+>   private transient AbstractCompiler compiler;
+149,153d145
+<   public void setErrorManager(ErrorManager errorManager) {
+<     this.errorManager = errorManager;
+<   }
+< 
+<   
+156c148,154
+<     setErrorManager(compiler.getErrorManager());
+---
+>   }
+> 
+>   private void checkErrorManager() {
+>     Preconditions.checkNotNull(compiler,
+>         "Expected setCompiler to be called first: " + this);
+>     Preconditions.checkNotNull(compiler.getErrorManager(),
+>         "Expected compiler to call an error manager: " + this);
+162,163c160
+<     Preconditions.checkNotNull(errorManager,
+<         "Expected setErrorManager to be called first");
+---
+>     checkErrorManager();
+168c165
+<       errorManager.report(CheckLevel.ERROR,
+---
+>       compiler.getErrorManager().report(CheckLevel.ERROR,
+177,178c174
+<     Preconditions.checkNotNull(errorManager,
+<         "Expected setErrorManager to be called first");
+---
+>     checkErrorManager();
+183c179
+<       errorManager.report(CheckLevel.ERROR,
+---
+>       compiler.getErrorManager().report(CheckLevel.ERROR,
+243,244c239,241
+<         DependencyInfo info = (new JsFileParser(errorManager)).parseFile(
+<             getName(), getName(), getCode());
+---
+>         DependencyInfo info =
+>             (new JsFileParser(compiler.getErrorManager())).parseFile(
+>                 getName(), getName(), getCode());

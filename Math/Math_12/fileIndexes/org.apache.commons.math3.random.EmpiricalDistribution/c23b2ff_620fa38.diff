@@ -1,0 +1,159 @@
+32d31
+< import org.apache.commons.math3.distribution.RealDistribution;
+33a33
+> import org.apache.commons.math3.distribution.RealDistribution;
+138,142c138
+<     private final RandomDataGenerator randomDataGen;
+<     
+< 
+< 
+<     private final boolean useRandomDataImpl;
+---
+>     private final RandomDataImpl randomData;
+148c144
+<         this(DEFAULT_BIN_COUNT);
+---
+>         this(DEFAULT_BIN_COUNT, new RandomDataImpl());
+157c153
+<         this(binCount, (RandomGenerator) null);
+---
+>         this(binCount, new RandomDataImpl());
+168,170c164
+< 
+<     @Deprecated
+<     public EmpiricalDistribution(int binCount, RandomDataImpl randomData) {
+---
+>     public EmpiricalDistribution(int binCount, RandomGenerator generator) {
+172,174c166
+<         this.randomData = randomData == null ?
+<             new RandomDataImpl() :
+<             randomData;
+---
+>         randomData = new RandomDataImpl(generator);
+176,189d167
+<         useRandomDataImpl = true;
+<         randomDataGen = null;
+<     }
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public EmpiricalDistribution(RandomDataImpl randomData) {
+<         this(DEFAULT_BIN_COUNT, randomData);
+199,214c177,178
+<     public EmpiricalDistribution(int binCount, RandomDataGenerator randomData) {
+<         this.binCount = binCount;
+<         this.randomDataGen = randomData == null ?
+<             new RandomDataGenerator() :
+<             randomData;
+<         binStats = new ArrayList<SummaryStatistics>();
+<         useRandomDataImpl = false; 
+<     }
+<     
+< 
+< 
+< 
+< 
+< 
+<     public EmpiricalDistribution(RandomDataGenerator randomData) {
+<         this(DEFAULT_BIN_COUNT, randomData);
+---
+>     public EmpiricalDistribution(RandomGenerator generator) {
+>         this(DEFAULT_BIN_COUNT, generator);
+225,226c189,192
+<     public EmpiricalDistribution(int binCount, RandomGenerator generator) {
+<         this(binCount, new RandomDataGenerator(generator));
+---
+>     public EmpiricalDistribution(int binCount, RandomDataImpl randomData) {
+>         this.binCount = binCount;
+>         this.randomData = randomData;
+>         binStats = new ArrayList<SummaryStatistics>();
+236,237c202,203
+<     public EmpiricalDistribution(RandomGenerator generator) {
+<         this(DEFAULT_BIN_COUNT, generator);
+---
+>     public EmpiricalDistribution(RandomDataImpl randomData) {
+>         this(DEFAULT_BIN_COUNT, randomData);
+240c206
+<     
+---
+>      
+291c257
+<            } catch (IOException ex) { 
+---
+>            } catch (IOException ex) {
+323c289
+<             } catch (IOException ex) { 
+---
+>             } catch (IOException ex) {
+500,534c466,481
+<         if (useRandomDataImpl) {
+<             
+<             
+<             final double x = randomData.nextUniform(0,1);
+<             
+<             for (int i = 0; i < binCount; i++) {
+<                 if (x <= upperBounds[i]) {
+<                     SummaryStatistics stats = binStats.get(i);
+<                     if (stats.getN() > 0) {
+<                         if (stats.getStandardDeviation() > 0) {  
+<                             return randomData.nextGaussian(stats.getMean(),
+<                                                            stats.getStandardDeviation());
+<                         } else {
+<                             return stats.getMean(); 
+<                         }
+<                     }
+<                 }
+<             }
+<         } else {
+<             
+<             final double x = randomDataGen.nextUniform(0, 1);
+<             
+<             for (int i = 0; i < binCount; i++) {
+<                 if (x <= upperBounds[i]) {
+<                     SummaryStatistics stats = binStats.get(i);
+<                     if (stats.getN() > 0) {
+<                         if (stats.getStandardDeviation() > 0) {  
+<                             return randomDataGen.nextGaussian(stats.getMean(),
+<                                                               stats.getStandardDeviation());
+<                         } else {
+<                             return stats.getMean(); 
+<                         }
+<                     }
+<                 }
+<             }
+---
+>         
+>         final double x = randomData.nextUniform(0,1);
+> 
+>         
+>         for (int i = 0; i < binCount; i++) {
+>            if (x <= upperBounds[i]) {
+>                SummaryStatistics stats = binStats.get(i);
+>                if (stats.getN() > 0) {
+>                    if (stats.getStandardDeviation() > 0) {  
+>                        return randomData.nextGaussian(stats.getMean(),
+>                                                       stats.getStandardDeviation());
+>                    } else {
+>                        return stats.getMean(); 
+>                    }
+>                }
+>            }
+627,632c574
+<         if (useRandomDataImpl) {
+<             
+<             randomData.reSeed(seed);
+<         } else {
+<             randomDataGen.reSeed(seed);
+<         }
+---
+>         randomData.reSeed(seed);
+822c764
+<         reSeed(seed);
+---
+>         randomData.reSeed(seed);

@@ -1,0 +1,61 @@
+2065c2065,2068
+<         for (int i = 1; i < max; i++) {
+---
+> 
+>         int index;
+>         ITEM:
+>         for (index = 1; index < max; index++) {
+2069,2073c2072,2073
+<                     if (val[i] <= previous) {
+<                         if (abort) {
+<                             throw new NonMonotonousSequenceException(val[i], previous, i, dir, strict);
+<                         }
+<                         return false;
+---
+>                     if (val[index] <= previous) {
+>                         break ITEM;
+2076,2080c2076,2077
+<                     if (val[i] < previous) {
+<                         if (abort) {
+<                             throw new NonMonotonousSequenceException(val[i], previous, i, dir, strict);
+<                         }
+<                         return false;
+---
+>                     if (val[index] < previous) {
+>                         break ITEM;
+2086,2090c2083,2084
+<                     if (val[i] >= previous) {
+<                         if (abort) {
+<                             throw new NonMonotonousSequenceException(val[i], previous, i, dir, strict);
+<                         }
+<                         return false;
+---
+>                     if (val[index] >= previous) {
+>                         break ITEM;
+2093,2097c2087,2088
+<                     if (val[i] > previous) {
+<                         if (abort) {
+<                             throw new NonMonotonousSequenceException(val[i], previous, i, dir, strict);
+<                         }
+<                         return false;
+---
+>                     if (val[index] > previous) {
+>                         break ITEM;
+2105c2096,2108
+<             previous = val[i];
+---
+>             previous = val[index];
+>         }
+> 
+>         if (index == max) {
+>             
+>             return true;
+>         }
+> 
+>         
+>         if (abort) {
+>             throw new NonMonotonousSequenceException(val[index], previous, index, dir, strict);
+>         } else {
+>             return false;
+2107d2109
+<         return true;

@@ -1,0 +1,63 @@
+39d38
+< import java.util.List;
+2269,2285d2267
+<   public static Node newFunctionNode(String name, List<Node> params,
+<       Node body, int lineno, int charno) {
+<     Node parameterParen = new Node(Token.PARAM_LIST, lineno, charno);
+<     for (Node param : params) {
+<       parameterParen.addChildToBack(param);
+<     }
+<     Node function = new Node(Token.FUNCTION, lineno, charno);
+<     function.addChildrenToBack(
+<         Node.newString(Token.NAME, name, lineno, charno));
+<     function.addChildToBack(parameterParen);
+<     function.addChildToBack(body);
+<     return function;
+<   }
+< 
+<   
+< 
+< 
+2292c2274
+<       CodingConvention convention, String name, int lineno, int charno) {
+---
+>       CodingConvention convention, String name) {
+2295c2277
+<       return newName(convention, name, lineno, charno);
+---
+>       return newName(convention, name);
+2297,2298c2279
+<     Node node = newName(
+<         convention, name.substring(0, endPos), lineno, charno);
+---
+>     Node node = newName(convention, name.substring(0, endPos));
+2306c2287
+<       Node propNode = Node.newString(part, lineno, charno);
+---
+>       Node propNode = IR.string(part);
+2310c2291
+<       node = new Node(Token.GETPROP, node, propNode, lineno, charno);
+---
+>       node = IR.getprop(node, propNode);
+2332c2313
+<     Node node = newQualifiedNameNode(convention, name, -1, -1);
+---
+>     Node node = newQualifiedNameNode(convention, name);
+2365,2366c2346,2347
+<       CodingConvention convention, String name, int lineno, int charno) {
+<     Node nameNode = Node.newString(Token.NAME, name, lineno, charno);
+---
+>       CodingConvention convention, String name) {
+>     Node nameNode = IR.name(name);
+2383,2390c2364,2365
+<   static Node newName(
+<       CodingConvention convention, String name, Node basisNode) {
+<     Node nameNode = IR.name(name);
+<     if (convention.isConstantKey(name)) {
+<       nameNode.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+<     }
+<     nameNode.copyInformationFrom(basisNode);
+<     return nameNode;
+---
+>   static Node newName(CodingConvention convention, String name, Node srcref) {
+>     return newName(convention, name).srcref(srcref);

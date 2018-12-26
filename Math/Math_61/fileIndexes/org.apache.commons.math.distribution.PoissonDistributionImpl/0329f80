@@ -1,0 +1,279 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.distribution;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.special.Gamma;
+import org.apache.commons.math.util.MathUtils;
+
+
+
+
+
+
+public class PoissonDistributionImpl extends AbstractIntegerDistribution
+        implements PoissonDistribution, Serializable {
+
+    
+
+
+
+    public static final int DEFAULT_MAX_ITERATIONS = 10000000;
+
+    
+
+
+
+    public static final double DEFAULT_EPSILON = 1E-12;
+
+    
+    private static final long serialVersionUID = -3349935121172596109L;
+
+    
+    private NormalDistribution normal;
+
+    
+
+
+    private double mean;
+
+    
+
+
+
+
+
+    private int maxIterations = DEFAULT_MAX_ITERATIONS;
+
+    
+
+
+    private double epsilon = DEFAULT_EPSILON;
+
+    
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p) {
+        this(p, new NormalDistributionImpl());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p, double epsilon, int maxIterations) {
+        setMean(p);
+        this.epsilon = epsilon;
+        this.maxIterations = maxIterations;
+    }
+
+    
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p, double epsilon) {
+        setMean(p);
+        this.epsilon = epsilon;
+    }
+
+    
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p, int maxIterations) {
+        setMean(p);
+        this.maxIterations = maxIterations;
+    }
+
+
+    
+
+
+
+
+
+
+
+
+
+
+    @Deprecated
+    public PoissonDistributionImpl(double p, NormalDistribution z) {
+        super();
+        setNormalAndMeanInternal(z, p);
+    }
+
+    
+
+
+
+
+    public double getMean() {
+        return mean;
+    }
+
+    
+
+
+
+
+
+
+
+    @Deprecated
+    public void setMean(double p) {
+        setNormalAndMeanInternal(normal, p);
+    }
+    
+
+
+
+
+
+
+
+    private void setNormalAndMeanInternal(NormalDistribution z,
+                                          double p) {
+        if (p <= 0) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                    "the Poisson mean must be positive ({0})", p);
+        }
+        mean = p;
+        normal = z;
+        normal.setMean(p);
+        normal.setStandardDeviation(Math.sqrt(p));
+    }
+
+    
+
+
+
+
+
+
+    public double probability(int x) {
+        double ret;
+        if (x < 0 || x == Integer.MAX_VALUE) {
+            ret = 0.0;
+        } else if (x == 0) {
+            ret = Math.exp(-mean);
+        } else {
+            ret = Math.exp(-SaddlePointExpansion.getStirlingError(x) -
+                  SaddlePointExpansion.getDeviancePart(x, mean)) /
+                  Math.sqrt(MathUtils.TWO_PI * x);
+        }
+        return ret;
+    }
+
+    
+
+
+
+
+
+
+
+
+    @Override
+    public double cumulativeProbability(int x) throws MathException {
+        if (x < 0) {
+            return 0;
+        }
+        if (x == Integer.MAX_VALUE) {
+            return 1;
+        }
+        return Gamma.regularizedGammaQ((double) x + 1, mean, epsilon, maxIterations);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double normalApproximateProbability(int x) throws MathException {
+        
+        return normal.cumulativeProbability(x + 0.5);
+    }
+
+    
+
+
+
+
+
+
+
+    @Override
+    protected int getDomainLowerBound(double p) {
+        return 0;
+    }
+
+    
+
+
+
+
+
+
+
+    @Override
+    protected int getDomainUpperBound(double p) {
+        return Integer.MAX_VALUE;
+    }
+
+    
+
+
+
+
+
+
+
+
+    @Deprecated
+    public void setNormal(NormalDistribution value) {
+        setNormalAndMeanInternal(value, mean);
+    }
+}

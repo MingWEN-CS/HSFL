@@ -1,0 +1,34 @@
+2225a2226,2228
+> 
+> 
+> 
+2227c2230,2239
+<             return setCopy(getMaximumValue());
+---
+>             try {
+>                 return setCopy(getMaximumValue());
+>             } catch (RuntimeException ex) {
+>                 if (IllegalInstantException.isIllegalInstant(ex)) {
+>                     
+>                     long beforeGap = getChronology().getZone().previousTransition(getMillis() + DateTimeConstants.MILLIS_PER_DAY);
+>                     return new DateTime(beforeGap, getChronology());
+>                 }
+>                 throw ex;
+>             }
+2242a2255,2257
+> 
+> 
+> 
+2244c2259,2268
+<             return setCopy(getMinimumValue());
+---
+>             try {
+>                 return setCopy(getMinimumValue());
+>             } catch (RuntimeException ex) {
+>                 if (IllegalInstantException.isIllegalInstant(ex)) {
+>                     
+>                     long afterGap = getChronology().getZone().nextTransition(getMillis() - DateTimeConstants.MILLIS_PER_DAY);
+>                     return new DateTime(afterGap, getChronology());
+>                 }
+>                 throw ex;
+>             }

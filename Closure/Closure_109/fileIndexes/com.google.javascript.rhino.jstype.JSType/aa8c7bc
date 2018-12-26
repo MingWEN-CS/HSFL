@@ -1,0 +1,940 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.UNKNOWN;
+
+import com.google.javascript.rhino.ErrorReporter;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.jstype.JSTypeRegistry.ResolveMode;
+
+import java.io.Serializable;
+import java.util.Comparator;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class JSType implements Serializable {
+  private static final long serialVersionUID = 1L;
+
+  private boolean resolved = false;
+  private JSType resolveResult = null;
+
+  public static final String UNKNOWN_NAME =
+      "Unknown class name";
+
+  public static final String NOT_A_CLASS =
+      "Not declared as a constructor";
+
+  public static final String NOT_A_TYPE =
+      "Not declared as a type name";
+
+  public static final String EMPTY_TYPE_COMPONENT =
+      "Named type with empty name component";
+
+  
+
+
+
+
+  static final Comparator<JSType> ALPHA = new Comparator<JSType>() {
+    public int compare(JSType t1, JSType t2) {
+      return t1.toString().compareTo(t2.toString());
+    }
+  };
+
+  
+  public static final int ENUMDECL = 1;
+  public static final int NOT_ENUMDECL = 0;
+
+  final JSTypeRegistry registry;
+
+  JSType(JSTypeRegistry registry) {
+    this.registry = registry;
+  }
+
+  
+
+
+  JSType getNativeType(JSTypeNative typeId) {
+    return registry.getNativeType(typeId);
+  }
+
+  
+
+
+
+
+  public JSDocInfo getJSDocInfo() {
+    return null;
+  }
+
+  
+
+
+
+
+  void forgiveUnknownNames() {}
+
+  public boolean isNoType() {
+    return false;
+  }
+
+  public boolean isNoObjectType() {
+    return false;
+  }
+
+  public final boolean isEmptyType() {
+    return isNoType() || isNoObjectType();
+  }
+
+  public boolean isNumberObjectType() {
+    return false;
+  }
+
+  public boolean isNumberValueType() {
+    return false;
+  }
+
+  
+  public boolean isFunctionPrototypeType() {
+    return false;
+  }
+
+  public boolean isStringObjectType() {
+    return false;
+  }
+
+  boolean isTheObjectType() {
+    return false;
+  }
+
+  public boolean isStringValueType() {
+    return false;
+  }
+
+  
+
+
+
+  public final boolean isString() {
+    return this.isSubtype(
+        getNativeType(JSTypeNative.STRING_VALUE_OR_OBJECT_TYPE));
+  }
+
+  
+
+
+
+  public final boolean isNumber() {
+    return this.isSubtype(
+        getNativeType(JSTypeNative.NUMBER_VALUE_OR_OBJECT_TYPE));
+  }
+
+  public boolean isArrayType() {
+    return false;
+  }
+
+  public boolean isBooleanObjectType() {
+    return false;
+  }
+
+  public boolean isBooleanValueType() {
+    return false;
+  }
+
+  public boolean isRegexpType() {
+    return false;
+  }
+
+  public boolean isDateType() {
+    return false;
+  }
+
+  public boolean isNullType() {
+    return false;
+  }
+
+  public boolean isVoidType() {
+    return false;
+  }
+
+  public boolean isAllType() {
+    return false;
+  }
+
+  public boolean isUnknownType() {
+    return false;
+  }
+
+  public boolean isCheckedUnknownType() {
+    return false;
+  }
+
+  public boolean isUnionType() {
+    return false;
+  }
+
+  public boolean isFunctionType() {
+    return false;
+  }
+
+  public boolean isEnumElementType() {
+    return false;
+  }
+
+  public boolean isEnumType() {
+    return false;
+  }
+
+  boolean isNamedType() {
+    return false;
+  }
+
+  public boolean isRecordType() {
+    return false;
+  }
+
+  public boolean isTemplateType() {
+    return false;
+  }
+
+  
+
+
+
+  public boolean isObject() {
+    return false;
+  }
+
+  
+
+
+
+  public boolean isConstructor() {
+    return false;
+  }
+
+  
+
+
+
+  public boolean isNominalType() {
+    return false;
+  }
+
+  
+
+
+  public boolean isInstanceType() {
+    return false;
+  }
+
+  
+
+
+
+  public boolean isInterface() {
+    return false;
+  }
+
+  
+
+
+
+  public boolean isOrdinaryFunction() {
+    return false;
+  }
+
+  
+
+
+  public boolean isEquivalentTo(JSType jsType) {
+    if (jsType instanceof ProxyObjectType) {
+      return jsType.isEquivalentTo(this);
+    }
+    
+    
+    
+    
+    return this == jsType;
+  }
+
+  public static boolean isEquivalent(JSType typeA, JSType typeB) {
+    return (typeA == null || typeB == null) ?
+        typeA == typeB : typeA.isEquivalentTo(typeB);
+  }
+
+  @Override
+  public boolean equals(Object jsType) {
+    return (jsType instanceof JSType) ?
+        isEquivalentTo((JSType) jsType) : false;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
+  }
+
+  
+
+
+
+
+
+  public final boolean matchesInt32Context() {
+    return matchesNumberContext();
+  }
+
+  
+
+
+
+
+  public final boolean matchesUint32Context() {
+    return matchesNumberContext();
+  }
+
+  
+
+
+
+  public boolean matchesNumberContext() {
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+  public boolean matchesStringContext() {
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+  public boolean matchesObjectContext() {
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  public JSType findPropertyType(String propertyName) {
+    ObjectType autoboxObjType = ObjectType.cast(autoboxesTo());
+    if (autoboxObjType != null) {
+      return autoboxObjType.findPropertyType(propertyName);
+    }
+
+    return null;
+  }
+
+  
+
+
+
+
+
+  public boolean canBeCalled() {
+    return false;
+  }
+
+  
+
+
+
+
+
+
+  public boolean canAssignTo(JSType that) {
+    if (this.isSubtype(that)) {
+      return true;
+    }
+    return false;
+  }
+
+  
+
+
+
+
+  public JSType autoboxesTo() {
+    return null;
+  }
+
+  
+
+
+
+
+  public JSType unboxesTo() {
+    return null;
+  }
+
+  
+
+
+
+
+
+
+  public ObjectType toObjectType() {
+    return this instanceof ObjectType ? (ObjectType) this : null;
+  }
+
+  
+
+
+
+
+
+  public final ObjectType dereference() {
+    JSType restricted = restrictByNotNullOrUndefined();
+    JSType autobox = restricted.autoboxesTo();
+    return ObjectType.cast(autobox == null ? restricted : autobox);
+  }
+
+  
+
+
+
+
+
+  public final boolean canTestForEqualityWith(JSType that) {
+    return this.testForEquality(that).equals(UNKNOWN);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  public TernaryValue testForEquality(JSType that) {
+    if (that.isAllType() || that.isNoType() || that.isUnknownType()) {
+      return UNKNOWN;
+    }
+    if (that.isEnumElementType()) {
+      return that.testForEquality(this);
+    }
+    if (that instanceof UnionType) {
+      UnionType union = (UnionType) that;
+      TernaryValue result = null;
+      for (JSType t : union.alternates) {
+        TernaryValue test = this.testForEquality(t);
+        if (result == null) {
+          result = test;
+        } else if (!result.equals(test)) {
+          return UNKNOWN;
+        }
+      }
+    }
+    return null;
+  }
+
+  
+
+
+
+
+
+
+  public final boolean canTestForShallowEqualityWith(JSType that) {
+    return this.isSubtype(that) || that.isSubtype(this);
+  }
+
+  
+
+
+  public boolean isNullable() {
+    return this.isSubtype(getNativeType(JSTypeNative.NULL_TYPE));
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public JSType getLeastSupertype(JSType that) {
+    if (that.isUnionType()) {
+      
+      return that.getLeastSupertype(this);
+    }
+    return getLeastSupertype(this, that);
+  }
+
+  
+
+
+
+  static JSType getLeastSupertype(JSType thisType, JSType thatType) {
+    if (thatType.isEmptyType() || thatType.isAllType()) {
+      
+      
+      return thatType.getLeastSupertype(thisType);
+    }
+
+    return thisType.registry.createUnionType(thisType, thatType);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public JSType getGreatestSubtype(JSType that) {
+     if (that.isRecordType()) {
+      
+      return that.getGreatestSubtype(this);
+    }
+    return getGreatestSubtype(this, that);
+  }
+
+  
+
+
+
+  static JSType getGreatestSubtype(JSType thisType, JSType thatType) {
+    if (thatType.isEmptyType() || thatType.isAllType()) {
+      
+      
+      return thatType.getGreatestSubtype(thisType);
+    } else if (thisType.isUnknownType() || thatType.isUnknownType()) {
+      
+      
+      return thisType.isEquivalentTo(thatType) ? thisType :
+          thisType.getNativeType(JSTypeNative.UNKNOWN_TYPE);
+    } else if (thisType.isSubtype(thatType)) {
+      return thisType;
+    } else if (thatType.isSubtype(thisType)) {
+      return thatType;
+    } else if (thisType.isUnionType()) {
+      return ((UnionType) thisType).meet(thatType);
+    } else if (thatType.isUnionType()) {
+      return ((UnionType) thatType).meet(thisType);
+    } else if (thisType.isObject() && thatType.isObject()) {
+      return thisType.getNativeType(JSTypeNative.NO_OBJECT_TYPE);
+    }
+    return thisType.getNativeType(JSTypeNative.NO_TYPE);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public JSType getRestrictedTypeGivenToBooleanOutcome(boolean outcome) {
+    BooleanLiteralSet literals = getPossibleToBooleanOutcomes();
+    if (literals.contains(outcome)) {
+      return this;
+    } else {
+      return getNativeType(JSTypeNative.NO_TYPE);
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public abstract BooleanLiteralSet getPossibleToBooleanOutcomes();
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public TypePair getTypesUnderEquality(JSType that) {
+    
+    if (that instanceof UnionType) {
+      TypePair p = that.getTypesUnderEquality(this);
+      return new TypePair(p.typeB, p.typeA);
+    }
+
+    
+    switch (this.testForEquality(that)) {
+      case FALSE:
+        return new TypePair(null, null);
+
+      case TRUE:
+      case UNKNOWN:
+        return new TypePair(this, that);
+    }
+
+    
+    throw new IllegalStateException();
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public TypePair getTypesUnderInequality(JSType that) {
+    
+    if (that instanceof UnionType) {
+      TypePair p = that.getTypesUnderInequality(this);
+      return new TypePair(p.typeB, p.typeA);
+    }
+
+    
+    switch (this.testForEquality(that)) {
+      case TRUE:
+        return new TypePair(null, null);
+
+      case FALSE:
+      case UNKNOWN:
+        return new TypePair(this, that);
+    }
+
+    
+    throw new IllegalStateException();
+  }
+
+  
+
+
+
+
+
+
+
+
+  public TypePair getTypesUnderShallowEquality(JSType that) {
+    JSType commonType = getGreatestSubtype(that);
+    return new TypePair(commonType, commonType);
+  }
+
+  
+
+
+
+
+
+
+
+
+  public TypePair getTypesUnderShallowInequality(JSType that) {
+    
+    if (that instanceof UnionType) {
+      TypePair p = that.getTypesUnderShallowInequality(this);
+      return new TypePair(p.typeB, p.typeA);
+    }
+
+    
+    
+    
+    if (this.isNullType() && that.isNullType() ||
+        this.isVoidType() && that.isVoidType()) {
+      return new TypePair(null, null);
+    } else {
+      return new TypePair(this, that);
+    }
+  }
+
+  
+
+
+
+  public JSType restrictByNotNullOrUndefined() {
+    return this;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public abstract boolean isSubtype(JSType that);
+
+  
+
+
+
+
+
+
+
+  public boolean differsFrom(JSType that) {
+    
+    if (!this.isUnknownType() && !that.isUnknownType()) {
+      return !this.isEquivalentTo(that);
+    }
+    
+    return this.isUnknownType() ^ that.isUnknownType();
+  }
+
+  
+
+
+
+  static boolean isSubtype(JSType thisType, JSType thatType) {
+    
+    if (thatType.isUnknownType()) {
+      return true;
+    }
+    
+    if (thisType.isEquivalentTo(thatType)) {
+      return true;
+    }
+    
+    if (thatType.isAllType()) {
+      return true;
+    }
+    
+    if (thatType instanceof UnionType) {
+      UnionType union = (UnionType)thatType;
+      for (JSType element : union.alternates) {
+        if (thisType.isSubtype(element)) {
+          return true;
+        }
+      }
+    }
+    
+    if (thatType instanceof NamedType) {
+      return thisType.isSubtype(((NamedType)thatType).referencedType);
+    }
+    return false;
+  }
+
+  
+
+
+
+
+  public abstract <T> T visit(Visitor<T> visitor);
+
+  
+
+
+
+
+  public final JSType forceResolve(ErrorReporter t, StaticScope<JSType> scope) {
+    ResolveMode oldResolveMode = registry.getResolveMode();
+    registry.setResolveMode(ResolveMode.IMMEDIATE);
+    JSType result = resolve(t, scope);
+    registry.setResolveMode(oldResolveMode);
+    return result;
+  }
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  public final JSType resolve(ErrorReporter t, StaticScope<JSType> scope) {
+    if (resolved) {
+      
+      
+      if (resolveResult == null) {
+        return registry.getNativeType(JSTypeNative.UNKNOWN_TYPE);
+      }
+      return resolveResult;
+    }
+    resolved = true;
+    resolveResult = resolveInternal(t, scope);
+    resolveResult.setResolvedTypeInternal(resolveResult);
+    return resolveResult;
+  }
+
+  
+
+
+  abstract JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope);
+
+  void setResolvedTypeInternal(JSType type) {
+    resolveResult = type;
+    resolved = true;
+  }
+
+  
+  public final boolean isResolved() {
+    return resolved;
+  }
+
+  
+  public final void clearResolved() {
+    resolved = false;
+    resolveResult = null;
+  }
+
+  
+
+
+
+  static final JSType safeResolve(
+      JSType type, ErrorReporter t, StaticScope<JSType> scope) {
+    return type == null ? null : type.resolve(t, scope);
+  }
+
+  public static class TypePair {
+    public final JSType typeA;
+    public final JSType typeB;
+
+    public TypePair(JSType typeA, JSType typeB) {
+      this.typeA = typeA;
+      this.typeB = typeB;
+    }
+  }
+
+  
+
+
+
+  public String toDebugHashCodeString() {
+    return "{" + this.hashCode() + "}";
+  }
+}

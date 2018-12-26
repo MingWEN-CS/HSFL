@@ -1,0 +1,81 @@
+19a20
+> import com.google.common.base.Joiner;
+75a77,80
+>   
+>   
+>   private static final int MAX_INVALDIATION_WARNINGS_PER_PROPERTY = 10;
+> 
+305,308c310,311
+<       addInvalidatingType(mis.typeA);
+<       addInvalidatingType(mis.typeB);
+<       recordInvalidationError(mis.typeA, mis.src);
+<       recordInvalidationError(mis.typeB, mis.src);
+---
+>       addInvalidatingType(mis.typeA, mis.src);
+>       addInvalidatingType(mis.typeB, mis.src);
+321,326d323
+<     if (t.isUnionType()) {
+<       for (JSType alt : t.toMaybeUnionType().getAlternates()) {
+<         recordInvalidationError(alt, error);
+<       }
+<       return;
+<     }
+335c332
+<   private void addInvalidatingType(JSType type) {
+---
+>   private void addInvalidatingType(JSType type, JSError error) {
+339c336
+<         addInvalidatingType(alt);
+---
+>         addInvalidatingType(alt, error);
+342c339,340
+<       addInvalidatingType(type.toMaybeEnumElementType().getPrimitiveType());
+---
+>       addInvalidatingType(
+>           type.toMaybeEnumElementType().getPrimitiveType(), error);
+344a343
+>       recordInvalidationError(type, error);
+347a347
+>         recordInvalidationError(objType.getImplicitPrototype(), error);
+462,466c462,466
+<               StringBuilder sb = new StringBuilder();
+<               printErrorLocations(sb, jsType);
+<               if (sb.length() != 0) {
+<                 suggestion = "Consider fixing errors for the following types: ";
+<                 suggestion += sb.toString();
+---
+>               List<String> errors = Lists.newArrayList();
+>               printErrorLocations(errors, jsType);
+>               if (!errors.isEmpty()) {
+>                 suggestion = "Consider fixing errors for the following types:\n";
+>                 suggestion += Joiner.on("\n").join(errors);
+507,508c507,508
+<     private void printErrorLocations(StringBuilder sb, JSType t) {
+<       if (!t.isObject() || t.isAllType() || t.isUnionType()) {
+---
+>     private void printErrorLocations(List<String> errors, JSType t) {
+>       if (!t.isObject() || t.isAllType()) {
+510a511
+> 
+513c514
+<           printErrorLocations(sb, alt);
+---
+>           printErrorLocations(errors, alt);
+516a518
+> 
+518,519c520,521
+<         if(sb.length() != 0) {
+<           sb.append(", ");
+---
+>         if (errors.size() > MAX_INVALDIATION_WARNINGS_PER_PROPERTY) {
+>           return;
+521,525c523,525
+<         sb.append(t.toString());
+<         sb.append(" at ");
+<         sb.append(error.sourceName);
+<         sb.append(":");
+<         sb.append(error.lineNumber);
+---
+> 
+>         errors.add(
+>             t.toString() + " at " + error.sourceName + ":" + error.lineNumber);

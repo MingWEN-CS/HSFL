@@ -1,0 +1,192 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeZone;
+import org.joda.time.DurationType;
+import org.joda.time.chrono.ISOChronology;
+
+
+
+
+
+
+
+public abstract class AbstractConverter implements Converter {
+    
+    
+
+
+    protected AbstractConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object) {
+        return getInstantMillis(object, (DateTimeZone) null);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, DateTimeZone zone) {
+        return getInstantMillis(object);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, Chronology chrono) {
+        return getInstantMillis(object);
+    }
+    
+    
+    
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object) {
+        return ISOChronology.getInstance();
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object, DateTimeZone zone) {
+        return ISOChronology.getInstance(zone);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object, Chronology chrono) {
+        if (chrono == null) {
+            return ISOChronology.getInstance();
+        }
+        return chrono;
+    }
+    
+    
+    
+
+
+
+
+
+
+
+    public DurationType getDurationType(Object object, boolean precise) {
+        if (precise) {
+            return DurationType.getPreciseAllType();
+        }
+        return DurationType.getAllType();
+    }
+
+    
+    
+
+
+
+
+    public String toString() {
+        return "Converter[" + (getSupportedType() == null ? "null" : getSupportedType().getName()) + "]";
+    }
+
+}

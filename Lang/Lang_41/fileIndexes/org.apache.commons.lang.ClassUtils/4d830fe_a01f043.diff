@@ -1,0 +1,52 @@
+17a18,20
+> import java.lang.reflect.Method;
+> import java.lang.reflect.Modifier;
+> 
+589a593,639
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Method getPublicMethod(Class cls, String methodName, Class parameterTypes[]) 
+>         throws SecurityException, NoSuchMethodException 
+>     {
+>         
+>         Method declaredMethod = cls.getMethod(methodName, parameterTypes);
+>  
+>         if (Modifier.isPublic(declaredMethod.getDeclaringClass().getModifiers())) {
+>             return declaredMethod;
+>         }
+> 
+>         List candidateClasses = new ArrayList();
+>         candidateClasses.addAll(getAllInterfaces(cls));
+>         candidateClasses.addAll(getAllSuperclasses(cls));
+> 
+>         for (Iterator iter=candidateClasses.iterator(); iter.hasNext(); ) {
+>             Class candidateClass = (Class) iter.next();
+>             if (!Modifier.isPublic(candidateClass.getModifiers())) {
+>                 continue;
+>             }
+>             Method candidateMethod;
+>             try {
+>                 candidateMethod = candidateClass.getMethod(methodName, parameterTypes);
+>             } catch (NoSuchMethodException e) {
+>                 continue;
+>             }
+>             if (Modifier.isPublic(candidateMethod.getDeclaringClass().getModifiers())) {
+>                 return candidateMethod;
+>             }
+>         }
+>         
+>         String message = "Can't find an public method for " + methodName + " " + ArrayUtils.toString(parameterTypes); 
+>         throw new NoSuchMethodException(message);

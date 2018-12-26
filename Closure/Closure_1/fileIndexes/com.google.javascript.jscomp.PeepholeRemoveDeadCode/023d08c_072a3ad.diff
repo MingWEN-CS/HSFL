@@ -1,0 +1,100 @@
+50a51,52
+>       case Token.SWITCH:
+>         return tryOptimizeSwitch(subtree);
+66a69,164
+>   }
+> 
+>   
+> 
+> 
+>   private Node tryOptimizeSwitch(Node n) {
+>     Preconditions.checkState(n.getType() == Token.SWITCH);
+> 
+>     Node defaultCase = findDefaultCase(n);
+>     if (defaultCase != null && isUselessCase(defaultCase)) {
+>       NodeUtil.redeclareVarsInsideBranch(defaultCase);
+>       n.removeChild(defaultCase);
+>       reportCodeChange();
+>       defaultCase = null;
+>     }
+> 
+>     
+>     
+>     if (defaultCase == null) {
+>       Node next = null;
+>       
+>       for (Node c = n.getFirstChild().getNext(); c != null; c = next) {
+>         next = c.getNext();
+>         if (!mayHaveSideEffects(c.getFirstChild()) && isUselessCase(c)) {
+>           NodeUtil.redeclareVarsInsideBranch(c);
+>           n.removeChild(c);
+>           reportCodeChange();
+>         }
+>       }
+>     }
+> 
+>     if (n.hasOneChild()) {
+>       Node condition = n.removeFirstChild();
+>       Node parent = n.getParent();
+>       Node replacement = new Node(Token.EXPR_RESULT, condition)
+>                             .copyInformationFrom(n);
+>       parent.replaceChild(n, replacement);
+>       reportCodeChange();
+>       return replacement;
+>     }
+> 
+>     return null;
+>   }
+> 
+>   
+> 
+> 
+>   private Node findDefaultCase(Node n) {
+>     for (Node c : n.children()) {
+>       if (c.getType() == Token.DEFAULT) {
+>         return c;
+>       }
+>     }
+>     return null;
+>   }
+> 
+>   
+> 
+> 
+>   private boolean isUselessCase(Node caseNode) {
+>     Node executingCase = caseNode;
+>     while (executingCase != null) {
+>       Preconditions.checkState(executingCase.getType() == Token.DEFAULT
+>           || executingCase.getType() == Token.CASE);
+>       
+>       
+>       
+>       Preconditions.checkState(caseNode == executingCase
+>           || executingCase.getType() != Token.DEFAULT);
+>       Node block = executingCase.getLastChild();
+>       Preconditions.checkState(block.getType() == Token.BLOCK);
+>       if (block.hasChildren()) {
+>         for (Node blockChild : block.children()) {
+>           int type = blockChild.getType();
+>           
+>           switch (blockChild.getType()) {
+>             case Token.BREAK:
+>               
+>               return blockChild.getFirstChild() == null;
+>             case Token.VAR:
+>               if (blockChild.hasOneChild()
+>                   && blockChild.getFirstChild().getFirstChild() == null) {
+>                 
+>                 continue;
+>               }
+>               return false;
+>             default:
+>               return false;
+>           }
+>         }
+>       } else {
+>         
+>         executingCase = executingCase.getNext();
+>       }
+>     }
+>     return true;

@@ -1,0 +1,101 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+abstract class AbstractPeepholeOptimization {
+   
+  private NodeTraversal currentTraversal;
+  
+  
+
+
+
+
+
+
+
+  
+  abstract Node optimizeSubtree(Node subtree);
+
+  
+
+
+
+
+
+ 
+  protected void error(DiagnosticType diagnostic, Node n) {
+    JSError error = currentTraversal.makeError(n, diagnostic, n.toString());
+    currentTraversal.getCompiler().report(error);
+  }
+  
+  
+
+
+
+  protected void reportCodeChange() {
+    Preconditions.checkNotNull(currentTraversal);
+    currentTraversal.getCompiler().reportCodeChange();
+  }
+  
+  
+
+
+
+  protected boolean areNodesEqualForInlining(Node n1, Node n2) {
+    
+
+
+    Preconditions.checkNotNull(currentTraversal);
+    return currentTraversal.getCompiler().areNodesEqualForInlining(n1, n2);
+  }
+  
+  
+
+
+
+  protected boolean isASTNormalized() {
+    Preconditions.checkNotNull(currentTraversal);
+    Preconditions.checkNotNull(currentTraversal.getCompiler());
+    
+    return currentTraversal.getCompiler().isNormalized();
+  }
+  
+  
+
+
+  void beginTraversal(NodeTraversal traversal) {
+    currentTraversal = traversal;
+  }
+  
+  
+
+
+  void endTraversal(NodeTraversal traversal) {
+    currentTraversal = null;
+  }
+}

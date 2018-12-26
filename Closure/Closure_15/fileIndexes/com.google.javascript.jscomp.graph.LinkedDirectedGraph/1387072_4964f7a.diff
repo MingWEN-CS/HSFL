@@ -1,0 +1,135 @@
+50a51,62
+>   public static <N, E> LinkedDirectedGraph<N, E> createWithoutAnnotations() {
+>     return new LinkedDirectedGraph<N, E>(false, false);
+>   }
+> 
+>   public static <N, E> LinkedDirectedGraph<N, E> createWithNodeAnnotations() {
+>     return new LinkedDirectedGraph<N, E>(true, false);
+>   }
+> 
+>   public static <N, E> LinkedDirectedGraph<N, E> createWithEdgeAnnotations() {
+>     return new LinkedDirectedGraph<N, E>(false, true);
+>   }
+> 
+52c64,73
+<     return new LinkedDirectedGraph<N, E>();
+---
+>     return new LinkedDirectedGraph<N, E>(true, true);
+>   }
+> 
+>   private final boolean useNodeAnnotations;
+>   private final boolean useEdgeAnnotations;
+> 
+>   protected LinkedDirectedGraph(
+>       boolean useNodeAnnotations, boolean useEdgeAnnotations) {
+>     this.useNodeAnnotations = useNodeAnnotations;
+>     this.useEdgeAnnotations = useEdgeAnnotations;
+59a81,82
+>         useEdgeAnnotations ?
+>         new AnnotatedLinkedDirectedGraphEdge<N, E>(src, edgeValue, dest) :
+113c136,138
+<       node = new LinkedDirectedGraphNode<N, E>(nodeValue);
+---
+>       node = useNodeAnnotations ?
+>           new AnnotatedLinkedDirectedGraphNode<N, E>(nodeValue) :
+>           new LinkedDirectedGraphNode<N, E>(nodeValue);
+298,303d322
+<     protected Annotation annotation;
+< 
+<     protected int id;
+< 
+<     private static int totalNodes = 0;
+< 
+311d329
+<       this.id = totalNodes++;
+319d336
+<     @SuppressWarnings("unchecked")
+322c339,340
+<       return (A) annotation;
+---
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with node annotations turned off");
+327c345,346
+<       annotation = data;
+---
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with node annotations turned off");
+337c356
+<       return "LDN" + id;
+---
+>       return "LDN" + hashCode();
+391a411,437
+>   static class AnnotatedLinkedDirectedGraphNode<N, E>
+>       extends LinkedDirectedGraphNode<N, E> {
+> 
+>     protected Annotation annotation;
+> 
+>     
+> 
+> 
+>     AnnotatedLinkedDirectedGraphNode(N nodeValue) {
+>       super(nodeValue);
+>     }
+> 
+>     @SuppressWarnings("unchecked")
+>     @Override
+>     public <A extends Annotation> A getAnnotation() {
+>       return (A) annotation;
+>     }
+> 
+>     @Override
+>     public void setAnnotation(Annotation data) {
+>       annotation = data;
+>     }
+>   }
+> 
+>   
+> 
+> 
+402,403d447
+<     protected Annotation annotation;
+< 
+441d484
+<     @SuppressWarnings("unchecked")
+444c487,488
+<       return (A) annotation;
+---
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with edge annotations turned off");
+449c493,494
+<       annotation = data;
+---
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with edge annotations turned off");
+484a530,560
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static class AnnotatedLinkedDirectedGraphEdge<N, E>
+>       extends LinkedDirectedGraphEdge<N, E> {
+> 
+>     protected Annotation annotation;
+> 
+>     
+> 
+> 
+> 
+> 
+>     AnnotatedLinkedDirectedGraphEdge(DiGraphNode<N, E> sourceNode,
+>         E edgeValue, DiGraphNode<N, E> destNode) {
+>       super(sourceNode, edgeValue, destNode);
+>     }
+> 
+>     @SuppressWarnings("unchecked")
+>     @Override
+>     public <A extends Annotation> A getAnnotation() {
+>       return (A) annotation;
+>     }
+> 
+>     @Override
+>     public void setAnnotation(Annotation data) {
+>       annotation = data;

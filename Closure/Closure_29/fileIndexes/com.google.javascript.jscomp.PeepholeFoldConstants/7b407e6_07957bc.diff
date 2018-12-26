@@ -1,0 +1,96 @@
+226c226,227
+<       parent.replaceChild(n, n.removeFirstChild());
+---
+>       Node replacement = n.removeFirstChild();
+>       parent.replaceChild(n, replacement);
+228c229
+<       return null;
+---
+>       return replacement;
+608,612c609,612
+<     if (left.getType() == Token.NUMBER &&
+<         right.getType() == Token.NUMBER) {
+<       double resultDouble;
+<       double lval = left.getDouble();
+<       double rval = right.getDouble();
+---
+>     if (left.getType() != Token.NUMBER ||
+>         right.getType() != Token.NUMBER) {
+>       return n;
+>     }
+614,617c614,616
+<       
+<       
+<       if (lval < Integer.MIN_VALUE || lval > Integer.MAX_VALUE ||
+<           rval < Integer.MIN_VALUE || rval > Integer.MAX_VALUE) {
+---
+>     double resultDouble;
+>     double lval = left.getDouble();
+>     double rval = right.getDouble();
+619,621c618,621
+<         
+<         return n;
+<       }
+---
+>     
+>     
+>     if (lval < Integer.MIN_VALUE || lval > Integer.MAX_VALUE ||
+>         rval < Integer.MIN_VALUE || rval > Integer.MAX_VALUE) {
+624,627c624,625
+<       int lvalInt = (int) lval;
+<       if (lvalInt != lval) {
+<         return n;
+<       }
+---
+>       return n;
+>     }
+629,632c627,631
+<       int rvalInt = (int) rval;
+<       if (rvalInt != rval) {
+<         return n;
+<       }
+---
+>     
+>     int lvalInt = (int) lval;
+>     if (lvalInt != lval) {
+>       return n;
+>     }
+634,643c633,636
+<       switch (n.getType()) {
+<         case Token.BITAND:
+<           resultDouble = lvalInt & rvalInt;
+<           break;
+<         case Token.BITOR:
+<           resultDouble = lvalInt | rvalInt;
+<           break;
+<         default:
+<           throw new Error("Unknown bitwise operator");
+<       }
+---
+>     int rvalInt = (int) rval;
+>     if (rvalInt != rval) {
+>       return n;
+>     }
+645,647c638,646
+<       Node newNumber = Node.newNumber(resultDouble);
+<       n.getParent().replaceChild(n, newNumber);
+<       reportCodeChange();
+---
+>     switch (n.getType()) {
+>       case Token.BITAND:
+>         resultDouble = lvalInt & rvalInt;
+>         break;
+>       case Token.BITOR:
+>         resultDouble = lvalInt | rvalInt;
+>         break;
+>       default:
+>         throw new Error("Unknown bitwise operator");
+650c649,652
+<     return n;
+---
+>     Node newNumber = Node.newNumber(resultDouble);
+>     n.getParent().replaceChild(n, newNumber);
+>     reportCodeChange();
+>     return newNumber;
+1200d1201
+< 

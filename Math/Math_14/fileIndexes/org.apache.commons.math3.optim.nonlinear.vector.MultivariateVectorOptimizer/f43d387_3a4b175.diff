@@ -1,0 +1,67 @@
+20,21d19
+< import org.apache.commons.math3.exception.TooManyEvaluationsException;
+< import org.apache.commons.math3.exception.DimensionMismatchException;
+23c21,23
+< import org.apache.commons.math3.optim.OptimizationData;
+---
+> import org.apache.commons.math3.exception.DimensionMismatchException;
+> import org.apache.commons.math3.exception.TooManyEvaluationsException;
+> import org.apache.commons.math3.linear.RealMatrix;
+25a26
+> import org.apache.commons.math3.optim.OptimizationData;
+27c28
+< import org.apache.commons.math3.linear.RealMatrix;
+---
+> import org.apache.commons.math3.optim.nonlinear.vector.jacobian.GaussNewtonOptimizer;
+39a41,43
+> 
+> 
+>     @Deprecated
+41a46,47
+>     private double[] weight;
+>     
+83a90,100
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+99a117,118
+> 
+>     @Deprecated
+102a122,131
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public double[] getNonCorrelatedWeight() {
+>         return weight.clone();
+>     }
+144a174,178
+>             if (data instanceof NonCorrelatedWeight) {
+>                 weight = ((NonCorrelatedWeight) data).getWeight();
+>                 continue;
+>             }
+>             
+146a181,185
+>                 weight = new double[weightMatrix.getColumnDimension()];
+>                 for (int i = 0; i < weight.length; ++i) {
+>                     
+>                     weight[i] = weightMatrix.getEntry(i, i);
+>                 }
+159,161c198,199
+<         if (target.length != weightMatrix.getColumnDimension()) {
+<             throw new DimensionMismatchException(target.length,
+<                                                  weightMatrix.getColumnDimension());
+---
+>         if (target.length != weight.length) {
+>             throw new DimensionMismatchException(target.length, weight.length);

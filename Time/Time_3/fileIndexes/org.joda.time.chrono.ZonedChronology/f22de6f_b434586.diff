@@ -1,0 +1,306 @@
+16,53d15
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+63a26,28
+> import org.joda.time.IllegalFieldValueException;
+> import org.joda.time.Instant;
+> import org.joda.time.ReadablePartial;
+65a31
+> import org.joda.time.format.DateTimeFormat;
+178c144,145
+<                 ("Illegal instant due to time zone offset transition");
+---
+>                 ("Illegal instant due to time zone offset transition: " +
+>                     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS").print(new Instant(instant)));
+286c253
+<             this.iZone = zone;
+---
+>             iZone = zone;
+290c257
+<             return iTimeField ? iField.isPrecise() : iZone.isFixed();
+---
+>             return iTimeField ? iField.isPrecise() : this.iZone.isFixed();
+298c265
+<             return iField.getValue(duration, instant + this.iZone.getOffset(instant));
+---
+>             return iField.getValue(duration, addOffset(instant));
+302c269
+<             return iField.getValueAsLong(duration, instant + this.iZone.getOffset(instant));
+---
+>             return iField.getValueAsLong(duration, addOffset(instant));
+306c273
+<             return iField.getMillis(value, instant + this.iZone.getOffset(instant));
+---
+>             return iField.getMillis(value, addOffset(instant));
+310c277
+<             return iField.getMillis(value, instant + this.iZone.getOffset(instant));
+---
+>             return iField.getMillis(value, addOffset(instant));
+314c281
+<             int offset = this.iZone.getOffset(instant);
+---
+>             int offset = getOffsetToAdd(instant);
+316c283
+<             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+---
+>             return instant - (iTimeField ? offset : getOffsetFromLocalToSubtract(instant));
+320c287
+<             int offset = this.iZone.getOffset(instant);
+---
+>             int offset = getOffsetToAdd(instant);
+322c289
+<             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+---
+>             return instant - (iTimeField ? offset : getOffsetFromLocalToSubtract(instant));
+326c293
+<             int offset = this.iZone.getOffset(subtrahendInstant);
+---
+>             int offset = getOffsetToAdd(subtrahendInstant);
+328c295
+<                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+---
+>                 (minuendInstant + (iTimeField ? offset : getOffsetToAdd(minuendInstant)),
+333c300
+<             int offset = this.iZone.getOffset(subtrahendInstant);
+---
+>             int offset = getOffsetToAdd(subtrahendInstant);
+335c302
+<                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+---
+>                 (minuendInstant + (iTimeField ? offset : getOffsetToAdd(minuendInstant)),
+337a305,334
+> 
+>         private int getOffsetToAdd(long instant) {
+>             int offset = this.iZone.getOffset(instant);
+>             long sum = instant + offset;
+>             
+>             if ((instant ^ sum) < 0 && (instant ^ offset) >= 0) {
+>                 throw new ArithmeticException("Adding time zone offset caused overflow");
+>             }
+>             return offset;
+>         }
+> 
+>         private int getOffsetFromLocalToSubtract(long instant) {
+>             int offset = this.iZone.getOffsetFromLocal(instant);
+>             long diff = instant - offset;
+>             
+>             if ((instant ^ diff) < 0 && (instant ^ offset) < 0) {
+>                 throw new ArithmeticException("Subtracting time zone offset caused overflow");
+>             }
+>             return offset;
+>         }
+> 
+>         private long addOffset(long instant) {
+>             int offset = this.iZone.getOffset(instant);
+>             long sum = instant + offset;
+>             
+>             if ((instant ^ sum) < 0 && (instant ^ offset) >= 0) {
+>                 throw new ArithmeticException("Adding time zone offset caused overflow");
+>             }
+>             return sum;
+>         }
+366c363
+<             this.iZone = zone;
+---
+>             iZone = zone;
+378c375
+<             return iField.get(instant + this.iZone.getOffset(instant));
+---
+>             return iField.get(addOffset(instant));
+382c379
+<             return iField.getAsText(instant + this.iZone.getOffset(instant), locale);
+---
+>             return iField.getAsText(addOffset(instant), locale);
+386c383,391
+<             return iField.getAsShortText(instant + this.iZone.getOffset(instant), locale);
+---
+>             return iField.getAsShortText(addOffset(instant), locale);
+>         }
+> 
+>         public String getAsText(int fieldValue, Locale locale) {
+>             return iField.getAsText(fieldValue, locale);
+>         }
+> 
+>         public String getAsShortText(int fieldValue, Locale locale) {
+>             return iField.getAsShortText(fieldValue, locale);
+390c395
+<             int offset = this.iZone.getOffset(instant);
+---
+>             int offset = getOffsetToAdd(instant);
+392c397
+<             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+---
+>             return instant - (iTimeField ? offset : getOffsetFromLocalToSubtract(instant));
+396c401
+<             int offset = this.iZone.getOffset(instant);
+---
+>             int offset = getOffsetToAdd(instant);
+398c403
+<             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+---
+>             return instant - (iTimeField ? offset : getOffsetFromLocalToSubtract(instant));
+402c407
+<             int offset = this.iZone.getOffset(instant);
+---
+>             int offset = getOffsetToAdd(instant);
+404c409
+<             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+---
+>             return instant - (iTimeField ? offset : getOffsetFromLocalToSubtract(instant));
+408c413
+<             long offset = this.iZone.getOffset(instant);
+---
+>             long offset = getOffsetToAdd(instant);
+411c416
+<             long offsetFromLocal = this.iZone.getOffsetFromLocal(instant);
+---
+>             long offsetFromLocal = getOffsetFromLocalToSubtract(instant);
+416,417c421,422
+<                     throw new IllegalArgumentException
+<                         ("Illegal value for " + iField.getName() + ": " + value);
+---
+>                     throw new IllegalFieldValueException
+>                         (iField.getType(), new Integer(value), null, null);
+425c430
+<             instant = iField.set(instant + this.iZone.getOffset(instant), text, locale);
+---
+>             instant = iField.set(addOffset(instant), text, locale);
+427c432
+<             return instant - this.iZone.getOffsetFromLocal(instant);
+---
+>             return instant - getOffsetFromLocalToSubtract(instant);
+431c436
+<             int offset = this.iZone.getOffset(subtrahendInstant);
+---
+>             int offset = getOffsetToAdd(subtrahendInstant);
+433c438
+<                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+---
+>                 (minuendInstant + (iTimeField ? offset : getOffsetToAdd(minuendInstant)),
+438c443
+<             int offset = this.iZone.getOffset(subtrahendInstant);
+---
+>             int offset = getOffsetToAdd(subtrahendInstant);
+440c445
+<                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+---
+>                 (minuendInstant + (iTimeField ? offset : getOffsetToAdd(minuendInstant)),
+453c458
+<             return iField.isLeap(instant + this.iZone.getOffset(instant));
+---
+>             return iField.isLeap(addOffset(instant));
+457c462
+<             return iField.getLeapAmount(instant + this.iZone.getOffset(instant));
+---
+>             return iField.getLeapAmount(addOffset(instant));
+465c470
+<             int offset = this.iZone.getOffset(instant);
+---
+>             int offset = getOffsetToAdd(instant);
+467c472
+<             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+---
+>             return instant - (iTimeField ? offset : getOffsetFromLocalToSubtract(instant));
+471c476
+<             int offset = this.iZone.getOffset(instant);
+---
+>             int offset = getOffsetToAdd(instant);
+473c478
+<             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+---
+>             return instant - (iTimeField ? offset : getOffsetFromLocalToSubtract(instant));
+477c482
+<             return iField.remainder(instant + this.iZone.getOffset(instant));
+---
+>             return iField.remainder(addOffset(instant));
+485c490,498
+<             return iField.getMinimumValue(instant + this.iZone.getOffset(instant));
+---
+>             return iField.getMinimumValue(addOffset(instant));
+>         }
+> 
+>         public int getMinimumValue(ReadablePartial instant) {
+>             return iField.getMinimumValue(instant);
+>         }
+> 
+>         public int getMinimumValue(ReadablePartial instant, int[] values) {
+>             return iField.getMinimumValue(instant, values);
+493c506,514
+<             return iField.getMaximumValue(instant + this.iZone.getOffset(instant));
+---
+>             return iField.getMaximumValue(addOffset(instant));
+>         }
+> 
+>         public int getMaximumValue(ReadablePartial instant) {
+>             return iField.getMaximumValue(instant);
+>         }
+> 
+>         public int getMaximumValue(ReadablePartial instant, int[] values) {
+>             return iField.getMaximumValue(instant, values);
+501a523,552
+>         }
+> 
+>         private int getOffsetToAdd(long instant) {
+>             int offset = this.iZone.getOffset(instant);
+>             long sum = instant + offset;
+>             
+>             if ((instant ^ sum) < 0 && (instant ^ offset) >= 0) {
+>                 throw new ArithmeticException("Adding time zone offset caused overflow");
+>             }
+>             return offset;
+>         }
+> 
+>         private int getOffsetFromLocalToSubtract(long instant) {
+>             int offset = this.iZone.getOffsetFromLocal(instant);
+>             long diff = instant - offset;
+>             
+>             if ((instant ^ diff) < 0 && (instant ^ offset) < 0) {
+>                 throw new ArithmeticException("Subtracting time zone offset caused overflow");
+>             }
+>             return offset;
+>         }
+> 
+>         private long addOffset(long instant) {
+>             int offset = this.iZone.getOffset(instant);
+>             long sum = instant + offset;
+>             
+>             if ((instant ^ sum) < 0 && (instant ^ offset) >= 0) {
+>                 throw new ArithmeticException("Adding time zone offset caused overflow");
+>             }
+>             return sum;

@@ -1,0 +1,35 @@
+57a58
+> import org.joda.time.chrono.ISOChronology;
+832,833c833
+<         Chronology c = getChronology();
+<         setMillis(c.getDateOnlyMillis(instant) + c.getTimeOnlyMillis(getMillis()));
+---
+>         setMillis(getChronology().millisOfDay().set(instant, getMillisOfDay()));
+846a847
+>         
+865,867c866,867
+<         long instant = c.getDateTimeMillis(
+<             year, monthOfYear, dayOfMonth, 0, 0, 0, 0);
+<         setDate(instant);
+---
+>         long instantMidnight = c.getDateTimeMillis(year, monthOfYear, dayOfMonth, 0);
+>         setDate(instantMidnight);
+879,880c879,880
+<         Chronology c = getChronology();
+<         setMillis(c.getDateOnlyMillis(getMillis()) + c.getTimeOnlyMillis(millis));
+---
+>         int millisOfDay = ISOChronology.getInstanceUTC().millisOfDay().get(millis);
+>         setMillis(getChronology().millisOfDay().set(getMillis(), millisOfDay));
+895c895,900
+<         setTime(converter.getInstantMillis(instant));
+---
+>         long millis = converter.getInstantMillis(instant);
+>         DateTimeZone zone = converter.getChronology(instant).getZone();
+>         if (zone != null) {
+>             millis = zone.getMillisKeepLocal(DateTimeZone.UTC, millis);
+>         }
+>         setTime(millis);
+915c920
+<         setTime(instant);
+---
+>         setMillis(instant);

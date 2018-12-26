@@ -1,0 +1,144 @@
+20a21
+> import com.google.common.collect.ImmutableSet;
+57a59
+>   @SuppressWarnings("fallthrough")
+61c63,64
+<         return tryReduceReturn(node);        
+---
+>         return tryReduceReturn(node);  
+>         
+63a67
+>         
+66c70,71
+<         return tryMinimizeIf(node);     
+---
+>         return tryMinimizeIf(node);   
+>         
+69a75
+>         
+71c77
+<           tryMinimizeCondition(node.getFirstChild());
+---
+>         tryMinimizeCondition(node.getFirstChild());
+72a79
+>         
+82,94c89,98
+<       case Token.CALL:{
+<         Node left = node.getFirstChild();
+<         if (left != null) {
+<           if (Token.NAME == left.getType()) {
+<             String className = left.getString();
+<             if ("RegExp".equals(className)) {
+<               return tryFoldRegularExpressionConstructor(node);
+<             }
+<           }
+<         }    
+<       }
+<         return node;
+<         default:
+---
+>         node = tryFoldStandardConstructors(node);
+>         if (node.getType() != Token.CALL) {
+>           return node;
+>         }
+>         
+>         
+>       case Token.CALL:
+>         return tryFoldLiteralConstructor(node);
+>         
+>       default:
+172c176
+<   Node tryMinimizeIf(Node n) {
+---
+>   private Node tryMinimizeIf(Node n) {
+575c579
+<   Node tryMinimizeCondition(Node n) {
+---
+>   private Node tryMinimizeCondition(Node n) {
+660a665,742
+>   
+>   private static final ImmutableSet<String> STANDARD_OBJECT_CONSTRUCTORS =
+>     
+>     
+>     
+>     ImmutableSet.of(
+>       "Object",
+>       "Array",
+>       "RegExp",
+>       "Error"
+>       );
+>   
+>   
+> 
+> 
+>   private Node tryFoldStandardConstructors(Node n) {
+>     Preconditions.checkState(n.getType() == Token.NEW);
+>     
+>     
+>     
+>     
+>     if (isASTNormalized()) {
+>       if (n.getFirstChild().getType() == Token.NAME) {
+>         String className = n.getFirstChild().getString();
+>         if (STANDARD_OBJECT_CONSTRUCTORS.contains(className)) {
+>             n.setType(Token.CALL);
+>             reportCodeChange();
+>         }
+>       }
+>     }
+>     
+>     return n;
+>   }
+>   
+>   
+> 
+> 
+> 
+>   private Node tryFoldLiteralConstructor(Node n) {
+>     Preconditions.checkArgument(n.getType() == Token.CALL
+>         || n.getType() == Token.NEW);
+>   
+>     Node constructorNameNode = n.getFirstChild();
+>     
+>     Node newLiteralNode = null;
+>     
+>     
+>     
+>     
+> 
+>     if (isASTNormalized() && Token.NAME == constructorNameNode.getType()) {
+> 
+>       String className = constructorNameNode.getString();
+> 
+>       if ("RegExp".equals(className)) {
+>         
+>         return tryFoldRegularExpressionConstructor(n);
+>       } else {
+>         boolean constructorHasArguments = constructorNameNode.getNext() != null;
+> 
+>         if (!constructorHasArguments) {
+>           if ("Array".equals(className)) {
+>             
+>             newLiteralNode = new Node(Token.ARRAYLIT);
+>           } else if ("Object".equals(className)) {
+>             
+>             newLiteralNode = new Node(Token.OBJECTLIT);
+>           }
+>         }
+>         if (newLiteralNode != null) {
+>           n.getParent().replaceChild(n, newLiteralNode);
+>           reportCodeChange();
+>           return newLiteralNode;
+>         }   
+>       }
+>     }
+>     return n;
+>   } 
+667a750,756
+>     
+>     
+>     
+>     if (!isASTNormalized()) {
+>       return n;
+>     }
+>     

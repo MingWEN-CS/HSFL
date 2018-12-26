@@ -1,0 +1,75 @@
+21d20
+< import com.google.javascript.rhino.JSDocInfo;
+42,51d40
+<   public static final DiagnosticType VAR_MULTIPLY_DECLARED_ERROR =
+<       DiagnosticType.error(
+<           "JSC_VAR_MULTIPLY_DECLARED_ERROR",
+<           "Variable {0} first declared in {1}");
+< 
+<   public static final DiagnosticType VAR_ARGUMENTS_SHADOWED_ERROR =
+<     DiagnosticType.error(
+<         "JSC_VAR_ARGUMENTS_SHADOWED_ERROR",
+<         "Shadowing \"arguments\" is not allowed");
+< 
+193,224c182
+<         Scope s, String name, Node n, CompilerInput input) {
+<       Node parent = n.getParent();
+< 
+<       
+<       if (scope.isGlobal()) {
+<         Scope.Var origVar = scope.getVar(name);
+<         Node origParent = origVar.getParentNode();
+<         if (origParent.isCatch() &&
+<             parent.isCatch()) {
+<           
+<           return;
+<         }
+< 
+<         boolean allowDupe = hasDuplicateDeclarationSuppression(n, origVar);
+< 
+<         if (!allowDupe) {
+<           compiler.report(
+<               JSError.make(NodeUtil.getSourceName(n), n,
+<                            VAR_MULTIPLY_DECLARED_ERROR,
+<                            name,
+<                            (origVar.input != null
+<                             ? origVar.input.getName()
+<                             : "??")));
+<         }
+<       } else if (name.equals(ARGUMENTS) && !NodeUtil.isVarDeclaration(n)) {
+<         
+<         
+<         compiler.report(
+<             JSError.make(NodeUtil.getSourceName(n), n,
+<                 VAR_ARGUMENTS_SHADOWED_ERROR));
+<       }
+<     }
+---
+>         Scope s, String name, Node n, CompilerInput input) {}
+246,271d203
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+<   static boolean hasDuplicateDeclarationSuppression(Node n, Scope.Var origVar) {
+<     Preconditions.checkState(n.isName());
+<     Node parent = n.getParent();
+<     Node origParent = origVar.getParentNode();
+< 
+<     JSDocInfo info = n.getJSDocInfo();
+<     if (info == null) {
+<       info = parent.getJSDocInfo();
+<     }
+<     if (info != null && info.getSuppressions().contains("duplicate")) {
+<       return true;
+<     }
+< 
+<     info = origVar.nameNode.getJSDocInfo();
+<     if (info == null) {
+<       info = origParent.getJSDocInfo();
+<     }
+<     return (info != null && info.getSuppressions().contains("duplicate"));
+<   }

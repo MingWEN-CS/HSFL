@@ -1,0 +1,241 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.distribution;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+import org.apache.commons.math.special.Gamma;
+import org.apache.commons.math.util.MathUtils;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+public class PoissonDistributionImpl extends AbstractIntegerDistribution
+        implements PoissonDistribution, Serializable {
+
+    
+
+
+
+    public static final int DEFAULT_MAX_ITERATIONS = 10000000;
+
+    
+
+
+
+    public static final double DEFAULT_EPSILON = 1E-12;
+
+    
+    private static final long serialVersionUID = -3349935121172596109L;
+
+    
+    private NormalDistribution normal;
+
+    
+
+
+    private double mean;
+
+    
+
+
+
+
+
+    private int maxIterations = DEFAULT_MAX_ITERATIONS;
+
+    
+
+
+    private double epsilon = DEFAULT_EPSILON;
+
+    
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p) {
+        this(p, DEFAULT_EPSILON, DEFAULT_MAX_ITERATIONS);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p, double epsilon, int maxIterations) {
+        if (p <= 0) {
+            throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NOT_POSITIVE_POISSON_MEAN, p);
+        }
+        mean = p;
+        normal = new NormalDistributionImpl(p, FastMath.sqrt(p));
+        this.epsilon = epsilon;
+        this.maxIterations = maxIterations;
+    }
+
+    
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p, double epsilon) {
+        this(p, epsilon, DEFAULT_MAX_ITERATIONS);
+    }
+
+    
+
+
+
+
+
+
+    public PoissonDistributionImpl(double p, int maxIterations) {
+        this(p, DEFAULT_EPSILON, maxIterations);
+    }
+
+    
+
+
+
+
+    public double getMean() {
+        return mean;
+    }
+
+    
+
+
+
+
+
+
+    public double probability(int x) {
+        double ret;
+        if (x < 0 || x == Integer.MAX_VALUE) {
+            ret = 0.0;
+        } else if (x == 0) {
+            ret = FastMath.exp(-mean);
+        } else {
+            ret = FastMath.exp(-SaddlePointExpansion.getStirlingError(x) -
+                  SaddlePointExpansion.getDeviancePart(x, mean)) /
+                  FastMath.sqrt(MathUtils.TWO_PI * x);
+        }
+        return ret;
+    }
+
+    
+
+
+
+
+
+
+
+
+    @Override
+    public double cumulativeProbability(int x) throws MathException {
+        if (x < 0) {
+            return 0;
+        }
+        if (x == Integer.MAX_VALUE) {
+            return 1;
+        }
+        return Gamma.regularizedGammaQ((double) x + 1, mean, epsilon, maxIterations);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double normalApproximateProbability(int x) throws MathException {
+        
+        return normal.cumulativeProbability(x + 0.5);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public int sample() throws MathException {
+        return (int) FastMath.min(randomData.nextPoisson(mean), Integer.MAX_VALUE);
+    }
+
+    
+
+
+
+
+
+
+
+    @Override
+    protected int getDomainLowerBound(double p) {
+        return 0;
+    }
+
+    
+
+
+
+
+
+
+
+    @Override
+    protected int getDomainUpperBound(double p) {
+        return Integer.MAX_VALUE;
+    }
+}

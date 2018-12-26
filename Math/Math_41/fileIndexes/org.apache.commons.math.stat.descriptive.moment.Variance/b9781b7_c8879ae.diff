@@ -1,0 +1,86 @@
+42a43,49
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+56a64,70
+>     
+>     
+> 
+> 
+> 
+> 
+>     private boolean isBiasCorrected = true;
+69a84
+> 
+74a90,119
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Variance(boolean isBiasCorrected) {
+>         moment = new SecondMoment();
+>         this.isBiasCorrected = isBiasCorrected;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Variance(boolean isBiasCorrected, SecondMoment m2) {
+>         incMoment = false;
+>         this.moment = m2;
+>         this.isBiasCorrected = isBiasCorrected;      
+>     }
+>    
+>     
+92c137,141
+<                 return moment.m2 / ((double) moment.n - 1d);
+---
+>                 if (isBiasCorrected) {
+>                     return moment.m2 / ((double) moment.n - 1d);
+>                 } else {
+>                     return moment.m2 / ((double) moment.n);
+>                 }
+213,214c262,268
+<                 var = (accum - (Math.pow(accum2, 2) / ((double) length))) /
+<                 (double) (length - 1);
+---
+>                 if (isBiasCorrected) {
+>                     var = (accum - (Math.pow(accum2, 2) / ((double) length))) /
+>                     (double) (length - 1);
+>                 } else {
+>                     var = (accum - (Math.pow(accum2, 2) / ((double) length))) /
+>                     (double) length;
+>                 }
+242a297,298
+> 
+> 
+244a301,314
+>     }
+> 
+>     
+> 
+> 
+>     public boolean isBiasCorrected() {
+>         return isBiasCorrected;
+>     }
+> 
+>     
+> 
+> 
+>     public void setBiasCorrected(boolean isBiasCorrected) {
+>         this.isBiasCorrected = isBiasCorrected;

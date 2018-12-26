@@ -1,0 +1,58 @@
+28a29,30
+> import static com.google.javascript.rhino.jstype.JSTypeRegistry.OBJECT_ELEMENT_TEMPLATE;
+> import static com.google.javascript.rhino.jstype.JSTypeRegistry.OBJECT_INDEX_TEMPLATE;
+49c51
+< import com.google.javascript.rhino.jstype.TemplatizedType;
+---
+> import com.google.javascript.rhino.jstype.TemplateTypeMap;
+224c226
+<                   null : objType.getIndexType();
+---
+>                   null : objType.getTemplateTypeMap().getTemplateType(OBJECT_INDEX_TEMPLATE);
+1089,1100c1091,1104
+<       TemplatizedType paramObjectType = paramType.toMaybeTemplatizedType();
+<       JSType typeParameter = paramObjectType.getTemplateType();
+<       Preconditions.checkNotNull(typeParameter);
+<       if (typeParameter != null) {
+<         
+<         ObjectType argObjectType = argType
+<             .restrictByNotNullOrUndefined()
+<             .collapseUnion()
+<             .toMaybeTemplatizedType();
+<         if (argObjectType != null && argObjectType.isSubtype(paramType)) {
+<           JSType argTypeParameter = argObjectType.getTemplateType();
+<           Preconditions.checkNotNull(argTypeParameter);
+---
+>       
+>       ObjectType referencedParamType = paramType
+>           .toMaybeTemplatizedType()
+>           .getReferencedType();
+>       JSType argObjectType = argType
+>           .restrictByNotNullOrUndefined()
+>           .collapseUnion();
+> 
+>       if (argObjectType.isSubtype(referencedParamType)) {
+>         
+>         
+>         TemplateTypeMap paramTypeMap = paramType.getTemplateTypeMap();
+>         TemplateTypeMap argTypeMap = argObjectType.getTemplateTypeMap();
+>         for (String key : paramTypeMap.getTemplateKeys()) {
+1102c1106,1108
+<               typeParameter, argTypeParameter, resolvedTypes);
+---
+>               paramTypeMap.getTemplateType(key),
+>               argTypeMap.getTemplateType(key),
+>               resolvedTypes);
+1243,1249c1249,1252
+<     ObjectType objType = ObjectType.cast(
+<         getJSType(n.getFirstChild()).restrictByNotNullOrUndefined());
+<     if (objType != null) {
+<       JSType type = objType.getTemplateType();
+<       if (type != null) {
+<         n.setJSType(type);
+<       }
+---
+>     JSType type = getJSType(n.getFirstChild()).restrictByNotNullOrUndefined();
+>     TemplateTypeMap typeMap = type.getTemplateTypeMap();
+>     if (typeMap.hasTemplateType(OBJECT_ELEMENT_TEMPLATE)) {
+>       n.setJSType(typeMap.getTemplateType(OBJECT_ELEMENT_TEMPLATE));

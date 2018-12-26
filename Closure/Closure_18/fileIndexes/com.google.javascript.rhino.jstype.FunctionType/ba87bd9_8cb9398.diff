@@ -1,0 +1,110 @@
+113a114,119
+>   private List<ObjectType> extendedInterfaces = ImmutableList.of();
+> 
+>   
+> 
+> 
+> 
+314a321,328
+> 
+>       if (isInterface()) {
+>         for (ObjectType interfaceType : getExtendedInterfaces()) {
+>           if (interfaceType.getConstructor() != null) {
+>             interfaceType.getConstructor().addSubType(this);
+>           }
+>         }
+>       }
+349,351c363,364
+<       if (constructor.getSuperClassConstructor() != null) {
+<         addRelatedInterfaces(
+<             constructor.getSuperClassConstructor().getInstanceType(), set);
+---
+>       for (ObjectType interfaceType : instance.getCtorExtendedInterfaces()) {
+>         addRelatedInterfaces(interfaceType, set);
+375a389,433
+>   
+> 
+> 
+> 
+> 
+>   public Iterable<ObjectType> getAllExtendedInterfaces() {
+>     
+>     
+>     Set<ObjectType> extendedInterfaces = Sets.newLinkedHashSet();
+> 
+>     for (ObjectType interfaceType : getExtendedInterfaces()) {
+>       addRelatedExtendedInterfaces(interfaceType, extendedInterfaces);
+>     }
+>     return extendedInterfaces;
+>   }
+> 
+>   private void addRelatedExtendedInterfaces(ObjectType instance,
+>       Set<ObjectType> set) {
+>     FunctionType constructor = instance.getConstructor();
+>     if (constructor != null) {
+>       set.add(instance);
+> 
+>       for (ObjectType interfaceType : constructor.getExtendedInterfaces()) {
+>         addRelatedExtendedInterfaces(interfaceType, set);
+>       }
+>     }
+>   }
+> 
+>   
+>   public Iterable<ObjectType> getExtendedInterfaces() {
+>     return extendedInterfaces;
+>   }
+> 
+>   public void setExtendedInterfaces(List<ObjectType> extendedInterfaces)
+>     throws UnsupportedOperationException {
+>     if (isInterface()) {
+>       this.extendedInterfaces = ImmutableList.copyOf(extendedInterfaces);
+>       setPrototype(new FunctionPrototypeType(
+>               registry, this, null, isNativeObjectType()));
+>       prototype.setImplicitPrototype(null);
+>     } else {
+>       throw new UnsupportedOperationException();
+>     }
+>   }
+> 
+626a685,702
+>   public static ObjectType getTopDefiningInterface(ObjectType type,
+>       String propertyName) {
+>     ObjectType foundType = null;
+>     if (type.hasProperty(propertyName)) {
+>       foundType = type;
+>     }
+>     for (ObjectType interfaceType : type.getCtorExtendedInterfaces()) {
+>       if (interfaceType.hasProperty(propertyName)) {
+>         foundType = getTopDefiningInterface(interfaceType, propertyName);
+>       }
+>     }
+>     return foundType;
+>   }
+> 
+>   
+> 
+> 
+> 
+628c704
+<   public JSType getTopMostDefiningType(String propertyName) {
+---
+>   public ObjectType getTopMostDefiningType(String propertyName) {
+632,633c708,714
+<     JSType topInstanceType;
+<     do {
+---
+> 
+>     if (isInterface()) {
+>       return getTopDefiningInterface(this.getInstanceType(), propertyName);
+>     }
+> 
+>     ObjectType topInstanceType = ctor.getInstanceType();
+>     while (true) {
+636c717,720
+<     } while (ctor != null && ctor.getPrototype().hasProperty(propertyName));
+---
+>       if (ctor == null || !ctor.getPrototype().hasProperty(propertyName)) {
+>         break;
+>       }
+>     }

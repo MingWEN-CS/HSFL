@@ -1,0 +1,69 @@
+20d19
+< import java.io.Serializable;
+38d36
+< class TriDiagonalTransformer implements Serializable {
+40,41c38
+<     
+<     private static final long serialVersionUID = 8935390784125343332L;
+---
+> class TriDiagonalTransformer {
+109c106
+<             final double[][] qtData  = new double[m][m];
+---
+>             cachedQt = MatrixUtils.createRealMatrix(m, m);
+115c112
+<                 qtData[k][k] = 1;
+---
+>                 cachedQt.setEntry(k, k, 1);
+117d113
+<                     final double[] qtK = qtData[k];
+119c115
+<                     qtK[k] = 1 + beta * hK[k];
+---
+>                     cachedQt.setEntry(k, k, 1 + beta * hK[k]);
+121c117
+<                         qtK[i] = beta * hK[i];
+---
+>                         cachedQt.setEntry(k, i, beta * hK[i]);
+124d119
+<                         final double[] qtJ = qtData[j];
+127c122
+<                             beta += qtJ[i] * hK[i];
+---
+>                             beta += cachedQt.getEntry(j, i) * hK[i];
+130c125
+<                         qtJ[k] = beta * hK[k];
+---
+>                         cachedQt.setEntry(j, k, beta * hK[k]);
+132c127
+<                             qtJ[i] += beta * hK[i];
+---
+>                             cachedQt.addToEntry(j, i, beta * hK[i]);
+137,140c132
+<             qtData[0][0] = 1;
+< 
+<             
+<             cachedQt = new RealMatrixImpl(qtData, false);
+---
+>             cachedQt.setEntry(0, 0, 1);
+158c150
+<             double[][] tData = new double[m][m];
+---
+>             cachedT = MatrixUtils.createRealMatrix(m, m);
+160,161c152
+<                 double[] tDataI = tData[i];
+<                 tDataI[i] = main[i];
+---
+>                 cachedT.setEntry(i, i, main[i]);
+163c154
+<                     tDataI[i - 1] = secondary[i - 1];
+---
+>                     cachedT.setEntry(i, i - 1, secondary[i - 1]);
+166c157
+<                     tDataI[i + 1] = secondary[i];
+---
+>                     cachedT.setEntry(i, i + 1, secondary[i]);
+169,171d159
+< 
+<             
+<             cachedT = new RealMatrixImpl(tData, false);

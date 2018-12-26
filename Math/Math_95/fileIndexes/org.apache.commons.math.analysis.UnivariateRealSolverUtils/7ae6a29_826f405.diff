@@ -1,0 +1,177 @@
+18c18,20
+< import org.apache.commons.math.MathException;
+---
+> import org.apache.commons.math.FunctionEvaluationException;
+> import org.apache.commons.math.ConvergenceException;
+> 
+30a33,35
+>     
+>     
+>     private static UnivariateRealSolverFactory factory = null;
+41a47,50
+> 
+> 
+> 
+> 
+43,50c52,54
+<         throws MathException
+<     {
+<         if(f == null){
+<             throw new IllegalArgumentException("f can not be null.");    
+<         }
+<         
+<         return UnivariateRealSolverFactory.newInstance().newDefaultSolver(f)
+<             .solve(x0, x1);
+---
+>     throws ConvergenceException, FunctionEvaluationException {
+>         setup(f);
+>         return factory.newDefaultSolver(f).solve(x0, x1);
+64,76c68,78
+<     public static double solve(
+<         UnivariateRealFunction f,
+<         double x0,
+<         double x1,
+<         double absoluteAccuracy)
+<         throws MathException
+<     {
+<         if(f == null){
+<             throw new IllegalArgumentException("f can not be null.");    
+<         }
+<             
+<         UnivariateRealSolver solver = UnivariateRealSolverFactory.newInstance()
+<             .newDefaultSolver(f);
+---
+> 
+> 
+> 
+> 
+> 
+>     public static double solve(UnivariateRealFunction f, double x0, double x1,
+>             double absoluteAccuracy) throws ConvergenceException, 
+>             FunctionEvaluationException {    
+>        
+>         setup(f);
+>         UnivariateRealSolver solver = factory.newDefaultSolver(f);
+94,97c96,126
+<     public static double[] bracket(UnivariateRealFunction function,
+<                                    double initial,
+<                                    double lowerBound,
+<                                    double upperBound) throws MathException {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double[] bracket(UnivariateRealFunction function, 
+>             double initial, double lowerBound, double upperBound) 
+>     throws ConvergenceException, FunctionEvaluationException {
+102c131,150
+<     
+---
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+118,121c166,181
+<                                    double initial,
+<                                    double lowerBound,
+<                                    double upperBound,
+<                                    int maximumIterations) throws MathException {
+---
+>             double initial, double lowerBound, double upperBound, 
+>             int maximumIterations) throws ConvergenceException, 
+>             FunctionEvaluationException {
+>         
+>         if (function == null) {
+>             throw new IllegalArgumentException ("function is null.");
+>         }
+>         if (maximumIterations <= 0)  {
+>             throw new IllegalArgumentException
+>             ("bad value for maximumIterations: " + maximumIterations);
+>         }
+>         if (initial < lowerBound || initial > upperBound || lowerBound >= upperBound) {
+>             throw new IllegalArgumentException
+>             ("Invalid endpoint parameters:  lowerBound=" + lowerBound + 
+>               " initial=" + initial + " upperBound=" + upperBound);
+>         }
+131a192
+>             
+133,135c194,206
+<             numIterations += 1 ;
+<         } while ( (fa * fb > 0.0) && ( numIterations < maximumIterations ) );
+<     
+---
+>             numIterations++ ;
+>         } while ((fa * fb > 0.0) && (numIterations < maximumIterations) && 
+>                 ((a > lowerBound) || (b < upperBound)));
+>    
+>         if (fa * fb >= 0.0 ) {
+>             throw new ConvergenceException
+>             ("Number of iterations= " + numIterations +
+>               " maximum iterations= "  + maximumIterations +
+>               " initial= " + initial + " lowerBound=" + lowerBound +
+>               " upperBound=" + upperBound + " final a value=" + a +
+>               " final b value=" + b + " f(a)=" + fa + " f(b)=" + fb);
+>         }
+>         
+144a216
+> 
+146a219,236
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void setup(UnivariateRealFunction f) {
+>        
+>         if (f == null) {
+>             throw new IllegalArgumentException("function can not be null.");    
+>         }
+>         
+>         if (factory == null) {
+>             factory = UnivariateRealSolverFactory.newInstance();
+>         }       

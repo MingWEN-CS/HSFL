@@ -1,0 +1,373 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.chrono;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeFieldType;
+import org.joda.time.DateTimeZone;
+import org.joda.time.DurationField;
+import org.joda.time.DurationFieldType;
+import org.joda.time.field.FieldUtils;
+import org.joda.time.field.PreciseDurationField;
+import org.joda.time.field.SkipDateTimeField;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public final class CopticChronology extends BaseGJChronology {
+
+    
+    private static final long serialVersionUID = -5972804258688333942L;
+
+    
+
+
+
+    public static final int AM = DateTimeConstants.CE;
+
+    private static final long MILLIS_PER_YEAR =
+        (long) (365.25 * DateTimeConstants.MILLIS_PER_DAY);
+
+    private static final long MILLIS_PER_MONTH =
+        (long) (365.25 * DateTimeConstants.MILLIS_PER_DAY / 12);
+
+    
+    private static final int MIN_YEAR = -292269337;
+
+    
+    
+    
+    
+    private static final int MAX_YEAR = 292271022;
+
+    private static final DurationField cMonthsField;
+
+    
+    private static final CopticChronology INSTANCE_UTC;
+
+    
+    private static final Map cCache = new HashMap();
+
+    static {
+        cMonthsField =  new PreciseDurationField
+            (DurationFieldType.months(), 30L * DateTimeConstants.MILLIS_PER_DAY);
+        INSTANCE_UTC = getInstance(DateTimeZone.UTC);
+    }
+
+    
+
+
+
+
+
+    public static CopticChronology getInstanceUTC() {
+        return INSTANCE_UTC;
+    }
+
+    
+
+
+
+
+    public static CopticChronology getInstance() {
+        return getInstance(DateTimeZone.getDefault(), 4);
+    }
+
+    
+
+
+
+
+
+    public static CopticChronology getInstance(DateTimeZone zone) {
+        return getInstance(zone, 4);
+    }
+
+    
+
+
+
+
+
+
+    public static CopticChronology getInstance(DateTimeZone zone, int minDaysInFirstWeek) {
+        if (zone == null) {
+            zone = DateTimeZone.getDefault();
+        }
+        CopticChronology chrono;
+        synchronized (cCache) {
+            CopticChronology[] chronos = (CopticChronology[]) cCache.get(zone);
+            if (chronos == null) {
+                chronos = new CopticChronology[7];
+                cCache.put(zone, chronos);
+            }
+            try {
+                chrono = chronos[minDaysInFirstWeek - 1];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new IllegalArgumentException
+                    ("Invalid min days in first week: " + minDaysInFirstWeek);
+            }
+            if (chrono == null) {
+                if (zone == DateTimeZone.UTC) {
+                    
+                    chrono = new CopticChronology(null, null, minDaysInFirstWeek);
+                    
+                    DateTime lowerLimit = new DateTime(1, 1, 1, 0, 0, 0, 0, chrono);
+                    chrono = new CopticChronology
+                        (LimitChronology.getInstance(chrono, lowerLimit, null),
+                         null, minDaysInFirstWeek);
+                } else {
+                    chrono = getInstance(DateTimeZone.UTC, minDaysInFirstWeek);
+                    chrono = new CopticChronology
+                        (ZonedChronology.getInstance(chrono, zone), null, minDaysInFirstWeek);
+                }
+                chronos[minDaysInFirstWeek - 1] = chrono;
+            }
+        }
+        return chrono;
+    }
+
+    
+    
+
+    
+
+
+    CopticChronology(Chronology base, Object param, int minDaysInFirstWeek) {
+        super(base, param, minDaysInFirstWeek);
+    }
+
+    
+
+
+    private Object readResolve() {
+        Chronology base = getBase();
+        return base == null ? getInstanceUTC() : getInstance(base.getZone());
+    }
+
+    
+    
+    
+
+
+
+
+    public Chronology withUTC() {
+        return INSTANCE_UTC;
+    }
+
+    
+
+
+
+
+
+    public Chronology withZone(DateTimeZone zone) {
+        if (zone == null) {
+            zone = DateTimeZone.getDefault();
+        }
+        if (zone == getZone()) {
+            return this;
+        }
+        return getInstance(zone);
+    }
+
+    
+    long setYear(long instant, int year) {
+        
+        int thisYear = getYear(instant);
+        int dayOfYear = getDayOfYear(instant, thisYear);
+        int millisOfDay = getMillisOfDay(instant);
+
+        if (dayOfYear > 365) {
+            
+            if (!isLeapYear(year)) {
+                
+                dayOfYear--;
+            }
+        }
+
+        instant = getYearMonthDayMillis(year, 1, dayOfYear);
+        instant += millisOfDay;
+        return instant;
+    }
+
+    
+    long getYearDifference(long minuendInstant, long subtrahendInstant) {
+        
+        int minuendYear = getYear(minuendInstant);
+        int subtrahendYear = getYear(subtrahendInstant);
+
+        
+        long minuendRem = minuendInstant - getYearMillis(minuendYear);
+        long subtrahendRem = subtrahendInstant - getYearMillis(subtrahendYear);
+
+        int difference = minuendYear - subtrahendYear;
+        if (minuendRem < subtrahendRem) {
+            difference--;
+        }
+        return difference;
+    }
+
+    
+    long getDateMidnightMillis(int year, int monthOfYear, int dayOfMonth) {
+        FieldUtils.verifyValueBounds(DateTimeFieldType.year(), year, getMinYear(), getMaxYear());
+        FieldUtils.verifyValueBounds(DateTimeFieldType.monthOfYear(), monthOfYear, 1, 13);
+        FieldUtils.verifyValueBounds(DateTimeFieldType.dayOfMonth(), dayOfMonth, 1, getDaysInYearMonth(year, monthOfYear));
+        return getYearMonthDayMillis(year, monthOfYear, dayOfMonth);
+    }
+
+    
+    long getTotalMillisByYearMonth(int year, int month) {
+        return (month * 30L * DateTimeConstants.MILLIS_PER_DAY);
+    }
+
+    
+    int getDayOfMonth(long millis) {
+        
+        return (getDayOfYear(millis) - 1) % 30 + 1;
+    }
+
+    
+    boolean isLeapYear(int year) {
+        return (year & 3) == 3;
+    }
+
+    
+    int getDaysInYearMonth(int year, int month) {
+        return (month != 13) ? 30 : (isLeapYear(year) ? 6 : 5);
+    }
+
+    
+    int getDaysInMonthMax() {
+        return 30;
+    }
+
+    
+    int getDaysInMonthMax(int month) {
+        return (month != 13 ? 30 : 6);
+    }
+
+    
+    int getMonthOfYear(long millis, int year) {
+        return ((int) ((millis - getYearMillis(year)) / 30)) + 1;
+    }
+    
+    
+    long calculateFirstDayOfYearMillis(int year) {
+        if (year > MAX_YEAR) {
+            throw new ArithmeticException("Year is too large: " + year + " > " + MAX_YEAR);
+        }
+        if (year < MIN_YEAR) {
+            throw new ArithmeticException("Year is too small: " + year + " < " + MIN_YEAR);
+        }
+
+        
+        
+        
+
+        int relativeYear = year - 1687;
+        int leapYears;
+        if (relativeYear <= 0) {
+            
+            
+            leapYears = (relativeYear + 3) >> 2;
+        } else {
+            leapYears = relativeYear >> 2;
+            
+            if (!isLeapYear(year)) {
+                leapYears++;
+            }
+        }
+        
+        long millis = (relativeYear * 365L + leapYears)
+            * (long)DateTimeConstants.MILLIS_PER_DAY;
+
+        
+
+        return millis + (365L - 112) * DateTimeConstants.MILLIS_PER_DAY;
+    }
+
+    
+    int getMinYear() {
+        return MIN_YEAR;
+    }
+
+    
+    int getMaxYear() {
+        return MAX_YEAR;
+    }
+
+    
+    long getAverageMillisPerYear() {
+        return MILLIS_PER_YEAR;
+    }
+
+    
+    long getAverageMillisPerMonth() {
+        return MILLIS_PER_MONTH;
+    }
+
+    
+    long getApproxMillisAtEpoch() {
+        return 1686L * MILLIS_PER_YEAR + 112L * DateTimeConstants.MILLIS_PER_DAY;
+    }
+
+    
+    protected void assemble(Fields fields) {
+        if (getBase() == null) {
+            super.assemble(fields);
+
+            fields.year = new BasicYearDateTimeField(this);
+            fields.years = fields.year.getDurationField();
+
+            
+            fields.year = new SkipDateTimeField(this, fields.year);
+            fields.weekyear = new SkipDateTimeField(this, fields.weekyear);
+            
+            fields.era = CopticEraDateTimeField.INSTANCE;
+            fields.months = cMonthsField;
+            fields.monthOfYear = new CopticMonthOfYearDateTimeField(this, cMonthsField);
+            fields.dayOfMonth = new BasicDayOfMonthDateTimeField(this, fields.days);
+        }
+    }
+
+}

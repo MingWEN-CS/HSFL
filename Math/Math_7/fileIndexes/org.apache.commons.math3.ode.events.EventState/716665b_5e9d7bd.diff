@@ -1,0 +1,41 @@
+21c21
+< import org.apache.commons.math.exception.FunctionEvaluationException;
+---
+> import org.apache.commons.math.exception.MathUserException;
+25d24
+< import org.apache.commons.math.ode.DerivativeException;
+183,184c182,183
+<         } catch (DerivativeException de) {
+<             throw new EventException(de);
+---
+>         } catch (MathUserException mue) {
+>             throw new EventException(mue);
+200c199
+<         throws DerivativeException, EventException, ConvergenceException {
+---
+>         throws MathUserException, EventException, ConvergenceException {
+247c246
+<                         public double value(final double t) throws FunctionEvaluationException {
+---
+>                         public double value(final double t) throws MathUserException {
+251,252d249
+<                             } catch (DerivativeException e) {
+<                                 throw new FunctionEvaluationException(e, t);
+254c251
+<                                 throw new FunctionEvaluationException(e, t);
+---
+>                                 throw new MathUserException(e);
+294,298c291,293
+<         } catch (FunctionEvaluationException e) {
+<             final Throwable cause = e.getCause();
+<             if ((cause != null) && (cause instanceof DerivativeException)) {
+<                 throw (DerivativeException) cause;
+<             } else if ((cause != null) && (cause instanceof EventException)) {
+---
+>         } catch (MathUserException mue) {
+>             final Throwable cause = mue.getCause();
+>             if ((cause != null) && (cause instanceof EventException)) {
+301c296
+<             throw new EventException(e);
+---
+>             throw mue;

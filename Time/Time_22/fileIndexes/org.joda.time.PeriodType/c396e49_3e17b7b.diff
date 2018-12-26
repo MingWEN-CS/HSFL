@@ -1,0 +1,236 @@
+95a96
+>     private static final PeriodType MILLIS_TYPE;
+96a98
+>     private static final PeriodType YEAR_DAY_TYPE;
+100c102,106
+<     private static final PeriodType MILLIS_TYPE;
+---
+>     private static final PeriodType UTC_DAY_HOUR_TYPE;
+>     private static final PeriodType UTC_YEAR_DAY_TYPE;
+>     private static final PeriodType UTC_YEAR_WEEK_TYPE;
+>     private static final PeriodType UTC_YEAR_MONTH_TYPE;
+>     private static final PeriodType UTC_ALL_TYPE;
+107a114
+>         MILLIS_TYPE = new MillisType();
+108a116
+>         YEAR_DAY_TYPE = new YearDayType(ISOChronology.getInstance());
+112c120,124
+<         MILLIS_TYPE = new MillisType();
+---
+>         UTC_DAY_HOUR_TYPE = new DayHourType(ISOChronology.getInstanceUTC());
+>         UTC_YEAR_DAY_TYPE = new YearDayType(ISOChronology.getInstanceUTC());
+>         UTC_YEAR_WEEK_TYPE = new YearWeekType(ISOChronology.getInstanceUTC());
+>         UTC_YEAR_MONTH_TYPE = new YearMonthType(ISOChronology.getInstanceUTC());
+>         UTC_ALL_TYPE = new AllType(ISOChronology.getInstanceUTC());
+159,160d170
+< 
+< 
+164a175,177
+>         if (chrono == null || chrono.equals(ISOChronology.getInstanceUTC())) {
+>             return getUTCDayHourType();
+>         }
+204,205d216
+< 
+< 
+209a221,223
+>         if (chrono == null || chrono.equals(ISOChronology.getInstanceUTC())) {
+>             return getUTCAllType();
+>         }
+224a239,241
+>     public static PeriodType getYearDayType() {
+>         return YEAR_DAY_TYPE;
+>     }
+226,227c243,266
+<     public static PeriodType getYearMonthType() {
+<         return YEAR_MONTH_TYPE;
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static PeriodType getYearDayType(Chronology chrono) {
+>         if (chrono == null || chrono.equals(ISOChronology.getInstance())) {
+>             return getYearDayType();
+>         }
+>         if (chrono == null || chrono.equals(ISOChronology.getInstanceUTC())) {
+>             return getUTCYearDayType();
+>         }
+>         return new YearDayType(chrono);
+242a282,296
+>     public static PeriodType getYearMonthType() {
+>         return YEAR_MONTH_TYPE;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+252a307,309
+>         if (chrono == null || chrono.equals(ISOChronology.getInstanceUTC())) {
+>             return getUTCYearMonthType();
+>         }
+290,291d346
+< 
+< 
+295a351,353
+>         if (chrono == null || chrono.equals(ISOChronology.getInstanceUTC())) {
+>             return getUTCYearWeekType();
+>         }
+299a358
+>     
+310,311c369,370
+<     public static PeriodType getPreciseDayHourType() {
+<         return PRECISE_DAY_HOUR_TYPE;
+---
+>     public static PeriodType getUTCDayHourType() {
+>         return UTC_DAY_HOUR_TYPE;
+326,327c385,386
+<     public static PeriodType getPreciseYearDayType() {
+<         return PRECISE_YEAR_DAY_TYPE;
+---
+>     public static PeriodType getUTCYearDayType() {
+>         return UTC_YEAR_DAY_TYPE;
+342a402,404
+>     public static PeriodType getUTCYearMonthType() {
+>         return UTC_YEAR_MONTH_TYPE;
+>     }
+344,345c406,470
+<     public static PeriodType getPreciseAllType() {
+<         return PRECISE_ALL_TYPE;
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static PeriodType getUTCYearWeekType() {
+>         return UTC_YEAR_WEEK_TYPE;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static PeriodType getUTCAllType() {
+>         return UTC_ALL_TYPE;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static PeriodType getPreciseDayHourType() {
+>         return PRECISE_DAY_HOUR_TYPE;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static PeriodType getPreciseYearDayType() {
+>         return PRECISE_YEAR_DAY_TYPE;
+382a508,525
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static PeriodType getPreciseAllType() {
+>         return PRECISE_ALL_TYPE;
+>     }
+> 
+>     
+736a880,911
+>         }
+>     }
+> 
+>     private static class YearDayType extends DayHourType {
+>         private static final long serialVersionUID = 6567563546499L;
+> 
+>         YearDayType(Chronology chrono) {
+>             super(chrono);
+>         }
+> 
+>         public PeriodType withChronology(Chronology chrono) {
+>             if (chrono == iChronology) {
+>                 return this;
+>             }
+>             return PeriodType.getYearWeekType(chrono);
+>         }
+> 
+>         public boolean isPrecise() {
+>             return years().isPrecise()
+>                 && super.isPrecise();
+>         }
+> 
+>         public DurationField years() {
+>             return iChronology.weekyears();
+>         }
+> 
+>         private Object readResolve() {
+>             return getYearDayType(iChronology);
+>         }
+>         
+>         public String getName() {
+>             return "YearDayType";

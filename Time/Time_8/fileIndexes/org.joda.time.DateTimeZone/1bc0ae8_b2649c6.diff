@@ -1,0 +1,99 @@
+32d31
+< import org.joda.time.chrono.ISOChronology;
+103c102
+<     private static DateTimeZone cDefault;
+---
+>     private static volatile DateTimeZone cDefault;
+116,132d114
+< 
+<         try {
+<             try {
+<                 cDefault = forID(System.getProperty("user.timezone"));
+<             } catch (RuntimeException ex) {
+<                 
+<             }
+<             if (cDefault == null) {
+<                 cDefault = forTimeZone(TimeZone.getDefault());
+<             }
+<         } catch (IllegalArgumentException ex) {
+<             
+<         }
+< 
+<         if (cDefault == null) {
+<             cDefault = UTC;
+<         }
+142c124,149
+<         return cDefault;
+---
+>         DateTimeZone zone = cDefault;
+>         if (zone == null) {
+>             synchronized(DateTimeZone.class) {
+>                 zone = cDefault;
+>                 if (zone == null) {
+>                     DateTimeZone temp = null;
+>                     try {
+>                         try {
+>                             temp = forID(System.getProperty("user.timezone"));
+>                         } catch (RuntimeException ex) {
+>                             
+>                         }
+>                         if (temp == null) {
+>                             temp = forTimeZone(TimeZone.getDefault());
+>                         }
+>                     } catch (IllegalArgumentException ex) {
+>                         
+>                     }
+>                     if (temp == null) {
+>                         temp = UTC;
+>                     }
+>                     cDefault = zone = temp;
+>                 }
+>             }
+>         }
+>         return zone;
+160c167,169
+<         cDefault = zone;
+---
+>         synchronized(DateTimeZone.class) {
+>             cDefault = zone;
+>         }
+577,598c586,601
+<         Chronology chrono;
+<         if (cDefault != null) {
+<             chrono = ISOChronology.getInstanceUTC();
+<         } else {
+<             
+<             
+<             chrono = new BaseChronology() {
+<                 public DateTimeZone getZone() {
+<                     return null;
+<                 }
+<                 public Chronology withUTC() {
+<                     return this;
+<                 }
+<                 public Chronology withZone(DateTimeZone zone) {
+<                     return this;
+<                 }
+<                 public String toString() {
+<                     return getClass().getName();
+<                 }
+<             };
+<         }
+< 
+---
+>         
+>         
+>         Chronology chrono = new BaseChronology() {
+>             public DateTimeZone getZone() {
+>                 return null;
+>             }
+>             public Chronology withUTC() {
+>                 return this;
+>             }
+>             public Chronology withZone(DateTimeZone zone) {
+>                 return this;
+>             }
+>             public String toString() {
+>                 return getClass().getName();
+>             }
+>         };

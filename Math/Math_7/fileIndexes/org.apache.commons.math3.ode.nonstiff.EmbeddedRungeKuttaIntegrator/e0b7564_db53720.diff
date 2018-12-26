@@ -1,0 +1,50 @@
+22a23
+> import org.apache.commons.math.ode.events.CombinedEventsManager;
+193c194,195
+<     stepStart  = t0;
+---
+>     
+>     stepStart         = t0;
+196d197
+<     boolean lastStep;
+200c201,205
+<     do {
+---
+>     CombinedEventsManager manager = addEndTimeChecker(t, eventsHandlersManager);
+>     boolean lastStep = false;
+> 
+>     
+>     while (!lastStep) {
+230,235d234
+<         if ((forward && (stepStart + stepSize > t)) ||
+<             ((! forward) && (stepStart + stepSize < t))) {
+<           stepSize = t - stepStart;
+<         }
+< 
+<         
+265c264
+<           if (eventsHandlersManager.evaluateStep(interpolator)) {
+---
+>           if (manager.evaluateStep(interpolator)) {
+267c266
+<             hNew = eventsHandlersManager.getEventTime() - stepStart;
+---
+>             hNew = manager.getEventTime() - stepStart;
+286,291c285,286
+<       eventsHandlersManager.stepAccepted(nextStep, y);
+<       if (eventsHandlersManager.stop()) {
+<         lastStep = true;
+<       } else {
+<         lastStep = forward ? (nextStep >= t) : (nextStep <= t);
+<       }
+---
+>       manager.stepAccepted(nextStep, y);
+>       lastStep = manager.stop();
+305c300
+<       if (eventsHandlersManager.reset(stepStart, y) && ! lastStep) {
+---
+>       if (manager.reset(stepStart, y) && ! lastStep) {
+322c317
+<     } while (! lastStep);
+---
+>     }

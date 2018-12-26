@@ -1,0 +1,373 @@
+58,66c58
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< class Normalize implements CompilerPass, Callback {
+---
+> class Normalize implements CompilerPass {
+88c80,81
+<     NodeTraversal.traverse(compiler, root, this);
+---
+>     NodeTraversal.traverse(compiler, root,
+>         new NormalizeStatements(compiler, assertOnChange));
+99,105d91
+<   @Override
+<   public boolean shouldTraverse(NodeTraversal t, Node n, Node parent) {
+<     doStatementNormalizations(t, n, parent);
+< 
+<     return true;
+<   }
+< 
+233,244c219,234
+<   @Override
+<   public void visit(NodeTraversal t, Node n, Node parent) {
+<     switch (n.getType()) {
+<       case Token.WHILE:
+<         if (CONVERT_WHILE_TO_FOR) {
+<           Node expr = n.getFirstChild();
+<           n.setType(Token.FOR);
+<           n.addChildBefore(new Node(Token.EMPTY), expr);
+<           n.addChildAfter(new Node(Token.EMPTY), expr);
+<           reportCodeChange("WHILE node");
+<         }
+<         break;
+---
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   static class NormalizeStatements implements Callback {
+>     private final AbstractCompiler compiler;
+>     private final boolean assertOnChange;
+> 
+>     NormalizeStatements(AbstractCompiler compiler, boolean assertOnChange) {
+>       this.compiler = compiler;
+>       this.assertOnChange = assertOnChange;
+246d235
+<   }
+248c237,243
+<   
+---
+>     private void reportCodeChange(String changeDescription) {
+>       if (assertOnChange) {
+>         throw new IllegalStateException(
+>             "Normalize constraints violated:\n" + changeDescription);
+>       }
+>       compiler.reportCodeChange();
+>     }
+249a245,247
+>     @Override
+>     public boolean shouldTraverse(NodeTraversal t, Node n, Node parent) {
+>       doStatementNormalizations(t, n, parent);
+251,253c249
+<   private void doStatementNormalizations(NodeTraversal t, Node n, Node parent) {
+<     if (n.getType() == Token.LABEL) {
+<       normalizeLabels(n);
+---
+>       return true;
+256,259c252,264
+<     
+<     
+<     if (NodeUtil.isStatementBlock(n) || n.getType() == Token.LABEL) {
+<       extractForInitializer(n, null, null);
+---
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       switch (n.getType()) {
+>         case Token.WHILE:
+>           if (CONVERT_WHILE_TO_FOR) {
+>             Node expr = n.getFirstChild();
+>             n.setType(Token.FOR);
+>             n.addChildBefore(new Node(Token.EMPTY), expr);
+>             n.addChildAfter(new Node(Token.EMPTY), expr);
+>             reportCodeChange("WHILE node");
+>           }
+>           break;
+>       }
+263,266d267
+<     
+<     if (NodeUtil.isStatementBlock(n)) {
+<       splitVarDeclarations(n);
+<     }
+268,269c269,290
+<     if (n.getType() == Token.FUNCTION) {
+<       moveNamedFunctions(n.getLastChild());
+---
+> 
+>     private void doStatementNormalizations(
+>         NodeTraversal t, Node n, Node parent) {
+>       if (n.getType() == Token.LABEL) {
+>         normalizeLabels(n);
+>       }
+> 
+>       
+>       
+>       if (NodeUtil.isStatementBlock(n) || n.getType() == Token.LABEL) {
+>         extractForInitializer(n, null, null);
+>       }
+> 
+>       
+>       
+>       if (NodeUtil.isStatementBlock(n)) {
+>         splitVarDeclarations(n);
+>       }
+> 
+>       if (n.getType() == Token.FUNCTION) {
+>         moveNamedFunctions(n.getLastChild());
+>       }
+271d291
+<   }
+273,275c293,295
+<   
+<   
+<   
+---
+>     
+>     
+>     
+280,281c300,301
+<   private void normalizeLabels(Node n) {
+<     Preconditions.checkArgument(n.getType() == Token.LABEL);
+---
+>     private void normalizeLabels(Node n) {
+>       Preconditions.checkArgument(n.getType() == Token.LABEL);
+283,296c303,317
+<     Node last = n.getLastChild();
+<     switch (last.getType()) {
+<       case Token.LABEL:
+<       case Token.BLOCK:
+<       case Token.FOR:
+<       case Token.WHILE:
+<       case Token.DO:
+<         return;
+<       default:
+<         Node block = new Node(Token.BLOCK);
+<         n.replaceChild(last, block);
+<         block.addChildToFront(last);
+<         reportCodeChange("LABEL normalization");
+<         return;
+---
+>       Node last = n.getLastChild();
+>       switch (last.getType()) {
+>         case Token.LABEL:
+>         case Token.BLOCK:
+>         case Token.FOR:
+>         case Token.WHILE:
+>         case Token.DO:
+>           return;
+>         default:
+>           Node block = new Node(Token.BLOCK);
+>           n.replaceChild(last, block);
+>           block.addChildToFront(last);
+>           reportCodeChange("LABEL normalization");
+>           return;
+>       }
+298d318
+<   }
+300c320
+<   
+---
+>     
+311,312c331,332
+<   private void extractForInitializer(
+<       Node n, Node before, Node beforeParent) {
+---
+>     private void extractForInitializer(
+>         Node n, Node before, Node beforeParent) {
+314,335c334,355
+<     for (Node next, c = n.getFirstChild(); c != null; c = next) {
+<       next = c.getNext();
+<       Node insertBefore = (before == null) ? c : before;
+<       Node insertBeforeParent = (before == null) ? n : beforeParent;
+<       switch (c.getType()) {
+<         case Token.LABEL:
+<           extractForInitializer(c, insertBefore, insertBeforeParent);
+<           break;
+<         case Token.FOR:
+<           if (!NodeUtil.isForIn(c)
+<               && c.getFirstChild().getType() != Token.EMPTY) {
+<             Node init = c.getFirstChild();
+<             c.replaceChild(init, new Node(Token.EMPTY));
+< 
+<             Node newStatement;
+<             
+<             
+<             if (init.getType() == Token.VAR) {
+<               newStatement = init;
+<             } else {
+<               newStatement = NodeUtil.newExpr(init);
+<             }
+---
+>       for (Node next, c = n.getFirstChild(); c != null; c = next) {
+>         next = c.getNext();
+>         Node insertBefore = (before == null) ? c : before;
+>         Node insertBeforeParent = (before == null) ? n : beforeParent;
+>         switch (c.getType()) {
+>           case Token.LABEL:
+>             extractForInitializer(c, insertBefore, insertBeforeParent);
+>             break;
+>           case Token.FOR:
+>             if (!NodeUtil.isForIn(c)
+>                 && c.getFirstChild().getType() != Token.EMPTY) {
+>               Node init = c.getFirstChild();
+>               c.replaceChild(init, new Node(Token.EMPTY));
+> 
+>               Node newStatement;
+>               
+>               
+>               if (init.getType() == Token.VAR) {
+>                 newStatement = init;
+>               } else {
+>                 newStatement = NodeUtil.newExpr(init);
+>               }
+337,340c357,361
+<             insertBeforeParent.addChildBefore(newStatement, insertBefore);
+<             reportCodeChange("FOR initializer");
+<           }
+<           break;
+---
+>               insertBeforeParent.addChildBefore(newStatement, insertBefore);
+>               reportCodeChange("FOR initializer");
+>             }
+>             break;
+>         }
+343,344d363
+<   }
+< 
+346c365
+<   
+---
+>     
+354,360c373,379
+<   private void splitVarDeclarations(Node n) {
+<     for (Node next, c = n.getFirstChild(); c != null; c = next) {
+<       next = c.getNext();
+<       if (c.getType() == Token.VAR) {
+<         if (assertOnChange && !c.hasChildren()) {
+<           throw new IllegalStateException("Empty VAR node.");
+<         }
+---
+>     private void splitVarDeclarations(Node n) {
+>       for (Node next, c = n.getFirstChild(); c != null; c = next) {
+>         next = c.getNext();
+>         if (c.getType() == Token.VAR) {
+>           if (assertOnChange && !c.hasChildren()) {
+>             throw new IllegalStateException("Empty VAR node.");
+>           }
+362,367c381,388
+<         while (c.getFirstChild() != c.getLastChild()) {
+<           Node name = c.getFirstChild();
+<           c.removeChild(name);
+<           Node newVar = new Node(Token.VAR, name, n.getLineno(), n.getCharno());
+<           n.addChildBefore(newVar, c);
+<           reportCodeChange("VAR with multiple children");
+---
+>           while (c.getFirstChild() != c.getLastChild()) {
+>             Node name = c.getFirstChild();
+>             c.removeChild(name);
+>             Node newVar = new Node(
+>                 Token.VAR, name, n.getLineno(), n.getCharno());
+>             n.addChildBefore(newVar, c);
+>             reportCodeChange("VAR with multiple children");
+>           }
+371d391
+<   }
+373c393
+<   
+---
+>     
+377,387c397,407
+<   private void moveNamedFunctions(Node functionBody) {
+<     Preconditions.checkState(
+<         functionBody.getParent().getType() == Token.FUNCTION);
+<     Node previous = null;
+<     Node current = functionBody.getFirstChild();
+<     
+<     
+<     while (current != null && NodeUtil.isFunctionDeclaration(current)) {
+<       previous = current;
+<       current = current.getNext();
+<     }
+---
+>     private void moveNamedFunctions(Node functionBody) {
+>       Preconditions.checkState(
+>           functionBody.getParent().getType() == Token.FUNCTION);
+>       Node previous = null;
+>       Node current = functionBody.getFirstChild();
+>       
+>       
+>       while (current != null && NodeUtil.isFunctionDeclaration(current)) {
+>         previous = current;
+>         current = current.getNext();
+>       }
+389,391d408
+<     
+<     Node insertAfter = previous;
+<     while (current != null) {
+393,394c410,411
+<       Node next = current.getNext();
+<       if (NodeUtil.isFunctionDeclaration(current)) {
+---
+>       Node insertAfter = previous;
+>       while (current != null) {
+396,397c413,417
+<         Preconditions.checkNotNull(previous);
+<         functionBody.removeChildAfter(previous);
+---
+>         Node next = current.getNext();
+>         if (NodeUtil.isFunctionDeclaration(current)) {
+>           
+>           Preconditions.checkNotNull(previous);
+>           functionBody.removeChildAfter(previous);
+399,405c419,427
+<         
+<         
+<         insertAfter = addToFront(functionBody, current, insertAfter);
+<         compiler.reportCodeChange();
+<       } else {
+<         
+<         previous = current;
+---
+>           
+>           
+>           insertAfter = addToFront(functionBody, current, insertAfter);
+>           reportCodeChange("Move function declaration not at top of function");
+>         } else {
+>           
+>           previous = current;
+>         }
+>         current = next;
+407d428
+<       current = next;
+409d429
+<   }
+411c431
+<   
+---
+>     
+416,420c436,442
+<   private Node addToFront(Node parent, Node newChild, Node after) {
+<     if (after == null) {
+<       parent.addChildToFront(newChild);
+<     } else {
+<       parent.addChildAfter(newChild, after);
+---
+>     private Node addToFront(Node parent, Node newChild, Node after) {
+>       if (after == null) {
+>         parent.addChildToFront(newChild);
+>       } else {
+>         parent.addChildAfter(newChild, after);
+>       }
+>       return newChild;
+422d443
+<     return newChild;

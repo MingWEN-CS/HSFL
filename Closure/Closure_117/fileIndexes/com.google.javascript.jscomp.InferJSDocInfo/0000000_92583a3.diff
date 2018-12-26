@@ -1,0 +1,129 @@
+1a2,129
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+> import com.google.javascript.rhino.JSDocInfo;
+> import com.google.javascript.rhino.jstype.JSType;
+> import com.google.javascript.rhino.jstype.FunctionType;
+> import com.google.javascript.rhino.jstype.ObjectType;
+> import com.google.javascript.rhino.Node;
+> import com.google.javascript.rhino.Token;
+> 
+> 
+> 
+> 
+> 
+> 
+> class InferJSDocInfo extends AbstractPostOrderCallback
+>     implements CompilerPass {
+> 
+>   private AbstractCompiler compiler;
+>   private boolean inExterns;
+> 
+>   InferJSDocInfo(AbstractCompiler compiler) {
+>     this.compiler = compiler;
+>   }
+> 
+>   public void process(Node externs, Node root) {
+>     if (externs != null) {
+>       inExterns = true;
+>       NodeTraversal.traverse(compiler, externs, this);
+>     }
+>     if (root != null) {
+>       inExterns = false;
+>       NodeTraversal.traverse(compiler, root, this);
+>     }
+>   }
+> 
+>   public void visit(NodeTraversal t, Node n, Node parent) {
+>     JSDocInfo docInfo;
+> 
+>     switch (n.getType()) {
+>       case Token.FUNCTION:
+>         
+>         
+>         JSType fnType = n.getJSType();
+>         if (fnType == null) {
+>           break;
+>         }
+> 
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         docInfo = n.getJSDocInfo();
+>         if (docInfo == null &&
+>             (parent.getType() == Token.ASSIGN ||
+>              parent.getType() == Token.NAME)) {
+>           docInfo = parent.getJSDocInfo();
+> 
+>           if (docInfo == null) {
+>             Node gramps = parent.getParent();
+>             if (gramps != null && gramps.getType() == Token.VAR &&
+>                 gramps.hasOneChild()) {
+>               docInfo = gramps.getJSDocInfo();
+>             }
+>           }
+>         }
+> 
+>         if (docInfo != null && fnType instanceof FunctionType) {
+>           FunctionType maybeCtorType = (FunctionType) fnType;
+>           maybeCtorType.setJSDocInfo(docInfo);
+>           if (maybeCtorType.isConstructor()) {
+>             maybeCtorType.getInstanceType().setJSDocInfo(docInfo);
+>           }
+>         }
+>         break;
+> 
+>       case Token.GETPROP:
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         if (NodeUtil.isExpressionNode(parent) ||
+>             (parent.getType() == Token.ASSIGN &&
+>              parent.getFirstChild() == n)) {
+>           docInfo = n.getJSDocInfo();
+>           if (docInfo == null) {
+>             docInfo = parent.getJSDocInfo();
+>           }
+>           if (docInfo != null) {
+>             JSType lhsType = n.getFirstChild().getJSType();
+>             if (lhsType != null &&
+>                 lhsType instanceof ObjectType) {
+>               ObjectType objectType = (ObjectType) lhsType;
+>               objectType.setPropertyJSDocInfo(
+>                   n.getLastChild().getString(), docInfo, inExterns);
+>             }
+>           }
+>         }
+>         break;
+>     }
+>   }
+> }

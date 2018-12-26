@@ -1,0 +1,1078 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Nullable;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+final class Tracer {
+  
+  static final Logger logger =
+      Logger.getLogger(Tracer.class.getName());
+
+  
+
+
+
+  private static volatile boolean defaultPrettyPrint;
+
+  
+
+
+
+  private static List<TracingStatistic> extraTracingStatistics =
+      new CopyOnWriteArrayList<TracingStatistic>();
+
+  
+  private long[] extraTracingValues;
+
+  
+  @Nullable private final String type;
+
+  
+  private final String comment;
+
+  
+  private final long startTimeMs;
+
+  
+  private long stopTimeMs;
+
+  
+
+
+
+  final Thread startThread;
+
+  
+
+
+
+
+
+
+  static final int MAX_TRACE_SIZE = 1000;
+
+  
+
+
+
+  static interface InternalClock {
+    long currentTimeMillis();
+  }
+
+  
+
+
+
+  static InternalClock clock = new InternalClock() {
+    @Override
+    public long currentTimeMillis() {
+      return System.currentTimeMillis();
+    }
+  };
+
+  
+
+
+
+
+
+
+  Tracer(@Nullable String type, @Nullable String comment) {
+    this.type = type;
+    this.comment = comment == null ? "" : comment;
+    startTimeMs = clock.currentTimeMillis();
+    startThread = Thread.currentThread();
+    if (!extraTracingStatistics.isEmpty()) {
+      int size = extraTracingStatistics.size();
+      extraTracingValues = new long[size];
+      int i = 0;
+      for (TracingStatistic tracingStatistic : extraTracingStatistics) {
+        extraTracingValues[i] = tracingStatistic.start(startThread);
+        i++;
+      }
+    }
+
+    ThreadTrace trace = getThreadTrace();
+
+    
+    if (!trace.isInitialized()) {
+      return;
+    }
+
+    
+    if (trace.events.size() >= MAX_TRACE_SIZE) {
+      logger.log(Level.WARNING,
+                  "Giant thread trace. Too many Tracers created. "
+                    + "Clearing to avoid memory leak.",
+                  new Throwable(trace.toString()));
+      trace.truncateEvents();
+    }
+
+    
+    if (trace.outstandingEvents.size() >= MAX_TRACE_SIZE) {
+      logger.log(Level.WARNING,
+                  "Too many outstanding Tracers. Tracer.stop() is missing "
+                    + "or Tracer.stop() is not wrapped in a "
+                    + "try/finally block. "
+                    + "Clearing to avoid memory leak.",
+                  new Throwable(trace.toString()));
+      trace.truncateOutstandingEvents();
+    }
+
+    trace.startEvent(this);
+  }
+
+  
+
+
+
+
+  Tracer(String comment) {
+    this(null, comment);
+  }
+
+  
+
+
+
+
+
+  static Tracer shortName(Object object, String comment) {
+    if (object == null) {
+      return new Tracer(comment);
+    }
+    return new Tracer(object.getClass().getSimpleName(), comment);
+  }
+
+  
+
+
+
+
+
+  private static String longToPaddedString(long v, int digitsColumnWidth) {
+    int digitWidth = numDigits(v);
+    StringBuilder sb = new StringBuilder();
+    appendSpaces(sb, digitsColumnWidth - digitWidth);
+    sb.append(v);
+    return sb.toString();
+  }
+
+  
+
+
+
+
+
+  private static int numDigits(long n) {
+    int i = 0;
+    do {
+      i++;
+      n = n / 10;
+    } while (n > 0);
+    return i;
+  }
+
+  
+
+
+
+
+  @VisibleForTesting
+  static void appendSpaces(StringBuilder sb, int numSpaces) {
+    if (numSpaces > 16) {
+      logger.warning("Tracer.appendSpaces called with large numSpaces");
+      
+      numSpaces = 16;
+    }
+    while (numSpaces >= 5) {
+      sb.append("     ");
+      numSpaces -= 5;
+    }
+
+    
+    switch (numSpaces) {
+      case 1:
+        sb.append(" ");
+        break;
+      case 2:
+        sb.append("  ");
+        break;
+      case 3:
+        sb.append("   ");
+        break;
+      case 4:
+        sb.append("    ");
+        break;
+    }
+  }
+
+  
+
+
+
+
+
+
+  static int addTracingStatistic(TracingStatistic tracingStatistic) {
+    
+    
+    if (tracingStatistic.enable()) {
+      
+      extraTracingStatistics.add(tracingStatistic);
+      
+      
+      return extraTracingStatistics.lastIndexOf(tracingStatistic);
+    } else {
+      return -1;
+    }
+  }
+
+  
+
+
+
+
+
+
+  @VisibleForTesting
+  static void clearTracingStatisticsTestingOnly() {
+    extraTracingStatistics.clear();
+  }
+
+  
+
+
+
+
+
+
+
+
+  long stop(int silenceThreshold) {
+    Preconditions.checkState(Thread.currentThread() == startThread);
+
+    ThreadTrace trace = getThreadTrace();
+    
+    if (!trace.isInitialized()) {
+      return 0;
+    }
+
+    stopTimeMs = clock.currentTimeMillis();
+    if (extraTracingValues != null) {
+      
+      
+      
+      for (int i = 0; i < extraTracingValues.length; i++) {
+        long value = extraTracingStatistics.get(i).stop(startThread);
+        extraTracingValues[i] = value - extraTracingValues[i];
+      }
+    }
+
+    
+    if (!trace.isInitialized()) {
+      return 0;
+    }
+
+    trace.endEvent(this, silenceThreshold);
+    return stopTimeMs - startTimeMs;
+  }
+
+  
+
+
+
+  long stop() {
+    return stop(-1);
+  }
+
+  @Override public String toString() {
+    if (type == null) {
+      return comment;
+    } else {
+      return "[" + type + "] " + comment;
+    }
+  }
+
+  static void setDefaultSilenceThreshold(int threshold) {
+    getThreadTrace().defaultSilenceThreshold = threshold;
+  }
+
+  
+
+
+
+
+  static void initCurrentThreadTrace() {
+    ThreadTrace events = getThreadTrace();
+    if (!events.isEmpty()) {
+      logger.log(Level.WARNING,
+                 "Non-empty timer log:\n" + events,
+                 new Throwable());
+      clearThreadTrace();
+
+      
+      events = getThreadTrace();
+    }
+
+    
+    events.init();
+  }
+
+  static void initCurrentThreadTrace(int defaultSilenceThreshold) {
+    initCurrentThreadTrace();
+    setDefaultSilenceThreshold(defaultSilenceThreshold);
+  }
+
+  
+
+
+
+
+  static String getCurrentThreadTraceReport() {
+    return getThreadTrace().toString();
+  }
+
+  
+
+
+  static void logCurrentThreadTrace() {
+    ThreadTrace trace = getThreadTrace();
+
+    
+    
+    
+    
+    
+    if (!trace.isInitialized()) {
+      logger.log(Level.WARNING,
+                 "Tracer log requested for this thread but was not "
+                 + "initialized using Tracer.initCurrentThreadTrace().",
+                 new Throwable());
+      return;
+    }
+
+    if (!trace.isEmpty()) {
+      logger.log(Level.WARNING, "timers:\n{0}", getCurrentThreadTraceReport());
+    }
+  }
+
+  
+
+
+  static void clearCurrentThreadTrace() {
+    clearThreadTrace();
+  }
+
+  
+
+
+  static void logAndClearCurrentThreadTrace() {
+    logCurrentThreadTrace();
+    clearThreadTrace();
+  }
+
+  
+
+
+
+
+  static void setPrettyPrint(boolean enabled) {
+    defaultPrettyPrint = enabled;
+  }
+
+  
+  static final class Stat {
+    private int count;
+    private int silent;
+    private int clockTime;
+    private int[] extraInfo;
+
+    
+
+
+
+    int getCount() { return count; }
+
+    
+
+
+
+    int getSilentCount() { return silent; }
+
+    
+
+
+
+    int getTotalTime() { return clockTime; }
+
+    
+    @VisibleForTesting
+    int getExtraInfo(int index) {
+      return index >= extraInfo.length ? 0 : extraInfo[index];
+    }
+
+  }
+
+  
+
+
+  @Nullable private static AtomicTracerStatMap typeToCountMap;
+
+  
+
+
+  @Nullable private static AtomicTracerStatMap typeToSilentMap;
+
+  
+
+
+  @Nullable private static AtomicTracerStatMap typeToTimeMap;
+
+  
+
+
+
+
+  static synchronized void enableTypeMaps() {
+    if (typeToCountMap == null) {
+      typeToCountMap = new AtomicTracerStatMap();
+      typeToSilentMap = new AtomicTracerStatMap();
+      typeToTimeMap = new AtomicTracerStatMap();
+    }
+  }
+
+  
+
+
+
+
+  @Nullable static Map<String, Long> getTypeToCountMap() {
+    return typeToCountMap != null ? typeToCountMap.getMap() : null;
+  }
+
+  
+
+
+
+
+  @Nullable static Map<String, Long> getTypeToSilentMap() {
+    return typeToSilentMap != null ? typeToSilentMap.getMap() : null;
+  }
+
+  
+
+
+
+
+  @Nullable static Map<String, Long> getTypeToTimeMap() {
+    return typeToTimeMap != null ? typeToTimeMap.getMap() : null;
+  }
+
+  
+  static Stat getStatsForType(String type) {
+    Stat stat = getThreadTrace().stats.get(type);
+    return stat != null ? stat : ZERO_STAT;
+  }
+
+  private static final Stat ZERO_STAT = new Stat();
+
+  
+  private static String formatTime(long time) {
+    int sec = (int) ((time / 1000) % 60);
+    int ms = (int) (time % 1000);
+    return String.format("%02d.%03d", sec, ms);
+  }
+
+  
+  private static final class Event {
+    boolean isStart;   
+    Tracer tracer;
+
+    Event(boolean start, Tracer t) {
+      isStart = start;
+      tracer = t;
+    }
+
+    long eventTime() {
+      return isStart ? tracer.startTimeMs : tracer.stopTimeMs;
+    }
+
+    
+
+
+
+
+
+
+
+
+    String toString(long prevEventTime, String indent, int digitsColWidth) {
+      StringBuilder sb = new StringBuilder(120);
+
+      if (prevEventTime == -1) {
+        appendSpaces(sb, digitsColWidth);
+      } else {
+        sb.append(longToPaddedString(
+            eventTime() - prevEventTime, digitsColWidth));
+      }
+
+      sb.append(' ');
+      sb.append(formatTime(eventTime()));
+      if (isStart) {
+        sb.append(" Start ");
+        appendSpaces(sb, digitsColWidth);
+        sb.append("   ");
+      } else {
+        sb.append(" Done ");
+        long delta = tracer.stopTimeMs - tracer.startTimeMs;
+        sb.append(longToPaddedString(delta, digitsColWidth));
+        sb.append(" ms ");
+        if (tracer.extraTracingValues != null) {
+          for (int i = 0; i < tracer.extraTracingValues.length; i++) {
+            delta = tracer.extraTracingValues[i];
+            sb.append(String.format("%4d", delta));
+            sb.append(extraTracingStatistics.get(i).getUnits());
+            sb.append(";  ");
+          }
+        }
+      }
+      sb.append(indent);
+      sb.append(tracer.toString());
+      return sb.toString();
+    }
+  }
+
+  
+  static final class ThreadTrace {
+
+    
+    int defaultSilenceThreshold; 
+
+    
+    final ArrayList<Event> events = new ArrayList<Event>();
+
+    
+    final HashSet<Tracer> outstandingEvents = new HashSet<Tracer>();
+
+    
+    final Map<String, Stat> stats = new HashMap<String, Stat>();
+
+    
+
+
+
+    boolean isOutstandingEventsTruncated = false;
+
+    
+
+
+
+    boolean isEventsTruncated = false;
+
+    
+
+
+
+    boolean isInitialized = false;
+
+    
+
+
+    boolean prettyPrint = false;
+
+    
+    void init() {
+      isInitialized = true;
+    }
+
+    
+    boolean isInitialized() {
+      return isInitialized;
+    }
+
+    
+
+
+
+    void startEvent(Tracer t) {
+      events.add(new Event(true, t));
+      boolean notAlreadyOutstanding = outstandingEvents.add(t);
+      Preconditions.checkState(notAlreadyOutstanding);
+    }
+
+    
+
+
+    void endEvent(Tracer t, int silenceThreshold) {
+      boolean wasOutstanding = outstandingEvents.remove(t);
+      if (!wasOutstanding) {
+        if (isOutstandingEventsTruncated) {
+          
+          
+          
+          logger.log(Level.WARNING,
+                      "event not found, probably because the event stack "
+                          + "overflowed and was truncated",
+                      new Throwable());
+        } else {
+          
+          
+          throw new IllegalStateException();
+        }
+      }
+
+      long elapsed = t.stopTimeMs - t.startTimeMs;
+
+      if (silenceThreshold == -1) {   
+        silenceThreshold = defaultSilenceThreshold;
+      }
+
+      if (elapsed < silenceThreshold) {
+        
+        boolean removed = false;
+        for (int i = 0; i < events.size(); i++) {
+          Event e = events.get(i);
+          if (e.tracer == t) {
+            Preconditions.checkState(e.isStart);
+            events.remove(i);
+            removed = true;
+            break;
+          }
+        }
+
+        
+        
+        Preconditions.checkState(removed || isEventsTruncated);
+      } else {
+        events.add(new Event(false, t));
+      }
+
+      if (t.type != null) {
+        Stat stat = stats.get(t.type);
+        if (stat == null) {
+          stat = new Stat();
+          if (!extraTracingStatistics.isEmpty()) {
+            stat.extraInfo = new int[extraTracingStatistics.size()];
+          }
+          stats.put(t.type, stat);
+        }
+
+        stat.count++;
+        if (typeToCountMap != null) {
+          typeToCountMap.incrementBy(t.type, 1);
+        }
+
+        stat.clockTime += elapsed;
+        if (typeToTimeMap != null) {
+          typeToTimeMap.incrementBy(t.type, elapsed);
+        }
+
+        if (stat.extraInfo != null && t.extraTracingValues != null) {
+          int overlapLength =
+              Math.min(stat.extraInfo.length, t.extraTracingValues.length);
+          for (int i = 0; i < overlapLength; i++) {
+            stat.extraInfo[i] += t.extraTracingValues[i];
+            AtomicTracerStatMap map =
+                extraTracingStatistics.get(i).getTracingStat();
+            if (map != null) {
+              map.incrementBy(t.type, t.extraTracingValues[i]);
+            }
+          }
+        }
+
+        if (elapsed < silenceThreshold) {
+          stat.silent++;
+          if (typeToSilentMap != null) {
+            typeToSilentMap.incrementBy(t.type, 1);
+          }
+        }
+      }
+    }
+
+    boolean isEmpty() {
+      return events.size() == 0 && outstandingEvents.size() == 0;
+    }
+
+    void truncateOutstandingEvents() {
+      isOutstandingEventsTruncated = true;
+      outstandingEvents.clear();
+    }
+
+    void truncateEvents() {
+      isEventsTruncated = true;
+      events.clear();
+    }
+
+    
+    
+    @SuppressWarnings("nullness")
+    @Override public String toString() {
+
+      int numDigits = getMaxDigits();
+      StringBuilder sb = new StringBuilder();
+      long etime = -1;
+      LinkedList<String> indent = prettyPrint ? new LinkedList<String>() : null;
+      for (Event e : events) {
+        if (prettyPrint && !e.isStart && !indent.isEmpty()) {
+          indent.pop();
+        }
+        sb.append(" ");
+        if (prettyPrint) {
+          sb.append(e.toString(etime, Joiner.on("").join(indent), numDigits));
+        } else {
+          sb.append(e.toString(etime, "", 4));
+        }
+        etime = e.eventTime();
+        sb.append('\n');
+        if (prettyPrint && e.isStart) {
+          indent.push("|  ");
+        }
+      }
+
+      if (outstandingEvents.size() != 0) {
+        long now = clock.currentTimeMillis();
+
+        sb.append(" Unstopped timers:\n");
+        for (Tracer t : outstandingEvents) {
+          sb.append("  ").
+            append(t).
+            append(" (").
+            append(now - t.startTimeMs).
+            append(" ms, started at ").
+            append(formatTime(t.startTimeMs)).
+            append(")\n");
+        }
+      }
+
+      for (String key : stats.keySet()) {
+        Stat stat = stats.get(key);
+        if (stat.count > 1) {
+          sb.append(" TOTAL ").
+             append(key).
+             append(" ").
+             append(stat.count).
+             append(" (").
+             append(stat.clockTime).
+             append(" ms");
+          if (stat.extraInfo != null) {
+            for (int i = 0; i < stat.extraInfo.length; i++) {
+              sb.append("; ");
+              sb.append(stat.extraInfo[i]).
+                 append(' ').
+                 append(extraTracingStatistics.get(i).getUnits());
+            }
+          }
+          sb.append(")\n");
+        }
+      }
+      return sb.toString();
+    }
+
+    
+
+
+
+
+    private int getMaxDigits() {
+      long etime = -1;
+      long maxTime = 0;
+      for (Event e : events) {
+        if (etime != -1) {
+          long time = e.eventTime() - etime;
+          maxTime = Math.max(maxTime, time);
+        }
+        if (!e.isStart) {
+          long time = e.tracer.stopTimeMs - e.tracer.startTimeMs;
+          maxTime = Math.max(maxTime, time);
+        }
+        etime = e.eventTime();
+      }
+      
+      return Math.max(3, numDigits(maxTime));
+    }
+  }
+
+  
+  private static ThreadLocal<ThreadTrace> traces =
+      new ThreadLocal<ThreadTrace>();
+
+  
+
+
+  static ThreadTrace getThreadTrace() {
+    ThreadTrace t = traces.get();
+    if (t == null) {
+      t = new ThreadTrace();
+      t.prettyPrint = defaultPrettyPrint;
+      traces.set(t);
+    }
+    return t;
+  }
+
+  
+  static void clearThreadTrace() {
+    traces.remove();
+  }
+
+  
+
+
+
+
+
+
+
+  static interface TracingStatistic {
+    
+
+
+
+
+
+
+
+    long start(Thread thread);
+
+    
+
+
+
+
+
+
+
+
+    long stop(Thread thread);
+
+    
+
+
+
+
+
+
+
+    boolean enable();
+
+    
+
+
+
+    AtomicTracerStatMap getTracingStat();
+
+    
+
+
+
+
+    String getUnits();
+  }
+
+  
+
+
+
+
+  static final class AtomicTracerStatMap {
+    private ConcurrentMap<String, Long> map =
+        new ConcurrentHashMap<String, Long>();
+
+    
+
+
+
+
+
+    
+    
+    @SuppressWarnings("nullness")
+        void incrementBy(String key, long delta) {
+      
+      
+      
+      
+      Long oldValue = map.get(key);
+      if (oldValue == null) {
+        
+        oldValue = map.putIfAbsent(key, delta);
+        if (oldValue == null) {
+          
+          return;
+        } else {
+          
+          
+        }
+      }
+      while (true) {
+        if (map.replace(key, oldValue, oldValue + delta)) {
+          break;
+        }
+        
+        oldValue = map.get(key);
+      }
+    }
+
+    
+
+
+    Map<String, Long> getMap() {
+      return map;
+    }
+  }
+}

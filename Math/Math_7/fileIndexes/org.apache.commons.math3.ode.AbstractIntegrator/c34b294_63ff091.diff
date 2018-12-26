@@ -1,0 +1,42 @@
+23a24
+> import java.util.Iterator;
+247a249,250
+>             
+>             final int orderingSign = interpolator.isForward() ? +1 : -1;
+252c255
+<                     return Double.compare(es0.getEventTime(), es1.getEventTime());
+---
+>                     return orderingSign * Double.compare(es0.getEventTime(), es1.getEventTime());
+257d259
+<             
+265,266c267,272
+<             
+<             for (final EventState state : occuringEvents) {
+---
+>             while (!occuringEvents.isEmpty()) {
+> 
+>                 
+>                 final Iterator<EventState> iterator = occuringEvents.iterator();
+>                 final EventState currentEvent = iterator.next();
+>                 iterator.remove();
+269c275
+<                 final double eventT = state.getEventTime();
+---
+>                 final double eventT = currentEvent.getEventTime();
+276,277c282,283
+<                 state.stepAccepted(eventT, eventY);
+<                 isLastStep = state.stop();
+---
+>                 currentEvent.stepAccepted(eventT, eventY);
+>                 isLastStep = currentEvent.stop();
+290c296
+<                 if (state.reset(eventT, eventY)) {
+---
+>                 if (currentEvent.reset(eventT, eventY)) {
+302a309,314
+> 
+>                 
+>                 if (currentEvent.evaluateStep(interpolator)) {
+>                     
+>                     occuringEvents.add(currentEvent);
+>                 }

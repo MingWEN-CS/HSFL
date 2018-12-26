@@ -1,0 +1,159 @@
+85a86,88
+>     private static final int SGN_MASK_FLOAT = 0x80000000;
+> 
+>     
+414a418,571
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equals(float x, float y) {
+>         return equals(x, y, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equalsIncludingNaN(float x, float y) {
+>         return (Float.isNaN(x) && Float.isNaN(y)) || equals(x, y, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equals(float x, float y, float eps) {
+>         return equals(x, y, 1) || FastMath.abs(y - x) <= eps;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equalsIncludingNaN(float x, float y, float eps) {
+>         return equalsIncludingNaN(x, y) || (FastMath.abs(y - x) <= eps);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equals(float x, float y, int maxUlps) {
+>         
+>         
+>         assert maxUlps > 0 && maxUlps < NAN_GAP;
+> 
+>         int xInt = Float.floatToIntBits(x);
+>         int yInt = Float.floatToIntBits(y);
+> 
+>         
+>         if (xInt < 0) {
+>             xInt = SGN_MASK_FLOAT - xInt;
+>         }
+>         if (yInt < 0) {
+>             yInt = SGN_MASK_FLOAT - yInt;
+>         }
+> 
+>         final boolean isEqual = FastMath.abs(xInt - yInt) <= maxUlps;
+> 
+>         return isEqual && !Float.isNaN(x) && !Float.isNaN(y);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equalsIncludingNaN(float x, float y, int maxUlps) {
+>         return (Float.isNaN(x) && Float.isNaN(y)) || equals(x, y, maxUlps);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equals(float[] x, float[] y) {
+>         if ((x == null) || (y == null)) {
+>             return !((x == null) ^ (y == null));
+>         }
+>         if (x.length != y.length) {
+>             return false;
+>         }
+>         for (int i = 0; i < x.length; ++i) {
+>             if (!equals(x[i], y[i])) {
+>                 return false;
+>             }
+>         }
+>         return true;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equalsIncludingNaN(float[] x, float[] y) {
+>         if ((x == null) || (y == null)) {
+>             return !((x == null) ^ (y == null));
+>         }
+>         if (x.length != y.length) {
+>             return false;
+>         }
+>         for (int i = 0; i < x.length; ++i) {
+>             if (!equalsIncludingNaN(x[i], y[i])) {
+>                 return false;
+>             }
+>         }
+>         return true;

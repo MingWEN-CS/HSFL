@@ -1,0 +1,47 @@
+89,91c89
+<     for (Map.Entry<Var, NamedInfo> e : namedInfo.entrySet()) {
+<       NamedInfo info = e.getValue();
+< 
+---
+>     for (NamedInfo info : namedInfo.values()) {
+245a244
+>       Node scopeFuncParent = rootNode.getParent();
+248,264c247,266
+<       }
+< 
+<       
+< 
+< 
+<       
+<       
+<       for  (Scope s = t.getScope(); s.getParent() != null; s = s.getParent()) {
+<         Node curRoot = s.getRootNode();
+<         if (curRoot.getParent().getType() == Token.ASSIGN) {
+<           Node owner = curRoot.getParent().getFirstChild();
+<           while (owner.getType() == Token.GETPROP) {
+<             owner = owner.getFirstChild();
+<           }
+<           if (owner.getType() == Token.NAME && owner.getString().equals(name)) {
+<             recursive = true;
+<             break;
+---
+>       } else if (scopeFuncParent.getType() == Token.NAME &&
+>           scopeFuncParent.getString().equals(name)) {
+>         recursive = true;
+>       } else {
+>         
+>         
+>         
+>         for (Scope s = t.getScope();
+>              s.getParent() != null; s = s.getParent()) {
+>           Node curRoot = s.getRootNode();
+>           if (curRoot.getParent().getType() == Token.ASSIGN) {
+>             Node owner = curRoot.getParent().getFirstChild();
+>             while (owner.getType() == Token.GETPROP) {
+>               owner = owner.getFirstChild();
+>             }
+>             if (owner.getType() == Token.NAME &&
+>                 owner.getString().equals(name)) {
+>               recursive = true;
+>               break;
+>             }

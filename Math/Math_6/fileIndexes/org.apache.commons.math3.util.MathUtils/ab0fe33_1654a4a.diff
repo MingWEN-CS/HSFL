@@ -1,0 +1,518 @@
+22a23,28
+> import java.util.List;
+> import java.util.ArrayList;
+> import java.util.Comparator;
+> import java.util.Map;
+> import java.util.AbstractMap;
+> import java.util.Collections;
+27a34,39
+> import org.apache.commons.math.exception.DimensionMismatchException;
+> import org.apache.commons.math.exception.NullArgumentException;
+> import org.apache.commons.math.exception.NotPositiveException;
+> import org.apache.commons.math.exception.MathArithmeticException;
+> import org.apache.commons.math.exception.MathIllegalArgumentException;
+> import org.apache.commons.math.exception.NumberIsTooLargeException;
+104c116
+<             throw MathRuntimeException.createArithmeticException(LocalizedFormats.OVERFLOW_IN_ADDITION, x, y);
+---
+>             throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_ADDITION, x, y);
+148c160
+<                         throw MathRuntimeException.createArithmeticException(pattern, a, b);
+---
+>                         throw new MathArithmeticException(pattern, a, b);
+162c174
+<                     throw MathRuntimeException.createArithmeticException(pattern, a, b);
+---
+>                     throw new MathArithmeticException(pattern, a, b);
+364,365c376,378
+<     private static void checkBinomial(final int n, final int k)
+<         throws IllegalArgumentException {
+---
+> 
+> 
+>     private static void checkBinomial(final int n, final int k) {
+367,369c380,381
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.BINOMIAL_INVALID_PARAMETERS_ORDER,
+<                 n, k);
+---
+>             throw new NumberIsTooLargeException(LocalizedFormats.BINOMIAL_INVALID_PARAMETERS_ORDER,
+>                                                 k, n, true);
+372,374c384
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.BINOMIAL_NEGATIVE_PARAMETER,
+<                   n);
+---
+>             throw new NotPositiveException(LocalizedFormats.BINOMIAL_NEGATIVE_PARAMETER, n);
+583a594,595
+> 
+> 
+586,588c598,599
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+<                   n);
+---
+>             throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+>                                            n);
+591,592c602
+<             throw new ArithmeticException(
+<                     "factorial value is too large to fit in a long");
+---
+>             throw new MathArithmeticException();
+610,616d619
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+619,621c622,623
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+<                   n);
+---
+>             throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+>                                            n);
+636,641d637
+< 
+< 
+< 
+< 
+< 
+< 
+644,646c640,641
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+<                   n);
+---
+>             throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+>                                            n);
+692,694c687,688
+<                 throw MathRuntimeException.createArithmeticException(
+<                         LocalizedFormats.GCD_OVERFLOW_32_BITS,
+<                         p, q);
+---
+>                 throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_32_BITS,
+>                                                   p, q);
+718,720c712,713
+<             throw MathRuntimeException.createArithmeticException(
+<                     LocalizedFormats.GCD_OVERFLOW_32_BITS,
+<                     p, q);
+---
+>             throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_32_BITS,
+>                                               p, q);
+781,783c774,775
+<                 throw MathRuntimeException.createArithmeticException(
+<                         LocalizedFormats.GCD_OVERFLOW_64_BITS,
+<                         p, q);
+---
+>                 throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_64_BITS,
+>                                                   p, q);
+807,809c799,800
+<             throw MathRuntimeException.createArithmeticException(
+<                     LocalizedFormats.GCD_OVERFLOW_64_BITS,
+<                     p, q);
+---
+>             throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_64_BITS,
+>                                               p, q);
+950d940
+< 
+952c942
+<         if (a==0 || b==0){
+---
+>         if (a == 0 || b == 0){
+957,959c947,948
+<             throw MathRuntimeException.createArithmeticException(
+<                 LocalizedFormats.LCM_OVERFLOW_32_BITS,
+<                 a, b);
+---
+>             throw new MathArithmeticException(LocalizedFormats.LCM_OVERFLOW_32_BITS,
+>                                               a, b);
+987c976
+<         if (a==0 || b==0){
+---
+>         if (a == 0 || b == 0){
+992,994c981,982
+<             throw MathRuntimeException.createArithmeticException(
+<                 LocalizedFormats.LCM_OVERFLOW_64_BITS,
+<                 a, b);
+---
+>             throw new MathArithmeticException(LocalizedFormats.LCM_OVERFLOW_64_BITS,
+>                                               a, b);
+1032c1020
+<             throw new ArithmeticException("overflow: mul");
+---
+>             throw new MathArithmeticException();
+1049d1036
+<         String msg = "overflow: multiply";
+1060c1047
+<                         throw new ArithmeticException(msg);
+---
+>                         throw new MathArithmeticException();
+1067c1054
+<                         throw new ArithmeticException(msg);
+---
+>                         throw new MathArithmeticException();
+1082c1069
+<                     throw new ArithmeticException(msg);
+---
+>                     throw new MathArithmeticException();
+1163,1164c1150
+<      public static double[] normalizeArray(double[] values, double normalizedSum)
+<        throws ArithmeticException, IllegalArgumentException {
+---
+>      public static double[] normalizeArray(double[] values, double normalizedSum) {
+1280,1282c1266,1268
+< 
+<     private static double roundUnscaled(double unscaled, double sign,
+<         int roundingMethod) {
+---
+>     private static double roundUnscaled(double unscaled,
+>                                         double sign,
+>                                         int roundingMethod) {
+1340c1326
+<                 throw new ArithmeticException("Inexact result from rounding");
+---
+>                 throw new MathArithmeticException();
+1347,1357c1333,1342
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.INVALID_ROUNDING_METHOD,
+<                   roundingMethod,
+<                   "ROUND_CEILING",     BigDecimal.ROUND_CEILING,
+<                   "ROUND_DOWN",        BigDecimal.ROUND_DOWN,
+<                   "ROUND_FLOOR",       BigDecimal.ROUND_FLOOR,
+<                   "ROUND_HALF_DOWN",   BigDecimal.ROUND_HALF_DOWN,
+<                   "ROUND_HALF_EVEN",   BigDecimal.ROUND_HALF_EVEN,
+<                   "ROUND_HALF_UP",     BigDecimal.ROUND_HALF_UP,
+<                   "ROUND_UNNECESSARY", BigDecimal.ROUND_UNNECESSARY,
+<                   "ROUND_UP",          BigDecimal.ROUND_UP);
+---
+>             throw new MathIllegalArgumentException(LocalizedFormats.INVALID_ROUNDING_METHOD,
+>                                                    roundingMethod,
+>                                                    "ROUND_CEILING", BigDecimal.ROUND_CEILING,
+>                                                    "ROUND_DOWN", BigDecimal.ROUND_DOWN,
+>                                                    "ROUND_FLOOR", BigDecimal.ROUND_FLOOR,
+>                                                    "ROUND_HALF_DOWN", BigDecimal.ROUND_HALF_DOWN,
+>                                                    "ROUND_HALF_EVEN", BigDecimal.ROUND_HALF_EVEN,
+>                                                    "ROUND_HALF_UP", BigDecimal.ROUND_HALF_UP,
+>                                                    "ROUND_UNNECESSARY", BigDecimal.ROUND_UNNECESSARY,
+>                                                    "ROUND_UP", BigDecimal.ROUND_UP);
+1448,1451d1432
+< 
+< 
+< 
+< 
+1480c1461
+<             throw MathRuntimeException.createArithmeticException(LocalizedFormats.OVERFLOW_IN_SUBTRACTION, x, y);
+---
+>             throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_SUBTRACTION, x, y);
+1518,1519d1498
+<     public static int pow(final int k, int e)
+<         throws IllegalArgumentException {
+1520a1500
+>     public static int pow(final int k, int e) {
+1522,1524c1502
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.POWER_NEGATIVE_PARAMETERS,
+<                 k, e);
+---
+>             throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+1538d1515
+< 
+1548,1549d1524
+<     public static int pow(final int k, long e)
+<         throws IllegalArgumentException {
+1550a1526
+>     public static int pow(final int k, long e) {
+1552,1554c1528
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.POWER_NEGATIVE_PARAMETERS,
+<                 k, e);
+---
+>             throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+1568d1541
+< 
+1578,1579d1550
+<     public static long pow(final long k, int e)
+<         throws IllegalArgumentException {
+1580a1552
+>     public static long pow(final long k, int e) {
+1582,1584c1554
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.POWER_NEGATIVE_PARAMETERS,
+<                 k, e);
+---
+>             throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+1598d1567
+< 
+1608,1609d1576
+<     public static long pow(final long k, long e)
+<         throws IllegalArgumentException {
+1610a1578
+>     public static long pow(final long k, long e) {
+1612,1614c1580
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.POWER_NEGATIVE_PARAMETERS,
+<                 k, e);
+---
+>             throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+1628d1593
+< 
+1638,1639d1602
+<     public static BigInteger pow(final BigInteger k, int e)
+<         throws IllegalArgumentException {
+1640a1604
+>     public static BigInteger pow(final BigInteger k, int e) {
+1642,1644c1606
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.POWER_NEGATIVE_PARAMETERS,
+<                 k, e);
+---
+>             throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+1648d1609
+< 
+1658,1659d1618
+<     public static BigInteger pow(final BigInteger k, long e)
+<         throws IllegalArgumentException {
+1660a1620
+>     public static BigInteger pow(final BigInteger k, long e) {
+1662,1664c1622
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.POWER_NEGATIVE_PARAMETERS,
+<                 k, e);
+---
+>             throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+1688,1689d1645
+<     public static BigInteger pow(final BigInteger k, BigInteger e)
+<         throws IllegalArgumentException {
+1690a1647
+>     public static BigInteger pow(final BigInteger k, BigInteger e) {
+1692,1694c1649
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                 LocalizedFormats.POWER_NEGATIVE_PARAMETERS,
+<                 k, e);
+---
+>             throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+1708d1662
+< 
+1821c1775,1779
+<     public static void checkOrder(double[] val, OrderDirection dir, boolean strict) {
+---
+> 
+> 
+> 
+>     public static boolean checkOrder(double[] val, OrderDirection dir,
+>                                      boolean strict, boolean abort) {
+1855c1813,1814
+<             if (!ok) {
+---
+>             if (!ok &&
+>                 abort) {
+1859a1819,1835
+> 
+>         return ok;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean checkOrder(double[] val, OrderDirection dir,
+>                                      boolean strict) {
+>         return checkOrder(val, dir, strict, true);
+1868,1869c1844,1846
+<     public static void checkOrder(double[] val) {
+<         checkOrder(val, OrderDirection.INCREASING, true);
+---
+> 
+>     public static boolean checkOrder(double[] val) {
+>         return checkOrder(val, OrderDirection.INCREASING, true);
+1932,1957c1909,1929
+<     double rdwarf = 3.834e-20;
+<     double rgiant = 1.304e+19;
+<     double s1=0.0;
+<     double s2=0.0;
+<     double s3=0.0;
+<     double x1max = 0.0;
+<     double x3max = 0.0;
+<     double floatn = (double)v.length;
+<     double agiant = rgiant/floatn;
+<     for (int i=0;i<v.length;i++) {
+<         double xabs = Math.abs(v[i]);
+<         if (xabs<rdwarf || xabs>agiant) {
+<             if (xabs>rdwarf) {
+<                 if (xabs>x1max) {
+<                     double r=x1max/xabs;
+<                     s1=1.0+s1*r*r;
+<                     x1max=xabs;
+<                 } else {
+<                     double r=xabs/x1max;
+<                     s1+=r*r;
+<                 }
+<             } else {
+<                 if (xabs>x3max) {
+<                  double r=x3max/xabs;
+<                  s3=1.0+s3*r*r;
+<                  x3max=xabs;
+---
+>         double rdwarf = 3.834e-20;
+>         double rgiant = 1.304e+19;
+>         double s1 = 0;
+>         double s2 = 0;
+>         double s3 = 0;
+>         double x1max = 0;
+>         double x3max = 0;
+>         double floatn = (double) v.length;
+>         double agiant = rgiant / floatn;
+>         for (int i = 0; i < v.length; i++) {
+>             double xabs = Math.abs(v[i]);
+>             if (xabs < rdwarf || xabs > agiant) {
+>                 if (xabs > rdwarf) {
+>                     if (xabs > x1max) {
+>                         double r = x1max / xabs;
+>                         s1= 1 + s1 * r * r;
+>                         x1max = xabs;
+>                     } else {
+>                         double r = xabs / x1max;
+>                         s1 += r * r;
+>                     }
+1959,1961c1931,1939
+<                     if (xabs!=0.0) {
+<                         double r=xabs/x3max;
+<                         s3+=r*r;
+---
+>                     if (xabs > x3max) {
+>                         double r = x3max / xabs;
+>                         s3= 1 + s3 * r * r;
+>                         x3max = xabs;
+>                     } else {
+>                         if (xabs != 0) {
+>                             double r = xabs / x3max;
+>                             s3 += r * r;
+>                         }
+1963a1942,1943
+>             } else {
+>                 s2 += xabs * xabs;
+1965,1966d1944
+<         } else {
+<          s2+=xabs*xabs;
+1968,1974c1946,1948
+<     }
+<     double norm;
+<     if (s1!=0.0) {
+<         norm = x1max*Math.sqrt(s1+(s2/x1max)/x1max);
+<     } else {
+<         if (s2==0.0) {
+<             norm = x3max*Math.sqrt(s3);
+---
+>         double norm;
+>         if (s1 != 0) {
+>             norm = x1max * Math.sqrt(s1 + (s2 / x1max) / x1max);
+1976,1977c1950,1951
+<             if (s2>=x3max) {
+<                 norm = Math.sqrt(s2*(1.0+(x3max/s2)*(x3max*s3)));
+---
+>             if (s2 == 0) {
+>                 norm = x3max * Math.sqrt(s3);
+1979c1953,1957
+<                 norm = Math.sqrt(x3max*((s2/x3max)+(x3max*s3)));
+---
+>                 if (s2 >= x3max) {
+>                     norm = Math.sqrt(s2 * (1 + (x3max / s2) * (x3max * s3)));
+>                 } else {
+>                     norm = Math.sqrt(x3max * ((s2 / x3max) + (x3max * s3)));
+>                 }
+1981a1960,1975
+>         return norm;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void sortInPlace(double[] x,
+>                                    double[] ... yList) {
+>         sortInPlace(x, OrderDirection.INCREASING, yList);
+1983,1984d1976
+<     return norm;
+< }
+1985a1978,2043
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void sortInPlace(double[] x,
+>                                    final OrderDirection dir,
+>                                    double[] ... yList) {
+>         if (x == null ||
+>             yList == null) {
+>             throw new NullArgumentException();
+>         }
+> 
+>         final int len = x.length;
+>         final List<Map.Entry<Double, double[]>> list
+>             = new ArrayList<Map.Entry<Double, double[]>>(len);
+> 
+>         final int yListLen = yList.length;
+>         for (int i = 0; i < len; i++) {
+>             final double[] yValues = new double[yListLen];
+>             for (int j = 0; j < yListLen; j++) {
+>                 double[] y = yList[j];
+>                 if (y.length != len) {
+>                     throw new DimensionMismatchException(y.length, len);
+>                 }
+>                 yValues[j] = y[i];
+>             }
+>             list.add(new AbstractMap.SimpleEntry<Double, double[]>(x[i], yValues));
+>         }
+> 
+>         final Comparator<Map.Entry<Double, double[]>> comp
+>             = new Comparator<Map.Entry<Double, double[]>>() {
+>             public int compare(Map.Entry<Double, double[]> o1,
+>                                Map.Entry<Double, double[]> o2) {
+>                 int val;
+>                 switch (dir) {
+>                 case INCREASING:
+>                     val = o1.getKey().compareTo(o2.getKey());
+>                 break;
+>                 case DECREASING:
+>                     val = o2.getKey().compareTo(o1.getKey());
+>                 break;
+>                 default:
+>                     
+>                     throw new IllegalArgumentException();
+>                 }
+>                 return val;
+>             }
+>         };
+> 
+>         Collections.sort(list, comp);
+> 
+>         for (int i = 0; i < len; i++) {
+>             final Map.Entry<Double, double[]> e = list.get(i);
+>             x[i] = e.getKey();
+>             final double[] yValues = e.getValue();
+>             for (int j = 0; j < yListLen; j++) {
+>                 yList[j][i] = yValues[j];
+>             }
+>         }
+>     }

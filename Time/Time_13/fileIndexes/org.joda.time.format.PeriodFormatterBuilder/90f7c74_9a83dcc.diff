@@ -1,0 +1,144 @@
+58a59
+> import java.util.Collections;
+59a61
+> import java.util.TreeSet;
+580c582
+<         return appendSeparator(text, text, true, true);
+---
+>         return appendSeparator(text, text, null, true, true);
+597a600
+> 
+599c602
+<         return appendSeparator(text, text, false, true);
+---
+>         return appendSeparator(text, text, null, false, true);
+616a620
+> 
+618c622
+<         return appendSeparator(text, text, true, false);
+---
+>         return appendSeparator(text, text, null, true, false);
+643c647
+<         return appendSeparator(text, finalText, true, true);
+---
+>         return appendSeparator(text, finalText, null, true, true);
+646c650,679
+<     private PeriodFormatterBuilder appendSeparator(String text, String finalText, boolean useBefore, boolean useAfter) {
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSeparator(String text, String finalText,
+>                                                   String[] variants) {
+>         return appendSeparator(text, finalText, variants, true, true);
+>     }
+> 
+>     private PeriodFormatterBuilder appendSeparator(String text, String finalText,
+>                                                    String[] variants,
+>                                                    boolean useBefore, boolean useAfter) {
+657c690,691
+<                 formatters.add(new Separator(text, finalText, Literal.EMPTY, useBefore, useAfter));
+---
+>                 formatters.add
+>                     (new Separator(text, finalText, variants, Literal.EMPTY, useBefore, useAfter));
+679c713,714
+<             formatters.add(new Separator(text, finalText, composite, useBefore, useAfter));
+---
+>             formatters.add
+>                 (new Separator(text, finalText, variants, composite, useBefore, useAfter));
+1442a1478
+>         private final String[] iParsedForms;
+1450c1486,1487
+<         Separator(String text, String finalText, BasePeriodFormatter before, boolean useBefore, boolean useAfter) {
+---
+>         Separator(String text, String finalText, String[] variants,
+>                   BasePeriodFormatter before, boolean useBefore, boolean useAfter) {
+1452a1490,1509
+> 
+>             if ((finalText == null || text.equals(finalText)) &&
+>                 (variants == null || variants.length == 0)) {
+> 
+>                 iParsedForms = new String[] {text};
+>             } else {
+>                 
+>                 TreeSet parsedSet = new TreeSet(String.CASE_INSENSITIVE_ORDER);
+>                 parsedSet.add(text);
+>                 parsedSet.add(finalText);
+>                 if (variants != null) {
+>                     for (int i=variants.length; --i>=0; ) {
+>                         parsedSet.add(variants[i]);
+>                     }
+>                 }
+>                 ArrayList parsedList = new ArrayList(parsedSet);
+>                 Collections.reverse(parsedList);
+>                 iParsedForms = (String[]) parsedList.toArray(new String[parsedList.size()]);
+>             }
+> 
+1537,1538c1594
+<             final int oldPos = position;
+< 
+---
+>             int oldPos = position;
+1539a1596
+> 
+1542a1600,1601
+> 
+>             boolean found = false;
+1545,1550c1604,1615
+<                 
+<                 if (periodStr.regionMatches(true, position, iText, 0, iText.length())) {
+<                     position += iText.length();
+<                 } else if (iText != iFinalText && periodStr.regionMatches
+<                            (true, position, iFinalText, 0, iFinalText.length())) {
+<                     position += iFinalText.length();
+---
+>                 String[] parsedForms = iParsedForms;
+>                 int length = parsedForms.length;
+>                 for (int i=0; i < length; i++) {
+>                     String parsedForm = parsedForms[i];
+>                     if ((parsedForm == null || parsedForm.length() == 0) ||
+>                         periodStr.regionMatches
+>                         (true, position, parsedForm, 0, parsedForm.length())) {
+>                         
+>                         position += parsedForm.length();
+>                         found = true;
+>                         break;
+>                     }
+1552a1618,1619
+> 
+>             oldPos = position;
+1553a1621,1635
+> 
+>             if (position < 0) {
+>                 return position;
+>             }
+> 
+>             if (found && position == oldPos) {
+>                 
+>                 return ~oldPos;
+>             }
+> 
+>             if (position > oldPos && !found && !iUseBefore) {
+>                 
+>                 return ~oldPos;
+>             }
+> 

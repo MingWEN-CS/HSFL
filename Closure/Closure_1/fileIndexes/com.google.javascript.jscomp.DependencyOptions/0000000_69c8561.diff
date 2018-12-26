@@ -1,0 +1,127 @@
+1a2,127
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.common.collect.Sets;
+> 
+> import java.io.Serializable;
+> import java.util.Collection;
+> import java.util.Set;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class DependencyOptions implements Serializable {
+>   private static final long serialVersionUID = 1L;
+> 
+>   private boolean sortDependencies = false;
+>   private boolean pruneDependencies = false;
+>   private boolean dropMoochers = false;
+>   private final Set<String> entryPoints = Sets.newHashSet();
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   public void setDependencySorting(boolean enabled) {
+>     this.sortDependencies = enabled;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public void setDependencyPruning(boolean enabled) {
+>     this.pruneDependencies = enabled;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public void setMoocherDropping(boolean enabled) {
+>     this.dropMoochers = enabled;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public void setEntryPoints(Collection<String> symbols) {
+>     entryPoints.clear();
+>     entryPoints.addAll(symbols);
+>   }
+> 
+>   
+>   boolean needsManagement() {
+>     return sortDependencies || pruneDependencies;
+>   }
+> 
+>   boolean shouldSortDependencies() {
+>     return sortDependencies;
+>   }
+> 
+>   boolean shouldPruneDependencies() {
+>     return pruneDependencies;
+>   }
+> 
+>   boolean shouldDropMoochers() {
+>     return pruneDependencies && dropMoochers;
+>   }
+> 
+>   Collection<String> getEntryPoints() {
+>     return entryPoints;
+>   }
+> }

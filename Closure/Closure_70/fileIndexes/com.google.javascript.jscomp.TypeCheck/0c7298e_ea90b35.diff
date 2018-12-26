@@ -1,0 +1,117 @@
+277a278,281
+>   
+>   
+>   private int noTypeCheckSection = 0;
+> 
+375,377c379
+<   public boolean shouldTraverse(
+<       NodeTraversal t, Node n, Node parent) {
+<     JSDocInfo info;
+---
+>   private void checkNoTypeCheckSection(Node n, boolean enterSection) {
+379a382
+>       case Token.BLOCK:
+381,382c384,386
+<         
+<         info = n.getJSDocInfo();
+---
+>       case Token.FUNCTION:
+>       case Token.ASSIGN:
+>         JSDocInfo info = n.getJSDocInfo();
+384c388,392
+<           return false;
+---
+>           if (enterSection) {
+>             noTypeCheckSection++;
+>           } else {
+>             noTypeCheckSection--;
+>           }
+385a394
+>         validator.setShouldReport(noTypeCheckSection == 0);
+386a396,397
+>     }
+>   }
+388,394c399,404
+<       case Token.FUNCTION:
+<         
+<         info = n.getJSDocInfo();
+<         info = (info == null) ? parent.getJSDocInfo() : info;
+<         if (info != null && info.isNoTypeCheck()) {
+<           return false;
+<         }
+---
+>   private void report(NodeTraversal t, Node n, DiagnosticType diagnosticType,
+>       String... arguments) {
+>     if (noTypeCheckSection == 0) {
+>       t.report(n, diagnosticType, arguments);
+>     }
+>   }
+395a406,410
+>   public boolean shouldTraverse(
+>       NodeTraversal t, Node n, Node parent) {
+>     checkNoTypeCheckSection(n, true);
+>     switch (n.getType()) {
+>       case Token.FUNCTION:
+408c423
+<           t.report(n, FUNCTION_MASKS_VARIABLE, functionPrivateName);
+---
+>           report(t, n, FUNCTION_MASKS_VARIABLE, functionPrivateName);
+557c572
+<           t.report(n, BIT_OPERATION, NodeUtil.opToStr(n.getType()),
+---
+>           report(t, n, BIT_OPERATION, NodeUtil.opToStr(n.getType()),
+583c598
+<           t.report(n, DETERMINISTIC_TEST, leftType.toString(),
+---
+>           report(t, n, DETERMINISTIC_TEST, leftType.toString(),
+599c614
+<           t.report(n, DETERMINISTIC_TEST_NO_RESULT, leftType.toString(),
+---
+>           report(t, n, DETERMINISTIC_TEST_NO_RESULT, leftType.toString(),
+692c707
+<           t.report(n, BAD_DELETE);
+---
+>           report(t, n, BAD_DELETE);
+762c777
+<         t.report(n, UNEXPECTED_TOKEN, Token.name(n.getType()));
+---
+>         report(t, n, UNEXPECTED_TOKEN, Token.name(n.getType()));
+772a788,789
+> 
+>     checkNoTypeCheckSection(n, false);
+1150c1167
+<           t.report(n, INEXISTENT_ENUM_ELEMENT, propName);
+---
+>           report(t, n, INEXISTENT_ENUM_ELEMENT, propName);
+1154c1171
+<             t.report(n, INEXISTENT_PROPERTY, propName,
+---
+>             report(t, n, INEXISTENT_PROPERTY, propName,
+1272c1289
+<         t.report(line, NOT_A_CONSTRUCTOR);
+---
+>         report(t, line, NOT_A_CONSTRUCTOR);
+1315c1332
+<           t.report(n, BAD_IMPLEMENTED_TYPE, functionPrivateName);
+---
+>           report(t, n, BAD_IMPLEMENTED_TYPE, functionPrivateName);
+1336c1353
+<       t.report(n, NOT_CALLABLE, childType.toString());
+---
+>       report(t, n, NOT_CALLABLE, childType.toString());
+1349c1366
+<         t.report(n, CONSTRUCTOR_NOT_CALLABLE, childType.toString());
+---
+>         report(t, n, CONSTRUCTOR_NOT_CALLABLE, childType.toString());
+1462c1479
+<           t.report(left, BIT_OPERATION,
+---
+>           report(t, left, BIT_OPERATION,
+1466c1483
+<           t.report(right, BIT_OPERATION,
+---
+>           report(t, right, BIT_OPERATION,
+1500c1517
+<         t.report(n, UNEXPECTED_TOKEN, Node.tokenToName(op));
+---
+>         report(t, n, UNEXPECTED_TOKEN, Node.tokenToName(op));

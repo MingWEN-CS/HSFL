@@ -1,0 +1,76 @@
+41c41
+<   private ScopeCreator scopeCreator;
+---
+>   private MemoizedScopeCreator scopeCreator;
+46c46
+<       Scope topScope, ScopeCreator scopeCreator) {
+---
+>       Scope topScope, MemoizedScopeCreator scopeCreator) {
+73c73
+<     inferTypes(externsAndJs);
+---
+>     inferAllScopes(externsAndJs);
+77,80c77,106
+<   void inferTypes(Node node) {
+<     NodeTraversal inferTypes = new NodeTraversal(
+<         compiler, new TypeInferringCallback(), scopeCreator);
+<     inferTypes.traverseWithScope(node, topScope);
+---
+>   void inferAllScopes(Node node) {
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     (new NodeTraversal(
+>         compiler, new FirstScopeBuildingCallback(), scopeCreator))
+>         .traverseWithScope(node, topScope);
+>     (new NodeTraversal(
+>         compiler, new SecondScopeBuildingCallback(), scopeCreator))
+>         .traverseWithScope(node, topScope);
+83c109
+<   void inferTypes(NodeTraversal t, Node n, Scope scope) {
+---
+>   void inferScope(Node n, Scope scope) {
+95c121
+<       compiler.report(t.makeError(n, DATAFLOW_ERROR));
+---
+>       compiler.report(JSError.make(n.getSourceFileName(), n, DATAFLOW_ERROR));
+99c125
+<   private class TypeInferringCallback extends AbstractScopedCallback {
+---
+>   private class FirstScopeBuildingCallback extends AbstractScopedCallback {
+102c128,140
+<       inferTypes(t, t.getCurrentNode(), t.getScope());
+---
+>       t.getScope();
+>     }
+> 
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       
+>     }
+>   }
+> 
+>   private class SecondScopeBuildingCallback extends AbstractScopedCallback {
+>     @Override
+>     public void enterScope(NodeTraversal t) {
+>       inferScope(t.getScope().getRootNode(), t.getScope());

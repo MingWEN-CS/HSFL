@@ -1,0 +1,68 @@
+109a110,112
+>   private boolean generatePseudoNames;
+> 
+>   
+118a122
+>       boolean generatePseudoNames,
+125a130
+>     this.generatePseudoNames = generatePseudoNames;
+291,293c296
+<       String oldName = n.getString();
+<       Assignment a = assignments.get(oldName);
+< 
+---
+>       String newName = getNewGlobalName(n);
+295,297c298,300
+<       if (a.newName != null) {
+<         n.setString(a.newName);
+<         changed = changed || !a.newName.equals(oldName);
+---
+>       if (newName != null) {
+>         n.setString(newName);
+>         changed = true;
+304,307c307,311
+<       String oldName = localTempNames.get(count);
+<       Assignment a = assignments.get(oldName);
+<       n.setString(a.newName);
+<       changed = changed || !a.newName.equals(oldName);
+---
+>       String newName = getNewLocalName(n, count);
+>       if (newName != null) {
+>         n.setString(newName);
+>         changed = true;
+>       }
+319a324,355
+>   private String getNewGlobalName(Node n) {
+>     String oldName = n.getString();
+>     Assignment a = assignments.get(oldName);
+>     if (a.newName != null && !a.newName.equals(oldName)) {
+>       if (generatePseudoNames) {
+>         return getPseudoName(oldName);
+>       }
+>       return a.newName;
+>     } else {
+>       return null;
+>     }
+>   }
+> 
+>   private String getNewLocalName(Node n, int index) {
+>     String oldTempName = localTempNames.get(index);
+>     Assignment a = assignments.get(oldTempName);
+>     if (!a.newName.equals(oldTempName)) {
+>       if (generatePseudoNames) {
+>         return getPseudoName(n.getString());
+>       }
+>       return a.newName;
+>     }
+>     return null;
+>   }
+> 
+>   private String getPseudoName(String s) {
+>     Preconditions.checkState(generatePseudoNames);
+>     
+>     
+>     return '$' + s + "$$";
+>   }
+> 
+371d406
+< 

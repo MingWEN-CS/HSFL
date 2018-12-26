@@ -1,0 +1,42 @@
+42d41
+< import com.google.javascript.rhino.jstype.NamedType;
+45d43
+< import com.google.javascript.rhino.jstype.UnionType;
+792,800c790,791
+<         String unresolvedReference = getUnresolvedReference(type);
+<         if (unresolvedReference != null) {
+<           compiler.report(
+<               t.makeError(n, reportUnknownTypes,
+<                   UNRESOLVED_TYPE, unresolvedReference));
+<         } else {
+<           compiler.report(
+<               t.makeError(n, reportUnknownTypes, UNKNOWN_EXPR_TYPE));
+<         }
+---
+>         compiler.report(
+>             t.makeError(n, reportUnknownTypes, UNKNOWN_EXPR_TYPE));
+806,829d796
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   private String getUnresolvedReference(JSType type) {
+<     if (type.isNamedType()) {
+<       NamedType namedType = (NamedType) type;
+<       if (!namedType.isResolved()) {
+<         return namedType.getReferenceName();
+<       }
+<     } else if (type.isUnionType()) {
+<       for (JSType alt : ((UnionType) type).getAlternates()) {
+<         if (alt.isUnknownType()) {
+<           String unresolvedReference = getUnresolvedReference(alt);
+<           if (unresolvedReference != null) {
+<             return unresolvedReference;
+<           }
+<         }
+<       }
+<     }
+<     return null;

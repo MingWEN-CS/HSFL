@@ -1,0 +1,932 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.format;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeZone;
+import org.joda.time.chrono.ISOChronology;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class ISODateTimeFormat {
+
+    
+
+
+    private static Map cCache = new HashMap(7);
+
+    
+
+
+
+
+    public static ISODateTimeFormat getInstanceUTC() {
+        return getInstance(ISOChronology.getInstanceUTC());
+    }
+
+    
+
+
+
+
+
+    public static ISODateTimeFormat getInstance() {
+        return getInstance(ISOChronology.getInstance());
+    }
+
+    
+
+
+
+
+
+    public static ISODateTimeFormat getInstance(final DateTimeZone zone) {
+        return getInstance(ISOChronology.getInstance(zone));
+    }
+
+    
+
+
+
+
+
+    public static synchronized ISODateTimeFormat getInstance(Chronology chrono) {
+        if (chrono == null) {
+            chrono = ISOChronology.getInstance();
+        }
+        ISODateTimeFormat instance = (ISODateTimeFormat)cCache.get(chrono);
+        if (instance == null) {
+            instance = new ISODateTimeFormat(chrono);
+            cCache.put(chrono, instance);
+        }
+        return instance;
+    }
+
+    
+    private final Chronology iChrono;
+
+    private transient DateTimeFormatter
+        ye,  
+        mye, 
+        dme, 
+        we,  
+        wwe, 
+        dwe, 
+        dye, 
+        hde, 
+        mhe, 
+        sme, 
+        lse, 
+        fse, 
+        ze,  
+        
+        
+        ym,  
+        ymd, 
+
+        
+        ww,  
+        wwd, 
+
+        
+        hm,   
+        hms,  
+        hmsl, 
+        hmsf, 
+
+        dh,    
+        dhm,   
+        dhms,  
+        dhmsl, 
+        dhmsf, 
+
+        
+        t,  
+        tt,  
+        dt, 
+
+        
+        wdt, 
+
+        bd,  
+        bt,  
+        btt, 
+        bdt, 
+
+        bwd,  
+        bwdt; 
+
+    private transient DateTimeParser
+        dpe, 
+        tpe, 
+        dp,  
+        tp,  
+        dtp; 
+
+    
+
+
+
+
+    private ISODateTimeFormat(final Chronology chrono) {
+        iChrono = chrono;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeParser dateParser() {
+        if (dp == null) {
+            dp = new DateTimeFormatterBuilder(iChrono)
+                .append(dateElementParser())
+                .appendOptional
+                (new DateTimeFormatterBuilder(iChrono)
+                 .appendLiteral('T')
+                 .append(offsetElement())
+                 .toParser())
+                .toParser();
+        }
+        return dp;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public DateTimeParser dateElementParser() {
+        if (dpe == null) {
+            dpe = new DateTimeFormatterBuilder(iChrono)
+                .append(null, new DateTimeParser[] {
+                    new DateTimeFormatterBuilder(iChrono)
+                    .append(yearElement())
+                    .appendOptional
+                    (new DateTimeFormatterBuilder(iChrono)
+                     .append(monthElement())
+                     .appendOptional(dayOfMonthElement())
+                     .toParser())
+                    .toParser(),
+                    new DateTimeFormatterBuilder(iChrono)
+                    .append(weekyearElement())
+                    .append(weekElement())
+                    .appendOptional(dayOfWeekElement())
+                    .toParser(),
+                    new DateTimeFormatterBuilder(iChrono)
+                    .append(yearElement())
+                    .append(dayOfYearElement())
+                    .toParser()
+                })
+                .toParser();
+        }
+        return dpe;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeParser timeParser() {
+        if (tp == null) {
+            tp = new DateTimeFormatterBuilder(iChrono)
+                .appendOptional
+                (new DateTimeFormatterBuilder(iChrono)
+                 .appendLiteral('T')
+                 .toParser())
+                .append(timeElementParser())
+                .appendOptional(offsetElement())
+                .toParser();
+        }
+        return tp;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public DateTimeParser timeElementParser() {
+        if (tpe == null) {
+            
+            DateTimeParser decimalPoint = new DateTimeFormatterBuilder(iChrono)
+                .append(null, new DateTimeParser[] {
+                    new DateTimeFormatterBuilder(iChrono)
+                    .appendLiteral('.')
+                    .toParser(),
+                    new DateTimeFormatterBuilder(iChrono)
+                    .appendLiteral(',')
+                    .toParser()
+                })
+                .toParser();
+
+            tpe = new DateTimeFormatterBuilder(iChrono)
+                
+                .append(hourElement())
+                .append
+                (null, new DateTimeParser[] {
+                    new DateTimeFormatterBuilder(iChrono)
+                    
+                    .append(minuteElement())
+                    .append
+                    (null, new DateTimeParser[] {
+                        new DateTimeFormatterBuilder(iChrono)
+                        
+                        .append(secondElement())
+                        
+                        .appendOptional(new DateTimeFormatterBuilder(iChrono)
+                                        .append(decimalPoint)
+                                        .appendFractionOfSecond(1, 9)
+                                        .toParser())
+                        .toParser(),
+                        
+                        new DateTimeFormatterBuilder(iChrono)
+                        .append(decimalPoint)
+                        .appendFractionOfMinute(1, 9)
+                        .toParser(),
+                        null
+                    })
+                    .toParser(),
+                    
+                    new DateTimeFormatterBuilder(iChrono)
+                    .append(decimalPoint)
+                    .appendFractionOfHour(1, 9)
+                    .toParser(),
+                    null
+                })
+                .toParser();
+        }
+        return tpe;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeParser dateTimeParser() {
+        if (dtp == null) {
+            
+            
+            DateTimeParser time = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('T')
+                .append(timeElementParser())
+                .appendOptional(offsetElement())
+                .toParser();
+
+            dtp = new DateTimeFormatterBuilder(iChrono)
+                .append(null, new DateTimeParser[] {
+                    time,
+                    new DateTimeFormatterBuilder(iChrono)
+                    .append(dateElementParser())
+                    .append(null, new DateTimeParser[] {
+                        time,
+                        new DateTimeFormatterBuilder(iChrono)
+                        .appendLiteral('T')
+                        .append(offsetElement())
+                        .toParser(),
+                        null
+                    })
+                    .toParser()
+                })
+                .toParser();
+        }
+        return dtp;
+    }
+
+    
+    
+
+
+
+    public DateTimeFormatter date() {
+        return yearMonthDay();
+    }
+
+    
+
+
+
+
+
+    public DateTimeFormatter time() {
+        if (t == null) {
+            t = new DateTimeFormatterBuilder(iChrono)
+                .append(hourMinuteSecondMillis())
+                .append(offsetElement())
+                .toFormatter();
+        }
+        return t;
+    }
+
+    
+
+
+
+
+
+    public DateTimeFormatter tTime() {
+        if (t == null) {
+            t = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('T')
+                .append(time())
+                .toFormatter();
+        }
+        return t;
+    }
+
+    
+
+
+
+    public DateTimeFormatter dateTime() {
+        if (dt == null) {
+            dt = new DateTimeFormatterBuilder(iChrono)
+                .append(date())
+                .append(tTime())
+                .toFormatter();
+        }
+        return dt;
+    }
+
+    
+
+
+
+    public DateTimeFormatter weekDate() {
+        return weekyearWeekDay();
+    }
+
+    
+
+
+
+    public DateTimeFormatter weekDateTime() {
+        if (wdt == null) {
+            wdt = new DateTimeFormatterBuilder(iChrono)
+                .append(weekDate())
+                .appendLiteral('T')
+                .append(time())
+                .toFormatter();
+        }
+        return wdt;
+    }
+
+    
+    
+
+
+
+    public DateTimeFormatter basicDate() {
+        if (bd == null) {
+            bd = new DateTimeFormatterBuilder(iChrono)
+                .appendYear(4, 4)
+                .appendMonthOfYear(2)
+                .appendDayOfMonth(2)
+                .toFormatter();
+        }
+        return bd;
+    }
+
+    
+
+
+
+
+    public DateTimeFormatter basicTime() {
+        if (bt == null) {
+            bt = new DateTimeFormatterBuilder(iChrono)
+                .appendHourOfDay(2)
+                .appendMinuteOfHour(2)
+                .appendSecondOfMinute(2)
+                .appendTimeZoneOffset("", false, 1, 2)
+                .toFormatter();
+        }
+        return bt;
+    }
+
+    
+
+
+
+
+
+    public DateTimeFormatter basicTTime() {
+        if (bt == null) {
+            bt = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('T')
+                .append(basicTime())
+                .toFormatter();
+        }
+        return bt;
+    }
+
+    
+
+
+
+    public DateTimeFormatter basicDateTime() {
+        if (bdt == null) {
+            bdt = new DateTimeFormatterBuilder(iChrono)
+                .append(basicDate())
+                .append(basicTTime())
+                .toFormatter();
+        }
+        return bdt;
+    }
+
+    
+
+
+
+    public DateTimeFormatter basicWeekDate() {
+        if (bwd == null) {
+            bwd = new DateTimeFormatterBuilder(iChrono)
+                .appendWeekyear(4, 4)
+                .appendLiteral('W')
+                .appendWeekOfWeekyear(2)
+                .appendDayOfWeek(1)
+                .toFormatter();
+        }
+        return bwd;
+    }
+
+    
+
+
+
+    public DateTimeFormatter basicWeekDateTime() {
+        if (bwdt == null) {
+            bwdt = new DateTimeFormatterBuilder(iChrono)
+                .append(basicWeekDate())
+                .appendLiteral('T')
+                .append(basicTime())
+                .toFormatter();
+        }
+        return bwdt;
+    }
+
+    
+    
+
+
+    public DateTimeFormatter year() {
+        return yearElement();
+    }
+
+    
+
+
+
+    public DateTimeFormatter yearMonth() {
+        if (ym == null) {
+            ym = new DateTimeFormatterBuilder(iChrono)
+                .append(yearElement())
+                .append(monthElement())
+                .toFormatter();
+        }
+        return ym;
+    }
+
+    
+
+
+
+    public DateTimeFormatter yearMonthDay() {
+        if (ymd == null) {
+            ymd = new DateTimeFormatterBuilder(iChrono)
+                .append(yearElement())
+                .append(monthElement())
+                .append(dayOfMonthElement())
+                .toFormatter();
+        }
+        return ymd;
+    }
+
+    
+
+
+    public DateTimeFormatter weekyear() {
+        return weekyearElement();
+    }
+
+    
+
+
+
+    public DateTimeFormatter weekyearWeek() {
+        if (ww == null) {
+            ww = new DateTimeFormatterBuilder(iChrono)
+                .append(weekyearElement())
+                .append(weekElement())
+                .toFormatter();
+        }
+        return ww;
+    }
+
+    
+
+
+
+    public DateTimeFormatter weekyearWeekDay() {
+        if (wwd == null) {
+            wwd = new DateTimeFormatterBuilder(iChrono)
+                .append(weekyearElement())
+                .append(weekElement())
+                .append(dayOfWeekElement())
+                .toFormatter();
+        }
+        return wwd;
+    }
+
+    
+
+
+    public DateTimeFormatter hour() {
+        return hourElement();
+    }
+
+    
+
+
+
+    public DateTimeFormatter hourMinute() {
+        if (hm == null) {
+            hm = new DateTimeFormatterBuilder(iChrono)
+                .append(hourElement())
+                .append(minuteElement())
+                .toFormatter();
+        }
+        return hm;
+    }
+
+    
+
+
+
+    public DateTimeFormatter hourMinuteSecond() {
+        if (hms == null) {
+            hms = new DateTimeFormatterBuilder(iChrono)
+                .append(hourElement())
+                .append(minuteElement())
+                .append(secondElement())
+                .toFormatter();
+        }
+        return hms;
+    }
+
+    
+
+
+
+
+    public DateTimeFormatter hourMinuteSecondMillis() {
+        if (hmsl == null) {
+            hmsl = new DateTimeFormatterBuilder(iChrono)
+                .append(hourElement())
+                .append(minuteElement())
+                .append(secondElement())
+                .append(millisElement())
+                .toFormatter();
+        }
+        return hmsl;
+    }
+
+    
+
+
+
+
+    public DateTimeFormatter hourMinuteSecondFraction() {
+        if (hmsf == null) {
+            hmsf = new DateTimeFormatterBuilder(iChrono)
+                .append(hourElement())
+                .append(minuteElement())
+                .append(secondElement())
+                .append(fractionElement())
+                .toFormatter();
+        }
+        return hmsf;
+    }
+
+    
+
+
+
+    public DateTimeFormatter dateHour() {
+        if (dh == null) {
+            dh = new DateTimeFormatterBuilder(iChrono)
+                .append(date())
+                .appendLiteral('T')
+                .append(hour())
+                .toFormatter();
+        }
+        return dh;
+    }
+
+    
+
+
+
+    public DateTimeFormatter dateHourMinute() {
+        if (dhm == null) {
+            dhm = new DateTimeFormatterBuilder(iChrono)
+                .append(date())
+                .appendLiteral('T')
+                .append(hourMinute())
+                .toFormatter();
+        }
+        return dhm;
+    }
+
+    
+
+
+
+
+    public DateTimeFormatter dateHourMinuteSecond() {
+        if (dhms == null) {
+            dhms = new DateTimeFormatterBuilder(iChrono)
+                .append(date())
+                .appendLiteral('T')
+                .append(hourMinuteSecond())
+                .toFormatter();
+        }
+        return dhms;
+    }
+
+    
+
+
+
+
+    public DateTimeFormatter dateHourMinuteSecondMillis() {
+        if (dhmsl == null) {
+            dhmsl = new DateTimeFormatterBuilder(iChrono)
+                .append(date())
+                .appendLiteral('T')
+                .append(hourMinuteSecondMillis())
+                .toFormatter();
+        }
+        return dhmsl;
+    }
+
+    
+
+
+
+
+    public DateTimeFormatter dateHourMinuteSecondFraction() {
+        if (dhmsf == null) {
+            dhmsf = new DateTimeFormatterBuilder(iChrono)
+                .append(date())
+                .appendLiteral('T')
+                .append(hourMinuteSecondFraction())
+                .toFormatter();
+        }
+        return dhmsf;
+    }
+
+    
+    private DateTimeFormatter yearElement() {
+        if (ye == null) {
+            ye = new DateTimeFormatterBuilder(iChrono)
+                .appendYear(4, 9)
+                .toFormatter();
+        }
+        return ye;
+    }
+
+    private DateTimeFormatter monthElement() {
+        if (mye == null) {
+            mye = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('-')
+                .appendMonthOfYear(2)
+                .toFormatter();
+        }
+        return mye;
+    }
+
+    private DateTimeFormatter dayOfMonthElement() {
+        if (dme == null) {
+            dme = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('-')
+                .appendDayOfMonth(2)
+                .toFormatter();
+        }
+        return dme;
+    }
+
+    private DateTimeFormatter weekyearElement() {
+        if (we == null) {
+            we = new DateTimeFormatterBuilder(iChrono)
+                .appendWeekyear(4, 9)
+                .toFormatter();
+        }
+        return we;
+    }
+
+    private DateTimeFormatter weekElement() {
+        if (wwe == null) {
+            wwe = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral("-W")
+                .appendWeekOfWeekyear(2)
+                .toFormatter();
+        }
+        return wwe;
+    }
+
+    private DateTimeFormatter dayOfWeekElement() {
+        if (dwe == null) {
+            dwe = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('-')
+                .appendDayOfWeek(1)
+                .toFormatter();
+        }
+        return dwe;
+    }
+
+    private DateTimeFormatter dayOfYearElement() {
+        if (dye == null) {
+            dye = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('-')
+                .appendDayOfYear(3)
+                .toFormatter();
+        }
+        return dye;
+    }
+
+    private DateTimeFormatter hourElement() {
+        if (hde == null) {
+            hde = new DateTimeFormatterBuilder(iChrono)
+                .appendHourOfDay(2)
+                .toFormatter();
+        }
+        return hde;
+    }
+
+    private DateTimeFormatter minuteElement() {
+        if (mhe == null) {
+            mhe = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral(':')
+                .appendMinuteOfHour(2)
+                .toFormatter();
+        }
+        return mhe;
+    }
+
+    private DateTimeFormatter secondElement() {
+        if (sme == null) {
+            sme = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral(':')
+                .appendSecondOfMinute(2)
+                .toFormatter();
+        }
+        return sme;
+    }
+
+    private DateTimeFormatter millisElement() {
+        if (lse == null) {
+            lse = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('.')
+                .appendMillisOfSecond(3)
+                .toFormatter();
+        }
+        return lse;
+    }
+
+    private DateTimeFormatter fractionElement() {
+        if (fse == null) {
+            fse = new DateTimeFormatterBuilder(iChrono)
+                .appendLiteral('.')
+                
+                
+                .appendFractionOfSecond(3, 9)
+                .toFormatter();
+        }
+        return fse;
+    }
+
+    private DateTimeFormatter offsetElement() {
+        if (ze == null) {
+            ze = new DateTimeFormatterBuilder(iChrono)
+                .appendTimeZoneOffset("Z", true, 2, 4)
+                .toFormatter();
+        }
+        return ze;
+    }
+    
+}

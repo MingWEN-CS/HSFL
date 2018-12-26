@@ -1,0 +1,39 @@
+20a21
+> import org.apache.commons.math.FunctionEvaluationException;
+176c177
+<             pm = cumulativeProbability(xm);
+---
+>             pm = checkedCumulativeProbability(xm);
+201c202
+<         pm = cumulativeProbability(x0);
+---
+>         pm = checkedCumulativeProbability(x0);
+204c205
+<             pm = cumulativeProbability(x0);
+---
+>             pm = checkedCumulativeProbability(x0);
+207a209,232
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private double checkedCumulativeProbability(int argument) throws FunctionEvaluationException {
+>         double result = Double.NaN;
+>         try {
+>             result = cumulativeProbability(argument);
+>         } catch (MathException ex) {
+>             throw new FunctionEvaluationException(ex, argument, ex.getPattern(), ex.getArguments());
+>         }
+>         if (Double.isNaN(result)) {
+>             throw new FunctionEvaluationException(argument,
+>                 "Discrete cumulative probability function returned NaN for argument {0}", argument);
+>         }
+>         return result;

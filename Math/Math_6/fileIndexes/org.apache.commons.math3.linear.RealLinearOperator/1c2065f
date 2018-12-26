@@ -1,0 +1,93 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.linear;
+
+import org.apache.commons.math.exception.DimensionMismatchException;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class RealLinearOperator {
+    
+
+
+
+
+    public abstract int getRowDimension();
+
+    
+
+
+
+
+    public abstract int getColumnDimension();
+
+    
+
+
+
+
+
+    public double[] operate(final double[] x) {
+        if (x.length != getColumnDimension()) {
+            throw new DimensionMismatchException(x.length, getColumnDimension());
+        }
+        final RealVector y = operate(new ArrayRealVector(x, false));
+        if (y instanceof ArrayRealVector) {
+            return ((ArrayRealVector) y).getDataRef();
+        } else {
+            return y.getData();
+        }
+    }
+
+    
+
+
+
+
+
+    public abstract RealVector operate(final RealVector x);
+}

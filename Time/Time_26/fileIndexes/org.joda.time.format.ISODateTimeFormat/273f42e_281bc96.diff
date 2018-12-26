@@ -1,0 +1,139 @@
+131a132
+>         ltp, 
+133c134,135
+<         dotp; 
+---
+>         dotp, 
+>         ldotp; 
+545a548,550
+>             DateTimeParser tOffset = new DateTimeFormatterBuilder()
+>                 .appendLiteral('T')
+>                 .append(offsetElement()).toParser();
+548,552c553
+<                 .appendOptional
+<                 (new DateTimeFormatterBuilder()
+<                  .appendLiteral('T')
+<                  .append(offsetElement())
+<                  .toParser())
+---
+>                 .appendOptional(tOffset)
+567a569,583
+> 
+>     public static DateTimeFormatter localDateParser() {
+>         return dateElementParser();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+610,613c626
+<                 .appendOptional
+<                 (new DateTimeFormatterBuilder()
+<                  .appendLiteral('T')
+<                  .toParser())
+---
+>                 .appendOptional(literalTElement().getParser())
+630a644,665
+> 
+> 
+>     public static DateTimeFormatter localTimeParser() {
+>         if (ltp == null) {
+>             ltp = new DateTimeFormatterBuilder()
+>                 .appendOptional(literalTElement().getParser())
+>                 .append(timeElementParser())
+>                 .toFormatter();
+>         }
+>         return ltp;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+700a736
+> 
+710d745
+< 
+712,725c747
+<                 .append(null, new DateTimeParser[] {
+<                     time,
+<                     new DateTimeFormatterBuilder()
+<                     .append(dateElementParser())
+<                     .append(null, new DateTimeParser[] {
+<                         time,
+<                         new DateTimeFormatterBuilder()
+<                         .appendLiteral('T')
+<                         .append(offsetElement())
+<                         .toParser(),
+<                         null
+<                     })
+<                     .toParser()
+<                 })
+---
+>                 .append(null, new DateTimeParser[] {time, dateOptionalTimeParser().getParser()})
+746a769
+> 
+748a772,776
+>             DateTimeParser timeOrOffset = new DateTimeFormatterBuilder()
+>                 .appendLiteral('T')
+>                 .appendOptional(timeElementParser().getParser())
+>                 .appendOptional(offsetElement().getParser())
+>                 .toParser();
+751,756c779
+<                 .appendOptional(
+<                     new DateTimeFormatterBuilder()
+<                         .appendLiteral('T')
+<                         .append(timeElementParser())
+<                         .appendOptional(offsetElement().getParser())
+<                         .toParser())
+---
+>                 .appendOptional(timeOrOffset)
+762a786,816
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter localDateOptionalTimeParser() {
+>         if (ldotp == null) {
+>             DateTimeParser time = new DateTimeFormatterBuilder()
+>                 .appendLiteral('T')
+>                 .append(timeElementParser())
+>                 .toParser();
+>             ldotp = new DateTimeFormatterBuilder()
+>                 .append(dateElementParser())
+>                 .appendOptional(time)
+>                 .toFormatter();
+>         }
+>         return ldotp;
+>     }
+> 
+>     
+1599c1653
+<     
+---
+> 

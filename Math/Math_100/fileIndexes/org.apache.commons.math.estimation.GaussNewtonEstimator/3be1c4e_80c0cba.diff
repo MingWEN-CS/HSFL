@@ -1,0 +1,237 @@
+37,62c37
+< public class GaussNewtonEstimator
+<   implements Estimator, Serializable {
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+---
+> public class GaussNewtonEstimator extends AbstractEstimator implements Serializable {
+63a39
+>     
+71,77d46
+<   public GaussNewtonEstimator(int maxIterations,
+<                                double convergence,
+<                                double steadyStateThreshold) {
+<     this.maxIterations        = maxIterations;
+<     this.steadyStateThreshold = steadyStateThreshold;
+<     this.convergence          = convergence;
+<   }
+79d47
+<   
+102,106c70,76
+<   public void estimate(EstimationProblem problem)
+<     throws EstimationException {
+<     int    iterations = 0;
+<     double previous   = 0.0;
+<     double current    = 0.0;
+---
+>     public GaussNewtonEstimator(int maxCostEval,
+>             double convergence,
+>             double steadyStateThreshold) {
+>         setMaxCostEval(maxCostEval);
+>         this.steadyStateThreshold = steadyStateThreshold;
+>         this.convergence          = convergence;
+>     }
+109d78
+<     do {
+111,116d79
+<       if (++iterations > maxIterations) {
+<         throw new EstimationException ("unable to converge in {0} iterations",
+<                                        new String[] {
+<                                          Integer.toString(maxIterations)
+<                                        });
+<       }
+118,119d80
+<       
+<       linearEstimate(problem);
+121,122d81
+<       previous = current;
+<       current  = evaluateCriterion(problem);
+124,126d82
+<     } while ((iterations < 2)
+<              || (Math.abs(previous - current) > (current * steadyStateThreshold)
+<                  && (Math.abs(current) > convergence)));
+128d83
+<   }
+130d84
+<   
+146,147d99
+<   public void linearEstimate(EstimationProblem problem)
+<     throws EstimationException {
+149,150c101,102
+<     EstimatedParameter[]  parameters   = problem.getUnboundParameters();
+<     WeightedMeasurement[] measurements = problem.getMeasurements();
+---
+>     public void estimate(EstimationProblem problem)
+>     throws EstimationException {
+152,161c104
+<     
+<     RealMatrix b              = new RealMatrixImpl(parameters.length, 1);
+<     RealMatrix a              = new RealMatrixImpl(parameters.length, parameters.length);
+<     double[] grad             = new double[parameters.length];
+<     RealMatrixImpl bDecrement = new RealMatrixImpl(parameters.length, 1);
+<     double[][] bDecrementData = bDecrement.getDataRef();
+<     RealMatrixImpl wGradGradT = new RealMatrixImpl(parameters.length, parameters.length);
+<     double[][] wggData        = wGradGradT.getDataRef();
+<     for (int i = 0; i < measurements.length; ++i) {
+<         if (! measurements [i].isIgnored()) {
+---
+>         initializeEstimate(problem);
+163,164c106,115
+<             double weight   = measurements[i].getWeight();
+<             double residual = measurements[i].getResidual();
+---
+>         
+>         double[] grad             = new double[parameters.length];
+>         RealMatrixImpl bDecrement = new RealMatrixImpl(parameters.length, 1);
+>         double[][] bDecrementData = bDecrement.getDataRef();
+>         RealMatrixImpl wGradGradT = new RealMatrixImpl(parameters.length, parameters.length);
+>         double[][] wggData        = wGradGradT.getDataRef();
+> 
+>         
+>         double previous = Double.POSITIVE_INFINITY;
+>         do {
+167,170c118,144
+<             for (int j = 0; j < parameters.length; ++j) {
+<                 grad[j] = measurements[i].getPartial(parameters[j]);
+<                 bDecrementData[j][0] = weight * residual * grad[j];
+<             }
+---
+>             ++jacobianEvaluations;
+>             RealMatrix b = new RealMatrixImpl(parameters.length, 1);
+>             RealMatrix a = new RealMatrixImpl(parameters.length, parameters.length);
+>             for (int i = 0; i < measurements.length; ++i) {
+>                 if (! measurements [i].isIgnored()) {
+> 
+>                     double weight   = measurements[i].getWeight();
+>                     double residual = measurements[i].getResidual();
+> 
+>                     
+>                     for (int j = 0; j < parameters.length; ++j) {
+>                         grad[j] = measurements[i].getPartial(parameters[j]);
+>                         bDecrementData[j][0] = weight * residual * grad[j];
+>                     }
+> 
+>                     
+>                     for (int k = 0; k < parameters.length; ++k) {
+>                         double[] wggRow = wggData[k];
+>                         double gk = grad[k];
+>                         for (int l = 0; l < parameters.length; ++l) {
+>                             wggRow[l] =  weight * gk * grad[l];
+>                         }
+>                     }
+> 
+>                     
+>                     a = a.add(wGradGradT);
+>                     b = b.add(bDecrement);
+172,177d145
+<             
+<             for (int k = 0; k < parameters.length; ++k) {
+<                 double[] wggRow = wggData[k];
+<                 double gk = grad[k];
+<                 for (int l = 0; l < parameters.length; ++l) {
+<                     wggRow[l] =  weight * gk * grad[l];
+181,183c149
+<             
+<             a = a.add(wGradGradT);
+<             b = b.add(bDecrement);
+---
+>             try {
+185,186c151,152
+<         }
+<     }
+---
+>                 
+>                 RealMatrix dX = a.solve(b);
+188c154,157
+<     try {
+---
+>                 
+>                 for (int i = 0; i < parameters.length; ++i) {
+>                     parameters[i].setEstimate(parameters[i].getEstimate() + dX.getEntry(i, 0));
+>                 }
+190,191c159,161
+<       
+<       RealMatrix dX = a.solve(b);
+---
+>             } catch(InvalidMatrixException e) {
+>                 throw new EstimationException("unable to solve: singular problem", new Object[0]);
+>             }
+193,196d162
+<       
+<       for (int i = 0; i < parameters.length; ++i) {
+<         parameters[i].setEstimate(parameters[i].getEstimate() + dX.getEntry(i, 0));
+<       }
+198,200c164,165
+<     } catch(InvalidMatrixException e) {
+<       throw new EstimationException(e);
+<     }
+---
+>             previous = cost;
+>             updateResidualsAndCost();
+202c167,169
+<   }
+---
+>         } while ((getCostEvaluations() < 2)
+>                 || (Math.abs(previous - cost) > (cost * steadyStateThreshold)
+>                         && (Math.abs(cost) > convergence)));
+204,210d170
+<   private double evaluateCriterion(EstimationProblem problem) {
+<     double criterion = 0.0;
+<     WeightedMeasurement[] measurements = problem.getMeasurements();
+< 
+<     for (int i = 0; i < measurements.length; ++i) {
+<       double residual = measurements[i].getResidual();
+<       criterion      += measurements[i].getWeight() * residual * residual;
+213,235c173,174
+<     return criterion;
+< 
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   public double getRMS(EstimationProblem problem) {
+<     double criterion = evaluateCriterion(problem);
+<     int n = problem.getMeasurements().length;
+<     return Math.sqrt(criterion / n);
+<   }
+< 
+<   private int    maxIterations;
+<   private double steadyStateThreshold;
+<   private double convergence;
+---
+>     private double steadyStateThreshold;
+>     private double convergence;
+237c176
+<   private static final long serialVersionUID = -7606628156644194170L;
+---
+>     private static final long serialVersionUID = 5485001826076289109L;

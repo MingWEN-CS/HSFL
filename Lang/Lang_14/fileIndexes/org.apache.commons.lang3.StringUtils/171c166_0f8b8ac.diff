@@ -1,0 +1,291 @@
+802,803c802,803
+<     public static int indexOf(String str, int searchChar) {
+<         if (isEmpty(str)) {
+---
+>     public static int indexOf(CharSequence seq, int searchChar) {
+>         if (isEmpty(seq)) {
+806c806
+<         return str.indexOf(searchChar);
+---
+>         return StringUtils.indexOfSequence(seq, searchChar, 0);
+834,835c834,835
+<     public static int indexOf(String str, int searchChar, int startPos) {
+<         if (isEmpty(str)) {
+---
+>     public static int indexOf(CharSequence seq, int searchChar, int startPos) {
+>         if (isEmpty(seq)) {
+838c838
+<         return str.indexOf(searchChar, startPos);
+---
+>         return StringUtils.indexOfSequence(seq, searchChar, startPos);
+864,865c864,865
+<     public static int indexOf(String str, String searchStr) {
+<         if (str == null || searchStr == null) {
+---
+>     public static int indexOf(CharSequence seq, CharSequence searchSeq) {
+>         if (seq == null || searchSeq == null) {
+868c868
+<         return str.indexOf(searchStr);
+---
+>         return StringUtils.indexOfSequence(seq, searchSeq, 0);
+903,904c903,904
+<     public static int indexOf(String str, String searchStr, int startPos) {
+<         if (str == null || searchStr == null) {
+---
+>     public static int indexOf(CharSequence seq, CharSequence searchSeq, int startPos) {
+>         if (seq == null || searchSeq == null) {
+907c907
+<         return str.indexOf(searchStr, startPos);
+---
+>         return StringUtils.indexOfSequence(seq, searchSeq, startPos);
+1086,1087c1086,1087
+<     public static int lastIndexOf(String str, int searchChar) {
+<         if (isEmpty(str)) {
+---
+>     public static int lastIndexOf(CharSequence seq, int searchChar) {
+>         if (isEmpty(seq)) {
+1090c1090
+<         return str.lastIndexOf(searchChar);
+---
+>         return StringUtils.lastIndexOfSequence(seq, searchChar, seq.length());
+1120,1121c1120,1121
+<     public static int lastIndexOf(String str, int searchChar, int startPos) {
+<         if (isEmpty(str)) {
+---
+>     public static int lastIndexOf(CharSequence seq, int searchChar, int startPos) {
+>         if (isEmpty(seq)) {
+1124c1124
+<         return str.lastIndexOf(searchChar, startPos);
+---
+>         return StringUtils.lastIndexOfSequence(seq, searchChar, startPos);
+1149,1150c1149,1150
+<     public static int lastIndexOf(String str, String searchStr) {
+<         if (str == null || searchStr == null) {
+---
+>     public static int lastIndexOf(CharSequence seq, CharSequence searchSeq) {
+>         if (seq == null || searchSeq == null) {
+1153c1153
+<         return str.lastIndexOf(searchStr);
+---
+>         return StringUtils.lastIndexOfSequence(seq, searchSeq, seq.length());
+1221,1222c1221,1222
+<     public static int lastIndexOf(String str, String searchStr, int startPos) {
+<         if (str == null || searchStr == null) {
+---
+>     public static int lastIndexOf(CharSequence seq, CharSequence searchSeq, int startPos) {
+>         if (seq == null || searchSeq == null) {
+1225c1225
+<         return str.lastIndexOf(searchStr, startPos);
+---
+>         return StringUtils.lastIndexOfSequence(seq, searchSeq, startPos);
+1328,1329c1328,1329
+<     public static boolean contains(String str, int searchChar) {
+<         if (isEmpty(str)) {
+---
+>     public static boolean contains(CharSequence seq, int searchChar) {
+>         if (isEmpty(seq)) {
+1332c1332
+<         return str.indexOf(searchChar) >= 0;
+---
+>         return indexOfSequence(seq, searchChar, 0) >= 0;
+1356,1357c1356,1357
+<     public static boolean contains(String str, String searchStr) {
+<         if (str == null || searchStr == null) {
+---
+>     public static boolean contains(CharSequence seq, CharSequence searchSeq) {
+>         if (seq == null || searchSeq == null) {
+1360c1360
+<         return str.indexOf(searchStr) >= 0;
+---
+>         return indexOfSequence(seq, searchSeq, 0) >= 0;
+1409,1410c1409,1410
+<     public static boolean containsWhitespace(String str) {
+<         if (isEmpty(str)) {
+---
+>     public static boolean containsWhitespace(CharSequence seq) {
+>         if (isEmpty(seq)) {
+1413c1413
+<         int strLen = str.length();
+---
+>         int strLen = seq.length();
+1415c1415
+<             if (Character.isWhitespace(str.charAt(i))) {
+---
+>             if (Character.isWhitespace(seq.charAt(i))) {
+1528c1528,1529
+<     public static boolean containsAny(String cs, char... searchChars) {
+---
+> 
+>     public static boolean containsAny(CharSequence cs, char[] searchChars) {
+1585c1586,1587
+<     public static boolean containsAny(String cs, String searchChars) {
+---
+> 
+>     public static boolean containsAny(CharSequence cs, CharSequence searchChars) {
+1589c1591
+<         return containsAny(cs, searchChars.toCharArray());
+---
+>         return containsAny(cs, toCharArraySequence(searchChars));
+1618c1620
+<     public static int indexOfAnyBut(CharSequence cs, char... searchChars) {
+---
+>     public static int indexOfAnyBut(CharSequence cs, char[] searchChars) {
+1667,1668c1669,1670
+<     public static int indexOfAnyBut(String str, String searchChars) {
+<         if (isEmpty(str) || isEmpty(searchChars)) {
+---
+>     public static int indexOfAnyBut(CharSequence seq, CharSequence searchChars) {
+>         if (isEmpty(seq) || isEmpty(searchChars)) {
+1671c1673
+<         int strLen = str.length();
+---
+>         int strLen = seq.length();
+1673,1674c1675,1676
+<             char ch = str.charAt(i);
+<             boolean chFound = searchChars.indexOf(ch) >= 0;
+---
+>             char ch = seq.charAt(i);
+>             boolean chFound = indexOfSequence(searchChars, ch, 0) >= 0;
+1676,1677c1678,1679
+<                 char ch2 = str.charAt(i + 1);
+<                 if (chFound && searchChars.indexOf(ch2) < 0) {
+---
+>                 char ch2 = seq.charAt(i + 1);
+>                 if (chFound && indexOfSequence(searchChars, ch2, 0) < 0) {
+1870c1872
+<     public static int indexOfAny(String str, String... searchStrs) {
+---
+>     public static int indexOfAny(CharSequence str, CharSequence[] searchStrs) {
+1881c1883
+<             String search = searchStrs[i];
+---
+>             CharSequence search = searchStrs[i];
+1885c1887
+<             tmp = str.indexOf(search);
+---
+>             tmp = indexOfSequence(str, search, 0);
+1923c1925
+<     public static int lastIndexOfAny(String str, String... searchStrs) {
+---
+>     public static int lastIndexOfAny(CharSequence str, CharSequence[] searchStrs) {
+1931c1933
+<             String search = searchStrs[i];
+---
+>             CharSequence search = searchStrs[i];
+1935c1937
+<             tmp = str.lastIndexOf(search);
+---
+>             tmp = lastIndexOfSequence(str, search, str.length());
+6377a6380,6491
+>     }
+> 
+>     
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     static int indexOfSequence(CharSequence cs, int searchChar, int start) {
+>         if (cs instanceof String) {
+>             return ((String) cs).indexOf(searchChar, start);
+>         } else {
+>             int sz = cs.length();
+>             if ( start < 0 ) {
+>                 start = 0;
+>             }
+>             for ( int i=start; i < sz; i++ ) {
+>                 if ( cs.charAt(i) == searchChar) {
+>                     return i;
+>                 }
+>             }
+>             return -1;
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     static int indexOfSequence(CharSequence cs, CharSequence searchChar, int start) {
+>         if (cs instanceof String && searchChar instanceof String) {
+>             
+>             
+>             
+>             return ((String) cs).indexOf( (String) searchChar, start);
+>         } else {
+>             
+>             return cs.toString().indexOf(searchChar.toString(), start);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     static int lastIndexOfSequence(CharSequence cs, int searchChar, int start) {
+>         if (cs instanceof String) {
+>             return ((String) cs).lastIndexOf(searchChar, start);
+>         } else {
+>             int sz = cs.length();
+>             if ( start < 0 ) {
+>                 return -1;
+>             }
+>             if ( start >= sz ) {
+>                 start = sz - 1;
+>             }
+>             for ( int i=start; i >= 0; --i ) {
+>                 if ( cs.charAt(i) == searchChar) {
+>                     return i;
+>                 }
+>             }
+>             return -1;
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     static int lastIndexOfSequence(CharSequence cs, CharSequence searchChar, int start) {
+>         if (cs instanceof String && searchChar instanceof String) {
+>             
+>             
+>             
+>             return ((String) cs).lastIndexOf( (String) searchChar, start);
+>         } else {
+>             
+>             return cs.toString().lastIndexOf(searchChar.toString(), start);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     
+>     static char[] toCharArraySequence(CharSequence cs) {
+>         if (cs instanceof String) {
+>             return ((String) cs).toCharArray();
+>         } else {
+>             
+>             return cs.toString().toCharArray();
+>         }

@@ -1,0 +1,48 @@
+91c91
+<     protected Mean mean = new Mean();
+---
+>     protected Mean mean = new Mean(secondMoment);
+94c94
+<     protected Variance variance = new Variance();
+---
+>     protected Variance variance = new Variance(secondMoment);
+205,209c205
+<         if (mean == meanImpl) {
+<             return new Mean(secondMoment).getResult();
+<         } else {
+<             return meanImpl.getResult();
+<         }
+---
+>         return meanImpl.getResult();
+239,243c235
+<         if (varianceImpl == variance) {
+<             return new Variance(secondMoment).getResult();
+<         } else {
+<             return varianceImpl.getResult();
+<         }
+---
+>         return varianceImpl.getResult();
+664d655
+<         dest.meanImpl = source.meanImpl.copy();
+667d657
+<         dest.varianceImpl = source.varianceImpl.copy();
+669a660,673
+>         dest.secondMoment = source.secondMoment.copy();
+>         dest.n = source.n;
+> 
+>         
+>         if (source.getVarianceImpl() instanceof Variance) {
+>             dest.varianceImpl = new Variance(dest.secondMoment);
+>         } else {
+>             dest.varianceImpl = source.varianceImpl.copy();
+>         }
+>         if (source.meanImpl instanceof Mean) {
+>             dest.meanImpl = new Mean(dest.secondMoment);
+>         } else {
+>             dest.meanImpl = source.meanImpl.copy();
+>         }
+671d674
+<             
+676,677d678
+<         SecondMoment.copy(source.secondMoment, dest.secondMoment);
+<         dest.n = source.n;

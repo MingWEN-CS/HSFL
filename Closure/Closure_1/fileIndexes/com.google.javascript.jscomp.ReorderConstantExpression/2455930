@@ -1,0 +1,64 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+class ReorderConstantExpression extends AbstractPeepholeOptimization {
+
+  private AbstractCompiler compiler;
+
+  
+  
+  ReorderConstantExpression(AbstractCompiler compiler) {
+    this.compiler = compiler;
+  }
+
+  @Override
+  Node optimizeSubtree(Node subtree) {
+    
+    if (NodeUtil.isSymmetricOperation(subtree)
+        || NodeUtil.isRelationalOperation(subtree)) {
+      
+      if (NodeUtil.isImmutableValue(subtree.getLastChild())
+          && !NodeUtil.isImmutableValue(subtree.getFirstChild())) {
+
+        
+        if (NodeUtil.isRelationalOperation(subtree)){
+          int inverseOperator = NodeUtil.getInverseOperator(subtree.getType());
+          subtree.setType(inverseOperator);
+        }
+
+        
+        Node firstNode = subtree.getFirstChild().detachFromParent();
+        Node lastNode = subtree.getLastChild().detachFromParent();
+
+        subtree.addChildrenToFront(lastNode);
+        subtree.addChildrenToBack(firstNode);
+        this.compiler.reportCodeChange();
+      }
+    }
+    return subtree;
+  }
+}

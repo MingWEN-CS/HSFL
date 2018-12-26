@@ -1,0 +1,19 @@
+20a21
+> import com.google.javascript.jscomp.MakeDeclaredNamesUnique.BoilerplateRenamer;
+59d59
+< 
+79a80,93
+>   }
+> 
+>   static Node parseAndNormalizeSyntheticCode(
+>       AbstractCompiler compiler, String code, String prefix) {
+>     Node js = compiler.parseSyntheticCode(code);
+>     NodeTraversal.traverse(compiler, js,
+>         new Normalize.NormalizeStatements(compiler, false));
+>     NodeTraversal.traverse(
+>         compiler, js,
+>         new MakeDeclaredNamesUnique(
+>             new BoilerplateRenamer(
+>                 compiler.getUniqueNameIdSupplier(),
+>                 prefix)));
+>     return js;

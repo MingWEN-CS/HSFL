@@ -1,0 +1,51 @@
+24a25
+> import org.apache.commons.math.ode.events.CombinedEventsManager;
+110,111d110
+<     long    nbStep    = Math.max(1l, Math.abs(Math.round((t - t0) / step)));
+<     boolean lastStep  = false;
+113c112
+<     stepSize  = (t - t0) / nbStep;
+---
+>     stepSize  = step;
+117c116,120
+<     for (long i = 0; ! lastStep; ++i) {
+---
+>     CombinedEventsManager manager = addEndTimeChecker(t, eventsHandlersManager);
+>     boolean lastStep = false;
+> 
+>     
+>     while (!lastStep) {
+121d123
+<       boolean needUpdate = false;
+153,155c155,156
+<         if (eventsHandlersManager.evaluateStep(interpolator)) {
+<           needUpdate = true;
+<           stepSize = eventsHandlersManager.getEventTime() - stepStart;
+---
+>         if (manager.evaluateStep(interpolator)) {
+>           stepSize = manager.getEventTime() - stepStart;
+165,170c166,167
+<       eventsHandlersManager.stepAccepted(nextStep, y);
+<       if (eventsHandlersManager.stop()) {
+<         lastStep = true;
+<       } else {
+<         lastStep = (i == (nbStep - 1));
+<       }
+---
+>       manager.stepAccepted(nextStep, y);
+>       lastStep = manager.stop();
+179c176
+<       if (eventsHandlersManager.reset(stepStart, y) && ! lastStep) {
+---
+>       if (manager.reset(stepStart, y) && ! lastStep) {
+185,191c182,183
+<       if (needUpdate) {
+<         
+<         
+<         nbStep = Math.max(1l, Math.abs(Math.round((t - stepStart) / step)));
+<         stepSize = (t - stepStart) / nbStep;
+<         i = -1;
+<       }
+---
+>       
+>       stepSize = step;

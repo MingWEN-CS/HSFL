@@ -1,0 +1,810 @@
+20a21
+> import java.text.NumberFormat;
+24c25,26
+< import org.apache.commons.math.util.MathUtils;
+---
+> import org.apache.commons.math.geometry.Vector;
+> import org.apache.commons.math.geometry.Space;
+25a28
+> import org.apache.commons.math.util.MathUtils;
+33,53c36
+< public class Vector3D implements Serializable {
+<   
+<   public static final Vector3D ZERO   = new Vector3D(0, 0, 0);
+< 
+<   
+<   public static final Vector3D PLUS_I = new Vector3D(1, 0, 0);
+< 
+<   
+<   public static final Vector3D MINUS_I = new Vector3D(-1, 0, 0);
+< 
+<   
+<   public static final Vector3D PLUS_J = new Vector3D(0, 1, 0);
+< 
+<   
+<   public static final Vector3D MINUS_J = new Vector3D(0, -1, 0);
+< 
+<   
+<   public static final Vector3D PLUS_K = new Vector3D(0, 0, 1);
+< 
+<   
+<   public static final Vector3D MINUS_K = new Vector3D(0, 0, -1);
+---
+> public class Vector3D implements Serializable, Vector<Euclidean3D> {
+55,58c38,39
+<   
+<   
+<   public static final Vector3D NaN = new Vector3D(Double.NaN, Double.NaN, Double.NaN);
+<   
+---
+>     
+>     private static final long serialVersionUID = 1313493323784566947L;
+60,62c41,42
+<   
+<   public static final Vector3D POSITIVE_INFINITY =
+<       new Vector3D(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+---
+>     
+>     public static final Vector3D ZERO   = new Vector3D(0, 0, 0);
+64,66c44,45
+<   
+<   public static final Vector3D NEGATIVE_INFINITY =
+<       new Vector3D(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+---
+>     
+>     public static final Vector3D PLUS_I = new Vector3D(1, 0, 0);
+68,70c47,48
+<   
+<   private static final Vector3DFormat DEFAULT_FORMAT =
+<       Vector3DFormat.getInstance();
+---
+>     
+>     public static final Vector3D MINUS_I = new Vector3D(-1, 0, 0);
+72,73c50,51
+<   
+<   private static final long serialVersionUID = 5133268763396045979L;
+---
+>     
+>     public static final Vector3D PLUS_J = new Vector3D(0, 1, 0);
+75,76c53,54
+<   
+<   private final double x;
+---
+>     
+>     public static final Vector3D MINUS_J = new Vector3D(0, -1, 0);
+78,79c56,57
+<   
+<   private final double y;
+---
+>     
+>     public static final Vector3D PLUS_K = new Vector3D(0, 0, 1);
+81,82c59,60
+<   
+<   private final double z;
+---
+>     
+>     public static final Vector3D MINUS_K = new Vector3D(0, 0, -1);
+84c62,65
+<   
+---
+>     
+>     
+>     public static final Vector3D NaN = new Vector3D(Double.NaN, Double.NaN, Double.NaN);
+>     
+85a67,69
+>     
+>     public static final Vector3D POSITIVE_INFINITY =
+>         new Vector3D(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+86a71,73
+>     
+>     public static final Vector3D NEGATIVE_INFINITY =
+>         new Vector3D(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+87a75,78
+>     
+>  
+>     
+>     private final double x;
+88a80,81
+>     
+>     private final double y;
+89a83,84
+>     
+>     private final double z;
+90a86
+>     
+93,97d88
+<   public Vector3D(double x, double y, double z) {
+<     this.x = x;
+<     this.y = y;
+<     this.z = z;
+<   }
+99d89
+<   
+104a95,99
+>     public Vector3D(double x, double y, double z) {
+>         this.x = x;
+>         this.y = y;
+>         this.z = z;
+>     }
+105a101
+>     
+107,112d102
+<   public Vector3D(double alpha, double delta) {
+<     double cosDelta = FastMath.cos(delta);
+<     this.x = FastMath.cos(alpha) * cosDelta;
+<     this.y = FastMath.sin(alpha) * cosDelta;
+<     this.z = FastMath.sin(delta);
+<   }
+114d103
+<   
+120,124c109,114
+<   public Vector3D(double a, Vector3D u) {
+<     this.x = a * u.x;
+<     this.y = a * u.y;
+<     this.z = a * u.z;
+<   }
+---
+>     public Vector3D(double alpha, double delta) {
+>         double cosDelta = FastMath.cos(delta);
+>         this.x = FastMath.cos(alpha) * cosDelta;
+>         this.y = FastMath.sin(alpha) * cosDelta;
+>         this.z = FastMath.sin(delta);
+>     }
+126c116
+<   
+---
+>     
+131a122,126
+>     public Vector3D(double a, Vector3D u) {
+>         this.x = a * u.x;
+>         this.y = a * u.y;
+>         this.z = a * u.z;
+>     }
+132a128
+>     
+134,138d129
+<   public Vector3D(double a1, Vector3D u1, double a2, Vector3D u2) {
+<     this.x = a1 * u1.x + a2 * u2.x;
+<     this.y = a1 * u1.y + a2 * u2.y;
+<     this.z = a1 * u1.z + a2 * u2.z;
+<   }
+140d130
+<   
+145a136,140
+>     public Vector3D(double a1, Vector3D u1, double a2, Vector3D u2) {
+>         this.x = a1 * u1.x + a2 * u2.x;
+>         this.y = a1 * u1.y + a2 * u2.y;
+>         this.z = a1 * u1.z + a2 * u2.z;
+>     }
+146a142
+>     
+150,155d145
+<   public Vector3D(double a1, Vector3D u1, double a2, Vector3D u2,
+<                   double a3, Vector3D u3) {
+<     this.x = a1 * u1.x + a2 * u2.x + a3 * u3.x;
+<     this.y = a1 * u1.y + a2 * u2.y + a3 * u3.y;
+<     this.z = a1 * u1.z + a2 * u2.z + a3 * u3.z;
+<   }
+157d146
+<   
+162a152,157
+>     public Vector3D(double a1, Vector3D u1, double a2, Vector3D u2,
+>                     double a3, Vector3D u3) {
+>         this.x = a1 * u1.x + a2 * u2.x + a3 * u3.x;
+>         this.y = a1 * u1.y + a2 * u2.y + a3 * u3.y;
+>         this.z = a1 * u1.z + a2 * u2.z + a3 * u3.z;
+>     }
+163a159
+>     
+169,174d164
+<   public Vector3D(double a1, Vector3D u1, double a2, Vector3D u2,
+<                   double a3, Vector3D u3, double a4, Vector3D u4) {
+<     this.x = a1 * u1.x + a2 * u2.x + a3 * u3.x + a4 * u4.x;
+<     this.y = a1 * u1.y + a2 * u2.y + a3 * u3.y + a4 * u4.y;
+<     this.z = a1 * u1.z + a2 * u2.z + a3 * u3.z + a4 * u4.z;
+<   }
+176d165
+<   
+180,182d168
+<   public double getX() {
+<     return x;
+<   }
+184d169
+<   
+185a171,176
+>     public Vector3D(double a1, Vector3D u1, double a2, Vector3D u2,
+>                     double a3, Vector3D u3, double a4, Vector3D u4) {
+>         this.x = a1 * u1.x + a2 * u2.x + a3 * u3.x + a4 * u4.x;
+>         this.y = a1 * u1.y + a2 * u2.y + a3 * u3.y + a4 * u4.y;
+>         this.z = a1 * u1.z + a2 * u2.z + a3 * u3.z + a4 * u4.z;
+>     }
+186a178
+>     
+188,190d179
+<   public double getY() {
+<     return y;
+<   }
+192d180
+<   
+193a182,184
+>     public double getX() {
+>         return x;
+>     }
+194a186
+>     
+196,198d187
+<   public double getZ() {
+<     return z;
+<   }
+200d188
+<   
+201a190,192
+>     public double getY() {
+>         return y;
+>     }
+203,205c194
+<   public double getNorm1() {
+<     return FastMath.abs(x) + FastMath.abs(y) + FastMath.abs(z);
+<   }
+---
+>     
+207d195
+<   
+210,212c198,200
+<   public double getNorm() {
+<     return FastMath.sqrt (x * x + y * y + z * z);
+<   }
+---
+>     public double getZ() {
+>         return z;
+>     }
+214c202,205
+<   
+---
+>     
+>     public Space getSpace() {
+>         return Euclidean3D.getInstance();
+>     }
+215a207,210
+>     
+>     public Vector3D getZero() {
+>         return ZERO;
+>     }
+217,219c212,215
+<   public double getNormSq() {
+<     return x * x + y * y + z * z;
+<   }
+---
+>     
+>     public double getNorm1() {
+>         return FastMath.abs(x) + FastMath.abs(y) + FastMath.abs(z);
+>     }
+221c217,220
+<   
+---
+>     
+>     public double getNorm() {
+>         return FastMath.sqrt (x * x + y * y + z * z);
+>     }
+222a222,225
+>     
+>     public double getNormSq() {
+>         return x * x + y * y + z * z;
+>     }
+224,226c227,230
+<   public double getNormInf() {
+<     return FastMath.max(FastMath.max(FastMath.abs(x), FastMath.abs(y)), FastMath.abs(z));
+<   }
+---
+>     
+>     public double getNormInf() {
+>         return FastMath.max(FastMath.max(FastMath.abs(x), FastMath.abs(y)), FastMath.abs(z));
+>     }
+228c232
+<   
+---
+>     
+232,234c236,238
+<   public double getAlpha() {
+<     return FastMath.atan2(y, x);
+<   }
+---
+>     public double getAlpha() {
+>         return FastMath.atan2(y, x);
+>     }
+236c240
+<   
+---
+>     
+240,242c244,246
+<   public double getDelta() {
+<     return FastMath.asin(z / getNorm());
+<   }
+---
+>     public double getDelta() {
+>         return FastMath.asin(z / getNorm());
+>     }
+244c248,252
+<   
+---
+>     
+>     public Vector3D add(final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         return new Vector3D(x + v3.x, y + v3.y, z + v3.z);
+>     }
+245a254,258
+>     
+>     public Vector3D add(double factor, final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         return new Vector3D(x + factor * v3.x, y + factor * v3.y, z + factor * v3.z);
+>     }
+246a260,264
+>     
+>     public Vector3D subtract(final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         return new Vector3D(x - v3.x, y - v3.y, z - v3.z);
+>     }
+248,250c266,270
+<   public Vector3D add(Vector3D v) {
+<     return new Vector3D(x + v.x, y + v.y, z + v.z);
+<   }
+---
+>     
+>     public Vector3D subtract(final double factor, final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         return new Vector3D(x - factor * v3.x, y - factor * v3.y, z - factor * v3.z);
+>     }
+252c272,279
+<   
+---
+>     
+>     public Vector3D normalize() {
+>         double s = getNorm();
+>         if (s == 0) {
+>             throw new MathArithmeticException(LocalizedFormats.CANNOT_NORMALIZE_A_ZERO_NORM_VECTOR);
+>         }
+>         return scalarMultiply(1 / s);
+>     }
+253a281
+>     
+257,259d284
+<   public Vector3D add(double factor, Vector3D v) {
+<     return new Vector3D(x + factor * v.x, y + factor * v.y, z + factor * v.z);
+<   }
+261d285
+<   
+265,267d288
+<   public Vector3D subtract(Vector3D v) {
+<     return new Vector3D(x - v.x, y - v.y, z - v.z);
+<   }
+269d289
+<   
+274,276d293
+<   public Vector3D subtract(double factor, Vector3D v) {
+<     return new Vector3D(x - factor * v.x, y - factor * v.y, z - factor * v.z);
+<   }
+278d294
+<   
+279a296
+>     public Vector3D orthogonal() {
+280a298,311
+>         double threshold = 0.6 * getNorm();
+>         if (threshold == 0) {
+>             throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+>         }
+> 
+>         if ((x >= -threshold) && (x <= threshold)) {
+>             double inverse  = 1 / FastMath.sqrt(y * y + z * z);
+>             return new Vector3D(0, inverse * z, -inverse * y);
+>         } else if ((y >= -threshold) && (y <= threshold)) {
+>             double inverse  = 1 / FastMath.sqrt(x * x + z * z);
+>             return new Vector3D(-inverse * z, 0, inverse * x);
+>         }
+>         double inverse  = 1 / FastMath.sqrt(x * x + y * y);
+>         return new Vector3D(inverse * y, -inverse * x, 0);
+282,285d312
+<   public Vector3D normalize() {
+<     double s = getNorm();
+<     if (s == 0) {
+<       throw new MathArithmeticException(LocalizedFormats.CANNOT_NORMALIZE_A_ZERO_NORM_VECTOR);
+287,291d313
+<     return scalarMultiply(1 / s);
+<   }
+< 
+<   
+< 
+292a315
+>     
+302a326
+>     public static double angle(Vector3D v1, Vector3D v2) {
+303a328,342
+>         double normProduct = v1.getNorm() * v2.getNorm();
+>         if (normProduct == 0) {
+>             throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+>         }
+> 
+>         double dot = dotProduct(v1, v2);
+>         double threshold = normProduct * 0.9999;
+>         if ((dot < -threshold) || (dot > threshold)) {
+>             
+>             Vector3D v3 = crossProduct(v1, v2);
+>             if (dot >= 0) {
+>                 return FastMath.asin(v3.getNorm() / normProduct);
+>             }
+>             return FastMath.PI - FastMath.asin(v3.getNorm() / normProduct);
+>         }
+305c344,345
+<   public Vector3D orthogonal() {
+---
+>         
+>         return FastMath.acos(dot / normProduct);
+307,309d346
+<     double threshold = 0.6 * getNorm();
+<     if (threshold == 0) {
+<       throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+312,317c349,351
+<     if ((x >= -threshold) && (x <= threshold)) {
+<       double inverse  = 1 / FastMath.sqrt(y * y + z * z);
+<       return new Vector3D(0, inverse * z, -inverse * y);
+<     } else if ((y >= -threshold) && (y <= threshold)) {
+<       double inverse  = 1 / FastMath.sqrt(x * x + z * z);
+<       return new Vector3D(-inverse * z, 0, inverse * x);
+---
+>     
+>     public Vector3D negate() {
+>         return new Vector3D(-x, -y, -z);
+319,333d352
+<     double inverse  = 1 / FastMath.sqrt(x * x + y * y);
+<     return new Vector3D(inverse * y, -inverse * x, 0);
+< 
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+335,339c354,356
+<   public static double angle(Vector3D v1, Vector3D v2) {
+< 
+<     double normProduct = v1.getNorm() * v2.getNorm();
+<     if (normProduct == 0) {
+<       throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+---
+>     
+>     public Vector3D scalarMultiply(double a) {
+>         return new Vector3D(a * x, a * y, a * z);
+342,350c359,361
+<     double dot = dotProduct(v1, v2);
+<     double threshold = normProduct * 0.9999;
+<     if ((dot < -threshold) || (dot > threshold)) {
+<       
+<       Vector3D v3 = crossProduct(v1, v2);
+<       if (dot >= 0) {
+<         return FastMath.asin(v3.getNorm() / normProduct);
+<       }
+<       return FastMath.PI - FastMath.asin(v3.getNorm() / normProduct);
+---
+>     
+>     public boolean isNaN() {
+>         return Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z);
+354,375c365,367
+<     return FastMath.acos(dot / normProduct);
+< 
+<   }
+< 
+<   
+< 
+< 
+<   public Vector3D negate() {
+<     return new Vector3D(-x, -y, -z);
+<   }
+< 
+<   
+< 
+< 
+< 
+<   public Vector3D scalarMultiply(double a) {
+<     return new Vector3D(a * x, a * y, a * z);
+<   }
+< 
+<   
+< 
+< 
+---
+>     public boolean isInfinite() {
+>         return !isNaN() && (Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z));
+>     }
+377,379c369
+<   public boolean isNaN() {
+<       return Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z);
+<   }
+---
+>     
+381d370
+<   
+387,389d375
+<   public boolean isInfinite() {
+<       return !isNaN() && (Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z));
+<   }
+391d376
+<   
+402a388,389
+>     @Override
+>     public boolean equals(Object other) {
+403a391,404
+>         if (this == other) {
+>             return true;
+>         }
+> 
+>         if (other instanceof Vector3D) {
+>             final Vector3D rhs = (Vector3D)other;
+>             if (rhs.isNaN()) {
+>                 return this.isNaN();
+>             }
+> 
+>             return (x == rhs.x) && (y == rhs.y) && (z == rhs.z);
+>         }
+>         return false;
+>     }
+404a406
+>     
+410,411d411
+<   @Override
+<   public boolean equals(Object other) {
+413,414c413,418
+<     if (this == other) {
+<       return true;
+---
+>     @Override
+>     public int hashCode() {
+>         if (isNaN()) {
+>             return 642;
+>         }
+>         return 643 * (164 * MathUtils.hash(x) +  3 * MathUtils.hash(y) +  MathUtils.hash(z));
+417,423c421,424
+<     if (other instanceof Vector3D) {
+<       final Vector3D rhs = (Vector3D)other;
+<       if (rhs.isNaN()) {
+<           return this.isNaN();
+<       }
+< 
+<       return (x == rhs.x) && (y == rhs.y) && (z == rhs.z);
+---
+>     
+>     public double dotProduct(final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         return x * v3.x + y * v3.y + z * v3.z;
+425,432d425
+<     return false;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+433a427,429
+>     
+>     public Vector3D crossProduct(final Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+435,441c431,459
+<   @Override
+<   public int hashCode() {
+<       if (isNaN()) {
+<           return 8;
+<       }
+<       return 31 * (23 * MathUtils.hash(x) +  19 * MathUtils.hash(y) +  MathUtils.hash(z));
+<   }
+---
+>         final double n1 = getNormSq();
+>         final double n2 = v.getNormSq();
+>         if ((n1 * n2) < MathUtils.SAFE_MIN) {
+>             return ZERO;
+>         }
+> 
+>         
+>         
+>         final int deltaExp = (FastMath.getExponent(n1) - FastMath.getExponent(n2)) / 4;
+>         final double x1    = FastMath.scalb(x,   -deltaExp);
+>         final double y1    = FastMath.scalb(y,   -deltaExp);
+>         final double z1    = FastMath.scalb(z,   -deltaExp);
+>         final double x2    = FastMath.scalb(v3.x, deltaExp);
+>         final double y2    = FastMath.scalb(v3.y, deltaExp);
+>         final double z2    = FastMath.scalb(v3.z, deltaExp);
+> 
+>         
+>         
+>         
+>         
+>         
+> 
+>         
+>         final double ratio = (x1 * x2 + y1 * y2 + z1 * z2) / FastMath.scalb(n2, 2 * deltaExp);
+>         final double rho   = FastMath.rint(256 * ratio) / 256;
+> 
+>         final double x3 = x1 - rho * x2;
+>         final double y3 = y1 - rho * y2;
+>         final double z3 = z1 - rho * z2;
+443c461,462
+<   
+---
+>         
+>         return new Vector3D(y3 * z2 - z3 * y2, z3 * x2 - x3 * z2, x3 * y2 - y3 * x2);
+444a464
+>     }
+445a466,473
+>     
+>     public double distance1(Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         final double dx = FastMath.abs(v3.x - x);
+>         final double dy = FastMath.abs(v3.y - y);
+>         final double dz = FastMath.abs(v3.z - z);
+>         return dx + dy + dz;
+>     }
+446a475,482
+>     
+>     public double distance(Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         final double dx = v3.x - x;
+>         final double dy = v3.y - y;
+>         final double dz = v3.z - z;
+>         return FastMath.sqrt(dx * dx + dy * dy + dz * dz);
+>     }
+448,450c484,491
+<   public static double dotProduct(Vector3D v1, Vector3D v2) {
+<     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+<   }
+---
+>     
+>     public double distanceInf(Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         final double dx = FastMath.abs(v3.x - x);
+>         final double dy = FastMath.abs(v3.y - y);
+>         final double dz = FastMath.abs(v3.z - z);
+>         return FastMath.max(FastMath.max(dx, dy), dz);
+>     }
+452c493,500
+<   
+---
+>     
+>     public double distanceSq(Vector<Euclidean3D> v) {
+>         final Vector3D v3 = (Vector3D) v;
+>         final double dx = v3.x - x;
+>         final double dy = v3.y - y;
+>         final double dz = v3.z - z;
+>         return dx * dx + dy * dy + dz * dz;
+>     }
+453a502
+>     
+457d505
+<   public static Vector3D crossProduct(final Vector3D v1, final Vector3D v2) {
+459,463c507,509
+<       final double n1 = v1.getNormSq();
+<       final double n2 = v2.getNormSq();
+<       if ((n1 * n2) < MathUtils.SAFE_MIN) {
+<           return ZERO;
+<       }
+---
+>     public static double dotProduct(Vector3D v1, Vector3D v2) {
+>         return v1.dotProduct(v2);
+>     }
+465,473c511
+<       
+<       
+<       final int deltaExp = (FastMath.getExponent(n1) - FastMath.getExponent(n2)) / 4;
+<       final double x1    = FastMath.scalb(v1.x, -deltaExp);
+<       final double y1    = FastMath.scalb(v1.y, -deltaExp);
+<       final double z1    = FastMath.scalb(v1.z, -deltaExp);
+<       final double x2    = FastMath.scalb(v2.x,  deltaExp);
+<       final double y2    = FastMath.scalb(v2.y,  deltaExp);
+<       final double z2    = FastMath.scalb(v2.z,  deltaExp);
+---
+>     
+475,479d512
+<       
+<       
+<       
+<       
+<       
+481,483d513
+<       
+<       final double ratio = (x1 * x2 + y1 * y2 + z1 * z2) / FastMath.scalb(n2, 2 * deltaExp);
+<       final double rho   = FastMath.rint(256 * ratio) / 256;
+485,487d514
+<       final double x3 = x1 - rho * x2;
+<       final double y3 = y1 - rho * y2;
+<       final double z3 = z1 - rho * z2;
+489,490c516,518
+<       
+<       return new Vector3D(y3 * z2 - z3 * y2, z3 * x2 - x3 * z2, x3 * y2 - y3 * x2);
+---
+>     public static Vector3D crossProduct(final Vector3D v1, final Vector3D v2) {
+>         return v1.crossProduct(v2);
+>     }
+492c520
+<   }
+---
+>     
+494d521
+<   
+500a528,530
+>     public static double distance1(Vector3D v1, Vector3D v2) {
+>         return v1.distance1(v2);
+>     }
+502,507c532
+<   public static double distance1(Vector3D v1, Vector3D v2) {
+<     final double dx = FastMath.abs(v2.x - v1.x);
+<     final double dy = FastMath.abs(v2.y - v1.y);
+<     final double dz = FastMath.abs(v2.z - v1.z);
+<     return dx + dy + dz;
+<   }
+---
+>     
+509d533
+<   
+515a540,542
+>     public static double distance(Vector3D v1, Vector3D v2) {
+>         return v1.distance(v2);
+>     }
+517,522c544
+<   public static double distance(Vector3D v1, Vector3D v2) {
+<     final double dx = v2.x - v1.x;
+<     final double dy = v2.y - v1.y;
+<     final double dz = v2.z - v1.z;
+<     return FastMath.sqrt(dx * dx + dy * dy + dz * dz);
+<   }
+---
+>     
+524d545
+<   
+530a552,554
+>     public static double distanceInf(Vector3D v1, Vector3D v2) {
+>         return v1.distanceInf(v2);
+>     }
+532,537c556
+<   public static double distanceInf(Vector3D v1, Vector3D v2) {
+<     final double dx = FastMath.abs(v2.x - v1.x);
+<     final double dy = FastMath.abs(v2.y - v1.y);
+<     final double dz = FastMath.abs(v2.z - v1.z);
+<     return FastMath.max(FastMath.max(dx, dy), dz);
+<   }
+---
+>     
+539d557
+<   
+545a564,566
+>     public static double distanceSq(Vector3D v1, Vector3D v2) {
+>         return v1.distanceSq(v2);
+>     }
+547,552c568
+<   public static double distanceSq(Vector3D v1, Vector3D v2) {
+<     final double dx = v2.x - v1.x;
+<     final double dy = v2.y - v1.y;
+<     final double dz = v2.z - v1.z;
+<     return dx * dx + dy * dy + dz * dz;
+<   }
+---
+>     
+554d569
+<   
+555a571,574
+>     @Override
+>     public String toString() {
+>         return Vector3DFormat.getInstance().format(this);
+>     }
+557,560c576,579
+<   @Override
+<   public String toString() {
+<       return DEFAULT_FORMAT.format(this);
+<   }
+---
+>     
+>     public String toString(final NumberFormat format) {
+>         return new Vector3DFormat(format).format(this);
+>     }

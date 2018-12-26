@@ -1,0 +1,34 @@
+20a21
+> import org.apache.commons.math.MaxEvaluationsExceededException;
+53a55,57
+>     private int maxEvaluations;
+> 
+>     
+107a112
+>         setMaxEvaluations(Integer.MAX_VALUE);
+125a131,140
+>     public void setMaxEvaluations(int maxEvaluations) {
+>         this.maxEvaluations = maxEvaluations;
+>     }
+> 
+>     
+>     public int getMaxEvaluations() {
+>         return maxEvaluations;
+>     }
+> 
+>     
+152,154c167
+<             if (++iterations > maxIterations) {
+<                 throw new OptimizationException(new MaxIterationsExceededException(maxIterations));
+<             }
+---
+>             throw new OptimizationException(new MaxIterationsExceededException(maxIterations));
+183a197
+> 
+187c201,204
+<         ++objectiveEvaluations;
+---
+>         if (++objectiveEvaluations > maxEvaluations) {
+>             throw new FunctionEvaluationException(new MaxEvaluationsExceededException(maxEvaluations),
+>                                                   point);
+>         }

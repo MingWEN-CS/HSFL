@@ -1,0 +1,139 @@
+164a165,166
+> 
+> 
+174a177
+>         double numeratorValue = 0;
+176c179
+<             numerator = whole * denominator - numerator;
+---
+>             numeratorValue = (double) whole * denominator - numerator;
+178c181
+<             numerator = whole * denominator + numerator;
+---
+>             numeratorValue = (double) whole * denominator + numerator;
+180c183,186
+<         return new Fraction(numerator, denominator);
+---
+>         if (Math.abs(numeratorValue) > Integer.MAX_VALUE) {
+>             throw new ArithmeticException("Numerator too large to represent as an Integer.");
+>         }
+>         return new Fraction((int) numeratorValue, denominator);
+202c208
+<         int gcd = greatestCommonDenominator(Math.abs(numerator), denominator);
+---
+>         int gcd = greatestCommonDivisor(Math.abs(numerator), denominator);
+215a222,225
+> 
+> 
+> 
+> 
+217,219d226
+<         if (Double.isInfinite(value) || Double.isNaN(value)) {
+<             throw new ArithmeticException("The value must not be infinite or NaN");
+<         }
+221a229,232
+>         if (value  > Integer.MAX_VALUE || Double.isNaN(value)) {
+>             throw new ArithmeticException
+>                 ("The value must not be greater than Integer.MAX_VALUE or NaN");
+>         }
+224d234
+< 
+433c443
+<         int gcd = greatestCommonDenominator(Math.abs(numerator), denominator);
+---
+>         int gcd = greatestCommonDivisor(Math.abs(numerator), denominator);
+487a498,500
+> 
+> 
+> 
+493,494c506,517
+<         } else if (power < 0) {
+<             return getFraction((int) Math.pow(denominator, -power), (int) Math.pow(numerator, -power));
+---
+>         } else {
+>             double denominatorValue = Math.pow(denominator, power);
+>             double numeratorValue = Math.pow(numerator, power);
+>             if (numeratorValue > Integer.MAX_VALUE || denominatorValue > Integer.MAX_VALUE) {
+>                 throw new ArithmeticException("Integer overflow");
+>             }
+>             if (power < 0) {
+>                 return getFraction((int) Math.pow(denominator, -power), 
+>                     (int) Math.pow(numerator, -power));
+>             }
+>             return getFraction((int) Math.pow(numerator, power), 
+>                 (int) Math.pow(denominator, power));
+496d518
+<         return getFraction((int) Math.pow(numerator, power), (int) Math.pow(denominator, power));
+506c528
+<     private static int greatestCommonDenominator(int number1, int number2) {
+---
+>     private static int greatestCommonDivisor(int number1, int number2) {
+529d550
+< 
+538a560,569
+>         }     
+>         
+>         int gcd = greatestCommonDivisor(Math.abs(fraction.denominator), Math.abs(denominator));
+>         int thisResidue = denominator/gcd;
+>         int thatResidue = fraction.denominator/gcd;
+>         double denominatorValue = Math.abs((double) gcd * thisResidue * thatResidue);
+>         double numeratorValue = (double) numerator * thatResidue + fraction.numerator * thisResidue;
+>         if (Math.abs(numeratorValue) > Integer.MAX_VALUE || 
+>             Math.abs(denominatorValue) > Integer.MAX_VALUE) {
+>                 throw new ArithmeticException("Integer overflow");
+540,546c571
+<         if (denominator == fraction.denominator) {
+<             return getReducedFraction(numerator + fraction.numerator, denominator);
+<         }
+<         return getReducedFraction(
+<             numerator * fraction.denominator + denominator * fraction.numerator,
+<             denominator * fraction.denominator
+<         );
+---
+>         return Fraction.getReducedFraction((int) numeratorValue, (int) denominatorValue);
+559,560d583
+< 
+< 
+565,577c588
+<         if (numerator == 0) {
+<             return fraction.negate();
+<         }
+<         if (fraction.numerator == 0) {
+<             return this;
+<         }
+<         if (denominator == fraction.denominator) {
+<             return getReducedFraction(numerator - fraction.numerator, denominator);
+<         }
+<         return getReducedFraction(
+<             numerator * fraction.denominator - denominator * fraction.numerator,
+<             denominator * fraction.denominator
+<         );
+---
+>         return add(fraction.negate());
+597,600c608,614
+<         return getReducedFraction(
+<             numerator * fraction.numerator,
+<             denominator * fraction.denominator
+<         );
+---
+>         double numeratorValue = (double) numerator * fraction.numerator;
+>         double denominatorValue = (double) denominator * fraction.denominator;
+>         if (Math.abs(numeratorValue) > Integer.MAX_VALUE || 
+>             Math.abs(denominatorValue) > Integer.MAX_VALUE) {
+>                 throw new ArithmeticException("Integer overflow");
+>         }
+>         return getReducedFraction((int) numeratorValue, (int) denominatorValue);
+622a637,642
+>         }  
+>         double numeratorValue = (double) numerator * fraction.denominator;
+>         double denominatorValue = (double) denominator * fraction.numerator;
+>         if (Math.abs(numeratorValue) > Integer.MAX_VALUE || 
+>             Math.abs(denominatorValue) > Integer.MAX_VALUE) {
+>                 throw new ArithmeticException("Integer overflow");
+624,627c644
+<         return getReducedFraction(
+<             numerator * fraction.denominator,
+<             denominator * fraction.numerator
+<         );
+---
+>         return getReducedFraction((int) numeratorValue, (int) denominatorValue);

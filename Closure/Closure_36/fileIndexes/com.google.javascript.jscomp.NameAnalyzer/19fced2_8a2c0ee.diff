@@ -1,0 +1,68 @@
+269,271d268
+< 
+< 
+< 
+276a274,276
+> 
+> 
+> 
+281a282
+> 
+319a321,325
+>         case Token.OBJECTLIT:
+>           
+>           
+>           
+>           break;
+589a596,600
+>         } else if (NodeUtil.isObjectLitKey(n, parent)) {
+>           NameInformation ns = createNameInformation(t, n, parent);
+>           if (ns != null) {
+>             recordSet(ns.name, n);
+>           }
+623a635
+> 
+1294,1298c1306,1320
+<     while (NodeUtil.isGet(rootNameNode)) {
+<       Node prop = rootNameNode.getLastChild();
+<       if (rootNameNode.getType() == Token.GETPROP) {
+<         name = "." + prop.getString() + name;
+<       } else {
+---
+>     while (true) {
+>       if (NodeUtil.isGet(rootNameNode)) {
+>         Node prop = rootNameNode.getLastChild();
+>         if (rootNameNode.getType() == Token.GETPROP) {
+>           name = "." + prop.getString() + name;
+>         } else {
+>           
+>           bNameWasShortened = true;
+>           name = "";
+>         }
+>         rootNameNode = rootNameNode.getFirstChild();
+>       } else if (NodeUtil.isObjectLitKey(
+>           rootNameNode, rootNameNode.getParent())) {
+>         name = "." + rootNameNode.getString() + name;
+> 
+1300,1301c1322,1337
+<         bNameWasShortened = true;
+<         name = "";
+---
+>         Node objLit = rootNameNode.getParent();
+>         Node objLitParent = objLit.getParent();
+>         if (objLitParent.getType() == Token.ASSIGN) {
+>           
+>           rootNameNode = objLitParent.getFirstChild();
+>         } else if (objLitParent.getType() == Token.NAME) {
+>           
+>           rootNameNode = objLitParent;
+>         } else if (objLitParent.getType() == Token.STRING) {
+>           
+>           rootNameNode = objLitParent;
+>         } else {
+>           return null;
+>         }
+>       } else {
+>         break;
+1303d1338
+<       rootNameNode = rootNameNode.getFirstChild();

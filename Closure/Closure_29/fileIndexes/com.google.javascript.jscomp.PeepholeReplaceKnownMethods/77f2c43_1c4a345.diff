@@ -1,0 +1,70 @@
+110a111,114
+>       } else if (functionNameString.equals("charAt")) {
+>         subtree = tryFoldStringCharAt(subtree, stringNode, firstArg);
+>       } else if (functionNameString.equals("charCodeAt")) {
+>         subtree = tryFoldStringCharCodeAt(subtree, stringNode, firstArg);
+261c265
+<       if (checkVal == null || checkVal == Double.NaN) {
+---
+>       if (checkVal == null) {
+576a581,640
+>   
+> 
+> 
+>   private Node tryFoldStringCharAt(Node n, Node stringNode, Node arg1) {
+>     Preconditions.checkArgument(n.getType() == Token.CALL);
+>     Preconditions.checkArgument(stringNode.getType() == Token.STRING);
+> 
+>     int index;
+>     String stringAsString = stringNode.getString();
+> 
+>     if (arg1 != null && arg1.getType() == Token.NUMBER
+>         && arg1.getNext() == null) {
+>       index = (int) arg1.getDouble();
+>     } else {
+>       return n;
+>     }
+> 
+>     if (index < 0 || stringAsString.length() <= index) {
+>       
+>       
+>       return n;
+>     }
+> 
+>     Node resultNode = Node.newString(
+>         stringAsString.substring(index, index + 1));
+>     Node parent = n.getParent();
+>     parent.replaceChild(n, resultNode);
+>     reportCodeChange();
+>     return resultNode;
+>   }
+> 
+>   
+> 
+> 
+>   private Node tryFoldStringCharCodeAt(Node n, Node stringNode, Node arg1) {
+>     Preconditions.checkArgument(n.getType() == Token.CALL);
+>     Preconditions.checkArgument(stringNode.getType() == Token.STRING);
+> 
+>     int index;
+>     String stringAsString = stringNode.getString();
+> 
+>     if (arg1 != null && arg1.getType() == Token.NUMBER
+>         && arg1.getNext() == null) {
+>       index = (int) arg1.getDouble();
+>     } else {
+>       return n;
+>     }
+> 
+>     if (index < 0 || stringAsString.length() <= index) {
+>       
+>       
+>       return n;
+>     }
+> 
+>     Node resultNode = Node.newNumber(stringAsString.charAt(index));
+>     Node parent = n.getParent();
+>     parent.replaceChild(n, resultNode);
+>     reportCodeChange();
+>     return resultNode;
+>   }

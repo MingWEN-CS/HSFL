@@ -1,0 +1,50 @@
+235c235
+<       case Token.OBJECTLIT:
+---
+>       case Token.STRING:
+237c237
+<         return getStringValue(parent.getFirstChild());
+---
+>         return getStringValue(parent);
+295d294
+<       case Token.OBJECTLIT:
+305a305,314
+>       case Token.OBJECTLIT:
+>         
+>         for (Node child = n.getFirstChild(); child != null;
+>              child = child.getNext()) {
+>           if (!isLiteralValue(child.getFirstChild(), includeFunctions)) {
+>             return false;
+>           }
+>         }
+>         return true;
+> 
+505a515,525
+>         if (checkForNewObjects) {
+>           return true;
+>         }
+>         for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+>           if (checkForStateChangeHelper(
+>                   c.getFirstChild(), checkForNewObjects, compiler)) {
+>             return true;
+>           }
+>         }
+>         return false;
+> 
+1516,1527c1536,1538
+<     if (node.getType() == Token.STRING && parent.getType() == Token.OBJECTLIT) {
+<       int index = 0;
+<       for (Node current = parent.getFirstChild();
+<            current != null;
+<            current = current.getNext()) {
+<         if (current == node) {
+<           return index % 2 == 0;
+<         }
+<         index++;
+<       }
+<     }
+<     return false;
+---
+>     
+>     return node.getType() == Token.STRING &&
+>         parent.getType() == Token.OBJECTLIT;

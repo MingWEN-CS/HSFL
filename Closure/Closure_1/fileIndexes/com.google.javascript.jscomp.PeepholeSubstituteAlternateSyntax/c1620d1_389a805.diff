@@ -1,0 +1,156 @@
+23a24
+> import com.google.javascript.rhino.IR;
+188,189c189,190
+<         Node fixedIfCondition = new Node(Token.NOT, ifCondition)
+<             .copyInformationFrom(ifCondition);
+---
+>         Node fixedIfCondition = IR.not(ifCondition)
+>             .srcref(ifCondition);
+215,218c216,218
+<         Node addition = new Node(Token.ADD);
+<         Node stringNode = Node.newString("").copyInformationFrom(callTarget);
+<         addition.addChildToFront(stringNode);
+<         addition.addChildToBack(value.detachFromParent());
+---
+>         Node addition = IR.add(
+>             IR.string("").srcref(callTarget),
+>             value.detachFromParent());
+244c244
+<         Node newCallTarget = new Node(Token.GETPROP,
+---
+>         Node newCallTarget = IR.getprop(
+246c246
+<             Node.newString("call").copyInformationFrom(callTarget));
+---
+>             IR.string("call").srcref(callTarget));
+281c281
+<       Node newStatement = new Node(Token.EXPR_RESULT, right);
+---
+>       Node newStatement = IR.exprResult(right);
+333c333
+<                 new Node(Token.NOT, cond).copyInformationFrom(cond));
+---
+>                 IR.not(cond).srcref(cond));
+354,356c354,356
+<           Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+<                               .copyInformationFrom(child);
+<           Node returnNode = new Node(Token.RETURN, hookNode);
+---
+>           Node returnNode = IR.returnNode(
+>                                 IR.hook(cond, thenExpr, elseExpr)
+>                                     .srcref(child));
+489c489
+<       Node replacement = new Node(Token.BREAK);
+---
+>       Node replacement = IR.breakNode();
+662,663c662,664
+<           Node or = new Node(Token.OR, cond.removeFirstChild(),
+<           expr.removeFirstChild()).copyInformationFrom(n);
+---
+>           Node or = IR.or(
+>               cond.removeFirstChild(),
+>               expr.removeFirstChild()).srcref(n);
+683,684c684
+<         Node and = new Node(Token.AND, cond, expr.removeFirstChild())
+<                        .copyInformationFrom(n);
+---
+>         Node and = IR.and(cond, expr.removeFirstChild()).srcref(n);
+706,707c706,710
+<               n.addChildToBack(new Node(Token.AND, cond,
+<                   innerCond.detachFromParent()).copyInformationFrom(cond));
+---
+>               n.addChildToBack(
+>                   IR.and(
+>                       cond,
+>                       innerCond.detachFromParent())
+>                       .srcref(cond));
+747,749c750,752
+<       Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+<                           .copyInformationFrom(n);
+<       Node returnNode = new Node(Token.RETURN, hookNode);
+---
+>       Node returnNode = IR.returnNode(
+>                             IR.hook(cond, thenExpr, elseExpr)
+>                                 .srcref(n));
+778,779c781
+<             Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+<                                 .copyInformationFrom(n);
+---
+>             Node hookNode = IR.hook(cond, thenExpr, elseExpr).srcref(n);
+781c783
+<                               .copyInformationFrom(thenOp);
+---
+>                               .srcref(thenOp);
+794,796c796,797
+<       Node hookNode = new Node(Token.HOOK, cond, thenOp, elseOp)
+<                           .copyInformationFrom(n);
+<       Node expr = NodeUtil.newExpr(hookNode);
+---
+>       Node expr = IR.exprResult(
+>           IR.hook(cond, thenOp, elseOp).srcref(n));
+821,822c822,823
+<         Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+<                             .copyInformationFrom(n);
+---
+>         Node hookNode = IR.hook(cond, thenExpr, elseExpr)
+>                             .srcref(n);
+846,847c847,848
+<         Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr)
+<                             .copyInformationFrom(n);
+---
+>         Node hookNode = IR.hook(cond, thenExpr, elseExpr)
+>                             .srcref(n);
+1169,1170c1170
+<                 left = new Node(Token.NOT, leftParent)
+<                   .copyInformationFrom(leftParent);
+---
+>                 left = IR.not(leftParent).srcref(leftParent);
+1176,1177c1176
+<                 right = new Node(Token.NOT, rightParent)
+<                   .copyInformationFrom(rightParent);
+---
+>                 right = IR.not(rightParent).srcref(rightParent);
+1270c1269
+<           replacement = new Node(Token.NOT, condition);
+---
+>           replacement = IR.not(condition);
+1274c1273
+<           replacement = new Node(Token.OR, condition, falseNode);
+---
+>           replacement = IR.or(condition, falseNode);
+1278c1277
+<           replacement = new Node(Token.AND, condition, trueNode);
+---
+>           replacement = IR.and(condition, trueNode);
+1383c1382
+<           newLiteralNode = new Node(Token.OBJECTLIT);
+---
+>           newLiteralNode = IR.objectlit();
+1391c1390
+<             newLiteralNode = new Node(Token.ARRAYLIT);
+---
+>             newLiteralNode = IR.arraylit();
+1482c1481
+<         regexLiteral = new Node(Token.REGEXP, pattern);
+---
+>         regexLiteral = IR.regexp(pattern);
+1493c1492
+<         regexLiteral = new Node(Token.REGEXP, pattern, flags);
+---
+>         regexLiteral = IR.regexp(pattern, flags);
+1506,1507c1505
+<       Node not = new Node(Token.NOT,
+<           Node.newNumber(n.isTrue() ? 0 : 1));
+---
+>       Node not = IR.not(IR.number(n.isTrue() ? 0 : 1));
+1557,1560c1555,1559
+<       Node call = new Node(Token.CALL,
+<         new Node(Token.GETPROP, Node.newString(Token.STRING,template),
+<             Node.newString(Token.STRING, "split")),
+<         Node.newString(Token.STRING, "" + delimiter));
+---
+>       Node call = IR.call(
+>           IR.getprop(
+>               IR.string(template),
+>               IR.string("split")),
+>           IR.string("" + delimiter));

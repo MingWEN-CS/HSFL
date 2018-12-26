@@ -1,0 +1,13 @@
+136,137c136,140
+<     if (!options.checkSymbols) {
+<       options.setWarningLevel(DiagnosticGroups.UNDEFINED_VARIABLES,
+---
+>     WarningsGuard warningsGuard = options.getWarningsGuard();
+>     if (!options.checkSymbols &&
+>         (warningsGuard == null || !warningsGuard.disables(
+>             DiagnosticGroups.CHECK_VARIABLES))) {
+>       options.setWarningLevel(DiagnosticGroups.CHECK_VARIABLES,
+225c228
+<     if (options.closurePass) {
+---
+>     if (options.closurePass && options.removeAbstractMethods) {

@@ -1,0 +1,65 @@
+19d18
+< import com.google.common.base.Preconditions;
+22d20
+< import com.google.javascript.jscomp.CheckLevel;
+24a23
+> import com.google.javascript.rhino.JSTypeExpression;
+26a26
+> import com.google.javascript.rhino.jstype.JSType;
+111d110
+<       JSDocInfo info;
+114,118c113,114
+<           info = (JSDocInfo) n.getProp(Node.JSDOC_INFO_PROP);
+<           if (info != null && info.isConstructor()) {
+<             String qualifiedName = n.getFirstChild().getQualifiedName();
+<             constructors.add(qualifiedName);
+<           }
+---
+>         case Token.VAR:
+>           maybeAddConstructor(t, n);
+121,142c117,119
+<           if (NodeUtil.isFunctionExpression(n)) {
+<             if (parent.isName()) {
+<               String functionName = parent.getString();
+<               info = (JSDocInfo) parent.getProp(Node.JSDOC_INFO_PROP);
+<               if (info != null && info.isConstructor()) {
+<                 constructors.add(functionName);
+<               } else {
+<                 Node gramps = parent.getParent();
+<                 Preconditions.checkState(
+<                     gramps != null && gramps.isVar());
+<                 info = (JSDocInfo) gramps.getProp(Node.JSDOC_INFO_PROP);
+<                 if (info != null && info.isConstructor()) {
+<                   constructors.add(functionName);
+<                 }
+<               }
+<             }
+<           } else {
+<             info = (JSDocInfo) n.getProp(Node.JSDOC_INFO_PROP);
+<             if (info != null && info.isConstructor()) {
+<               String functionName = n.getFirstChild().getString();
+<               constructors.add(functionName);
+<             }
+---
+>           
+>           if (NodeUtil.isStatement(n)) {
+>             maybeAddConstructor(t, n);
+210a188,205
+>     }
+> 
+>     private void maybeAddConstructor(NodeTraversal t, Node n) {
+>       JSDocInfo info = (JSDocInfo) n.getProp(Node.JSDOC_INFO_PROP);
+>       if (info != null) {
+>         String ctorName = n.getFirstChild().getQualifiedName();
+>         if (info.isConstructor()) {
+>           constructors.add(ctorName);
+>         } else {
+>           JSTypeExpression typeExpr = info.getType();
+>           if (typeExpr != null) {
+>             JSType type = typeExpr.evaluate(t.getScope(), compiler.getTypeRegistry());
+>             if (type.isConstructor()) {
+>               constructors.add(ctorName);
+>             }
+>           }
+>         }
+>       }

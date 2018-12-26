@@ -1,0 +1,63 @@
+58,59c58,66
+<   
+<   private final boolean onlyConstants;
+---
+>   enum Mode {
+>     
+>     CONSTANTS_ONLY,
+>     
+>     LOCALS_ONLY,
+>     ALL
+>   };
+> 
+>   private final Mode mode;
+66c73,75
+<   InlineVariables(AbstractCompiler compiler, boolean onlyConstants,
+---
+>   InlineVariables(
+>       AbstractCompiler compiler,
+>       Mode mode,
+69c78
+<     this.onlyConstants = onlyConstants;
+---
+>     this.mode = mode;
+76,79c85
+<         compiler, new InliningBehavior(),
+<         onlyConstants ?
+<             identifyConstants :
+<             Predicates.<Var>alwaysTrue());
+---
+>         compiler, new InliningBehavior(), getFilterForMode());
+82a89,101
+>   private Predicate<Var> getFilterForMode() {
+>     switch (mode) {
+>       case ALL:
+>         return Predicates.<Var>alwaysTrue();
+>       case LOCALS_ONLY:
+>         return new IdentifyLocals();
+>       case CONSTANTS_ONLY:
+>         return new IdentifyConstants();
+>       default:
+>         throw new IllegalStateException();
+>     }
+>   }
+> 
+97a117,126
+>   
+> 
+> 
+>   private class IdentifyLocals implements Predicate<Var> {
+>     @Override
+>     public boolean apply(Var var) {
+>       return var.scope.isLocal();
+>     }
+>   }
+> 
+141c170
+<       if (!onlyConstants) {
+---
+>       if (mode != Mode.CONSTANTS_ONLY) {
+186c215
+<         } else if (onlyConstants) {
+---
+>         } else if (mode == Mode.CONSTANTS_ONLY) {

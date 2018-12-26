@@ -1,0 +1,776 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang.time;
+
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.TimeZone;
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class DateUtils {
+    
+    
+
+
+    public static final TimeZone UTC_TIME_ZONE = TimeZone.getTimeZone("GMT");
+    
+
+
+
+    public static final long MILLIS_PER_SECOND = 1000;
+    
+
+
+
+    public static final long MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+    
+
+
+
+    public static final long MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
+    
+
+
+
+    public static final long MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
+
+    
+
+
+
+    public final static int SEMI_MONTH = 1001;
+
+    private static final int[][] fields = {
+            {Calendar.MILLISECOND},
+            {Calendar.SECOND},
+            {Calendar.MINUTE},
+            {Calendar.HOUR_OF_DAY, Calendar.HOUR},
+            {Calendar.DATE, Calendar.DAY_OF_MONTH, Calendar.AM_PM },
+            {Calendar.MONTH, DateUtils.SEMI_MONTH},
+            {Calendar.YEAR},
+            {Calendar.ERA}};
+
+    
+
+
+    public final static int RANGE_WEEK_SUNDAY = 1;
+
+    
+
+
+    public final static int RANGE_WEEK_MONDAY = 2;
+
+    
+
+
+    public final static int RANGE_WEEK_RELATIVE = 3;
+
+    
+
+
+    public final static int RANGE_WEEK_CENTER = 4;
+
+    
+
+
+    public final static int RANGE_MONTH_SUNDAY = 5;
+
+    
+
+
+    public final static int RANGE_MONTH_MONDAY = 6;
+
+    
+
+
+
+
+
+
+
+    public DateUtils() {
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public static boolean isSameDay(Date date1, Date date2) {
+        if (date1 == null || date2 == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        Calendar cal1 = Calendar.getInstance();
+        cal1.setTime(date1);
+        Calendar cal2 = Calendar.getInstance();
+        cal2.setTime(date2);
+        return isSameDay(cal1, cal2);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public static boolean isSameDay(Calendar cal1, Calendar cal2) {
+        if (cal1 == null || cal2 == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return (cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA) &&
+                cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR));
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public static boolean isSameInstant(Date date1, Date date2) {
+        if (date1 == null || date2 == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return (date1.getTime() == date2.getTime());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static boolean isSameInstant(Calendar cal1, Calendar cal2) {
+        if (cal1 == null || cal2 == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return (cal1.getTime().getTime() == cal2.getTime().getTime());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public static boolean isSameLocalTime(Calendar cal1, Calendar cal2) {
+        if (cal1 == null || cal2 == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return (cal1.get(Calendar.MILLISECOND) == cal2.get(Calendar.MILLISECOND) &&
+                cal1.get(Calendar.SECOND) == cal2.get(Calendar.SECOND) &&
+                cal1.get(Calendar.MINUTE) == cal2.get(Calendar.MINUTE) &&
+                cal1.get(Calendar.HOUR) == cal2.get(Calendar.HOUR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) &&
+                cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA) &&
+                cal1.getClass() == cal2.getClass());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Date parseDate(String str, String[] parsePatterns) throws ParseException {
+        if (str == null || parsePatterns == null) {
+            throw new IllegalArgumentException("Date and Patterns must not be null");
+        }
+        
+        SimpleDateFormat parser = null;
+        ParsePosition pos = new ParsePosition(0);
+        for (int i = 0; i < parsePatterns.length; i++) {
+            if (i == 0) {
+                parser = new SimpleDateFormat(parsePatterns[0]);
+            } else {
+                parser.applyPattern(parsePatterns[i]);
+            }
+            pos.setIndex(0);
+            Date date = parser.parse(str, pos);
+            if (date != null && pos.getIndex() == str.length()) {
+                return date;
+            }
+        }
+        throw new ParseException("Unable to parse the date: " + str, -1);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Date round(Date date, int field) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        Calendar gval = Calendar.getInstance();
+        gval.setTime(date);
+        modify(gval, field, true);
+        return gval.getTime();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Calendar round(Calendar date, int field) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        Calendar rounded = (Calendar) date.clone();
+        modify(rounded, field, true);
+        return rounded;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Date round(Object date, int field) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        if (date instanceof Date) {
+            return round((Date) date, field);
+        } else if (date instanceof Calendar) {
+            return round((Calendar) date, field).getTime();
+        } else {
+            throw new ClassCastException("Could not round " + date);
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Date truncate(Date date, int field) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        Calendar gval = Calendar.getInstance();
+        gval.setTime(date);
+        modify(gval, field, false);
+        return gval.getTime();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Calendar truncate(Calendar date, int field) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        Calendar truncated = (Calendar) date.clone();
+        modify(truncated, field, false);
+        return truncated;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Date truncate(Object date, int field) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        if (date instanceof Date) {
+            return truncate((Date) date, field);
+        } else if (date instanceof Calendar) {
+            return truncate((Calendar) date, field).getTime();
+        } else {
+            throw new ClassCastException("Could not truncate " + date);
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+
+    private static void modify(Calendar val, int field, boolean round) {
+        if (val.get(Calendar.YEAR) > 280000000) {
+            throw new ArithmeticException("Calendar value too large for accurate calculations");
+        }
+        
+        boolean roundUp = false;
+        for (int i = 0; i < fields.length; i++) {
+            for (int j = 0; j < fields[i].length; j++) {
+                if (fields[i][j] == field) {
+                    
+                    if (round && roundUp) {
+                        if (field == DateUtils.SEMI_MONTH) {
+                            
+                            
+                            
+                            if (val.get(Calendar.DATE) == 1) {
+                                val.add(Calendar.DATE, 15);
+                            } else {
+                                val.add(Calendar.DATE, -15);
+                                val.add(Calendar.MONTH, 1);
+                            }
+                        } else {
+                            
+                            
+                            val.add(fields[i][0], 1);
+                        }
+                    }
+                    return;
+                }
+            }
+            
+            int offset = 0;
+            boolean offsetSet = false;
+            
+            switch (field) {
+                case DateUtils.SEMI_MONTH:
+                    if (fields[i][0] == Calendar.DATE) {
+                        
+                        
+                        
+                        offset = val.get(Calendar.DATE) - 1;
+                        
+                        
+                        if (offset >= 15) {
+                            offset -= 15;
+                        }
+                        
+                        roundUp = offset > 7;
+                        offsetSet = true;
+                    }
+                    break;
+                case Calendar.AM_PM:
+                    if (fields[i][0] == Calendar.HOUR_OF_DAY) {
+                        
+                        
+                        offset = val.get(Calendar.HOUR_OF_DAY);
+                        if (offset >= 12) {
+                            offset -= 12;
+                        }
+                        roundUp = offset > 6;
+                        offsetSet = true;
+                    }
+                    break;
+            }
+            if (!offsetSet) {
+                int min = val.getActualMinimum(fields[i][0]);
+                int max = val.getActualMaximum(fields[i][0]);
+                
+                offset = val.get(fields[i][0]) - min;
+                
+                roundUp = offset > ((max - min) / 2);
+            }
+            
+            val.set(fields[i][0], val.get(fields[i][0]) - offset);
+        }
+        throw new IllegalArgumentException("The field " + field + " is not supported");
+
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Iterator iterator(Date focus, int rangeStyle) {
+        if (focus == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        Calendar gval = Calendar.getInstance();
+        gval.setTime(focus);
+        return iterator(gval, rangeStyle);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Iterator iterator(Calendar focus, int rangeStyle) {
+        if (focus == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        Calendar start = null;
+        Calendar end = null;
+        int startCutoff = Calendar.SUNDAY;
+        int endCutoff = Calendar.SATURDAY;
+        switch (rangeStyle) {
+            case RANGE_MONTH_SUNDAY:
+            case RANGE_MONTH_MONDAY:
+                
+                start = truncate(focus, Calendar.MONTH);
+                
+                end = (Calendar) start.clone();
+                end.add(Calendar.MONTH, 1);
+                end.add(Calendar.DATE, -1);
+                
+                if (rangeStyle == RANGE_MONTH_MONDAY) {
+                    startCutoff = Calendar.MONDAY;
+                    endCutoff = Calendar.SUNDAY;
+                }
+                break;
+            case RANGE_WEEK_SUNDAY:
+            case RANGE_WEEK_MONDAY:
+            case RANGE_WEEK_RELATIVE:
+            case RANGE_WEEK_CENTER:
+                
+                start = truncate(focus, Calendar.DATE);
+                end = truncate(focus, Calendar.DATE);
+                switch (rangeStyle) {
+                    case RANGE_WEEK_SUNDAY:
+                        
+                        break;
+                    case RANGE_WEEK_MONDAY:
+                        startCutoff = Calendar.MONDAY;
+                        endCutoff = Calendar.SUNDAY;
+                        break;
+                    case RANGE_WEEK_RELATIVE:
+                        startCutoff = focus.get(Calendar.DAY_OF_WEEK);
+                        endCutoff = startCutoff - 1;
+                        break;
+                    case RANGE_WEEK_CENTER:
+                        startCutoff = focus.get(Calendar.DAY_OF_WEEK) - 3;
+                        endCutoff = focus.get(Calendar.DAY_OF_WEEK) + 3;
+                        break;
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("The range style " + rangeStyle + " is not valid.");
+        }
+        if (startCutoff < Calendar.SUNDAY) {
+            startCutoff += 7;
+        }
+        if (startCutoff > Calendar.SATURDAY) {
+            startCutoff -= 7;
+        }
+        if (endCutoff < Calendar.SUNDAY) {
+            endCutoff += 7;
+        }
+        if (endCutoff > Calendar.SATURDAY) {
+            endCutoff -= 7;
+        }
+        while (start.get(Calendar.DAY_OF_WEEK) != startCutoff) {
+            start.add(Calendar.DATE, -1);
+        }
+        while (end.get(Calendar.DAY_OF_WEEK) != endCutoff) {
+            end.add(Calendar.DATE, 1);
+        }
+        return new DateIterator(start, end);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Iterator iterator(Object focus, int rangeStyle) {
+        if (focus == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        if (focus instanceof Date) {
+            return iterator((Date) focus, rangeStyle);
+        } else if (focus instanceof Calendar) {
+            return iterator((Calendar) focus, rangeStyle);
+        } else {
+            throw new ClassCastException("Could not iterate based on " + focus);
+        }
+    }
+
+    
+
+
+    static class DateIterator implements Iterator {
+        private final Calendar endFinal;
+        private final Calendar spot;
+        
+        DateIterator(Calendar startFinal, Calendar endFinal) {
+            super();
+            this.endFinal = endFinal;
+            spot = startFinal;
+            spot.add(Calendar.DATE, -1);
+        }
+
+        public boolean hasNext() {
+            return spot.before(endFinal);
+        }
+
+        public Object next() {
+            if (spot.equals(endFinal)) {
+                throw new NoSuchElementException();
+            }
+            spot.add(Calendar.DATE, 1);
+            return spot.clone();
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+    
+    
+    
+    
+    
+    
+
+
+
+
+    public static final int MILLIS_IN_SECOND = 1000;
+    
+
+
+
+
+    public static final int MILLIS_IN_MINUTE = 60 * 1000;
+    
+
+
+
+
+    public static final int MILLIS_IN_HOUR = 60 * 60 * 1000;
+    
+
+
+
+
+    public static final int MILLIS_IN_DAY = 24 * 60 * 60 * 1000;
+    
+}

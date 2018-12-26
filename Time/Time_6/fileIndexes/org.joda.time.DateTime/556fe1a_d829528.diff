@@ -1,0 +1,32 @@
+380,387c380,384
+<         final long originalMillis = getMillis();
+<         final Chronology originalChrono = getChronology();
+<         final DateTimeZone originalZone;
+<         if (originalChrono == null || (originalZone = originalChrono.getZone()) == null) {
+<             
+<             
+<             
+<             return withMillis(originalMillis);
+---
+>         newDateTimeZone = (newDateTimeZone == null ? DateTimeZone.getDefault() : newDateTimeZone);
+>         DateTimeZone originalZone = getZone();
+>         originalZone = (originalZone == null ? DateTimeZone.getDefault() : originalZone);
+>         if (newDateTimeZone == originalZone) {
+>             return this;
+389,397c386,387
+< 
+<         DateTime newInstant = withChronology(originalChrono.withZone(newDateTimeZone));
+<         newDateTimeZone = newInstant.getZone();
+< 
+<         if (newDateTimeZone == null || newDateTimeZone == originalZone) {
+<             
+<             return newInstant;
+<         }
+< 
+---
+>         
+>         long originalMillis = getMillis();
+401c391
+<         return newInstant.withMillis(newMillis);
+---
+>         return new DateTime(newMillis, getChronology().withZone(newDateTimeZone));

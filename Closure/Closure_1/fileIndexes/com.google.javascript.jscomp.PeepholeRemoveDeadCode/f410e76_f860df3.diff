@@ -1,0 +1,79 @@
+291,297c291,297
+<       Node next = null;
+<       Node prev = null;
+<       
+<       for (Node c = n.getFirstChild().getNext(); c != null; c = next) {
+<         next = c.getNext();
+<         if (!mayHaveSideEffects(c.getFirstChild()) && isUselessCase(c, prev)) {
+<           removeCase(n, c);
+---
+>       Node cond = n.getFirstChild(), prev = null, next = null, cur;
+> 
+>       for (cur = cond.getNext(); cur != null; cur = next) {
+>         next = cur.getNext();
+>         if (!mayHaveSideEffects(cur.getFirstChild()) &&
+>             isUselessCase(cur, prev)) {
+>           removeCase(n, cur);
+299c299,352
+<           prev = c;
+---
+>           prev = cur;
+>         }
+>       }
+> 
+>       
+>       if (NodeUtil.isLiteralValue(cond, false)) {
+>         Node caseLabel;
+>         TernaryValue caseMatches = TernaryValue.TRUE;
+>         
+>         for (cur = cond.getNext(); cur != null; cur = next) {
+>           next = cur.getNext();
+>           caseLabel = cur.getFirstChild();
+>           caseMatches = PeepholeFoldConstants.evaluateComparison(
+>               Token.SHEQ, cond, caseLabel);
+>           if (caseMatches == TernaryValue.TRUE) {
+>             break;
+>           } else if (caseMatches == TernaryValue.UNKNOWN) {
+>             break;
+>           } else {
+>             n.removeChild(cur);
+>             reportCodeChange();
+>           }
+>         }
+>         if (caseMatches != TernaryValue.UNKNOWN) {
+>           Node block, lastStm;
+>           
+>           while (cur != null) {
+>             block = cur.getLastChild();
+>             lastStm = block.getLastChild();
+>             cur = cur.getNext();
+>             if (lastStm.isBreak()) {
+>               block.removeChild(lastStm);
+>               reportCodeChange();
+>               break;
+>             }
+>           }
+>           
+>           for (; cur != null; cur = next) {
+>             next = cur.getNext();
+>             n.removeChild(cur);
+>             reportCodeChange();
+>           }
+>           
+>           cur = cond.getNext();
+>           if (cur != null && cur.getNext() == null) {
+>             block = cur.getLastChild();
+>             if (!(NodeUtil.containsType(block, Token.BREAK,
+>                 NodeUtil.MATCH_NOT_FUNCTION))) {
+>               cur.removeChild(block);
+>               n.getParent().replaceChild(n, block);
+>               reportCodeChange();
+>               return block;
+>             }
+>           }
+307d359
+<       Node parent = n.getParent();
+309c361
+<       parent.replaceChild(n, replacement);
+---
+>       n.getParent().replaceChild(n, replacement);

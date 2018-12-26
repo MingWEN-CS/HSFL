@@ -1,0 +1,130 @@
+20,21d19
+< import com.google.common.collect.Maps;
+< import com.google.common.collect.Sets;
+24d21
+< import java.util.Collections;
+40,49d36
+<   private Set<String> exportedNames = null;
+< 
+<   
+< 
+< 
+< 
+<   private CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator =
+<       new CrossModuleMethodMotion.IdGenerator();
+< 
+<   
+59,64d45
+<   
+< 
+< 
+< 
+<   private Map<String, Integer> cssNames = null;
+< 
+70,118d50
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+<   
+< 
+<   
+< 
+< 
+< 
+<   Map<String, Integer> getCssNames() {
+<     return cssNames == null ? null : Maps.newHashMap(cssNames);
+<   }
+< 
+<   
+< 
+< 
+<   Set<String> getExportedNames() {
+<     return exportedNames == null ? null :
+<         Collections.unmodifiableSet(exportedNames);
+<   }
+< 
+<   
+< 
+< 
+< 
+<   CrossModuleMethodMotion.IdGenerator getCrossModuleIdGenerator() {
+<     return crossModuleIdGenerator;
+<   }
+< 
+<   
+< 
+< 
+<   void setCssNames(Map<String, Integer> newVal) {
+<     cssNames = newVal == null ? null : Maps.newHashMap(newVal);
+<   }
+< 
+<   
+< 
+< 
+<   void setExportedNames(Set<String> newVal) {
+<     exportedNames = newVal == null ? null : Sets.newHashSet(newVal);
+<   }
+< 
+<   
+205,208c137
+<   State getIntermediateState() {
+<     return new State(getCssNames(), getExportedNames(),
+<                      crossModuleIdGenerator);
+<   }
+---
+>   abstract State getIntermediateState();
+214,218c143
+<   void setIntermediateState(State state) {
+<     setCssNames(state.cssNames);
+<     setExportedNames(state.exportedNames);
+<     crossModuleIdGenerator = state.crossModuleIdGenerator;
+<   }
+---
+>   abstract void setIntermediateState(State state);
+241,256d165
+<     @Override Map<String, Integer> getCssNames() {
+<       return delegate.getCssNames();
+<     }
+< 
+<     @Override Set<String> getExportedNames() {
+<       return delegate.getExportedNames();
+<     }
+< 
+<     @Override void setCssNames(Map<String, Integer> newVal) {
+<       delegate.setCssNames(newVal);
+<     }
+< 
+<     @Override void setExportedNames(Set<String> newVal) {
+<       delegate.setExportedNames(newVal);
+<     }
+< 
+280,285c189,200
+<     private final Map<String, Integer> cssNames;
+<     private final Set<String> exportedNames;
+<     private final CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator;
+< 
+<     private State(Map<String, Integer> cssNames, Set<String> exportedNames,
+<                   CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator) {
+---
+>     final Map<String, Integer> cssNames;
+>     final Set<String> exportedNames;
+>     final CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator;
+>     final VariableMap variableMap;
+>     final VariableMap propertyMap;
+>     final VariableMap anonymousFunctionNameMap;
+>     final FunctionNames functionNames;
+> 
+>     State(Map<String, Integer> cssNames, Set<String> exportedNames,
+>           CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator,
+>           VariableMap variableMap, VariableMap propertyMap,
+>           VariableMap anonymousFunctionNameMap, FunctionNames functionNames) {
+288a204,207
+>       this.variableMap = variableMap;
+>       this.propertyMap = propertyMap;
+>       this.anonymousFunctionNameMap = anonymousFunctionNameMap;
+>       this.functionNames = functionNames;

@@ -1,0 +1,118 @@
+42a43
+> 
+45d45
+< import com.google.common.collect.Maps;
+51d50
+< import java.util.Map;
+74c73
+<   private final Map<String, Property> properties;
+---
+>   private final PropertyMap properties;
+118c117,119
+<     this.properties = Maps.newTreeMap();
+---
+>     this.properties = new PropertyMap();
+>     this.properties.setParentSource(this);
+> 
+129a131,135
+>   PropertyMap getPropertyMap() {
+>     return properties;
+>   }
+> 
+>   @Override
+131,147c137
+<     if (properties.containsKey(name)) {
+<       return properties.get(name);
+<     }
+<     ObjectType implicitPrototype = getImplicitPrototype();
+<     if (implicitPrototype != null) {
+<       Property prop = implicitPrototype.getSlot(name);
+<       if (prop != null) {
+<         return prop;
+<       }
+<     }
+<     for (ObjectType interfaceType : getCtorExtendedInterfaces()) {
+<       Property prop = interfaceType.getSlot(name);
+<       if (prop != null) {
+<         return prop;
+<       }
+<     }
+<     return null;
+---
+>     return properties.getSlot(name);
+155,165c145
+<     ObjectType implicitPrototype = getImplicitPrototype();
+<     if (implicitPrototype == null) {
+<       return this.properties.size();
+<     }
+<     int localCount = 0;
+<     for (String property : properties.keySet()) {
+<       if (!implicitPrototype.hasProperty(property)) {
+<         localCount++;
+<       }
+<     }
+<     return implicitPrototype.getPropertiesCount() + localCount;
+---
+>     return properties.getPropertiesCount();
+176c156
+<     return properties.get(propertyName) != null;
+---
+>     return properties.hasOwnProperty(propertyName);
+181c161
+<     return properties.keySet();
+---
+>     return properties.getOwnPropertyNames();
+195,201c175
+<     for (String prop : properties.keySet()) {
+<       props.add(prop);
+<     }
+<     ObjectType implicitPrototype = getImplicitPrototype();
+<     if (implicitPrototype != null) {
+<       implicitPrototype.collectPropertyNames(props);
+<     }
+---
+>     properties.collectPropertyNames(props);
+224c198
+<     Property p = properties.get(propertyName);
+---
+>     Property p = getSlot(propertyName);
+228,231d201
+<     ObjectType implicitPrototype = getImplicitPrototype();
+<     if (implicitPrototype != null) {
+<       return implicitPrototype.isPropertyInExterns(propertyName);
+<     }
+243,249c213
+<     Property oldProp = properties.get(name);
+<     if (oldProp != null) {
+<       
+<       
+<       newProp.setJSDocInfo(oldProp.getJSDocInfo());
+<     }
+<     properties.put(name, newProp);
+---
+>     properties.putProperty(name, newProp);
+255c219
+<     return properties.remove(name) != null;
+---
+>     return properties.removeProperty(name);
+260c224
+<     Property p = properties.get(propertyName);
+---
+>     Property p = getSlot(propertyName);
+264,267d227
+<     ObjectType implicitPrototype = getImplicitPrototype();
+<     if (implicitPrototype != null) {
+<       return implicitPrototype.getPropertyNode(propertyName);
+<     }
+273c233
+<     Property p = properties.get(propertyName);
+---
+>     Property p = properties.getOwnProperty(propertyName);
+283c243
+<       if (!properties.containsKey(propertyName)) {
+---
+>       if (properties.getOwnProperty(propertyName) == null) {
+293c253
+<       Property property = properties.get(propertyName);
+---
+>       Property property = properties.getOwnProperty(propertyName);

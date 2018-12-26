@@ -1,0 +1,128 @@
+121a122,142
+>   @Override
+>   public StaticSlot<JSType> getSlot(String name) {
+>     if (properties.containsKey(name)) {
+>       return properties.get(name);
+>     }
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype != null) {
+>       StaticSlot<JSType> prop = implicitPrototype.getSlot(name);
+>       if (prop != null) {
+>         return prop;
+>       }
+>     }
+>     for (ObjectType interfaceType : getCtorExtendedInterfaces()) {
+>       StaticSlot<JSType> prop = interfaceType.getSlot(name);
+>       if (prop != null) {
+>         return prop;
+>       }
+>     }
+>     return null;
+>   }
+> 
+142,156c163,164
+<     if (properties.get(propertyName) != null) {
+<       return true;
+<     }
+<     ObjectType implicitPrototype = getImplicitPrototype();
+<     if (implicitPrototype != null) {
+<       if (implicitPrototype.hasProperty(propertyName)) {
+<         return true;
+<       }
+<     }
+<     for (ObjectType interfaceType : getCtorExtendedInterfaces()) {
+<       if (interfaceType.hasProperty(propertyName)) {
+<         return true;
+<       }
+<     }
+<     return false;
+---
+>     
+>     return isUnknownType() || getSlot(propertyName) != null;
+171,177c179,180
+<     Property p = properties.get(property);
+<     if (p == null) {
+<       ObjectType implicitPrototype = getImplicitPrototype();
+<       if (implicitPrototype != null) {
+<         return implicitPrototype.isPropertyTypeDeclared(property);
+<       }
+<       
+---
+>     StaticSlot<JSType> slot = getSlot(property);
+>     if (slot == null) {
+180c183
+<     return !p.inferred;
+---
+>     return !slot.isTypeInferred();
+196,202c199,200
+<     Property p = properties.get(property);
+<     if (p == null) {
+<       ObjectType implicitPrototype = getImplicitPrototype();
+<       if (implicitPrototype != null) {
+<         return implicitPrototype.isPropertyTypeInferred(property);
+<       }
+<       
+---
+>     StaticSlot<JSType> slot = getSlot(property);
+>     if (slot == null) {
+205c203
+<     return p.inferred;
+---
+>     return slot.isTypeInferred();
+209,216c207,210
+<   public JSType getPropertyType(String propertyName) {
+<     Property p = properties.get(propertyName);
+<     if (p != null) {
+<       return p.type;
+<     }
+<     ObjectType implicitPrototype = getImplicitPrototype();
+<     if (implicitPrototype != null) {
+<       return implicitPrototype.getPropertyType(propertyName);
+---
+>   public JSType getPropertyType(String property) {
+>     StaticSlot<JSType> slot = getSlot(property);
+>     if (slot == null) {
+>       return getNativeType(JSTypeNative.UNKNOWN_TYPE);
+218c212
+<     return getNativeType(JSTypeNative.UNKNOWN_TYPE);
+---
+>     return slot.getType();
+240c234,235
+<     Property newProp = new Property(type, inferred, inExterns, propertyNode);
+---
+>     Property newProp = new Property(
+>         name, type, inferred, inExterns, propertyNode);
+501c496,497
+<   private static final class Property implements Serializable {
+---
+>   private static final class Property
+>       implements Serializable, StaticSlot<JSType> {
+506a503,507
+>     private String name;
+> 
+>     
+> 
+> 
+528,529c529,531
+<     private Property(JSType type, boolean inferred, boolean inExterns,
+<         Node propertyNode) {
+---
+>     private Property(String name, JSType type, boolean inferred,
+>         boolean inExterns, Node propertyNode) {
+>       this.name = name;
+533a536,550
+>     }
+> 
+>     @Override
+>     public String getName() {
+>       return name;
+>     }
+> 
+>     @Override
+>     public JSType getType() {
+>       return type;
+>     }
+> 
+>     @Override
+>     public boolean isTypeInferred() {
+>       return inferred;

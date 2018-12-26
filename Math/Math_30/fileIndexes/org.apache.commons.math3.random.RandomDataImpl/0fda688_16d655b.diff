@@ -1,0 +1,47 @@
+38a39
+> import org.apache.commons.math.exception.MathIllegalArgumentException;
+253c254,255
+<         return (int) ((r * upper) + ((1.0 - r) * lower) + r);
+---
+>         double scaled = r * upper + (1.0 - r) * lower + r;
+>         return (int)FastMath.floor(scaled);
+273c275,276
+<         return (long) ((r * upper) + ((1.0 - r) * lower) + r);
+---
+>         double scaled = r * upper + (1.0 - r) * lower + r;
+>         return (long)FastMath.floor(scaled);
+364c367,369
+<         return lower + (int) (sec.nextDouble() * (upper - lower + 1));
+---
+>         double r = sec.nextDouble();
+>         double scaled = r * upper + (1.0 - r) * lower + r;
+>         return (int)FastMath.floor(scaled);
+385c390,392
+<         return lower + (long) (sec.nextDouble() * (upper - lower + 1));
+---
+>         double r = sec.nextDouble();
+>         double scaled = r * upper + (1.0 - r) * lower + r;
+>         return (long)FastMath.floor(scaled);
+588,589d594
+< 
+< 
+592,593c597,598
+<             throw new NumberIsTooLargeException(LocalizedFormats.LOWER_BOUND_NOT_BELOW_UPPER_BOUND,
+<                                                 lower, upper, false);
+---
+>             throw new MathIllegalArgumentException(LocalizedFormats.LOWER_BOUND_NOT_BELOW_UPPER_BOUND,
+>                                                 lower, upper);
+594a600,608
+> 
+>         if (Double.isInfinite(lower) || Double.isInfinite(upper)) {
+>             throw new MathIllegalArgumentException(LocalizedFormats.INFINITE_BOUND);
+>         }
+> 
+>         if (Double.isNaN(lower) || Double.isNaN(upper)) {
+>             throw new MathIllegalArgumentException(LocalizedFormats.NAN_NOT_ALLOWED);
+>         }
+> 
+603c617
+<         return lower + u * (upper - lower);
+---
+>         return u * upper + (1.0 - u) * lower;

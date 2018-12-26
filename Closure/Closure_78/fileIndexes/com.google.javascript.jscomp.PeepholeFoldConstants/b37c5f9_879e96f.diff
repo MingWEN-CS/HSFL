@@ -1,0 +1,221 @@
+979a980
+>     
+981c982
+<     subtree = tryFoldStringJoin(subtree);
+---
+>     subtree = tryFoldArrayJoin(subtree);
+984c985
+<       subtree = tryFoldStringIndexOf(subtree);
+---
+>       subtree = tryFoldKnownStringMethods(subtree);
+993a995,996
+>   private Node tryFoldKnownStringMethods(Node subtree) {
+>     Preconditions.checkArgument(subtree.getType() == Token.CALL);
+995,996c998,1003
+<   private Node tryFoldStringIndexOf(Node n) {
+<     Preconditions.checkArgument(n.getType() == Token.CALL);
+---
+>     
+>     
+>     Node callTarget = subtree.getFirstChild();
+>     if (callTarget == null) {
+>       return subtree;
+>     }
+998c1005,1008
+<     Node left = n.getFirstChild();
+---
+>     Node firstArg = callTarget.getNext();
+>     if (firstArg == null) {
+>       return subtree;
+>     }
+1000,1001c1010,1012
+<     if (left == null) {
+<       return n;
+---
+>     if (!NodeUtil.isGet(callTarget) ||
+>         !NodeUtil.isImmutableValue(firstArg)) {
+>       return subtree;
+1004c1015,1016
+<     Node right = left.getNext();
+---
+>     Node stringNode = callTarget.getFirstChild();
+>     Node functionName = stringNode.getNext();
+1006,1007c1018,1020
+<     if (right == null) {
+<       return n;
+---
+>     if ((stringNode.getType() != Token.STRING) || (
+>         (functionName.getType() != Token.STRING))) {
+>       return subtree;
+1010,1011c1023,1031
+<     if (!NodeUtil.isGetProp(left) || !NodeUtil.isImmutableValue(right)) {
+<       return n;
+---
+>     String functionNameString = functionName.getString();
+>     if (functionNameString.equals("indexOf") ||
+>         functionNameString.equals("lastIndexOf")) {
+>       subtree = tryFoldStringIndexOf(subtree, functionNameString,
+>           stringNode, firstArg);
+>     } else if (functionNameString.equals("substr")) {
+>       subtree = tryFoldStringSubstr(subtree, stringNode, firstArg);
+>     } else if (functionNameString.equals("substring")) {
+>       subtree = tryFoldStringSubstring(subtree, stringNode, firstArg);
+1014,1015c1034,1038
+<     Node lstringNode = left.getFirstChild();
+<     Node functionName = lstringNode.getNext();
+---
+>     return subtree;
+>  }
+> 
+>   
+> 
+1017,1021c1040,1045
+<     if ((lstringNode.getType() != Token.STRING) ||
+<         (!functionName.getString().equals("indexOf") &&
+<         !functionName.getString().equals("lastIndexOf"))) {
+<       return n;
+<     }
+---
+> 
+> 
+>   private Node tryFoldStringIndexOf(
+>       Node n, String functionName, Node lstringNode, Node firstArg) {
+>     Preconditions.checkArgument(n.getType() == Token.CALL);
+>     Preconditions.checkArgument(lstringNode.getType() == Token.STRING);
+1024,1026c1048,1049
+<     boolean isIndexOf = functionName.getString().equals("indexOf");
+<     Node firstArg = right;
+<     Node secondArg = right.getNext();
+---
+>     boolean isIndexOf = functionName.equals("indexOf");
+>     Node secondArg = firstArg.getNext();
+1055,1056c1078,1079
+<   private Node tryFoldStringJoin(Node n) {
+<     Node left = n.getFirstChild();
+---
+>   private Node tryFoldArrayJoin(Node n) {
+>     Node callTarget = n.getFirstChild();
+1058c1081
+<     if (left == null) {
+---
+>     if (callTarget == null) {
+1062c1085
+<     Node right = left.getNext();
+---
+>     Node right = callTarget.getNext();
+1068c1091
+<     if (!NodeUtil.isGetProp(left) || !NodeUtil.isImmutableValue(right)) {
+---
+>     if (!NodeUtil.isGetProp(callTarget) || !NodeUtil.isImmutableValue(right)) {
+1072c1095
+<     Node arrayNode = left.getFirstChild();
+---
+>     Node arrayNode = callTarget.getFirstChild();
+1164a1188,1294
+>   }
+> 
+>   
+> 
+> 
+>   private Node tryFoldStringSubstr(Node n, Node stringNode, Node arg1) {
+>     Preconditions.checkArgument(n.getType() == Token.CALL);
+>     Preconditions.checkArgument(stringNode.getType() == Token.STRING);
+> 
+>     int start, length;
+>     String stringAsString = stringNode.getString();
+> 
+>     
+>     
+>     if (arg1 != null && arg1.getType() == Token.NUMBER) {
+>       start = (int) arg1.getDouble();
+>     } else {
+>       return n;
+>     }
+> 
+>     Node arg2 = arg1.getNext();
+>     if (arg2 != null) {
+>       if (arg2.getType() == Token.NUMBER) {
+>         length = (int) arg2.getDouble();
+>       } else {
+>         return n;
+>       }
+> 
+>       if (arg2.getNext() != null) {
+>         
+>         return n;
+>       }
+>     } else {
+>       
+>       length = stringAsString.length() - start;
+>     }
+> 
+>     
+>     
+>     
+>     
+>     if ((start + length) > stringAsString.length() ||
+>         (length < 0) ||
+>         (start < 0)) {
+>       return n;
+>     }
+> 
+>     String result = stringAsString.substring(start, start + length);
+>     Node resultNode = Node.newString(result);
+> 
+>     Node parent = n.getParent();
+>     parent.replaceChild(n, resultNode);
+>     reportCodeChange();
+>     return resultNode;
+>   }
+> 
+>   
+> 
+> 
+>   private Node tryFoldStringSubstring(Node n, Node stringNode, Node arg1) {
+>     Preconditions.checkArgument(n.getType() == Token.CALL);
+>     Preconditions.checkArgument(stringNode.getType() == Token.STRING);
+> 
+>     int start, end;
+>     String stringAsString = stringNode.getString();
+> 
+>     if (arg1 != null && arg1.getType() == Token.NUMBER) {
+>       start = (int) arg1.getDouble();
+>     } else {
+>       return n;
+>     }
+> 
+>     Node arg2 = arg1.getNext();
+>     if (arg2 != null) {
+>       if (arg2.getType() == Token.NUMBER) {
+>         end = (int) arg2.getDouble();
+>       } else {
+>         return n;
+>       }
+> 
+>       if (arg2.getNext() != null) {
+>         
+>         return n;
+>       }
+>     } else {
+>       
+>       end = stringAsString.length();
+>     }
+> 
+>     
+>     
+>     
+>     
+>     if ((end > stringAsString.length()) ||
+>         (start > stringAsString.length()) ||
+>         (end < 0) ||
+>         (start < 0)) {
+>       return n;
+>     }
+> 
+>     String result = stringAsString.substring(start, end);
+>     Node resultNode = Node.newString(result);
+> 
+>     Node parent = n.getParent();
+>     parent.replaceChild(n, resultNode);
+>     reportCodeChange();
+>     return resultNode;

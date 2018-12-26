@@ -1,0 +1,32 @@
+18a19
+> import java.util.Date;
+20a22
+> import java.util.TimeZone;
+246a249,259
+>     public Date toDate() {
+>         long millis = getMillis();
+>         long millisLocal = millis - TimeZone.getDefault().getOffset(millis);
+>         return new Date(millisLocal + getZone().getOffsetFromLocal(millisLocal));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+256c269
+<         cal.setTime(toDate());
+---
+>         cal.setTime(convertToDate(cal));
+268c281
+<         cal.setTime(toDate());
+---
+>         cal.setTime(convertToDate(cal));
+269a283,289
+>     }
+> 
+>     private Date convertToDate(Calendar cal) {
+>         long millis = getMillis();
+>         long millisLocal = millis - cal.getTimeZone().getOffset(millis);
+>         millis = millisLocal + getZone().getOffsetFromLocal(millisLocal);
+>         return new Date(millis);

@@ -1,0 +1,28 @@
+446a447,451
+>     if (options.reserveRawExports) {
+>       passes.add(gatherRawExports);
+>     }
+> 
+>     
+670a676,696
+>     }
+>   };
+> 
+>   
+>   final PassFactory gatherRawExports =
+>       new PassFactory("gatherRawExports", false) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       final GatherRawExports pass = new GatherRawExports(
+>           compiler);
+> 
+>       return new CompilerPass() {
+>         @Override
+>         public void process(Node externs, Node root) {
+>           pass.process(externs, root);
+>           if (exportedNames == null) {
+>             exportedNames = Sets.newHashSet();
+>           }
+>           exportedNames.addAll(pass.getExportedVariableNames());
+>         }
+>       };

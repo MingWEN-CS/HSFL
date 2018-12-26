@@ -1,0 +1,27 @@
+20a21
+> import com.google.common.collect.Iterables;
+312a314,315
+>       } else if (p.isSimpleStubDeclaration()) {
+>         flattenSimpleStubDeclaration(p, propAlias);
+317a321,341
+> 
+> 
+>   
+> 
+> 
+> 
+>   private void flattenSimpleStubDeclaration(Name name, String alias) {
+>     Ref ref = Iterables.getOnlyElement(name.getRefs());
+>     Node nameNode = NodeUtil.newName(
+>         compiler.getCodingConvention(), alias, ref.node,
+>         name.fullName());
+>     Node varNode = new Node(Token.VAR, nameNode).copyInformationFrom(nameNode);
+> 
+>     Preconditions.checkState(
+>         ref.node.getParent().getType() == Token.EXPR_RESULT);
+>     Node parent = ref.node.getParent();
+>     Node gramps = parent.getParent();
+>     gramps.replaceChild(parent, varNode);
+>     compiler.reportCodeChange();
+>   }
+> 

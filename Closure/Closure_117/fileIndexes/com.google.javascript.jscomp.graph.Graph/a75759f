@@ -1,0 +1,339 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp.graph;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class Graph<N, E> implements AdjacencyGraph<N, E> {
+  
+
+
+
+  private static final class AnnotationState {
+    private final Annotatable first;
+    private final Annotation second;
+
+    public AnnotationState(Annotatable annotatable, Annotation annotation) {
+      this.first = annotatable;
+      this.second = annotation;
+    }
+  }
+
+  
+
+
+
+  private static class GraphAnnotationState extends ArrayList<AnnotationState> {
+    private static final long serialVersionUID = 1L;
+
+    public GraphAnnotationState(int size) {
+      super(size);
+    }
+  }
+
+  
+
+
+  private Deque<GraphAnnotationState> nodeAnnotationStack;
+
+  
+
+
+  private Deque<GraphAnnotationState> edgeAnnotationStack;
+
+  
+
+
+
+
+
+
+  public abstract void connect(N n1, E edge, N n2);
+
+  
+
+
+
+
+
+  public abstract void disconnect(N n1, N n2);
+
+  
+
+
+
+
+
+
+
+  public final void connectIfNotFound(N n1, E edge, N n2) {
+    if (!isConnected(n1, edge, n2)) {
+      connect(n1, edge, n2);
+    }
+  }
+
+  
+
+
+
+
+
+
+
+  public abstract GraphNode<N, E> createNode(N value);
+
+  
+  public abstract Collection<GraphNode<N, E>> getNodes();
+
+  
+  public abstract List<GraphEdge<N, E>> getEdges();
+
+  
+
+
+
+
+
+  public abstract int getNodeDegree(N value);
+
+  public int getWeight(N value) {
+    return getNodeDegree(value);
+  }
+
+  
+
+
+
+
+
+  public abstract List<GraphNode<N, E>> getNeighborNodes(N value);
+
+  public abstract Iterator<GraphNode<N, E>> getNeighborNodesIterator(N value);
+
+  
+
+
+
+
+
+
+  public abstract List<GraphEdge<N, E>> getEdges(N n1, N n2);
+
+  
+
+
+
+
+
+
+  public final boolean hasNode(N n) {
+    return getNode(n) != null;
+  }
+
+  
+
+
+
+
+
+
+  public abstract boolean isConnected(N n1, N n2);
+
+  
+
+
+
+
+
+
+
+  public abstract boolean isConnected(N n1, E e, N n2);
+
+  
+
+
+
+  @SuppressWarnings("unchecked")
+  <T extends GraphNode<N, E>> T getNodeOrFail(N val) {
+    T node = (T) getNode(val);
+    if (node == null) {
+      throw new IllegalArgumentException(val + " does not exist in graph");
+    }
+    return node;
+  }
+
+  public final void clearNodeAnnotations() {
+    for (GraphNode<N, E> n : getNodes()) {
+      n.setAnnotation(null);
+    }
+  }
+
+  
+  public final void clearEdgeAnnotations() {
+    for (GraphEdge<N, E> e : getEdges()) {
+      e.setAnnotation(null);
+    }
+  }
+
+  
+
+
+
+  public final void pushNodeAnnotations() {
+    if (nodeAnnotationStack == null) {
+      nodeAnnotationStack = Lists.newLinkedList();
+    }
+    pushAnnotations(nodeAnnotationStack, getNodes());
+  }
+
+  
+
+
+
+  public final void popNodeAnnotations() {
+    Preconditions.checkNotNull(nodeAnnotationStack,
+        "Popping node annotations without pushing.");
+    popAnnotations(nodeAnnotationStack);
+  }
+
+  
+
+
+
+  public final void pushEdgeAnnotations() {
+    if (edgeAnnotationStack == null) {
+      edgeAnnotationStack = Lists.newLinkedList();
+    }
+    pushAnnotations(edgeAnnotationStack, getEdges());
+  }
+
+  
+
+
+
+  public final void popEdgeAnnotations() {
+    Preconditions.checkNotNull(edgeAnnotationStack,
+        "Popping edge annotations without pushing.");
+    popAnnotations(edgeAnnotationStack);
+  }
+
+  
+
+
+
+
+
+  public interface GraphEdge<N, E> extends Annotatable {
+    
+
+
+
+
+    E getValue();
+
+    GraphNode<N, E> getNodeA();
+
+    GraphNode<N, E> getNodeB();
+  }
+
+  
+
+
+
+  class SimpleSubGraph<N, E> implements SubGraph<N, E> {
+    private Graph<N, E> graph;
+    private List<GraphNode<N, E>> nodes = Lists.newArrayList();
+
+    SimpleSubGraph(Graph<N, E> graph) {
+      this.graph = graph;
+    }
+
+    public boolean isIndependentOf(N value) {
+      GraphNode<N, E> node = graph.getNode(value);
+      for (GraphNode<N, E> n : nodes) {
+        if (graph.getNeighborNodes(n.getValue()).contains(node)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public void addNode(N value) {
+      nodes.add(graph.getNodeOrFail(value));
+    }
+  }
+
+  
+
+
+
+  private static void pushAnnotations(
+      Deque<GraphAnnotationState> stack,
+      Collection<? extends Annotatable> haveAnnotations) {
+    stack.push(new GraphAnnotationState(haveAnnotations.size()));
+    for (Annotatable h : haveAnnotations) {
+      stack.peek().add(new AnnotationState(h, h.getAnnotation()));
+      h.setAnnotation(null);
+    }
+  }
+
+  
+
+
+  private static void popAnnotations(Deque<GraphAnnotationState> stack) {
+    for (AnnotationState as : stack.pop()) {
+      as.first.setAnnotation(as.second);
+    }
+  }
+}

@@ -1,0 +1,609 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat.descriptive.moment;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.exception.NullArgumentException;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+import org.apache.commons.math.stat.descriptive.WeightedEvaluation;
+import org.apache.commons.math.stat.descriptive.AbstractStorelessUnivariateStatistic;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Variance extends AbstractStorelessUnivariateStatistic implements Serializable, WeightedEvaluation {
+
+    
+    private static final long serialVersionUID = -9111962718267217978L;
+
+    
+    protected SecondMoment moment = null;
+
+    
+
+
+
+
+    protected boolean incMoment = true;
+
+    
+
+
+
+
+    private boolean isBiasCorrected = true;
+
+    
+
+
+
+    public Variance() {
+        moment = new SecondMoment();
+    }
+
+    
+
+
+
+
+
+    public Variance(final SecondMoment m2) {
+        incMoment = false;
+        this.moment = m2;
+    }
+
+    
+
+
+
+
+
+
+
+    public Variance(boolean isBiasCorrected) {
+        moment = new SecondMoment();
+        this.isBiasCorrected = isBiasCorrected;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Variance(boolean isBiasCorrected, SecondMoment m2) {
+        incMoment = false;
+        this.moment = m2;
+        this.isBiasCorrected = isBiasCorrected;
+    }
+
+    
+
+
+
+
+
+    public Variance(Variance original) {
+        copy(original, this);
+    }
+
+    
+
+
+
+
+
+
+
+
+    @Override
+    public void increment(final double d) {
+        if (incMoment) {
+            moment.increment(d);
+        }
+    }
+
+    
+
+
+    @Override
+    public double getResult() {
+            if (moment.n == 0) {
+                return Double.NaN;
+            } else if (moment.n == 1) {
+                return 0d;
+            } else {
+                if (isBiasCorrected) {
+                    return moment.m2 / (moment.n - 1d);
+                } else {
+                    return moment.m2 / (moment.n);
+                }
+            }
+    }
+
+    
+
+
+    public long getN() {
+        return moment.getN();
+    }
+
+    
+
+
+    @Override
+    public void clear() {
+        if (incMoment) {
+            moment.clear();
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public double evaluate(final double[] values) {
+        if (values == null) {
+            throw new NullArgumentException(LocalizedFormats.INPUT_ARRAY);
+        }
+        return evaluate(values, 0, values.length);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public double evaluate(final double[] values, final int begin, final int length) {
+
+        double var = Double.NaN;
+
+        if (test(values, begin, length)) {
+            clear();
+            if (length == 1) {
+                var = 0.0;
+            } else if (length > 1) {
+                Mean mean = new Mean();
+                double m = mean.evaluate(values, begin, length);
+                var = evaluate(values, m, begin, length);
+            }
+        }
+        return var;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double[] weights,
+                           final int begin, final int length) {
+
+        double var = Double.NaN;
+
+        if (test(values, weights,begin, length)) {
+            clear();
+            if (length == 1) {
+                var = 0.0;
+            } else if (length > 1) {
+                Mean mean = new Mean();
+                double m = mean.evaluate(values, weights, begin, length);
+                var = evaluate(values, weights, m, begin, length);
+            }
+        }
+        return var;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double[] weights) {
+        return evaluate(values, weights, 0, values.length);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double mean,
+            final int begin, final int length) {
+
+        double var = Double.NaN;
+
+        if (test(values, begin, length)) {
+            if (length == 1) {
+                var = 0.0;
+            } else if (length > 1) {
+                double accum = 0.0;
+                double dev = 0.0;
+                double accum2 = 0.0;
+                for (int i = begin; i < begin + length; i++) {
+                    dev = values[i] - mean;
+                    accum += dev * dev;
+                    accum2 += dev;
+                }
+                double len = length;
+                if (isBiasCorrected) {
+                    var = (accum - (accum2 * accum2 / len)) / (len - 1.0);
+                } else {
+                    var = (accum - (accum2 * accum2 / len)) / len;
+                }
+            }
+        }
+        return var;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double mean) {
+        return evaluate(values, mean, 0, values.length);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double[] weights,
+                           final double mean, final int begin, final int length) {
+
+        double var = Double.NaN;
+
+        if (test(values, weights, begin, length)) {
+            if (length == 1) {
+                var = 0.0;
+            } else if (length > 1) {
+                double accum = 0.0;
+                double dev = 0.0;
+                double accum2 = 0.0;
+                for (int i = begin; i < begin + length; i++) {
+                    dev = values[i] - mean;
+                    accum += weights[i] * (dev * dev);
+                    accum2 += weights[i] * dev;
+                }
+
+                double sumWts = 0;
+                for (int i = 0; i < weights.length; i++) {
+                    sumWts += weights[i];
+                }
+
+                if (isBiasCorrected) {
+                    var = (accum - (accum2 * accum2 / sumWts)) / (sumWts - 1.0);
+                } else {
+                    var = (accum - (accum2 * accum2 / sumWts)) / sumWts;
+                }
+            }
+        }
+        return var;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double[] weights, final double mean) {
+        return evaluate(values, weights, mean, 0, values.length);
+    }
+
+    
+
+
+    public boolean isBiasCorrected() {
+        return isBiasCorrected;
+    }
+
+    
+
+
+    public void setBiasCorrected(boolean biasCorrected) {
+        this.isBiasCorrected = biasCorrected;
+    }
+
+    
+
+
+    @Override
+    public Variance copy() {
+        Variance result = new Variance();
+        copy(this, result);
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+    public static void copy(Variance source, Variance dest) {
+        if (source == null ||
+            dest == null) {
+            throw new NullArgumentException();
+        }
+        dest.moment = source.moment.copy();
+        dest.isBiasCorrected = source.isBiasCorrected;
+        dest.incMoment = source.incMoment;
+    }
+}

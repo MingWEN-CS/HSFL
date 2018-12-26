@@ -1,0 +1,28 @@
+80,86c80,87
+<   
+<   
+<   static final DiagnosticType INVALIDATION = DiagnosticType.warning(
+<       "JSC_INVALIDATION",
+<       "Property disambiguator skipping all instances of property {0} "
+<       + "because of type {1} node {2}");
+<   private final boolean showInvalidationWarnings = false;
+---
+>   static class Warnings {
+>     static final DiagnosticType INVALIDATION = DiagnosticType.disabled(
+>         "JSC_INVALIDATION",
+>         "Property disambiguator skipping all instances of property {0} "
+>         + "because of type {1} node {2}");
+>   }
+> 
+>   private final boolean showInvalidationWarnings;
+274a276,277
+>     this.showInvalidationWarnings = compiler.getErrorLevel(
+>         JSError.make("", 0, 0, Warnings.INVALIDATION)) != CheckLevel.OFF;
+403c406
+<               t.getSourceName(), n, INVALIDATION, name,
+---
+>               t.getSourceName(), n, Warnings.INVALIDATION, name,
+426c429
+<                   t.getSourceName(), child, INVALIDATION, name,
+---
+>                   t.getSourceName(), child, Warnings.INVALIDATION, name,

@@ -1,0 +1,403 @@
+1a2,403
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math.analysis.solvers;
+> 
+> import java.io.Serializable;
+> 
+> import org.apache.commons.math.FunctionEvaluationException;
+> import org.apache.commons.math.MathRuntimeException;
+> import org.apache.commons.math.analysis.UnivariateRealFunction;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public abstract class UnivariateRealSolverImpl implements UnivariateRealSolver,
+>     Serializable {
+> 
+>     
+>     private static final long serialVersionUID = 1112491292565386596L;
+>     
+>     
+>     protected double absoluteAccuracy;
+> 
+>     
+>     protected double relativeAccuracy;
+> 
+>     
+>     protected double functionValueAccuracy;
+> 
+>     
+>     protected int maximalIterationCount;
+> 
+>     
+>     protected double defaultAbsoluteAccuracy;
+> 
+>     
+>     protected double defaultRelativeAccuracy;
+> 
+>     
+>     protected double defaultFunctionValueAccuracy;
+> 
+>     
+>     protected int defaultMaximalIterationCount;
+> 
+>     
+>     protected boolean resultComputed = false;
+> 
+>     
+>     protected double result;
+> 
+>     
+>     protected double functionValue;
+> 
+>     
+>     
+>     protected int iterationCount;
+> 
+>     
+> 
+> 
+> 
+> 
+>     @Deprecated
+>     protected UnivariateRealFunction f;
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     @Deprecated
+>     protected UnivariateRealSolverImpl(
+>         UnivariateRealFunction f,
+>         int defaultMaximalIterationCount,
+>         double defaultAbsoluteAccuracy) {
+>         
+>         if (f == null) {
+>             throw MathRuntimeException.createIllegalArgumentException("function to solve cannot be null",
+>                                                                       null);
+>         }
+>         this.f = f;
+> 
+>         this.defaultAbsoluteAccuracy = defaultAbsoluteAccuracy;
+>         this.defaultRelativeAccuracy = 1E-14;
+>         this.defaultFunctionValueAccuracy = 1E-15;
+>         this.absoluteAccuracy = defaultAbsoluteAccuracy;
+>         this.relativeAccuracy = defaultRelativeAccuracy;
+>         this.functionValueAccuracy = defaultFunctionValueAccuracy;
+>         this.defaultMaximalIterationCount = defaultMaximalIterationCount;
+>         this.maximalIterationCount = defaultMaximalIterationCount;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected UnivariateRealSolverImpl(int defaultMaximalIterationCount,
+>                                        double defaultAbsoluteAccuracy) {
+>         this.defaultAbsoluteAccuracy = defaultAbsoluteAccuracy;
+>         this.defaultRelativeAccuracy = 1E-14;
+>         this.defaultFunctionValueAccuracy = 1E-15;
+>         this.absoluteAccuracy = defaultAbsoluteAccuracy;
+>         this.relativeAccuracy = defaultRelativeAccuracy;
+>         this.functionValueAccuracy = defaultFunctionValueAccuracy;
+>         this.defaultMaximalIterationCount = defaultMaximalIterationCount;
+>         this.maximalIterationCount = defaultMaximalIterationCount;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public double getResult() {
+>         if (resultComputed) {
+>             return result;
+>         } else {
+>             throw MathRuntimeException.createIllegalStateException("no result available", null);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public double getFunctionValue() {
+>         if (resultComputed) {
+>             return functionValue;
+>         } else {
+>             throw MathRuntimeException.createIllegalStateException("no result available", null);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int getIterationCount() {
+>         if (resultComputed) {
+>             return iterationCount;
+>         } else {
+>             throw MathRuntimeException.createIllegalStateException("no result available", null);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     protected final void setResult(double result, int iterationCount) {
+>         this.result = result;
+>         this.iterationCount = iterationCount;
+>         this.resultComputed = true;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected final void setResult(double x, double fx, int iterationCount) {
+>         this.result = x;
+>         this.functionValue = fx;
+>         this.iterationCount = iterationCount;
+>         this.resultComputed = true;
+>     }
+> 
+>     
+> 
+> 
+>     protected final void clearResult() {
+>         this.resultComputed = false;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setAbsoluteAccuracy(double accuracy) {
+>         absoluteAccuracy = accuracy;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public double getAbsoluteAccuracy() {
+>         return absoluteAccuracy;
+>     }
+> 
+>     
+> 
+> 
+>     public void resetAbsoluteAccuracy() {
+>         absoluteAccuracy = defaultAbsoluteAccuracy;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public void setMaximalIterationCount(int count) {
+>         maximalIterationCount = count;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public int getMaximalIterationCount() {
+>         return maximalIterationCount;
+>     }
+> 
+>     
+> 
+> 
+>     public void resetMaximalIterationCount() {
+>         maximalIterationCount = defaultMaximalIterationCount;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setRelativeAccuracy(double accuracy) {
+>         relativeAccuracy = accuracy;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public double getRelativeAccuracy() {
+>         return relativeAccuracy;
+>     }
+> 
+>     
+> 
+> 
+>     public void resetRelativeAccuracy() {
+>         relativeAccuracy = defaultRelativeAccuracy;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setFunctionValueAccuracy(double accuracy) {
+>         functionValueAccuracy = accuracy;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public double getFunctionValueAccuracy() {
+>         return functionValueAccuracy;
+>     }
+> 
+>     
+> 
+> 
+>     public void resetFunctionValueAccuracy() {
+>         functionValueAccuracy = defaultFunctionValueAccuracy;
+>     }
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected boolean isBracketing(double lower, double upper, 
+>             UnivariateRealFunction f) throws FunctionEvaluationException {
+>         double f1 = f.value(lower);
+>         double f2 = f.value(upper);
+>         return ((f1 > 0 && f2 < 0) || (f1 < 0 && f2 > 0));
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected boolean isSequence(double start, double mid, double end) {
+>         return (start < mid) && (mid < end);
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void verifyInterval(double lower, double upper) {
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException
+>                 ("Endpoints do not specify an interval: [" + lower + 
+>                         "," + upper + "]");
+>         }       
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void verifySequence(double lower, double initial, double upper) {
+>         if (!isSequence(lower, initial, upper)) {
+>             throw new IllegalArgumentException
+>                 ("Invalid interval, initial value parameters:  lower=" + 
+>                    lower + " initial=" + initial + " upper=" + upper);
+>         }       
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void verifyBracketing(double lower, double upper, 
+>             UnivariateRealFunction f) throws FunctionEvaluationException {
+>         
+>         verifyInterval(lower, upper);
+>         if (!isBracketing(lower, upper, f)) {
+>             throw new IllegalArgumentException
+>             ("Function values at endpoints do not have different signs." +
+>                     "  Endpoints: [" + lower + "," + upper + "]" + 
+>                     "  Values: [" + f.value(lower) + "," + f.value(upper) + "]");       
+>         }
+>     }
+> }

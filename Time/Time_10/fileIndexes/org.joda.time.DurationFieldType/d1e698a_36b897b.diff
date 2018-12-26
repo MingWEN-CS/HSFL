@@ -1,0 +1,278 @@
+57,58d56
+< import java.util.HashMap;
+< import java.util.Map;
+66c64,65
+< public class DurationFieldType implements Serializable {
+---
+> 
+> public abstract class DurationFieldType implements Serializable {
+72c71,84
+<     private static Map cCache = new HashMap();
+---
+>     static final byte
+>         ERAS = 1,
+>         CENTURIES = 2,
+>         WEEKYEARS = 3,
+>         YEARS = 4,
+>         MONTHS = 5,
+>         WEEKS = 6,
+>         DAYS = 7,
+>         HALFDAYS = 8,
+>         HOURS = 9,
+>         MINUTES = 10,
+>         SECONDS = 11,
+>         MILLIS = 12;
+> 
+74c86
+<     private static final DurationFieldType ERAS = new DurationFieldType("eras");
+---
+>     static final DurationFieldType ERAS_TYPE = new StandardDurationFieldType("eras", ERAS);
+76c88
+<     private static final DurationFieldType CENTURIES = new DurationFieldType("centuries");
+---
+>     static final DurationFieldType CENTURIES_TYPE = new StandardDurationFieldType("centuries", CENTURIES);
+78c90
+<     private static final DurationFieldType WEEKYEARS = new DurationFieldType("weekyears");
+---
+>     static final DurationFieldType WEEKYEARS_TYPE = new StandardDurationFieldType("weekyears", WEEKYEARS);
+80c92
+<     private static final DurationFieldType YEARS = new DurationFieldType("years");
+---
+>     static final DurationFieldType YEARS_TYPE = new StandardDurationFieldType("years", YEARS);
+82c94
+<     private static final DurationFieldType MONTHS = new DurationFieldType("months");
+---
+>     static final DurationFieldType MONTHS_TYPE = new StandardDurationFieldType("months", MONTHS);
+84c96
+<     private static final DurationFieldType WEEKS = new DurationFieldType("weeks");
+---
+>     static final DurationFieldType WEEKS_TYPE = new StandardDurationFieldType("weeks", WEEKS);
+86c98
+<     private static final DurationFieldType DAYS = new DurationFieldType("days");
+---
+>     static final DurationFieldType DAYS_TYPE = new StandardDurationFieldType("days", DAYS);
+88c100
+<     private static final DurationFieldType HALFDAYS = new DurationFieldType("halfdays");
+---
+>     static final DurationFieldType HALFDAYS_TYPE = new StandardDurationFieldType("halfdays", HALFDAYS);
+90c102
+<     private static final DurationFieldType HOURS = new DurationFieldType("hours");
+---
+>     static final DurationFieldType HOURS_TYPE = new StandardDurationFieldType("hours", HOURS);
+92c104
+<     private static final DurationFieldType MINUTES = new DurationFieldType("minutes");
+---
+>     static final DurationFieldType MINUTES_TYPE = new StandardDurationFieldType("minutes", MINUTES);
+94c106
+<     private static final DurationFieldType SECONDS = new DurationFieldType("seconds");
+---
+>     static final DurationFieldType SECONDS_TYPE = new StandardDurationFieldType("seconds", SECONDS);
+96c108
+<     private static final DurationFieldType MILLIS = new DurationFieldType("millis");
+---
+>     static final DurationFieldType MILLIS_TYPE = new StandardDurationFieldType("millis", MILLIS);
+107,148c119
+< 
+< 
+< 
+< 
+<     public static synchronized DurationFieldType getInstance(String name) {
+<         DurationFieldType type = (DurationFieldType) cCache.get(name);
+<         if (type == null) {
+<             throw new IllegalArgumentException("The field '" + name + "' is unknown");
+<         }
+<         return type;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static synchronized DurationFieldType define(String name) {
+<         DurationFieldType type = (DurationFieldType) cCache.get(name);
+<         if (type == null) {
+<             return new DurationFieldType(name);
+<         }
+<         return type;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     private DurationFieldType(String name) {
+---
+>     protected DurationFieldType(String name) {
+151,160d121
+<         cCache.put(name, this);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private Object readResolve() {
+<         return getInstance(iName);
+170c131
+<         return MILLIS;
+---
+>         return MILLIS_TYPE;
+179c140
+<         return SECONDS;
+---
+>         return SECONDS_TYPE;
+188c149
+<         return MINUTES;
+---
+>         return MINUTES_TYPE;
+197c158
+<         return HOURS;
+---
+>         return HOURS_TYPE;
+206c167
+<         return HALFDAYS;
+---
+>         return HALFDAYS_TYPE;
+216c177
+<         return DAYS;
+---
+>         return DAYS_TYPE;
+225c186
+<         return WEEKS;
+---
+>         return WEEKS_TYPE;
+234c195
+<         return WEEKYEARS;
+---
+>         return WEEKYEARS_TYPE;
+243c204
+<         return MONTHS;
+---
+>         return MONTHS_TYPE;
+252c213
+<         return YEARS;
+---
+>         return YEARS_TYPE;
+261c222
+<         return CENTURIES;
+---
+>         return CENTURIES_TYPE;
+270c231
+<         return ERAS;
+---
+>         return ERAS_TYPE;
+288a250,258
+> 
+> 
+>     public abstract DurationField getField(Chronology chronology);
+> 
+>     
+> 
+> 
+> 
+> 
+292a263,352
+>     private static class StandardDurationFieldType extends DurationFieldType {
+>         
+>         private static final long serialVersionUID = 31156755687123L;
+> 
+>         
+>         private final byte iOrdinal;
+> 
+>         
+> 
+> 
+> 
+> 
+>         StandardDurationFieldType(String name, byte ordinal) {
+>             super(name);
+>             iOrdinal = ordinal;
+>         }
+> 
+>         public DurationField getField(Chronology chronology) {
+>             chronology = DateTimeUtils.getChronology(chronology);
+>             
+>             switch (iOrdinal) {
+>             case ERAS:
+>                 return chronology.eras();
+>             case CENTURIES:
+>                 return chronology.centuries();
+>             case WEEKYEARS:
+>                 return chronology.weekyears();
+>             case YEARS:
+>                 return chronology.years();
+>             case MONTHS:
+>                 return chronology.months();
+>             case WEEKS:
+>                 return chronology.weeks();
+>             case DAYS:
+>                 return chronology.days();
+>                 
+>                 
+>                 
+>             case HOURS:
+>                 return chronology.hours();
+>             case MINUTES:
+>                 return chronology.minutes();
+>             case SECONDS:
+>                 return chronology.seconds();
+>             case MILLIS:
+>                 return chronology.millis();
+>             default:
+>                 
+>                 throw new IllegalStateException();
+>             }
+>         }
+> 
+>         
+> 
+> 
+> 
+> 
+>         private Object readResolve() {
+>             switch (iOrdinal) {
+>             case ERAS:
+>                 return ERAS_TYPE;
+>             case CENTURIES:
+>                 return CENTURIES_TYPE;
+>             case WEEKYEARS:
+>                 return WEEKYEARS_TYPE;
+>             case YEARS:
+>                 return YEARS_TYPE;
+>             case MONTHS:
+>                 return MONTHS_TYPE;
+>             case WEEKS:
+>                 return WEEKS_TYPE;
+>             case DAYS:
+>                 return DAYS_TYPE;
+>             case HALFDAYS:
+>                 return HALFDAYS_TYPE;
+>             case HOURS:
+>                 return HOURS_TYPE;
+>             case MINUTES:
+>                 return MINUTES_TYPE;
+>             case SECONDS:
+>                 return SECONDS_TYPE;
+>             case MILLIS:
+>                 return MILLIS_TYPE;
+>             default:
+>                 
+>                 return this;
+>             }
+>         }
+> 
+>     }

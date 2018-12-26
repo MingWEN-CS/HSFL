@@ -1,0 +1,140 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+
+
+
+
+
+
+
+
+
+
+
+public class StatementFusion extends AbstractPeepholeOptimization {
+
+  @Override
+  Node optimizeSubtree(Node n) {
+    
+    if (!NodeUtil.isFunction(n.getParent()) && canFuseIntoOneStatement(n)) {
+      fuseIntoOneStatement(n);
+      reportCodeChange();
+    }
+    return n;
+  }
+
+  private static boolean canFuseIntoOneStatement(Node block) {
+    
+    if (block.getType() != Token.BLOCK) {
+      return false;
+    }
+
+    
+    if (!block.hasChildren() || block.hasOneChild()) {
+      return false;
+    }
+
+    Node last = block.getLastChild();
+
+    for (Node c = block.getFirstChild(); c != null; c = c.getNext()) {
+      if (!NodeUtil.isExpressionNode(c) && c != last) {
+        return false;
+      }
+    }
+
+    
+    
+    switch(last.getType()) {
+      case Token.IF:
+      case Token.THROW:
+      case Token.SWITCH:
+      case Token.EXPR_RESULT:
+        return true;
+      case Token.RETURN:
+        
+        return last.hasChildren();
+    }
+
+    return false;
+  }
+
+  private void fuseIntoOneStatement(Node block) {
+    Node cur = block.removeFirstChild();
+
+    
+    Node commaTree = cur.removeFirstChild();
+
+
+    while (block.hasMoreThanOneChild()) {
+      Node next = block.removeFirstChild().removeFirstChild();
+      commaTree = fuseExpressionIntoExpression(commaTree, next);
+    }
+
+    Preconditions.checkState(block.hasOneChild());
+    Node last = block.getLastChild();
+
+    
+    
+    
+    switch(last.getType()) {
+      case Token.IF:
+      case Token.RETURN:
+      case Token.THROW:
+      case Token.SWITCH:
+      case Token.EXPR_RESULT:
+        fuseExpresssonIntoFirstChild(commaTree, last);
+        return;
+      default:
+        throw new IllegalStateException("Statement fusion missing.");
+    }
+  }
+
+  
+  private static Node fuseExpressionIntoExpression(Node exp1, Node exp2) {
+    Node comma = new Node(Token.COMMA, exp1);
+    comma.copyInformationFrom(exp2);
+
+    
+    
+    
+    if (exp2.getType() == Token.COMMA) {
+      Node leftMostChild = exp2;
+      while(leftMostChild.getType() == Token.COMMA) {
+        leftMostChild = leftMostChild.getFirstChild();
+      }
+      Node parent = leftMostChild.getParent();
+      comma.addChildToBack(leftMostChild.detachFromParent());
+      parent.addChildToFront(comma);
+      return exp2;
+    } else {
+      comma.addChildToBack(exp2);
+      return comma;
+    }
+  }
+
+  private static void fuseExpresssonIntoFirstChild(Node exp, Node stmt) {
+    Node val = stmt.removeFirstChild();
+    Node comma = fuseExpressionIntoExpression(exp, val);
+    stmt.addChildToFront(comma);
+  }
+}

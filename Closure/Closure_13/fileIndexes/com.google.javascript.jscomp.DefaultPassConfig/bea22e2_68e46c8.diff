@@ -1,0 +1,23 @@
+129a130,132
+>   
+>   private String idGeneratorMap = null;
+> 
+141c144
+<         anonymousFunctionNameMap, stringMap, functionNames);
+---
+>         anonymousFunctionNameMap, stringMap, functionNames, idGeneratorMap);
+155a159
+>     this.idGeneratorMap = state.idGeneratorMap;
+1167,1168c1171,1179
+<     protected CompilerPass createInternal(AbstractCompiler compiler) {
+<       return new ReplaceIdGenerators(compiler, options.idGenerators);
+---
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       return new CompilerPass() {
+>         @Override public void process(Node externs, Node root) {
+>           ReplaceIdGenerators pass =
+>               new ReplaceIdGenerators(compiler, options.idGenerators);
+>           pass.process(externs, root);
+>           idGeneratorMap = pass.getIdGeneratorMap();
+>         }
+>       };

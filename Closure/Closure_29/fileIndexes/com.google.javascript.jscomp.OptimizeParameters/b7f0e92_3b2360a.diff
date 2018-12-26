@@ -1,0 +1,271 @@
+18a19
+> import com.google.common.annotations.VisibleForTesting;
+22,25d22
+< import com.google.javascript.jscomp.NameReferenceGraph.Name;
+< import com.google.javascript.jscomp.NameReferenceGraph.Reference;
+< import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+< import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+28a26
+> import java.util.Collection;
+43c41,42
+< class OptimizeParameters implements CompilerPass {
+---
+> class OptimizeParameters
+>     implements CompilerPass, OptimizeCalls.CallGraphCompilerPass {
+46d44
+<   private NameReferenceGraph nameGraph;
+48c46
+<   OptimizeParameters(AbstractCompiler compiler, NameReferenceGraph nameGraph) {
+---
+>   OptimizeParameters(AbstractCompiler compiler) {
+50d47
+<     this.nameGraph = nameGraph;
+53,54c50,52
+<   OptimizeParameters(AbstractCompiler compiler) {
+<     this(compiler, null);
+---
+>   
+>   OptimizeParameters(AbstractCompiler compiler, NameReferenceGraph unused) {
+>     this(compiler);
+57a56
+>   @VisibleForTesting
+59,64c58,61
+<     if (nameGraph == null) {
+<       NameReferenceGraphConstruction c =
+<           new NameReferenceGraphConstruction(compiler);
+<       c.process(externs, root);
+<       nameGraph = c.getNameReferenceGraph();
+<     }
+---
+>     SimpleDefinitionFinder defFinder = new SimpleDefinitionFinder(compiler);
+>     defFinder.process(externs, root);
+>     process(defFinder);
+>   }
+66,72c63,68
+<     for (DiGraphNode<Name, Reference> node :
+<         nameGraph.getDirectedGraphNodes()) {
+<       Name name = node.getValue();
+<       if (name.canChangeSignature()) {
+<         List<DiGraphEdge<Name, Reference>> edges = node.getInEdges();
+<         tryEliminateConstantArgs(name, edges);
+<         tryEliminateOptionalArgs(name, edges);
+---
+>   @Override
+>   public void process(SimpleDefinitionFinder definitions) {
+>     for (DefinitionSite defSite : definitions.getDefinitionSites()) {
+>       if (canChangeSignature(defSite, definitions)) {
+>         tryEliminateConstantArgs(defSite, definitions);
+>         tryEliminateOptionalArgs(defSite, definitions);
+80a77,79
+>   private boolean canChangeSignature(
+>       DefinitionSite definitionSite, SimpleDefinitionFinder defFinder) {
+>     Definition definition = definitionSite.definition;
+82,83c81,83
+<   private void tryEliminateOptionalArgs(Name name,
+<       List<DiGraphEdge<Name, Reference>> edges) {
+---
+>     if (definitionSite.inExterns) {
+>       return false;
+>     }
+87c87,93
+<     int maxArgs = -1;
+---
+>     
+>     Node rValue = definition.getRValue();
+>     if (rValue == null ||
+>         !NodeUtil.isFunction(rValue) ||
+>         NodeUtil.isVarArgsFunction(rValue)) {
+>       return false;
+>     }
+89,98c95,101
+<     for (DiGraphEdge<Name, Reference> refEdge : edges) {
+<       Reference ref = refEdge.getValue();
+<       Node call = ref.parent;
+< 
+<       if (isCallSite(ref)) {
+<         int numArgs = call.getChildCount() - 1;
+<         if (numArgs > maxArgs) {
+<           maxArgs = numArgs;
+<         }
+<       } 
+---
+>     
+>     
+>     
+>     
+>     
+>     if (!OptimizeReturns.isSimpleFunctionDeclaration(rValue)) {
+>       return false;
+101,102c104,106
+<     for (Definition definition : name.getDeclarations()) {
+<       eliminateParamsAfter(definition.getRValue(), maxArgs);
+---
+>     
+>     if (OptimizeReturns.maybeExported(compiler, definition)) {
+>       return false;
+103a108,137
+> 
+>     Collection<UseSite> useSites = defFinder.getUseSites(definition);
+> 
+>     if (useSites.isEmpty()) {
+>       return false;
+>     }
+> 
+>     for (UseSite site : useSites) {
+>       
+>       
+>       
+>       if (!isCallSite(site.node)) {
+>         return false;
+>       }
+> 
+>       
+> 
+>       
+>       
+>       Node nameNode = site.node;
+>       Collection<Definition> singleSiteDefinitions =
+>           defFinder.getDefinitionsReferencedAt(nameNode);
+>       if (singleSiteDefinitions.size() > 1) {
+>         return false;
+>       }
+>       Preconditions.checkState(!singleSiteDefinitions.isEmpty());
+>       Preconditions.checkState(singleSiteDefinitions.contains(definition));
+>     }
+> 
+>     return true;
+108a143,162
+>   private void tryEliminateOptionalArgs(
+>       DefinitionSite defSite, SimpleDefinitionFinder defFinder) {
+>     
+>     
+>     int maxArgs = -1;
+> 
+>     Definition definition = defSite.definition;
+>     Collection<UseSite> useSites = defFinder.getUseSites(definition);
+>     for (UseSite site : useSites) {
+>       Preconditions.checkState(isCallSite(site.node));
+>       Node call = site.node.getParent();
+> 
+>       int numArgs = call.getChildCount() - 1;
+>       if (numArgs > maxArgs) {
+>         maxArgs = numArgs;
+>       }
+>     }
+> 
+>     eliminateParamsAfter(definition.getRValue(), maxArgs);
+>   }
+109a164
+>   
+120,121c175,176
+<   private void tryEliminateConstantArgs(Name name,
+<       List<DiGraphEdge<Name, Reference>> edges) {
+---
+>   private void tryEliminateConstantArgs(
+>       DefinitionSite defSite, SimpleDefinitionFinder defFinder) {
+127,140c182,195
+<     for (DiGraphEdge<Name, Reference> refEdge : edges) {
+<       Reference ref = refEdge.getValue();
+<       Node call = ref.parent;
+< 
+<       if (isCallSite(ref)) {
+<         Node cur = call.getFirstChild();
+<         if (firstCall) {
+<           
+<           
+<           buildParameterList(parameters, cur);
+<           firstCall = false;
+<         } else {
+<           findConstantParameters(parameters, cur);
+<         }
+---
+>     Definition definition = defSite.definition;
+>     Collection<UseSite> useSites = defFinder.getUseSites(definition);
+>     for (UseSite site : useSites) {
+>       Preconditions.checkState(isCallSite(site.node));
+>       Node call = site.node.getParent();
+> 
+>       Node cur = call.getFirstChild();
+>       if (firstCall) {
+>         
+>         
+>         buildParameterList(parameters, cur);
+>         firstCall = false;
+>       } else {
+>         findConstantParameters(parameters, cur);
+145,147c200,202
+<     for (DiGraphEdge<Name, Reference> refEdge : edges) {
+<       Reference ref = refEdge.getValue();
+<       Node call = ref.parent;
+---
+>     for (UseSite site : useSites) {
+>       Preconditions.checkState(isCallSite(site.node));
+>       Node call = site.node.getParent();
+149,151c204
+<       if (isCallSite(ref)) {
+<         optimizeCallSite(parameters, call);
+<       }
+---
+>       optimizeCallSite(parameters, call);
+156,160c209,211
+<     for (Definition definition : name.getDeclarations()) {
+<       Node function = definition.getRValue();
+<       if (NodeUtil.isFunction(function)) {
+<         optimizeFunctionDefinition(parameters, function);
+<       }
+---
+>     Node function = definition.getRValue();
+>     if (NodeUtil.isFunction(function)) {
+>       optimizeFunctionDefinition(parameters, function);
+165c216,217
+<     for (int index = 0; (cur = cur.getNext()) != null; index++) {
+---
+>     int index = 0;
+>     while ((cur = cur.getNext()) != null) {
+168c220
+<       } else if (parameters.get(index).shouldRemove()){
+---
+>       } else if (parameters.get(index).shouldRemove()) {
+173a226,230
+>       index++;
+>     }
+> 
+>     for (;index < parameters.size(); index++) {
+>       parameters.get(index).setShouldRemove(false);
+208,209c265,266
+<   private boolean isCallSite(Reference ref) {
+<     Node call = ref.parent;
+---
+>   private boolean isCallSite(Node fn) {
+>     Node call = fn.getParent();
+213c270
+<     return isCallOrNew(call) && call.getFirstChild() == ref.site;
+---
+>     return isCallOrNew(call) && call.getFirstChild() == fn;
+299,303c356,365
+<     while (formalArgPtr != null) {
+<       Node next = formalArgPtr.getNext();
+<       function.getFirstChild().getNext().removeChild(formalArgPtr);
+<       Node var = new Node(Token.VAR, formalArgPtr);
+<       function.getLastChild().addChildrenToFront(var);
+---
+>     return eliminateParamsAfter(function, formalArgPtr);
+>   }
+> 
+>   private boolean eliminateParamsAfter(Node fnNode, Node argNode) {
+>     if (argNode != null) {
+>       
+>       eliminateParamsAfter(fnNode, argNode.getNext());
+>       argNode.detachFromParent();
+>       Node var = new Node(Token.VAR, argNode).copyInformationFrom(argNode);
+>       fnNode.getLastChild().addChildrenToFront(var);
+305,306c367
+<       paramRemoved = true;
+<       formalArgPtr = next;
+---
+>       return true;
+308,309c369
+< 
+<     return paramRemoved;
+---
+>     return false;

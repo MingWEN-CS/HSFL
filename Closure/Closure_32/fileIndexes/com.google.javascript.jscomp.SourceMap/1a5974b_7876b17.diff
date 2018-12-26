@@ -1,0 +1,100 @@
+19a20,23
+> import com.google.javascript.jscomp.sourcemap.SourceMapGenerator;
+> import com.google.javascript.jscomp.sourcemap.SourceMapGeneratorV1;
+> import com.google.javascript.jscomp.sourcemap.SourceMapGeneratorV2;
+> import com.google.javascript.jscomp.sourcemap.Position;
+33c37
+< public interface SourceMap {
+---
+> public class SourceMap implements SourceMapGenerator {
+35c39
+<   enum Format {
+---
+>   public static enum Format {
+38c42
+<          return new SourceMapLegacy();
+---
+>          return new SourceMap(new SourceMapGeneratorV1());
+43c47
+<          return new SourceMap2();
+---
+>          return new SourceMap(new SourceMapGeneratorV2());
+52c56
+<   public enum DetailLevel implements Predicate<Node> {
+---
+>   public static enum DetailLevel implements Predicate<Node> {
+75,110c79
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   void appendTo(Appendable out, String name) throws IOException;
+< 
+<   
+< 
+< 
+< 
+<   void reset();
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   void addMapping(Node node, Position startPosition, Position endPosition);
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   void setWrapperPrefix(String prefix);
+< 
+<   
+< 
+< 
+---
+>   final SourceMapGenerator generator;
+111a81,83
+>   private SourceMap(SourceMapGenerator generator) {
+>     this.generator = generator;
+>   }
+112a85,89
+>   @Override
+>   public void addMapping(
+>       Node node, Position startPosition, Position endPosition) {
+>     generator.addMapping(node, startPosition, endPosition);
+>   }
+113a91,94
+>   @Override
+>   public void appendTo(Appendable out, String name) throws IOException {
+>     generator.appendTo(out, name);
+>   }
+114a96,99
+>   @Override
+>   public void reset() {
+>     generator.reset();
+>   }
+115a101,104
+>   @Override
+>   public void setStartingPosition(int offsetLine, int offsetIndex) {
+>     generator.setStartingPosition(offsetLine, offsetIndex);
+>   }
+116a106,109
+>   @Override
+>   public void setWrapperPrefix(String prefix) {
+>     generator.setWrapperPrefix(prefix);
+>   }
+118d110
+<   void setStartingPosition(int offsetLine, int offsetIndex);
+119a112,114
+>   public void validate(boolean validate) {
+>     generator.validate(validate);
+>   }

@@ -1,0 +1,438 @@
+248a249,250
+> 
+> 
+262a265,266
+> 
+> 
+270a275,291
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder deleteCharAt(int index) {
+>         if (index < 0 || index >= size) {
+>             throw new StringIndexOutOfBoundsException(index);
+>         }
+>         deleteImpl(index, index + 1, 1);
+>         return this;
+>     }
+> 
+>     
+1035,1043c1056,1058
+< 
+<     public StrBuilder delete(int startIndex, int endIndex) {
+<         endIndex = validateRange(startIndex, endIndex);
+<         int len = endIndex - startIndex;
+<         if (len > 0) {
+<             System.arraycopy(buffer, endIndex, buffer, startIndex, size - endIndex);
+<             size -= len;
+<         }
+<         return this;
+---
+>     private void deleteImpl(int startIndex, int endIndex, int len) {
+>         System.arraycopy(buffer, endIndex, buffer, startIndex, size - endIndex);
+>         size -= len;
+1053,1055c1068,1074
+<     public StrBuilder deleteCharAt(int index) {
+<         if (index < 0 || index >= size) {
+<             throw new StringIndexOutOfBoundsException(index);
+---
+> 
+> 
+>     public StrBuilder delete(int startIndex, int endIndex) {
+>         endIndex = validateRange(startIndex, endIndex);
+>         int len = endIndex - startIndex;
+>         if (len > 0) {
+>             deleteImpl(startIndex, endIndex, len);
+1057,1058d1075
+<         System.arraycopy(buffer, index + 1, buffer, index, size - index - 1);
+<         size--;
+1062a1080
+>     
+1068c1086
+<     public StrBuilder delete(char ch) {
+---
+>     public StrBuilder deleteAll(char ch) {
+1077,1078c1095,1113
+<                 System.arraycopy(buffer, i, buffer, start, size - i);
+<                 size -= (i - start);
+---
+>                 int len = i - start;
+>                 deleteImpl(start, i, len);
+>                 i -= len;
+>             }
+>         }
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder deleteFirst(char ch) {
+>         for (int i = 0; i < size; i++) {
+>             if (buffer[i] == ch) {
+>                 deleteImpl(i, i + 1, 1);
+>                 break;
+1084a1120
+>     
+1090c1126
+<     public StrBuilder delete(String str) {
+---
+>     public StrBuilder deleteAll(String str) {
+1095c1131
+<                 delete(index, index + len);
+---
+>                 deleteImpl(index, index + len, len);
+1102a1139,1155
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder deleteFirst(String str) {
+>         int len = (str == null ? 0 : str.length());
+>         if (len > 0) {
+>             int index = indexOf(str, 0);
+>             if (index >= 0) {
+>                 deleteImpl(index, index + len, len);
+>             }
+>         }
+>         return this;
+>     }
+> 
+>     
+1112a1166,1168
+>     public StrBuilder deleteAll(StrMatcher matcher) {
+>         return replace(matcher, null, 0, size, -1);
+>     }
+1114,1117c1170,1196
+<     public StrBuilder replace(int startIndex, int endIndex, String str) {
+<         endIndex = validateRange(startIndex, endIndex);
+<         int insertLen = str.length();
+<         int removeLen = endIndex - startIndex;
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder deleteFirst(StrMatcher matcher) {
+>         return replace(matcher, null, 0, size, 1);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private void replaceImpl(int startIndex, int endIndex, int removeLen, String insertStr, int insertLen) {
+1119,1121d1197
+<         if (insertLen > removeLen) {
+<             ensureCapacity(newSize);
+<         }
+1122a1199
+>             ensureCapacity(newSize);
+1126,1127c1203,1205
+<         str.getChars(0, insertLen, buffer, startIndex);
+<         return this;
+---
+>         if (insertLen > 0) {
+>             insertStr.getChars(0, insertLen, buffer, startIndex);
+>         }
+1141c1219
+<     public StrBuilder replace(int startIndex, int endIndex, StrBuilder builder) {
+---
+>     public StrBuilder replace(int startIndex, int endIndex, String replaceStr) {
+1143,1152c1221,1241
+<         int insertLen = builder.length();
+<         int removeLen = endIndex - startIndex;
+<         if (insertLen > removeLen) {
+<             ensureCapacity(size - removeLen + insertLen);
+<         }
+<         if (insertLen != removeLen) {
+<             
+<             System.arraycopy(buffer, endIndex, buffer, startIndex + insertLen, size - endIndex);
+<             
+<             size += (insertLen - removeLen);
+---
+>         int insertLen = (replaceStr == null ? 0 : replaceStr.length());
+>         replaceImpl(startIndex, endIndex, endIndex - startIndex, replaceStr, insertLen);
+>         return this;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder replaceAll(char search, char replace) {
+>         if (search != replace) {
+>             for (int i = 0; i < size; i++) {
+>                 if (buffer[i] == search) {
+>                     buffer[i] = replace;
+>                 }
+>             }
+1154d1242
+<         builder.getChars(0, insertLen, buffer, startIndex);
+1165c1253,1254
+<     public StrBuilder replace(char search, char replace) {
+---
+> 
+>     public StrBuilder replaceFirst(char search, char replace) {
+1169a1259
+>                     break;
+1176a1267
+>     
+1183c1274
+<     public StrBuilder replace(String searchStr, String replaceStr) {
+---
+>     public StrBuilder replaceAll(String searchStr, String replaceStr) {
+1186c1277
+<             replaceStr = (replaceStr == null ? "" : replaceStr);
+---
+>             int replaceLen = (replaceStr == null ? 0 : replaceStr.length());
+1189,1190c1280,1392
+<                 replace(index, index + searchLen, replaceStr);
+<                 index = indexOf(searchStr, index);
+---
+>                 replaceImpl(index, index + searchLen, searchLen, replaceStr, replaceLen);
+>                 index = indexOf(searchStr, index + replaceLen);
+>             }
+>         }
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder replaceFirst(String searchStr, String replaceStr) {
+>         int searchLen = (searchStr == null ? 0 : searchStr.length());
+>         if (searchLen > 0) {
+>             int index = indexOf(searchStr, 0);
+>             if (index >= 0) {
+>                 int replaceLen = (replaceStr == null ? 0 : replaceStr.length());
+>                 replaceImpl(index, index + searchLen, searchLen, replaceStr, replaceLen);
+>             }
+>         }
+>         return this;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder replaceAll(StrMatcher matcher, String replaceStr) {
+>         return replace(matcher, replaceStr, 0, size, -1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder replaceFirst(StrMatcher matcher, String replaceStr) {
+>         return replace(matcher, replaceStr, 0, size, 1);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder replace(
+>             StrMatcher matcher, String replaceStr,
+>             int startIndex, int endIndex, int replaceCount) {
+>         endIndex = validateRange(startIndex, endIndex);
+>         return replaceImpl(matcher, replaceStr, startIndex, endIndex, replaceCount);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private StrBuilder replaceImpl(
+>             StrMatcher matcher, String replaceStr,
+>             int from, int to, int replaceCount) {
+>         if (matcher == null || size == 0) {
+>             return this;
+>         }
+>         int replaceLen = (replaceStr == null ? 0 : replaceStr.length());
+>         char[] buf = buffer;
+>         for (int i = from; i < to && replaceCount != 0; i++) {
+>             int removeLen = matcher.isMatch(buf, i, from, to);
+>             if (removeLen > 0) {
+>                 replaceImpl(i, i + removeLen, removeLen, replaceStr, replaceLen);
+>                 to = to - removeLen + replaceLen;
+>                 i = i + replaceLen - 1;
+>                 if (replaceCount > 0) {
+>                     replaceCount--;
+>                 }
+1403a1606,1620
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean contains(StrMatcher matcher) {
+>         return indexOf(matcher, 0) >= 0;
+>     }
+> 
+>     
+1484a1702,1744
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int indexOf(StrMatcher matcher) {
+>         return indexOf(matcher, 0);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int indexOf(StrMatcher matcher, int startIndex) {
+>         startIndex = (startIndex < 0 ? 0 : startIndex);
+>         if (matcher == null || startIndex >= size) {
+>             return -1;
+>         }
+>         int len = size;
+>         if (len > 0) {
+>             char[] buf = buffer;
+>             for (int i = startIndex; i < len; i++) {
+>                 if (matcher.isMatch(buf, i, startIndex, len) > 0) {
+>                     return i;
+>                 }
+>             }
+>         }
+>         return -1;
+>     }
+> 
+>     
+1559a1820,1863
+>         }
+>         return -1;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int lastIndexOf(StrMatcher matcher) {
+>         return lastIndexOf(matcher, size);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int lastIndexOf(StrMatcher matcher, int startIndex) {
+>         startIndex = (startIndex >= size ? size - 1 : startIndex);
+>         if (matcher == null || startIndex < 0) {
+>             return -1;
+>         }
+>         int len = size;
+>         if (len > 0) {
+>             char[] buf = buffer;
+>             int endIndex = startIndex + 1;
+>             for (int i = startIndex; i >= 0; i--) {
+>                 if (matcher.isMatch(buf, i, 0, endIndex) > 0) {
+>                     return i;
+>                 }
+>             }

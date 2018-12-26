@@ -1,0 +1,135 @@
+58c58
+<     private static final String DEFAULT_PREFIX = "[";
+---
+>     private static final String DEFAULT_PREFIX = "{";
+60c60
+<     private static final String DEFAULT_SUFFIX = "]";
+---
+>     private static final String DEFAULT_SUFFIX = "}";
+62c62
+<     private static final String DEFAULT_ROW_SEPARATOR = "; ";
+---
+>     private static final String DEFAULT_ROW_PREFIX = "{";
+64c64
+<     private static final String DEFAULT_COLUMN_SEPARATOR = ", ";
+---
+>     private static final String DEFAULT_ROW_SUFFIX = "}";
+66c66
+<     private final String prefix;
+---
+>     private static final String DEFAULT_ROW_SEPARATOR = ",";
+68c68
+<     private final String suffix;
+---
+>     private static final String DEFAULT_COLUMN_SEPARATOR = ",";
+70c70
+<     private final String rowSeparator;
+---
+>     private final String prefix;
+72c72
+<     private final String columnSeparator;
+---
+>     private final String suffix;
+74c74
+<     private final String trimmedPrefix;
+---
+>     private final String rowPrefix;
+76c76
+<     private final String trimmedSuffix;
+---
+>     private final String rowSuffix;
+78c78
+<     private final String trimmedRowSeparator;
+---
+>     private final String rowSeparator;
+80c80
+<     private final String trimmedColumnSeparator;
+---
+>     private final String columnSeparator;
+90,91c90,91
+<         this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_ROW_SEPARATOR, DEFAULT_COLUMN_SEPARATOR,
+<              CompositeFormat.getDefaultNumberFormat());
+---
+>         this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_ROW_PREFIX, DEFAULT_ROW_SUFFIX,
+>                 DEFAULT_ROW_SEPARATOR, DEFAULT_COLUMN_SEPARATOR, CompositeFormat.getDefaultNumberFormat());
+99c99,100
+<         this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_ROW_SEPARATOR, DEFAULT_COLUMN_SEPARATOR, format);
+---
+>         this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_ROW_PREFIX, DEFAULT_ROW_SUFFIX,
+>                 DEFAULT_ROW_SEPARATOR, DEFAULT_COLUMN_SEPARATOR, format);
+108a110,111
+> 
+> 
+109a113
+>                             final String rowPrefix, final String rowSuffix,
+111c115,116
+<         this(prefix, suffix, rowSeparator, columnSeparator, CompositeFormat.getDefaultNumberFormat());
+---
+>         this(prefix, suffix, rowPrefix, rowSuffix, rowSeparator, columnSeparator,
+>                 CompositeFormat.getDefaultNumberFormat());
+122a128,129
+> 
+> 
+123a131
+>                             final String rowPrefix, final String rowSuffix,
+127a136,137
+>         this.rowPrefix         = rowPrefix;
+>         this.rowSuffix         = rowSuffix;
+130,133d139
+<         trimmedPrefix          = prefix.trim();
+<         trimmedSuffix          = suffix.trim();
+<         trimmedRowSeparator    = rowSeparator.trim();
+<         trimmedColumnSeparator = columnSeparator.trim();
+167a174,189
+>     public String getRowPrefix() {
+>         return rowPrefix;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public String getRowSuffix() {
+>         return rowSuffix;
+>     }
+> 
+>     
+> 
+> 
+> 
+234a257
+>             toAppendTo.append(rowPrefix);
+240a264
+>             toAppendTo.append(rowSuffix);
+280a305,311
+>         final String trimmedPrefix = prefix.trim();
+>         final String trimmedSuffix = suffix.trim();
+>         final String trimmedRowPrefix = rowPrefix.trim();
+>         final String trimmedRowSuffix = rowSuffix.trim();
+>         final String trimmedColumnSeparator = columnSeparator.trim();
+>         final String trimmedRowSeparator = rowSeparator.trim();
+> 
+295,297c326,327
+<                     if (CompositeFormat.parseFixedstring(source, trimmedRowSeparator, pos)) {
+<                         matrix.add(rowComponents);
+<                         rowComponents = new ArrayList<Number>();
+---
+>                     if (!trimmedRowSuffix.isEmpty() && !CompositeFormat.parseFixedstring(source, trimmedRowSuffix, pos)) {
+>                         return null;
+299c329,336
+<                         loop = false;
+---
+>                         CompositeFormat.parseAndIgnoreWhitespace(source, pos);
+>                         if (CompositeFormat.parseFixedstring(source, trimmedRowSeparator, pos)) {
+>                             matrix.add(rowComponents);
+>                             rowComponents = new ArrayList<Number>();
+>                             continue;
+>                         } else {
+>                             loop = false;
+>                         }
+300a338,342
+>                 }
+>             } else {
+>                 CompositeFormat.parseAndIgnoreWhitespace(source, pos);
+>                 if (!trimmedRowPrefix.isEmpty() && !CompositeFormat.parseFixedstring(source, trimmedRowPrefix, pos)) {
+>                     return null;

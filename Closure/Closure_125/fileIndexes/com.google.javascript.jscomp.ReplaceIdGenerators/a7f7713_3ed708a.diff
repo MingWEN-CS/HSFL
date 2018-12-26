@@ -1,0 +1,235 @@
+19c19,22
+< import com.google.common.collect.Lists;
+---
+> import com.google.common.base.Preconditions;
+> import com.google.common.collect.BiMap;
+> import com.google.common.collect.HashBiMap;
+> import com.google.common.collect.ImmutableBiMap;
+24a28,31
+> 
+> import java.io.BufferedReader;
+> import java.io.IOException;
+> import java.io.StringReader;
+26d32
+< import java.util.List;
+51a58,62
+>   static final DiagnosticType INVALID_GENERATOR_ID_MAPPING =
+>       DiagnosticType.error(
+>           "JSC_INVALID_GENERATOR_ID_MAPPING",
+>           "Invalid generator id mapping. {0}");
+> 
+57c68,69
+<   private final Map<String, List<Replacement>> idGeneratorMaps;
+---
+>   private final Map<String, Map<String, String>> idGeneratorMaps;
+>   private final Map<String, BiMap<String, String>> previousMap;
+63c75,76
+<       boolean generatePseudoNames) {
+---
+>       boolean generatePseudoNames,
+>       String previousMapSerialized) {
+70a84,87
+>     Map<String, BiMap<String, String>> previousMap;
+>     previousMap = parsePreviousResults(previousMapSerialized);
+>     this.previousMap = previousMap;
+> 
+72,74c89,91
+<       for(String gen : idGens) {
+<         nameGenerators.put(gen, createNameSupplier());
+<         idGeneratorMaps.put(gen, Lists.<Replacement>newLinkedList());
+---
+>       for (String gen : idGens) {
+>         nameGenerators.put(gen, createNameSupplier(previousMap.get(gen)));
+>         idGeneratorMaps.put(gen, Maps.<String, String>newLinkedHashMap());
+80c97
+<     String getName(String name);
+---
+>     String getName(String id, String name);
+84,85c101,108
+<     private final NameGenerator generator =
+<         new NameGenerator(Collections.<String>emptySet(), "", null);
+---
+>     private final NameGenerator generator;
+>     private final Map<String, String> previousMappings;
+>     public ObfuscatedNameSuppier(BiMap<String, String> previousMappings) {
+>       this.previousMappings = previousMappings.inverse();
+>       this.generator =
+>           new NameGenerator(previousMappings.keySet(), "", null);
+>     }
+> 
+87,88c110,115
+<     public String getName(String name) {
+<       return generator.generateNextName();
+---
+>     public String getName(String id, String name) {
+>       String newName = previousMappings.get(id);
+>       if (newName == null) {
+>         newName = generator.generateNextName();
+>       }
+>       return newName;
+95c122
+<     public String getName(String name) {
+---
+>     public String getName(String id, String name) {
+100c127,131
+<   private NameSupplier createNameSupplier() {
+---
+>   private NameSupplier createNameSupplier(
+>       BiMap<String, String> previousMappings) {
+>     previousMappings = previousMappings != null ?
+>         previousMappings :
+>         ImmutableBiMap.<String, String>of();
+104c135
+<       return new ObfuscatedNameSuppier();
+---
+>       return new ObfuscatedNameSuppier(previousMappings);
+139a171
+> 
+141c173,174
+<         consistNameGenerators.put(name, createNameSupplier());
+---
+>         consistNameGenerators.put(
+>             name, createNameSupplier(previousMap.get(name)));
+144c177
+<         nameGenerators.put(name, createNameSupplier());
+---
+>         nameGenerators.put(name, createNameSupplier(previousMap.get(name)));
+146c179
+<       idGeneratorMaps.put(name, Lists.<Replacement>newArrayList());
+---
+>       idGeneratorMaps.put(name, Maps.<String, String>newLinkedHashMap());
+199c232
+<       List<Replacement> idGeneratorMap = idGeneratorMaps.get(callName);
+---
+>       Map<String, String> idGeneratorMap = idGeneratorMaps.get(callName);
+201a235,236
+>       String name = id.getString();
+>       String instanceId = getIdForGeneratorNode(consistent, id);
+204c239
+<         rename = entry.get(id.getString());
+---
+>         rename = entry.get(instanceId);
+206,207c241,242
+<           rename = nameGenerator.getName(id.getString());
+<           entry.put(id.getString(), rename);
+---
+>           rename = nameGenerator.getName(instanceId, name);
+>           entry.put(instanceId, rename);
+210c245
+<         rename = nameGenerator.getName(id.getString());
+---
+>         rename = nameGenerator.getName(instanceId, name);
+214,215c249
+<       idGeneratorMap.add(
+<           new Replacement(rename, t.getSourceName(), t.getLineNumber()));
+---
+>       idGeneratorMap.put(rename, instanceId);
+224c258,259
+<   public String getIdGeneratorMap() {
+---
+> 
+>   public String getSerializedIdMappings() {
+226c261
+<     for (Map.Entry<String, List<Replacement>> entry :
+---
+>     for (Map.Entry<String, Map<String, String>> replacements :
+228,232c263,273
+<       sb.append("[");
+<       sb.append(entry.getKey());
+<       sb.append("]\n\n");
+<       for (Replacement replacement : entry.getValue()) {
+<         sb.append(replacement.toString());
+---
+>       if (!replacements.getValue().isEmpty()) {
+>         sb.append("[");
+>         sb.append(replacements.getKey());
+>         sb.append("]\n\n");
+>         for (Map.Entry<String, String> replacement :
+>             replacements.getValue().entrySet()) {
+>           sb.append(replacement.getKey());
+>           sb.append(':');
+>           sb.append(replacement.getValue());
+>           sb.append("\n");
+>         }
+235d275
+<       sb.append("\n");
+240,248c280,292
+<   private static class Replacement {
+<     private final String name;
+<     private final String sourceName;
+<     private final int lineNumber;
+< 
+<     private Replacement(String name, String sourceName, int lineNumber) {
+<       this.name = name;
+<       this.sourceName = sourceName;
+<       this.lineNumber = lineNumber;
+---
+>   private Map<String, BiMap<String, String>> parsePreviousResults(
+>       String serializedMap) {
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+> 
+>     if (serializedMap == null || serializedMap.isEmpty()) {
+>       return Collections.emptyMap();
+251,253c295,345
+<     @Override
+<     public String toString() {
+<       return name + ":" + sourceName + ":" + lineNumber;
+---
+>     Map<String, BiMap<String, String>> resultMap = Maps.newHashMap();
+>     BufferedReader reader = new BufferedReader(new StringReader(serializedMap));
+>     BiMap<String, String> currentSectionMap = null;
+> 
+>     String line;
+>     int lineIndex = 0;
+>     try {
+>       while ((line = reader.readLine()) != null) {
+>         lineIndex++;
+>         if (line.isEmpty()) {
+>           continue;
+>         }
+>         if (line.charAt(0) == '[') {
+>           String currentSection = line.substring(1, line.length() - 1);
+>           currentSectionMap = resultMap.get(currentSection);
+>           if (currentSectionMap == null) {
+>             currentSectionMap = HashBiMap.create();
+>             resultMap.put(currentSection, currentSectionMap);
+>           } else {
+>             reportInvalidLine(line, lineIndex);
+>             return Collections.emptyMap();
+>           }
+>         } else {
+>           int split = line.indexOf(':');
+>           if (split != -1) {
+>             String name = line.substring(0, split);
+>             String location = line.substring(split + 1, line.length());
+>             currentSectionMap.put(name, location);
+>           } else {
+>             reportInvalidLine(line, lineIndex);
+>             return Collections.emptyMap();
+>           }
+>         }
+>       }
+>     } catch (IOException e) {
+>       JSError.make(INVALID_GENERATOR_ID_MAPPING, e.getMessage());
+>     }
+>     return resultMap;
+>   }
+> 
+>   private void reportInvalidLine(String line, int lineIndex) {
+>     JSError.make(INVALID_GENERATOR_ID_MAPPING,
+>         "line(" + line + "): " + lineIndex);
+>   }
+> 
+>   String getIdForGeneratorNode(boolean consistent, Node n) {
+>     Preconditions.checkState(n.isString());
+>     if (consistent) {
+>       return n.getString();
+>     } else {
+>       return n.getSourceFileName() + ':' + n.getLineno() + ":" + n.getCharno();

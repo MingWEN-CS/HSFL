@@ -1,0 +1,187 @@
+72c72
+<     private static final Map primitiveWrapperMap = new HashMap();
+---
+>     private static final Map<Class<?>, Class<?>> primitiveWrapperMap = new HashMap<Class<?>, Class<?>>();
+88c88
+<     private static final Map wrapperPrimitiveMap = new HashMap();
+---
+>     private static final Map<Class<?>, Class<?>> wrapperPrimitiveMap = new HashMap<Class<?>, Class<?>>();
+90,92c90,92
+<         for (Iterator it = primitiveWrapperMap.keySet().iterator(); it.hasNext();) {
+<             Class primitiveClass = (Class) it.next();
+<             Class wrapperClass = (Class) primitiveWrapperMap.get(primitiveClass);
+---
+>         for (Iterator<Class<?>> it = primitiveWrapperMap.keySet().iterator(); it.hasNext();) {
+>             Class<?> primitiveClass = it.next();
+>             Class<?> wrapperClass = primitiveWrapperMap.get(primitiveClass);
+102c102
+<     private static final Map abbreviationMap = new HashMap();
+---
+>     private static final Map<String, String> abbreviationMap = new HashMap<String, String>();
+107c107
+<     private static final Map reverseAbbreviationMap = new HashMap();
+---
+>     private static final Map<String, String> reverseAbbreviationMap = new HashMap<String, String>();
+168c168
+<     public static String getShortClassName(Class cls) {
+---
+>     public static String getShortClassName(Class<?> cls) {
+223c223
+<     public static String getPackageName(Class cls) {
+---
+>     public static String getPackageName(Class<?> cls) {
+285c285
+<     public static List getAllInterfaces(Class cls) {
+---
+>     public static List<Class<?>> getAllInterfaces(Class<?> cls) {
+289c289
+<         List list = new ArrayList();
+---
+>         List<Class<?>> list = new ArrayList<Class<?>>();
+291c291
+<             Class[] interfaces = cls.getInterfaces();
+---
+>             Class<?>[] interfaces = cls.getInterfaces();
+296,298c296,298
+<                 List superInterfaces = getAllInterfaces(interfaces[i]);
+<                 for (Iterator it = superInterfaces.iterator(); it.hasNext();) {
+<                     Class intface = (Class) it.next();
+---
+>                 List<Class<?>> superInterfaces = getAllInterfaces(interfaces[i]);
+>                 for (Iterator<Class<?>> it = superInterfaces.iterator(); it.hasNext();) {
+>                     Class<?> intface = it.next();
+323c323
+<     public static List convertClassNamesToClasses(List classNames) {
+---
+>     public static List<Class<?>> convertClassNamesToClasses(List<String> classNames) {
+327,329c327,329
+<         List classes = new ArrayList(classNames.size());
+<         for (Iterator it = classNames.iterator(); it.hasNext();) {
+<             String className = (String) it.next();
+---
+>         List<Class<?>> classes = new ArrayList<Class<?>>(classNames.size());
+>         for (Iterator<String> it = classNames.iterator(); it.hasNext();) {
+>             String className = it.next();
+351c351
+<     public static List convertClassesToClassNames(List classes) {
+---
+>     public static List<String> convertClassesToClassNames(List<Class<?>> classes) {
+355,357c355,357
+<         List classNames = new ArrayList(classes.size());
+<         for (Iterator it = classes.iterator(); it.hasNext();) {
+<             Class cls = (Class) it.next();
+---
+>         List<String> classNames = new ArrayList<String>(classes.size());
+>         for (Iterator<Class<?>> it = classes.iterator(); it.hasNext();) {
+>             Class<?> cls = it.next();
+401c401
+<     public static boolean isAssignable(Class[] classArray, Class[] toClassArray) {
+---
+>     public static boolean isAssignable(Class<?>[] classArray, Class<?>[] toClassArray) {
+437c437
+<     public static boolean isAssignable(Class[] classArray, Class[] toClassArray, boolean autoboxing) {
+---
+>     public static boolean isAssignable(Class<?>[] classArray, Class<?>[] toClassArray, boolean autoboxing) {
+482c482
+<     public static boolean isAssignable(Class cls, Class toClass) {
+---
+>     public static boolean isAssignable(Class<?> cls, Class<?> toClass) {
+513c513
+<     public static boolean isAssignable(Class cls, Class toClass, boolean autoboxing) {
+---
+>     public static boolean isAssignable(Class<?> cls, Class<?> toClass, boolean autoboxing) {
+598,599c598,599
+<     public static Class primitiveToWrapper(Class cls) {
+<         Class convertedClass = cls;
+---
+>     public static Class<?> primitiveToWrapper(Class<?> cls) {
+>         Class<?> convertedClass = cls;
+601c601
+<             convertedClass = (Class) primitiveWrapperMap.get(cls);
+---
+>             convertedClass = primitiveWrapperMap.get(cls);
+616c616
+<     public static Class[] primitivesToWrappers(Class[] classes) {
+---
+>     public static Class<?>[] primitivesToWrappers(Class<?>[] classes) {
+625c625
+<         Class[] convertedClasses = new Class[classes.length];
+---
+>         Class<?>[] convertedClasses = new Class[classes.length];
+648,649c648,649
+<     public static Class wrapperToPrimitive(Class cls) {
+<         return (Class) wrapperPrimitiveMap.get(cls);
+---
+>     public static Class<?> wrapperToPrimitive(Class<?> cls) {
+>         return wrapperPrimitiveMap.get(cls);
+666c666
+<     public static Class[] wrappersToPrimitives(Class[] classes) {
+---
+>     public static Class<?>[] wrappersToPrimitives(Class<?>[] classes) {
+675c675
+<         Class[] convertedClasses = new Class[classes.length];
+---
+>         Class<?>[] convertedClasses = new Class[classes.length];
+691c691
+<     public static boolean isInnerClass(Class cls) {
+---
+>     public static boolean isInnerClass(Class<?> cls) {
+711c711
+<     public static Class getClass(
+---
+>     public static Class<?> getClass(
+713c713
+<         Class clazz;
+---
+>         Class<?> clazz;
+734c734
+<     public static Class getClass(ClassLoader classLoader, String className) throws ClassNotFoundException {
+---
+>     public static Class<?> getClass(ClassLoader classLoader, String className) throws ClassNotFoundException {
+748c748
+<     public static Class getClass(String className) throws ClassNotFoundException {
+---
+>     public static Class<?> getClass(String className) throws ClassNotFoundException {
+763c763
+<     public static Class getClass(String className, boolean initialize) throws ClassNotFoundException {
+---
+>     public static Class<?> getClass(String className, boolean initialize) throws ClassNotFoundException {
+792c792
+<     public static Method getPublicMethod(Class cls, String methodName, Class parameterTypes[])
+---
+>     public static Method getPublicMethod(Class<?> cls, String methodName, Class<?> parameterTypes[])
+800c800
+<         List candidateClasses = new ArrayList();
+---
+>         List<Class<?>> candidateClasses = new ArrayList<Class<?>>();
+804,805c804,805
+<         for (Iterator it = candidateClasses.iterator(); it.hasNext(); ) {
+<             Class candidateClass = (Class) it.next();
+---
+>         for (Iterator<Class<?>> it = candidateClasses.iterator(); it.hasNext(); ) {
+>             Class<?> candidateClass = it.next();
+841c841
+<             String abbreviation = (String) abbreviationMap.get(className);
+---
+>             String abbreviation = abbreviationMap.get(className);
+861c861
+<     public static Class[] toClass(Object[] array) {
+---
+>     public static Class<?>[] toClass(Object[] array) {
+867c867
+<         Class[] classes = new Class[array.length];
+---
+>         Class<?>[] classes = new Class[array.length];
+898c898
+<     public static String getShortCanonicalName(Class cls) {
+---
+>     public static String getShortCanonicalName(Class<?> cls) {
+942c942
+<     public static String getPackageCanonicalName(Class cls) {
+---
+>     public static String getPackageCanonicalName(Class<?> cls) {
+1000,1001c1000
+<                         className = (String) reverseAbbreviationMap.get(
+<                             className.substring(0, 1));
+---
+>                         className = reverseAbbreviationMap.get(className.substring(0, 1));

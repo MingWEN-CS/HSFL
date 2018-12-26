@@ -1,0 +1,158 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.FALSE;
+import static com.google.javascript.rhino.jstype.TernaryValue.TRUE;
+
+import com.google.javascript.rhino.ErrorReporter;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+
+
+
+
+
+
+public class EnumType extends PrototypeObjectType {
+  private static final long serialVersionUID = 1L;
+
+  
+  private EnumElementType elementsType;
+  
+  private final Set<String> elements = new HashSet<String>();
+
+  
+
+
+
+
+
+  EnumType(JSTypeRegistry registry, String name, JSType elementsType) {
+    super(registry, "enum{" + name + "}", null);
+    this.elementsType = new EnumElementType(registry, elementsType, name);
+  }
+
+  @Override
+  public boolean isEnumType() {
+    return true;
+  }
+
+  @Override
+  public ObjectType getImplicitPrototype() {
+    return registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+  }
+
+  
+
+
+
+
+  public Set<String> getElements() {
+    return Collections.unmodifiableSet(elements);
+  }
+
+  public boolean defineElement(String name) {
+    elements.add(name);
+    return defineDeclaredProperty(name, elementsType, false);
+  }
+
+  
+
+
+  public EnumElementType getElementsType() {
+    return elementsType;
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    TernaryValue result = super.testForEquality(that);
+    if (result != null) {
+      return result;
+    }
+    return this.isEquivalentTo(that) ? TRUE : FALSE;
+  }
+
+  @Override
+  public boolean isSubtype(JSType that) {
+    return that.isEquivalentTo(getNativeType(JSTypeNative.OBJECT_TYPE)) ||
+        that.isEquivalentTo(getNativeType(JSTypeNative.OBJECT_PROTOTYPE)) ||
+        JSType.isSubtype(this, that);
+  }
+
+  @Override
+  public String toString() {
+    return getReferenceName();
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseObjectType(this);
+  }
+
+  @Override
+  public FunctionType getConstructor() {
+    return null;
+  }
+
+  @Override
+  public boolean matchesNumberContext() {
+    return false;
+  }
+
+  @Override
+  public boolean matchesStringContext() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesObjectContext() {
+    return true;
+  }
+
+  @Override
+  JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+    elementsType = (EnumElementType) elementsType.resolve(t, scope);
+    return super.resolveInternal(t, scope);
+  }
+}

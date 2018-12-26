@@ -1,0 +1,74 @@
+197,202c197,201
+<     diagnosticGroups.setWarningLevels(
+<         options, config.jscompError, CheckLevel.ERROR);
+<     diagnosticGroups.setWarningLevels(
+<         options, config.jscompWarning, CheckLevel.WARNING);
+<     diagnosticGroups.setWarningLevels(
+<         options, config.jscompOff, CheckLevel.OFF);
+---
+>     if (config.warningGuards != null) {
+>       for (WarningGuardSpec.Entry entry : config.warningGuards.entries) {
+>         diagnosticGroups.setWarningLevel(options, entry.groupName, entry.level);
+>       }
+>     }
+1497,1519c1496
+<     private final List<String> jscompError = Lists.newArrayList();
+< 
+<     
+< 
+< 
+<     CommandLineConfig setJscompError(List<String> jscompError) {
+<       this.jscompError.clear();
+<       this.jscompError.addAll(jscompError);
+<       return this;
+<     }
+< 
+<     private final List<String> jscompWarning = Lists.newArrayList();
+< 
+<     
+< 
+< 
+<     CommandLineConfig setJscompWarning(List<String> jscompWarning) {
+<       this.jscompWarning.clear();
+<       this.jscompWarning.addAll(jscompWarning);
+<       return this;
+<     }
+< 
+<     private final List<String> jscompOff = Lists.newArrayList();
+---
+>     private WarningGuardSpec warningGuards = null;
+1524,1526c1501,1502
+<     CommandLineConfig setJscompOff(List<String> jscompOff) {
+<       this.jscompOff.clear();
+<       this.jscompOff.addAll(jscompOff);
+---
+>     CommandLineConfig setWarningGuardSpec(WarningGuardSpec spec) {
+>       this.warningGuards = spec;
+1630a1607,1633
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   protected static class WarningGuardSpec {
+>     private static class Entry {
+>       private final CheckLevel level;
+>       private final String groupName;
+> 
+>       private Entry(CheckLevel level, String groupName) {
+>         this.level = level;
+>         this.groupName = groupName;
+>       }
+>     }
+> 
+>     
+>     private final List<Entry> entries = Lists.newArrayList();
+> 
+>     protected void add(CheckLevel level, String groupName) {
+>       entries.add(new Entry(level, groupName));
+>     }
+> 
+>     protected void clear() {
+>       entries.clear();

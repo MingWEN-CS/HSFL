@@ -1,0 +1,131 @@
+21c21
+< import org.apache.commons.math.MathException;
+---
+> import org.apache.commons.math.FunctionEvaluationException;
+29c29,30
+< public abstract class UnivariateRealSolverImpl implements UnivariateRealSolver, Serializable {
+---
+> public abstract class UnivariateRealSolverImpl implements UnivariateRealSolver,
+>     Serializable {
+77a79,80
+> 
+> 
+105c108,109
+<     public double getResult() throws MathException {
+---
+> 
+>     public double getResult() {
+109c113
+<             throw new MathException("No result available");
+---
+>             throw new IllegalStateException("No result available");
+119c123,124
+<     public int getIterationCount() throws MathException {
+---
+> 
+>     public int getIterationCount() {
+123c128
+<             throw new MathException("No result available");
+---
+>             throw new IllegalStateException("No result available");
+131a137
+> 
+152,153c158
+<     public void setAbsoluteAccuracy(double accuracy)
+<         throws MathException {
+---
+>     public void setAbsoluteAccuracy(double accuracy) {
+205c210
+<     public void setRelativeAccuracy(double accuracy) throws MathException {
+---
+>     public void setRelativeAccuracy(double accuracy) {
+231,232c236
+<     public void setFunctionValueAccuracy(double accuracy)
+<         throws MathException {
+---
+>     public void setFunctionValueAccuracy(double accuracy) {
+248a253,336
+>     }
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected boolean isBracketing(double lower, double upper, 
+>             UnivariateRealFunction f) throws FunctionEvaluationException {
+>         return  (f.value(lower) * f.value(upper) < 0);
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected boolean isSequence(double start, double mid, double end) {
+>         return (start < mid) && (mid < end);
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void verifyInterval(double lower, double upper) {
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException
+>                 ("Endpoints do not specify an interval: [" + lower + 
+>                         "," + upper + "]");
+>         }       
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void verifySequence(double lower, double initial, double upper) {
+>         if (!isSequence(lower, initial, upper)) {
+>             throw new IllegalArgumentException
+>                 ("Invalid interval, initial value parameters:  lower=" + 
+>                    lower + " initial=" + initial + " upper=" + upper);
+>         }       
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void verifyBracketing(double lower, double upper, 
+>             UnivariateRealFunction f) throws FunctionEvaluationException {
+>         
+>         verifyInterval(lower, upper);
+>         if (!isBracketing(lower, upper, f)) {
+>             throw new IllegalArgumentException
+>             ("Function values at endpoints do not have different signs." +
+>                     "  Endpoints: [" + lower + "," + upper + "]" + 
+>                     "  Values: [" + f.value(lower) + "," + f.value(upper) + "]");       
+>         }

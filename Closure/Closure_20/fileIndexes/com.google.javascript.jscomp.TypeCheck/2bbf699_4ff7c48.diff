@@ -1,0 +1,46 @@
+160a161,166
+>   static final DiagnosticType CONFLICTING_IMPLEMENTED_TYPE =
+>     DiagnosticType.warning(
+>         "JSC_CONFLICTING_IMPLEMENTED_TYPE",
+>         "{0} cannot implement this type; " +
+>         "an interface can only extend, but not implement interfaces");
+> 
+230a237
+>       CONFLICTING_IMPLEMENTED_TYPE,
+1404,1408c1411,1421
+<       for (JSType baseInterface : functionType.getImplementedInterfaces()) {
+<         boolean badImplementedType = false;
+<         ObjectType baseInterfaceObj = ObjectType.cast(baseInterface);
+<         if (baseInterfaceObj != null) {
+<           FunctionType interfaceConstructor =
+---
+>       if (functionType.isInterface()) {
+>         if (functionType.hasImplementedInterfaces()) {
+>           compiler.report(t.makeError(n,
+>               CONFLICTING_IMPLEMENTED_TYPE, functionPrivateName));
+>         }
+>       } else {
+>         for (JSType baseInterface : functionType.getImplementedInterfaces()) {
+>           boolean badImplementedType = false;
+>           ObjectType baseInterfaceObj = ObjectType.cast(baseInterface);
+>           if (baseInterfaceObj != null) {
+>             FunctionType interfaceConstructor =
+1410,1411c1423,1427
+<           if (interfaceConstructor != null &&
+<               !interfaceConstructor.isInterface()) {
+---
+>             if (interfaceConstructor != null &&
+>                 !interfaceConstructor.isInterface()) {
+>               badImplementedType = true;
+>             }
+>           } else {
+1414,1418c1430,1432
+<         } else {
+<           badImplementedType = true;
+<         }
+<         if (badImplementedType) {
+<           report(t, n, BAD_IMPLEMENTED_TYPE, functionPrivateName);
+---
+>           if (badImplementedType) {
+>             report(t, n, BAD_IMPLEMENTED_TYPE, functionPrivateName);
+>           }

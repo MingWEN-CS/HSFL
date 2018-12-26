@@ -1,0 +1,48 @@
+198a199,200
+>       boolean maybeModifiedArguments =
+>           maybeEscapedOrModifiedArguments(t.getScope(), referenceMap);
+220c222
+<           inlineNonConstants(v, referenceInfo);
+---
+>           inlineNonConstants(v, referenceInfo, maybeModifiedArguments);
+224a227,256
+>     private boolean maybeEscapedOrModifiedArguments(
+>         Scope scope, Map<Var, ReferenceCollection> referenceMap) {
+>       if (scope.isLocal()) {
+>         Var arguments = scope.getArgumentsVar();
+>         ReferenceCollection refs = referenceMap.get(arguments);
+>         if (refs != null && !refs.references.isEmpty()) {
+>           for (Reference ref : refs.references) {
+>             Node refNode = ref.getNameNode();
+>             Node refParent = ref.getParent();
+>             
+>             
+>             if (!(NodeUtil.isGet(refParent)
+>                 && refNode == ref.getParent().getFirstChild()
+>                 && !isLValue(refParent))) {
+>               return true;
+>             }
+>           }
+>         }
+>       }
+>       return false;
+>     }
+> 
+>     private boolean isLValue(Node n) {
+>       Node parent = n.getParent();
+>       return (parent.getType() == Token.INC
+>           || parent.getType() == Token.DEC
+>           || (NodeUtil.isAssignmentOp(parent)
+>           && parent.getFirstChild() == n));
+>     }
+> 
+226c258,259
+<         Var v, ReferenceCollection referenceInfo) {
+---
+>         Var v, ReferenceCollection referenceInfo,
+>         boolean maybeModifiedArguments) {
+271c304,305
+<       if (!staleVars.contains(v) && referenceInfo.isWellDefined() &&
+---
+>       if (!maybeModifiedArguments &&
+>           !staleVars.contains(v) && referenceInfo.isWellDefined() &&

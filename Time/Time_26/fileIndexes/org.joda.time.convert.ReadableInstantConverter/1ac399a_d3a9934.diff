@@ -1,0 +1,65 @@
+56a57
+> import org.joda.time.DateTimeUtils;
+74c75
+<     
+---
+> 
+89,93d89
+<     public long getInstantMillis(Object object) {
+<         return ((ReadableInstant) object).getMillis();
+<     }
+<     
+<     
+99,101c95
+< 
+< 
+<     public Chronology getChronology(Object object) {
+---
+>     public Chronology getChronology(Object object, DateTimeZone zone) {
+104c98,105
+<             return ISOChronology.getInstance();
+---
+>             return ISOChronology.getInstance(zone);
+>         }
+>         DateTimeZone chronoZone = chrono.getZone();
+>         if (chronoZone != zone) {
+>             chrono = chrono.withZone(zone);
+>             if (chrono == null) {
+>                 return ISOChronology.getInstance(zone);
+>             }
+108,109d108
+<     
+<     
+110a110
+>     
+120,121c120
+<     public Chronology getChronology(Object object, DateTimeZone zone) {
+<         Chronology chrono = ((ReadableInstant) object).getChronology();
+---
+>     public Chronology getChronology(Object object, Chronology chrono) {
+123,130c122,123
+<             return ISOChronology.getInstance(zone);
+<         }
+<         DateTimeZone chronoZone = chrono.getZone();
+<         if (chronoZone != zone) {
+<             chrono = chrono.withZone(zone);
+<             if (chrono == null) {
+<                 return ISOChronology.getInstance(zone);
+<             }
+---
+>             chrono = ((ReadableInstant) object).getChronology();
+>             chrono = DateTimeUtils.getChronology(chrono);
+132a126,138
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getInstantMillis(Object object, Chronology chrono) {
+>         return ((ReadableInstant) object).getMillis();

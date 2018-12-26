@@ -1,0 +1,18 @@
+60c60
+< import org.joda.time.format.ISOPeriodFormat;
+---
+> import org.joda.time.format.FormatUtils;
+257c257,267
+<         return ISOPeriodFormat.getInstance().standard().print(toPeriod());
+---
+>         long millis = getMillis();
+>         StringBuffer buf = new StringBuffer();
+>         buf.append("PT");
+>         FormatUtils.appendUnpaddedInteger(buf, millis / 1000);
+>         long part = Math.abs(millis % 1000);
+>         if (part > 0) {
+>             buf.append('.');
+>             FormatUtils.appendPaddedInteger(buf, part, 3);
+>         }
+>         buf.append('S');
+>         return buf.toString();

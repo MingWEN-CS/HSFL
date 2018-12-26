@@ -1,0 +1,60 @@
+260d259
+<   }
+261a261,264
+>     if (n.getType() == Token.FUNCTION) {
+>       moveNamedFunctions(n.getLastChild());
+>     }
+>   }
+333a337,388
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private void moveNamedFunctions(Node functionBody) {
+>     Preconditions.checkState(
+>         functionBody.getParent().getType() == Token.FUNCTION);
+>     Node previous = null;
+>     Node current = functionBody.getFirstChild();
+>     
+>     
+>     while (current != null && NodeUtil.isFunctionDeclaration(current)) {
+>       previous = current;
+>       current = current.getNext();
+>     }
+> 
+>     
+>     Node insertAfter = previous;
+>     while (current != null) {
+>       
+>       Node next = current.getNext();
+>       if (NodeUtil.isFunctionDeclaration(current)) {
+>         
+>         Preconditions.checkNotNull(previous);
+>         functionBody.removeChildAfter(previous);
+> 
+>         
+>         
+>         insertAfter = addToFront(functionBody, current, insertAfter);
+>         compiler.reportCodeChange();
+>       } else {
+>         
+>         previous = current;
+>       }
+>       current = next;
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private Node addToFront(Node parent, Node newChild, Node after) {
+>     if (after == null) {
+>       parent.addChildToFront(newChild);
+>     } else {
+>       parent.addChildAfter(newChild, after);
+>     }
+>     return newChild;

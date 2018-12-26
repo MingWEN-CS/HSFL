@@ -1,0 +1,68 @@
+28a29,31
+> 
+> 
+> 
+33a37,40
+>     
+>     private final boolean isImmutable;
+>     
+>     private final int cachedHashCode;
+42c49,53
+<     public Pair(K k, V v) {
+---
+> 
+> 
+> 
+> 
+>     public Pair(K k, V v, boolean assumeImmutable) {
+44a56,81
+>         isImmutable = assumeImmutable;
+>         cachedHashCode = computeHashCode();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Pair(K k, V v) {
+>         this(k, v, false);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Pair(Pair<? extends K, ? extends V> entry, boolean assumeImmutable) {
+>         this(entry.getKey(), entry.getValue(), assumeImmutable);
+53,54c90
+<         key = entry.getKey();
+<         value = entry.getValue();
+---
+>         this(entry, false);
+107,108c143,157
+<         return (key == null ? 0 : key.hashCode()) ^
+<             (value == null ? 0 : value.hashCode());
+---
+>         return isImmutable ? cachedHashCode : computeHashCode();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private final int computeHashCode() {
+>         int result = key == null ? 0 : key.hashCode();
+> 
+>         final int h = value == null ? 0 : value.hashCode();
+>         result = 37 * result + h ^ (h >>> 16);
+> 
+>         return result;

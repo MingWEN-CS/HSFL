@@ -1,0 +1,38 @@
+22a23,24
+> import java.util.HashSet;
+> import java.util.LinkedHashSet;
+287c289,296
+<         List<Class<?>> list = new ArrayList<Class<?>>();
+---
+> 
+>         LinkedHashSet<Class<?>> interfacesFound = new LinkedHashSet<Class<?>>();
+>         getAllInterfaces(cls, interfacesFound);
+> 
+>         return new ArrayList<Class<?>>(interfacesFound);
+>     }
+> 
+>     private static void getAllInterfaces(Class<?> cls, HashSet<Class<?>> interfacesFound) {
+290,298c299,302
+<             for (Class<?> intface : interfaces) {
+<                 if (list.contains(intface) == false) {
+<                     list.add(intface);
+<                 }
+<                 List<Class<?>> superInterfaces = getAllInterfaces(intface);
+<                 for (Class<?> superInterface : superInterfaces) {
+<                     if (list.contains(superInterface) == false) {
+<                         list.add(superInterface);
+<                     }
+---
+> 
+>             for (Class<?> i : interfaces) {
+>                 if (interfacesFound.add(i)) {
+>                     getAllInterfaces(i, interfacesFound);
+300a305
+> 
+302,304c307,308
+<         }
+<         return list;
+<     }
+---
+>          }
+>      }

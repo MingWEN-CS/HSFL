@@ -1,0 +1,253 @@
+60c60,68
+<       case Token.RETURN:
+---
+>       case Token.RETURN: {
+>         Node result = tryRemoveRedundantExit(node);
+>         if (result != node) {
+>           return result;
+>         }
+>         result = tryReplaceExitWithBreak(node);
+>         if (result != node) {
+>           return result;
+>         }
+61a70,81
+>       }
+> 
+>       case Token.THROW: {
+>         Node result = tryRemoveRedundantExit(node);
+>         if (result != node) {
+>           return result;
+>         }
+>         return tryReplaceExitWithBreak(node);
+>       }
+> 
+>       
+>       
+113,114c133,159
+<     boolean possibleException = result != null &&
+<         ControlFlowAnalysis.mayThrowException(result);
+---
+>     if (result != null) {
+>       switch (result.getType()) {
+>         case Token.VOID:
+>           Node operand = result.getFirstChild();
+>           if (!mayHaveSideEffects(operand)) {
+>             n.removeFirstChild();
+>             reportCodeChange();
+>           }
+>           break;
+>         case Token.NAME:
+>           String name = result.getString();
+>           if (name.equals("undefined")) {
+>             n.removeFirstChild();
+>             reportCodeChange();
+>           }
+>           break;
+>       }
+>     }
+> 
+>     return n;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+116d160
+<     
+117a162,169
+> 
+> 
+> 
+> 
+>   private Node tryReplaceExitWithBreak(Node n) {
+>     Node result = n.getFirstChild();
+> 
+>     
+120,121d171
+<     boolean safe = true;
+< 
+126,135c176,177
+< 
+<           
+<           
+< 
+<           
+<           
+<           
+<           
+<         safe = false;
+<         break;
+---
+>         
+>         return n;
+149,159d190
+<     while (follow != null &&
+<         NodeUtil.isTryFinallyNode(follow.getParent(), follow)) {
+<       if (result != null &&
+<           
+<           (NodeUtil.canBeSideEffected(result) ||
+<            NodeUtil.mayHaveSideEffects(result))) {
+<         safe = false;
+<         break;
+<       }
+<       follow = ControlFlowAnalysis.computeFollowNode(follow);
+<     }
+161,169c192,193
+<     if (safe) {
+<       if (follow == null) {
+<         
+<         
+<         if (result == null) {
+<           n.setType(Token.BREAK);
+<           reportCodeChange();
+<           return n;
+<         }
+---
+>     Node prefinallyFollows = follow;
+>     follow = skipFinallyNodes(follow);
+171,179c195,197
+<       } else if (follow.getType() == Token.RETURN &&
+<           (result == follow.getFirstChild() ||
+<            (result != null && follow.hasChildren() &&
+<             result.checkTreeEqualsSilent(follow.getFirstChild())) &&
+<             ControlFlowAnalysis.getExceptionHandler(n) ==
+<             ControlFlowAnalysis.getExceptionHandler(follow)
+<            )) {
+<         
+<         
+---
+>     if (prefinallyFollows != follow) {
+>       
+>       if (!isPure(result)) {
+181,183d198
+<         n.removeChildren();
+<         n.setType(Token.BREAK);
+<         reportCodeChange();
+185a201,203
+>     }
+> 
+>     if (follow == null && (n.getType() == Token.THROW || result != null)) {
+187c205
+<       
+---
+>       return n;
+190a209,215
+>     
+>     if (follow == null || areMatchingExits(n, follow)) {
+>       Node replacement = new Node(Token.BREAK);
+>       n.getParent().replaceChild(n, replacement);
+>       this.reportCodeChange();
+>       return replacement;
+>     }
+192,210c217,243
+<     if (result != null) {
+<       switch (result.getType()) {
+<         case Token.VOID:
+<           Node operand = result.getFirstChild();
+<           if (!mayHaveSideEffects(operand)) {
+<             n.removeFirstChild();
+<             reportCodeChange();
+<           }
+<           break;
+<         case Token.NAME:
+<           String name = result.getString();
+<           if (name.equals("undefined")) {
+<             n.removeFirstChild();
+<             reportCodeChange();
+<           }
+<           break;
+<         default:
+<           
+<             break;
+---
+>     return n;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private Node tryRemoveRedundantExit(Node n) {
+>     Node exitExpr = n.getFirstChild();
+> 
+>     Node follow = ControlFlowAnalysis.computeFollowNode(n);
+> 
+>     
+>     
+>     Node prefinallyFollows = follow;
+>     follow = skipFinallyNodes(follow);
+>     if (prefinallyFollows != follow) {
+>       
+>       if (!isPure(exitExpr)) {
+>         
+>         return n;
+213a247,259
+>     if (follow == null && (n.getType() == Token.THROW || exitExpr != null)) {
+>       
+>       return n;
+>     }
+> 
+>     
+>     
+>     if (follow == null || areMatchingExits(n, follow)) {
+>       n.detachFromParent();
+>       reportCodeChange();
+>       return null;
+>     }
+> 
+220a267,311
+>   boolean isPure(Node n) {
+>     return n == null
+>         || (!NodeUtil.canBeSideEffected(n)
+>             && !NodeUtil.mayHaveSideEffects(n));
+>   }
+> 
+>   
+> 
+> 
+>   Node skipFinallyNodes(Node n) {
+>     while (n != null && NodeUtil.isTryFinallyNode(n.getParent(), n)) {
+>       n = ControlFlowAnalysis.computeFollowNode(n);
+>     }
+>     return n;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   boolean areMatchingExits(Node nodeThis, Node nodeThat) {
+>     return nodeThis.checkTreeEqualsSilent(nodeThat)
+>         && (!isExceptionPossible(nodeThis)
+>             || getExceptionHandler(nodeThis) == getExceptionHandler(nodeThat));
+>   }
+> 
+>   boolean isExceptionPossible(Node n) {
+>     
+>     Preconditions.checkState(n.getType() == Token.RETURN
+>         || n.getType() == Token.THROW);
+>     return n.getType() == Token.THROW
+>         || (n.hasChildren()
+>             && !NodeUtil.isLiteralValue(n.getLastChild(), true));
+>   }
+> 
+>   Node getExceptionHandler(Node n) {
+>     return ControlFlowAnalysis.getExceptionHandler(n);
+>   }
+> 
+>   
+> 
+> 
+> 
+514a606
+> 

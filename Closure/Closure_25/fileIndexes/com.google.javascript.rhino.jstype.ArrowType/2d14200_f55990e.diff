@@ -1,0 +1,22 @@
+41a42
+> import com.google.javascript.rhino.ErrorReporter;
+52,53d52
+< 
+< 
+58c57
+<   final JSType returnType;
+---
+>   JSType returnType;
+231a231,242
+>   }
+> 
+>   @Override
+>   JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+>     returnType = safeResolve(returnType, t, scope);
+>     if (parameters != null) {
+>       for (Node paramNode = parameters.getFirstChild();
+>            paramNode != null; paramNode = paramNode.getNext()) {
+>         paramNode.setJSType(paramNode.getJSType().resolve(t, scope));
+>       }
+>     }
+>     return this;

@@ -1,0 +1,65 @@
+610a611,674
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String stripAccents(String input) {
+>         if(input == null) {
+>             return null;
+>         }
+>         if(SystemUtils.isJavaVersionAtLeast(1.6f)) {
+> 
+>             
+> 
+>             
+>             try {
+>                 
+>                 Class normalizerFormClass = ClassUtils.getClass("java.text.Normalizer$Form", false);
+> 
+>                 
+>                 Class normalizerClass = ClassUtils.getClass("java.text.Normalizer", false);
+> 
+>                 
+>                 java.lang.reflect.Method method = normalizerClass.getMethod("normalize", CharSequence.class, normalizerFormClass );
+> 
+>                 
+>                 java.lang.reflect.Field nfd = normalizerFormClass.getField("NFD");
+> 
+>                 
+>                 String decomposed = (String) method.invoke( null, input, nfd.get(null) );
+>                 
+> 
+>                 java.util.regex.Pattern accentPattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+>                 return accentPattern.matcher(decomposed).replaceAll("");
+>             } catch(ClassNotFoundException cnfe) {
+>                 throw new RuntimeException("ClassNotFoundException occurred during 1.6 backcompat code", cnfe);
+>             } catch(NoSuchMethodException nsme) {
+>                 throw new RuntimeException("NoSuchMethodException occurred during 1.6 backcompat code", nsme);
+>             } catch(NoSuchFieldException nsfe) {
+>                 throw new RuntimeException("NoSuchFieldException occurred during 1.6 backcompat code", nsfe);
+>             } catch(IllegalAccessException iae) {
+>                 throw new RuntimeException("IllegalAccessException occurred during 1.6 backcompat code", iae);
+>             } catch(IllegalArgumentException iae) {
+>                 throw new RuntimeException("IllegalArgumentException occurred during 1.6 backcompat code", iae);
+>             } catch(java.lang.reflect.InvocationTargetException ite) {
+>                 throw new RuntimeException("InvocationTargetException occurred during 1.6 backcompat code", ite);
+>             } catch(SecurityException se) {
+>                 throw new RuntimeException("SecurityException occurred during 1.6 backcompat code", se);
+>             }
+>         } else {
+>             throw new UnsupportedOperationException("The stripAccents(String) method is not supported until Java 1.6");
+>         }
+>     }
+> 
+>     

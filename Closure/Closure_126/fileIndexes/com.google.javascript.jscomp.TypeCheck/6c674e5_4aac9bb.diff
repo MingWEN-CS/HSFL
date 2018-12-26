@@ -1,0 +1,30 @@
+600,601c600,612
+<         leftType = getJSType(n.getFirstChild());
+<         rightType = getJSType(n.getLastChild());
+---
+>         left = n.getFirstChild();
+>         right = n.getLastChild();
+> 
+>         if (left.isTypeOf()) {
+>           if (right.isString()) {
+>             checkTypeofString(t, right, right.getString());
+>           }
+>         } else if (right.isTypeOf() && left.isString()) {
+>           checkTypeofString(t, left, left.getString());
+>         }
+> 
+>         leftType = getJSType(left);
+>         rightType = getJSType(right);
+617,618c628
+<           result = leftTypeRestricted.testForEquality(
+<               rightTypeRestricted);
+---
+>           result = leftTypeRestricted.testForEquality(rightTypeRestricted);
+809a820,826
+>   }
+> 
+>   private void checkTypeofString(NodeTraversal t, Node n, String s) {
+>     if (!(s.equals("number") || s.equals("string") || s.equals("boolean") ||
+>           s.equals("undefined") || s.equals("function") || s.equals("object"))){
+>       validator.expectValidTypeofName(t, n, s);
+>     }

@@ -1,0 +1,51 @@
+122c122,123
+<     switch (condition.getType()) {
+---
+>     int operatorToken = condition.getType();
+>     switch (operatorToken) {
+127,128c128,138
+<         Node left = condition.getFirstChild();
+<         Node right = condition.getLastChild();
+---
+>       case Token.CASE:
+>         Node left;
+>         Node right;
+>         if (operatorToken == Token.CASE) {
+>           left = condition.getParent().getFirstChild(); 
+>           right = condition.getFirstChild();
+>         } else {
+>           left = condition.getFirstChild();
+>           right = condition.getLastChild();
+>         }
+> 
+143,144c153,154
+<             boolean resultEqualsValue = condition.getType() == Token.EQ ||
+<                                         condition.getType() == Token.SHEQ;
+---
+>             boolean resultEqualsValue = operatorToken == Token.EQ ||
+>                 operatorToken == Token.SHEQ || operatorToken == Token.CASE;
+153c163
+<     switch (condition.getType()) {
+---
+>     switch (operatorToken) {
+234a245,254
+> 
+>       case Token.CASE:
+>         Node left =
+>             condition.getParent().getFirstChild(); 
+>         Node right = condition.getFirstChild();
+>         if (outcome) {
+>           return caseEquality(left, right, blindScope, SHEQ);
+>         } else {
+>           return caseEquality(left, right, blindScope, SHNE);
+>         }
+242,243c262,264
+<     Node left = condition.getFirstChild();
+<     Node right = condition.getLastChild();
+---
+>     return caseEquality(condition.getFirstChild(), condition.getLastChild(),
+>                         blindScope, merging);
+>   }
+244a266,267
+>   private FlowScope caseEquality(Node left, Node right, FlowScope blindScope,
+>       Function<TypePair, TypePair> merging) {

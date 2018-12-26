@@ -1,0 +1,65 @@
+343c343,344
+<         if (TokenStream.isJSIdentifier(name) &&
+---
+>         if (!n.isQuotedString() &&
+>             TokenStream.isJSIdentifier(name) &&
+349c350,356
+<           add(jsString(n.getString(), outputCharsetEncoder));
+---
+>           
+>           double d = getSimpleNumber(name);
+>           if (!Double.isNaN(d)) {
+>             cc.addNumber(d);
+>           } else {
+>             add(jsString(n.getString(), outputCharsetEncoder));
+>           }
+652a660,661
+>             Preconditions.checkState(c.getType() == Token.STRING);
+>             String key = c.getString();
+655,658c664,666
+<             if (c.getType() == Token.STRING &&
+<                 !c.isQuotedString() &&
+<                 !TokenStream.isKeyword(c.getString()) &&
+<                 TokenStream.isJSIdentifier(c.getString()) &&
+---
+>             if (!c.isQuotedString() &&
+>                 !TokenStream.isKeyword(key) &&
+>                 TokenStream.isJSIdentifier(key) &&
+661,662c669,670
+<                 NodeUtil.isLatin(c.getString())) {
+<               add(c.getString());
+---
+>                 NodeUtil.isLatin(key)) {
+>               add(key);
+664c672,678
+<               addExpr(c, 1);
+---
+>               
+>               double d = getSimpleNumber(key);
+>               if (!Double.isNaN(d)) {
+>                 cc.addNumber(d);
+>               } else {
+>                 addExpr(c, 1);
+>               }
+719a734,754
+>   }
+> 
+>   static boolean isSimpleNumber(String s) {
+>     int len = s.length();
+>     for (int index = 0; index < len; index++) {
+>       char c = s.charAt(index);
+>       if (c < '0' || c > '9') {
+>         return false;
+>       }
+>     }
+>     return len > 0;
+>   }
+> 
+>   static double getSimpleNumber(String s) {
+>     if (isSimpleNumber(s)) {
+>       long l = Long.parseLong(s);
+>       if (l < NodeUtil.MAX_POSITIVE_INTEGER_NUMBER) {
+>         return l;
+>       }
+>     }
+>     return Double.NaN;

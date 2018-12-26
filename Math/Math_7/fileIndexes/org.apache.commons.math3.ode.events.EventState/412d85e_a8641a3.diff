@@ -1,0 +1,18 @@
+214,215c214,223
+<                     final double root = (ta <= tb) ? solver.solve(f, ta, tb) : solver.solve(f, tb, ta);
+<                     if (Math.abs(root - ta) <= convergence) {
+---
+>                     double root;
+>                     try {
+>                         root = (ta <= tb) ? solver.solve(f, ta, tb) : solver.solve(f, tb, ta);
+>                     } catch (IllegalArgumentException iae) {
+>                         
+>                         root = Double.NaN;
+>                     }
+>                     if (Double.isNaN(root) ||
+>                         ((Math.abs(root - ta) <= convergence) &&
+>                          (Math.abs(root - previousEventTime) <= convergence))) {
+220c228
+<                         (Math.abs(previousEventTime - root) > convergence)) {
+---
+>                                (Math.abs(previousEventTime - root) > convergence)) {

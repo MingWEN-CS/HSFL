@@ -1,0 +1,88 @@
+80c80
+<         this(p, new NormalDistributionImpl());
+---
+>         this(p, DEFAULT_EPSILON, DEFAULT_MAX_ITERATIONS);
+93c93,97
+<         setMean(p);
+---
+>         if (p <= 0) {
+>             throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NOT_POSITIVE_POISSON_MEAN, p);
+>         }
+>         mean = p;
+>         normal = new NormalDistributionImpl(p, FastMath.sqrt(p));
+106,107c110
+<         setMean(p);
+<         this.epsilon = epsilon;
+---
+>         this(p, epsilon, DEFAULT_MAX_ITERATIONS);
+118,137c121
+<         setMean(p);
+<         this.maxIterations = maxIterations;
+<     }
+< 
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public PoissonDistributionImpl(double p, NormalDistribution z) {
+<         super();
+<         setNormalAndMeanInternal(z, p);
+---
+>         this(p, DEFAULT_EPSILON, maxIterations);
+156,187d139
+< 
+<     @Deprecated
+<     public void setMean(double p) {
+<         setNormalAndMeanInternal(normal, p);
+<     }
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     private void setNormalAndMeanInternal(NormalDistribution z,
+<                                           double p) {
+<         if (p <= 0) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.NOT_POSITIVE_POISSON_MEAN, p);
+<         }
+<         mean = p;
+<         normal = z;
+<         normal.setMean(p);
+<         normal.setStandardDeviation(FastMath.sqrt(p));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+288,301d239
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public void setNormal(NormalDistribution value) {
+<         setNormalAndMeanInternal(value, mean);

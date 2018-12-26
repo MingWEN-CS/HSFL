@@ -1,0 +1,18 @@
+443,444c443,456
+<             if (!NodeUtil.isForIn(c)
+<                 && c.getFirstChild().getType() != Token.EMPTY) {
+---
+>             if (NodeUtil.isForIn(c)) {
+>               Node first = c.getFirstChild();
+>               if (first.getType() == Token.VAR) {
+>                 
+>                 
+>                 
+>                 
+>                 Node newStatement = first.cloneTree();
+>                 Node name = first.removeFirstChild();
+>                 first.getParent().replaceChild(first, name);
+>                 insertBeforeParent.addChildBefore(newStatement, insertBefore);
+>                 reportCodeChange("FOR-IN var declaration");
+>               }
+>             } else if (c.getFirstChild().getType() != Token.EMPTY) {

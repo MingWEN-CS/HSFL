@@ -1,0 +1,80 @@
+70,77d69
+<   private static final Pattern COMMENT = Pattern.compile(
+<       "
+<       "|/\\*([^\\*]*(\\*+[^/\\*])?)*(\\*+/)?" 
+<       );
+<   private static final Pattern END_MULTILINE_COMMENT =
+<       Pattern.compile(".*?\\*/");
+< 
+<   
+82,87d73
+<   private Matcher commentMatcher = COMMENT.matcher("");
+< 
+<   private Matcher endMultilineCommentMatcher =
+<       END_MULTILINE_COMMENT.matcher("");
+< 
+<   
+115,121d100
+<   void doParse(String filePath, String fileContents) {
+<     doParse(filePath, new StringReader(fileContents));
+<   }
+< 
+<   
+< 
+< 
+145,147c124,126
+<             endMultilineCommentMatcher.reset(line);
+<             if (endMultilineCommentMatcher.lookingAt()) {
+<               revisedLine = endMultilineCommentMatcher.replaceFirst("");
+---
+>             int endOfComment = revisedLine.indexOf("*/");
+>             if (endOfComment != -1) {
+>               revisedLine = revisedLine.substring(endOfComment + 2);
+155,161c134,147
+<             commentMatcher.reset(line);
+<             if (commentMatcher.find()) {
+<               do {
+<                 if (
+<                     commentMatcher.group(1) != null &&
+<                     
+<                     commentMatcher.group(3) == null) {
+---
+>             while (true) {
+>               int startOfLineComment = revisedLine.indexOf("
+>               int startOfMultilineComment = revisedLine.indexOf("
+> 
+> 
+> 
+> 
+> 
+> 
+> ",
+>                     startOfMultilineComment + 2);
+>                 if (endOfMultilineComment == -1) {
+>                   revisedLine = revisedLine.substring(
+>                       0, startOfMultilineComment);
+162a149,153
+>                   break;
+>                 } else {
+>                   revisedLine =
+>                       revisedLine.substring(0, startOfMultilineComment) +
+>                       revisedLine.substring(endOfMultilineComment + 2);
+164,166c155,157
+<               } while (commentMatcher.find());
+< 
+<               revisedLine = commentMatcher.replaceAll("");
+---
+>               } else {
+>                 break;
+>               }
+171c162,164
+<             parseLine(revisedLine);
+---
+>             if (!parseLine(revisedLine)) {
+>               break;
+>             }
+197c190,191
+<   abstract void parseLine(String line) throws ParseException;
+---
+> 
+>   abstract boolean parseLine(String line) throws ParseException;

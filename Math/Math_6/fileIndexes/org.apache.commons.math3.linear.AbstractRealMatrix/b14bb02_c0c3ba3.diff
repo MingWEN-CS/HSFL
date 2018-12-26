@@ -1,0 +1,262 @@
+198,204c198,227
+<         final int rowCount    = getRowDimension();
+<         final int columnCount = getColumnDimension();
+<         double maxColSum = 0;
+<         for (int col = 0; col < columnCount; ++col) {
+<             double sum = 0;
+<             for (int row = 0; row < rowCount; ++row) {
+<                 sum += Math.abs(getEntry(row, col));
+---
+>         return walkInColumnOrder(new RealMatrixPreservingVisitor() {
+> 
+>             
+>             private static final long serialVersionUID = -2452270856202894168L;
+> 
+>             
+>             private double endRow;
+> 
+>             
+>             private double columnSum;
+> 
+>             
+>             private double maxColSum;
+> 
+>             
+>             public void start(final int rows, final int columns,
+>                               final int startRow, final int endRow,
+>                               final int startColumn, final int endColumn) {
+>                 this.endRow = endRow;
+>                 columnSum   = 0;
+>                 maxColSum   = 0;
+>             }
+> 
+>             
+>             public void visit(final int row, final int column, final double value) {
+>                 columnSum += Math.abs(value);
+>                 if (row == endRow) {
+>                     maxColSum = Math.max(maxColSum, columnSum);
+>                     columnSum = 0;
+>                 }
+206,208c229,235
+<             maxColSum = Math.max(maxColSum, sum);
+<         }
+<         return maxColSum;
+---
+> 
+>             
+>             public double end() {
+>                 return maxColSum;
+>             }
+> 
+>         });
+213,219c240,252
+<         final int rowCount    = getRowDimension();
+<         final int columnCount = getColumnDimension();
+<         double sum2 = 0;
+<         for (int col = 0; col < columnCount; ++col) {
+<             for (int row = 0; row < rowCount; ++row) {
+<                 final double mij = getEntry(row, col);
+<                 sum2 += mij * mij;
+---
+>         return walkInOptimizedOrder(new RealMatrixPreservingVisitor() {
+> 
+>             
+>             private static final long serialVersionUID = -6065411033772300640L;
+> 
+>             
+>             private double sum;
+> 
+>             
+>             public void start(final int rows, final int columns,
+>                               final int startRow, final int endRow,
+>                               final int startColumn, final int endColumn) {
+>                 sum = 0;
+221,222c254,265
+<         }
+<         return Math.sqrt(sum2);
+---
+> 
+>             
+>             public void visit(final int row, final int column, final double value) {
+>                 sum += value * value;
+>             }
+> 
+>             
+>             public double end() {
+>                 return Math.sqrt(sum);
+>             }
+> 
+>         });
+514,516c557,575
+<         for (int row = 0; row < nRows; ++row) {
+<             for (int col = 0; col < nCols; ++col) {
+<                 out.setEntry(col, row, getEntry(row, col));
+---
+>         walkInOptimizedOrder(new RealMatrixPreservingVisitor() {
+> 
+>             
+>             private static final long serialVersionUID = 3807296710038754174L;
+> 
+>             
+>             public void start(final int rows, final int columns,
+>                               final int startRow, final int endRow,
+>                               final int startColumn, final int endColumn) {
+>             }
+> 
+>             
+>             public void visit(final int row, final int column, final double value) {
+>                 out.setEntry(column, row, value);
+>             }
+> 
+>             
+>             public double end() {
+>                 return 0;
+518c577,578
+<         }
+---
+> 
+>         });
+694c754
+<     public void walkInRowOrder(final RealMatrixChangingVisitor visitor)
+---
+>     public double walkInRowOrder(final RealMatrixChangingVisitor visitor)
+697a758
+>         visitor.start(rows, columns, 0, rows - 1, 0, columns - 1);
+705a767
+>         return visitor.end();
+709c771
+<     public void walkInRowOrder(final RealMatrixPreservingVisitor visitor)
+---
+>     public double walkInRowOrder(final RealMatrixPreservingVisitor visitor)
+712a775
+>         visitor.start(rows, columns, 0, rows - 1, 0, columns - 1);
+717a781
+>         return visitor.end();
+721,723c785,787
+<     public void walkInRowOrder(final RealMatrixChangingVisitor visitor,
+<                                final int startRow, final int endRow,
+<                                final int startColumn, final int endColumn)
+---
+>     public double walkInRowOrder(final RealMatrixChangingVisitor visitor,
+>                                  final int startRow, final int endRow,
+>                                  final int startColumn, final int endColumn)
+725a790,791
+>         visitor.start(getRowDimension(), getColumnDimension(),
+>                       startRow, endRow, startColumn, endColumn);
+733a800
+>         return visitor.end();
+737,739c804,806
+<     public void walkInRowOrder(final RealMatrixPreservingVisitor visitor,
+<                                final int startRow, final int endRow,
+<                                final int startColumn, final int endColumn)
+---
+>     public double walkInRowOrder(final RealMatrixPreservingVisitor visitor,
+>                                  final int startRow, final int endRow,
+>                                  final int startColumn, final int endColumn)
+741a809,810
+>         visitor.start(getRowDimension(), getColumnDimension(),
+>                       startRow, endRow, startColumn, endColumn);
+746a816
+>         return visitor.end();
+749,750c819
+<     
+<     public void walkInInternalOrder(final RealMatrixChangingVisitor visitor)
+---
+>     public double walkInColumnOrder(final RealMatrixChangingVisitor visitor)
+752c821,832
+<         walkInRowOrder(visitor);
+---
+>         final int rows    = getRowDimension();
+>         final int columns = getColumnDimension();
+>         visitor.start(rows, columns, 0, rows - 1, 0, columns - 1);
+>         for (int column = 0; column < columns; ++column) {
+>             for (int row = 0; row < rows; ++row) {
+>                 final double oldValue = getEntry(row, column);
+>                 final double newValue = visitor.visit(row, column, oldValue);
+>                 setEntry(row, column, newValue);
+>             }
+>         }
+>         lu = null;
+>         return visitor.end();
+756c836
+<     public void walkInInternalOrder(final RealMatrixPreservingVisitor visitor)
+---
+>     public double walkInColumnOrder(final RealMatrixPreservingVisitor visitor)
+758c838,846
+<         walkInRowOrder(visitor);
+---
+>         final int rows    = getRowDimension();
+>         final int columns = getColumnDimension();
+>         visitor.start(rows, columns, 0, rows - 1, 0, columns - 1);
+>         for (int column = 0; column < columns; ++column) {
+>             for (int row = 0; row < rows; ++row) {
+>                 visitor.visit(row, column, getEntry(row, column));
+>             }
+>         }
+>         return visitor.end();
+762c850
+<     public void walkInInternalOrder(final RealMatrixChangingVisitor visitor,
+---
+>     public double walkInColumnOrder(final RealMatrixChangingVisitor visitor,
+765,766c853,865
+<         throws MatrixIndexException, MatrixVisitorException {
+<         walkInRowOrder(visitor, startRow, endRow, startColumn, endColumn);
+---
+>     throws MatrixIndexException, MatrixVisitorException {
+>         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+>         visitor.start(getRowDimension(), getColumnDimension(),
+>                       startRow, endRow, startColumn, endColumn);
+>         for (int column = startColumn; column <= endColumn; ++column) {
+>             for (int row = startRow; row <= endRow; ++row) {
+>                 final double oldValue = getEntry(row, column);
+>                 final double newValue = visitor.visit(row, column, oldValue);
+>                 setEntry(row, column, newValue);
+>             }
+>         }
+>         lu = null;
+>         return visitor.end();
+770c869
+<     public void walkInInternalOrder(final RealMatrixPreservingVisitor visitor,
+---
+>     public double walkInColumnOrder(final RealMatrixPreservingVisitor visitor,
+772a872,907
+>     throws MatrixIndexException, MatrixVisitorException {
+>         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+>         visitor.start(getRowDimension(), getColumnDimension(),
+>                       startRow, endRow, startColumn, endColumn);
+>         for (int column = startColumn; column <= endColumn; ++column) {
+>             for (int row = startRow; row <= endRow; ++row) {
+>                 visitor.visit(row, column, getEntry(row, column));
+>             }
+>         }
+>         return visitor.end();
+>     }
+> 
+>     
+>     public double walkInOptimizedOrder(final RealMatrixChangingVisitor visitor)
+>         throws MatrixVisitorException {
+>         return walkInRowOrder(visitor);
+>     }
+> 
+>     
+>     public double walkInOptimizedOrder(final RealMatrixPreservingVisitor visitor)
+>         throws MatrixVisitorException {
+>         return walkInRowOrder(visitor);
+>     }
+> 
+>     
+>     public double walkInOptimizedOrder(final RealMatrixChangingVisitor visitor,
+>                                        final int startRow, final int endRow,
+>                                        final int startColumn, final int endColumn)
+>         throws MatrixIndexException, MatrixVisitorException {
+>         return walkInRowOrder(visitor, startRow, endRow, startColumn, endColumn);
+>     }
+> 
+>     
+>     public double walkInOptimizedOrder(final RealMatrixPreservingVisitor visitor,
+>                                        final int startRow, final int endRow,
+>                                        final int startColumn, final int endColumn)
+774c909
+<         walkInRowOrder(visitor, startRow, endRow, startColumn, endColumn);
+---
+>         return walkInRowOrder(visitor, startRow, endRow, startColumn, endColumn);

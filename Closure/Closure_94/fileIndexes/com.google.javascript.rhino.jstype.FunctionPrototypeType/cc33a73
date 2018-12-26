@@ -1,0 +1,95 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import com.google.javascript.rhino.jstype.ObjectType;
+
+import java.util.List;
+import java.util.Set;
+
+
+
+
+
+public class FunctionPrototypeType extends PrototypeObjectType {
+  private static final long serialVersionUID = 1L;
+
+  private final FunctionType ownerFunction;
+
+  FunctionPrototypeType(JSTypeRegistry registry, FunctionType ownerFunction,
+      ObjectType implicitPrototype, boolean isNative) {
+    super(registry, null , implicitPrototype,
+        isNative);
+    this.ownerFunction = ownerFunction;
+  }
+
+  FunctionPrototypeType(JSTypeRegistry registry, FunctionType ownerFunction,
+      ObjectType implicitPrototype) {
+    this(registry, ownerFunction, implicitPrototype, false);
+  }
+
+  @Override
+  public String getReferenceName() {
+    if (ownerFunction == null) {
+      return "{...}.prototype";
+    } else {
+      return ownerFunction.getReferenceName() + ".prototype";
+    }
+  }
+
+  @Override
+  public boolean hasReferenceName() {
+    return ownerFunction != null && ownerFunction.hasReferenceName();
+  }
+
+  @Override
+  public boolean isFunctionPrototypeType() {
+    return true;
+  }
+
+  public FunctionType getOwnerFunction() {
+    return ownerFunction;
+  }
+
+  @Override
+  Iterable<ObjectType> getCtorImplementedInterfaces() {
+    return getOwnerFunction().getImplementedInterfaces();
+  }
+}

@@ -1,0 +1,17 @@
+18a19
+> import com.google.common.base.Preconditions;
+62c63
+<     implements CompilerPass {
+---
+>     implements HotSwapCompilerPass {
+70a72
+>   @Override
+79a82,89
+>   }
+> 
+>   @Override
+>   public void hotSwapScript(Node root) {
+>     Preconditions.checkNotNull(root);
+>     Preconditions.checkState(root.getType() == Token.SCRIPT);
+>     inExterns = false;
+>     NodeTraversal.traverse(compiler, root, this);

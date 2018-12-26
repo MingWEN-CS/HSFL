@@ -1,0 +1,82 @@
+567c567
+<         outputSourceMap(options, options.jsOutputFile);
+---
+>         outputSourceMap(options);
+580c580
+<           mapOut = openSourceMapStream(options, moduleFilePrefix);
+---
+>           mapOut = toPrintStream(expandSourceMapPath(options, null));
+585,586c585
+<             mapOut = openSourceMapStream(
+<                 options, moduleFilePrefix + m.getName() + ".js");
+---
+>             mapOut = toPrintStream(expandSourceMapPath(options, m));
+699,703d697
+<   private PrintStream openSourceMapStream(B options, String path)
+<       throws IOException {
+<     if (options.sourceMapOutputPath == null) {
+<       return null;
+<     }
+705,706d698
+<     String sourceMapPath = options.sourceMapOutputPath;
+<     sourceMapPath = sourceMapPath.replace("%outname%", path);
+708d699
+<     String mapPath = null;
+710,711c701,709
+<     if (sourceMapPath.contains("/") || sourceMapPath.contains("\\")) {
+<       mapPath = sourceMapPath;
+---
+> 
+> 
+>   private String expandCommandLinePath(
+>       String path, JSModule forModule) {
+>     String sub;
+>     if (forModule != null) {
+>       sub = config.moduleOutputPathPrefix + forModule.getName() + ".js";
+>     } else if (!config.module.isEmpty()) {
+>       sub = config.moduleOutputPathPrefix;
+713,714c711,720
+<       File outputFile = new File(path);
+<       mapPath = outputFile.getParent() + File.separatorChar + sourceMapPath;
+---
+>       sub = config.jsOutputFile;
+>     }
+>     return path.replace("%outname%", sub);
+>   }
+> 
+>   
+>   @VisibleForTesting
+>   String expandSourceMapPath(B options, JSModule forModule) {
+>     if (Strings.isEmpty(options.sourceMapOutputPath)) {
+>       return null;
+715a722,725
+>     return expandCommandLinePath(options.sourceMapOutputPath, forModule);
+>   }
+> 
+>   
+717c727,733
+<     return new PrintStream(new FileOutputStream(mapPath));
+---
+> 
+> 
+>   private PrintStream toPrintStream(String fileName) throws IOException {
+>     if (fileName == null) {
+>       return null;
+>     }
+>     return new PrintStream(new FileOutputStream(fileName));
+728c744
+<   private void outputSourceMap(B options, String path)
+---
+>   private void outputSourceMap(B options)
+730c746
+<     if (options.sourceMapOutputPath == null) {
+---
+>     if (Strings.isEmpty(options.sourceMapOutputPath)) {
+734,736c750,752
+<     File outputFile = new File(path);
+<     PrintStream out = openSourceMapStream(options, path);
+<     compiler.getSourceMap().appendTo(out, outputFile.getName());
+---
+>     String outName = expandSourceMapPath(options, null);
+>     PrintStream out = toPrintStream(outName);
+>     compiler.getSourceMap().appendTo(out, outName);

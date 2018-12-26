@@ -1,0 +1,14 @@
+176,177c176,185
+<       return (super.isEquivalentTo(node, compareJsType, recurse)
+<           && getDouble() == ((NumberNode) node).getDouble());
+---
+>       boolean equivalent = super.isEquivalentTo(node, compareJsType, recurse);
+>       if (equivalent) {
+>         double thisValue = getDouble();
+>         double thatValue = ((NumberNode) node).getDouble();
+>         if (thisValue == thatValue) {
+>           
+>           return (thisValue != 0.0) || (1/thisValue == 1/thatValue);
+>         }
+>       }
+>       return false;

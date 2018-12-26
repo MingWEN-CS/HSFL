@@ -1,0 +1,114 @@
+83a84,88
+>   public interface FunctionCallback {
+>     void visit(AbstractCompiler compiler, Node fnRoot);
+>   }
+> 
+>   
+137a143,148
+>   public abstract static class AbstractPreOrderCallback implements Callback {
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {}
+>   }
+> 
+>   
+276a288
+>       
+396,402c408,409
+<   
+< 
+< 
+<   public Compiler getCompiler() {
+<     
+<     
+<     return (Compiler) compiler;
+---
+>   public AbstractCompiler getCompiler() {
+>     return compiler;
+413c420
+<       if (line >=0) {
+---
+>       if (line >= 0) {
+452a460,486
+> 
+> 
+> 
+> 
+>   public static void traverseChangedFunctions(
+>       AbstractCompiler compiler, FunctionCallback callback) {
+>     final AbstractCompiler comp = compiler;
+>     final FunctionCallback cb = callback;
+>     final Node jsRoot = comp.getJsRoot();
+>     if (comp.hasScopeChanged(jsRoot)) {
+>       cb.visit(comp, jsRoot);
+>     }
+>     traverse(comp, jsRoot,
+>         new AbstractPreOrderCallback() {
+>           @Override
+>           public final boolean shouldTraverse(NodeTraversal t, Node n, Node p) {
+>             if (n.isFunction() && comp.hasScopeChanged(n)) {
+>               cb.visit(comp, n);
+>             }
+>             return true;
+>           }
+>         });
+>   }
+> 
+>   
+> 
+> 
+477d510
+<   @SuppressWarnings("fallthrough")
+486c519,521
+<     if (!callback.shouldTraverse(this, n, parent)) return;
+---
+>     if (!callback.shouldTraverse(this, n, parent)) {
+>       return;
+>     }
+488,501c523,532
+<     switch (type) {
+<       case Token.FUNCTION:
+<         traverseFunction(n, parent);
+<         break;
+< 
+<       default:
+<         for (Node child = n.getFirstChild(); child != null; ) {
+<           
+<           
+<           Node next = child.getNext();
+<           traverseBranch(child, n);
+<           child = next;
+<         }
+<         break;
+---
+>     if (type == Token.FUNCTION) {
+>       traverseFunction(n, parent);
+>     } else {
+>       for (Node child = n.getFirstChild(); child != null; ) {
+>         
+>         
+>         Node next = child.getNext();
+>         traverseBranch(child, n);
+>         child = next;
+>       }
+509,510d539
+< 
+< 
+541,542c570
+<     Preconditions.checkState(body.getNext() == null &&
+<             body.isBlock(), body);
+---
+>     Preconditions.checkState(body.getNext() == null && body.isBlock(), body);
+564a593
+>     compiler.setScope(node);
+574a604
+>     compiler.setScope(s.getRootNode());
+592a623,625
+>     if (!scopes.isEmpty()) {
+>       compiler.setScope(scopes.peek().getRootNode());
+>     }
+650,651c683,684
+<     JSError error = JSError.make(getBestSourceFileName(n),
+<         n, diagnosticType, arguments);
+---
+>     JSError error = JSError.make(
+>         getBestSourceFileName(n), n, diagnosticType, arguments);

@@ -1,0 +1,25 @@
+97a98,100
+>   static final DiagnosticType OUTPUT_SAME_AS_INPUT_ERROR = DiagnosticType.error(
+>       "JSC_OUTPUT_SAME_AS_INPUT_ERROR",
+>       "Bad output file (already listed as input file): {0}");
+749a753
+>     List<String> outputFileNames = Lists.newArrayList();
+750a755
+>       outputFileNames.add(config.jsOutputFile);
+767a773,776
+>       for (JSModule m : modules) {
+>         outputFileNames.add(getModuleOutputFileName(m));
+>       }
+> 
+784a794,804
+>       for (JSModule m : modules) {
+>         outputFileNames.add(getModuleOutputFileName(m));
+>       }
+>     }
+> 
+>     for (String outputFileName : outputFileNames) {
+>       if (compiler.getSourceFileByName(outputFileName) != null) {
+>         compiler.report(
+>             JSError.make(OUTPUT_SAME_AS_INPUT_ERROR, outputFileName));
+>         return 1;
+>       }

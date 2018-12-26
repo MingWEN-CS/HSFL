@@ -1,0 +1,111 @@
+56,57c56
+< import java.util.HashMap;
+< import java.util.Map;
+---
+> import java.util.*;
+82c81
+<     static private String[][] apos = {
+---
+>     static String[][] apos = {
+86c85
+<     static private String[][] iso8859_1 = {
+---
+>     static String[][] iso8859_1 = {
+388,390c387
+<         HTML40.addEntities(basic);
+<         HTML40.addEntities(iso8859_1);
+<         HTML40.addEntities(html40);
+---
+>         fillWithHtml40Entities(HTML40);
+393,395c390,406
+<     static class IntMap {
+<         private Map mapNameToValue = new HashMap();
+<         private Map mapValueToName = new HashMap();
+---
+>     static void fillWithHtml40Entities(Entities entities) {
+>         entities.addEntities(basic);
+>         entities.addEntities(iso8859_1);
+>         entities.addEntities(html40);
+>     }
+> 
+>     static interface IntMap {
+>         void add(String name, int value);
+> 
+>         String name(int value);
+> 
+>         int value(String name);
+>     }
+> 
+>     static abstract class MapIntMap implements IntMap {
+>         protected Map mapNameToValue;
+>         protected Map mapValueToName;
+402c413
+<         private String name(int value) {
+---
+>         public String name(int value) {
+406c417
+<         private int value(String name) {
+---
+>         public int value(String name) {
+414c425,483
+<     IntMap map = new IntMap();
+---
+>     static class HashIntMap extends MapIntMap {
+>         public HashIntMap() {
+>             mapNameToValue = new HashMap();
+>             mapValueToName = new HashMap();
+>         }
+>     }
+> 
+>     static class TreeIntMap extends MapIntMap {
+>         public TreeIntMap() {
+>             mapNameToValue = new TreeMap();
+>             mapValueToName = new TreeMap();
+>         }
+>     }
+> 
+>     static class ArrayIntMap implements IntMap {
+>         int growBy = 100;
+>         private int size = 0;
+>         private String[] names = new String[growBy];
+>         private int[] values = new int[growBy];
+> 
+>         public void add(String name, int value) {
+>             ensureCapacity(size + 1);
+>             names[size] = name;
+>             values[size] = value;
+>             size++;
+>         }
+> 
+>         private void ensureCapacity(int capacity) {
+>             if (capacity > names.length) {
+>                 int newSize = Math.max(capacity, size + growBy);
+>                 String[] newNames = new String[newSize];
+>                 System.arraycopy(names, 0, newNames, 0, size);
+>                 names = newNames;
+>                 int[] newValues = new int[newSize];
+>                 System.arraycopy(values, 0, newValues, 0, size);
+>                 values = newValues;
+>             }
+>         }
+> 
+>         public String name(int value) {
+>             for (int i = 0; i < size; ++i) {
+>                 if (values[i] == value) {
+>                     return names[i];
+>                 }
+>             }
+>             return null;
+>         }
+> 
+>         public int value(String name) {
+>             for (int i = 0; i < size; ++i) {
+>                 if (names[i].equals(name)) {
+>                     return values[i];
+>                 }
+>             }
+>             return -1;
+>         }
+>     }
+> 
+>     IntMap map = new HashIntMap();

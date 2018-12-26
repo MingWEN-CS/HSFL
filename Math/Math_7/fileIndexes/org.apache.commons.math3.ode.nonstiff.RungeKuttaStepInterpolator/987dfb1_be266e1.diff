@@ -1,0 +1,62 @@
+18c18
+< package org.apache.commons.math.ode.nonstiff;
+---
+> package org.apache.commons.math3.ode.nonstiff;
+24,26c24,26
+< import org.apache.commons.math.ode.AbstractIntegrator;
+< import org.apache.commons.math.ode.EquationsMapper;
+< import org.apache.commons.math.ode.sampling.AbstractStepInterpolator;
+---
+> import org.apache.commons.math3.ode.AbstractIntegrator;
+> import org.apache.commons.math3.ode.EquationsMapper;
+> import org.apache.commons.math3.ode.sampling.AbstractStepInterpolator;
+41a42,44
+>     protected double[] previousState;
+> 
+>     
+58,60c61,63
+<     super();
+<     yDotK      = null;
+<     integrator = null;
+---
+>     previousState = null;
+>     yDotK         = null;
+>     integrator    = null;
+85c88,89
+<       final int dimension = currentState.length;
+---
+> 
+>       previousState = interpolator.previousState.clone();
+89,91c93
+<         yDotK[k] = new double[dimension];
+<         System.arraycopy(interpolator.yDotK[k], 0,
+<                          yDotK[k], 0, dimension);
+---
+>         yDotK[k] = interpolator.yDotK[k].clone();
+94a97
+>       previousState = null;
+131a135
+>     this.previousState = null;
+137a142,148
+>   public void shift() {
+>     previousState = currentState.clone();
+>     super.shift();
+>   }
+> 
+>   
+>   @Override
+145a157,160
+>     for (int i = 0; i < n; ++i) {
+>       out.writeDouble(previousState[i]);
+>     }
+> 
+167a183,191
+>     if (n < 0) {
+>       previousState = null;
+>     } else {
+>       previousState = new double[n];
+>       for (int i = 0; i < n; ++i) {
+>         previousState[i] = in.readDouble();
+>       }
+>     }
+> 

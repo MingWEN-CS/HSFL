@@ -1,0 +1,330 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.base;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.Duration;
+import org.joda.time.MutablePeriod;
+import org.joda.time.Period;
+import org.joda.time.PeriodType;
+import org.joda.time.ReadWritableInstant;
+import org.joda.time.ReadableInstant;
+import org.joda.time.ReadablePeriod;
+import org.joda.time.field.FieldUtils;
+import org.joda.time.format.ISOPeriodFormat;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class AbstractPeriod implements ReadablePeriod {
+
+    
+
+
+    protected AbstractPeriod() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public long addTo(long instant, int scalar) {
+        return addTo(instant, scalar, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public long addTo(long instant, int scalar, Chronology chrono) {
+        if (isPrecise()) {
+            return FieldUtils.safeAdd(instant, toDurationMillis() * scalar);
+        }
+        
+        PeriodType type = getPeriodType();
+        if (chrono != null) {
+            type = type.withChronology(chrono);
+        }
+        
+        long value; 
+        value = scaleValue(getYears(), scalar);
+        if (value != 0) {
+            instant = type.years().add(instant, value);
+        }
+        value = scaleValue(getMonths(), scalar);
+        if (value != 0) {
+            instant = type.months().add(instant, value);
+        }
+        value = scaleValue(getWeeks(), scalar);
+        if (value != 0) {
+            instant = type.weeks().add(instant, value);
+        }
+        value = scaleValue(getDays(), scalar);
+        if (value != 0) {
+            instant = type.days().add(instant, value);
+        }
+        value = scaleValue(getHours(), scalar);
+        if (value != 0) {
+            instant = type.hours().add(instant, value);
+        }
+        value = scaleValue(getMinutes(), scalar);
+        if (value != 0) {
+            instant = type.minutes().add(instant, value);
+        }
+        value = scaleValue(getSeconds(), scalar);
+        if (value != 0) {
+            instant = type.seconds().add(instant, value);
+        }
+        value = scaleValue(getMillis(), scalar);
+        if (value != 0) {
+            instant = type.millis().add(instant, value);
+        }
+
+        return instant;
+    }
+
+    
+
+
+
+
+
+
+    private static long scaleValue(int value, int scalar) {
+        long val = value;  
+        switch (scalar) {
+        case -1:
+            return -val;
+        case 0:
+            return 0;
+        case 1:
+            return val;
+        default:
+            return val * scalar;
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime addTo(ReadableInstant instant, int scalar) {
+        long instantMillis = DateTimeUtils.getInstantMillis(instant);
+        Chronology chrono = DateTimeUtils.getInstantChronology(instant, null);
+        return new DateTime(addTo(instantMillis, scalar, chrono), chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public void addInto(ReadWritableInstant instant, int scalar) {
+        if (instant == null) {
+            throw new IllegalArgumentException("The instant must not be null");
+        }
+        instant.setMillis(addTo(instant.getMillis(), scalar, instant.getChronology()));
+    }
+
+    
+    
+
+
+
+
+    public Period toPeriod() {
+        return new Period(this);
+    }
+
+    
+
+
+
+
+
+
+    public MutablePeriod toMutablePeriod() {
+        return new MutablePeriod(this);
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public Duration toDuration() {
+        return new Duration(toDurationMillis());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public boolean equals(Object readablePeriod) {
+        if (this == readablePeriod) {
+            return true;
+        }
+        if (readablePeriod instanceof ReadablePeriod == false) {
+            return false;
+        }
+        ReadablePeriod other = (ReadablePeriod) readablePeriod;
+        PeriodType type = getPeriodType();
+        if (type.equals(other.getPeriodType()) == false) {
+            return false;
+        }
+        return getYears() == other.getYears()
+            && getMonths() == other.getMonths()
+            && getWeeks() == other.getWeeks()
+            && getDays() == other.getDays()
+            && getHours() == other.getHours()
+            && getMinutes() == other.getMinutes()
+            && getSeconds() == other.getSeconds()
+            && getMillis() == other.getMillis();
+    }
+
+    
+
+
+
+
+
+
+    public int hashCode() {
+        int hash = getPeriodType().hashCode();
+        hash = 53 * hash + getYears();
+        hash = 53 * hash + getMonths();
+        hash = 53 * hash + getWeeks();
+        hash = 53 * hash + getDays();
+        hash = 53 * hash + getHours();
+        hash = 53 * hash + getMinutes();
+        hash = 53 * hash + getSeconds();
+        hash = 53 * hash + getMillis();
+        return hash;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public String toString() {
+        return ISOPeriodFormat.getInstance().standard().print(this);
+    }
+
+}

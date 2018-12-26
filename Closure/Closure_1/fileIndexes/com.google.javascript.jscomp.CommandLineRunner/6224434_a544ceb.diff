@@ -1,0 +1,38 @@
+36a37
+> import java.io.FileInputStream;
+348a350,359
+>     @Option(name = "--translations_file",
+>         usage = "Source of translated messages. Currently only supports XTB.")
+>     private String translationsFile = "";
+> 
+>     @Option(name = "--translations_project",
+>         usage = "Scopes all translations to the specified project." +
+>         "When specified, we will use different message ids so that messages " +
+>         "in different projects can have different translations.")
+>     private String translationsProject = null;
+> 
+629c640
+<     if(flags.generate_exports) {
+---
+>     if (flags.generate_exports) {
+639a651,670
+> 
+>     if (!flags.translationsFile.isEmpty()) {
+>       try {
+>         options.messageBundle = new XtbMessageBundle(
+>             new FileInputStream(flags.translationsFile),
+>             flags.translationsProject);
+>       } catch (IOException e) {
+>         throw new RuntimeException("Reading XTB file", e);
+>       }
+>     } else if (CompilationLevel.ADVANCED_OPTIMIZATIONS == level) {
+>       
+>       
+>       
+>       
+>       
+>       
+>       
+>       options.messageBundle = new EmptyMessageBundle();
+>     }
+> 

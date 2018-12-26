@@ -1,0 +1,66 @@
+118c118
+<     return referencedType;
+---
+>     return getReferencedTypeInternal();
+191c191,192
+<       return registry.isLastGeneration() ? referencedType : this;
+---
+>       return registry.isLastGeneration() ?
+>           getReferencedType() : this;
+200c201,202
+<     return registry.isLastGeneration() ? referencedType : this;
+---
+>     return registry.isLastGeneration() ?
+>         getReferencedType() : this;
+209c211
+<     ObjectType type = ObjectType.cast(registry.getType(reference));
+---
+>     JSType type = registry.getType(reference);
+211c213
+<       setReferencedType(type, t, enclosing);
+---
+>       setReferencedAndResolvedType(type, t, enclosing);
+229c231,232
+<       setReferencedType(functionType.getInstanceType(), t, enclosing);
+---
+>       setReferencedAndResolvedType(
+>           functionType.getInstanceType(), t, enclosing);
+231c234,235
+<       setReferencedType(((EnumType) value).getElementsType(), t, enclosing);
+---
+>       setReferencedAndResolvedType(
+>           ((EnumType) value).getElementsType(), t, enclosing);
+285c289
+<   private void setReferencedType(ObjectType type, ErrorReporter t,
+---
+>   private void setReferencedAndResolvedType(JSType type, ErrorReporter t,
+287c291
+<     referencedType = type;
+---
+>     setReferencedType(type);
+289c293
+<     setResolvedTypeInternal(referencedType);
+---
+>     setResolvedTypeInternal(getReferencedType());
+293c297,298
+<     referencedType = registry.getNativeObjectType(JSTypeNative.UNKNOWN_TYPE);
+---
+>     setReferencedType(
+>         registry.getNativeObjectType(JSTypeNative.UNKNOWN_TYPE));
+296c301
+<     setResolvedTypeInternal(referencedType);
+---
+>     setResolvedTypeInternal(getReferencedType());
+299a305
+>     JSType referencedType = getReferencedType();
+318,319c324,326
+<         referencedType = registry.getNativeObjectType(
+<             JSTypeNative.CHECKED_UNKNOWN_TYPE);
+---
+>         setReferencedType(
+>             registry.getNativeObjectType(
+>                 JSTypeNative.CHECKED_UNKNOWN_TYPE));
+322c329
+<       setResolvedTypeInternal(referencedType);
+---
+>       setResolvedTypeInternal(getReferencedType());

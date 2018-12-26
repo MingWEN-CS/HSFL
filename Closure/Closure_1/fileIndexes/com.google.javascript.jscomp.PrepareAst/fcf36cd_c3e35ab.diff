@@ -1,0 +1,62 @@
+38c38
+<   private final boolean assertOnChange;
+---
+>   private final boolean checkOnly;
+44c44
+<   PrepareAst(AbstractCompiler compiler, boolean forbidChanges) {
+---
+>   PrepareAst(AbstractCompiler compiler, boolean checkOnly) {
+46c46
+<     this.assertOnChange = forbidChanges;
+---
+>     this.checkOnly = checkOnly;
+50c50
+<     if (assertOnChange) {
+---
+>     if (checkOnly) {
+57c57
+<     if (assertOnChange) {
+---
+>     if (checkOnly) {
+59,66c59,71
+<     }
+<     if (externs != null) {
+<       NodeTraversal.traverse(
+<           compiler, externs, new PrepareAnnotations(compiler));
+<     }
+<     if (root != null) {
+<       NodeTraversal.traverse(
+<           compiler, root, new PrepareAnnotations(compiler));
+---
+>     } else {
+>       
+>       
+>       
+>       
+>       if (externs != null) {
+>         NodeTraversal.traverse(
+>             compiler, externs, new PrepareAnnotations(compiler));
+>       }
+>       if (root != null) {
+>         NodeTraversal.traverse(
+>             compiler, root, new PrepareAnnotations(compiler));
+>       }
+150a156
+>     @SuppressWarnings("fallthrough")
+154d159
+<         case Token.NAME:
+155a161,170
+>           
+>           
+>           
+>           if (parent.getType() != Token.OBJECTLIT &&
+>               parent.getType() != Token.GETPROP) {
+>             break;
+>           }
+>           
+> 
+>         case Token.NAME:
+162c177
+<           if (convention.isConstant(nString)) {
+---
+>           if (NodeUtil.isConstantByConvention(convention, n, parent)) {

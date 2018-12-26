@@ -1,0 +1,52 @@
+25d24
+< import com.google.javascript.jscomp.CodingConvention.SubclassRelationship;
+73,74d71
+<   private final CodingConvention codingConvention;
+< 
+108,113d104
+<   private final Multimap<Var, Node> inheritsCalls =
+<       ArrayListMultimap.create();
+< 
+<   
+< 
+< 
+128d118
+<     this.codingConvention = compiler.getCodingConvention();
+139d128
+<     Preconditions.checkState(compiler.getLifeCycleStage().isNormalized());
+141d129
+< 
+227,241d214
+<       case Token.CALL:
+<         
+<         SubclassRelationship subclassRelationship =
+<             codingConvention.getClassesDefinedByCall(n);
+<         if (subclassRelationship != null) {
+<           Var subclassVar = scope.getVar(subclassRelationship.subclassName);
+<           if (!referenced.contains(subclassVar)) {
+<             
+<             inheritsCalls.put(subclassVar, parent);
+<             continuations.put(subclassVar, new Continuation(n, scope));
+<             return;
+<           }
+<         }
+<         break;
+< 
+290c263
+<     if (codingConvention.isExported(var.getName())) {
+---
+>     if (compiler.getCodingConvention().isExported(var.getName())) {
+731d703
+<       
+745c717
+<     CodingConvention convention = codingConvention;
+---
+>     CodingConvention convention = compiler.getCodingConvention();
+749,755d720
+< 
+<       
+<       
+<       for (Node exprCallNode : inheritsCalls.get(var)) {
+<         NodeUtil.removeChild(exprCallNode.getParent(), exprCallNode);
+<         compiler.reportCodeChange();
+<       }

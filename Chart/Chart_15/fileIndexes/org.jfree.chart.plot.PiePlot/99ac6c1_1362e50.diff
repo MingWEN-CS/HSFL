@@ -1,0 +1,125 @@
+152a153,154
+> 
+> 
+165a168
+> import java.awt.geom.Ellipse2D;
+232c235
+<     public static final double DEFAULT_INTERIOR_GAP = 0.1;
+---
+>     public static final double DEFAULT_INTERIOR_GAP = 0.08;
+378c381
+<     private double maximumLabelWidth = 0.20;
+---
+>     private double maximumLabelWidth = 0.14;
+384c387
+<     private double labelGap = 0.05;
+---
+>     private double labelGap = 0.025;
+390c393
+<     private double labelLinkMargin = 0.05;
+---
+>     private double labelLinkMargin = 0.025;
+456a460,479
+> 
+> 
+>     static final boolean DEBUG_DRAW_INTERIOR = false;
+>     
+>     
+> 
+> 
+> 
+> 
+>     static final boolean DEBUG_DRAW_LINK_AREA = false;
+>     
+>     
+> 
+> 
+> 
+>     static final boolean DEBUG_DRAW_PIE_AREA = false;
+>     
+>     
+> 
+> 
+468d490
+<         setBackgroundPaint(new Color(230, 230, 230));
+2094c2116
+<         double labelWidth = 0.0;
+---
+>         double labelReserve = 0.0;
+2096,2097c2118
+<             labelWidth = this.labelGap + this.maximumLabelWidth 
+<                          + this.labelLinkMargin;    
+---
+>             labelReserve = this.labelGap + this.maximumLabelWidth;    
+2100,2101c2121,2122
+<                 + labelWidth);
+<         double gapVertical = plotArea.getHeight() * this.interiorGap;
+---
+>                 + labelReserve) * 2.0;
+>         double gapVertical = plotArea.getHeight() * this.interiorGap * 2.0;
+2102a2124,2137
+>         
+>         if (DEBUG_DRAW_INTERIOR) {
+>             double hGap = plotArea.getWidth() * this.interiorGap;
+>             double vGap = plotArea.getHeight() * this.interiorGap;
+>         
+>             double igx1 = plotArea.getX() + hGap;
+>             double igx2 = plotArea.getMaxX() - hGap;
+>             double igy1 = plotArea.getY() + vGap;
+>             double igy2 = plotArea.getMaxY() - vGap;
+>             g2.setPaint(Color.gray);
+>             g2.draw(new Rectangle2D.Double(igx1, igy1, igx2 - igx1, 
+>                     igy2 - igy1));
+>         }
+>         
+2121a2157,2164
+> 
+>         if (DEBUG_DRAW_LINK_AREA) {
+>             g2.setPaint(Color.blue);
+>             g2.draw(linkArea);
+>             g2.setPaint(Color.yellow);
+>             g2.draw(new Ellipse2D.Double(linkArea.getX(), linkArea.getY(), 
+>                     linkArea.getWidth(), linkArea.getHeight()));
+>         }
+2130,2131c2173,2174
+<         double hh = linkArea.getWidth() * lm;
+<         double vv = linkArea.getHeight() * lm;
+---
+>         double hh = linkArea.getWidth() * lm * 2.0;
+>         double vv = linkArea.getHeight() * lm * 2.0;
+2148a2192,2195
+>         if (DEBUG_DRAW_PIE_AREA) {
+>             g2.setPaint(Color.green);
+>             g2.draw(pieArea);
+>         }
+2295,2296c2342,2344
+<     protected void drawSimpleLabels(Graphics2D g2, List keys, double totalValue, 
+<             Rectangle2D plotArea, Rectangle2D pieArea, PiePlotState state) {
+---
+>     protected void drawSimpleLabels(Graphics2D g2, List keys, 
+>             double totalValue, Rectangle2D plotArea, Rectangle2D pieArea, 
+>             PiePlotState state) {
+2344c2392,2393
+<                 Rectangle2D out = this.labelPadding.createOutsetRectangle(bounds);
+---
+>                 Rectangle2D out = this.labelPadding.createOutsetRectangle(
+>                         bounds);
+2430,2431c2479,2485
+<         float maxLabelWidth = (float) (getMaximumLabelWidth() 
+<                 * plotArea.getWidth());
+---
+>         
+>         
+>         
+>         double marginX = plotArea.getX() + this.interiorGap * plotArea.getWidth();
+>         double gap = plotArea.getWidth() * this.labelGap;
+>         double ww = linkArea.getX() - gap - marginX;
+>         float labelWidth = (float) this.labelPadding.trimWidth(ww);
+2435c2489
+<             drawLeftLabels(leftKeys, g2, plotArea, linkArea, maxLabelWidth, 
+---
+>             drawLeftLabels(leftKeys, g2, plotArea, linkArea, labelWidth, 
+2437c2491
+<             drawRightLabels(rightKeys, g2, plotArea, linkArea, maxLabelWidth, 
+---
+>             drawRightLabels(rightKeys, g2, plotArea, linkArea, labelWidth, 

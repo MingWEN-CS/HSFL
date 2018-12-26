@@ -1,0 +1,156 @@
+19c19,20
+< import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+---
+> import com.google.common.base.Preconditions;
+> import com.google.common.collect.Lists;
+21a23
+> import java.util.ArrayList;
+29c31,32
+< class PeepholeOptimizationsPass extends AbstractPostOrderCallback
+---
+> 
+> class PeepholeOptimizationsPass
+33a37,38
+>   private final AbstractPeepholeOptimization[] peepholeOptimizations;
+> 
+36c41,87
+<   private final AbstractPeepholeOptimization[] peepholeOptimizations;
+---
+>   private StateStack traversalState = new StateStack();
+> 
+>   static private class ScopeState {
+>     boolean changed;
+>     boolean traverseChildScopes;
+>     ScopeState() {
+>       reset();
+>     }
+> 
+>     void reset() {
+>       changed = false;
+>       traverseChildScopes = true;
+>     }
+>   }
+> 
+>   static private class StateStack {
+>     private ArrayList<ScopeState> states = Lists.newArrayList();
+>     private int currentDepth = 0;
+> 
+>     StateStack() {
+>       states.add(new ScopeState());
+>     }
+> 
+>     ScopeState peek() {
+>       return states.get(currentDepth);
+>     }
+> 
+>     void push() {
+>       currentDepth++;
+>       if (states.size() <= currentDepth) {
+>         states.add(new ScopeState());
+>       } else {
+>         states.get(currentDepth).reset();
+>       }
+>     }
+> 
+>     void pop() {
+>       currentDepth--;
+>     }
+>   }
+> 
+>   private class PeepholeChangeHandler implements CodeChangeHandler {
+>     @Override
+>     public void reportChange() {
+>       traversalState.peek().changed = true;
+>     }
+>   }
+54c105,120
+<     NodeTraversal t = new NodeTraversal(compiler, this);
+---
+>     PeepholeChangeHandler handler = new PeepholeChangeHandler();
+>     compiler.addChangeHandler(handler);
+>     beginTraversal();
+>     traverse(root);
+>     endTraversal();
+>     compiler.removeChangeHandler(handler);
+>   }
+> 
+>   private void traverse(Node node) {
+>     
+>     
+>     
+>     
+>     if (!shouldVisit(node)) {
+>       return;
+>     }
+56,58c122,134
+<     beginTraversal(t);
+<     t.traverse(root);
+<     endTraversal(t);
+---
+>     int visits = 0;
+>     do {
+>       for (Node c = node.getFirstChild(); c != null; c = c.getNext()) {
+>         traverse(c);
+>       }
+> 
+>       visit(node);
+>       visits++;
+> 
+>       Preconditions.checkState(visits < 10000, "too many interations");
+>     } while (shouldRetraverse(node));
+> 
+>     exitNode(node);
+61,62c137,170
+<   @Override
+<   public void visit(NodeTraversal t, Node n, Node parent) {
+---
+>   private boolean shouldRetraverse(Node node) {
+>     if (node.getParent() != null && node.isFunction() || node.isScript()) {
+>       ScopeState state = traversalState.peek();
+>       if (state.changed) {
+>         
+>         
+>         
+>         
+>         state.changed = false;
+>         state.traverseChildScopes = false;
+>         return true;
+>       }
+>     }
+>     return false;
+>   }
+> 
+>   private boolean shouldVisit(Node node) {
+>     if (node.isFunction() || node.isScript()) {
+>       ScopeState previous = traversalState.peek();
+>       if (!previous.traverseChildScopes) {
+>         return false;
+>       }
+>       traversalState.push();
+>     }
+>     return true;
+>   }
+> 
+>   private void exitNode(Node node) {
+>     if (node.isFunction() || node.isScript()) {
+>       traversalState.pop();
+>     }
+>   }
+> 
+>   public void visit(Node n) {
+89c197
+<   private void beginTraversal(NodeTraversal t) {
+---
+>   private void beginTraversal() {
+91c199
+<       optimization.beginTraversal(t);
+---
+>       optimization.beginTraversal(compiler);
+95c203
+<   private void endTraversal(NodeTraversal t) {
+---
+>   private void endTraversal() {
+97c205
+<       optimization.endTraversal(t);
+---
+>       optimization.endTraversal(compiler);

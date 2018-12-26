@@ -1,0 +1,84 @@
+25d24
+< import java.text.SimpleDateFormat;
+32a32
+> import java.util.Map;
+128,139d127
+<         
+<         
+<         
+<         
+<         if (locale.equals(JAPANESE_IMPERIAL)
+<         || (locale.getLanguage().equals("th") && locale.getCountry().equals("TH"))) {
+<             collector.add(new SimpleDateFormatStrategy());
+<             strategies= collector.toArray(new Strategy[collector.size()]);
+<             parsePattern= Pattern.compile("(.*+)");
+<             return;
+<         }
+< 
+259c247,253
+<             throw new ParseException(source+" does not match "+parsePattern.pattern(), 0);            
+---
+>             
+>             if (locale.equals(JAPANESE_IMPERIAL)) {
+>                 throw new ParseException(
+>                         "(The " +locale + " locale does not support dates before 1868 AD)\n" +
+>                         source+" does not match "+parsePattern.pattern(), 0);
+>             }
+>             throw new ParseException(source+" does not match "+parsePattern.pattern(), 0);
+386c380,387
+<                 fieldKeyValues= createKeyValues(symbols.getEras(), null);
+---
+>                 
+>                 
+>                 
+>                 Calendar c = Calendar.getInstance(locale);
+>                 
+>                 String[] shortEras = toArray(c.getDisplayNames(Calendar.ERA, Calendar.SHORT, locale));
+>                 String[] longEras = toArray(c.getDisplayNames(Calendar.ERA, Calendar.LONG, locale));
+>                 fieldKeyValues= createKeyValues(longEras, shortEras);
+406a408,420
+> 
+>     private String[] toArray(Map<String, Integer> era) {
+>         String[] eras = new String[era.size()]; 
+>         for(Map.Entry<String, Integer> me : era.entrySet()) {
+>             int idx = me.getValue().intValue();
+>             final String key = me.getKey();
+>             if (key == null) {
+>                 throw new IllegalArgumentException();
+>             }
+>             eras[idx] = key;
+>         }
+>         return eras;
+>     }
+822,852d835
+< 
+<     
+< 
+< 
+<     private static class SimpleDateFormatStrategy implements Strategy {
+< 
+<         @Override
+<         public boolean isNumber() {
+<             return false;
+<         }
+< 
+<         @Override
+<         public void setCalendar(FastDateParser parser, Calendar cal, String value) {
+<             String pat = parser.pattern;
+<             Locale loc = parser.locale;
+<             SimpleDateFormat sdf = new SimpleDateFormat(pat, loc);
+<             try {
+<                 Date d = sdf.parse(value);
+<                 cal.setTime(d);
+<             } catch (ParseException e) {
+<                 throw new IllegalArgumentException(
+<                         "Unexpected error using pattern " + pat + " with locale " + loc.toString(), e);
+<             }
+<         }
+< 
+<         @Override
+<         public boolean addRegex(FastDateParser parser, StringBuilder regex) {
+<             return false;
+<         }
+<         
+<     }

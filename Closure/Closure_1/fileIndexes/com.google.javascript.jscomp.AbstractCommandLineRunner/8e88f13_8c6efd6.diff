@@ -1,0 +1,49 @@
+35d34
+< import java.io.BufferedReader;
+1280,1281c1279
+<   private Map<String, String> constructRootRelativePathsMap()
+<       throws IOException {
+---
+>   private Map<String, String> constructRootRelativePathsMap() {
+1283,1294c1281,1287
+<     if (!config.manifestMapFile.equals("")) {
+<       File mapFile = new File(config.manifestMapFile);
+<       BufferedReader br = Files.newReader(mapFile, Charsets.UTF_8);
+<       String line;
+<       while ((line = br.readLine()) != null) {
+<         int colonIndex = line.indexOf(':');
+<         Preconditions.checkState(colonIndex > 0);
+<         String execPath = line.substring(0, colonIndex);
+<         String rootRelativePath = line.substring(colonIndex + 1);
+<         Preconditions.checkState(rootRelativePath.indexOf(':') == -1);
+<         rootRelativePathsMap.put(execPath, rootRelativePath);
+<       }
+---
+>     for (String mapString : config.manifestMaps) {
+>       int colonIndex = mapString.indexOf(':');
+>       Preconditions.checkState(colonIndex > 0);
+>       String execPath = mapString.substring(0, colonIndex);
+>       String rootRelativePath = mapString.substring(colonIndex + 1);
+>       Preconditions.checkState(rootRelativePath.indexOf(':') == -1);
+>       rootRelativePathsMap.put(execPath, rootRelativePath);
+1738a1732,1733
+>     private boolean skipNormalOutputs = false;
+> 
+1742,1743d1736
+<     private boolean skipNormalOutputs = false;
+< 
+1749,1750c1742
+<     
+< 
+---
+>     private List<String> manifestMaps = ImmutableList.of();
+1751a1744
+>     
+1753d1745
+<     private String manifestMapFile = "";
+1755,1756c1747,1748
+<     CommandLineConfig setManifestMapFile(String manifestMapFile) {
+<       this.manifestMapFile = manifestMapFile;
+---
+>     CommandLineConfig setManifestMaps(List<String> manifestMaps) {
+>       this.manifestMaps = manifestMaps;

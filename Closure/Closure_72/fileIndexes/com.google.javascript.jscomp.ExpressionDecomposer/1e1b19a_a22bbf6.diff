@@ -1,0 +1,192 @@
+20,21d19
+< import com.google.common.base.Predicate;
+< import com.google.common.base.Predicates;
+69a68,69
+>   private static final int MAX_INTERATIONS = 100;
+> 
+76a77
+>     int i = 0;
+78a80,84
+>       if (i > MAX_INTERATIONS) {
+>         throw new IllegalStateException(
+>             "DecomposeExpression depth exceeded on :\n" + 
+>             expression.toStringTree());
+>       }
+156c162
+<           if (parent.getFirstChild().getType() == Token.NAME) {
+---
+>           if (isSafeAssign(parent, state.sideEffects)) {
+181,183d186
+<         Node functionExpression = parent.getFirstChild();
+<         decomposeSubExpressions(
+<             functionExpression.getNext(), child, state);
+185,191c188,195
+<         if (isExpressionTreeUnsafe(functionExpression, state.sideEffects)) {
+<           
+<           
+<           state.sideEffects = true;
+< 
+<           
+<           Node replacement = rewriteCallExpression(parent, state);
+---
+>         
+>         if (!maybeExternMethod(parent.getFirstChild())) {
+>           throw new IllegalStateException(
+>               "External object method calls can not be decomposed.");
+>         } else {
+>           Node functionExpression = parent.getFirstChild();
+>           decomposeSubExpressions(
+>               functionExpression.getNext(), child, state);
+193c197,206
+<           parent = replacement;
+---
+>           if (isExpressionTreeUnsafe(functionExpression, state.sideEffects)) {
+>             
+>             
+>             state.sideEffects = true;
+>   
+>             
+>             Node replacement = rewriteCallExpression(parent, state);
+>             
+>             parent = replacement;
+>           }
+221a235,242
+>   private boolean maybeExternMethod(Node node) {
+>     
+>     return true;
+>   }
+> 
+>   
+> 
+> 
+592,596c613
+<       if (isSubexpressionMovable(expressionRoot, subExpression)) {
+<         return DecompositionType.MOVABLE;
+<       } else {
+<         return DecompositionType.DECOMPOSABLE;
+<       }
+---
+>       return isSubexpressionMovable(expressionRoot, subExpression);
+625,626d641
+<   private boolean isSubexpressionMovable(
+<       Node expressionRoot, Node subExpression) {
+628,629c643,647
+<     boolean callExpressionHasSideEffects = NodeUtil.mayHaveSideEffects(
+<         subExpression);
+---
+> 
+>   private DecompositionType isSubexpressionMovable(
+>       Node expressionRoot, Node subExpression) {
+>     boolean requiresDecomposition = false;
+>     boolean seenSideEffects = NodeUtil.mayHaveSideEffects(subExpression);
+636c654,656
+<         return true;
+---
+>         return requiresDecomposition
+>             ? DecompositionType.DECOMPOSABLE
+>             : DecompositionType.MOVABLE;
+645c665
+<           return false;
+---
+>           requiresDecomposition = true;
+655,656c675
+<         if (parentType == Token.ASSIGN
+<             && parent.getFirstChild().getType() == Token.NAME) {
+---
+>         if (isSafeAssign(parent, seenSideEffects)) {
+677,678c696,724
+<                 n, callExpressionHasSideEffects)) {
+<               return false;
+---
+>                 n, seenSideEffects)) {
+>               seenSideEffects = true;
+>               requiresDecomposition = true;
+>             }
+>           }
+> 
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           Node first = parent.getFirstChild();
+>           if (requiresDecomposition 
+>               && parent.getType() == Token.CALL 
+>               && NodeUtil.isGet(first)) {
+>             if (maybeExternMethod(first)) {
+>               return DecompositionType.UNDECOMPOSABLE;
+>             } else {
+>               return DecompositionType.DECOMPOSABLE;
+694,698d739
+<   private boolean canBeSideEffected(Node n) {
+<     return NodeUtil.has(
+<         n, new SideEffected(this.knownConstants),
+<         Predicates.<Node>alwaysTrue());
+<   }
+700d740
+<   
+703,704d742
+<   private static class SideEffected implements Predicate<Node> {
+<     final Set<String> additionalConsts;
+706,708d743
+<     SideEffected(Set<String> additionalConsts) {
+<       this.additionalConsts = additionalConsts;
+<     }
+710d744
+<     
+713,720c747,761
+<     public boolean apply(Node n) {
+<       switch (n.getType()) {
+<         case Token.CALL:
+<         case Token.NEW:
+<           
+<           
+<           
+<           return true;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private boolean isSafeAssign(Node n, boolean seenSideEffects) {
+>     if (n.getType() == Token.ASSIGN) {
+>       Node lhs = n.getFirstChild();
+>       switch (lhs.getType()) {
+722,728c763,768
+<           
+<           
+<           
+<           return !NodeUtil.isConstantName(n)
+<               && !additionalConsts.contains(n.getString());
+<         default:
+<           return false;
+---
+>           return true;
+>         case Token.GETPROP:
+>           return !isExpressionTreeUnsafe(lhs.getFirstChild(), seenSideEffects);
+>         case Token.GETELEM:
+>           return !isExpressionTreeUnsafe(lhs.getFirstChild(), seenSideEffects) 
+>               && !isExpressionTreeUnsafe(lhs.getLastChild(), seenSideEffects);
+730a771
+>     return false;
+744c785
+<       return canBeSideEffected(n);
+---
+>       return NodeUtil.canBeSideEffected(n, this.knownConstants);

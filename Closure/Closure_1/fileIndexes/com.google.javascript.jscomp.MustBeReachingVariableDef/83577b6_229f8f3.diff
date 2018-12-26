@@ -1,0 +1,24 @@
+30a31
+> import java.util.Map.Entry;
+358c359
+<       if (v.getParentNode().getType() == Token.LP) {
+---
+>       if (isParameter(v)) {
+363a365,381
+> 
+>     
+>     for (Entry<Var, Definition> pair: output.reachingDef.entrySet()) {
+>       Definition value = pair.getValue();
+>       if (value == null) {
+>         continue;
+>       }
+>       for (Var dep : value.depends) {
+>         if (isParameter(dep)) {
+>           output.reachingDef.put(pair.getKey(), null);
+>         }
+>       }
+>     }
+>   }
+> 
+>   private boolean isParameter(Var v) {
+>     return v.getParentNode().getType() == Token.LP;

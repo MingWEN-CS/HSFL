@@ -1,0 +1,986 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.FunctionInjector.CanInlineResult;
+import com.google.javascript.jscomp.FunctionInjector.InliningMode;
+import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+import com.google.javascript.jscomp.NodeTraversal.Callback;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class InlineFunctions implements CompilerPass {
+
+  
+  
+  
+  
+  
+  private final Map<String, FunctionState> fns = Maps.newHashMap();
+  private final Map<Node, String> anonFns = Maps.newHashMap();
+
+  private final AbstractCompiler compiler;
+
+  private final FunctionInjector injector;
+
+  private final boolean blockFunctionInliningEnabled;
+  private final boolean inlineAnonymousFunctionExpressions;
+  private final boolean inlineGlobalFunctions;
+  private final boolean inlineLocalFunctions;
+
+  InlineFunctions(AbstractCompiler compiler,
+      Supplier<String> safeNameIdSupplier,
+      boolean inlineGlobalFunctions,
+      boolean inlineLocalFunctions,
+      boolean inlineAnonymousFunctionExpressions,
+      boolean blockFunctionInliningEnabled,
+      boolean enableExpressionDecomposition) {
+    Preconditions.checkArgument(compiler != null);
+    Preconditions.checkArgument(safeNameIdSupplier != null);
+    this.compiler = compiler;
+
+    this.inlineGlobalFunctions = inlineGlobalFunctions;
+    this.inlineLocalFunctions = inlineLocalFunctions;
+    this.inlineAnonymousFunctionExpressions =
+      inlineAnonymousFunctionExpressions;
+    this.blockFunctionInliningEnabled = blockFunctionInliningEnabled;
+
+    this.injector = new FunctionInjector(
+        compiler, safeNameIdSupplier, enableExpressionDecomposition);
+  }
+
+  FunctionState getOrCreateFunctionState(String fnName) {
+    FunctionState fs = fns.get(fnName);
+    if (fs == null) {
+      fs = new FunctionState();
+      fns.put(fnName, fs);
+    }
+    return fs;
+  }
+
+  
+
+
+  public void process(Node externs, Node root) {
+    Preconditions.checkState(compiler.isNormalized());
+
+    NodeTraversal.traverse(compiler, root, new FindCandidateFunctions());
+    if (fns.isEmpty()) {
+      return;  
+    }
+    NodeTraversal.traverse(compiler, root,
+       new FindCandidatesReferences(fns, anonFns));
+    trimCanidatesNotMeetingMinimumRequirements();
+    if (fns.isEmpty()) {
+      return;  
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    Set<String> fnNames = Sets.newHashSet(fns.keySet());
+    injector.setKnownConstants(fnNames);
+
+    trimCanidatesUsingOnCost();
+    if (fns.isEmpty()) {
+      return;  
+    }
+    resolveInlineConflicts();
+    decomposeExpressions(fnNames);
+    NodeTraversal.traverse(compiler, root,
+        new CallVisitor(fns, anonFns, new Inline(injector)));
+
+    removeInlinedFunctions();
+  }
+
+  
+
+
+  private class FindCandidateFunctions implements Callback {
+    private int callsSeen = 0;
+
+    @Override
+    public boolean shouldTraverse(
+        NodeTraversal nodeTraversal, Node n, Node parent) {
+      
+      
+      return inlineLocalFunctions || inlineAnonymousFunctionExpressions
+         || parent == null || NodeUtil.isControlStructure(parent)
+         || NodeUtil.isStatementBlock(parent);
+    }
+
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      if ((t.inGlobalScope() && inlineGlobalFunctions)
+          || (!t.inGlobalScope() && inlineLocalFunctions)) {
+        findNamedFunctions(t, n, parent);
+      } 
+      
+      if (inlineAnonymousFunctionExpressions) {
+        findAnonymousFunctionExpressions(t, n);
+      }
+    }
+
+    public void findNamedFunctions(NodeTraversal t, Node n, Node parent) {
+      if (!NodeUtil.isStatement(n)) {
+        
+        return;
+      }
+
+      switch (n.getType()) {
+        
+        
+        case Token.VAR:
+          
+          
+          if (n.hasOneChild()) {
+            
+            Node nameNode = n.getFirstChild();
+            if (nameNode.getType() == Token.NAME && nameNode.hasChildren()
+                && nameNode.getFirstChild().getType() == Token.FUNCTION) {
+              maybeAddFunction(new FunctionVar(n), t.getModule());
+            }
+          }
+          break;
+
+        
+        
+        case Token.FUNCTION:
+          Preconditions.checkState(NodeUtil.isStatementBlock(parent)
+              || parent.getType() == Token.LABEL);
+          if (!NodeUtil.isFunctionAnonymous(n)) {
+            Function fn = new NamedFunction(n);
+            maybeAddFunction(fn, t.getModule());
+          }
+          break;
+      }
+    }
+
+    
+
+
+
+
+
+    public void findAnonymousFunctionExpressions(NodeTraversal t, Node n) {
+      switch (n.getType()) {
+        
+        
+        case Token.CALL:
+          Node fnNode = null;
+          if (n.getFirstChild().getType() == Token.FUNCTION) {
+            fnNode = n.getFirstChild();
+          } else if (NodeUtil.isFunctionObjectCall(n)) {
+            Node fnIdentifingNode = n.getFirstChild().getFirstChild();
+            if (fnIdentifingNode.getType() == Token.FUNCTION) {
+              fnNode = fnIdentifingNode;
+            }
+          }
+
+          
+          if (fnNode != null) {
+            Function fn = new AnonymousFunction(fnNode, callsSeen++);
+            maybeAddFunction(fn, t.getModule());
+            anonFns.put(fnNode, fn.getName());
+          }
+          break;
+      }
+    }
+  }
+
+  
+
+
+
+  private void maybeAddFunction(Function fn, JSModule module) {
+    String name = fn.getName();
+    FunctionState fs = getOrCreateFunctionState(name);
+
+    
+    
+
+    
+    if (fs.hasExistingFunctionDefinition()) {
+      fs.setInline(false);
+    } else {
+      
+      if (fs.canInline()) {
+        
+        fs.setFn(fn);
+        if (injector.isDirectCallNodeReplacementPossible(
+            fn.getFunctionNode())) {
+          fs.inlineDirectly(true);
+        }
+
+        
+        
+        
+        if (!isCandidateFunction(fn)) {
+          
+          fs.setInline(false);
+        }
+
+        
+        if (fs.canInline()) {
+          fs.setModule(module);
+
+          Node fnNode = fn.getFunctionNode();
+          Set<String> namesToAlias =
+              FunctionArgumentInjector.findModifiedParameters(fnNode);
+          if (!namesToAlias.isEmpty()) {
+            fs.inlineDirectly(false);
+            fs.setNamesToAlias(namesToAlias);
+          }
+
+          Node block = NodeUtil.getFunctionBody(fnNode);
+          if (NodeUtil.referencesThis(block)) {
+            fs.setReferencesThis(true);
+          }
+        }
+
+        
+        if (fs.canInline() && !fs.canInlineDirectly()) {
+          if (!blockFunctionInliningEnabled) {
+            fs.setInline(false);
+          }
+        }
+      }
+    }
+  }
+
+  
+
+
+
+  private boolean isCandidateFunction(Function fn) {
+    
+    String fnName = fn.getName();
+    if (compiler.getCodingConvention().isExported(fnName)) {
+      
+      
+      
+      
+      
+      
+      return false;
+    }
+    
+    
+    if (RenameProperties.RENAME_PROPERTY_FUNCTION_NAME.equals(fnName)) {
+      return false;
+    }
+
+    Node fnNode = fn.getFunctionNode();
+    return injector.doesFunctionMeetMinimumRequirements(fnName, fnNode);
+  }
+
+  
+
+
+  private interface CallVisitorCallback {
+    public void visitCallSite(
+        NodeTraversal t, Node callNode, Node parent, FunctionState fs);
+  }
+
+  
+
+
+  private static class CallVisitor extends AbstractPostOrderCallback {
+
+    protected CallVisitorCallback callback;
+    private Map<String, FunctionState> functionMap;
+    private Map<Node, String> anonFunctionMap;
+
+    CallVisitor(Map<String, FunctionState> fns,
+                Map<Node, String> anonFns,
+                CallVisitorCallback callback) {
+      this.functionMap = fns;
+      this.anonFunctionMap = anonFns;
+      this.callback = callback;
+    }
+
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      switch (n.getType()) {
+        
+        case Token.CALL:
+          Node child = n.getFirstChild();
+          String name = null;
+          
+          
+          if (child.getType() == Token.NAME) {
+            name = child.getString();
+          } else if (child.getType() == Token.FUNCTION) {
+            name = anonFunctionMap.get(child);
+          } else if (NodeUtil.isFunctionObjectCall(n)) {
+            Preconditions.checkState(NodeUtil.isGet(child));
+            Node fnIdentifingNode = child.getFirstChild();
+            if (fnIdentifingNode.getType() == Token.NAME) {
+              name = fnIdentifingNode.getString();
+            } else if (fnIdentifingNode.getType() == Token.FUNCTION) {
+              name = anonFunctionMap.get(fnIdentifingNode);
+            }
+          }
+
+          if (name != null) {
+            FunctionState fs = functionMap.get(name);
+            
+            if (fs != null) {
+              callback.visitCallSite(t, n, parent, fs);
+            }
+          }
+          break;
+      }
+    }
+  }
+
+
+  
+
+
+  private class FindCandidatesReferences
+      extends CallVisitor
+      implements CallVisitorCallback {
+    FindCandidatesReferences(
+        Map<String, FunctionState> fns,
+        Map<Node, String> anonFns) {
+      super(fns, anonFns, null);
+      this.callback = this;
+    }
+
+    @Override
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      super.visit(t, n, parent);
+      if (n.getType() == Token.NAME) {
+        checkNameUsage(t, n, parent);
+      }
+    }
+
+    public void visitCallSite(
+        NodeTraversal t, Node callNode, Node parent, FunctionState fs) {
+      maybeAddReference(t, fs, callNode, t.getModule());
+    }
+
+    void maybeAddReference(NodeTraversal t, FunctionState fs,
+        Node callNode, JSModule module) {
+      if (!fs.canInline()) {
+        return;
+      }
+
+      boolean referenceAdded = false;
+      InliningMode mode = fs.canInlineDirectly()
+           ? InliningMode.DIRECT : InliningMode.BLOCK;
+      referenceAdded = maybeAddReferenceUsingMode(
+          t, fs, callNode, module, mode);
+      if (!referenceAdded &&
+          mode == InliningMode.DIRECT && blockFunctionInliningEnabled) {
+        
+        
+        mode = InliningMode.BLOCK;
+        referenceAdded = maybeAddReferenceUsingMode(
+            t, fs, callNode, module, mode);
+      }
+
+      if (!referenceAdded) {
+        
+        
+        fs.setRemove(false);
+      }
+    }
+
+    private boolean maybeAddReferenceUsingMode(
+        NodeTraversal t, FunctionState fs, Node callNode,
+        JSModule module, InliningMode mode) {
+      CanInlineResult result = injector.canInlineReferenceToFunction(
+          t, callNode, fs.getFn().getFunctionNode(),
+          fs.getNamesToAlias(), mode, fs.getReferencesThis());
+      if (result != CanInlineResult.NO) {
+        
+        boolean decompose =
+          (result == CanInlineResult.AFTER_DECOMPOSITION);
+        fs.addReference(new Reference(callNode, module, mode, decompose));
+        return true;
+      }
+
+      return false;
+    }
+
+    
+
+
+    private void checkNameUsage(NodeTraversal t, Node n, Node parent) {
+      Preconditions.checkState(n.getType() == Token.NAME);
+
+      if (parent.getType() == Token.VAR || parent.getType() == Token.FUNCTION) {
+        
+        
+        return;
+      }
+
+      if (parent.getType() == Token.CALL && parent.getFirstChild() == n) {
+        
+        return;
+      }
+
+      
+      
+      
+      
+      
+      
+      
+      
+      if (NodeUtil.isGet(parent)
+           && n == parent.getFirstChild()
+           && n.getNext().getType() == Token.STRING
+           && n.getNext().getString().equals("call")) {
+        Node gramps = n.getAncestor(2);
+        if (gramps.getType() == Token.CALL
+            && gramps.getFirstChild() == parent) {
+          
+          return;
+        }
+      }
+
+      
+      String name = n.getString();
+      FunctionState fs = fns.get(name);
+      if (fs == null) {
+        return;
+      }
+
+      
+      if (parent.getType() == Token.ASSIGN && parent.getFirstChild() == n) {
+        
+        
+        
+        fs.setInline(false);
+      } else {
+        
+        
+        
+        fs.setRemove(false);
+      }
+    }
+  }
+
+  
+
+
+  private static class Inline implements CallVisitorCallback {
+    private final FunctionInjector injector;
+
+    Inline(FunctionInjector injector) {
+      this.injector = injector;
+    }
+
+    public void visitCallSite(
+        NodeTraversal t, Node callNode, Node parent, FunctionState fs) {
+      Preconditions.checkState(fs.hasExistingFunctionDefinition());
+      if (fs.canInline()) {
+        Reference ref = fs.getReference(callNode);
+        
+        
+        
+        
+        if (ref != null) {
+          inlineFunction(t, callNode, fs, ref.mode);
+          
+          
+          ref.inlined = true;
+        }
+      }
+    }
+
+    
+
+
+    private void inlineFunction(
+        NodeTraversal t, Node callNode, FunctionState fs, InliningMode mode) {
+      Function fn = fs.getFn();
+      String fnName = fn.getName();
+      Node fnNode = fs.getSafeFnNode();
+
+      Node newCode = injector.inline(t, callNode, fnName, fnNode, mode);
+      t.getCompiler().reportCodeChange();
+      t.getCompiler().addToDebugLog("Inlined function: " + fn.getName());
+    }
+  }
+
+  
+
+
+
+  private void trimCanidatesNotMeetingMinimumRequirements() {
+   Iterator<Entry<String, FunctionState>> i;
+   for (i = fns.entrySet().iterator(); i.hasNext();) {
+     FunctionState fs = i.next().getValue();
+     if (!fs.hasExistingFunctionDefinition() || !fs.canInline()) {
+       i.remove();
+     }
+   }
+  }
+
+  
+
+
+  void trimCanidatesUsingOnCost() {
+    Iterator<Entry<String, FunctionState>> i;
+    for (i = fns.entrySet().iterator(); i.hasNext();) {
+      FunctionState fs = i.next().getValue();
+      if (fs.hasReferences()) {
+        
+        boolean lowersCost = mimimizeCost(fs);
+        if (!lowersCost) {
+          
+          i.remove();
+        }
+      } else if (!fs.canRemove()) {
+        
+        
+        i.remove();
+      }
+    }
+  }
+
+  
+
+
+
+
+  private boolean mimimizeCost(FunctionState fs) {
+    if (!inliningLowersCost(fs)) {
+      
+      if (fs.hasBlockInliningReferences()) {
+        fs.setRemove(false);
+        fs.removeBlockInliningReferences();
+        if (!fs.hasReferences() || !inliningLowersCost(fs)) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  
+
+
+  private boolean inliningLowersCost(FunctionState fs) {
+    return injector.inliningLowersCost(
+        fs.getModule(),
+        fs.getFn().getFunctionNode(),
+        fs.getReferences(),
+        fs.getNamesToAlias(),
+        fs.canRemove(),
+        fs.getReferencesThis());
+  }
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private void resolveInlineConflicts() {
+    for (FunctionState fs : fns.values()) {
+      resolveInlineConflictsForFunction(fs);
+    }
+  }
+
+  
+
+
+  private void resolveInlineConflictsForFunction(FunctionState fs) {
+    
+    if (!fs.hasReferences()) {
+      return;
+    }
+
+    Node fnNode = fs.getFn().getFunctionNode();
+    Set<String> names = findCalledFunctions(fnNode);
+    if (!names.isEmpty()) {
+      
+      for (String name : names) {
+        FunctionState fsCalled = fns.get(name);
+        if (fsCalled != null && fsCalled.canRemove()) {
+          fsCalled.setRemove(false);
+          
+          
+          if (!mimimizeCost(fsCalled)) {
+            
+            fsCalled.setInline(false);
+          }
+        }
+      }
+
+      
+      fs.setSafeFnNode(fs.getFn().getFunctionNode().cloneTree());
+    }
+  }
+
+  
+
+
+  private Set<String> findCalledFunctions(Node node) {
+    Set<String> changed = Sets.newHashSet();
+    findCalledFunctions(node, changed);
+    return changed;
+  }
+
+  
+
+
+  private void findCalledFunctions(
+      Node node, Set<String> changed) {
+    Preconditions.checkArgument(changed != null);
+    
+    if (node.getType() == Token.CALL) {
+      Node child = node.getFirstChild();
+      if (child.getType() == Token.NAME) {
+        String name = child.getString();
+        changed.add(name);
+      }
+    }
+
+    for (Node c = node.getFirstChild(); c != null; c = c.getNext()) {
+      findCalledFunctions(c, changed);
+    }
+  }
+
+  
+
+
+
+  private void decomposeExpressions(Set<String> fnNames) {
+    ExpressionDecomposer decomposer = new ExpressionDecomposer(
+        compiler, compiler.getUniqueNameIdSupplier(), fnNames);
+
+    for (FunctionState fs : fns.values()) {
+      if (fs.canInline()) {
+        for (Reference ref : fs.getReferences()) {
+          if (ref.requiresDecomposition) {
+            decomposer.maybeDecomposeExpression(ref.callNode);
+          }
+        }
+      }
+    }
+  }
+
+  
+
+
+  void removeInlinedFunctions() {
+    for (FunctionState fs : fns.values()) {
+      if (fs.canRemove()) {
+        Function fn = fs.getFn();
+        Preconditions.checkState(fs.canInline());
+        Preconditions.checkState(fn != null);
+        verifyAllReferencesInlined(fs);
+        fn.remove();
+        compiler.reportCodeChange();
+      }
+    }
+  }
+
+  
+
+
+
+  void verifyAllReferencesInlined(FunctionState fs) {
+    for (Reference ref : fs.getReferences()) {
+      if (!ref.inlined) {
+        throw new IllegalStateException("Call site missed.\n call: "
+            + ref.callNode.toStringTree() + "\n parent:  " 
+            + ref.callNode.getParent().toStringTree());
+      }
+    }
+  }
+
+  
+
+
+  private static class FunctionState {
+    private Function fn = null;
+    private Node safeFnNode = null;
+    private boolean inline = true;
+    private boolean remove = true;
+    private boolean inlineDirectly = false;
+    private boolean referencesThis = false;
+    private Map<Node, Reference> references = null;
+    private JSModule module = null;
+    private Set<String> namesToAlias = null;
+
+    boolean hasExistingFunctionDefinition() {
+      return (fn != null);
+    }
+
+    public void setReferencesThis(boolean referencesThis) {
+      this.referencesThis = referencesThis;
+    }
+
+    public boolean getReferencesThis() {
+      return this.referencesThis;
+    }
+
+    void removeBlockInliningReferences() {
+      Iterator<Entry<Node, Reference>> i;
+      for (i = getReferencesInternal().entrySet().iterator(); i.hasNext();) {
+        Entry<Node, Reference> entry = i.next();
+        if (entry.getValue().mode == InliningMode.BLOCK) {
+          i.remove();
+        }
+      }
+    }
+
+    public boolean hasBlockInliningReferences() {
+      for (Reference r : getReferencesInternal().values()) {
+        if (r.mode == InliningMode.BLOCK) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public Function getFn() {
+      return fn;
+    }
+
+    public void setFn(Function fn) {
+      Preconditions.checkState(this.fn == null);
+      this.fn = fn;
+    }
+
+    public Node getSafeFnNode() {
+      return (safeFnNode != null) ? safeFnNode : fn.getFunctionNode();
+    }
+
+    public void setSafeFnNode(Node safeFnNode) {
+      this.safeFnNode = safeFnNode;
+    }
+
+    public boolean canInline() {
+      return inline;
+    }
+
+    public void setInline(boolean inline) {
+      this.inline = inline;
+      if (inline == false) {
+        
+        references = null;
+        
+        remove = false;
+      }
+    }
+
+    public boolean canRemove() {
+      return remove;
+    }
+
+    public void setRemove(boolean remove) {
+      this.remove = remove;
+    }
+
+    public boolean canInlineDirectly() {
+      return inlineDirectly;
+    }
+
+    public void inlineDirectly(boolean directReplacement) {
+      this.inlineDirectly = directReplacement;
+    }
+
+    public boolean hasReferences() {
+      return (references != null && !references.isEmpty());
+    }
+
+    private Map<Node, Reference> getReferencesInternal() {
+      if (references == null) {
+        return Collections.emptyMap();
+      }
+      return references;
+    }
+
+    public void addReference(Reference ref) {
+      if (references == null) {
+        references = Maps.newHashMap();
+      }
+      references.put(ref.callNode, ref);
+    }
+
+    public Collection<Reference> getReferences() {
+      return getReferencesInternal().values();
+    }
+
+    public Reference getReference(Node n) {
+      return getReferencesInternal().get(n);
+    }
+
+    public Set<String> getNamesToAlias() {
+      if (namesToAlias == null) {
+        return Collections.emptySet();
+      }
+      return Collections.unmodifiableSet(namesToAlias);
+    }
+
+    public void setNamesToAlias(Set<String> names) {
+      namesToAlias = names;
+    }
+
+    public void setModule(JSModule module) {
+      this.module = module;
+    }
+
+    public JSModule getModule() {
+      return module;
+    }
+  }
+
+  
+  private static interface Function {
+    
+    public String getName();
+
+    
+    public Node getFunctionNode();
+
+    
+    public void remove();
+  }
+
+  
+  private static class NamedFunction implements Function {
+    private final Node fn;
+
+    public NamedFunction(Node fn) {
+      this.fn = fn;
+    }
+
+    public String getName() {
+      return fn.getFirstChild().getString();
+    }
+
+    public Node getFunctionNode() {
+      return fn;
+    }
+
+    public void remove() {
+      NodeUtil.removeChild(fn.getParent(), fn);
+    }
+  }
+
+  
+  private static class FunctionVar implements Function {
+    private final Node var;
+
+    public FunctionVar(Node var) {
+      this.var = var;
+    }
+
+    public String getName() {
+      return var.getFirstChild().getString();
+    }
+
+    public Node getFunctionNode() {
+      return var.getFirstChild().getFirstChild();
+    }
+
+    public void remove() {
+      NodeUtil.removeChild(var.getParent(), var);
+    }
+  }
+
+  
+  private static class AnonymousFunction implements Function {
+    private final Node fn;
+    private final String fakeName;
+
+    public AnonymousFunction(Node fn, int index) {
+      this.fn = fn;
+      
+      
+      this.fakeName = String.valueOf(index);
+    }
+
+    public String getName() {
+      return fakeName;
+    }
+
+    public Node getFunctionNode() {
+      return fn;
+    }
+
+    public void remove() {
+      
+    }
+  }
+
+  class Reference extends FunctionInjector.Reference {
+    final boolean requiresDecomposition;
+    boolean inlined = false;
+    Reference(
+        Node callNode, JSModule module, InliningMode mode, boolean decompose) {
+      super(callNode, module, mode);
+      this.requiresDecomposition = decompose;
+    }
+  }
+}

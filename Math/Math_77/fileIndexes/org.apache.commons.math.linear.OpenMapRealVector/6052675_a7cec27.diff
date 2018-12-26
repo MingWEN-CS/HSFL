@@ -1,0 +1,67 @@
+1252a1253,1318
+>     
+>     public java.util.Iterator<Entry> sparseIterator() {
+>         return new OpenMapSparseIterator();
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+>     protected class OpenMapEntry extends Entry {
+>         private final Iterator iter;
+> 
+>         protected OpenMapEntry(Iterator iter) {
+>             this.iter = iter;
+>         }
+>         
+>         @Override
+>         public double getValue() {
+>             return iter.value();
+>         }
+> 
+>         
+>         @Override
+>         public void setValue(double value) {
+>             entries.put(iter.key(), value);
+>         }
+>         
+>         
+>         @Override
+>         public int getIndex() {
+>             return iter.key();
+>         }
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+>     
+>     protected class OpenMapSparseIterator implements java.util.Iterator<Entry> {
+>         private final Iterator iter;
+>         private final Entry current;
+>         
+>         protected OpenMapSparseIterator() {
+>             iter = entries.iterator();
+>             current = new OpenMapEntry(iter);
+>         }
+> 
+>         
+>         public boolean hasNext() {
+>             return iter.hasNext();
+>         }
+> 
+>         
+>         public Entry next() {
+>             iter.advance();
+>             return current;
+>         }
+> 
+>         public void remove() {
+>             throw new UnsupportedOperationException("Not supported");
+>        }
+>         
+>     }

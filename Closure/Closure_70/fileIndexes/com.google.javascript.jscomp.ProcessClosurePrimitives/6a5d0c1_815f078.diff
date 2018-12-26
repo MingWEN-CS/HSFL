@@ -1,0 +1,51 @@
+935c935
+<       decl.copyInformationFromForTree(getSourceInfoNode());
+---
+>       setSourceInfo(decl);
+956d955
+<       Node sourceInfoNode = getSourceInfoNode();
+961c960,961
+<                   sourceInfoNode, namespace),
+---
+>                   firstNode ,
+>                   namespace),
+965c965
+<       decl.copyInformationFromForTree(sourceInfoNode);
+---
+>       setSourceInfo(decl);
+971a972,984
+>     private void setSourceInfo(Node newNode) {
+>       Node provideStringNode = getProvideStringNode();
+>       int offset = getSourceInfoOffset(provideStringNode);
+>       Node sourceInfoNode = provideStringNode == null
+>           ? firstNode : provideStringNode;
+>       newNode.copyInformationFromForTree(sourceInfoNode);
+>       if (offset != 0) {
+>         newNode.setSourcePositionForTree(
+>             newNode.getSourcePosition() + offset);
+>       }
+>     }
+> 
+>     
+974c987,1001
+<     private Node getSourceInfoNode() {
+---
+>     private int getSourceInfoOffset(Node provideStringNode) {
+>       if (provideStringNode == null) {
+>         return 0;
+>       }
+> 
+>       int indexOfLastDot = namespace.lastIndexOf('.');
+> 
+>       
+>       
+>       
+>       
+>       return 2 + indexOfLastDot;
+>     }
+> 
+>     private Node getProvideStringNode() {
+978c1005
+<           firstNode;
+---
+>           null;

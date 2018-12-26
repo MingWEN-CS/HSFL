@@ -1,0 +1,56 @@
+103d102
+<     
+137d135
+<     
+143,146c141
+<         if (this instanceof Instant) {
+<             return (Instant) this;
+<         }
+<         return new Instant(this);
+---
+>         return new Instant(getMillis());
+155,158c150
+<         if (this instanceof DateTime) {
+<             return (DateTime) this;
+<         }
+<         return new DateTime(this);
+---
+>         return new DateTime(getMillis());
+168,172c160,162
+<         zone = DateTimeUtils.getZone(zone);
+<         if (this instanceof DateTime && getZone() == zone) {
+<             return (DateTime) this;
+<         }
+<         return new DateTime(this, zone);
+---
+>         Chronology chrono = DateTimeUtils.getChronology(getChronology());
+>         chrono = chrono.withZone(zone);
+>         return new DateTime(getMillis(), chrono);
+182,186c172
+<         chronology = DateTimeUtils.getChronology(chronology);
+<         if (this instanceof DateTime && getChronology() == chronology) {
+<             return (DateTime) this;
+<         }
+<         return new DateTime(this, chronology);
+---
+>         return new DateTime(getMillis(), chronology);
+231c217
+<         return new MutableDateTime(this);
+---
+>         return new MutableDateTime(getMillis());
+241c227,229
+<         return new MutableDateTime(this, zone);
+---
+>         Chronology chrono = DateTimeUtils.getChronology(getChronology());
+>         chrono = chrono.withZone(zone);
+>         return new MutableDateTime(getMillis(), chrono);
+251c239
+<         return new MutableDateTime(this, chronology);
+---
+>         return new MutableDateTime(getMillis(), chronology);
+254a243
+>     
+305d293
+<     
+485d472
+<     

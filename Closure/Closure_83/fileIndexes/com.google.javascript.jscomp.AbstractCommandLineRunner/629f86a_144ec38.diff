@@ -1,0 +1,123 @@
+22a23,24
+> import com.google.common.base.Receiver;
+> import com.google.common.base.Supplier;
+36a39
+> import java.io.StringWriter;
+91a95,100
+>   private boolean testMode = false;
+>   private Supplier<List<JSSourceFile>> externsSupplierForTesting = null;
+>   private Supplier<List<JSSourceFile>> inputsSupplierForTesting = null;
+>   private Supplier<List<JSModule>> modulesSupplierForTesting = null;
+>   private Receiver<Integer> exitCodeReceiverForTesting = null;
+> 
+109a119,150
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   @VisibleForTesting
+>   void enableTestMode(
+>       Supplier<List<JSSourceFile>> externsSupplier,
+>       Supplier<List<JSSourceFile>> inputsSupplier,
+>       Supplier<List<JSModule>> modulesSupplier,
+>       Receiver<Integer> exitCodeReceiver) {
+>     Preconditions.checkArgument(
+>         inputsSupplier == null ^ modulesSupplier == null);
+>     testMode = true;
+>     this.externsSupplierForTesting = externsSupplier;
+>     this.inputsSupplierForTesting = inputsSupplier;
+>     this.modulesSupplierForTesting = modulesSupplier;
+>     this.exitCodeReceiverForTesting = exitCodeReceiver;
+>   }
+> 
+>   
+> 
+> 
+>   protected boolean isInTestMode() {
+>     return testMode;
+>   }
+> 
+>   
+> 
+> 
+215a257
+> 
+219c261,266
+<     System.exit(result);
+---
+> 
+>     if (testMode) {
+>       exitCodeReceiverForTesting.accept(result);
+>     } else {
+>       System.exit(result);
+>     }
+275c322
+<   private static List<JSSourceFile> createSourceInputs(List<String> files)
+---
+>   private List<JSSourceFile> createSourceInputs(List<String> files)
+276a324,326
+>     if (isInTestMode()) {
+>       return inputsSupplierForTesting.get();
+>     }
+311c361,362
+<   static JSModule[] createJsModules(List<String> specs, List<String> jsFiles)
+---
+>   List<JSModule> createJsModules(
+>       List<String> specs, List<String> jsFiles)
+312a364,367
+>     if (isInTestMode()) {
+>       return modulesSupplierForTesting.get();
+>     }
+> 
+390c445
+<     return modulesByName.values().toArray(new JSModule[modulesByName.size()]);
+---
+>     return Lists.newArrayList(modulesByName.values());
+403c458
+<       JSModule[] modules) throws FlagUsageException {
+---
+>       List<JSModule> modules) throws FlagUsageException {
+407c462
+<         Maps.newHashMapWithExpectedSize(modules.length);
+---
+>         Maps.newHashMapWithExpectedSize(modules.size());
+499,501c554
+<     List<JSSourceFile> externsList = createExterns();
+<     JSSourceFile[] externs = new JSSourceFile[externsList.size()];
+<     externsList.toArray(externs);
+---
+>     List<JSSourceFile> externs = createExterns();
+506c559
+<     JSModule[] modules = null;
+---
+>     List<JSModule> modules = null;
+520c573
+<       result = compiler.compile(externs, modules, options);
+---
+>       result = compiler.compileModules(externs, modules, options);
+522,524c575
+<       List<JSSourceFile> inputList = createSourceInputs(jsFiles);
+<       JSSourceFile[] inputs = new JSSourceFile[inputList.size()];
+<       inputList.toArray(inputs);
+---
+>       List<JSSourceFile> inputs = createSourceInputs(jsFiles);
+539c590
+<   int processResults(Result result, JSModule[] modules, B options)
+---
+>   int processResults(Result result, List<JSModule> modules, B options)
+693c744,745
+<     return createExternInputs(config.externs);
+---
+>     return isInTestMode() ? externsSupplierForTesting.get() :
+>         createExternInputs(config.externs);
+782a835,837
+>     if (testMode) {
+>       return new StringWriter();
+>     }
+794a850,852
+>     }
+>     if (testMode) {
+>       return new StringWriter();

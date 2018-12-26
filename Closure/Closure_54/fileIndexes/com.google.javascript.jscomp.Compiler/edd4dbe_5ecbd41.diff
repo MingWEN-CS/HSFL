@@ -1,0 +1,44 @@
+86a87,89
+>   private WarningsGuard warningsGuard;
+> 
+>   
+226a230,252
+> 
+>     
+>     List<WarningsGuard> guards = Lists.newArrayList();
+>     guards.add(
+>         new SuppressDocWarningsGuard(
+>             getDiagnosticGroups().getRegisteredGroups()));
+>     WarningsGuard warningsGuard = options.getWarningsGuard();
+>     if (warningsGuard != null) {
+>       guards.add(options.getWarningsGuard());
+>     }
+> 
+>     
+>     
+>     
+>     
+>     
+>     if (!options.checkSymbols &&
+>         (warningsGuard == null || !warningsGuard.disables(
+>             DiagnosticGroups.CHECK_VARIABLES))) {
+>       guards.add(new DiagnosticGroupWarningsGuard(
+>           DiagnosticGroups.CHECK_VARIABLES, CheckLevel.OFF));
+>     }
+>     this.warningsGuard = new ComposeWarningsGuard(guards);
+1576a1603,1610
+>   
+> 
+> 
+> 
+>   protected DiagnosticGroups getDiagnosticGroups() {
+>     return new DiagnosticGroups();
+>   }
+> 
+1580,1582c1614,1615
+<     WarningsGuard guard = options.getWarningsGuard();
+<     if (guard != null) {
+<       CheckLevel newLevel = guard.level(error);
+---
+>     if (warningsGuard != null) {
+>       CheckLevel newLevel = warningsGuard.level(error);

@@ -1,0 +1,73 @@
+53,54c53,54
+<   private final Map<String, NameGenerator> nameGenerators;
+<   private final Map<String, NameGenerator> consistNameGenerators;
+---
+>   private final Map<String, NameSupplier> nameGenerators;
+>   private final Map<String, NameSupplier> consistNameGenerators;
+59c59,63
+<   public ReplaceIdGenerators(AbstractCompiler compiler, Set<String> idGens) {
+---
+>   private final boolean generatePseudoNames;
+> 
+>   public ReplaceIdGenerators(
+>       AbstractCompiler compiler, Set<String> idGens,
+>       boolean generatePseudoNames) {
+60a65
+>     this.generatePseudoNames = generatePseudoNames;
+68,69c73
+<         nameGenerators.put(gen,
+<             new NameGenerator(Collections.<String>emptySet(), "", null));
+---
+>         nameGenerators.put(gen, createNameSupplier());
+74a79,107
+>   private static interface NameSupplier {
+>     String getName(String name);
+>   }
+> 
+>   private static class ObfuscatedNameSuppier implements NameSupplier {
+>     private final NameGenerator generator =
+>         new NameGenerator(Collections.<String>emptySet(), "", null);
+>     @Override
+>     public String getName(String name) {
+>       return generator.generateNextName();
+>     }
+>   }
+> 
+>   private static class PseudoNameSuppier implements NameSupplier {
+>     private int counter = 0;
+>     @Override
+>     public String getName(String name) {
+>       return name + "$" + counter++;
+>     }
+>   }
+> 
+>   private NameSupplier createNameSupplier() {
+>     if (generatePseudoNames) {
+>       return new PseudoNameSuppier();
+>     } else {
+>       return new ObfuscatedNameSuppier();
+>     }
+>   }
+> 
+108,109c141
+<         consistNameGenerators.put(name,
+<             new NameGenerator(Collections.<String>emptySet(), "", null));
+---
+>         consistNameGenerators.put(name, createNameSupplier());
+112,113c144
+<         nameGenerators.put(name,
+<           new NameGenerator(Collections.<String>emptySet(), "", null));
+---
+>         nameGenerators.put(name, createNameSupplier());
+136c167
+<       NameGenerator nameGenerator = nameGenerators.get(callName);
+---
+>       NameSupplier nameGenerator = nameGenerators.get(callName);
+175c206
+<           rename = nameGenerator.generateNextName();
+---
+>           rename = nameGenerator.getName(id.getString());
+179c210
+<         rename = nameGenerator.generateNextName();
+---
+>         rename = nameGenerator.getName(id.getString());

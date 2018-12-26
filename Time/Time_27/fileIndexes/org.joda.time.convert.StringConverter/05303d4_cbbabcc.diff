@@ -1,0 +1,72 @@
+175a176,186
+> 
+>     public long[] getIntervalMillis(Object object) {
+>         return parseInterval(null, object);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+176a188,198
+>         parseInterval(writableInterval, object);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private long[] parseInterval(ReadWritableInterval writableInterval, Object object) {
+194,195c216,217
+<         PeriodFormatter durationParser = ISOPeriodFormat.getInstance().standard();
+<         long startInstant;
+---
+>         PeriodFormatter periodParser = ISOPeriodFormat.getInstance().standard();
+>         long startInstant, endInstant;
+197c219,220
+< 
+---
+>         
+>         
+201c224
+<             period = durationParser.parsePeriod(getPeriodType(leftStr, false), leftStr);
+---
+>             period = periodParser.parsePeriod(getPeriodType(leftStr, false), leftStr);
+206c229,230
+< 
+---
+>         
+>         
+212,214c236,237
+<             period = durationParser.parsePeriod(getPeriodType(rightStr, false), rightStr);
+<             writableInterval.setStartMillis(startInstant);
+<             writableInterval.setPeriodAfterStart(period);
+---
+>             period = periodParser.parsePeriod(getPeriodType(rightStr, false), rightStr);
+>             endInstant = period.addTo(startInstant, 1);
+216,221c239,241
+<             long endInstant = dateTimeParser.parseMillis(rightStr);
+<             writableInterval.setEndMillis(endInstant);
+<             if (period == null) {
+<                 writableInterval.setStartMillis(startInstant);
+<             } else {
+<                 writableInterval.setPeriodBeforeEnd(period);
+---
+>             endInstant = dateTimeParser.parseMillis(rightStr);
+>             if (period != null) {
+>                 startInstant = period.addTo(endInstant, -1);
+222a243,251
+>         }
+>         
+>         
+>         if (writableInterval == null) {
+>             return new long[] {startInstant, endInstant};
+>         } else {
+>             writableInterval.setStartMillis(startInstant);
+>             writableInterval.setEndMillis(endInstant);
+>             return null;

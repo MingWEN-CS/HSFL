@@ -1,0 +1,43 @@
+29d28
+< import org.apache.commons.math.MaxEvaluationsExceededException;
+34c33
+< import org.apache.commons.math.exception.MathUserException;
+---
+> import org.apache.commons.math.exception.MaxCountExceededException;
+41a41
+> import org.apache.commons.math.util.Incrementor;
+76,79c76
+<     private int maxEvaluations;
+< 
+<     
+<     private int evaluations;
+---
+>     private Incrementor evaluations;
+93a91
+>         evaluations = new Incrementor();
+170c168
+<         this.maxEvaluations = (maxEvaluations < 0) ? Integer.MAX_VALUE : maxEvaluations;
+---
+>         evaluations.setMaximalCount((maxEvaluations < 0) ? Integer.MAX_VALUE : maxEvaluations);
+175c173
+<         return maxEvaluations;
+---
+>         return evaluations.getMaximalCount();
+180c178
+<         return evaluations;
+---
+>         return evaluations.getCount();
+186c184
+<         evaluations = 0;
+---
+>         evaluations.resetCount();
+203d200
+< 
+205,208c202,203
+<         throws MathUserException {
+<         if (++evaluations > maxEvaluations) {
+<             throw new MathUserException(new MaxEvaluationsExceededException(maxEvaluations));
+<         }
+---
+>         throws MaxCountExceededException {
+>         evaluations.incrementCount();

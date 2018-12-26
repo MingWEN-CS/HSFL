@@ -1,0 +1,50 @@
+18c18
+< package org.apache.commons.math.linear;
+---
+> package org.apache.commons.math3.linear;
+22,27c22,27
+< import org.apache.commons.math.exception.DimensionMismatchException;
+< import org.apache.commons.math.exception.NullArgumentException;
+< import org.apache.commons.math.exception.NoDataException;
+< import org.apache.commons.math.exception.MathIllegalStateException;
+< import org.apache.commons.math.exception.util.LocalizedFormats;
+< import org.apache.commons.math.util.MathUtils;
+---
+> import org.apache.commons.math3.exception.DimensionMismatchException;
+> import org.apache.commons.math3.exception.NullArgumentException;
+> import org.apache.commons.math3.exception.NoDataException;
+> import org.apache.commons.math3.exception.MathIllegalStateException;
+> import org.apache.commons.math3.exception.util.LocalizedFormats;
+> import org.apache.commons.math3.util.MathUtils;
+214a215
+> 
+216,219c217,230
+<         for (int row = 0; row < nRows; row++) {
+<             final double[] dataRow    = data[row];
+<             final double[] outDataRow = outData[row];
+<             for (int col = 0; col < nCols; col++) {
+---
+>         
+>         final double[] mCol = new double[nSum];
+>         final double[][] mData = m.data;
+> 
+>         
+>         for (int col = 0; col < nCols; col++) {
+>             
+>             
+>             for (int mRow = 0; mRow < nSum; mRow++) {
+>                 mCol[mRow] = mData[mRow][col];
+>             }
+> 
+>             for (int row = 0; row < nRows; row++) {
+>                 final double[] dataRow = data[row];
+222c233
+<                     sum += dataRow[i] * m.data[i][col];
+---
+>                     sum += dataRow[i] * mCol[i];
+224c235
+<                 outDataRow[col] = sum;
+---
+>                 outData[row][col] = sum;
+229d239
+< 

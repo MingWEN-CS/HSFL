@@ -1,0 +1,535 @@
+67,69d66
+<     private final Locale iLocale;
+< 
+<     
+70a68
+>     
+78,90c76
+<         this(Locale.getDefault());
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     public DateTimeFormatterBuilder(Locale locale) {
+<         if (locale == null) {
+<             locale = Locale.getDefault();
+<         }
+<         iLocale = locale;
+---
+>         super();
+98,104d83
+<     public Locale getLocale() {
+<         return iLocale;
+<     }
+< 
+<     
+<     
+< 
+110,111c89
+< 
+<     public DateTimePrinter toPrinter() throws UnsupportedOperationException {
+---
+>     public DateTimePrinter toPrinter() {
+114c92
+<             return (DateTimePrinter)f;
+---
+>             return (DateTimePrinter) f;
+116c94
+<         throw new UnsupportedOperationException("Printing not supported");
+---
+>         throw new UnsupportedOperationException("Printing is not supported");
+127c105
+<     public DateTimeParser toParser() throws UnsupportedOperationException {
+---
+>     public DateTimeParser toParser() {
+130c108
+<             return (DateTimeParser)f;
+---
+>             return (DateTimeParser) f;
+132c110
+<         throw new UnsupportedOperationException("Parsing not supported");
+---
+>         throw new UnsupportedOperationException("Parsing is not supported");
+143c121,125
+<     public DateTimeFormatter toFormatter() throws UnsupportedOperationException {
+---
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter toFormatter() {
+145,146c127,136
+<         if (isFormatter(f)) {
+<             return (DateTimeFormatter)f;
+---
+>         DateTimePrinter printer = null;
+>         if (isPrinter(f)) {
+>             printer = (DateTimePrinter) f;
+>         }
+>         DateTimeParser parser = null;
+>         if (isParser(f)) {
+>             parser = (DateTimeParser) f;
+>         }
+>         if (printer != null || parser != null) {
+>             return new DateTimeFormatter(printer, parser);
+155a146,147
+> 
+> 
+163a156,157
+> 
+> 
+171a166,167
+> 
+> 
+198c194
+<         return append0(formatter);
+---
+>         return append0(formatter.getPrinter(), formatter.getParser());
+294,296c290
+<         DateTimeFormatter[] parsers = new DateTimeFormatter[] {
+<             (DateTimeFormatter) parser, null
+<         };
+---
+>         DateTimeParser[] parsers = new DateTimeParser[] {parser, null};
+441c435
+<         return append0(new TextField(fieldType, iLocale, false));
+---
+>         return append0(new TextField(fieldType, false));
+456c450
+<         return append0(new TextField(fieldType, iLocale, true));
+---
+>         return append0(new TextField(fieldType, true));
+824c818
+<         return append0(new TimeZonePrinter( iLocale, false), null);
+---
+>         return append0(new TimeZonePrinter(false), null);
+835c829
+<         return append0(new TimeZonePrinter( iLocale, true), null);
+---
+>         return append0(new TimeZonePrinter(true), null);
+855c849
+<         return append0(new TimeZoneOffsetFormatter
+---
+>         return append0(new TimeZoneOffset
+859a854
+>     
+871a867
+>     
+923c919
+<                     && ((Composite)f).isParser();
+---
+>                     || ((Composite)f).isParser();
+944,945c940
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+958,960c953,955
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+964,966c959,961
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+970c965
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+974c969
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+978,986d972
+<         public String print(long instant, Chronology chrono,
+<                                int displayOffset, DateTimeZone displayZone) {
+<             return String.valueOf(iValue);
+<         }
+< 
+<         public String print(ReadablePartial partial) {
+<             return String.valueOf(iValue);
+<         }
+< 
+1017,1018c1003
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+1031,1033c1016,1018
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+1037,1039c1022,1024
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+1043c1028
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+1047c1032
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+1051,1059d1035
+<         public String print(long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+<             return iValue;
+<         }
+< 
+<         public String print(ReadablePartial partial) {
+<             return iValue;
+<         }
+< 
+1074,1075c1050
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+1160,1162c1135,1137
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+1171,1173c1146,1148
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+1182c1157
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+1194c1169
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+1223,1225c1198,1200
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+1234,1236c1209,1211
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+1245c1220
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+1257c1232
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+1272,1273c1247
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+1323,1325c1297,1299
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+1335,1337c1309,1311
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+1359c1333
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+1369c1343
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+1395,1396c1369
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+1399d1371
+<         private final Locale iLocale;
+1402c1374
+<         TextField(DateTimeFieldType fieldType, Locale locale, boolean isShort) {
+---
+>         TextField(DateTimeFieldType fieldType, boolean isShort) {
+1405d1376
+<             iLocale = locale;
+1413,1415c1384,1386
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+1417c1388
+<                 buf.append(print(instant, chrono, displayOffset, displayZone));
+---
+>                 buf.append(print(instant, chrono, locale));
+1423,1425c1394,1396
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+1427c1398
+<                 out.write(print(instant, chrono, displayOffset, displayZone));
+---
+>                 out.write(print(instant, chrono, locale));
+1433c1404
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+1435c1406
+<                 buf.append(print(partial));
+---
+>                 buf.append(print(partial, locale));
+1441c1412
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+1443c1414
+<                 out.write(print(partial));
+---
+>                 out.write(print(partial, locale));
+1449,1450c1420
+<         public String print(long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         private String print(long instant, Chronology chrono, Locale locale) {
+1453c1423
+<                 return field.getAsShortText(instant, iLocale);
+---
+>                 return field.getAsShortText(instant, locale);
+1455c1425
+<                 return field.getAsText(instant, iLocale);
+---
+>                 return field.getAsText(instant, locale);
+1459c1429
+<         public String print(ReadablePartial partial) {
+---
+>         private String print(ReadablePartial partial, Locale locale) {
+1463c1433
+<                     return field.getAsShortText(partial, iLocale);
+---
+>                     return field.getAsShortText(partial, locale);
+1465c1435
+<                     return field.getAsText(partial, iLocale);
+---
+>                     return field.getAsText(partial, locale);
+1494c1464,1465
+<             bucket.saveField(iFieldType, text.substring(position, i), iLocale);
+---
+>             Locale locale = bucket.getLocale();
+>             bucket.saveField(iFieldType, text.substring(position, i), locale);
+1502,1503c1473
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+1524,1526c1494,1496
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+1534,1536c1504,1506
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+1540c1510
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+1553c1523
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+1727,1729c1697,1698
+<     static class TimeZoneOffsetFormatter
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>     static class TimeZoneOffset
+>             implements DateTimePrinter, DateTimeParser {
+1736c1705
+<         TimeZoneOffsetFormatter(String zeroOffsetText,
+---
+>         TimeZoneOffset(String zeroOffsetText,
+1765,1767c1734,1736
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+1824,1826c1793,1795
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+1883c1852
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+1887c1856
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+2087d2055
+<             extends BaseDateTimeFormatter
+2090d2057
+<         private final Locale iLocale;
+2093c2060
+<         TimeZonePrinter(Locale locale, boolean shortFormat) {
+---
+>         TimeZonePrinter(boolean shortFormat) {
+2095d2061
+<             iLocale = locale;
+2103,2106c2069,2072
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+<             buf.append(print(instant, chrono, displayOffset, displayZone));
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+>             buf.append(print(instant, displayZone, locale));
+2109,2112c2075,2078
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+<             out.write(print(instant, chrono, displayOffset, displayZone));
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+>             out.write(print(instant, displayZone, locale));
+2115,2116c2081
+<         public String print(long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         private String print(long instant, DateTimeZone displayZone, Locale locale) {
+2121c2086
+<                 return displayZone.getShortName(instant, this.iLocale);
+---
+>                 return displayZone.getShortName(instant, locale);
+2123c2088
+<                 return displayZone.getName(instant, this.iLocale);
+---
+>                 return displayZone.getName(instant, locale);
+2127c2092
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+2131c2096
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+2138,2139c2103
+<             extends BaseDateTimeFormatter
+<             implements DateTimeFormatter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+2186c2150
+<         private Composite(Composite base, DateTimeFormatter[] printers) {
+---
+>         private Composite(Composite base, DateTimePrinter[] printers) {
+2197,2199c2161,2163
+<         public void printTo(StringBuffer buf,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+2207c2171
+<                 elements[i].printTo(buf, instant, chrono, displayOffset, displayZone);
+---
+>                 elements[i].printTo(buf, instant, chrono, displayOffset, displayZone, locale);
+2211,2213c2175,2177
+<         public void printTo(Writer out,
+<                             long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+2221c2185
+<                 elements[i].printTo(out, instant, chrono, displayOffset, displayZone);
+---
+>                 elements[i].printTo(out, instant, chrono, displayOffset, displayZone, locale);
+2225c2189
+<         public void printTo(StringBuffer buf, ReadablePartial partial) {
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+2233c2197
+<                 elements[i].printTo(buf, partial);
+---
+>                 elements[i].printTo(buf, partial, locale);
+2237c2201
+<         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+2245c2209
+<                 elements[i].printTo(out, partial);
+---
+>                 elements[i].printTo(out, partial, locale);
+2312d2275
+<             extends BaseDateTimeFormatter
+2394a2358
+> 

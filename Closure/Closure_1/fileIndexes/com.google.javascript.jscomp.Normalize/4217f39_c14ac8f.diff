@@ -1,0 +1,36 @@
+20a21
+> import com.google.common.collect.Sets;
+29a31
+> import java.util.Set;
+628a631,632
+>     private Set<Var> hasOkDuplicateDeclaration = Sets.newHashSet();
+> 
+635,636c639
+<         Scope s, String name, Node n, Node parent, Node gramps,
+<         Node nodeWithLineNumber) {
+---
+>         Scope s, String name, Node n, CompilerInput input) {
+637a641
+>       Node parent = n.getParent();
+638a643,655
+> 
+>       if (v != null && s.isGlobal()) {
+>         
+>         
+>         
+>         
+>         if (v.isExtern() && !input.isExtern()) {
+>           if (hasOkDuplicateDeclaration.add(v)) {
+>             return;
+>           }
+>         }
+>       }
+> 
+660c677
+<                 NodeUtil.getSourceName(nodeWithLineNumber), nodeWithLineNumber,
+---
+>                 input.getName(), n,
+672c689
+<         replaceVarWithAssignment(n, parent, gramps);
+---
+>         replaceVarWithAssignment(n, parent, parent.getParent());

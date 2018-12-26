@@ -1,0 +1,36 @@
+68a69,72
+>   static final DiagnosticType GOOG_SCOPE_USES_THROW = DiagnosticType.error(
+>       "JSC_GOOG_SCOPE_USES_THROW",
+>       "The body of a goog.scope function cannot use 'throw'.");
+> 
+242c246,247
+<         if (n.getType() == Token.NAME && parent.getType() == Token.VAR) {
+---
+>         int type = n.getType();
+>         if (type == Token.NAME && parent.getType() == Token.VAR) {
+256a262,273
+> 
+>         if (type == Token.NAME && NodeUtil.isAssignmentOp(parent)) {
+>           report(t, n, GOOG_SCOPE_ALIAS_REDEFINED, n.getString());
+>         }
+> 
+>         if (type == Token.RETURN) {
+>           report(t, n, GOOG_SCOPE_USES_RETURN);
+>         } else if (type == Token.THIS) {
+>           report(t, n, GOOG_SCOPE_REFERENCES_THIS);
+>         } else if (type == Token.THROW) {
+>           report(t, n, GOOG_SCOPE_USES_THROW);
+>         }
+261,263d277
+<           if (NodeUtil.isAssignmentOp(parent)) {
+<             report(t, n, GOOG_SCOPE_ALIAS_REDEFINED, n.getString());
+<           }
+277,284d290
+<         }
+< 
+<         if (n.getType() == Token.RETURN) {
+<           report(t, n, GOOG_SCOPE_USES_RETURN);
+<         }
+< 
+<         if (n.getType() == Token.THIS) {
+<           report(t, n, GOOG_SCOPE_REFERENCES_THIS);

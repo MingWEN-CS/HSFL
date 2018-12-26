@@ -1,0 +1,29 @@
+56c56
+<     DiagnosticType.warning(
+---
+>     DiagnosticType.error(
+59a60,64
+>   static final DiagnosticType UNDEFINED_EXTERN_VAR_ERROR =
+>     DiagnosticType.error(
+>       "JSC_UNDEFINED_EXTERN_VAR_ERROR",
+>       "name {0} is not undefined in the externs.");
+> 
+116c121,124
+<         t.report(n, UNDEFINED_VAR_ERROR, varName);
+---
+>         
+>         if (!t.getInput().isExtern()) {
+>           t.report(n, UNDEFINED_VAR_ERROR, varName);
+>         }
+178d185
+<           case Token.GETPROP:
+180a188,196
+>             break;
+>           case Token.GETPROP:
+>             if (n == parent.getFirstChild()) {
+>               Scope scope = t.getScope();
+>               Scope.Var var = scope.getVar(n.getString());
+>               if (var == null) {
+>                 t.report(n, UNDEFINED_EXTERN_VAR_ERROR, n.getString());
+>               }
+>             }

@@ -1,0 +1,196 @@
+1a2,196
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math.special;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class Beta {
+>     
+>     private static final double DEFAULT_EPSILON = 10e-9;
+> 
+>     
+> 
+> 
+>     private Beta() {
+>         super();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double regularizedBeta(double x, double a, double b) {
+>         return regularizedBeta(x, a, b, DEFAULT_EPSILON, Integer.MAX_VALUE);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double regularizedBeta(double x, double a, double b, double epsilon) {
+>         return regularizedBeta(x, a, b, epsilon, Integer.MAX_VALUE);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double regularizedBeta(double x, double a, double b, int maxIterations) {
+>         return regularizedBeta(x, a, b, DEFAULT_EPSILON, maxIterations);
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double regularizedBeta(double x, final double a, final double b, double epsilon, int maxIterations) {
+>         double ret;
+> 
+>         if (a <= 0.0) {
+>             throw new IllegalArgumentException("a must be positive");
+>         } else if (b <= 0.0) {
+>             throw new IllegalArgumentException("b must be positive");
+>         } else if (x < 0.0 || x > 1.0) {
+>             throw new IllegalArgumentException(
+>                 "x must be between 0.0 and 1.0, inclusive");
+>         } else if(x == 0.0){
+>             ret = 0.0;
+>         } else if(x == 1.0){
+>             ret = 1.0;
+>         } else {
+>             double n = 0.0;
+>             double an = 1.0 / a;
+>             double s = an;
+>             while(Math.abs(an) > epsilon && n < maxIterations){
+>                 n = n + 1.0;
+>                 an = an * (n - b) / n * x / (a + n) * (a + n - 1);
+>                 s = s + an;
+>             }
+>             ret = Math.exp(a * Math.log(x) - logBeta(a, b)) * s;
+>         }
+> 
+>         return ret;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double logBeta(double a, double b) {
+>         double ret;
+> 
+>         if (a <= 0.0) {
+>             throw new IllegalArgumentException("a must be positive");
+>         } else if (b <= 0.0) {
+>             throw new IllegalArgumentException("b must be positive");
+>         } else {
+>             ret = Gamma.logGamma(a) + Gamma.logGamma(b)
+>                 - Gamma.logGamma(a + b);
+>         }
+> 
+>         return ret;
+>     }
+> }

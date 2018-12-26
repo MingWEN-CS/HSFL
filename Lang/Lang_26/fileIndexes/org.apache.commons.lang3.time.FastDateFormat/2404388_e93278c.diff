@@ -1,0 +1,622 @@
+56c56,63
+< import java.util.Date;
+---
+> import java.io.Serializable;
+> import java.text.DateFormat;
+> import java.text.DateFormatSymbols;
+> import java.text.FieldPosition;
+> import java.text.Format;
+> import java.text.ParsePosition;
+> import java.text.SimpleDateFormat;
+> import java.util.ArrayList;
+57a65
+> import java.util.Date;
+59,60c67
+< import java.util.Locale;
+< import java.util.TimeZone;
+---
+> import java.util.HashMap;
+62c69
+< import java.util.ArrayList;
+---
+> import java.util.Locale;
+64,67c71
+< import java.util.HashMap;
+< import java.text.DateFormatSymbols;
+< import java.text.DateFormat;
+< import java.text.SimpleDateFormat;
+---
+> import java.util.TimeZone;
+81,87d84
+< public class FastDateFormat {
+<     
+<     public static final Object
+<         FULL = new Integer(SimpleDateFormat.FULL),
+<         LONG = new Integer(SimpleDateFormat.LONG),
+<         MEDIUM = new Integer(SimpleDateFormat.MEDIUM),
+<         SHORT = new Integer(SimpleDateFormat.SHORT);
+88a86,99
+> 
+> 
+> 
+> public class FastDateFormat extends Format {
+>     
+>     
+>     public static final int FULL = SimpleDateFormat.FULL;
+>     
+>     public static final int LONG = SimpleDateFormat.LONG;
+>     
+>     public static final int MEDIUM = SimpleDateFormat.MEDIUM;
+>     
+>     public static final int SHORT = SimpleDateFormat.SHORT;
+>     
+95,96d105
+<     private static Map cTimeZoneDisplayCache = new HashMap();
+< 
+100a110,127
+>     private static Map cTimeZoneDisplayCache = new HashMap(7);
+> 
+>     
+>     private final String mPattern;
+>     
+>     private final TimeZone mTimeZone;
+>     
+>     private final Locale mLocale;
+>     
+>     private final Rule[] mRules;
+>     
+>     private final int mMaxLengthEstimate;
+> 
+>     
+>     
+> 
+> 
+> 
+103d129
+<         
+109a136,139
+> 
+> 
+> 
+> 
+111d140
+<         
+120,123d148
+<     public static FastDateFormat getInstance(String pattern, TimeZone timeZone) {
+<         
+<         return getInstance(pattern, timeZone, null);
+<     }
+125d149
+<     
+128,131c152,153
+< 
+<     public static FastDateFormat getInstance(String pattern, Locale locale) {
+<         
+<         return getInstance(pattern, null, locale);
+---
+>     public static FastDateFormat getInstance(String pattern, TimeZone timeZone) {
+>         return getInstance(pattern, timeZone, null);
+139,140d160
+<     
+< 
+143a164,166
+>     public static FastDateFormat getInstance(String pattern, Locale locale) {
+>         return getInstance(pattern, null, locale);
+>     }
+144a168
+>     
+148d171
+<     
+154,155c177
+<     public static FastDateFormat getInstance(String pattern, TimeZone timeZone, Locale locale) {
+<         
+---
+>     public static synchronized FastDateFormat getInstance(String pattern, TimeZone timeZone, Locale locale) {
+157d178
+< 
+165c186
+<         FastDateFormat format = (FastDateFormat)cInstanceCache.get(key);
+---
+>         FastDateFormat format = (FastDateFormat) cInstanceCache.get(key);
+185,222d205
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     
+< 
+< 
+< 
+< 
+226d208
+< 
+234,235c216
+<         FastDateFormat format = (FastDateFormat)cDateInstanceCache.get(key);
+< 
+---
+>         FastDateFormat format = (FastDateFormat) cDateInstanceCache.get(key);
+242c223,224
+<                 String pattern = ((SimpleDateFormat)DateFormat.getDateInstance(style, locale)).toPattern();
+---
+>                 SimpleDateFormat formatter = (SimpleDateFormat) DateFormat.getDateInstance(style, locale);
+>                 String pattern = formatter.toPattern();
+245,248c227,229
+<             }
+<             catch (ClassCastException e) {
+<                 throw new IllegalArgumentException
+<                     ("No date pattern for locale: " + locale);
+---
+>                 
+>             } catch (ClassCastException ex) {
+>                 throw new IllegalArgumentException("No date pattern for locale: " + locale);
+251d231
+< 
+260a241,243
+> 
+> 
+> 
+263d245
+< 
+271,272c253
+<         FastDateFormat format = (FastDateFormat)cTimeInstanceCache.get(key);
+< 
+---
+>         FastDateFormat format = (FastDateFormat) cTimeInstanceCache.get(key);
+274d254
+< 
+280c260,261
+<                 String pattern = ((SimpleDateFormat)DateFormat.getTimeInstance(style, locale)).toPattern();
+---
+>                 SimpleDateFormat formatter = (SimpleDateFormat) DateFormat.getTimeInstance(style, locale);
+>                 String pattern = formatter.toPattern();
+283,286c264,266
+<             }
+<             catch (ClassCastException e) {
+<                 throw new IllegalArgumentException
+<                     ("No date pattern for locale: " + locale);
+---
+>             
+>             } catch (ClassCastException ex) {
+>                 throw new IllegalArgumentException("No date pattern for locale: " + locale);
+289d268
+< 
+300,301d278
+<     public static synchronized FastDateFormat getDateTimeInstance(Object dateStyle, Object timeStyle,
+<             TimeZone timeZone, Locale locale) {
+303d279
+<         Object key = new Pair(dateStyle, timeStyle);
+304a281,285
+> 
+>     public static synchronized FastDateFormat getDateTimeInstance(
+>             int dateStyle, int timeStyle, TimeZone timeZone, Locale locale) {
+> 
+>         Object key = new Pair(new Integer(dateStyle), new Integer(timeStyle));
+312,314c293
+<         FastDateFormat format =
+<             (FastDateFormat)cDateTimeInstanceCache.get(key);
+< 
+---
+>         FastDateFormat format = (FastDateFormat) cDateTimeInstanceCache.get(key);
+316,333d294
+<             int ds;
+<             try {
+<                 ds = ((Integer)dateStyle).intValue();
+<             }
+<             catch (ClassCastException e) {
+<                 throw new IllegalArgumentException
+<                     ("Illegal date style: " + dateStyle);
+<             }
+< 
+<             int ts;
+<             try {
+<                 ts = ((Integer)timeStyle).intValue();
+<             }
+<             catch (ClassCastException e) {
+<                 throw new IllegalArgumentException
+<                     ("Illegal time style: " + timeStyle);
+<             }
+< 
+339c300,301
+<                 String pattern = ((SimpleDateFormat)DateFormat.getDateTimeInstance(ds, ts, locale)).toPattern();
+---
+>                 SimpleDateFormat formatter = (SimpleDateFormat) DateFormat.getDateTimeInstance(dateStyle, timeStyle, locale);
+>                 String pattern = formatter.toPattern();
+342,345c304,306
+<             }
+<             catch (ClassCastException e) {
+<                 throw new IllegalArgumentException
+<                     ("No date time pattern for locale: " + locale);
+---
+>                 
+>             } catch (ClassCastException ex) {
+>                 throw new IllegalArgumentException("No date time pattern for locale: " + locale);
+348d308
+< 
+351a312,321
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+354c324
+<         String value = (String)cTimeZoneDisplayCache.get(key);
+---
+>         String value = (String) cTimeZoneDisplayCache.get(key);
+362a333,337
+>     
+> 
+> 
+> 
+> 
+372a348,354
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+386c368
+<         for (int i=0; i<length; i++) {
+---
+>         for (int i = 0; i < length; i++) {
+406,407c388
+<                 }
+<                 else {
+---
+>                 } else {
+414,415c395
+<                 }
+<                 else if (tokenLen == 3) {
+---
+>                 } else if (tokenLen == 3) {
+417,418c397
+<                 }
+<                 else if (tokenLen == 2) {
+---
+>                 } else if (tokenLen == 2) {
+420,421c399
+<                 }
+<                 else {
+---
+>                 } else {
+429,430c407
+<                 rule = new TwelveHourField
+<                     (selectNumberRule(Calendar.HOUR, tokenLen));
+---
+>                 rule = new TwelveHourField(selectNumberRule(Calendar.HOUR, tokenLen));
+445,447c422
+<                 rule = new TextField
+<                     (Calendar.DAY_OF_WEEK,
+<                      tokenLen < 4 ? shortWeekdays : weekdays);
+---
+>                 rule = new TextField(Calendar.DAY_OF_WEEK, tokenLen < 4 ? shortWeekdays : weekdays);
+453,454c428
+<                 rule = selectNumberRule
+<                     (Calendar.DAY_OF_WEEK_IN_MONTH, tokenLen);
+---
+>                 rule = selectNumberRule(Calendar.DAY_OF_WEEK_IN_MONTH, tokenLen);
+466,467c440
+<                 rule = new TwentyFourHourField
+<                     (selectNumberRule(Calendar.HOUR_OF_DAY, tokenLen));
+---
+>                 rule = new TwentyFourHourField(selectNumberRule(Calendar.HOUR_OF_DAY, tokenLen));
+475,476c448
+<                 }
+<                 else {
+---
+>                 } else {
+484,485c456
+<                 }
+<                 else {
+---
+>                 } else {
+490,491c461
+<                 throw new IllegalArgumentException
+<                     ("Illegal pattern component: " + token);
+---
+>                 throw new IllegalArgumentException("Illegal pattern component: " + token);
+499a470,476
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+517,518c494
+<                 }
+<                 else {
+---
+>                 } else {
+522,523c498
+<         }
+<         else {
+---
+>         } else {
+537,538c512
+<                     }
+<                     else {
+---
+>                     } else {
+541,542c515
+<                 }
+<                 else if (!inLiteral &&
+---
+>                 } else if (!inLiteral &&
+546,547c519
+<                 }
+<                 else {
+---
+>                 } else {
+556a529,535
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+568,577d546
+<     private final String mPattern;
+<     private final TimeZone mTimeZone;
+<     private final Locale mLocale;
+<     private final Rule[] mRules;
+<     private final int mMaxLengthEstimate;
+< 
+<     private FastDateFormat() {
+<         this(getDefaultPattern(), null, null, null);
+<     }
+< 
+579,610d547
+< 
+< 
+<     private FastDateFormat(String pattern) throws IllegalArgumentException {
+<         this(pattern, null, null, null);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private FastDateFormat(String pattern, TimeZone timeZone) {
+<         this(pattern, timeZone, null, null);
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private FastDateFormat(String pattern, Locale locale) {
+<         this(pattern, null, locale, null);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private FastDateFormat(String pattern, DateFormatSymbols symbols) {
+<         this(pattern, null, null, symbols);
+<     }
+< 
+617,625d553
+<     private FastDateFormat(String pattern, TimeZone timeZone, Locale locale) {
+<         this(pattern, timeZone, locale, null);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+643c571
+<         mRules = (Rule[])rulesList.toArray(new Rule[rulesList.size()]);
+---
+>         mRules = (Rule[]) rulesList.toArray(new Rule[rulesList.size()]);
+652a581,606
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
+>         if (obj instanceof Date) {
+>             return format((Date) obj, toAppendTo);
+>         } else if (obj instanceof Calendar) {
+>             return format((Calendar) obj, toAppendTo);
+>         } else {
+>             throw new IllegalArgumentException("Unknown class: " +
+>                 (obj == null ? "<null>" : obj.getClass().getName()));
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+661a616,621
+>     
+> 
+> 
+> 
+> 
+> 
+663,664c623
+<         return format(calendar, new StringBuffer(mMaxLengthEstimate))
+<             .toString();
+---
+>         return format(calendar, new StringBuffer(mMaxLengthEstimate)).toString();
+666a626,632
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+675a642,648
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+683a657,663
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+687c667
+<         for (int i=0; i<len; i++) {
+---
+>         for (int i = 0; i < len; i++) {
+692a673,692
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Object parseObject(String source, ParsePosition pos) {
+>         pos.setIndex(0);
+>         pos.setErrorIndex(0);
+>         return null;
+>     }
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+700a701,702
+> 
+> 
+704a707,711
+>     
+> 
+> 
+> 
+> 
+713a721
+> 
+717a726,729
+>     
+>     
+> 
+> 
+720d731
+< 
+723a735,737
+>     
+> 
+> 
+727a742,744
+>     
+> 
+> 
+743a761,763
+>     
+> 
+> 
+759a780,782
+>     
+> 
+> 
+784a808,810
+>     
+> 
+> 
+813a840,842
+>     
+> 
+> 
+836a866,868
+>     
+> 
+> 
+881a914,916
+>     
+> 
+> 
+907a943,945
+>     
+> 
+> 
+925a964,966
+>     
+> 
+> 
+943a985,987
+>     
+> 
+> 
+967a1012,1014
+>     
+> 
+> 
+991a1039,1041
+>     
+> 
+> 
+1053a1104,1107
+>     
+>     
+> 
+> 
+1090d1143
+<     
+1094c1147
+<     private static class Pair implements Comparable, java.io.Serializable {
+---
+>     private static class Pair implements Comparable, Serializable {
+1180a1234
+> 

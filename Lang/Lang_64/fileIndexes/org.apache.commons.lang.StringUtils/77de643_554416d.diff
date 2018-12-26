@@ -1,0 +1,314 @@
+83a84,94
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+96c107
+<     private static String blanks = new String(" ");
+---
+>     private static String spaces = new String(" ");
+223a235
+> 
+238,239d249
+< 
+< 
+974c984,991
+<         return center(str, size, " ");
+---
+>         int sz = str.length();
+>         int p = size - sz;
+>         if (p < 1) {
+>             return str;
+>         }
+>         str = leftPad(str, sz + p / 2, ' ');
+>         str = rightPad(str, size, ' ');
+>         return str;
+989c1006
+<     public static String center(String str, int size, String delim) {
+---
+>     public static String center(String str, int size, String padStr) {
+995,996c1012,1013
+<         str = leftPad(str, sz + p / 2, delim);
+<         str = rightPad(str, size, delim);
+---
+>         str = leftPad(str, sz + p / 2, padStr);
+>         str = rightPad(str, size, padStr);
+1378a1396,1404
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1380c1406,1410
+<         if (str.length() == 1 && repeat <= PAD_LIMIT) {
+---
+>         int inputLength = str.length();
+>         if (repeat == 0) {
+>             return "";
+>         }
+>         if (inputLength == 1 && repeat <= PAD_LIMIT) {
+1384,1386c1414,1435
+<         StringBuffer buffer = new StringBuffer(repeat * str.length());
+<         for (int i = 0; i < repeat; i++) {
+<             buffer.append(str);
+---
+>         char[] input = str.toCharArray();
+>         char[] output = new char[repeat * inputLength];
+>         switch (inputLength) {
+>             case 1:
+>                 char ch = input[0];
+>                 for (int i = repeat - 1; i >= 0; i--) {
+>                     output[i] = ch;
+>                 }
+>                 break;
+>             case 2:
+>                 char ch0 = input[0];
+>                 char ch1 = input[1];
+>                 for (int i = repeat * 2 - 2; i >= 0; i--,i--) {
+>                     output[i] = ch0;
+>                     output[i + 1] = ch1;
+>                 }
+>                 break;
+>             default:
+>                 for (int i = repeat - 1; i >= 0; i--) {
+>                     System.arraycopy(input, 0, output, i * inputLength, inputLength);
+>                 }
+>                 break;            
+1388c1437
+<         return buffer.toString();
+---
+>         return new String(output);
+1397a1447,1453
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1399,1400c1455,1456
+<         while (blanks.length() < repeat)  {
+<             blanks = blanks.concat(blanks);
+---
+>         while (spaces.length() < repeat)  {
+>             spaces = spaces.concat(spaces);
+1402c1458
+<         return blanks.substring(0, repeat);
+---
+>         return spaces.substring(0, repeat);
+1416,1418c1472,1478
+<     private static String padding(int repeat, char delim) {
+<         if (padding[delim] == null) {
+<             padding[delim] = String.valueOf(delim);
+---
+> 
+> 
+> 
+> 
+>     private static String padding(int repeat, char padChar) {
+>         if (padding[padChar] == null) {
+>             padding[padChar] = String.valueOf(padChar);
+1420,1421c1480,1481
+<         while (padding[delim].length() < repeat) {
+<             padding[delim] = padding[delim].concat(padding[delim]);
+---
+>         while (padding[padChar].length() < repeat) {
+>             padding[padChar] = padding[padChar].concat(padding[padChar]);
+1423c1483
+<         return padding[delim].substring(0, repeat);
+---
+>         return padding[padChar].substring(0, repeat);
+1435a1496,1503
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1444c1512
+<         return str + padding(pads);
+---
+>         return str.concat(padding(pads));
+1458c1526,1534
+<     public static String rightPad(String str, int size, char delim) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String rightPad(String str, int size, char padChar) {
+1464c1540
+<             return rightPad(str, size, String.valueOf(delim));
+---
+>             return rightPad(str, size, String.valueOf(padChar));
+1466c1542
+<         return str + padding(pads, delim);
+---
+>         return str.concat(padding(pads, padChar));
+1481,1483c1557,1570
+<     public static String rightPad(String str, int size, String delim) {
+<         if (delim.length() == 1 && size - str.length() <= PAD_LIMIT) {
+<            return rightPad(str, size, delim.charAt(0));
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String rightPad(String str, int size, String padStr) {
+>         if (padStr.length() == 1 && size - str.length() <= PAD_LIMIT) {
+>            return rightPad(str, size, padStr.charAt(0));
+1486c1573
+<         size = (size - str.length()) / delim.length();
+---
+>         size = (size - str.length()) / padStr.length();
+1488c1575
+<             str += repeat(delim, size);
+---
+>             str += repeat(padStr, size);
+1502a1590,1597
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1525c1620,1628
+<     public static String leftPad(String str, int size, char delim) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String leftPad(String str, int size, char padChar) {
+1533c1636
+<         return padding(pads, delim).concat(str);
+---
+>         return padding(pads, padChar).concat(str);
+1548,1551c1651,1665
+<     public static String leftPad(String str, int size, String delim) {
+<         if (delim.length() == 1 && size - str.length() <= PAD_LIMIT)
+<            return leftPad(str, size, delim.charAt(0));
+<         size = (size - str.length()) / delim.length();
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String leftPad(String str, int size, String padStr) {
+>         if (padStr.length() == 1 && size - str.length() <= PAD_LIMIT)
+>            return leftPad(str, size, padStr.charAt(0));
+>         size = (size - str.length()) / padStr.length();
+1553c1667
+<             str = repeat(delim, size) + str;
+---
+>             str = repeat(padStr, size) + str;
+2254a2369,2393
+> 
+> 
+> 
+> 
+> 
+>     public static String defaultString(String str) {
+>         return (str == null ? "" : str);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+2256c2395
+<         return defaultString(obj, "");
+---
+>         return (obj == null ? "" : obj.toString());
+2270,2271c2409,2435
+<     public static String defaultString(Object obj, String defaultString) {
+<         return (obj == null) ? defaultString : obj.toString();
+---
+> 
+> 
+> 
+> 
+>     public static String defaultString(String str, String defaultStr) {
+>         return (str == null ? defaultStr : str);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String defaultString(Object obj, String defaultStr) {
+>         return (obj == null ? defaultStr : obj.toString());
+2284a2449,2454
+> 
+> 
+> 
+> 
+> 
+> 
+2379a2550
+> 
+2388a2560,2561
+> 
+> 

@@ -1,0 +1,37 @@
+29a30
+> import org.apache.commons.math.linear.Array2DRowRealMatrix;
+32d32
+< import org.apache.commons.math.linear.Array2DRowRealMatrix;
+109c109,110
+<         this.numDecisionVariables   = getNumVariables() + (restrictToNonNegative ? 0 : 1);
+---
+>         this.numDecisionVariables   = f.getCoefficients().getDimension() +
+>                                       (restrictToNonNegative ? 0 : 1);
+189,195d189
+<     public int getNumVariables() {
+<         return f.getCoefficients().getDimension();
+<     }
+< 
+<     
+< 
+< 
+273c267
+<     private Integer getBasicRow(final int col) {
+---
+>     Integer getBasicRow(final int col) {
+326d319
+< 
+332a326,338
+>     }
+> 
+>     
+> 
+> 
+> 
+>     boolean isOptimal() {
+>         for (int i = getNumObjectiveFunctions(); i < getWidth() - 1; i++) {
+>             if (MathUtils.compareTo(tableau.getEntry(0, i), 0, epsilon) < 0) {
+>                 return false;
+>             }
+>         }
+>         return true;

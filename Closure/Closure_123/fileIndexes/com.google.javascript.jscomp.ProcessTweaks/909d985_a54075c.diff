@@ -1,0 +1,152 @@
+28a29,30
+> import java.util.Map.Entry;
+> import java.util.SortedMap;
+49a52,61
+>   private final boolean stripTweaks;
+>   private final SortedMap<String, Node> compilerDefaultValueOverrides;
+>   
+>   
+> 
+> 
+> 
+>   private static final String DEFAULT_VALUES_VAR_NAME =
+>       "__JSCOMPILER_TWEAK_DEFAULT_VALUE_OVERRIDES";
+>   
+163a176,187
+>     
+>     Node createDefaultValueNode() {
+>       switch (this) {
+>         case REGISTER_BOOLEAN:
+>           return new Node(Token.FALSE);
+>         case REGISTER_NUMBER:
+>           return Node.newNumber(0);
+>         case REGISTER_STRING:
+>           return Node.newString("");
+>       }
+>       throw new IllegalStateException();
+>     }
+175c199,200
+<   ProcessTweaks(AbstractCompiler compiler) {
+---
+>   ProcessTweaks(AbstractCompiler compiler, boolean stripTweaks,
+>       Map<String, Node> compilerDefaultValueOverrides) {
+176a202,205
+>     this.stripTweaks = stripTweaks;
+>     
+>     this.compilerDefaultValueOverrides = Maps.newTreeMap();
+>     this.compilerDefaultValueOverrides.putAll(compilerDefaultValueOverrides);
+181c210,302
+<     collectTweaks(root);
+---
+>     Map<String, TweakInfo> tweakInfos = collectTweaks(root);
+>     applyCompilerDefaultValueOverrides(tweakInfos);
+> 
+>     boolean changed = false;
+> 
+>     if (stripTweaks) {
+>       changed = stripAllCalls(tweakInfos);
+>     } else if (!compilerDefaultValueOverrides.isEmpty()) {
+>       
+>       
+>       Node varNode = createCompilerDefaultValueOverridesVarNode(
+>           root.getFirstChild());
+>       root.getFirstChild().addChildToFront(varNode);
+>       changed = true;
+>     }
+>     if (changed) {
+>       compiler.reportCodeChange();
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private boolean stripAllCalls(Map<String, TweakInfo> tweakInfos) {
+>     for (TweakInfo tweakInfo : tweakInfos.values()) {
+>       boolean isRegistered = tweakInfo.isRegistered();
+>       for (TweakFunctionCall functionCall : tweakInfo.functionCalls) {
+>         Node callNode = functionCall.callNode;
+>         Node parent = callNode.getParent();
+>         if (functionCall.tweakFunc.isGetterFunction()) {
+>           Node newValue;
+>           if (isRegistered) {
+>             newValue = tweakInfo.getDefaultValueNode().cloneNode();
+>           } else {
+>             
+>             
+>             
+>             TweakFunction registerFunction =
+>                 functionCall.tweakFunc.registerFunction;
+>             newValue = registerFunction.createDefaultValueNode();
+>           }
+>           parent.replaceChild(callNode, newValue);
+>         } else {
+>           Node voidZeroNode = new Node(Token.VOID)
+>               .copyInformationFrom(callNode);
+>           voidZeroNode.addChildToBack(Node.newNumber(0)
+>               .copyInformationFrom(callNode));
+>           parent.replaceChild(callNode, voidZeroNode);
+>         }
+>       }
+>     }
+>     return !tweakInfos.isEmpty();
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private Node createCompilerDefaultValueOverridesVarNode(
+>       Node sourceInformationNode) {
+>     Node varNode = new Node(Token.VAR)
+>         .copyInformationFrom(sourceInformationNode);
+>     Node nameNode = Node.newString(Token.NAME, DEFAULT_VALUES_VAR_NAME)
+>         .copyInformationFrom(sourceInformationNode);
+>     Node objNode = new Node(Token.OBJECTLIT)
+>         .copyInformationFrom(sourceInformationNode);
+>     varNode.addChildToBack(nameNode);
+>     nameNode.addChildToBack(objNode);
+>     for (Entry<String, Node> entry : compilerDefaultValueOverrides.entrySet()) {
+>       Node objKeyNode = Node.newString(entry.getKey())
+>           .copyInformationFrom(sourceInformationNode);
+>       Node objValueNode = entry.getValue().cloneNode()
+>           .copyInformationFrom(sourceInformationNode);
+>       objKeyNode.addChildToBack(objValueNode);
+>       objNode.addChildToBack(objKeyNode);
+>     }
+>     return varNode;
+>   }
+> 
+>   
+>   private void applyCompilerDefaultValueOverrides(
+>       Map<String, TweakInfo> tweakInfos) {
+>     for (Entry<String, Node> entry : compilerDefaultValueOverrides.entrySet()) {
+>       String tweakId = entry.getKey();
+>       TweakInfo tweakInfo = tweakInfos.get(tweakId);
+>       if (tweakInfo == null) {
+>         compiler.report(JSError.make(UNKNOWN_TWEAK_WARNING, tweakId));
+>       } else {
+>         tweakInfo.defaultValueNode = entry.getValue();
+>       }
+>     }
+384,386d504
+<       if (this.defaultValueNode == null) {
+<         this.defaultValueNode = defaultValueNode;
+<       }
+402a521,534
+>     }
+>     
+>     Node getDefaultValueNode() {
+>       Preconditions.checkState(isRegistered());
+>       
+>       if (defaultValueNode != null) {
+>         return defaultValueNode;
+>       }
+>       
+>       if (registerCall.valueNode != null) {
+>         return registerCall.valueNode;
+>       }
+>       
+>       return registerCall.tweakFunc.createDefaultValueNode();

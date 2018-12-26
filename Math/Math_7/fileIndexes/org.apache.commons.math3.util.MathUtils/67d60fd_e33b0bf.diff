@@ -1,0 +1,406 @@
+73,82d72
+<     private static final long[] FACTORIALS = new long[] {
+<                        1l,                  1l,                   2l,
+<                        6l,                 24l,                 120l,
+<                      720l,               5040l,               40320l,
+<                   362880l,            3628800l,            39916800l,
+<                479001600l,         6227020800l,         87178291200l,
+<            1307674368000l,     20922789888000l,     355687428096000l,
+<         6402373705728000l, 121645100408832000l, 2432902008176640000l };
+< 
+<     
+99,176d88
+<     public static int addAndCheck(int x, int y) {
+<         long s = (long)x + (long)y;
+<         if (s < Integer.MIN_VALUE || s > Integer.MAX_VALUE) {
+<             throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_ADDITION, x, y);
+<         }
+<         return (int)s;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static long addAndCheck(long a, long b) {
+<         return addAndCheck(a, b, LocalizedFormats.OVERFLOW_IN_ADDITION);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     private static long addAndCheck(long a, long b, Localizable pattern) {
+<         long ret;
+<         if (a > b) {
+<             
+<             ret = addAndCheck(b, a, pattern);
+<         } else {
+<             
+< 
+<             if (a < 0) {
+<                 if (b < 0) {
+<                     
+<                     if (Long.MIN_VALUE - b <= a) {
+<                         ret = a + b;
+<                     } else {
+<                         throw new MathArithmeticException(pattern, a, b);
+<                     }
+<                 } else {
+<                     
+<                     ret = a + b;
+<                 }
+<             } else {
+<                 
+<                 
+< 
+<                 
+<                 if (a <= Long.MAX_VALUE - b) {
+<                     ret = a + b;
+<                 } else {
+<                     throw new MathArithmeticException(pattern, a, b);
+<                 }
+<             }
+<         }
+<         return ret;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+229c141
+<                 final long d = gcd(i, j);
+---
+>                 final long d = ArithmeticsUtils.gcd(i, j);
+239c151
+<                 final long d = gcd(i, j);
+---
+>                 final long d = ArithmeticsUtils.gcd(i, j);
+392,646d303
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static long factorial(final int n) {
+<         if (n < 0) {
+<             throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+<                                            n);
+<         }
+<         if (n > 20) {
+<             throw new MathArithmeticException();
+<         }
+<         return FACTORIALS[n];
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static double factorialDouble(final int n) {
+<         if (n < 0) {
+<             throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+<                                            n);
+<         }
+<         if (n < 21) {
+<             return factorial(n);
+<         }
+<         return FastMath.floor(FastMath.exp(factorialLog(n)) + 0.5);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static double factorialLog(final int n) {
+<         if (n < 0) {
+<             throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+<                                            n);
+<         }
+<         if (n < 21) {
+<             return FastMath.log(factorial(n));
+<         }
+<         double logSum = 0;
+<         for (int i = 2; i <= n; i++) {
+<             logSum += FastMath.log(i);
+<         }
+<         return logSum;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static int gcd(final int p, final int q) {
+<         int u = p;
+<         int v = q;
+<         if ((u == 0) || (v == 0)) {
+<             if ((u == Integer.MIN_VALUE) || (v == Integer.MIN_VALUE)) {
+<                 throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_32_BITS,
+<                                                   p, q);
+<             }
+<             return FastMath.abs(u) + FastMath.abs(v);
+<         }
+<         
+<         
+<         
+<         
+<         
+<         if (u > 0) {
+<             u = -u;
+<         } 
+<         if (v > 0) {
+<             v = -v;
+<         } 
+<         
+<         int k = 0;
+<         while ((u & 1) == 0 && (v & 1) == 0 && k < 31) { 
+<                                                             
+<             u /= 2;
+<             v /= 2;
+<             k++; 
+<         }
+<         if (k == 31) {
+<             throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_32_BITS,
+<                                               p, q);
+<         }
+<         
+<         
+<         int t = ((u & 1) == 1) ? v : -(u / 2);
+<         
+<         
+<         do {
+<             
+<             
+<             while ((t & 1) == 0) { 
+<                 t /= 2; 
+<             }
+<             
+<             if (t > 0) {
+<                 u = -t;
+<             } else {
+<                 v = t;
+<             }
+<             
+<             t = (v - u) / 2;
+<             
+<             
+<         } while (t != 0);
+<         return -u * (1 << k); 
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static long gcd(final long p, final long q) {
+<         long u = p;
+<         long v = q;
+<         if ((u == 0) || (v == 0)) {
+<             if ((u == Long.MIN_VALUE) || (v == Long.MIN_VALUE)){
+<                 throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_64_BITS,
+<                                                   p, q);
+<             }
+<             return FastMath.abs(u) + FastMath.abs(v);
+<         }
+<         
+<         
+<         
+<         
+<         
+<         if (u > 0) {
+<             u = -u;
+<         } 
+<         if (v > 0) {
+<             v = -v;
+<         } 
+<         
+<         int k = 0;
+<         while ((u & 1) == 0 && (v & 1) == 0 && k < 63) { 
+<                                                             
+<             u /= 2;
+<             v /= 2;
+<             k++; 
+<         }
+<         if (k == 63) {
+<             throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_64_BITS,
+<                                               p, q);
+<         }
+<         
+<         
+<         long t = ((u & 1) == 1) ? v : -(u / 2);
+<         
+<         
+<         do {
+<             
+<             
+<             while ((t & 1) == 0) { 
+<                 t /= 2; 
+<             }
+<             
+<             if (t > 0) {
+<                 u = -t;
+<             } else {
+<                 v = t;
+<             }
+<             
+<             t = (v - u) / 2;
+<             
+<             
+<         } while (t != 0);
+<         return -u * (1L << k); 
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+759c416
+<         int lcm = FastMath.abs(mulAndCheck(a / gcd(a, b), b));
+---
+>         int lcm = FastMath.abs(mulAndCheck(a / ArithmeticsUtils.gcd(a, b), b));
+793c450
+<         long lcm = FastMath.abs(mulAndCheck(a / gcd(a, b), b));
+---
+>         long lcm = FastMath.abs(mulAndCheck(a / ArithmeticsUtils.gcd(a, b), b));
+1209,1251d865
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static int subAndCheck(int x, int y) {
+<         long s = (long)x - (long)y;
+<         if (s < Integer.MIN_VALUE || s > Integer.MAX_VALUE) {
+<             throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_SUBTRACTION, x, y);
+<         }
+<         return (int)s;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static long subAndCheck(long a, long b) {
+<         long ret;
+<         if (b == Long.MIN_VALUE) {
+<             if (a < 0) {
+<                 ret = a - b;
+<             } else {
+<                 throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_ADDITION, a, -b);
+<             }
+<         } else {
+<             
+<             ret = addAndCheck(a, -b, LocalizedFormats.OVERFLOW_IN_ADDITION);
+<         }
+<         return ret;

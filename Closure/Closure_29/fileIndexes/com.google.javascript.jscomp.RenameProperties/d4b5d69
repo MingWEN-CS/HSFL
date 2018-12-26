@@ -1,0 +1,462 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import javax.annotation.Nullable;
+import com.google.common.base.Preconditions;
+import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.TokenStream;
+
+import java.util.*;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class RenameProperties implements CompilerPass {
+
+  private final AbstractCompiler compiler;
+  private final boolean generatePseudoNames;
+
+  
+  private final VariableMap prevUsedPropertyMap;
+
+  private final List<Node> stringNodesToRename = new ArrayList<Node>();
+  private final Map<Node, Node> callNodeToParentMap =
+      new HashMap<Node, Node>();
+  private final char[] reservedCharacters;
+
+  
+  private final Map<String, Property> propertyMap =
+      new HashMap<String, Property>();
+
+  
+  private final Set<String> externedNames = new HashSet<String>(
+      Arrays.asList("prototype"));
+
+  
+  private final Set<String> quotedNames = new HashSet<String>();
+
+  
+
+
+
+  private static final Comparator<Property> FREQUENCY_COMPARATOR =
+      new Comparator<Property>() {
+        public int compare(Property p1, Property p2) {
+          if (p1.numOccurrences != p2.numOccurrences) {
+            return p2.numOccurrences - p1.numOccurrences;
+          }
+          return p1.oldName.compareTo(p2.oldName);
+        }
+      };
+
+  
+
+
+
+
+
+
+
+  static final String RENAME_PROPERTY_FUNCTION_NAME =
+      "JSCompiler_renameProperty";
+
+  static final DiagnosticType BAD_CALL = DiagnosticType.error(
+      "JSC_BAD_RENAME_PROPERTY_FUNCTION_NAME_CALL",
+      "Bad " + RENAME_PROPERTY_FUNCTION_NAME + " call - " +
+      "argument must be a string literal");
+
+  static final DiagnosticType BAD_ARG = DiagnosticType.error(
+      "JSC_BAD_RENAME_PROPERTY_FUNCTION_NAME_ARG",
+      "Bad " + RENAME_PROPERTY_FUNCTION_NAME + " argument - " +
+      "'{0}' is not a valid JavaScript identifier");
+
+  
+
+
+
+
+
+
+  RenameProperties(AbstractCompiler compiler,
+      boolean generatePseudoNames) {
+    this(compiler, generatePseudoNames, null, null);
+  }
+
+  
+
+
+
+
+
+
+
+
+  RenameProperties(AbstractCompiler compiler,
+      boolean generatePseudoNames, VariableMap prevUsedPropertyMap) {
+    this(compiler, generatePseudoNames, prevUsedPropertyMap, null);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  RenameProperties(AbstractCompiler compiler,
+      boolean generatePseudoNames,
+      VariableMap prevUsedPropertyMap,
+      @Nullable char[] reservedCharacters) {
+    this.compiler = compiler;
+    this.generatePseudoNames = generatePseudoNames;
+    this.prevUsedPropertyMap = prevUsedPropertyMap;
+    this.reservedCharacters = reservedCharacters;
+  }
+
+  @Override
+  public void process(Node externs, Node root) {
+    NodeTraversal.traverse(compiler, externs, new ProcessExterns());
+    NodeTraversal.traverse(compiler, root, new ProcessProperties());
+
+    Set<String> reservedNames =
+        new HashSet<String>(externedNames.size() + quotedNames.size());
+    reservedNames.addAll(externedNames);
+    reservedNames.addAll(quotedNames);
+
+    
+    
+    if (prevUsedPropertyMap != null) {
+      reusePropertyNames(reservedNames, propertyMap.values());
+    }
+
+    compiler.addToDebugLog("JS property assignments:");
+
+    
+    Set<Property> propsByFreq = new TreeSet<Property>(FREQUENCY_COMPARATOR);
+    propsByFreq.addAll(propertyMap.values());
+    generateNames(propsByFreq, reservedNames);
+
+    
+    boolean changed = false;
+    for (Node n : stringNodesToRename) {
+      String oldName = n.getString();
+      Property p = propertyMap.get(oldName);
+      if (p != null && p.newName != null) {
+        Preconditions.checkState(oldName.equals(p.oldName));
+        n.setString(p.newName);
+        changed = changed || !p.newName.equals(oldName);
+      }
+    }
+
+    
+    for (Node n : callNodeToParentMap.keySet()) {
+      Node parent = callNodeToParentMap.get(n);
+      Node firstArg = n.getFirstChild().getNext();
+      StringBuilder sb = new StringBuilder();
+      for (String oldName : firstArg.getString().split("[.]")) {
+        Property p = propertyMap.get(oldName);
+        String replacement;
+        if (p != null && p.newName != null) {
+          Preconditions.checkState(oldName.equals(p.oldName));
+          replacement = p.newName;
+        } else {
+          replacement = oldName;
+        }
+        if (sb.length() > 0) {
+          sb.append('.');
+        }
+        sb.append(replacement);
+      }
+      parent.replaceChild(n, Node.newString(sb.toString()));
+      changed = true;
+    }
+
+    if (changed) {
+      compiler.reportCodeChange();
+    }
+  }
+
+  
+
+
+
+
+
+
+  private void reusePropertyNames(Set<String> reservedNames,
+                                  Collection<Property> allProps) {
+    for (Property prop : allProps) {
+      
+      
+      String prevName = prevUsedPropertyMap.lookupNewName(prop.oldName);
+      if (!generatePseudoNames && prevName != null) {
+        
+        if (reservedNames.contains(prevName)) {
+          continue;
+        }
+
+        prop.newName = prevName;
+        reservedNames.add(prevName);
+      }
+    }
+  }
+
+  
+
+
+
+
+
+
+  private void generateNames(Set<Property> props, Set<String> reservedNames) {
+    NameGenerator nameGen = new NameGenerator(
+        reservedNames, "", reservedCharacters);
+    for (Property p : props) {
+      if (generatePseudoNames) {
+        p.newName = "$" + p.oldName + "$";
+      } else {
+        
+        if (p.newName == null) {
+          p.newName = nameGen.generateNextName();
+        }
+      }
+
+      reservedNames.add(p.newName);
+
+      compiler.addToDebugLog(p.oldName + " => " + p.newName);
+    }
+  }
+
+  
+
+
+
+
+  VariableMap getPropertyMap() {
+    Map<String, String> map = new HashMap<String, String>();
+    for (Property p : propertyMap.values()) {
+      if (p.newName != null) {
+        map.put(p.oldName, p.newName);
+      }
+    }
+    return new VariableMap(map);
+  }
+
+  
+
+  
+
+
+  private class ProcessExterns extends AbstractPostOrderCallback {
+
+    @Override
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      switch (n.getType()) {
+        case Token.GETPROP:
+          Node dest = n.getFirstChild().getNext();
+          if (dest.getType() == Token.STRING) {
+            externedNames.add(dest.getString());
+          }
+          break;
+        case Token.OBJECTLIT:
+          for (Node child = n.getFirstChild();
+               child != null;
+               child = child.getNext()) {
+            if (child.getType() == Token.STRING) {
+              externedNames.add(child.getString());
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  
+
+  
+
+
+
+  private class ProcessProperties extends AbstractPostOrderCallback {
+
+    @Override
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      switch (n.getType()) {
+        case Token.GETPROP:
+          Node propNode = n.getFirstChild().getNext();
+          if (propNode.getType() == Token.STRING) {
+            maybeMarkCandidate(propNode);
+          }
+          break;
+        case Token.OBJECTLIT:
+          
+          
+          for (Node key = n.getFirstChild(); key != null;
+               key = key.getNext()) {
+            
+            
+            if (key.getType() == Token.STRING) {
+              if (!key.isQuotedString()) {
+                maybeMarkCandidate(key);
+              } else {
+                
+                
+                quotedNames.add(key.getString());
+              }
+            }
+          }
+          break;
+        case Token.GETELEM:
+          
+          
+          
+          Node child = n.getLastChild();
+          if (child != null && child.getType() == Token.STRING) {
+            quotedNames.add(child.getString());
+          }
+          break;
+        case Token.CALL:
+          
+          
+          Node fnName = n.getFirstChild();
+          if (fnName.getType() == Token.NAME &&
+              RENAME_PROPERTY_FUNCTION_NAME.equals(fnName.getString())) {
+            callNodeToParentMap.put(n, parent);
+            countCallCandidates(t, n);
+          }
+          break;
+        case Token.FUNCTION:
+          
+          
+          if (NodeUtil.isFunctionDeclaration(n)) {
+            String name = n.getFirstChild().getString();
+            if (RENAME_PROPERTY_FUNCTION_NAME.equals(name)) {
+              if (NodeUtil.isExpressionNode(parent)) {
+                parent.detachFromParent();
+              } else {
+                parent.removeChild(n);
+              }
+              compiler.reportCodeChange();
+            }
+          } else if (parent.getType() == Token.NAME &&
+                     RENAME_PROPERTY_FUNCTION_NAME.equals(parent.getString())) {
+            Node varNode = parent.getParent();
+            if (varNode.getType() == Token.VAR) {
+              varNode.removeChild(parent);
+              if (!varNode.hasChildren()) {
+                varNode.detachFromParent();
+              }
+              compiler.reportCodeChange();
+            }
+          }
+          break;
+      }
+    }
+
+    
+
+
+
+
+
+    private void maybeMarkCandidate(Node n) {
+      String name = n.getString();
+      if (!externedNames.contains(name)) {
+        stringNodesToRename.add(n);
+        countPropertyOccurrence(name);
+      }
+    }
+
+    
+
+
+
+
+
+
+    private void countCallCandidates(NodeTraversal t, Node callNode) {
+      Node firstArg = callNode.getFirstChild().getNext();
+      if (firstArg.getType() != Token.STRING) {
+        t.report(callNode, BAD_CALL);
+        return;
+      }
+
+      for (String name : firstArg.getString().split("[.]")) {
+        if (!TokenStream.isJSIdentifier(name)) {
+          t.report(callNode, BAD_ARG, name);
+          continue;
+        }
+        if (!externedNames.contains(name)) {
+          countPropertyOccurrence(name);
+        }
+      }
+    }
+
+    
+
+
+
+
+    private void countPropertyOccurrence(String name) {
+      Property prop = propertyMap.get(name);
+      if (prop == null) {
+        prop = new Property(name);
+        propertyMap.put(name, prop);
+      }
+      prop.numOccurrences++;
+    }
+  }
+
+  
+
+  
+
+
+  private class Property {
+    final String oldName;
+    String newName;
+    int numOccurrences;
+
+    Property(String name) {
+      this.oldName = name;
+    }
+  }
+}

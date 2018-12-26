@@ -1,0 +1,40 @@
+20a21
+> import org.joda.time.Chronology;
+90a92,106
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected Chronology getChronology() {
+>         throw new UnsupportedOperationException(
+>                 "The method getChronology() was added in v1.4 and needs " +
+>                 "to be implemented by subclasses of AbstractReadableInstantFieldProperty");
+>     }
+> 
+>     
+429,434c445,446
+<         if (object instanceof AbstractReadableInstantFieldProperty) {
+<             AbstractReadableInstantFieldProperty other = (AbstractReadableInstantFieldProperty) object;
+<             if (get() == other.get() &&
+<                 getField().equals(other.getField())) {
+<                 return true;
+<             }
+---
+>         if (object instanceof AbstractReadableInstantFieldProperty == false) {
+>             return false;
+436c448,452
+<         return false;
+---
+>         AbstractReadableInstantFieldProperty other = (AbstractReadableInstantFieldProperty) object;
+>         return 
+>             get() == other.get() &&
+>             getFieldType().equals(other.getFieldType()) &&
+>             FieldUtils.equals(getChronology(), other.getChronology());
+445c461
+<         return get() * 17 + getField().hashCode();
+---
+>         return get() * 17 + getFieldType().hashCode() + getChronology().hashCode();

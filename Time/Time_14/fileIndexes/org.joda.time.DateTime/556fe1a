@@ -1,0 +1,595 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.Serializable;
+
+import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.property.DateTimeFieldProperty;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class DateTime extends AbstractDateTime
+        implements ReadableDateTime, Serializable {
+    
+    
+    private static final long serialVersionUID = -5171125899451703815L;
+
+    
+    
+    
+
+
+
+    public DateTime() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+
+    public DateTime(DateTimeZone zone) {
+        super(zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public DateTime(Chronology chronology) {
+        super(chronology);
+    }
+
+    
+    
+
+
+
+
+
+    public DateTime(long instant) {
+        super(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public DateTime(long instant, DateTimeZone zone) {
+        super(instant, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public DateTime(long instant, Chronology chronology) {
+        super(instant, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime(Object instant) {
+        super(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime(Object instant, DateTimeZone zone) {
+        super(instant, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime(Object instant, Chronology chronology) {
+        super(instant, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime(
+            int year,
+            int monthOfYear,
+            int dayOfMonth,
+            int hourOfDay,
+            int minuteOfHour,
+            int secondOfMinute,
+            int millisOfSecond) {
+        super(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime(
+            int year,
+            int monthOfYear,
+            int dayOfMonth,
+            int hourOfDay,
+            int minuteOfHour,
+            int secondOfMinute,
+            int millisOfSecond,
+            DateTimeZone zone) {
+        super(year, monthOfYear, dayOfMonth,
+              hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime(
+            int year,
+            int monthOfYear,
+            int dayOfMonth,
+            int hourOfDay,
+            int minuteOfHour,
+            int secondOfMinute,
+            int millisOfSecond,
+            Chronology chronology) {
+        super(year, monthOfYear, dayOfMonth,
+              hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public final DateTime withMillis(long newMillis) {
+        return (newMillis == getMillis() ? this : new DateTime(newMillis, getChronology()));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public final DateTime withChronology(Chronology newChronology) {
+        return (newChronology == getChronology() ? this : new DateTime(getMillis(), newChronology));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public final DateTime withZone(DateTimeZone newDateTimeZone) {
+        return withChronology(getChronology().withZone(newDateTimeZone));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public final DateTime withZoneRetainFields(DateTimeZone newDateTimeZone) {
+        final long originalMillis = getMillis();
+        final Chronology originalChrono = getChronology();
+        final DateTimeZone originalZone;
+        if (originalChrono == null || (originalZone = originalChrono.getZone()) == null) {
+            
+            
+            
+            return withMillis(originalMillis);
+        }
+
+        DateTime newInstant = withChronology(originalChrono.withZone(newDateTimeZone));
+        newDateTimeZone = newInstant.getZone();
+
+        if (newDateTimeZone == null || newDateTimeZone == originalZone) {
+            
+            return newInstant;
+        }
+
+        long newMillis = originalMillis + originalZone.getOffset(originalMillis);
+        newMillis -= newDateTimeZone.getOffsetFromLocal(newMillis);
+
+        return newInstant.withMillis(newMillis);
+    }
+
+    
+    
+    
+
+
+
+
+    public final DateTimeFieldProperty era() {
+        return new DateTimeFieldProperty(this, getChronology().era());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty centuryOfEra() {
+        return new DateTimeFieldProperty(this, getChronology().centuryOfEra());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty yearOfCentury() {
+        return new DateTimeFieldProperty(this, getChronology().yearOfCentury());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty yearOfEra() {
+        return new DateTimeFieldProperty(this, getChronology().yearOfEra());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty year() {
+        return new DateTimeFieldProperty(this, getChronology().year());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty weekyear() {
+        return new DateTimeFieldProperty(this, getChronology().weekyear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty monthOfYear() {
+        return new DateTimeFieldProperty(this, getChronology().monthOfYear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty weekOfWeekyear() {
+        return new DateTimeFieldProperty(this, getChronology().weekOfWeekyear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty dayOfYear() {
+        return new DateTimeFieldProperty(this, getChronology().dayOfYear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty dayOfMonth() {
+        return new DateTimeFieldProperty(this, getChronology().dayOfMonth());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty dayOfWeek() {
+        return new DateTimeFieldProperty(this, getChronology().dayOfWeek());
+    }
+
+    
+    
+    
+
+
+
+
+    public final DateTimeFieldProperty hourOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().hourOfDay());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty minuteOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().minuteOfDay());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty minuteOfHour() {
+        return new DateTimeFieldProperty(this, getChronology().minuteOfHour());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty secondOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().secondOfDay());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty secondOfMinute() {
+        return new DateTimeFieldProperty(this, getChronology().secondOfMinute());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty millisOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().millisOfDay());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty millisOfSecond() {
+        return new DateTimeFieldProperty(this, getChronology().millisOfSecond());
+    }
+
+    
+    
+    
+
+
+
+
+    public final String toString() {
+        return ISODateTimeFormat.getInstance(getChronology()).dateTime().print(this);
+    }
+
+    
+
+
+
+    protected final void setMillis(long millis) {
+    }
+
+    
+
+
+
+    protected final void setChronology(Chronology chronology) {
+    }
+
+}

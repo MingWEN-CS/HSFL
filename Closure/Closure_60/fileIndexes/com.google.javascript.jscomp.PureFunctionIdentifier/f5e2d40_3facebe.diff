@@ -1,0 +1,184 @@
+19d18
+< import com.google.common.annotations.VisibleForTesting;
+21a21
+> import com.google.common.base.Predicate;
+310c310
+<       SideEffectFlags flags = new SideEffectFlags();
+---
+>       Node.SideEffectFlags flags = new Node.SideEffectFlags();
+364,420d363
+<   private static class SideEffectFlags {
+<     private int value = Node.SIDE_EFFECTS_ALL;
+< 
+<     int valueOf() {
+<       return value;
+<     }
+< 
+<     
+<     void setAllFlags() {
+<       value = Node.SIDE_EFFECTS_ALL;
+<     }
+< 
+<     
+<     void clearAllFlags() {
+<       value = Node.NO_SIDE_EFFECTS | Node.FLAG_LOCAL_RESULTS;
+<     }
+< 
+<     boolean areAllFlagsSet() {
+<       return value == Node.SIDE_EFFECTS_ALL;
+<     }
+< 
+<     
+< 
+< 
+< 
+<     void clearSideEffectFlags() {
+<       value |= Node.NO_SIDE_EFFECTS;
+<     }
+< 
+<     void setMutatesGlobalState() {
+<       
+<       removeFlag(Node.FLAG_GLOBAL_STATE_UNMODIFIED);
+<       removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+<       removeFlag(Node.FLAG_THIS_UNMODIFIED);
+<     }
+< 
+<     void setThrows() {
+<       removeFlag(Node.FLAG_NO_THROWS);
+<     }
+< 
+<     void setMutatesThis() {
+<       removeFlag(Node.FLAG_THIS_UNMODIFIED);
+<     }
+< 
+<     void setMutatesArguments() {
+<       removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+<     }
+< 
+<     void setReturnsTainted() {
+<       removeFlag(Node.FLAG_LOCAL_RESULTS);
+<     }
+< 
+<     private void removeFlag(int flag) {
+<       value &= ~flag;
+<     }
+<   }
+< 
+499c442
+<               if (value != null && !isKnownLocalValue(value)) {
+---
+>               if (value != null && !NodeUtil.evaluatesToLocalValue(value)) {
+510c453
+<                   && !isKnownLocalValue(node.getFirstChild())) {
+---
+>                   && !NodeUtil.evaluatesToLocalValue(node.getFirstChild())) {
+597c540,542
+<           if (rhs != null && NodeUtil.isAssign(op) && !isKnownLocalValue(rhs)) {
+---
+>           if (rhs != null
+>               && NodeUtil.isAssign(op)
+>               && !NodeUtil.evaluatesToLocalValue(rhs)) {
+661a607,612
+>       if (inExterns) {
+>         
+>         
+>         sideEffectInfo.setTaintsReturn();
+>       }
+> 
+766,793c717,727
+<   @VisibleForTesting
+<   static boolean isKnownLocalValue(Node value) {
+<     
+<     
+<     switch (value.getType()) {
+<       case Token.ASSIGN:
+<       case Token.COMMA:
+<         return isKnownLocalValue(value.getLastChild());
+<       case Token.AND:
+<       case Token.OR:
+<         return isKnownLocalValue(value.getFirstChild()) &&
+<            isKnownLocalValue(value.getLastChild());
+<       case Token.HOOK:
+<         return isKnownLocalValue(value.getFirstChild().getNext()) &&
+<            isKnownLocalValue(value.getLastChild());
+<       case Token.INC:
+<       case Token.DEC:
+<         if (value.getBooleanProp(Node.INCRDECR_PROP)) {
+<           return isKnownLocalValue(value.getFirstChild());
+<         } else {
+<           return true;
+<         }
+<       case Token.THIS:
+<         
+<         return false;
+<       case Token.NAME:
+<         
+<         
+---
+>   private static boolean isKnownLocalValue(Node value) {
+>     Predicate<Node> taintingPredicate = new Predicate<Node>() {
+>       @Override
+>       public boolean apply(Node value) {
+>         switch (value.getType()) {
+>           case Token.THIS:
+>             
+>             return false;
+>           case Token.NAME:
+>             
+>             
+795,823c729,737
+<         
+<         return NodeUtil.isImmutableValue(value);
+<       case Token.GETELEM:
+<       case Token.GETPROP:
+<         
+<         return false;
+<       case Token.CALL:
+<         
+<         
+<         return false;
+<       case Token.NEW:
+<         return true;
+<       case Token.FUNCTION:
+<       case Token.REGEXP:
+<       case Token.ARRAYLIT:
+<       case Token.OBJECTLIT:
+<         
+<         return true;
+<       case Token.IN:
+<         
+<         return true;
+<       default:
+<         
+<         
+<         
+<         if (NodeUtil.isAssignmentOp(value)
+<             || NodeUtil.isSimpleOperator(value)
+<             || NodeUtil.isImmutableValue(value)) {
+<           return true;
+---
+>             return false;
+>           case Token.GETELEM:
+>           case Token.GETPROP:
+>             
+>             return false;
+>           case Token.CALL:
+>             
+>             
+>             return false;
+824a739,741
+>         return false;
+>       }
+>     };
+826,829c743
+<         throw new IllegalStateException(
+<             "Unexpected expression node" + value +
+<             "\n parent:" + value.getParent());
+<     }
+---
+>     return NodeUtil.evaluatesToLocalValue(value, taintingPredicate);
+877c791,792
+<           } else if (objectNode != null && isKnownLocalValue(objectNode)
+---
+>           } else if (objectNode != null
+>               && NodeUtil.evaluatesToLocalValue(objectNode)

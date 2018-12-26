@@ -1,0 +1,47 @@
+162a163,173
+>     static LocalVarMotion forVar(
+>         Node name, Node var, Node block) {
+>       Preconditions.checkArgument(var.getType() == Token.VAR);
+>       Preconditions.checkArgument(NodeUtil.isStatement(var));
+>       
+>       
+>       
+>       
+>       return new LocalVarMotion(
+>           name, new FunctionlessLocalScope(name, var, block));
+>     }
+164,167c175
+<     LocalVarMotion(Node ... ancestors) {
+<       Preconditions.checkArgument(ancestors.length >= 2);
+<       Preconditions.checkArgument(ancestors[0].getType() == Token.NAME);
+<       Preconditions.checkArgument(ancestors[1].getType() == Token.VAR);
+---
+>     
+169d176
+<       this.iterator = new FunctionlessLocalScope(ancestors);
+171,172c178,195
+<       Node nameNode = ancestors[0];
+<       Node valueNode = nameNode.getFirstChild();
+---
+> 
+>     static LocalVarMotion forAssign(
+>         Node name, Node assign, Node expr, Node block) {
+>       Preconditions.checkArgument(assign.getType() == Token.ASSIGN);
+>       Preconditions.checkArgument(expr.getType() == Token.EXPR_RESULT);
+>       
+>       
+>       return new LocalVarMotion(
+>           name, new FunctionlessLocalScope(assign, expr, block));
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private LocalVarMotion(Node nameNode, FunctionlessLocalScope iterator) {
+>       Preconditions.checkArgument(nameNode.getType() == Token.NAME);
+>       Node valueNode = NodeUtil.getAssignedValue(nameNode);
+176c199
+< 
+---
+>       this.iterator = iterator;

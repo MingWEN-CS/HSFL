@@ -1,0 +1,258 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.analysis.solvers;
+
+import org.apache.commons.math.ConvergingAlgorithmImpl;
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+
+
+
+
+
+
+
+public abstract class UnivariateRealSolverImpl
+    extends ConvergingAlgorithmImpl implements UnivariateRealSolver {
+
+    
+    private static final long serialVersionUID = 1112491292565386596L;
+    
+    
+    protected double functionValueAccuracy;
+
+    
+    protected double defaultFunctionValueAccuracy;
+
+    
+    protected boolean resultComputed = false;
+
+    
+    protected double result;
+
+    
+    protected double functionValue;
+
+    
+
+
+
+
+    @Deprecated
+    protected UnivariateRealFunction f;
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    @Deprecated
+    protected UnivariateRealSolverImpl(final UnivariateRealFunction f,
+                                       final int defaultMaximalIterationCount,
+                                       final double defaultAbsoluteAccuracy) {
+        super(defaultMaximalIterationCount, defaultAbsoluteAccuracy);
+        if (f == null) {
+            throw MathRuntimeException.createIllegalArgumentException("function to solve cannot be null");
+        }
+        this.f = f;
+        this.defaultFunctionValueAccuracy = 1.0e-15;
+        this.functionValueAccuracy = defaultFunctionValueAccuracy;
+    }
+
+    
+
+
+
+
+
+
+
+    protected UnivariateRealSolverImpl(final int defaultMaximalIterationCount,
+                                       final double defaultAbsoluteAccuracy) {
+        super(defaultMaximalIterationCount, defaultAbsoluteAccuracy);
+        this.defaultFunctionValueAccuracy = 1.0e-15;
+        this.functionValueAccuracy = defaultFunctionValueAccuracy;
+    }
+
+    
+
+
+    protected void checkResultComputed() throws IllegalStateException {
+        if (!resultComputed) {
+            throw MathRuntimeException.createIllegalStateException("no result available");
+        }
+    }
+
+    
+    public double getResult() {
+        checkResultComputed();
+        return result;
+    }
+
+    
+    public double getFunctionValue() {
+        checkResultComputed();
+        return functionValue;
+    }
+
+    
+    public void setFunctionValueAccuracy(final double accuracy) {
+        functionValueAccuracy = accuracy;
+    }
+
+    
+    public double getFunctionValueAccuracy() {
+        return functionValueAccuracy;
+    }
+
+    
+    public void resetFunctionValueAccuracy() {
+        functionValueAccuracy = defaultFunctionValueAccuracy;
+    }
+
+    
+
+
+
+
+
+    protected final void setResult(final double result, final int iterationCount) {
+        this.result         = result;
+        this.iterationCount = iterationCount;
+        this.resultComputed = true;
+    }
+
+    
+
+
+
+
+
+
+    protected final void setResult(final double x, final double fx,
+                                   final int iterationCount) {
+        this.result         = x;
+        this.functionValue  = fx;
+        this.iterationCount = iterationCount;
+        this.resultComputed = true;
+    }
+
+    
+
+
+    protected final void clearResult() {
+        this.iterationCount = 0;
+        this.resultComputed = false;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected boolean isBracketing(final double lower, final double upper, 
+                                   final UnivariateRealFunction f)
+        throws FunctionEvaluationException {
+        final double f1 = f.value(lower);
+        final double f2 = f.value(upper);
+        return ((f1 > 0 && f2 < 0) || (f1 < 0 && f2 > 0));
+    }
+    
+    
+
+
+
+
+
+
+
+    protected boolean isSequence(final double start, final double mid, final double end) {
+        return (start < mid) && (mid < end);
+    }
+    
+    
+
+
+
+
+
+
+
+    protected void verifyInterval(final double lower, final double upper) {
+        if (lower >= upper) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                    "endpoints do not specify an interval: [{0}, {1}]",
+                    lower, upper);
+        }       
+    }
+    
+    
+
+
+
+
+
+
+
+
+    protected void verifySequence(final double lower, final double initial, final double upper) {
+        if (!isSequence(lower, initial, upper)) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                    "invalid interval, initial value parameters:  lower={0}, initial={1}, upper={2}",
+                    lower, initial, upper);
+        }       
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+    protected void verifyBracketing(final double lower, final double upper, 
+                                    final UnivariateRealFunction f)
+        throws FunctionEvaluationException {
+        
+        verifyInterval(lower, upper);
+        if (!isBracketing(lower, upper, f)) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                    "function values at endpoints do not have different signs.  " +
+                    "Endpoints: [{0}, {1}], Values: [{2}, {3}]",
+                    lower, upper, f.value(lower), f.value(upper));       
+        }
+    }
+}

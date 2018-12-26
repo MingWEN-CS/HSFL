@@ -1,0 +1,211 @@
+75d74
+< import org.joda.time.chrono.ISOChronology;
+172,180d170
+< 
+< 
+< 
+< 
+< 
+<     public static DateTimeFormat getInstanceUTC() {
+<         return getInstance(ISOChronology.getInstanceUTC(), Locale.getDefault());
+<     }
+< 
+186d175
+< 
+188,222c177
+<         return getInstance(ISOChronology.getInstance(), Locale.getDefault());
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static DateTimeFormat getInstance(final DateTimeZone zone) {
+<         return getInstance(ISOChronology.getInstance(zone), Locale.getDefault());
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static DateTimeFormat getInstance(final DateTimeZone zone, final Locale locale) {
+<         return getInstance(ISOChronology.getInstance(zone), locale);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static DateTimeFormat getInstance(final Chronology chrono) {
+<         return getInstance(chrono, Locale.getDefault());
+---
+>         return getInstance(Locale.getDefault());
+231,236c186
+< 
+< 
+<     public static synchronized DateTimeFormat getInstance(Chronology chrono, Locale locale) {
+<         if (chrono == null) {
+<             chrono = ISOChronology.getInstance();
+<         }
+---
+>     public synchronized static DateTimeFormat getInstance(Locale locale) {
+240,245c190
+<         Map map = (Map)cInstanceCache.get(chrono);
+<         if (map == null) {
+<             map = new HashMap(7);
+<             cInstanceCache.put(chrono, map);
+<         }
+<         DateTimeFormat dtf = (DateTimeFormat)map.get(locale);
+---
+>         DateTimeFormat dtf = (DateTimeFormat) cInstanceCache.get(locale);
+247,248c192,193
+<             dtf = new DateTimeFormat(chrono, locale);
+<             map.put(locale, dtf);
+---
+>             dtf = new DateTimeFormat(locale);
+>             cInstanceCache.put(locale, dtf);
+253a199
+>     
+506,507d451
+<     private final Chronology iChrono;
+<     
+521,522c465
+< 
+<     private DateTimeFormat(final Chronology chrono, final Locale locale) {
+---
+>     private DateTimeFormat(final Locale locale) {
+524d466
+<         iChrono = chrono;
+546c488
+<         DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder(iChrono, iLocale);
+---
+>         DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder(iLocale);
+702,707c644,645
+<         public Chronology getChronology() {
+<             return mPrinter.getChronology();
+<         }
+< 
+<         public int estimatePrintedLength() {
+<             return mPrinter.estimatePrintedLength();
+---
+>         public BoundDateTimePrinter bindPrinter(Chronology chrono) {
+>             return mPrinter.bindPrinter(chrono);
+735,737c673,674
+<         public void printTo(StringBuffer buf, long instant,
+<                             DateTimeZone zone, long instantLocal) {
+<             mPrinter.printTo(buf, instant, zone, instantLocal);
+---
+>         public void printTo(StringBuffer buf, long instant, Chronology chrono) {
+>             mPrinter.printTo(buf, instant, chrono);
+740,743c677,678
+<         public void printTo(Writer out, long instant,
+<                             DateTimeZone zone, long instantLocal)
+<             throws IOException {
+<             mPrinter.printTo(out, instant, zone, instantLocal);
+---
+>         public void printTo(Writer out, long instant, Chronology chrono) throws IOException {
+>             mPrinter.printTo(out, instant, chrono);
+766,767c701,702
+<         public String print(long instant, DateTimeZone zone, long instantLocal) {
+<             return mPrinter.print(instant, zone, instantLocal);
+---
+>         public String print(long instant, Chronology chrono) {
+>             return mPrinter.print(instant, chrono);
+778c713
+<         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+---
+>         public int parseInto(ReadWritableInstant instant, String text, int position) {
+782c717
+<         public int parseInto(ReadWritableInstant instant, String text, int position) {
+---
+>         public long parseMillis(String text) {
+786c721
+<         public long parseMillis(String text) {
+---
+>         public long parseMillis(String text, Chronology chrono) {
+793a729,732
+>         public long parseMillis(String text, long instant, Chronology chrono) {
+>             throw unsupported();
+>         }
+> 
+797a737,740
+>         public DateTime parseDateTime(String text, Chronology chrono) {
+>             throw unsupported();
+>         }
+> 
+805a749,752
+>         public MutableDateTime parseMutableDateTime(String text, Chronology chrono) {
+>             throw unsupported();
+>         }
+> 
+828,833c775,776
+<         public Chronology getChronology() {
+<             return mParser.getChronology();
+<         }
+< 
+<         public int estimatePrintedLength() {
+<             return 0;
+---
+>         public BoundDateTimePrinter bindPrinter(Chronology chrono) {
+>             throw unsupported();
+860,861c803
+<         public void printTo(StringBuffer buf, long instant,
+<                             DateTimeZone zone, long instantLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant, Chronology chrono) {
+865,866c807
+<         public void printTo(Writer out, long instant,
+<                             DateTimeZone zone, long instantLocal) {
+---
+>         public void printTo(Writer out, long instant, Chronology chrono) throws IOException {
+890c831
+<         public String print(long instant, DateTimeZone zone, long instantLocal) {
+---
+>         public String print(long instant, Chronology chrono) {
+898,905d838
+<         public int estimateParsedLength() {
+<             return mParser.estimateParsedLength();
+<         }
+< 
+<         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+<             return mParser.parseInto(bucket, text, position);
+<         }
+< 
+914,915c847,856
+<         public long parseMillis(String text, long instantLocal) {
+<             return mParser.parseMillis(text, instantLocal);
+---
+>         public long parseMillis(String text, Chronology chrono) {
+>             return mParser.parseMillis(text, chrono);
+>         }
+> 
+>         public long parseMillis(String text, long instant) {
+>             return mParser.parseMillis(text, instant);
+>         }
+> 
+>         public long parseMillis(String text, long instant, Chronology chrono) {
+>             return mParser.parseMillis(text, instant, chrono);
+921a863,866
+>         public DateTime parseDateTime(String text, Chronology chrono) {
+>             return mParser.parseDateTime(text, chrono);
+>         }
+> 
+930,931c875,879
+<         public MutableDateTime parseMutableDateTime(String text,
+<                                                     ReadableInstant instant) {
+---
+>         public MutableDateTime parseMutableDateTime(String text, Chronology chrono) {
+>             return mParser.parseMutableDateTime(text, chrono);
+>         }
+> 
+>         public MutableDateTime parseMutableDateTime(String text, ReadableInstant instant) {

@@ -1,0 +1,113 @@
+1a2,113
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math.linear;
+> 
+> import org.apache.commons.math.exception.DimensionMismatchException;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public abstract class RealLinearOperator {
+>     
+>     private final int rowDimension;
+>     
+>     private final int columnDimension;
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public RealLinearOperator(final int rowDimension, final int columnDimension) {
+>         this.columnDimension = columnDimension;
+>         this.rowDimension = rowDimension;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public final int getRowDimension() {
+>         return rowDimension;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public final int getColumnDimension() {
+>         return columnDimension;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public double[] operate(final double[] x) {
+>         if (x.length != getColumnDimension()) {
+>             throw new DimensionMismatchException(x.length, getColumnDimension());
+>         }
+>         final RealVector y = operate(new ArrayRealVector(x, false));
+>         if (y instanceof ArrayRealVector) {
+>             return ((ArrayRealVector) y).getDataRef();
+>         } else {
+>             return y.getData();
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public abstract RealVector operate(final RealVector x);
+> }

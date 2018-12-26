@@ -1,0 +1,51 @@
+19a20
+> import com.google.common.collect.ImmutableList;
+293a295
+> 
+297a300,324
+>     DependencyOptions depOptions = new DependencyOptions();
+>     depOptions.setDependencySorting(true);
+>     depOptions.setDependencyPruning(true);
+>     depOptions.setEntryPoints(entryPoints);
+>     return manageDependencies(depOptions, inputs);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public List<CompilerInput> manageDependencies(
+>       DependencyOptions depOptions,
+>       List<CompilerInput> inputs)
+>       throws CircularDependencyException, MissingProvideException {
+> 
+301,302c328,332
+<         Sets.newLinkedHashSet(sorter.getInputsWithoutProvides());
+<     for (String entryPoint : entryPoints) {
+---
+>         Sets.newLinkedHashSet(
+>             depOptions.shouldDropMoochers() ?
+>             ImmutableList.<CompilerInput>of() :
+>             sorter.getInputsWithoutProvides());
+>     for (String entryPoint : depOptions.getEntryPoints()) {
+307c337,338
+<     List<CompilerInput> absoluteOrder = sorter.getSortedDependenciesOf(inputs);
+---
+>     List<CompilerInput> absoluteOrder =
+>         sorter.getDependenciesOf(inputs, depOptions.shouldSortDependencies());
+328,329c359,361
+<           sorter.getSortedDependenciesOf(
+<               entryPointInputsPerModule.get(module));
+---
+>           sorter.getDependenciesOf(
+>               entryPointInputsPerModule.get(module),
+>               depOptions.shouldSortDependencies());

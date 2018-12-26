@@ -1,0 +1,40 @@
+18a19
+> import com.google.common.collect.Sets;
+25a27,28
+> import java.util.Set;
+> 
+72a76,79
+>   static final DiagnosticType DUPLICATE_OBJECT_KEY = DiagnosticType.error(
+>       "JSC_DUPLICATE_OBJECT_KEY",
+>       "object literals cannot contain duplicate keys in ES5 strict mode");
+> 
+178,183c185,206
+<     if (!noCajaChecks) {
+<       for (Node key = n.getFirstChild();
+<            key != null;
+<            key = key.getNext()) {
+<         if (key.getString().endsWith("__")) {
+<           t.report(key, ILLEGAL_NAME);
+---
+>     Set<String> getters = Sets.newHashSet();
+>     Set<String> setters = Sets.newHashSet();
+>     for (Node key = n.getFirstChild();
+>          key != null;
+>          key = key.getNext()) {
+>       if (!noCajaChecks && key.getString().endsWith("__")) {
+>         t.report(key, ILLEGAL_NAME);
+>       }
+>       if (key.getType() != Token.SET) {
+>         
+>         if (getters.contains(key.getString())) {
+>           t.report(key, DUPLICATE_OBJECT_KEY);
+>         } else {
+>           getters.add(key.getString());
+>         }
+>       }
+>       if (key.getType() != Token.GET) {
+>         
+>         if (setters.contains(key.getString())) {
+>           t.report(key, DUPLICATE_OBJECT_KEY);
+>         } else {
+>           setters.add(key.getString());

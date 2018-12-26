@@ -1,0 +1,139 @@
+23d22
+< import org.apache.commons.math3.analysis.differentiation.JacobianFunction;
+27a27,29
+> import org.apache.commons.math3.linear.ArrayRealVector;
+> import org.apache.commons.math3.linear.RealMatrix;
+> import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+30a33
+> import org.apache.commons.math3.linear.EigenDecomposition;
+56a60
+> 
+85a90,91
+>     
+>     private RealMatrix weightMatrixSqrt;
+127c133,136
+<         for (int i = 0; i < rows; ++i) {
+---
+>         final int nR = getTarget().length;
+>         final int nC = point.length;
+>         final double[][] jacobianData = new double[nR][nC];
+>         for (int i = 0; i < nR; ++i) {
+129c138
+<             for (int j = 0; j < point.length; ++j) {
+---
+>             for (int j = 0; j < nC; ++j) {
+131c140
+<                 weightedResidualJacobian[i][j] = dsValue[i].getPartialDerivative(orders);
+---
+>                 jacobianData[i][j] = dsValue[i].getPartialDerivative(orders);
+136,145c145,146
+<         final double[] residualsWeights = getWeightRef();
+< 
+<         for (int i = 0; i < rows; i++) {
+<             final double[] ji = weightedResidualJacobian[i];
+<             double wi = FastMath.sqrt(residualsWeights[i]);
+<             for (int j = 0; j < cols; ++j) {
+<                 
+<                 weightedResidualJacobian[i][j] = -ji[j]*wi;
+<             }
+<         }
+---
+>         weightedResidualJacobian
+>             = weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(jacobianData)).scalarMultiply(-1).getData();
+156,159c157,159
+<         objective = computeObjectiveValue(point);
+<         if (objective.length != rows) {
+<             throw new DimensionMismatchException(objective.length, rows);
+<         }
+---
+>         final double[] res = computeResidual(point);
+>         final ArrayRealVector residuals = new ArrayRealVector(res);
+>         final RealMatrix weight = getWeight();
+161,170c161,164
+<         final double[] targetValues = getTargetRef();
+<         final double[] residualsWeights = getWeightRef();
+< 
+<         cost = 0;
+<         for (int i = 0; i < rows; i++) {
+<             final double residual = targetValues[i] - objective[i];
+<             weightedResiduals[i]= residual*FastMath.sqrt(residualsWeights[i]);
+<             cost += residualsWeights[i] * residual * residual;
+<         }
+<         cost = FastMath.sqrt(cost);
+---
+>         
+>         cost = FastMath.sqrt(residuals.dotProduct(weight.operate(residuals)));
+>         
+>         weightedResiduals = weightMatrixSqrt.operate(residuals).toArray();
+230,240c224,225
+<         double[][] jTj = new double[cols][cols];
+<         for (int i = 0; i < cols; ++i) {
+<             for (int j = i; j < cols; ++j) {
+<                 double sum = 0;
+<                 for (int k = 0; k < rows; ++k) {
+<                     sum += weightedResidualJacobian[k][i] * weightedResidualJacobian[k][j];
+<                 }
+<                 jTj[i][j] = sum;
+<                 jTj[j][i] = sum;
+<             }
+<         }
+---
+>         final RealMatrix wrj = new Array2DRowRealMatrix(weightedResidualJacobian);
+>         final RealMatrix jTj = wrj.transpose().multiply(wrj);
+244c229
+<             = new QRDecomposition(MatrixUtils.createRealMatrix(jTj), threshold).getSolver();
+---
+>             = new QRDecomposition(jTj, threshold).getSolver();
+391a377,378
+> 
+>     @Deprecated
+408a396,398
+>         weightMatrixSqrt = squareRoot(getWeight());
+> 
+>         
+419a410,414
+>     }
+> 
+>     
+> 
+> 
+421,422d415
+<         weightedResidualJacobian = new double[rows][cols];
+<         this.weightedResiduals = new double[rows];
+424c417,450
+<         cost = Double.POSITIVE_INFINITY;
+---
+> 
+>     private RealMatrix squareRoot(RealMatrix m) {
+>         final EigenDecomposition dec = new EigenDecomposition(m);
+>         return dec.getSquareRoot();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private double[] computeResidual(double[] params) {
+>         if (params.length != getStartPoint().length) {
+>             throw new DimensionMismatchException(params.length,
+>                                                  getStartPoint().length);
+>         }
+> 
+>         objective = computeObjectiveValue(params);
+>         final double[] target = getTarget();
+> 
+>         final double[] residuals = new double[target.length];
+>         for (int i = 0; i < target.length; i++) {
+>             residuals[i] = target[i] - objective[i];
+>         }
+> 
+>         return residuals;

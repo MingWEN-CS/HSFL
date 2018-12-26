@@ -1,0 +1,52 @@
+114,121c114,122
+<     private void blacklistVarReferencesInTree(Node root, Scope scope) {
+<       for (Node c = root.getFirstChild(); c != null; c = c.getNext()) {
+<         blacklistVarReferencesInTree(c, scope);
+<       }
+< 
+<       if (root.getType() == Token.NAME) {
+<         staleVars.add(scope.getVar(root.getString()));
+<       }
+---
+>     private void blacklistVarReferencesInTree(Node root, final Scope scope) {
+>       NodeUtil.visitPreOrder(root, new NodeUtil.Visitor() {
+>         @Override
+>         public void visit(Node node) {
+>           if (node.getType() == Token.NAME) {
+>             staleVars.add(scope.getVar(node.getString()));
+>           }
+>         }
+>       }, NodeUtil.MATCH_NOT_FUNCTION);
+238c239
+<       Map<String, String> varmap = Maps.newHashMap();
+---
+>       Map<String, String> varmap = Maps.newLinkedHashMap();
+243a245
+>             Preconditions.checkState(val.getType() == Token.OBJECTLIT);
+260,266c262
+<           Preconditions.checkState(
+<             getprop.getType() == Token.GETPROP,
+<             "Unexpected reference type: " + Token.name(getprop.getType()));
+<           Preconditions.checkState(
+<             getprop.getFirstChild().getString().equals(v.getName()),
+<             "Unexpected variable name: " + getprop.getFirstChild().getString() +
+<             ", expecting: " + v.getName());
+---
+>           Preconditions.checkState(getprop.getType() == Token.GETPROP);
+308c304
+<       Set<String> all = Sets.newHashSet(varmap.keySet());
+---
+>       Set<String> all = Sets.newLinkedHashSet(varmap.keySet());
+391a388,389
+>         } else {
+>           blacklistVarReferencesInTree(val, v.scope);
+415,421c413
+<           Preconditions.checkState(
+<             getprop.getType() == Token.GETPROP,
+<             "Unexpected reference type: " + Token.name(getprop.getType()));
+<           Preconditions.checkState(
+<             getprop.getFirstChild().getString().equals(v.getName()),
+<             "Unexpected variable name: " + getprop.getFirstChild().getString() +
+<             ", expecting: " + v.getName());
+---
+>           Preconditions.checkState(getprop.getType() == Token.GETPROP);

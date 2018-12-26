@@ -1,0 +1,31 @@
+17a18,20
+> import java.io.IOException;
+> import java.io.ObjectInputStream;
+> import java.io.ObjectOutputStream;
+936c939,941
+<         private final DateMidnight iInstant;
+---
+>         private DateMidnight iInstant;
+>         
+>         private DateTimeField iField;
+938,939d942
+<         private final DateTimeField iField;
+< 
+949a953,969
+>         }
+> 
+>         
+> 
+> 
+>         private void writeObject(ObjectOutputStream oos) throws IOException {
+>             oos.writeObject(iInstant);
+>             oos.writeObject(iField.getType());
+>         }
+> 
+>         
+> 
+> 
+>         private void readObject(ObjectInputStream oos) throws IOException, ClassNotFoundException {
+>             iInstant = (DateMidnight) oos.readObject();
+>             DateTimeFieldType type = (DateTimeFieldType) oos.readObject();
+>             iField = type.getField(iInstant.getChronology());

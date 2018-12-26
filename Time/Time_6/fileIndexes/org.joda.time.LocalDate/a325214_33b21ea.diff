@@ -1,0 +1,200 @@
+115,117d114
+<     public static LocalDate nowDefaultZone() {
+<         return forInstant(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance());
+<     }
+119d115
+<     
+128,130d123
+<     public static LocalDate now(DateTimeZone zone) {
+<         return forInstant(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance(zone));
+<     }
+132d124
+<     
+134a127,136
+>     public static LocalDate fromCalendarFields(Calendar calendar) {
+>         if (calendar == null) {
+>             throw new IllegalArgumentException("The calendar must not be null");
+>         }
+>         return new LocalDate(
+>             calendar.get(Calendar.YEAR),
+>             calendar.get(Calendar.MONTH) + 1,
+>             calendar.get(Calendar.DAY_OF_MONTH)
+>         );
+>     }
+135a138
+>     
+141,143d143
+<     public static LocalDate now(Chronology chronology) {
+<         return forInstant(DateTimeUtils.currentTimeMillis(), chronology);
+<     }
+145,146d144
+<     
+<     
+154a153,162
+>     public static LocalDate fromDateFields(Date date) {
+>         if (date == null) {
+>             throw new IllegalArgumentException("The date must not be null");
+>         }
+>         return new LocalDate(
+>             date.getYear() + 1900,
+>             date.getMonth() + 1,
+>             date.getDate()
+>         );
+>     }
+155a164,165
+>     
+>     
+160a171,173
+>     public LocalDate() {
+>         this(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance());
+>     }
+161a175
+>     
+164,173d177
+<     public static LocalDate forFields(Calendar calendar) {
+<         if (calendar == null) {
+<             throw new IllegalArgumentException("The calendar must not be null");
+<         }
+<         return new LocalDate(
+<             calendar.get(Calendar.YEAR),
+<             calendar.get(Calendar.MONTH) + 1,
+<             calendar.get(Calendar.DAY_OF_MONTH)
+<         );
+<     }
+175d178
+<     
+180a184,186
+>     public LocalDate(DateTimeZone zone) {
+>         this(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance(zone));
+>     }
+181a188
+>     
+190,198c197,198
+<     public static LocalDate forFields(Date date) {
+<         if (date == null) {
+<             throw new IllegalArgumentException("The date must not be null");
+<         }
+<         return new LocalDate(
+<             date.getYear() + 1900,
+<             date.getMonth() + 1,
+<             date.getDate()
+<         );
+---
+>     public LocalDate(Chronology chronology) {
+>         this(DateTimeUtils.currentTimeMillis(), chronology);
+210,211c210,211
+<     public static LocalDate forInstantDefaultZone(long instant) {
+<         return forInstant(instant, ISOChronology.getInstance());
+---
+>     public LocalDate(long instant) {
+>         this(instant, ISOChronology.getInstance());
+224,225c224,225
+<     public static LocalDate forInstant(long instant, DateTimeZone zone) {
+<         return forInstant(instant, ISOChronology.getInstance(zone));
+---
+>     public LocalDate(long instant, DateTimeZone zone) {
+>         this(instant, ISOChronology.getInstance(zone));
+238c238
+<     public static LocalDate forInstant(long instant, Chronology chronology) {
+---
+>     public LocalDate(long instant, Chronology chronology) {
+239a240
+>         
+241c242,245
+<         return new LocalDate(localMillis, chronology.withUTC());
+---
+>         chronology = chronology.withUTC();
+>         chronology.dayOfMonth().roundFloor(localMillis);
+>         iLocalMillis = localMillis;
+>         iChronology = chronology;
+261,262c265,266
+<     public static LocalDate forInstant(Object instant) {
+<         return forInstant(instant, (Chronology) null);
+---
+>     public LocalDate(Object instant) {
+>         this(instant, (Chronology) null);
+281c285
+<     public static LocalDate forInstant(Object instant, DateTimeZone zone) {
+---
+>     public LocalDate(Object instant, DateTimeZone zone) {
+283,286c287,294
+<         Chronology chrono = converter.getChronology(instant, zone);
+<         long millis = converter.getInstantMillis(instant, chrono);
+<         chrono = DateTimeUtils.getChronology(chrono);
+<         return forInstant(millis, chrono);
+---
+>         Chronology chronology = converter.getChronology(instant, zone);
+>         long millis = converter.getInstantMillis(instant, chronology);
+>         
+>         long localMillis = chronology.getZone().getMillisKeepLocal(DateTimeZone.UTC, millis);
+>         chronology = chronology.withUTC();
+>         chronology.dayOfMonth().roundFloor(localMillis);
+>         iLocalMillis = localMillis;
+>         iChronology = chronology;
+304c312
+<     public static LocalDate forInstant(Object instant, Chronology chronology) {
+---
+>     public LocalDate(Object instant, Chronology chronology) {
+308,320c316,319
+<         return forInstant(millis, chrono);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     LocalDate(long localMillis, Chronology chronology) {
+<         super();
+<         chronology.dayOfMonth().roundFloor(localMillis);
+---
+>         
+>         long localMillis = chrono.getZone().getMillisKeepLocal(DateTimeZone.UTC, millis);
+>         chrono = chrono.withUTC();
+>         chrono.dayOfMonth().roundFloor(localMillis);
+322c321
+<         iChronology = chronology;
+---
+>         iChronology = chrono;
+518c517
+<     public DateTime toDateTimeAtMidnightDefaultZone() {
+---
+>     public DateTime toDateTimeAtMidnight() {
+550c549
+<     public DateTime toDateTimeAtCurrentTimeDefaultZone() {
+---
+>     public DateTime toDateTimeAtCurrentTime() {
+583c582
+<     public DateMidnight toDateMidnightDefaultZone() {
+---
+>     public DateMidnight toDateMidnight() {
+616c615
+<     public DateTime toDateTimeDefaultZone(LocalTime time) {
+---
+>     public DateTime toDateTime(LocalTime time) {
+658c657
+<     public Interval toIntervalDefaultZone() {
+---
+>     public Interval toInterval() {
+1686c1685
+<         public LocalDate withRoundedFloor() {
+---
+>         public LocalDate roundFloor() {
+1700c1699
+<         public LocalDate withRoundedCeiling() {
+---
+>         public LocalDate roundCeiling() {
+1710c1709
+<         public LocalDate withRoundedHalfFloor() {
+---
+>         public LocalDate roundHalfFloor() {
+1720c1719
+<         public LocalDate withRoundedHalfCeiling() {
+---
+>         public LocalDate roundHalfCeiling() {
+1731c1730
+<         public LocalDate withRoundedHalfEven() {
+---
+>         public LocalDate roundHalfEven() {

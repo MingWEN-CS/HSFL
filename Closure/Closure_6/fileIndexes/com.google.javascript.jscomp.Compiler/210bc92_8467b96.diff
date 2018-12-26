@@ -1,0 +1,92 @@
+308c308,310
+<   public void init(List<JSSourceFile> externs, List<JSSourceFile> inputs,
+---
+>   public <T1 extends SourceFile, T2 extends SourceFile> void init(
+>       List<T1> externs,
+>       List<T2> inputs,
+311c313
+<     for (JSSourceFile input : inputs) {
+---
+>     for (SourceFile input : inputs) {
+324c326
+<     initModules(Lists.<JSSourceFile>newArrayList(externs),
+---
+>     initModules(Lists.<SourceFile>newArrayList(externs),
+332,334c334,335
+<   public void initModules(
+<       List<JSSourceFile> externs, List<JSModule> modules,
+<       CompilerOptions options) {
+---
+>   public <T extends SourceFile> void initModules(
+>       List<T> externs, List<JSModule> modules, CompilerOptions options) {
+376,377c377,378
+<   private List<CompilerInput> makeCompilerInput(
+<       List<JSSourceFile> files, boolean isExtern) {
+---
+>   private <T extends SourceFile> List<CompilerInput> makeCompilerInput(
+>       List<T> files, boolean isExtern) {
+379c380
+<     for (JSSourceFile file : files) {
+---
+>     for (T file : files) {
+422c423
+<         module.add(JSSourceFile.fromCode(
+---
+>         module.add(SourceFile.fromCode(
+489,490c490,491
+<       JSSourceFile extern, JSSourceFile input, CompilerOptions options) {
+<      return compile(extern, new JSSourceFile[] { input }, options);
+---
+>       SourceFile extern, SourceFile input, CompilerOptions options) {
+>      return compile(Lists.newArrayList(extern), Lists.newArrayList(input), options);
+494,495c495,496
+<       JSSourceFile extern, JSSourceFile[] input, CompilerOptions options) {
+<      return compile(new JSSourceFile[] { extern }, input, options);
+---
+>       SourceFile extern, JSSourceFile[] input, CompilerOptions options) {
+>      return compile(Lists.newArrayList(extern), Lists.newArrayList(input), options);
+500c501,502
+<      return compile(new JSSourceFile[] { extern }, modules, options);
+---
+>      return compileModules(
+>          Lists.newArrayList(extern), Lists.newArrayList(modules), options);
+509,510c511,512
+<     return compile(Lists.<JSSourceFile>newArrayList(externs),
+<         Lists.<JSSourceFile>newArrayList(inputs),
+---
+>     return compile(Lists.<SourceFile>newArrayList(externs),
+>         Lists.<SourceFile>newArrayList(inputs),
+517,518c519,520
+<   public Result compile(List<JSSourceFile> externs,
+<       List<JSSourceFile> inputs, CompilerOptions options) {
+---
+>   public <T1 extends SourceFile, T2 extends SourceFile> Result compile(
+>       List<T1> externs, List<T2> inputs, CompilerOptions options) {
+541c543
+<     return compileModules(Lists.<JSSourceFile>newArrayList(externs),
+---
+>     return compileModules(Lists.<SourceFile>newArrayList(externs),
+549c551
+<   public Result compileModules(List<JSSourceFile> externs,
+---
+>   public <T extends SourceFile> Result compileModules(List<T> externs,
+1428c1430
+<   public Node parse(JSSourceFile file) {
+---
+>   public Node parse(SourceFile file) {
+1439c1441
+<         JSSourceFile.fromCode(" [synthetic:" + (++syntheticCodeId) + "] ", js));
+---
+>         SourceFile.fromCode(" [synthetic:" + (++syntheticCodeId) + "] ", js));
+1462c1464
+<     return parse(JSSourceFile.fromCode(fileName, js));
+---
+>     return parse(SourceFile.fromCode(fileName, js));
+1469c1471
+<         JSSourceFile.fromCode(" [testcode] ", js));
+---
+>         SourceFile.fromCode(" [testcode] ", js));
+2307c2309
+<         JSSourceFile.fromCode(inputId.getIdName(), ""));
+---
+>         SourceFile.fromCode(inputId.getIdName(), ""));

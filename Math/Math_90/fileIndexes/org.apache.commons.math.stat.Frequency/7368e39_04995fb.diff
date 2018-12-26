@@ -1,0 +1,328 @@
+57a58,62
+> import java.util.Comparator;
+> import java.text.NumberFormat;
+> 
+> import org.apache.commons.collections.SortedBag;
+> import org.apache.commons.collections.TreeBag;
+59,60d63
+< import org.apache.commons.collections.Bag;
+< import org.apache.commons.collections.HashBag;
+69,72d71
+< public class Frequency implements Serializable{
+<     
+<     
+<     private String name;
+73a73,75
+> 
+> public class Frequency implements Serializable {
+>     
+75c77
+<     private Bag freqTable = new HashBag();
+---
+>     private SortedBag freqTable = null;
+81c83
+<         this(null);
+---
+>         freqTable = new TreeBag();
+83c85
+< 
+---
+>     
+88,90c90,91
+<     public Frequency(String name) {
+<         super();
+<         setName(name);
+---
+>     public Frequency(Comparator comparator) {
+>     	freqTable = new TreeBag(comparator);
+98a100
+>     	NumberFormat nf = NumberFormat.getPercentInstance();
+100c102
+<         outBuffer.append("Value \t Frequency \n");
+---
+>         outBuffer.append("Value \t Freq. \t Pct. \t Cum Pct. \n");
+106c108,112
+<             outBuffer.append(freqTable.getCount(value));
+---
+>             outBuffer.append(getCount(value));
+>             outBuffer.append('\t');
+>             outBuffer.append(nf.format(getPct(value)));
+>             outBuffer.append('\t');
+>             outBuffer.append(nf.format(getCumPct(value)));
+116,117c122,128
+<     public void addValue(String v) {
+<         freqTable.add(v);
+---
+>     public void addValue(Object v) {
+>     	try {
+>     		freqTable.add(v);
+>     	} catch (ClassCastException ex) {	
+>     		
+>     		throw new IllegalArgumentException("Value not comparable to existing values.");
+>     	}
+125c136
+<         addValue((new Integer(v)).toString());
+---
+>         addValue(new Long(v));
+133c144
+<         addValue((new Long(v)).toString());
+---
+>         addValue(new Long(v));
+134a146,149
+>     
+>     
+> 
+> 
+135a151,159
+>     public void addValue(char v) {
+>     	addValue(new Character(v));
+>     }
+>     
+>     
+>     public void clear() {
+>     	freqTable.clear();
+>     }
+>     
+139a164,170
+>     public Iterator valuesIterator() {
+>     	return freqTable.uniqueSet().iterator();
+>     }
+>     
+>     
+>     
+>     
+141,142c172,175
+<     public long getCount(String v) {
+<         return freqTable.getCount(v);
+---
+> 
+> 
+>     public long getSumFreq() {
+>     	return freqTable.size();
+149,150c182,190
+<     public long getSumFreq() {
+<         return freqTable.size();
+---
+> 
+>     public long getCount(Object v) {
+>     	long result = 0;
+>     	try { 
+>     		result = freqTable.getCount(v);
+>     	} catch (Exception ex) {
+>     		
+>     	}
+>     	return result;
+158,159c198,205
+<     public double getPct(String v) {
+<         return (double) getCount(v) / (double) getSumFreq();        
+---
+>     public long getCount(int v) {
+>     	long result = 0;
+>     	try { 
+>     		result = freqTable.getCount(new Long(v));
+>     	} catch (Exception ex) {
+>     		
+>     	}
+>     	return result;
+160a207,210
+>     
+>     
+> 
+> 
+161a212,221
+> 
+>     public long getCount(long v) {
+>     	long result = 0;
+>     	try { 
+>     		result = freqTable.getCount(new Long(v));
+>     	} catch (Exception ex) {
+>     		
+>     	}
+>     	return result;
+>     }
+163,164c223,235
+<     public void clear() {
+<         freqTable.clear();
+---
+>     
+> 
+> 
+> 
+> 
+>     public long getCount(char v) {
+>     	long result = 0;
+>     	try { 
+>     		result = freqTable.getCount(new Character(v));
+>     	} catch (Exception ex) {
+>     		
+>     	}
+>     	return result;
+165a237,241
+>     
+>     
+> 
+>     
+> 
+166a243,247
+> 
+> 
+>     public double getPct(Object v) {
+>     	return (double) getCount(v) / (double) getSumFreq();        
+>     }
+167a249,250
+>     
+> 
+170,171c253,255
+<     public String getName() {
+<         return name;
+---
+> 
+>     public double getPct(int v) {
+>         return getPct(new Long(v));       
+172a257,259
+>     
+>     
+> 
+173a261,265
+> 
+> 
+>     public double getPct(long v) {
+>     	return getPct(new Long(v));         
+>     }
+174a267,268
+>     
+> 
+177,178c271,273
+<     public void setName(java.lang.String name) {
+<         this.name = name;
+---
+> 
+>     public double getPct(char v) {
+>     	return getPct(new Character(v));         
+179a275,282
+>     
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+180a284,400
+> 
+> 
+>     public long getCumFreq(Object v) {
+>     	long result = 0;
+>     	try {
+>     		result = freqTable.getCount(v);
+>     	} catch (ClassCastException ex) {
+>     		return result;   
+>     	}
+>     	Comparable c = (Comparable) v;
+>     	if (c.compareTo(freqTable.first()) < 0) {
+>     		return 0;	
+>     	}
+>     	if (c.compareTo(freqTable.last()) > 0) {
+>     		return getSumFreq();	
+>     	}
+>     	Iterator values = valuesIterator();
+>     	while (values.hasNext()) {
+>     		Object nextValue = values.next();
+>     		if (c.compareTo(nextValue) > 0) {
+>     			result += getCount(nextValue);
+>     		} else {
+>     			return result;
+>     		}
+>     	}
+>     	return result;
+>     }
+>     
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getCumFreq(int v) {
+>     	return getCumFreq(new Long(v));       
+>     }
+>     
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getCumFreq(long v) {
+>     	return getCumFreq(new Long(v));         
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getCumFreq(char v) {
+>     	return getCumFreq(new Character(v));         
+>     }
+>     
+>     
+>     
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getCumPct(Object v) {
+>     	return (double) getCumFreq(v) / (double) getSumFreq();        
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getCumPct(int v) {
+>     	return getCumPct(new Long(v));       
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getCumPct(long v) {
+>     	return getCumPct(new Long(v));         
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getCumPct(char v) {
+>     	return getCumPct(new Character(v));         
+>     }

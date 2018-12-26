@@ -1,0 +1,274 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.ode;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
+import org.apache.commons.math.MaxEvaluationsExceededException;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+import org.apache.commons.math.ode.events.CombinedEventsManager;
+import org.apache.commons.math.ode.events.EventHandler;
+import org.apache.commons.math.ode.events.EventState;
+import org.apache.commons.math.ode.sampling.StepHandler;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+public abstract class AbstractIntegrator implements FirstOrderIntegrator {
+
+    
+    protected Collection<StepHandler> stepHandlers;
+
+    
+    protected double stepStart;
+
+    
+    protected double stepSize;
+
+    
+    protected CombinedEventsManager eventsHandlersManager;
+
+    
+    private final String name;
+
+    
+    private int maxEvaluations;
+
+    
+    private int evaluations;
+
+    
+    private transient FirstOrderDifferentialEquations equations;
+
+    
+
+
+    public AbstractIntegrator(final String name) {
+        this.name = name;
+        stepHandlers = new ArrayList<StepHandler>();
+        stepStart = Double.NaN;
+        stepSize  = Double.NaN;
+        eventsHandlersManager = new CombinedEventsManager();
+        setMaxEvaluations(-1);
+        resetEvaluations();
+    }
+
+    
+
+    protected AbstractIntegrator() {
+        this(null);
+    }
+
+    
+    public String getName() {
+        return name;
+    }
+
+    
+    public void addStepHandler(final StepHandler handler) {
+        stepHandlers.add(handler);
+    }
+
+    
+    public Collection<StepHandler> getStepHandlers() {
+        return Collections.unmodifiableCollection(stepHandlers);
+    }
+
+    
+    public void clearStepHandlers() {
+        stepHandlers.clear();
+    }
+
+    
+    public void addEventHandler(final EventHandler function,
+                                final double maxCheckInterval,
+                                final double convergence,
+                                final int maxIterationCount) {
+        eventsHandlersManager.addEventHandler(function, maxCheckInterval,
+                                              convergence, maxIterationCount);
+    }
+
+    
+    public Collection<EventHandler> getEventHandlers() {
+        return eventsHandlersManager.getEventsHandlers();
+    }
+
+    
+    public void clearEventHandlers() {
+        eventsHandlersManager.clearEventsHandlers();
+    }
+
+    
+
+
+    protected boolean requiresDenseOutput() {
+        for (StepHandler handler : stepHandlers) {
+            if (handler.requiresDenseOutput()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+    public double getCurrentStepStart() {
+        return stepStart;
+    }
+
+    
+    public double getCurrentSignedStepsize() {
+        return stepSize;
+    }
+
+    
+    public void setMaxEvaluations(int maxEvaluations) {
+        this.maxEvaluations = (maxEvaluations < 0) ? Integer.MAX_VALUE : maxEvaluations;
+    }
+
+    
+    public int getMaxEvaluations() {
+        return maxEvaluations;
+    }
+
+    
+    public int getEvaluations() {
+        return evaluations;
+    }
+
+    
+
+    protected void resetEvaluations() {
+        evaluations = 0;
+    }
+
+    
+
+
+
+    protected void setEquations(final FirstOrderDifferentialEquations equations) {
+        this.equations = equations;
+    }
+
+    
+
+
+
+
+
+
+    public void computeDerivatives(final double t, final double[] y, final double[] yDot)
+        throws DerivativeException {
+        if (++evaluations > maxEvaluations) {
+            throw new DerivativeException(new MaxEvaluationsExceededException(maxEvaluations));
+        }
+        equations.computeDerivatives(t, y, yDot);
+    }
+
+    
+
+
+
+
+
+
+
+    protected void sanityChecks(final FirstOrderDifferentialEquations ode,
+                                final double t0, final double[] y0,
+                                final double t, final double[] y)
+        throws IntegratorException {
+
+        if (ode.getDimension() != y0.length) {
+            throw new IntegratorException(
+                    LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y0.length);
+        }
+
+        if (ode.getDimension() != y.length) {
+            throw new IntegratorException(
+                    LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y.length);
+        }
+
+        if (FastMath.abs(t - t0) <= 1.0e-12 * FastMath.max(FastMath.abs(t0), FastMath.abs(t))) {
+            throw new IntegratorException(
+                    LocalizedFormats.TOO_SMALL_INTEGRATION_INTERVAL,
+                    FastMath.abs(t - t0));
+        }
+
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected CombinedEventsManager addEndTimeChecker(final double startTime,
+                                                      final double endTime,
+                                                      final CombinedEventsManager manager) {
+        CombinedEventsManager newManager = new CombinedEventsManager();
+        for (final EventState state : manager.getEventsStates()) {
+            newManager.addEventHandler(state.getEventHandler(),
+                                       state.getMaxCheckInterval(),
+                                       state.getConvergence(),
+                                       state.getMaxIterationCount());
+        }
+        newManager.addEventHandler(new EndTimeChecker(endTime),
+                                   Double.POSITIVE_INFINITY,
+                                   FastMath.ulp(FastMath.max(FastMath.abs(startTime), FastMath.abs(endTime))),
+                                   100);
+        return newManager;
+    }
+
+    
+    private static class EndTimeChecker implements EventHandler {
+
+        
+        private final double endTime;
+
+        
+
+
+        public EndTimeChecker(final double endTime) {
+            this.endTime = endTime;
+        }
+
+        
+        public int eventOccurred(double t, double[] y, boolean increasing) {
+            return STOP;
+        }
+
+        
+        public double g(double t, double[] y) {
+            return t - endTime;
+        }
+
+        
+        public void resetState(double t, double[] y) {
+        }
+
+    }
+
+}

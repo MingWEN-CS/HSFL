@@ -1,0 +1,196 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.distribution;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.analysis.UnivariateFunction;
+import org.apache.commons.math.analysis.solvers.UnivariateRealSolverUtils;
+import org.apache.commons.math.exception.MathInternalError;
+import org.apache.commons.math.exception.NotStrictlyPositiveException;
+import org.apache.commons.math.exception.NumberIsTooLargeException;
+import org.apache.commons.math.exception.OutOfRangeException;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+import org.apache.commons.math.random.RandomDataImpl;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+
+
+
+public abstract class AbstractRealDistribution
+implements RealDistribution, Serializable {
+    
+    private static final long serialVersionUID = -38038050983108802L;
+
+    
+    public static final double SOLVER_DEFAULT_ABSOLUTE_ACCURACY = 1e-6;
+
+    
+    private double solverAbsoluteAccuracy = SOLVER_DEFAULT_ABSOLUTE_ACCURACY;
+
+    
+    protected final RandomDataImpl randomData = new RandomDataImpl();
+
+    
+    protected AbstractRealDistribution() {}
+
+    
+
+
+
+
+
+    public double cumulativeProbability(double x0, double x1) throws NumberIsTooLargeException {
+        if (x0 > x1) {
+            throw new NumberIsTooLargeException(LocalizedFormats.LOWER_ENDPOINT_ABOVE_UPPER_ENDPOINT,
+                    x0, x1, true);
+        }
+        return cumulativeProbability(x1) - cumulativeProbability(x0);
+    }
+
+    
+    public double inverseCumulativeProbability(final double p) throws OutOfRangeException {
+
+        if (p < 0.0 || p > 1.0) {
+            throw new OutOfRangeException(p, 0, 1);
+        }
+
+        
+        
+        UnivariateFunction rootFindingFunction =
+            new UnivariateFunction() {
+            public double value(double x) {
+                return cumulativeProbability(x) - p;
+            }
+        };
+
+        
+        double lowerBound = getDomainLowerBound(p);
+        double upperBound = getDomainUpperBound(p);
+        double[] bracket = null;
+        try {
+            bracket = UnivariateRealSolverUtils.bracket(
+                    rootFindingFunction, getInitialDomain(p),
+                    lowerBound, upperBound);
+        } catch (NumberIsTooLargeException ex) {
+            
+
+
+
+
+            if (FastMath.abs(rootFindingFunction.value(lowerBound)) < getSolverAbsoluteAccuracy()) {
+                return lowerBound;
+            }
+            if (FastMath.abs(rootFindingFunction.value(upperBound)) < getSolverAbsoluteAccuracy()) {
+                return upperBound;
+            }
+            
+            throw new MathInternalError(ex);
+        }
+
+        
+        double root = UnivariateRealSolverUtils.solve(rootFindingFunction,
+                
+                
+                bracket[0],bracket[1], getSolverAbsoluteAccuracy());
+        return root;
+    }
+
+    
+
+
+
+
+
+
+
+
+    protected abstract double getInitialDomain(double p);
+
+    
+
+
+
+
+
+
+
+
+    protected abstract double getDomainLowerBound(double p);
+
+    
+
+
+
+
+
+
+
+
+    protected abstract double getDomainUpperBound(double p);
+
+    
+
+
+
+
+
+
+    protected double getSolverAbsoluteAccuracy() {
+        return solverAbsoluteAccuracy;
+    }
+
+    
+    public void reseedRandomGenerator(long seed) {
+        randomData.reSeed(seed);
+    }
+
+    
+
+
+
+
+
+
+
+    public double sample() {
+        return randomData.nextInversionDeviate(this);
+    }
+
+    
+
+
+
+
+
+    public double[] sample(int sampleSize) {
+        if (sampleSize <= 0) {
+            throw new NotStrictlyPositiveException(LocalizedFormats.NUMBER_OF_SAMPLES,
+                    sampleSize);
+        }
+        double[] out = new double[sampleSize];
+        for (int i = 0; i < sampleSize; i++) {
+            out[i] = sample();
+        }
+        return out;
+    }
+}

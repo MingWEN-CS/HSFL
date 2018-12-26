@@ -1,0 +1,161 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.distribution;
+
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.analysis.UnivariateRealSolverUtils;
+
+
+
+
+
+
+
+
+public abstract class AbstractContinuousDistribution
+    implements ContinuousDistribution {
+        
+    
+
+
+    protected AbstractContinuousDistribution() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+
+
+    public double cummulativeProbability(double x0, double x1) {
+        return cummulativeProbability(x1) - cummulativeProbability(x0);
+    }
+    
+    
+
+
+
+
+
+
+    public double inverseCummulativeProbability(final double p) {
+        if (p < 0.0 || p > 1.0) {
+            throw new IllegalArgumentException(
+                "p must be between 0.0 and 1.0, inclusive.");
+        }
+        
+        
+        
+        UnivariateRealFunction rootFindingFunction =
+            new UnivariateRealFunction() {
+                
+            public double value(double x) throws MathException {
+                return cummulativeProbability(x) - p;
+            }
+        };
+        
+        try {
+            
+            double[] bracket = UnivariateRealSolverUtils.bracket(rootFindingFunction,
+                getInitialDomain(p), getDomainLowerBound(p),
+                getDomainUpperBound(p));
+            
+            
+            double root = UnivariateRealSolverUtils.solve(
+                rootFindingFunction, bracket[0], bracket[1]);
+        
+            return root;
+        } catch (MathException ex) {
+            
+            return Double.NaN;
+        }
+    }
+    
+    
+
+
+
+
+
+
+
+    protected abstract double getInitialDomain(double p);
+    
+    
+
+
+
+
+
+
+
+
+    protected abstract double getDomainLowerBound(double p);
+    
+    
+
+
+
+
+
+
+
+
+    protected abstract double getDomainUpperBound(double p);
+}

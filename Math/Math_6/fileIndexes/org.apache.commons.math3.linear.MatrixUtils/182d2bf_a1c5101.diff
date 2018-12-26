@@ -1,0 +1,92 @@
+26a27,28
+> import org.apache.commons.math.fraction.BigFraction;
+> import org.apache.commons.math.fraction.Fraction;
+627a630,717
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public static RealMatrix fractionMatrixToRealMatrix(final FieldMatrix<Fraction> m) {
+>         final FractionMatrixConverter converter = new FractionMatrixConverter();
+>         m.walkInOptimizedOrder(converter);
+>         return converter.getConvertedMatrix();
+>     }
+> 
+>     
+>     private static class FractionMatrixConverter extends DefaultFieldMatrixPreservingVisitor<Fraction> {
+> 
+>         
+>         private double[][] data;
+> 
+>         
+>         public FractionMatrixConverter() {
+>             super(Fraction.ZERO);
+>         }
+> 
+>         
+>         @Override
+>         public void start(int rows, int columns,
+>                           int startRow, int endRow, int startColumn, int endColumn) {
+>             data = new double[rows][columns];
+>         }
+> 
+>         
+>         @Override
+>         public void visit(int row, int column, Fraction value) {
+>             data[row][column] = value.doubleValue();
+>         }
+> 
+>         
+> 
+> 
+>         RealMatrix getConvertedMatrix() {
+>             return new RealMatrixImpl(data, false);
+>         }
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public static RealMatrix bigFractionMatrixToRealMatrix(final FieldMatrix<BigFraction> m) {
+>         final BigFractionMatrixConverter converter = new BigFractionMatrixConverter();
+>         m.walkInOptimizedOrder(converter);
+>         return converter.getConvertedMatrix();
+>     }
+> 
+>     
+>     private static class BigFractionMatrixConverter extends DefaultFieldMatrixPreservingVisitor<BigFraction> {
+> 
+>         
+>         private double[][] data;
+> 
+>         
+>         public BigFractionMatrixConverter() {
+>             super(BigFraction.ZERO);
+>         }
+> 
+>         
+>         @Override
+>         public void start(int rows, int columns,
+>                           int startRow, int endRow, int startColumn, int endColumn) {
+>             data = new double[rows][columns];
+>         }
+> 
+>         
+>         @Override
+>         public void visit(int row, int column, BigFraction value) {
+>             data[row][column] = value.doubleValue();
+>         }
+> 
+>         
+> 
+> 
+>         RealMatrix getConvertedMatrix() {
+>             return new RealMatrixImpl(data, false);
+>         }
+> 

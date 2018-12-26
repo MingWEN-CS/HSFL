@@ -1,0 +1,84 @@
+35a36
+> import org.apache.commons.math.util.FastMath;
+68a70,72
+>     private static final int DEFAULT_ULPS = 10;
+> 
+>     
+98a103,105
+>     private final int maxUlps;
+> 
+>     
+110a118,135
+>         this(f, constraints, goalType, restrictToNonNegative, epsilon, DEFAULT_ULPS);
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     SimplexTableau(final LinearObjectiveFunction f,
+>                    final Collection<LinearConstraint> constraints,
+>                    final GoalType goalType, final boolean restrictToNonNegative,
+>                    final double epsilon,
+>                    final int maxUlps) {
+114a140
+>         this.maxUlps                = maxUlps;
+175c201
+<                 getInvertedCoeffiecientSum(objectiveCoefficients));
+---
+>                 getInvertedCoefficientSum(objectiveCoefficients));
+191c217
+<                     getInvertedCoeffiecientSum(constraint.getCoefficients()));
+---
+>                     getInvertedCoefficientSum(constraint.getCoefficients()));
+272c298
+<     protected static double getInvertedCoeffiecientSum(final RealVector coefficients) {
+---
+>     protected static double getInvertedCoefficientSum(final RealVector coefficients) {
+288c314,315
+<             if (MathUtils.equals(getEntry(i, col), 1.0, epsilon) && (row == null)) {
+---
+>             final double entry = getEntry(i, col);
+>             if (MathUtils.equals(entry, 1d, getEpsilon(entry)) && (row == null)) {
+290c317
+<             } else if (!MathUtils.equals(getEntry(i, col), 0.0, epsilon)) {
+---
+>             } else if (!MathUtils.equals(entry, 0d, getEpsilon(entry))) {
+311,313c338,341
+<           if (MathUtils.compareTo(tableau.getEntry(0, i), 0, epsilon) > 0) {
+<             columnsToDrop.add(i);
+<           }
+---
+>             final double entry = tableau.getEntry(0, i);
+>             if (MathUtils.compareTo(entry, 0d, getEpsilon(entry)) > 0) {
+>                 columnsToDrop.add(i);
+>             }
+356c384,385
+<             if (MathUtils.compareTo(tableau.getEntry(0, i), 0, epsilon) < 0) {
+---
+>             final double entry = tableau.getEntry(0, i);
+>             if (MathUtils.compareTo(entry, 0d, epsilon) < 0) {
+385c414
+<               coefficients[i] = 0;
+---
+>               coefficients[i] = 0 - (restrictToNonNegative ? 0 : mostNegative);
+547a577
+>                  (maxUlps                == rhs.maxUlps) &&
+562a593
+>                maxUlps ^
+587a619,623
+>     
+>     
+> 
+> 
+> 
+588a625,627
+>     private double getEpsilon(double value) {
+>         return FastMath.ulp(value) * (double) maxUlps;
+>     }    

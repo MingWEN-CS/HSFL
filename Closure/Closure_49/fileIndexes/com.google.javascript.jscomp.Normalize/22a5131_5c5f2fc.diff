@@ -1,0 +1,27 @@
+275,276c275,278
+<             n.addChildBefore(new Node(Token.EMPTY), expr);
+<             n.addChildAfter(new Node(Token.EMPTY), expr);
+---
+>             Node empty = new Node(Token.EMPTY);
+>             empty.copyInformationFrom(n);
+>             n.addChildBefore(empty, expr);
+>             n.addChildAfter(empty.cloneNode(), expr);
+382a385
+>           block.copyInformationFrom(last);
+416c419,421
+<               c.replaceChild(init, new Node(Token.EMPTY));
+---
+>               Node empty = new Node(Token.EMPTY);
+>               empty.copyInformationFrom(c);
+>               c.replaceChild(init, empty);
+584c589,590
+<         gramps.replaceChild(parent, new Node(Token.EXPR_RESULT, replacement));
+---
+>         replacement.copyInformationFrom(parent);
+>         gramps.replaceChild(parent, NodeUtil.newExpr(replacement));
+597c603,605
+<           gramps.replaceChild(parent, new Node(Token.EMPTY));
+---
+>           
+>           
+>           throw new IllegalStateException("Unexpected LABEL");

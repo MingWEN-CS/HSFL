@@ -1,0 +1,32 @@
+67c67
+< class DevirtualizePrototypeMethods implements CompilerPass {
+---
+> class DevirtualizePrototypeMethods implements SpecializationAwareCompilerPass {
+68a69
+>   private SpecializeModule.SpecializationState specializationState;
+73a75,78
+>   public void enableSpecialization(SpecializeModule.SpecializationState state) {
+>     this.specializationState = state;
+>   }
+> 
+237a243,251
+> 
+>       
+>       
+>       if (specializationState != null &&
+>           !specializationState.canFixupSpecializedFunctionContainingNode(
+>               nameNode)) {
+>         return false;
+>       }
+> 
+284a299,302
+> 
+>       if (specializationState != null) {
+>         specializationState.reportSpecializedFunctionContainingNode(parent);
+>       }
+305a324,328
+> 
+>     if (specializationState != null) {
+>       specializationState.reportRemovedFunction(functionNode);
+>     }
+> 

@@ -1,0 +1,863 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.complex;
+
+import java.io.Serializable;
+import org.apache.commons.math.util.MathUtils;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Complex implements Serializable  {
+
+    
+    private static final long serialVersionUID = -6530173849413811929L;
+    
+        
+    public static final Complex I = new Complex(0.0, 1.0);
+    
+    
+    public static final Complex NaN = new Complex(Double.NaN, Double.NaN);
+
+        
+    public static final Complex ONE = new Complex(1.0, 0.0);
+    
+        
+    public static final Complex ZERO = new Complex(0.0, 0.0);
+    
+    
+    protected double imaginary;
+    
+    
+    protected double real;
+    
+    
+
+
+
+
+
+    public Complex(double real, double imaginary) {
+        super();
+        this.real = real;
+        this.imaginary = imaginary;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public double abs() {
+        if (isNaN()) {
+            return Double.NaN;
+        }
+        
+        if (isInfinite()) {
+            return Double.POSITIVE_INFINITY;
+        }
+        
+        if (Math.abs(real) < Math.abs(imaginary)) {
+            if (imaginary == 0.0) {
+                return Math.abs(real);
+            }
+            double q = real / imaginary;
+            return (Math.abs(imaginary) * Math.sqrt(1 + q*q));
+        } else {
+            if (real == 0.0) {
+                return Math.abs(imaginary);
+            }
+            double q = imaginary / real;
+            return (Math.abs(real) * Math.sqrt(1 + q*q));
+        }
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex add(Complex rhs) {   
+        return createComplex(real + rhs.getReal(),
+            imaginary + rhs.getImaginary());
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex conjugate() {
+        if (isNaN()) {
+            return NaN;
+        }   
+        return createComplex(real, -imaginary);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex divide(Complex rhs) {
+        if (isNaN() || rhs.isNaN()) {
+            return NaN;
+        }
+
+        double c = rhs.getReal();
+        double d = rhs.getImaginary();
+        if (c == 0.0 && d == 0.0) {
+            return NaN;
+        }
+        
+        if (rhs.isInfinite() && !isInfinite()) {
+            return ZERO;
+        }
+
+        if (Math.abs(c) < Math.abs(d)) {
+            if (d == 0.0) {
+                return createComplex(real/c, imaginary/c);
+            }
+            double q = c / d;
+            double denominator = c * q + d;
+            return createComplex((real * q + imaginary) / denominator,
+                (imaginary * q - real) / denominator);
+        } else {
+            if (c == 0.0) {
+                return createComplex(imaginary/d, -real/c);
+            }
+            double q = d / c;
+            double denominator = d * q + c;
+            return createComplex((imaginary * q + real) / denominator,
+                (imaginary - real * q) / denominator);
+        }
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public boolean equals(Object other) {
+        boolean ret;
+        
+        if (this == other) { 
+            ret = true;
+        } else if (other == null) {
+            ret = false;
+        } else  {
+            try {
+                Complex rhs = (Complex)other;
+                if (rhs.isNaN()) {
+                    ret = this.isNaN();
+                } else {
+                ret = (Double.doubleToRawLongBits(real) ==
+                        Double.doubleToRawLongBits(rhs.getReal())) &&
+                    (Double.doubleToRawLongBits(imaginary) ==
+                        Double.doubleToRawLongBits(rhs.getImaginary())); 
+                }
+            } catch (ClassCastException ex) {
+                
+                ret = false;
+            }
+        }
+      
+        return ret;
+    }
+    
+    
+
+
+
+
+
+
+    public int hashCode() {
+        if (isNaN()) {
+            return 7;
+        }
+        return 37 * (17 * MathUtils.hash(imaginary) + 
+            MathUtils.hash(real));
+    }
+
+    
+
+
+
+
+    public double getImaginary() {
+        return imaginary;
+    }
+
+    
+
+
+
+
+    public double getReal() {
+        return real;
+    }
+    
+    
+
+
+
+
+
+
+    public boolean isNaN() {
+        return Double.isNaN(real) || Double.isNaN(imaginary);        
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public boolean isInfinite() {
+        return !isNaN() && 
+        (Double.isInfinite(real) || Double.isInfinite(imaginary));        
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex multiply(Complex rhs) {
+        if (isNaN() || rhs.isNaN()) {
+            return NaN;
+        }
+        return createComplex(real * rhs.real - imaginary * rhs.imaginary,
+                real * rhs.imaginary + imaginary * rhs.real);
+    }
+    
+    
+
+
+
+
+
+
+
+    public Complex negate() {
+        if (isNaN()) {
+            return NaN;
+        }
+        
+        return createComplex(-real, -imaginary);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex subtract(Complex rhs) {
+        if (isNaN() || rhs.isNaN()) {
+            return NaN;
+        }
+        
+        return createComplex(real - rhs.getReal(),
+            imaginary - rhs.getImaginary());
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex acos() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+
+        return this.add(this.sqrt1z().multiply(Complex.I)).log()
+              .multiply(Complex.I.negate());
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex asin() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+
+        return sqrt1z().add(this.multiply(Complex.I)).log()
+              .multiply(Complex.I.negate());
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex atan() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        return this.add(Complex.I).divide(Complex.I.subtract(this)).log()
+            .multiply(Complex.I.divide(createComplex(2.0, 0.0)));
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex cos() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        return createComplex(Math.cos(real) * MathUtils.cosh(imaginary),
+            -Math.sin(real) * MathUtils.sinh(imaginary));
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex cosh() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        return createComplex(MathUtils.cosh(real) * Math.cos(imaginary),
+            MathUtils.sinh(real) * Math.sin(imaginary));
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex exp() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        double expReal = Math.exp(real);
+        return createComplex(expReal *  Math.cos(imaginary), expReal * Math.sin(imaginary));
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex log() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+
+        return createComplex(Math.log(abs()),
+            Math.atan2(imaginary, real));        
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex pow(Complex x) {
+        if (x == null) {
+            throw new NullPointerException();
+        }
+        return this.log().multiply(x).exp();
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex sin() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        return createComplex(Math.sin(real) * MathUtils.cosh(imaginary),
+            Math.cos(real) * MathUtils.sinh(imaginary));
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex sinh() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        return createComplex(MathUtils.sinh(real) * Math.cos(imaginary),
+            MathUtils.cosh(real) * Math.sin(imaginary));
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex sqrt() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        if (real == 0.0 && imaginary == 0.0) {
+            return createComplex(0.0, 0.0);
+        }
+        
+        double t = Math.sqrt((Math.abs(real) + abs()) / 2.0);
+        if (real >= 0.0) {
+            return createComplex(t, imaginary / (2.0 * t));
+        } else {
+            return createComplex(Math.abs(imaginary) / (2.0 * t),
+                MathUtils.indicator(imaginary) * t);
+        }
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex sqrt1z() {
+        return createComplex(1.0, 0.0).subtract(this.multiply(this)).sqrt();
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex tan() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        double real2 = 2.0 * real;
+        double imaginary2 = 2.0 * imaginary;
+        double d = Math.cos(real2) + MathUtils.cosh(imaginary2);
+        
+        return createComplex(Math.sin(real2) / d, MathUtils.sinh(imaginary2) / d);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Complex tanh() {
+        if (isNaN()) {
+            return Complex.NaN;
+        }
+        
+        double real2 = 2.0 * real;
+        double imaginary2 = 2.0 * imaginary;
+        double d = MathUtils.cosh(real2) + Math.cos(imaginary2);
+        
+        return createComplex(MathUtils.sinh(real2) / d, Math.sin(imaginary2) / d);
+    }
+
+    
+
+
+
+
+
+
+
+    protected Complex createComplex(double real, double imaginary) {
+        return new Complex(real, imaginary);
+    }
+}

@@ -1,0 +1,20 @@
+18a19
+> import com.google.javascript.jscomp.regex.RegExpTree;
+27a29
+> 
+33a36,38
+>   static final DiagnosticType MALFORMED_REGEXP = DiagnosticType.warning(
+>         "JSC_MALFORMED_REGEXP",
+>         "Malformed Regular Expression: {0}");
+63a69,79
+>       }
+> 
+>     
+>     } else if (n.getType() == Token.REGEXP) {
+>       String pattern = n.getFirstChild().getString();
+>       String flags = n.getChildCount() == 2
+>           ? n.getLastChild().getString() : "";
+>       try {
+>         RegExpTree.parseRegExp(pattern, flags);
+>       } catch (IllegalArgumentException ex) {
+>         t.report(n, MALFORMED_REGEXP, ex.getMessage());

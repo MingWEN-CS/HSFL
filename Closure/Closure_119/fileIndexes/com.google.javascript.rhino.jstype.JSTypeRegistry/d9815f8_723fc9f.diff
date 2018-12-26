@@ -1,0 +1,58 @@
+160a161,164
+>   
+>   
+>   private final TemplateTypeMap emptyTemplateTypeMap;
+> 
+205a210,211
+>     this.emptyTemplateTypeMap = new TemplateTypeMap(
+>         this, ImmutableList.<String>of(), ImmutableList.<JSType>of());
+275c281
+<         new PrototypeObjectType(this, null, null, true, null, null);
+---
+>         new PrototypeObjectType(this, null, null, true, null);
+1405c1411
+<         new PrototypeObjectType(this, null, null, true, null, null);
+---
+>         new PrototypeObjectType(this, null, null, true, null);
+1426c1432
+<         templateKeys, true, false);
+---
+>         createTemplateTypeMap(templateKeys, null), true, false);
+1442,1444c1448,1459
+<   public TemplatizedType createTemplatizedType(
+<       ObjectType objectType, JSType parameterType) {
+<     return new TemplatizedType(this, objectType, parameterType);
+---
+> 
+>   public TemplateTypeMap createTemplateTypeMap(
+>       ImmutableList<String> templateKeys,
+>       ImmutableList<JSType> templateValues) {
+>     templateKeys = templateKeys == null ?
+>         ImmutableList.<String>of() : templateKeys;
+>     templateValues = templateValues == null ?
+>         ImmutableList.<JSType>of() : templateValues;
+> 
+>     return (templateKeys.isEmpty() && templateValues.isEmpty()) ?
+>         emptyTemplateTypeMap :
+>         new TemplateTypeMap(this, templateKeys, templateValues);
+1450,1465c1465,1467
+< 
+< 
+< 
+<   public JSType createTemplatizedType(
+<       JSType baseType, ImmutableList<JSType> templatizedTypes) {
+<     
+<     
+<     if (baseType instanceof InstanceObjectType) {
+<       ObjectType baseObjType = baseType.toObjectType();
+<       return new InstanceObjectType(
+<           this, baseObjType.getConstructor(), baseObjType.isNativeObjectType(),
+<           templatizedTypes);
+<     } else {
+<       throw new IllegalArgumentException(
+<           "Only instance object types can be templatized");
+<     }
+---
+>   public TemplatizedType createTemplatizedType(
+>       ObjectType objectType, JSType parameterType) {
+>     return new TemplatizedType(this, objectType, parameterType);

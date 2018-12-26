@@ -1,0 +1,19 @@
+22a23
+> import com.google.javascript.rhino.IR;
+67c68
+<             "Existing alias definition for " + Node.tokenToName(n.getType()));
+---
+>             "Existing alias definition for " + Token.name(n.getType()));
+216,220c217,222
+<     Node parameterName = Node.newString(Token.NAME, "jscomp_throw_param");
+<     List<Node> parameters = Lists.newArrayList(parameterName.cloneNode());
+<     Node throwStatement = new Node(Token.THROW, parameterName);
+<     Node body = new Node(Token.BLOCK, throwStatement);
+<     return NodeUtil.newFunctionNode(aliasName, parameters, body, -1, -1);
+---
+>     final String PARAM_NAME = "jscomp_throw_param";
+>     return IR.function(
+>         IR.name(aliasName),
+>         IR.paramList(IR.name(PARAM_NAME)),
+>         IR.block(
+>             IR.throwNode(IR.name(PARAM_NAME))));

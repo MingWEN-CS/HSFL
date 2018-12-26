@@ -1,0 +1,109 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+
+import com.google.javascript.jscomp.parsing.ParserRunner;
+
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.io.IOException;
+
+import java.util.logging.Logger;
+
+
+
+
+
+
+public class JsAst implements SourceAst {
+  private static final Logger logger_ = Logger.getLogger(JsAst.class.getName());
+  private static final long serialVersionUID = 1L;
+
+  private transient SourceFile sourceFile;
+  private String fileName;
+  private Node root;
+
+  public JsAst(SourceFile sourceFile) {
+    this.sourceFile = sourceFile;
+    this.fileName = sourceFile.getName();
+  }
+
+  @Override
+  public Node getAstRoot(AbstractCompiler compiler) {
+    if (root == null) {
+      createAst(compiler);
+    }
+    return root;
+  }
+
+  @Override
+  public void clearAst() {
+    root = null;
+    
+    
+    
+    sourceFile.clearCachedSource();
+  }
+
+  @Override
+  public SourceFile getSourceFile() {
+    return sourceFile;
+  }
+
+  @Override
+  public void setSourceFile(SourceFile file) {
+    Preconditions.checkState(fileName.equals(file.getName()));
+    sourceFile = file;
+  }
+
+  private void createAst(AbstractCompiler compiler) {
+    try {
+      parse(compiler, sourceFile.getName(), sourceFile.getCode());
+    } catch (IOException e) {
+      compiler.report(
+          JSError.make(AbstractCompiler.READ_ERROR, sourceFile.getName()));
+    }
+  }
+
+  private void parse(AbstractCompiler compiler, String sourceName,
+      String sourceStr) {
+    try {
+      logger_.fine("Parsing: " + sourceName);
+      root = ParserRunner.parse(sourceName, sourceStr, compiler.isIdeMode(),
+          compiler.getTypeRegistry(),
+          compiler.getDefaultErrorReporter(),
+          logger_);
+    } catch (IOException e) {
+      compiler.report(JSError.make(AbstractCompiler.READ_ERROR, sourceName));
+    }
+
+    if (root == null || compiler.hasHaltingErrors()) {
+      
+      root = new Node(Token.BLOCK);
+    } else {
+      compiler.normalizeNodeTypes(root);
+      compiler.annotateCodingConvention(root);
+    }
+
+    
+    
+    root.putProp(Node.SOURCENAME_PROP, sourceName);
+  }
+}

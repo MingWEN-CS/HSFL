@@ -1,0 +1,59 @@
+18,19d17
+< import static com.google.javascript.jscomp.FunctionArgumentInjector.THIS_MARKER;
+< 
+31d28
+< import java.util.Map.Entry;
+32a30
+> import java.util.Map.Entry;
+182,188d179
+<   private String getUniqueThisName() {
+<     return "JSCompiler_inline_this_" + safeNameIdSupplier.get();
+<   }
+< 
+<   
+< 
+< 
+203c194
+<           compiler, fnTemplateRoot, null, argMap);
+---
+>           fnTemplateRoot, null, argMap);
+222,249c213,218
+<           if (name.equals(THIS_MARKER)) {
+<             boolean referencesThis = NodeUtil.referencesThis(fnTemplateRoot);
+<             
+<             
+<             
+< 
+<             Node value = entry.getValue();
+<             if (value.getType() != Token.THIS
+<                 && (referencesThis
+<                     || NodeUtil.mayHaveSideEffects(value, compiler))) {
+<               String newName = getUniqueThisName();
+<               Node newValue = entry.getValue().cloneTree();
+<               Node newNode = NodeUtil.newVarNode(newName, newValue)
+<                   .copyInformationFromForTree(newValue);
+<               newVars.add(0, newNode);
+<               
+<               newArgMap.put(THIS_MARKER,
+<                   Node.newString(Token.NAME, newName)
+<                       .copyInformationFromForTree(newValue));
+<             }
+<           } else {
+<             Node newValue = entry.getValue().cloneTree();
+<             Node newNode = NodeUtil.newVarNode(name, newValue)
+<                 .copyInformationFromForTree(newValue);
+<             newVars.add(0, newNode);
+<             
+<             newArgMap.remove(name);
+<           }
+---
+>           Node newValue = entry.getValue().cloneTree();
+>           Node newNode = NodeUtil.newVarNode(name, newValue)
+>               .copyInformationFromForTree(newValue);
+>           newVars.add(0, newNode);
+>           
+>           newArgMap.remove(name);
+255c224
+<           compiler, fnTemplateRoot, null, newArgMap);
+---
+>           fnTemplateRoot, null, newArgMap);

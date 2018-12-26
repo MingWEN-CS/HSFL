@@ -1,0 +1,393 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.ode;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import org.apache.commons.math.analysis.solvers.BracketingNthOrderBrentSolver;
+import org.apache.commons.math.analysis.solvers.UnivariateRealSolver;
+import org.apache.commons.math.exception.DimensionMismatchException;
+import org.apache.commons.math.exception.MathIllegalArgumentException;
+import org.apache.commons.math.exception.MathIllegalStateException;
+import org.apache.commons.math.exception.MaxCountExceededException;
+import org.apache.commons.math.exception.NumberIsTooSmallException;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+import org.apache.commons.math.ode.events.EventHandler;
+import org.apache.commons.math.ode.events.EventState;
+import org.apache.commons.math.ode.sampling.AbstractStepInterpolator;
+import org.apache.commons.math.ode.sampling.StepHandler;
+import org.apache.commons.math.util.FastMath;
+import org.apache.commons.math.util.Incrementor;
+import org.apache.commons.math.util.MathUtils;
+
+
+
+
+
+
+public abstract class AbstractIntegrator implements FirstOrderIntegrator {
+
+    
+    protected Collection<StepHandler> stepHandlers;
+
+    
+    protected double stepStart;
+
+    
+    protected double stepSize;
+
+    
+    protected boolean isLastStep;
+
+    
+    protected boolean resetOccurred;
+
+    
+    private Collection<EventState> eventsStates;
+
+    
+    private boolean statesInitialized;
+
+    
+    private final String name;
+
+    
+    private Incrementor evaluations;
+
+    
+    private transient ExpandableStatefulODE equations;
+
+    
+
+
+    public AbstractIntegrator(final String name) {
+        this.name = name;
+        stepHandlers = new ArrayList<StepHandler>();
+        stepStart = Double.NaN;
+        stepSize  = Double.NaN;
+        eventsStates = new ArrayList<EventState>();
+        statesInitialized = false;
+        evaluations = new Incrementor();
+        setMaxEvaluations(-1);
+        resetEvaluations();
+    }
+
+    
+
+    protected AbstractIntegrator() {
+        this(null);
+    }
+
+    
+    public String getName() {
+        return name;
+    }
+
+    
+    public void addStepHandler(final StepHandler handler) {
+        stepHandlers.add(handler);
+    }
+
+    
+    public Collection<StepHandler> getStepHandlers() {
+        return Collections.unmodifiableCollection(stepHandlers);
+    }
+
+    
+    public void clearStepHandlers() {
+        stepHandlers.clear();
+    }
+
+    
+    public void addEventHandler(final EventHandler handler,
+                                final double maxCheckInterval,
+                                final double convergence,
+                                final int maxIterationCount) {
+        addEventHandler(handler, maxCheckInterval, convergence,
+                        maxIterationCount,
+                        new BracketingNthOrderBrentSolver(convergence, 5));
+    }
+
+    
+    public void addEventHandler(final EventHandler handler,
+                                final double maxCheckInterval,
+                                final double convergence,
+                                final int maxIterationCount,
+                                final UnivariateRealSolver solver) {
+        eventsStates.add(new EventState(handler, maxCheckInterval, convergence,
+                                        maxIterationCount, solver));
+    }
+
+    
+    public Collection<EventHandler> getEventHandlers() {
+        final List<EventHandler> list = new ArrayList<EventHandler>();
+        for (EventState state : eventsStates) {
+            list.add(state.getEventHandler());
+        }
+        return Collections.unmodifiableCollection(list);
+    }
+
+    
+    public void clearEventHandlers() {
+        eventsStates.clear();
+    }
+
+    
+    public double getCurrentStepStart() {
+        return stepStart;
+    }
+
+    
+    public double getCurrentSignedStepsize() {
+        return stepSize;
+    }
+
+    
+    public void setMaxEvaluations(int maxEvaluations) {
+        evaluations.setMaximalCount((maxEvaluations < 0) ? Integer.MAX_VALUE : maxEvaluations);
+    }
+
+    
+    public int getMaxEvaluations() {
+        return evaluations.getMaximalCount();
+    }
+
+    
+    public int getEvaluations() {
+        return evaluations.getCount();
+    }
+
+    
+
+    protected void resetEvaluations() {
+        evaluations.resetCount();
+    }
+
+    
+
+
+    protected void setEquations(final ExpandableStatefulODE equations) {
+        this.equations = equations;
+    }
+
+    
+    public double integrate(final FirstOrderDifferentialEquations equations,
+                            final double t0, final double[] y0, final double t, final double[] y)
+        throws MathIllegalStateException, MathIllegalArgumentException {
+
+        if (y0.length != equations.getDimension()) {
+            throw new DimensionMismatchException(y0.length, equations.getDimension());
+        }
+        if (y.length != equations.getDimension()) {
+            throw new DimensionMismatchException(y.length, equations.getDimension());
+        }
+
+        
+        final ExpandableStatefulODE expandable = new ExpandableStatefulODE(equations);
+        expandable.setTime(t0);
+        expandable.setPrimaryState(y0);
+
+        
+        integrate(expandable, t);
+
+        
+        System.arraycopy(expandable.getPrimaryState(), 0, y, 0, y.length);
+        return expandable.getTime();
+
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public abstract void integrate(ExpandableStatefulODE equations, double t)
+        throws MathIllegalStateException, MathIllegalArgumentException;
+
+    
+
+
+
+
+
+    public void computeDerivatives(final double t, final double[] y, final double[] yDot)
+        throws MaxCountExceededException {
+        evaluations.incrementCount();
+        equations.computeDerivatives(t, y, yDot);
+    }
+
+    
+
+
+
+
+
+
+    protected void setStateInitialized(final boolean stateInitialized) {
+        this.statesInitialized = stateInitialized;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected double acceptStep(final AbstractStepInterpolator interpolator,
+                                final double[] y, final double[] yDot, final double tEnd)
+        throws MathIllegalStateException {
+
+            double previousT = interpolator.getGlobalPreviousTime();
+            final double currentT = interpolator.getGlobalCurrentTime();
+            resetOccurred = false;
+
+            
+            if (! statesInitialized) {
+                for (EventState state : eventsStates) {
+                    state.reinitializeBegin(interpolator);
+                }
+                statesInitialized = true;
+            }
+
+            
+            final int orderingSign = interpolator.isForward() ? +1 : -1;
+            SortedSet<EventState> occuringEvents = new TreeSet<EventState>(new Comparator<EventState>() {
+
+                
+                public int compare(EventState es0, EventState es1) {
+                    return orderingSign * Double.compare(es0.getEventTime(), es1.getEventTime());
+                }
+
+            });
+
+            for (final EventState state : eventsStates) {
+                if (state.evaluateStep(interpolator)) {
+                    
+                    occuringEvents.add(state);
+                }
+            }
+
+            while (!occuringEvents.isEmpty()) {
+
+                
+                final Iterator<EventState> iterator = occuringEvents.iterator();
+                final EventState currentEvent = iterator.next();
+                iterator.remove();
+
+                
+                final double eventT = currentEvent.getEventTime();
+                interpolator.setSoftPreviousTime(previousT);
+                interpolator.setSoftCurrentTime(eventT);
+
+                
+                interpolator.setInterpolatedTime(eventT);
+                final double[] eventY = interpolator.getInterpolatedState();
+                currentEvent.stepAccepted(eventT, eventY);
+                isLastStep = currentEvent.stop();
+
+                
+                for (final StepHandler handler : stepHandlers) {
+                    handler.handleStep(interpolator, isLastStep);
+                }
+
+                if (isLastStep) {
+                    
+                    System.arraycopy(eventY, 0, y, 0, y.length);
+                    return eventT;
+                }
+
+                if (currentEvent.reset(eventT, eventY)) {
+                    
+                    
+                    System.arraycopy(eventY, 0, y, 0, y.length);
+                    computeDerivatives(eventT, y, yDot);
+                    resetOccurred = true;
+                    return eventT;
+                }
+
+                
+                previousT = eventT;
+                interpolator.setSoftPreviousTime(eventT);
+                interpolator.setSoftCurrentTime(currentT);
+
+                
+                if (currentEvent.evaluateStep(interpolator)) {
+                    
+                    occuringEvents.add(currentEvent);
+                }
+
+            }
+
+            interpolator.setInterpolatedTime(currentT);
+            final double[] currentY = interpolator.getInterpolatedState();
+            for (final EventState state : eventsStates) {
+                state.stepAccepted(currentT, currentY);
+                isLastStep = isLastStep || state.stop();
+            }
+            isLastStep = isLastStep || MathUtils.equals(currentT, tEnd, 1);
+
+            
+            for (StepHandler handler : stepHandlers) {
+                handler.handleStep(interpolator, isLastStep);
+            }
+
+            return currentT;
+
+    }
+
+    
+
+
+
+    protected void sanityChecks(final ExpandableStatefulODE equations, final double t)
+        throws NumberIsTooSmallException {
+
+        final double threshold = 1000 * FastMath.ulp(FastMath.max(FastMath.abs(equations.getTime()),
+                                                                  FastMath.abs(t)));
+        final double dt = FastMath.abs(equations.getTime() - t);
+        if (dt <= threshold) {
+            throw new NumberIsTooSmallException(LocalizedFormats.TOO_SMALL_INTEGRATION_INTERVAL,
+                                                dt, threshold, false);
+        }
+
+    }
+
+}

@@ -1,0 +1,53 @@
+591,620c591,601
+<         if (info == null ||
+<             !FunctionTypeBuilder.isFunctionTypeDeclaration(info)) {
+<           
+<           
+<           
+<           
+<           
+<           
+<           if (lvalueNode != null && lvalueNode.getType() == Token.GETPROP &&
+<               lvalueNode.isQualifiedName()) {
+<             Var var = scope.getVar(
+<                 lvalueNode.getFirstChild().getQualifiedName());
+<             if (var != null) {
+<               ObjectType ownerType = ObjectType.cast(var.getType());
+<               FunctionType propType = null;
+<               if (ownerType != null) {
+<                 String propName = lvalueNode.getLastChild().getString();
+<                 propType = findOverriddenFunction(ownerType, propName);
+<               }
+< 
+<               if (propType != null) {
+<                 functionType =
+<                     new FunctionTypeBuilder(
+<                         name, compiler, errorRoot, sourceName, scope)
+<                     .setSourceNode(fnRoot)
+<                     .inferFromOverriddenFunction(propType, parametersNode)
+<                     .inferThisType(info, owner)
+<                     .inferReturnStatements(fnBlock)
+<                     .buildAndRegister();
+<               }
+---
+>         
+>         FunctionType overriddenPropType = null;
+>         if (lvalueNode != null && lvalueNode.getType() == Token.GETPROP &&
+>             lvalueNode.isQualifiedName()) {
+>           Var var = scope.getVar(
+>               lvalueNode.getFirstChild().getQualifiedName());
+>           if (var != null) {
+>             ObjectType ownerType = ObjectType.cast(var.getType());
+>             if (ownerType != null) {
+>               String propName = lvalueNode.getLastChild().getString();
+>               overriddenPropType = findOverriddenFunction(ownerType, propName);
+624d604
+<       } 
+626d605
+<       if (functionType == null) {
+630a610
+>             .inferFromOverriddenFunction(overriddenPropType, parametersNode)
+636c616
+<             .inferReturnStatements(fnBlock)
+---
+>             .inferReturnStatementsAsLastResort(fnBlock)

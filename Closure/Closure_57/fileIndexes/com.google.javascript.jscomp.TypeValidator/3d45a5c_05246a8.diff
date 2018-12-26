@@ -1,0 +1,13 @@
+700,701c700,708
+<         while (objectType != null && !objectType.hasOwnProperty(propName)) {
+<           objectType = objectType.getImplicitPrototype();
+---
+>         if (objectType.getConstructor() != null &&
+>             objectType.getConstructor().isInterface()) {
+>           objectType = FunctionType.getTopDefiningInterface(
+>               objectType, propName);
+>         } else {
+>           
+>           while (objectType != null && !objectType.hasOwnProperty(propName)) {
+>             objectType = objectType.getImplicitPrototype();
+>           }

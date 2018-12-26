@@ -1,0 +1,281 @@
+80,85d79
+<     private static final long SGN_MASK = 0x8000000000000000L;
+< 
+<     
+<     private static final int SGN_MASK_FLOAT = 0x80000000;
+< 
+<     
+398,442d391
+< 
+< 
+< 
+<     public static int compareTo(double x, double y, double eps) {
+<         if (equals(x, y, eps)) {
+<             return 0;
+<         } else if (x < y) {
+<             return -1;
+<         }
+<         return 1;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static int compareTo(final double x, final double y, final int maxUlps) {
+<         if (equals(x, y, maxUlps)) {
+<             return 0;
+<         } else if (x < y) {
+<             return -1;
+<         }
+<         return 1;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+455,559d403
+<     public static boolean equals(float x, float y) {
+<         return equals(x, y, 1);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equalsIncludingNaN(float x, float y) {
+<         return (Float.isNaN(x) && Float.isNaN(y)) || equals(x, y, 1);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equals(float x, float y, float eps) {
+<         return equals(x, y, 1) || FastMath.abs(y - x) <= eps;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equalsIncludingNaN(float x, float y, float eps) {
+<         return equalsIncludingNaN(x, y) || (FastMath.abs(y - x) <= eps);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equals(float x, float y, int maxUlps) {
+<         int xInt = Float.floatToIntBits(x);
+<         int yInt = Float.floatToIntBits(y);
+< 
+<         
+<         if (xInt < 0) {
+<             xInt = SGN_MASK_FLOAT - xInt;
+<         }
+<         if (yInt < 0) {
+<             yInt = SGN_MASK_FLOAT - yInt;
+<         }
+< 
+<         final boolean isEqual = FastMath.abs(xInt - yInt) <= maxUlps;
+< 
+<         return isEqual && !Float.isNaN(x) && !Float.isNaN(y);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equalsIncludingNaN(float x, float y, int maxUlps) {
+<         return (Float.isNaN(x) && Float.isNaN(y)) || equals(x, y, maxUlps);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+570c414
+<             if (!equals(x[i], y[i])) {
+---
+>             if (!Precision.equals(x[i], y[i])) {
+596c440
+<             if (!equalsIncludingNaN(x[i], y[i])) {
+---
+>             if (!Precision.equalsIncludingNaN(x[i], y[i])) {
+611,715d454
+<     public static boolean equals(double x, double y) {
+<         return equals(x, y, 1);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equalsIncludingNaN(double x, double y) {
+<         return (Double.isNaN(x) && Double.isNaN(y)) || equals(x, y, 1);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equals(double x, double y, double eps) {
+<         return equals(x, y, 1) || FastMath.abs(y - x) <= eps;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equalsIncludingNaN(double x, double y, double eps) {
+<         return equalsIncludingNaN(x, y) || (FastMath.abs(y - x) <= eps);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equals(double x, double y, int maxUlps) {
+<         long xInt = Double.doubleToLongBits(x);
+<         long yInt = Double.doubleToLongBits(y);
+< 
+<         
+<         if (xInt < 0) {
+<             xInt = SGN_MASK - xInt;
+<         }
+<         if (yInt < 0) {
+<             yInt = SGN_MASK - yInt;
+<         }
+< 
+<         final boolean isEqual = FastMath.abs(xInt - yInt) <= maxUlps;
+< 
+<         return isEqual && !Double.isNaN(x) && !Double.isNaN(y);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean equalsIncludingNaN(double x, double y, int maxUlps) {
+<         return (Double.isNaN(x) && Double.isNaN(y)) || equals(x, y, maxUlps);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+726c465
+<             if (!equals(x[i], y[i])) {
+---
+>             if (!Precision.equals(x[i], y[i])) {
+752c491
+<             if (!equalsIncludingNaN(x[i], y[i])) {
+---
+>             if (!Precision.equalsIncludingNaN(x[i], y[i])) {

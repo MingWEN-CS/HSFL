@@ -1,0 +1,196 @@
+22a23
+> import org.apache.commons.collections.ComparatorUtils;
+53c54
+<     	freqTable = new TreeBag(comparator);
+---
+>         freqTable = new TreeBag(comparator);
+62c63
+<     	NumberFormat nf = NumberFormat.getPercentInstance();
+---
+>         NumberFormat nf = NumberFormat.getPercentInstance();
+85,90c86,91
+<     	try {
+<     		freqTable.add(v);
+<     	} catch (ClassCastException ex) {	
+<     		
+<     		throw new IllegalArgumentException("Value not comparable to existing values.");
+<     	}
+---
+>         try {
+>             freqTable.add(v);
+>         } catch (ClassCastException ex) {   
+>             
+>             throw new IllegalArgumentException("Value not comparable to existing values.");
+>         }
+114c115
+<     	addValue(new Character(v));
+---
+>         addValue(new Character(v));
+119c120
+<     	freqTable.clear();
+---
+>         freqTable.clear();
+127c128
+<     	return freqTable.uniqueSet().iterator();
+---
+>         return freqTable.uniqueSet().iterator();
+137c138
+<     	return freqTable.size();
+---
+>         return freqTable.size();
+146,152c147,153
+<     	long result = 0;
+<     	try { 
+<     		result = freqTable.getCount(v);
+<     	} catch (Exception ex) {
+<     		
+<     	}
+<     	return result;
+---
+>         long result = 0;
+>         try { 
+>             result = freqTable.getCount(v);
+>         } catch (Exception ex) {
+>             
+>         }
+>         return result;
+161,167c162,168
+<     	long result = 0;
+<     	try { 
+<     		result = freqTable.getCount(new Long(v));
+<     	} catch (Exception ex) {
+<     		
+<     	}
+<     	return result;
+---
+>         long result = 0;
+>         try { 
+>             result = freqTable.getCount(new Long(v));
+>         } catch (Exception ex) {
+>             
+>         }
+>         return result;
+176,182c177,183
+<     	long result = 0;
+<     	try { 
+<     		result = freqTable.getCount(new Long(v));
+<     	} catch (Exception ex) {
+<     		
+<     	}
+<     	return result;
+---
+>         long result = 0;
+>         try { 
+>             result = freqTable.getCount(new Long(v));
+>         } catch (Exception ex) {
+>             
+>         }
+>         return result;
+191,197c192,198
+<     	long result = 0;
+<     	try { 
+<     		result = freqTable.getCount(new Character(v));
+<     	} catch (Exception ex) {
+<     		
+<     	}
+<     	return result;
+---
+>         long result = 0;
+>         try { 
+>             result = freqTable.getCount(new Character(v));
+>         } catch (Exception ex) {
+>             
+>         }
+>         return result;
+209c210
+<     	return (double) getCount(v) / (double) getSumFreq();        
+---
+>         return (double) getCount(v) / (double) getSumFreq();        
+229c230
+<     	return getPct(new Long(v));         
+---
+>         return getPct(new Long(v));         
+239c240
+<     	return getPct(new Character(v));         
+---
+>         return getPct(new Character(v));         
+253,275c254,280
+<     	long result = 0;
+<     	try {
+<     		result = freqTable.getCount(v);
+<     	} catch (ClassCastException ex) {
+<     		return result;   
+<     	}
+<     	Comparable c = (Comparable) v;
+<     	if (c.compareTo(freqTable.first()) < 0) {
+<     		return 0;	
+<     	}
+<     	if (c.compareTo(freqTable.last()) > 0) {
+<     		return getSumFreq();	
+<     	}
+<     	Iterator values = valuesIterator();
+<     	while (values.hasNext()) {
+<     		Object nextValue = values.next();
+<     		if (c.compareTo(nextValue) > 0) {
+<     			result += getCount(nextValue);
+<     		} else {
+<     			return result;
+<     		}
+<     	}
+<     	return result;
+---
+>         Comparator c = freqTable.comparator();
+>         if (c == null) {
+>             c = ComparatorUtils.NATURAL_COMPARATOR;
+>         }
+>         long result = 0;
+>         try {
+>             result = freqTable.getCount(v);
+>         } catch (ClassCastException ex) {
+>             return result;   
+>         }
+>         if (c.compare(v, freqTable.first()) < 0) {
+>             return
+>         System.out.println("iterating..."); 0;   
+>         }
+>         if (c.compare(v, freqTable.last()) >= 0) {
+>             return getSumFreq();    
+>         }
+>         Iterator values = valuesIterator();
+>         while (values.hasNext()) {
+>             Object nextValue = values.next();
+>             if (c.compare(v, nextValue) > 0) {
+>                 result += getCount(nextValue);
+>             } else {
+>                 return result;
+>             }
+>         }
+>         return result;
+287c292
+<     	return getCumFreq(new Long(v));       
+---
+>         return getCumFreq(new Long(v));       
+299c304
+<     	return getCumFreq(new Long(v));         
+---
+>         return getCumFreq(new Long(v));         
+311c316
+<     	return getCumFreq(new Character(v));         
+---
+>         return getCumFreq(new Character(v));         
+326c331
+<     	return (double) getCumFreq(v) / (double) getSumFreq();        
+---
+>         return (double) getCumFreq(v) / (double) getSumFreq();        
+339c344
+<     	return getCumPct(new Long(v));       
+---
+>         return getCumPct(new Long(v));       
+352c357
+<     	return getCumPct(new Long(v));         
+---
+>         return getCumPct(new Long(v));         
+365c370
+<     	return getCumPct(new Character(v));         
+---
+>         return getCumPct(new Character(v));         

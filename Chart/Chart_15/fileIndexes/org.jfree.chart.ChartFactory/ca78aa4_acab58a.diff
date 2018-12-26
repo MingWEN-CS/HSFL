@@ -1,0 +1,238 @@
+124a125,126
+> 
+> 
+132a135
+> import java.util.Locale;
+236a240,269
+> 
+> 
+>     public static JFreeChart createPieChart(String title, PieDataset dataset,
+>             boolean legend, boolean tooltips, Locale locale) {
+> 
+>         PiePlot plot = new PiePlot(dataset);
+>         plot.setLabelGenerator(new StandardPieSectionLabelGenerator(locale));
+>         plot.setInsets(new RectangleInsets(0.0, 5.0, 5.0, 5.0));
+>         if (tooltips) {
+>             plot.setToolTipGenerator(new StandardPieToolTipGenerator(locale));
+>         }
+>         return new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, 
+>                 legend);
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+247,248c280
+<             plot.setToolTipGenerator(new StandardPieToolTipGenerator(
+<                     StandardPieToolTipGenerator.DEFAULT_SECTION_LABEL_FORMAT));
+---
+>             plot.setToolTipGenerator(new StandardPieToolTipGenerator());
+295a328,446
+> 
+> 
+>     public static JFreeChart createPieChart(String title, PieDataset dataset,
+>             PieDataset previousDataset, int percentDiffForMaxScale,
+>             boolean greenForIncrease, boolean legend, boolean tooltips,
+>             Locale locale, boolean subTitle, boolean showDifference) {
+> 
+>         PiePlot plot = new PiePlot(dataset);
+>         plot.setLabelGenerator(new StandardPieSectionLabelGenerator(locale));
+>         plot.setInsets(new RectangleInsets(0.0, 5.0, 5.0, 5.0));
+> 
+>         if (tooltips) {
+>             plot.setToolTipGenerator(new StandardPieToolTipGenerator(locale));
+>         }
+> 
+>         List keys = dataset.getKeys();
+>         DefaultPieDataset series = null;
+>         if (showDifference) {
+>             series = new DefaultPieDataset();
+>         }
+> 
+>         double colorPerPercent = 255.0 / percentDiffForMaxScale;
+>         for (Iterator it = keys.iterator(); it.hasNext();) {
+>             Comparable key = (Comparable) it.next();
+>             Number newValue = dataset.getValue(key);
+>             Number oldValue = previousDataset.getValue(key);
+> 
+>             if (oldValue == null) {
+>                 if (greenForIncrease) {
+>                     plot.setSectionPaint(key, Color.green);
+>                 } 
+>                 else {
+>                     plot.setSectionPaint(key, Color.red);
+>                 }
+>                 if (showDifference) {
+>                     series.setValue(key + " (+100%)", newValue);
+>                 }
+>             }
+>             else {
+>                 double percentChange = (newValue.doubleValue() 
+>                         / oldValue.doubleValue() - 1.0) * 100.0;
+>                 double shade
+>                     = (Math.abs(percentChange) >= percentDiffForMaxScale ? 255
+>                     : Math.abs(percentChange) * colorPerPercent);
+>                 if (greenForIncrease 
+>                         && newValue.doubleValue() > oldValue.doubleValue()
+>                         || !greenForIncrease && newValue.doubleValue() 
+>                         < oldValue.doubleValue()) {
+>                     plot.setSectionPaint(key, new Color(0, (int) shade, 0));
+>                 }
+>                 else {
+>                     plot.setSectionPaint(key, new Color((int) shade, 0, 0));
+>                 }
+>                 if (showDifference) {
+>                     series.setValue(key + " (" + (percentChange >= 0 ? "+" : "") 
+>                             + NumberFormat.getPercentInstance().format(
+>                             percentChange / 100.0) + ")", newValue);
+>                 }
+>             }
+>         }
+> 
+>         if (showDifference) {
+>             plot.setDataset(series);
+>         }
+> 
+>         JFreeChart chart =  new JFreeChart(title, 
+>                 JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
+> 
+>         if (subTitle) {
+>             TextTitle subtitle = null;
+>             subtitle = new TextTitle("Bright " + (greenForIncrease ? "red" 
+>                     : "green") + "=change >=-" + percentDiffForMaxScale 
+>                     + "%, Bright " + (!greenForIncrease ? "red" : "green") 
+>                     + "=change >=+" + percentDiffForMaxScale + "%", 
+>                     new Font("SansSerif", Font.PLAIN, 10));
+>             chart.addSubtitle(subtitle);
+>         }
+> 
+>         return chart;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+312,313c463
+<             plot.setToolTipGenerator(new StandardPieToolTipGenerator(
+<                     StandardPieToolTipGenerator.DEFAULT_SECTION_LABEL_FORMAT));
+---
+>             plot.setToolTipGenerator(new StandardPieToolTipGenerator());
+369,371c519,520
+<         JFreeChart chart =  new JFreeChart(
+<             title, JFreeChart.DEFAULT_TITLE_FONT, plot, legend
+<         );
+---
+>         JFreeChart chart =  new JFreeChart(title, 
+>                 JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
+399a549,578
+> 
+> 
+>     public static JFreeChart createRingChart(String title, PieDataset dataset,
+>             boolean legend, boolean tooltips, Locale locale) {
+> 
+>         RingPlot plot = new RingPlot(dataset);
+>         plot.setLabelGenerator(new StandardPieSectionLabelGenerator(locale));
+>         plot.setInsets(new RectangleInsets(0.0, 5.0, 5.0, 5.0));
+>         if (tooltips) {
+>             plot.setToolTipGenerator(new StandardPieToolTipGenerator(locale));
+>         }
+>         return new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, 
+>                 legend);
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+410,411c589
+<             plot.setToolTipGenerator(new StandardPieToolTipGenerator(
+<                     StandardPieToolTipGenerator.DEFAULT_SECTION_LABEL_FORMAT));
+---
+>             plot.setToolTipGenerator(new StandardPieToolTipGenerator());
+467a646,673
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static JFreeChart createPieChart3D(String title, PieDataset dataset,
+>             boolean legend, boolean tooltips, Locale locale) {
+> 
+>         PiePlot3D plot = new PiePlot3D(dataset);
+>         plot.setInsets(new RectangleInsets(0.0, 5.0, 5.0, 5.0));
+>         if (tooltips) {
+>             plot.setToolTipGenerator(new StandardPieToolTipGenerator(locale));
+>         }
+>         return new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, 
+>                 legend);

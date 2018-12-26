@@ -1,0 +1,33 @@
+18a19
+> import com.google.common.base.Predicate;
+23a25
+> import com.google.javascript.jscomp.graph.GraphReachability.EdgeTuple;
+74,75c76,77
+<     new GraphReachability<Node, ControlFlowGraph.Branch>(curCfg)
+<         .compute(curCfg.getEntry().getValue());
+---
+>     new GraphReachability<Node, ControlFlowGraph.Branch>(
+>         curCfg, new ReachablePredicate()).compute(curCfg.getEntry().getValue());
+144a147,168
+>   }
+>   
+>   private final class ReachablePredicate implements
+>       Predicate<EdgeTuple<Node, ControlFlowGraph.Branch>> {
+> 
+>     @Override
+>     public boolean apply(EdgeTuple<Node, Branch> input) {
+>       Branch branch = input.edge;
+>       if (!branch.isConditional()) {
+>         return true;
+>       }
+>       Node predecessor = input.sourceNode;
+>       Node condition = NodeUtil.getConditionExpression(predecessor);
+>   
+>       
+>       
+>       if (condition != null && NodeUtil.isImmutableValue(condition)) {
+>         return NodeUtil.getBooleanValue(condition).toBoolean(true) ==
+>             (branch == Branch.ON_TRUE);
+>       }
+>       return true;
+>     }

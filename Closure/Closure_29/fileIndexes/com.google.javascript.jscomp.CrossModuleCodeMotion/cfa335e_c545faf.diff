@@ -1,0 +1,38 @@
+18a19
+> import com.google.common.base.Preconditions;
+118,119d118
+<             
+<             
+121,130c120,122
+<             if (declParent.getType() == Token.VAR &&
+<                 declParent.getChildCount() > 1) {
+<               declParent.removeChild(decl.node);
+< 
+<               
+<               Node var = new Node(Token.VAR, decl.node);
+<               destParent.addChildToFront(var);
+<             } else {
+<               
+<               declParent.detachFromParent();
+---
+>             Preconditions.checkState(
+>                 declParent.getType() != Token.VAR || declParent.hasOneChild(),
+>                 "AST not normalized.");
+132,134c124,128
+<               
+<               destParent.addChildToFront(declParent);
+<             }
+---
+>             
+>             declParent.detachFromParent();
+> 
+>             
+>             destParent.addChildToFront(declParent);
+252c246
+<       
+---
+> 
+258c252
+<       
+---
+> 

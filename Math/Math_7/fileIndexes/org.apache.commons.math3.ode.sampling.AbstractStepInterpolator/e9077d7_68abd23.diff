@@ -1,0 +1,34 @@
+354c354,358
+<     out.writeInt(currentState.length);
+---
+>     if (currentState == null) {
+>         out.writeInt(-1);
+>     } else {
+>         out.writeInt(currentState.length);
+>     }
+360,361c364,367
+<     for (int i = 0; i < currentState.length; ++i) {
+<       out.writeDouble(currentState[i]);
+---
+>     if (currentState != null) {
+>         for (int i = 0; i < currentState.length; ++i) {
+>             out.writeDouble(currentState[i]);
+>         }
+396,398c402,408
+<     currentState  = new double[dimension];
+<     for (int i = 0; i < currentState.length; ++i) {
+<       currentState[i] = in.readDouble();
+---
+>     if (dimension < 0) {
+>         currentState = null;
+>     } else {
+>         currentState  = new double[dimension];
+>         for (int i = 0; i < currentState.length; ++i) {
+>             currentState[i] = in.readDouble();
+>         }
+403,404c413,414
+<     interpolatedState       = new double[dimension];
+<     interpolatedDerivatives = new double[dimension];
+---
+>     interpolatedState       = (dimension < 0) ? null : new double[dimension];
+>     interpolatedDerivatives = (dimension < 0) ? null : new double[dimension];

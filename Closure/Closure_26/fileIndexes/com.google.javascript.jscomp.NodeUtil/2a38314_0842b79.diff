@@ -1,0 +1,53 @@
+69a70,107
+>   static TernaryValue getExpressionBooleanValue(Node n) {
+>     switch (n.getType()) {
+>       case Token.ASSIGN:
+>       case Token.COMMA:
+>         
+>         return getExpressionBooleanValue(n.getLastChild());
+>       case Token.NOT:
+>         TernaryValue value = getExpressionBooleanValue(n.getLastChild());
+>         return value.not();
+>       case Token.AND: {
+>         TernaryValue lhs = getExpressionBooleanValue(n.getFirstChild());
+>         TernaryValue rhs = getExpressionBooleanValue(n.getLastChild());
+>         return lhs.and(rhs);
+>       }
+>       case Token.OR:  {
+>         TernaryValue lhs = getExpressionBooleanValue(n.getFirstChild());
+>         TernaryValue rhs = getExpressionBooleanValue(n.getLastChild());
+>         return lhs.or(rhs);
+>       }
+>       case Token.HOOK:  {
+>         TernaryValue trueValue = getExpressionBooleanValue(
+>             n.getFirstChild().getNext());
+>         TernaryValue falseValue = getExpressionBooleanValue(n.getLastChild());
+>         if (trueValue.equals(falseValue)) {
+>           return trueValue;
+>         } else {
+>           return TernaryValue.UNKNOWN;
+>         }
+>       }
+>       default:
+>         return getBooleanValue(n);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+2052a2091,2103
+>   }
+> 
+>   
+> 
+> 
+>   static Node newCallNode(Node callTarget, Node... parameters) {
+>     boolean isFreeCall = isName(callTarget);
+>     Node call = new Node(Token.CALL, callTarget);
+>     call.putBooleanProp(Node.FREE_CALL, isFreeCall);
+>     for (Node parameter : parameters) {
+>       call.addChildToBack(parameter);
+>     }
+>     return call;

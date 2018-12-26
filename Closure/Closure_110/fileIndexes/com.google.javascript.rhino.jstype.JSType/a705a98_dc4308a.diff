@@ -1,0 +1,39 @@
+489c489,493
+<     if (that.isAllType() || that.isNoType() || that.isUnknownType()) {
+---
+>     return testForEqualityHelper(this, that);
+>   }
+> 
+>   TernaryValue testForEqualityHelper(JSType aType, JSType bType) {
+>     if (bType.isAllType() || bType.isEmptyType() || bType.isUnknownType()) {
+492,504c496,507
+<     if (that.isEnumElementType()) {
+<       return that.testForEquality(this);
+<     }
+<     if (that instanceof UnionType) {
+<       UnionType union = (UnionType) that;
+<       TernaryValue result = null;
+<       for (JSType t : union.alternates) {
+<         TernaryValue test = this.testForEquality(t);
+<         if (result == null) {
+<           result = test;
+<         } else if (!result.equals(test)) {
+<           return UNKNOWN;
+<         }
+---
+>     if (aType.isFunctionType() || bType.isFunctionType()) {
+>       JSType otherType = aType.isFunctionType() ? bType : aType;
+>       
+>       
+>       
+>       
+>       
+>       
+>       if (otherType.isSubtype(getNativeType(JSTypeNative.OBJECT_TYPE))) {
+>         return TernaryValue.UNKNOWN;
+>       } else {
+>         return TernaryValue.FALSE;
+505a509,511
+>     }
+>     if (bType.isEnumElementType() || bType.isUnionType()) {
+>       return bType.testForEquality(aType);

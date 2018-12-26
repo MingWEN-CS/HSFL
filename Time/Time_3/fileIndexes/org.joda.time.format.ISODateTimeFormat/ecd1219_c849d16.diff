@@ -1,0 +1,1557 @@
+62,139d61
+<     private static DateTimeFormatter
+<         ye,  
+<         mye, 
+<         dme, 
+<         we,  
+<         wwe, 
+<         dwe, 
+<         dye, 
+<         hde, 
+<         mhe, 
+<         sme, 
+<         fse, 
+<         ze,  
+<         lte, 
+<         
+<         
+<         ym,  
+<         ymd, 
+< 
+<         
+<         ww,  
+<         wwd, 
+< 
+<         
+<         hm,   
+<         hms,  
+<         hmsl, 
+<         hmsf, 
+< 
+<         dh,    
+<         dhm,   
+<         dhms,  
+<         dhmsl, 
+<         dhmsf, 
+< 
+<         
+<         t,  
+<         tx,  
+<         tt,  
+<         ttx,  
+<         dt, 
+<         dtx, 
+< 
+<         
+<         wdt, 
+<         wdtx, 
+< 
+<         od,  
+<         odt, 
+<         odtx, 
+< 
+<         bd,  
+<         bt,  
+<         btx,  
+<         btt, 
+<         bttx, 
+<         bdt, 
+<         bdtx, 
+< 
+<         bod,  
+<         bodt, 
+<         bodtx, 
+< 
+<         bwd,  
+<         bwdt, 
+<         bwdtx, 
+< 
+<         dpe, 
+<         tpe, 
+<         dp,  
+<         ldp, 
+<         tp,  
+<         ltp, 
+<         dtp, 
+<         dotp, 
+<         ldotp; 
+< 
+<     
+249c171
+<             bld.append(yearElement());
+---
+>             bld.append(Constants.ye);
+252c174
+<             bld.append(weekyearElement());
+---
+>             bld.append(Constants.we);
+295c217
+<             bld.append(yearElement());
+---
+>             bld.append(Constants.ye);
+363c285
+<             bld.append(yearElement());
+---
+>             bld.append(Constants.ye);
+400c322
+<             bld.append(weekyearElement());
+---
+>             bld.append(Constants.we);
+569,578c491
+<         if (dp == null) {
+<             DateTimeParser tOffset = new DateTimeFormatterBuilder()
+<                 .appendLiteral('T')
+<                 .append(offsetElement()).toParser();
+<             dp = new DateTimeFormatterBuilder()
+<                 .append(dateElementParser())
+<                 .appendOptional(tOffset)
+<                 .toFormatter();
+<         }
+<         return dp;
+---
+>         return Constants.dp;
+595,598c508
+<         if (ldp == null) {
+<             ldp = dateElementParser().withZoneUTC();
+<         }
+<         return ldp;
+---
+>         return Constants.ldp;
+613,636c523
+<         if (dpe == null) {
+<             dpe = new DateTimeFormatterBuilder()
+<                 .append(null, new DateTimeParser[] {
+<                     new DateTimeFormatterBuilder()
+<                     .append(yearElement())
+<                     .appendOptional
+<                     (new DateTimeFormatterBuilder()
+<                      .append(monthElement())
+<                      .appendOptional(dayOfMonthElement().getParser())
+<                      .toParser())
+<                     .toParser(),
+<                     new DateTimeFormatterBuilder()
+<                     .append(weekyearElement())
+<                     .append(weekElement())
+<                     .appendOptional(dayOfWeekElement().getParser())
+<                     .toParser(),
+<                     new DateTimeFormatterBuilder()
+<                     .append(yearElement())
+<                     .append(dayOfYearElement())
+<                     .toParser()
+<                 })
+<                 .toFormatter();
+<         }
+<         return dpe;
+---
+>         return Constants.dpe;
+654,661c541
+<         if (tp == null) {
+<             tp = new DateTimeFormatterBuilder()
+<                 .appendOptional(literalTElement().getParser())
+<                 .append(timeElementParser())
+<                 .appendOptional(offsetElement().getParser())
+<                 .toFormatter();
+<         }
+<         return tp;
+---
+>         return Constants.tp;
+680,686c560
+<         if (ltp == null) {
+<             ltp = new DateTimeFormatterBuilder()
+<                 .appendOptional(literalTElement().getParser())
+<                 .append(timeElementParser())
+<                 .toFormatter().withZoneUTC();
+<         }
+<         return ltp;
+---
+>         return Constants.ltp;
+702,751c576
+<         if (tpe == null) {
+<             
+<             DateTimeParser decimalPoint = new DateTimeFormatterBuilder()
+<                 .append(null, new DateTimeParser[] {
+<                     new DateTimeFormatterBuilder()
+<                     .appendLiteral('.')
+<                     .toParser(),
+<                     new DateTimeFormatterBuilder()
+<                     .appendLiteral(',')
+<                     .toParser()
+<                 })
+<                 .toParser();
+< 
+<             tpe = new DateTimeFormatterBuilder()
+<                 
+<                 .append(hourElement())
+<                 .append
+<                 (null, new DateTimeParser[] {
+<                     new DateTimeFormatterBuilder()
+<                     
+<                     .append(minuteElement())
+<                     .append
+<                     (null, new DateTimeParser[] {
+<                         new DateTimeFormatterBuilder()
+<                         
+<                         .append(secondElement())
+<                         
+<                         .appendOptional(new DateTimeFormatterBuilder()
+<                                         .append(decimalPoint)
+<                                         .appendFractionOfSecond(1, 9)
+<                                         .toParser())
+<                         .toParser(),
+<                         
+<                         new DateTimeFormatterBuilder()
+<                         .append(decimalPoint)
+<                         .appendFractionOfMinute(1, 9)
+<                         .toParser(),
+<                         null
+<                     })
+<                     .toParser(),
+<                     
+<                     new DateTimeFormatterBuilder()
+<                     .append(decimalPoint)
+<                     .appendFractionOfHour(1, 9)
+<                     .toParser(),
+<                     null
+<                 })
+<                 .toFormatter();
+<         }
+<         return tpe;
+---
+>         return Constants.tpe;
+775,787c600
+<         if (dtp == null) {
+<             
+<             
+<             DateTimeParser time = new DateTimeFormatterBuilder()
+<                 .appendLiteral('T')
+<                 .append(timeElementParser())
+<                 .appendOptional(offsetElement().getParser())
+<                 .toParser();
+<             dtp = new DateTimeFormatterBuilder()
+<                 .append(null, new DateTimeParser[] {time, dateOptionalTimeParser().getParser()})
+<                 .toFormatter();
+<         }
+<         return dtp;
+---
+>         return Constants.dtp;
+810,821c623
+<         if (dotp == null) {
+<             DateTimeParser timeOrOffset = new DateTimeFormatterBuilder()
+<                 .appendLiteral('T')
+<                 .appendOptional(timeElementParser().getParser())
+<                 .appendOptional(offsetElement().getParser())
+<                 .toParser();
+<             dotp = new DateTimeFormatterBuilder()
+<                 .append(dateElementParser())
+<                 .appendOptional(timeOrOffset)
+<                 .toFormatter();
+<         }
+<         return dotp;
+---
+>         return Constants.dotp;
+845,855c647
+<         if (ldotp == null) {
+<             DateTimeParser time = new DateTimeFormatterBuilder()
+<                 .appendLiteral('T')
+<                 .append(timeElementParser())
+<                 .toParser();
+<             ldotp = new DateTimeFormatterBuilder()
+<                 .append(dateElementParser())
+<                 .appendOptional(time)
+<                 .toFormatter().withZoneUTC();
+<         }
+<         return ldotp;
+---
+>         return Constants.ldotp;
+879,885c671
+<         if (t == null) {
+<             t = new DateTimeFormatterBuilder()
+<                 .append(hourMinuteSecondFraction())
+<                 .append(offsetElement())
+<                 .toFormatter();
+<         }
+<         return t;
+---
+>         return Constants.t;
+897,903c683
+<         if (tx == null) {
+<             tx = new DateTimeFormatterBuilder()
+<                 .append(hourMinuteSecond())
+<                 .append(offsetElement())
+<                 .toFormatter();
+<         }
+<         return tx;
+---
+>         return Constants.tx;
+916,922c696
+<         if (tt == null) {
+<             tt = new DateTimeFormatterBuilder()
+<                 .append(literalTElement())
+<                 .append(time())
+<                 .toFormatter();
+<         }
+<         return tt;
+---
+>         return Constants.tt;
+935,941c709
+<         if (ttx == null) {
+<             ttx = new DateTimeFormatterBuilder()
+<                 .append(literalTElement())
+<                 .append(timeNoMillis())
+<                 .toFormatter();
+<         }
+<         return ttx;
+---
+>         return Constants.ttx;
+953,959c721
+<         if (dt == null) {
+<             dt = new DateTimeFormatterBuilder()
+<                 .append(date())
+<                 .append(tTime())
+<                 .toFormatter();
+<         }
+<         return dt;
+---
+>         return Constants.dt;
+971,977c733
+<         if (dtx == null) {
+<             dtx = new DateTimeFormatterBuilder()
+<                 .append(date())
+<                 .append(tTimeNoMillis())
+<                 .toFormatter();
+<         }
+<         return dtx;
+---
+>         return Constants.dtx;
+988,994c744
+<         if (od == null) {
+<             od = new DateTimeFormatterBuilder()
+<                 .append(yearElement())
+<                 .append(dayOfYearElement())
+<                 .toFormatter();
+<         }
+<         return od;
+---
+>         return Constants.od;
+1007,1013c757
+<         if (odt == null) {
+<             odt = new DateTimeFormatterBuilder()
+<                 .append(ordinalDate())
+<                 .append(tTime())
+<                 .toFormatter();
+<         }
+<         return odt;
+---
+>         return Constants.odt;
+1026,1032c770
+<         if (odtx == null) {
+<             odtx = new DateTimeFormatterBuilder()
+<                 .append(ordinalDate())
+<                 .append(tTimeNoMillis())
+<                 .toFormatter();
+<         }
+<         return odtx;
+---
+>         return Constants.odtx;
+1042c780
+<         return weekyearWeekDay();
+---
+>         return Constants.wwd;
+1054,1060c792
+<         if (wdt == null) {
+<             wdt = new DateTimeFormatterBuilder()
+<                 .append(weekDate())
+<                 .append(tTime())
+<                 .toFormatter();
+<         }
+<         return wdt;
+---
+>         return Constants.wdt;
+1072,1078c804
+<         if (wdtx == null) {
+<             wdtx = new DateTimeFormatterBuilder()
+<                 .append(weekDate())
+<                 .append(tTimeNoMillis())
+<                 .toFormatter();
+<         }
+<         return wdtx;
+---
+>         return Constants.wdtx;
+1089,1096c815
+<         if (bd == null) {
+<             bd = new DateTimeFormatterBuilder()
+<                 .appendYear(4, 4)
+<                 .appendFixedDecimal(DateTimeFieldType.monthOfYear(), 2)
+<                 .appendFixedDecimal(DateTimeFieldType.dayOfMonth(), 2)
+<                 .toFormatter();
+<         }
+<         return bd;
+---
+>         return Constants.bd;
+1109,1119c828
+<         if (bt == null) {
+<             bt = new DateTimeFormatterBuilder()
+<                 .appendFixedDecimal(DateTimeFieldType.hourOfDay(), 2)
+<                 .appendFixedDecimal(DateTimeFieldType.minuteOfHour(), 2)
+<                 .appendFixedDecimal(DateTimeFieldType.secondOfMinute(), 2)
+<                 .appendLiteral('.')
+<                 .appendFractionOfSecond(3, 9)
+<                 .appendTimeZoneOffset("Z", false, 2, 2)
+<                 .toFormatter();
+<         }
+<         return bt;
+---
+>         return Constants.bt;
+1131,1139c840
+<         if (btx == null) {
+<             btx = new DateTimeFormatterBuilder()
+<                 .appendFixedDecimal(DateTimeFieldType.hourOfDay(), 2)
+<                 .appendFixedDecimal(DateTimeFieldType.minuteOfHour(), 2)
+<                 .appendFixedDecimal(DateTimeFieldType.secondOfMinute(), 2)
+<                 .appendTimeZoneOffset("Z", false, 2, 2)
+<                 .toFormatter();
+<         }
+<         return btx;
+---
+>         return Constants.btx;
+1152,1158c853
+<         if (btt == null) {
+<             btt = new DateTimeFormatterBuilder()
+<                 .append(literalTElement())
+<                 .append(basicTime())
+<                 .toFormatter();
+<         }
+<         return btt;
+---
+>         return Constants.btt;
+1171,1177c866
+<         if (bttx == null) {
+<             bttx = new DateTimeFormatterBuilder()
+<                 .append(literalTElement())
+<                 .append(basicTimeNoMillis())
+<                 .toFormatter();
+<         }
+<         return bttx;
+---
+>         return Constants.bttx;
+1189,1195c878
+<         if (bdt == null) {
+<             bdt = new DateTimeFormatterBuilder()
+<                 .append(basicDate())
+<                 .append(basicTTime())
+<                 .toFormatter();
+<         }
+<         return bdt;
+---
+>         return Constants.bdt;
+1207,1213c890
+<         if (bdtx == null) {
+<             bdtx = new DateTimeFormatterBuilder()
+<                 .append(basicDate())
+<                 .append(basicTTimeNoMillis())
+<                 .toFormatter();
+<         }
+<         return bdtx;
+---
+>         return Constants.bdtx;
+1224,1230c901
+<         if (bod == null) {
+<             bod = new DateTimeFormatterBuilder()
+<                 .appendYear(4, 4)
+<                 .appendFixedDecimal(DateTimeFieldType.dayOfYear(), 3)
+<                 .toFormatter();
+<         }
+<         return bod;
+---
+>         return Constants.bod;
+1243,1249c914
+<         if (bodt == null) {
+<             bodt = new DateTimeFormatterBuilder()
+<                 .append(basicOrdinalDate())
+<                 .append(basicTTime())
+<                 .toFormatter();
+<         }
+<         return bodt;
+---
+>         return Constants.bodt;
+1262,1268c927
+<         if (bodtx == null) {
+<             bodtx = new DateTimeFormatterBuilder()
+<                 .append(basicOrdinalDate())
+<                 .append(basicTTimeNoMillis())
+<                 .toFormatter();
+<         }
+<         return bodtx;
+---
+>         return Constants.bodtx;
+1278,1286c937
+<         if (bwd == null) {
+<             bwd = new DateTimeFormatterBuilder()
+<                 .appendWeekyear(4, 4)
+<                 .appendLiteral('W')
+<                 .appendFixedDecimal(DateTimeFieldType.weekOfWeekyear(), 2)
+<                 .appendFixedDecimal(DateTimeFieldType.dayOfWeek(), 1)
+<                 .toFormatter();
+<         }
+<         return bwd;
+---
+>         return Constants.bwd;
+1298,1304c949
+<         if (bwdt == null) {
+<             bwdt = new DateTimeFormatterBuilder()
+<                 .append(basicWeekDate())
+<                 .append(basicTTime())
+<                 .toFormatter();
+<         }
+<         return bwdt;
+---
+>         return Constants.bwdt;
+1316,1322c961
+<         if (bwdtx == null) {
+<             bwdtx = new DateTimeFormatterBuilder()
+<                 .append(basicWeekDate())
+<                 .append(basicTTimeNoMillis())
+<                 .toFormatter();
+<         }
+<         return bwdtx;
+---
+>         return Constants.bwdtx;
+1332c971
+<         return yearElement();
+---
+>         return Constants.ye;
+1342,1348c981
+<         if (ym == null) {
+<             ym = new DateTimeFormatterBuilder()
+<                 .append(yearElement())
+<                 .append(monthElement())
+<                 .toFormatter();
+<         }
+<         return ym;
+---
+>         return Constants.ym;
+1358,1365c991
+<         if (ymd == null) {
+<             ymd = new DateTimeFormatterBuilder()
+<                 .append(yearElement())
+<                 .append(monthElement())
+<                 .append(dayOfMonthElement())
+<                 .toFormatter();
+<         }
+<         return ymd;
+---
+>         return Constants.ymd;
+1374c1000
+<         return weekyearElement();
+---
+>         return Constants.we;
+1384,1390c1010
+<         if (ww == null) {
+<             ww = new DateTimeFormatterBuilder()
+<                 .append(weekyearElement())
+<                 .append(weekElement())
+<                 .toFormatter();
+<         }
+<         return ww;
+---
+>         return Constants.ww;
+1400,1407c1020
+<         if (wwd == null) {
+<             wwd = new DateTimeFormatterBuilder()
+<                 .append(weekyearElement())
+<                 .append(weekElement())
+<                 .append(dayOfWeekElement())
+<                 .toFormatter();
+<         }
+<         return wwd;
+---
+>         return Constants.wwd;
+1416c1029
+<         return hourElement();
+---
+>         return Constants.hde;
+1426,1432c1039
+<         if (hm == null) {
+<             hm = new DateTimeFormatterBuilder()
+<                 .append(hourElement())
+<                 .append(minuteElement())
+<                 .toFormatter();
+<         }
+<         return hm;
+---
+>         return Constants.hm;
+1442,1449c1049
+<         if (hms == null) {
+<             hms = new DateTimeFormatterBuilder()
+<                 .append(hourElement())
+<                 .append(minuteElement())
+<                 .append(secondElement())
+<                 .toFormatter();
+<         }
+<         return hms;
+---
+>         return Constants.hms;
+1461,1470c1061
+<         if (hmsl == null) {
+<             hmsl = new DateTimeFormatterBuilder()
+<                 .append(hourElement())
+<                 .append(minuteElement())
+<                 .append(secondElement())
+<                 .appendLiteral('.')
+<                 .appendFractionOfSecond(3, 3)
+<                 .toFormatter();
+<         }
+<         return hmsl;
+---
+>         return Constants.hmsl;
+1482,1490c1073
+<         if (hmsf == null) {
+<             hmsf = new DateTimeFormatterBuilder()
+<                 .append(hourElement())
+<                 .append(minuteElement())
+<                 .append(secondElement())
+<                 .append(fractionElement())
+<                 .toFormatter();
+<         }
+<         return hmsf;
+---
+>         return Constants.hmsf;
+1500,1507c1083
+<         if (dh == null) {
+<             dh = new DateTimeFormatterBuilder()
+<                 .append(date())
+<                 .append(literalTElement())
+<                 .append(hour())
+<                 .toFormatter();
+<         }
+<         return dh;
+---
+>         return Constants.dh;
+1517,1524c1093
+<         if (dhm == null) {
+<             dhm = new DateTimeFormatterBuilder()
+<                 .append(date())
+<                 .append(literalTElement())
+<                 .append(hourMinute())
+<                 .toFormatter();
+<         }
+<         return dhm;
+---
+>         return Constants.dhm;
+1535,1542c1104
+<         if (dhms == null) {
+<             dhms = new DateTimeFormatterBuilder()
+<                 .append(date())
+<                 .append(literalTElement())
+<                 .append(hourMinuteSecond())
+<                 .toFormatter();
+<         }
+<         return dhms;
+---
+>         return Constants.dhms;
+1554,1561c1116
+<         if (dhmsl == null) {
+<             dhmsl = new DateTimeFormatterBuilder()
+<                 .append(date())
+<                 .append(literalTElement())
+<                 .append(hourMinuteSecondMillis())
+<                 .toFormatter();
+<         }
+<         return dhmsl;
+---
+>         return Constants.dhmsl;
+1573,1580c1128
+<         if (dhmsf == null) {
+<             dhmsf = new DateTimeFormatterBuilder()
+<                 .append(date())
+<                 .append(literalTElement())
+<                 .append(hourMinuteSecondFraction())
+<                 .toFormatter();
+<         }
+<         return dhmsf;
+---
+>         return Constants.dhmsf;
+1584,1588c1132,1221
+<     private static DateTimeFormatter yearElement() {
+<         if (ye == null) {
+<             ye = new DateTimeFormatterBuilder()
+<                 .appendYear(4, 9)
+<                 .toFormatter();
+---
+>     static final class Constants {
+>         private static final DateTimeFormatter
+>             ye = yearElement(),  
+>             mye = monthElement(), 
+>             dme = dayOfMonthElement(), 
+>             we = weekyearElement(),  
+>             wwe = weekElement(), 
+>             dwe = dayOfWeekElement(), 
+>             dye = dayOfYearElement(), 
+>             hde = hourElement(), 
+>             mhe = minuteElement(), 
+>             sme = secondElement(), 
+>             fse = fractionElement(), 
+>             ze = offsetElement(),  
+>             lte = literalTElement(), 
+>             
+>             
+>             ym = yearMonth(),  
+>             ymd = yearMonthDay(), 
+> 
+>             
+>             ww = weekyearWeek(),  
+>             wwd = weekyearWeekDay(), 
+> 
+>             
+>             hm = hourMinute(),   
+>             hms = hourMinuteSecond(),  
+>             hmsl = hourMinuteSecondMillis(), 
+>             hmsf = hourMinuteSecondFraction(), 
+> 
+>             dh = dateHour(),    
+>             dhm = dateHourMinute(),   
+>             dhms = dateHourMinuteSecond(),  
+>             dhmsl = dateHourMinuteSecondMillis(), 
+>             dhmsf = dateHourMinuteSecondFraction(), 
+> 
+>             
+>             t = time(),  
+>             tx = timeNoMillis(),  
+>             tt = tTime(),  
+>             ttx = tTimeNoMillis(),  
+>             dt = dateTime(), 
+>             dtx = dateTimeNoMillis(), 
+> 
+>             
+>             wdt = weekDateTime(), 
+>             wdtx = weekDateTimeNoMillis(), 
+> 
+>             od = ordinalDate(),  
+>             odt = ordinalDateTime(), 
+>             odtx = ordinalDateTimeNoMillis(), 
+> 
+>             bd = basicDate(),  
+>             bt = basicTime(),  
+>             btx = basicTimeNoMillis(),  
+>             btt = basicTTime(), 
+>             bttx = basicTTimeNoMillis(), 
+>             bdt = basicDateTime(), 
+>             bdtx = basicDateTimeNoMillis(), 
+> 
+>             bod = basicOrdinalDate(),  
+>             bodt = basicOrdinalDateTime(), 
+>             bodtx = basicOrdinalDateTimeNoMillis(), 
+> 
+>             bwd = basicWeekDate(),  
+>             bwdt = basicWeekDateTime(), 
+>             bwdtx = basicWeekDateTimeNoMillis(), 
+> 
+>             dpe = dateElementParser(), 
+>             tpe = timeElementParser(), 
+>             dp = dateParser(),  
+>             ldp = localDateParser(), 
+>             tp = timeParser(),  
+>             ltp = localTimeParser(), 
+>             dtp = dateTimeParser(), 
+>             dotp = dateOptionalTimeParser(), 
+>             ldotp = localDateOptionalTimeParser(); 
+> 
+>         
+>         private static DateTimeFormatter dateParser() {
+>             if (dp == null) {
+>                 DateTimeParser tOffset = new DateTimeFormatterBuilder()
+>                     .appendLiteral('T')
+>                     .append(offsetElement()).toParser();
+>                 return new DateTimeFormatterBuilder()
+>                     .append(dateElementParser())
+>                     .appendOptional(tOffset)
+>                     .toFormatter();
+>             }
+>             return dp;
+1590,1591d1222
+<         return ye;
+<     }
+1593,1598c1224,1228
+<     private static DateTimeFormatter monthElement() {
+<         if (mye == null) {
+<             mye = new DateTimeFormatterBuilder()
+<                 .appendLiteral('-')
+<                 .appendMonthOfYear(2)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter localDateParser() {
+>             if (ldp == null) {
+>                 return dateElementParser().withZoneUTC();
+>             }
+>             return ldp;
+1600,1601d1229
+<         return mye;
+<     }
+1603,1608c1231,1255
+<     private static DateTimeFormatter dayOfMonthElement() {
+<         if (dme == null) {
+<             dme = new DateTimeFormatterBuilder()
+<                 .appendLiteral('-')
+<                 .appendDayOfMonth(2)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter dateElementParser() {
+>             if (dpe == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(null, new DateTimeParser[] {
+>                         new DateTimeFormatterBuilder()
+>                         .append(yearElement())
+>                         .appendOptional
+>                         (new DateTimeFormatterBuilder()
+>                          .append(monthElement())
+>                          .appendOptional(dayOfMonthElement().getParser())
+>                          .toParser())
+>                         .toParser(),
+>                         new DateTimeFormatterBuilder()
+>                         .append(weekyearElement())
+>                         .append(weekElement())
+>                         .appendOptional(dayOfWeekElement().getParser())
+>                         .toParser(),
+>                         new DateTimeFormatterBuilder()
+>                         .append(yearElement())
+>                         .append(dayOfYearElement())
+>                         .toParser()
+>                     })
+>                     .toFormatter();
+>             }
+>             return dpe;
+1610,1611d1256
+<         return dme;
+<     }
+1613,1617c1258,1266
+<     private static DateTimeFormatter weekyearElement() {
+<         if (we == null) {
+<             we = new DateTimeFormatterBuilder()
+<                 .appendWeekyear(4, 9)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter timeParser() {
+>             if (tp == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendOptional(literalTElement().getParser())
+>                     .append(timeElementParser())
+>                     .appendOptional(offsetElement().getParser())
+>                     .toFormatter();
+>             }
+>             return tp;
+1619,1620d1267
+<         return we;
+<     }
+1622,1627c1269,1276
+<     private static DateTimeFormatter weekElement() {
+<         if (wwe == null) {
+<             wwe = new DateTimeFormatterBuilder()
+<                 .appendLiteral("-W")
+<                 .appendWeekOfWeekyear(2)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter localTimeParser() {
+>             if (ltp == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendOptional(literalTElement().getParser())
+>                     .append(timeElementParser())
+>                     .toFormatter().withZoneUTC();
+>             }
+>             return ltp;
+1629,1630d1277
+<         return wwe;
+<     }
+1632,1637c1279,1329
+<     private static DateTimeFormatter dayOfWeekElement() {
+<         if (dwe == null) {
+<             dwe = new DateTimeFormatterBuilder()
+<                 .appendLiteral('-')
+<                 .appendDayOfWeek(1)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter timeElementParser() {
+>             if (tpe == null) {
+>                 
+>                 DateTimeParser decimalPoint = new DateTimeFormatterBuilder()
+>                     .append(null, new DateTimeParser[] {
+>                         new DateTimeFormatterBuilder()
+>                         .appendLiteral('.')
+>                         .toParser(),
+>                         new DateTimeFormatterBuilder()
+>                         .appendLiteral(',')
+>                         .toParser()
+>                     })
+>                     .toParser();
+> 
+>                 return new DateTimeFormatterBuilder()
+>                     
+>                     .append(hourElement())
+>                     .append
+>                     (null, new DateTimeParser[] {
+>                         new DateTimeFormatterBuilder()
+>                         
+>                         .append(minuteElement())
+>                         .append
+>                         (null, new DateTimeParser[] {
+>                             new DateTimeFormatterBuilder()
+>                             
+>                             .append(secondElement())
+>                             
+>                             .appendOptional(new DateTimeFormatterBuilder()
+>                                             .append(decimalPoint)
+>                                             .appendFractionOfSecond(1, 9)
+>                                             .toParser())
+>                             .toParser(),
+>                             
+>                             new DateTimeFormatterBuilder()
+>                             .append(decimalPoint)
+>                             .appendFractionOfMinute(1, 9)
+>                             .toParser(),
+>                             null
+>                         })
+>                         .toParser(),
+>                         
+>                         new DateTimeFormatterBuilder()
+>                         .append(decimalPoint)
+>                         .appendFractionOfHour(1, 9)
+>                         .toParser(),
+>                         null
+>                     })
+>                     .toFormatter();
+>             }
+>             return tpe;
+1639,1640d1330
+<         return dwe;
+<     }
+1642,1647c1332,1345
+<     private static DateTimeFormatter dayOfYearElement() {
+<         if (dye == null) {
+<             dye = new DateTimeFormatterBuilder()
+<                 .appendLiteral('-')
+<                 .appendDayOfYear(3)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter dateTimeParser() {
+>             if (dtp == null) {
+>                 
+>                 
+>                 DateTimeParser time = new DateTimeFormatterBuilder()
+>                     .appendLiteral('T')
+>                     .append(timeElementParser())
+>                     .appendOptional(offsetElement().getParser())
+>                     .toParser();
+>                 return new DateTimeFormatterBuilder()
+>                     .append(null, new DateTimeParser[] {time, dateOptionalTimeParser().getParser()})
+>                     .toFormatter();
+>             }
+>             return dtp;
+1649,1656c1347,1360
+<         return dye;
+<     }
+<     
+<     private static DateTimeFormatter literalTElement() {
+<         if (lte == null) {
+<             lte = new DateTimeFormatterBuilder()
+<                 .appendLiteral('T')
+<                 .toFormatter();
+---
+> 
+>         private static DateTimeFormatter dateOptionalTimeParser() {
+>             if (dotp == null) {
+>                 DateTimeParser timeOrOffset = new DateTimeFormatterBuilder()
+>                     .appendLiteral('T')
+>                     .appendOptional(timeElementParser().getParser())
+>                     .appendOptional(offsetElement().getParser())
+>                     .toParser();
+>                 return new DateTimeFormatterBuilder()
+>                     .append(dateElementParser())
+>                     .appendOptional(timeOrOffset)
+>                     .toFormatter();
+>             }
+>             return dotp;
+1658,1659d1361
+<         return lte;
+<     }
+1661,1665c1363,1374
+<     private static DateTimeFormatter hourElement() {
+<         if (hde == null) {
+<             hde = new DateTimeFormatterBuilder()
+<                 .appendHourOfDay(2)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter localDateOptionalTimeParser() {
+>             if (ldotp == null) {
+>                 DateTimeParser time = new DateTimeFormatterBuilder()
+>                     .appendLiteral('T')
+>                     .append(timeElementParser())
+>                     .toParser();
+>                 return new DateTimeFormatterBuilder()
+>                     .append(dateElementParser())
+>                     .appendOptional(time)
+>                     .toFormatter().withZoneUTC();
+>             }
+>             return ldotp;
+1667,1668d1375
+<         return hde;
+<     }
+1670,1675c1377,1385
+<     private static DateTimeFormatter minuteElement() {
+<         if (mhe == null) {
+<             mhe = new DateTimeFormatterBuilder()
+<                 .appendLiteral(':')
+<                 .appendMinuteOfHour(2)
+<                 .toFormatter();
+---
+>         
+>         private static DateTimeFormatter time() {
+>             if (t == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(hourMinuteSecondFraction())
+>                     .append(offsetElement())
+>                     .toFormatter();
+>             }
+>             return t;
+1677,1678d1386
+<         return mhe;
+<     }
+1680,1685c1388,1395
+<     private static DateTimeFormatter secondElement() {
+<         if (sme == null) {
+<             sme = new DateTimeFormatterBuilder()
+<                 .appendLiteral(':')
+<                 .appendSecondOfMinute(2)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter timeNoMillis() {
+>             if (tx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(hourMinuteSecond())
+>                     .append(offsetElement())
+>                     .toFormatter();
+>             }
+>             return tx;
+1687,1688d1396
+<         return sme;
+<     }
+1690,1697c1398,1405
+<     private static DateTimeFormatter fractionElement() {
+<         if (fse == null) {
+<             fse = new DateTimeFormatterBuilder()
+<                 .appendLiteral('.')
+<                 
+<                 
+<                 .appendFractionOfSecond(3, 9)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter tTime() {
+>             if (tt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(literalTElement())
+>                     .append(time())
+>                     .toFormatter();
+>             }
+>             return tt;
+1699,1700d1406
+<         return fse;
+<     }
+1702,1706c1408,1425
+<     private static DateTimeFormatter offsetElement() {
+<         if (ze == null) {
+<             ze = new DateTimeFormatterBuilder()
+<                 .appendTimeZoneOffset("Z", true, 2, 4)
+<                 .toFormatter();
+---
+>         private static DateTimeFormatter tTimeNoMillis() {
+>             if (ttx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(literalTElement())
+>                     .append(timeNoMillis())
+>                     .toFormatter();
+>             }
+>             return ttx;
+>         }
+> 
+>         private static DateTimeFormatter dateTime() {
+>             if (dt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(date())
+>                     .append(tTime())
+>                     .toFormatter();
+>             }
+>             return dt;
+1708c1427,1899
+<         return ze;
+---
+> 
+>         private static DateTimeFormatter dateTimeNoMillis() {
+>             if (dtx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(date())
+>                     .append(tTimeNoMillis())
+>                     .toFormatter();
+>             }
+>             return dtx;
+>         }
+> 
+>         private static DateTimeFormatter ordinalDate() {
+>             if (od == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(yearElement())
+>                     .append(dayOfYearElement())
+>                     .toFormatter();
+>             }
+>             return od;
+>         }
+> 
+>         private static DateTimeFormatter ordinalDateTime() {
+>             if (odt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(ordinalDate())
+>                     .append(tTime())
+>                     .toFormatter();
+>             }
+>             return odt;
+>         }
+> 
+>         private static DateTimeFormatter ordinalDateTimeNoMillis() {
+>             if (odtx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(ordinalDate())
+>                     .append(tTimeNoMillis())
+>                     .toFormatter();
+>             }
+>             return odtx;
+>         }
+> 
+>         private static DateTimeFormatter weekDateTime() {
+>             if (wdt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(weekDate())
+>                     .append(tTime())
+>                     .toFormatter();
+>             }
+>             return wdt;
+>         }
+> 
+>         private static DateTimeFormatter weekDateTimeNoMillis() {
+>             if (wdtx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(weekDate())
+>                     .append(tTimeNoMillis())
+>                     .toFormatter();
+>             }
+>             return wdtx;
+>         }
+> 
+>         
+>         private static DateTimeFormatter basicDate() {
+>             if (bd == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendYear(4, 4)
+>                     .appendFixedDecimal(DateTimeFieldType.monthOfYear(), 2)
+>                     .appendFixedDecimal(DateTimeFieldType.dayOfMonth(), 2)
+>                     .toFormatter();
+>             }
+>             return bd;
+>         }
+> 
+>         private static DateTimeFormatter basicTime() {
+>             if (bt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendFixedDecimal(DateTimeFieldType.hourOfDay(), 2)
+>                     .appendFixedDecimal(DateTimeFieldType.minuteOfHour(), 2)
+>                     .appendFixedDecimal(DateTimeFieldType.secondOfMinute(), 2)
+>                     .appendLiteral('.')
+>                     .appendFractionOfSecond(3, 9)
+>                     .appendTimeZoneOffset("Z", false, 2, 2)
+>                     .toFormatter();
+>             }
+>             return bt;
+>         }
+> 
+>         private static DateTimeFormatter basicTimeNoMillis() {
+>             if (btx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendFixedDecimal(DateTimeFieldType.hourOfDay(), 2)
+>                     .appendFixedDecimal(DateTimeFieldType.minuteOfHour(), 2)
+>                     .appendFixedDecimal(DateTimeFieldType.secondOfMinute(), 2)
+>                     .appendTimeZoneOffset("Z", false, 2, 2)
+>                     .toFormatter();
+>             }
+>             return btx;
+>         }
+> 
+>         private static DateTimeFormatter basicTTime() {
+>             if (btt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(literalTElement())
+>                     .append(basicTime())
+>                     .toFormatter();
+>             }
+>             return btt;
+>         }
+> 
+>         private static DateTimeFormatter basicTTimeNoMillis() {
+>             if (bttx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(literalTElement())
+>                     .append(basicTimeNoMillis())
+>                     .toFormatter();
+>             }
+>             return bttx;
+>         }
+> 
+>         private static DateTimeFormatter basicDateTime() {
+>             if (bdt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(basicDate())
+>                     .append(basicTTime())
+>                     .toFormatter();
+>             }
+>             return bdt;
+>         }
+> 
+>         private static DateTimeFormatter basicDateTimeNoMillis() {
+>             if (bdtx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(basicDate())
+>                     .append(basicTTimeNoMillis())
+>                     .toFormatter();
+>             }
+>             return bdtx;
+>         }
+> 
+>         private static DateTimeFormatter basicOrdinalDate() {
+>             if (bod == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendYear(4, 4)
+>                     .appendFixedDecimal(DateTimeFieldType.dayOfYear(), 3)
+>                     .toFormatter();
+>             }
+>             return bod;
+>         }
+> 
+>         private static DateTimeFormatter basicOrdinalDateTime() {
+>             if (bodt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(basicOrdinalDate())
+>                     .append(basicTTime())
+>                     .toFormatter();
+>             }
+>             return bodt;
+>         }
+> 
+>         private static DateTimeFormatter basicOrdinalDateTimeNoMillis() {
+>             if (bodtx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(basicOrdinalDate())
+>                     .append(basicTTimeNoMillis())
+>                     .toFormatter();
+>             }
+>             return bodtx;
+>         }
+> 
+>         private static DateTimeFormatter basicWeekDate() {
+>             if (bwd == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendWeekyear(4, 4)
+>                     .appendLiteral('W')
+>                     .appendFixedDecimal(DateTimeFieldType.weekOfWeekyear(), 2)
+>                     .appendFixedDecimal(DateTimeFieldType.dayOfWeek(), 1)
+>                     .toFormatter();
+>             }
+>             return bwd;
+>         }
+> 
+>         private static DateTimeFormatter basicWeekDateTime() {
+>             if (bwdt == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(basicWeekDate())
+>                     .append(basicTTime())
+>                     .toFormatter();
+>             }
+>             return bwdt;
+>         }
+> 
+>         private static DateTimeFormatter basicWeekDateTimeNoMillis() {
+>             if (bwdtx == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(basicWeekDate())
+>                     .append(basicTTimeNoMillis())
+>                     .toFormatter();
+>             }
+>             return bwdtx;
+>         }
+> 
+>         
+>         private static DateTimeFormatter yearMonth() {
+>             if (ym == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(yearElement())
+>                     .append(monthElement())
+>                     .toFormatter();
+>             }
+>             return ym;
+>         }
+> 
+>         private static DateTimeFormatter yearMonthDay() {
+>             if (ymd == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(yearElement())
+>                     .append(monthElement())
+>                     .append(dayOfMonthElement())
+>                     .toFormatter();
+>             }
+>             return ymd;
+>         }
+> 
+>         private static DateTimeFormatter weekyearWeek() {
+>             if (ww == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(weekyearElement())
+>                     .append(weekElement())
+>                     .toFormatter();
+>             }
+>             return ww;
+>         }
+> 
+>         private static DateTimeFormatter weekyearWeekDay() {
+>             if (wwd == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(weekyearElement())
+>                     .append(weekElement())
+>                     .append(dayOfWeekElement())
+>                     .toFormatter();
+>             }
+>             return wwd;
+>         }
+> 
+>         private static DateTimeFormatter hourMinute() {
+>             if (hm == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(hourElement())
+>                     .append(minuteElement())
+>                     .toFormatter();
+>             }
+>             return hm;
+>         }
+> 
+>         private static DateTimeFormatter hourMinuteSecond() {
+>             if (hms == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(hourElement())
+>                     .append(minuteElement())
+>                     .append(secondElement())
+>                     .toFormatter();
+>             }
+>             return hms;
+>         }
+> 
+>         private static DateTimeFormatter hourMinuteSecondMillis() {
+>             if (hmsl == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(hourElement())
+>                     .append(minuteElement())
+>                     .append(secondElement())
+>                     .appendLiteral('.')
+>                     .appendFractionOfSecond(3, 3)
+>                     .toFormatter();
+>             }
+>             return hmsl;
+>         }
+> 
+>         private static DateTimeFormatter hourMinuteSecondFraction() {
+>             if (hmsf == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(hourElement())
+>                     .append(minuteElement())
+>                     .append(secondElement())
+>                     .append(fractionElement())
+>                     .toFormatter();
+>             }
+>             return hmsf;
+>         }
+> 
+>         private static DateTimeFormatter dateHour() {
+>             if (dh == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(date())
+>                     .append(literalTElement())
+>                     .append(hour())
+>                     .toFormatter();
+>             }
+>             return dh;
+>         }
+> 
+>         private static DateTimeFormatter dateHourMinute() {
+>             if (dhm == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(date())
+>                     .append(literalTElement())
+>                     .append(hourMinute())
+>                     .toFormatter();
+>             }
+>             return dhm;
+>         }
+> 
+>         private static DateTimeFormatter dateHourMinuteSecond() {
+>             if (dhms == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(date())
+>                     .append(literalTElement())
+>                     .append(hourMinuteSecond())
+>                     .toFormatter();
+>             }
+>             return dhms;
+>         }
+> 
+>         private static DateTimeFormatter dateHourMinuteSecondMillis() {
+>             if (dhmsl == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(date())
+>                     .append(literalTElement())
+>                     .append(hourMinuteSecondMillis())
+>                     .toFormatter();
+>             }
+>             return dhmsl;
+>         }
+> 
+>         private static DateTimeFormatter dateHourMinuteSecondFraction() {
+>             if (dhmsf == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .append(date())
+>                     .append(literalTElement())
+>                     .append(hourMinuteSecondFraction())
+>                     .toFormatter();
+>             }
+>             return dhmsf;
+>         }
+> 
+>         
+>         private static DateTimeFormatter yearElement() {
+>             if (ye == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendYear(4, 9)
+>                     .toFormatter();
+>             }
+>             return ye;
+>         }
+>     
+>         private static DateTimeFormatter monthElement() {
+>             if (mye == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral('-')
+>                     .appendMonthOfYear(2)
+>                     .toFormatter();
+>             }
+>             return mye;
+>         }
+>     
+>         private static DateTimeFormatter dayOfMonthElement() {
+>             if (dme == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral('-')
+>                     .appendDayOfMonth(2)
+>                     .toFormatter();
+>             }
+>             return dme;
+>         }
+>     
+>         private static DateTimeFormatter weekyearElement() {
+>             if (we == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendWeekyear(4, 9)
+>                     .toFormatter();
+>             }
+>             return we;
+>         }
+>     
+>         private static DateTimeFormatter weekElement() {
+>             if (wwe == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral("-W")
+>                     .appendWeekOfWeekyear(2)
+>                     .toFormatter();
+>             }
+>             return wwe;
+>         }
+>     
+>         private static DateTimeFormatter dayOfWeekElement() {
+>             if (dwe == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral('-')
+>                     .appendDayOfWeek(1)
+>                     .toFormatter();
+>             }
+>             return dwe;
+>         }
+>     
+>         private static DateTimeFormatter dayOfYearElement() {
+>             if (dye == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral('-')
+>                     .appendDayOfYear(3)
+>                     .toFormatter();
+>             }
+>             return dye;
+>         }
+>         
+>         private static DateTimeFormatter literalTElement() {
+>             if (lte == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral('T')
+>                     .toFormatter();
+>             }
+>             return lte;
+>         }
+>     
+>         private static DateTimeFormatter hourElement() {
+>             if (hde == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendHourOfDay(2)
+>                     .toFormatter();
+>             }
+>             return hde;
+>         }
+>     
+>         private static DateTimeFormatter minuteElement() {
+>             if (mhe == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral(':')
+>                     .appendMinuteOfHour(2)
+>                     .toFormatter();
+>             }
+>             return mhe;
+>         }
+>     
+>         private static DateTimeFormatter secondElement() {
+>             if (sme == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral(':')
+>                     .appendSecondOfMinute(2)
+>                     .toFormatter();
+>             }
+>             return sme;
+>         }
+>     
+>         private static DateTimeFormatter fractionElement() {
+>             if (fse == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendLiteral('.')
+>                     
+>                     
+>                     .appendFractionOfSecond(3, 9)
+>                     .toFormatter();
+>             }
+>             return fse;
+>         }
+>     
+>         private static DateTimeFormatter offsetElement() {
+>             if (ze == null) {
+>                 return new DateTimeFormatterBuilder()
+>                     .appendTimeZoneOffset("Z", true, 2, 4)
+>                     .toFormatter();
+>             }
+>             return ze;
+>         }
+> 

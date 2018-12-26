@@ -1,0 +1,1565 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang.text;
+
+import java.util.Collection;
+import java.util.Iterator;
+
+import org.apache.commons.lang.ArrayUtils;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class StrBuilder implements Cloneable {
+
+    
+
+
+    static final int CAPACITY = 32;
+
+    
+    private static final long serialVersionUID = 7628716375283629643L;
+
+    
+    protected char[] buf;
+    
+    protected int size;
+    
+    private String nullText;
+
+    
+    
+
+
+    public StrBuilder() {
+        this(CAPACITY);
+    }
+
+    
+
+
+
+
+    public StrBuilder(int initialCapacity) {
+        super();
+        if (initialCapacity <= 0) {
+            initialCapacity = CAPACITY;
+        }
+        buf = new char[initialCapacity];
+    }
+
+    
+
+
+
+
+
+    public StrBuilder(String str) {
+        super();
+        if (str == null) {
+            buf = new char[32];
+        } else {
+            buf = new char[str.length() + 32];
+            append(str);
+        }
+    }
+
+    
+    
+
+
+
+
+    public String getNullText() {
+        return nullText;
+    }
+
+    
+
+
+
+
+    public void setNullText(String str) {
+        if (str != null && str.length() == 0) {
+            str = null;
+        }
+        nullText = str;
+    }
+
+    
+    
+
+
+
+
+    public int length() {
+        return size;
+    }
+
+    
+
+
+
+
+
+
+    public void setLength(int length) {
+        if (length < 0) {
+            throw new StringIndexOutOfBoundsException(length);
+        }
+        if (length == size) {
+            
+        } else if (length < size) {
+            size = length;
+        } else {
+            ensureCapacity(length);
+            int oldEnd = size;
+            int newEnd = length;
+            size = length;
+            for (int i = oldEnd; i < newEnd; i++) {
+                buf[i] = '\0';
+            }
+        }
+    }
+
+    
+    
+
+
+
+
+    public int capacity() {
+        return buf.length;
+    }
+
+    
+
+
+
+
+    public void ensureCapacity(int capacity) {
+        if (capacity > buf.length) {
+            char[] old = buf;
+            buf = new char[capacity];
+            System.arraycopy(old, 0, buf, 0, size);
+        }
+    }
+
+    
+
+
+    public void minimizeCapacity() {
+        if (buf.length > length()) {
+            char[] old = buf;
+            buf = new char[length()];
+            System.arraycopy(old, 0, buf, 0, size);
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public int size() {
+        return size;
+    }
+
+    
+
+
+
+
+
+
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void clear() {
+        size = 0;
+    }
+
+    
+    
+
+
+
+
+
+
+    public char charAt(int index) {
+        if (index < 0 || index >= length()) {
+            throw new StringIndexOutOfBoundsException(index);
+        }
+        return buf[index];
+    }
+
+    
+
+
+
+
+
+
+    public void setCharAt(int index, char ch) {
+        if (index < 0 || index >= length()) {
+            throw new StringIndexOutOfBoundsException(index);
+        }
+        buf[index] = ch;
+    }
+
+    
+    
+
+
+
+
+    public char[] toCharArray() {
+        if (size == 0) {
+            return ArrayUtils.EMPTY_CHAR_ARRAY;
+        }
+        char chars[] = new char[size];
+        System.arraycopy(buf, 0, chars, 0, size);
+        return chars;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public char[] toCharArray(int startIndex, int endIndex) {
+        endIndex = validateRange(startIndex, endIndex);
+        int len = endIndex - startIndex;
+        if (len == 0) {
+            return ArrayUtils.EMPTY_CHAR_ARRAY;
+        }
+        char chars[] = new char[len];
+        System.arraycopy(buf, startIndex, chars, 0, len);
+        return chars;
+    }
+
+    
+
+
+
+
+
+    public char[] getChars(char[] destination) {
+        int len = length();
+        if (destination == null || destination.length < len) {
+            destination = new char[len];
+        }
+        System.arraycopy(buf, 0, destination, 0, len);
+        return destination;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void getChars(int startIndex, int endIndex, char destination[], int destinationIndex) {
+        if (startIndex < 0) {
+            throw new StringIndexOutOfBoundsException(startIndex);
+        }
+        if (endIndex < 0 || endIndex > length()) {
+            throw new StringIndexOutOfBoundsException(endIndex);
+        }
+        if (startIndex > endIndex) {
+            throw new StringIndexOutOfBoundsException("end < start");
+        }
+        System.arraycopy(buf, startIndex, destination, destinationIndex, endIndex - startIndex);
+    }
+
+    
+    
+
+
+
+
+    public StrBuilder appendNull() {
+        if (nullText == null)  {
+            return this;
+        }
+        return append(nullText);
+    }
+
+    
+
+
+
+
+
+
+    public StrBuilder append(Object obj) {
+        if (obj == null) {
+            return appendNull();
+        } 
+        return append(obj.toString());        
+    }
+
+    
+
+
+
+
+
+
+    public StrBuilder append(String str) {
+        if (str == null) {
+            return appendNull();
+        }
+        int strLen = str.length();
+        if (strLen > 0) {
+            int len = length();
+            ensureCapacity(len + strLen);
+            str.getChars(0, strLen, buf, len);
+            size += strLen;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+    public StrBuilder append(StringBuffer str) {
+        if (str == null) {
+            return appendNull();
+        }
+        int strLen = str.length();
+        if (strLen > 0) {
+            int len = length();
+            ensureCapacity(len + strLen);
+            str.getChars(0, strLen, buf, len);
+            size += strLen;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+    public StrBuilder append(StrBuilder str) {
+        if (str == null) {
+            return appendNull();
+        }
+        int strLen = str.length();
+        if (strLen > 0) {
+            int len = length();
+            ensureCapacity(len + strLen);
+            System.arraycopy(str.buf, 0, buf, len, strLen);
+            size += strLen;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public StrBuilder append(char[] chars) {
+        if (chars == null) {
+            return this;
+        }
+        int strLen = chars.length;
+        if (strLen > 0) {
+            int len = length();
+            ensureCapacity(len + strLen);
+            System.arraycopy(chars, 0, buf, len, strLen);
+            size += strLen;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public StrBuilder append(char[] chars, int startIndex, int length) {
+        if (chars == null) {
+            return this;
+        }
+        if (startIndex < 0 || startIndex > chars.length) {
+            throw new StringIndexOutOfBoundsException("startIndex must be valid");
+        }
+        if (length < 0) {
+            throw new StringIndexOutOfBoundsException("length must not be negative");
+        }
+        if (length > 0) {
+            int len = length();
+            ensureCapacity(len + length);
+            System.arraycopy(chars, startIndex, buf, len, length);
+            size += length;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+    public StrBuilder append(boolean value) {
+        if (value) {
+            ensureCapacity(size + 4);
+            buf[size++] = 't';
+            buf[size++] = 'r';
+            buf[size++] = 'u';
+            buf[size++] = 'e';
+        } else {
+            ensureCapacity(size + 5);
+            buf[size++] = 'f';
+            buf[size++] = 'a';
+            buf[size++] = 'l';
+            buf[size++] = 's';
+            buf[size++] = 'e';
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+    public StrBuilder append(char ch) {
+        int len = length();
+        ensureCapacity(len + 1);
+        buf[size++] = ch;
+        return this;
+    }
+
+    
+
+
+
+
+
+    public StrBuilder append(int value) {
+        return append(String.valueOf(value));
+    }
+
+    
+
+
+
+
+
+    public StrBuilder append(long value) {
+        return append(String.valueOf(value));
+    }
+
+    
+
+
+
+
+
+    public StrBuilder append(float value) {
+        return append(String.valueOf(value));
+    }
+
+    
+
+
+
+
+
+    public StrBuilder append(double value) {
+        return append(String.valueOf(value));
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public StrBuilder appendWithSeparators(Object[] array, String separator) {
+        if (array != null && array.length > 0) {
+            separator = (separator == null ? "" : separator);
+            append(array[0]);
+            for (int i = 1; i < array.length; i++) {
+                append(separator);
+                append(array[i]);
+            }
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public StrBuilder appendWithSeparators(Collection coll, String separator) {
+        if (coll != null && coll.size() > 0) {
+            separator = (separator == null ? "" : separator);
+            Iterator it = coll.iterator();
+            while (it.hasNext()) {
+                append(it.next());
+                if (it.hasNext()) {
+                    append(separator);
+                }
+            }
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public StrBuilder appendWithSeparators(Iterator it, String separator) {
+        if (it != null) {
+            separator = (separator == null ? "" : separator);
+            while (it.hasNext()) {
+                append(it.next());
+                if (it.hasNext()) {
+                    append(separator);
+                }
+            }
+        }
+        return this;
+    }
+
+    
+    
+
+
+
+
+
+
+    public StrBuilder appendPadding(int length, char padChar) {
+        if (length >= 0) {
+            ensureCapacity(size + length);
+            for (int i = 0; i < length; i++) {
+                buf[size++] = padChar;
+            }
+        }
+        return this;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public StrBuilder appendFixedWidthPadLeft(Object obj, int width, char padChar) {
+        if (width > 0) {
+            ensureCapacity(size + width);
+            String str = (obj == null ? getNullText() : obj.toString());
+            int strLen = str.length();
+            if (strLen >= width) {
+                str.getChars(strLen - width, strLen, buf, size);
+            } else {
+                int padLen = width - strLen;
+                for (int i = 0; i < padLen; i++) {
+                    buf[size + i] = padChar;
+                }
+                str.getChars(0, strLen, buf, size + padLen);
+            }
+            size += width;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public StrBuilder appendFixedWidthPadLeft(int value, int width, char padChar) {
+        return appendFixedWidthPadLeft(String.valueOf(value), width, padChar);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public StrBuilder appendFixedWidthPadRight(Object obj, int width, char padChar) {
+        if (width > 0) {
+            ensureCapacity(size + width);
+            String str = (obj == null ? getNullText() : obj.toString());
+            int strLen = str.length();
+            if (strLen >= width) {
+                str.getChars(0, strLen, buf, size);
+            } else {
+                int padLen = width - strLen;
+                str.getChars(0, strLen, buf, size);
+                for (int i = 0; i < padLen; i++) {
+                    buf[size + strLen + i] = padChar;
+                }
+            }
+            size += width;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public StrBuilder appendFixedWidthPadRight(int value, int width, char padChar) {
+        return appendFixedWidthPadRight(String.valueOf(value), width, padChar);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, Object obj) {
+        if (obj == null) {
+            return insert(index, nullText);
+        }
+        return insert(index, obj.toString());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, String str) {
+        validateIndex(index);
+        if (str == null) {
+            str = nullText;
+        }
+        int strLen = (str == null ? 0 : str.length());
+        if (strLen > 0) {
+            int newSize = size + strLen;
+            ensureCapacity(newSize);
+            System.arraycopy(buf, index, buf, index + strLen, size - index);
+            size = newSize;
+            str.getChars(0, strLen, buf, index);
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, char chars[]) {
+        validateIndex(index);
+        if (chars == null) {
+            return this;
+        }
+        int len = chars.length;
+        if (len > 0) {
+            ensureCapacity(size + len);
+            System.arraycopy(buf, index, buf, index + len, size - index);
+            System.arraycopy(chars, 0, buf, index, len);
+            size += len;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, char chars[], int offset, int length) {
+        validateIndex(index);
+        if (chars == null) {
+            return this;
+        }
+        if (offset < 0 || offset > chars.length) {
+            throw new StringIndexOutOfBoundsException("Invalid offset: " + offset);
+        }
+        if (length < 0 || offset + length > chars.length) {
+            throw new StringIndexOutOfBoundsException("Invalid length: " + length);
+        }
+        if (length > 0) {
+            ensureCapacity(size + length);
+            System.arraycopy(buf, index, buf, index + length, size - index);
+            System.arraycopy(chars, offset, buf, index, length);
+            size += length;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, boolean value) {
+        validateIndex(index);
+        if (value) {
+            ensureCapacity(size + 4);
+            System.arraycopy(buf, index, buf, index + 4, size - index);
+            buf[index++] = 't';
+            buf[index++] = 'r';
+            buf[index++] = 'u';
+            buf[index] = 'e';
+            size += 4;
+        } else {
+            ensureCapacity(size + 5);
+            System.arraycopy(buf, index, buf, index + 5, size - index);
+            buf[index++] = 'f';
+            buf[index++] = 'a';
+            buf[index++] = 'l';
+            buf[index++] = 's';
+            buf[index] = 'e';
+            size += 5;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, char value) {
+        validateIndex(index);
+        ensureCapacity(size + 1);
+        System.arraycopy(buf, index, buf, index + 1, size - index);
+        buf[index] = value;
+        size++;
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, int value) {
+        return insert(index, String.valueOf(value));
+    }
+
+    
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, long value) {
+        return insert(index, String.valueOf(value));
+    }
+
+    
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, float value) {
+        return insert(index, String.valueOf(value));
+    }
+
+    
+
+
+
+
+
+
+
+    public StrBuilder insert(int index, double value) {
+        return insert(index, String.valueOf(value));
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public StrBuilder delete(int startIndex, int endIndex) {
+        endIndex = validateRange(startIndex, endIndex);
+        int len = endIndex - startIndex;
+        if (len > 0) {
+            System.arraycopy(buf, endIndex, buf, startIndex, size - endIndex);
+            size -= len;
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+    public StrBuilder deleteCharAt(int index) {
+        if (index < 0 || index >= size) {
+            throw new StringIndexOutOfBoundsException(index);
+        }
+        System.arraycopy(buf, index + 1, buf, index, size - index - 1);
+        size--;
+        return this;
+    }
+
+    
+
+
+
+
+
+    public StrBuilder delete(char ch) {
+        for (int i = 0; i < size; i++) {
+            if (buf[i] == ch) {
+                int start = i;
+                while (++i < size) {
+                    if (buf[i] != ch) {
+                        break;
+                    }
+                }
+                System.arraycopy(buf, i, buf, start, size - i);
+                size -= (i - start);
+            }
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+    public StrBuilder delete(String str) {
+        int len = (str == null ? 0 : str.length());
+        if (len > 0) {
+            int index = indexOf(str, 0);
+            while (index >= 0) {
+                delete(index, index + len);
+                index = indexOf(str, index);
+            }
+        }
+        return this;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public StrBuilder replace(int startIndex, int endIndex, String str) {
+        endIndex = validateRange(startIndex, endIndex);
+        int insertLen = str.length();
+        int removeLen = endIndex - startIndex;
+        int newSize = size - removeLen + insertLen;
+        if (insertLen > removeLen) {
+            ensureCapacity(newSize);
+        }
+        if (insertLen != removeLen) {
+            System.arraycopy(buf, endIndex, buf, startIndex + insertLen, size - endIndex);
+            size = newSize;
+        }
+        str.getChars(0, insertLen, buf, startIndex);
+        return this;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public StrBuilder replace(int startIndex, int endIndex, StrBuilder builder) {
+        endIndex = validateRange(startIndex, endIndex);
+        int insertLen = builder.length();
+        int removeLen = endIndex = startIndex;
+        if (insertLen > removeLen) {
+            ensureCapacity(size - removeLen + insertLen);
+        }
+        if (insertLen != removeLen) {
+            System.arraycopy(buf, endIndex, buf, startIndex + insertLen, size - endIndex);
+        }
+        builder.getChars(0, insertLen, buf, startIndex);
+        return this;
+    }
+
+    
+
+
+
+
+
+
+    public StrBuilder replace(char search, char replace) {
+        if (search != replace) {
+            for (int i = 0; i < size; i++) {
+                if (buf[i] == search) {
+                    buf[i] = replace;
+                }
+            }
+        }
+        return this;
+    }
+
+    
+
+
+
+
+
+
+    public StrBuilder replace(String searchStr, String replaceStr) {
+        int searchLen = (searchStr == null ? 0 : searchStr.length());
+        if (searchLen > 0) {
+            replaceStr = (replaceStr == null ? "" : replaceStr);
+            int index = indexOf(searchStr, 0);
+            while (index >= 0) {
+                replace(index, index + searchLen, replaceStr);
+                index = indexOf(searchStr, index);
+            }
+        }
+        return this;
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public boolean startsWith(String str) {
+        if (str == null) {
+            return false;
+        }
+        int len = str.length();
+        if (len == 0) {
+            return true;
+        }
+        if (len > size) {
+            return false;
+        }
+        for (int i = 0; i < len; i++) {
+            if (buf[i] != str.charAt(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    
+
+
+
+
+
+
+
+    public boolean endsWith(String str) {
+        if (str == null) {
+            return false;
+        }
+        int len = str.length();
+        if (len == 0) {
+            return true;
+        }
+        if (len > size) {
+            return false;
+        }
+        int pos = size - len;
+        for (int i = 0; i < len; i++,pos++) {
+            if (buf[pos] != str.charAt(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    
+    
+
+
+
+
+
+
+    public String substring(int start) {
+        return substring(start, size);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public String substring(int startIndex, int endIndex) {
+        endIndex = validateRange(startIndex, endIndex);
+        return new String(buf, startIndex, endIndex - startIndex);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public String leftString(int length) {
+        if (length <= 0) {
+            return "";
+        } else if (length >= size) {
+            return new String(buf, 0, size);
+        } else {
+            return new String(buf, 0, length);
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public String rightString(int length) {
+        if (length <= 0) {
+            return "";
+        } else if (length >= size) {
+            return new String(buf, 0, size);
+        } else {
+            return new String(buf, size - length, size);
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public String midString(int index, int length) {
+        if (index < 0) {
+            index = 0;
+        }
+        if (length <= 0 || index >= size) {
+            return "";
+        }
+        if (size <= index + length) {
+            return new String(buf, index, size - index);
+        } else {
+            return new String(buf, index, length);
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public boolean contains(char ch) {
+        char[] thisBuf = buf;
+        for (int i = 0; i < thisBuf.length; i++) {
+            if (thisBuf[i] == ch) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+
+    public boolean contains(String str) {
+        return indexOf(str, 0) >= 0;
+    }
+
+    
+    
+
+
+
+
+
+    public int indexOf(char ch) {
+        return indexOf(ch, 0);
+    }
+
+    
+
+
+
+
+
+
+    public int indexOf(char ch, int startIndex) {
+        startIndex = (startIndex < 0 ? 0 : startIndex);
+        if (startIndex >= size) {
+            return -1;
+        }
+        char[] thisBuf = buf;
+        for (int i = startIndex; i < thisBuf.length; i++) {
+            if (thisBuf[i] == ch) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    
+
+
+
+
+
+
+
+    public int indexOf(String str) {
+        return indexOf(str, 0);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public int indexOf(String str, int startIndex) {
+        startIndex = (startIndex < 0 ? 0 : startIndex);
+        if (startIndex >= size) {
+            return -1;
+        }
+        int strLen = (str == null ? 0 : str.length());
+        if (strLen > 0 && strLen <= size) {
+            if (strLen == 1) {
+                return indexOf(str.charAt(0), startIndex);
+            }
+            char[] thisBuf = buf;
+            outer:
+            for (int i = startIndex; i < thisBuf.length - strLen; i++) {
+                for (int j = 0; j < strLen; j++) {
+                    if (str.charAt(j) != thisBuf[i + j]) {
+                        continue outer;
+                    }
+                }
+                return i;
+            }
+            
+        } else if (strLen == 0) {
+            return 0;
+        }
+        return -1;
+    }
+
+    
+    
+
+
+
+
+
+    public int lastIndexOf(char ch) {
+        return lastIndexOf(ch, 0);
+    }
+
+    
+
+
+
+
+
+
+    public int lastIndexOf(char ch, int startIndex) {
+        startIndex = (startIndex >= size ? size - 1 : startIndex);
+        if (startIndex < 0) {
+            return -1;
+        }
+        char[] thisBuf = buf;
+        for (int i = startIndex; i >= 0; i--) {
+            if (thisBuf[i] == ch) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    
+
+
+
+
+
+
+
+    public int lastIndexOf(String str) {
+        return lastIndexOf(str, size);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public int lastIndexOf(String str, int startIndex) {
+        startIndex = (startIndex >= size ? size - 1 : startIndex);
+        if (startIndex < 0) {
+            return -1;
+        }
+        int strLen = (str == null ? 0 : str.length());
+        if (strLen > 0 && strLen <= size) {
+            if (strLen == 1) {
+                return lastIndexOf(str.charAt(0), startIndex);
+            }
+            char[] thisBuf = buf;
+            outer:
+            for (int i = startIndex - strLen; i >= 0; i--) {
+                for (int j = 0; j < strLen; j++) {
+                    if (str.charAt(j) != thisBuf[i + j]) {
+                        continue outer;
+                    }
+                }
+                return i;
+            }
+            
+        } else if (strLen == 0) {
+            return startIndex;
+        }
+        return -1;
+    }
+
+    
+
+
+
+
+    public StrBuilder reverse() {
+        if (size == 0) {
+            return this;
+        }
+        
+        int half = size / 2;
+        for (int leftIdx = 0, rightIdx = size - 1; leftIdx < half; leftIdx++,rightIdx--) {
+            char swap = buf[leftIdx];
+            buf[leftIdx] = buf[rightIdx];
+            buf[rightIdx] = swap;
+        }
+        return this;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+    public String toString() {
+        return new String(buf, 0, size);
+    }
+
+    
+
+
+
+
+
+    public StringBuffer toStringBuffer() {
+        return new StringBuffer(size).append(buf, 0, size);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    protected int validateRange(int startIndex, int endIndex) {
+        if (startIndex < 0) {
+            throw new StringIndexOutOfBoundsException(startIndex);
+        }
+        if (endIndex > size) {
+            endIndex = size;
+        }
+        if (startIndex > endIndex) {
+            throw new StringIndexOutOfBoundsException("end < start");
+        }
+        return endIndex;
+    }
+
+    
+
+
+
+
+
+    protected void validateIndex(int index) {
+        if (index < 0 || index > size) {
+            throw new StringIndexOutOfBoundsException(index);
+        }
+    }
+
+}

@@ -1,0 +1,754 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.format;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Locale;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.MutableDateTime;
+import org.joda.time.ReadWritableInstant;
+import org.joda.time.ReadableInstant;
+import org.joda.time.ReadablePartial;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class DateTimeFormatter {
+
+    
+    private final DateTimePrinter iPrinter;
+    
+    private final DateTimeParser iParser;
+    
+    private final Locale iLocale;
+    
+    private final boolean iOffsetParsed;
+    
+    private final Chronology iChrono;
+    
+    private final DateTimeZone iZone;
+    
+    private final Integer iPivotYear;
+
+    
+
+
+
+
+
+
+    public DateTimeFormatter(
+            DateTimePrinter printer, DateTimeParser parser) {
+        super();
+        iPrinter = printer;
+        iParser = parser;
+        iLocale = null;
+        iOffsetParsed = false;
+        iChrono = null;
+        iZone = null;
+        iPivotYear = null;
+    }
+
+    
+
+
+    private DateTimeFormatter(
+            DateTimePrinter printer, DateTimeParser parser,
+            Locale locale, boolean offsetParsed,
+            Chronology chrono, DateTimeZone zone,
+            Integer pivotYear) {
+        super();
+        iPrinter = printer;
+        iParser = parser;
+        iLocale = locale;
+        iOffsetParsed = offsetParsed;
+        iChrono = chrono;
+        iZone = zone;
+        iPivotYear = pivotYear;
+    }
+
+    
+    
+
+
+
+
+    public boolean isPrinter() {
+        return (iPrinter != null);
+    }
+
+    
+
+
+
+
+    public DateTimePrinter getPrinter() {
+        return iPrinter;
+    }
+
+    
+
+
+
+
+    public boolean isParser() {
+        return (iParser != null);
+    }
+
+    
+
+
+
+
+    public DateTimeParser getParser() {
+        return iParser;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public DateTimeFormatter withLocale(Locale locale) {
+        if (locale == getLocale() || (locale != null && locale.equals(getLocale()))) {
+            return this;
+        }
+        return new DateTimeFormatter(iPrinter, iParser, locale,
+                iOffsetParsed, iChrono, iZone, iPivotYear);
+    }
+
+    
+
+
+
+
+    public Locale getLocale() {
+        return iLocale;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeFormatter withOffsetParsed() {
+        if (iOffsetParsed == true) {
+            return this;
+        }
+        return new DateTimeFormatter(iPrinter, iParser, iLocale,
+                true, iChrono, null, iPivotYear);
+    }
+
+    
+
+
+
+
+
+    public boolean isOffsetParsed() {
+        return iOffsetParsed;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeFormatter withChronology(Chronology chrono) {
+        if (iChrono == chrono) {
+            return this;
+        }
+        return new DateTimeFormatter(iPrinter, iParser, iLocale,
+                iOffsetParsed, chrono, iZone, iPivotYear);
+    }
+
+    
+
+
+
+
+    public Chronology getChronolgy() {
+        return iChrono;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeFormatter withZone(DateTimeZone zone) {
+        if (iZone == zone) {
+            return this;
+        }
+        return new DateTimeFormatter(iPrinter, iParser, iLocale,
+                false, iChrono, zone, iPivotYear);
+    }
+
+    
+
+
+
+
+    public DateTimeZone getZone() {
+        return iZone;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeFormatter withPivotYear(Integer pivotYear) {
+        if (iPivotYear == pivotYear || (iPivotYear != null && iPivotYear.equals(pivotYear))) {
+            return this;
+        }
+        return new DateTimeFormatter(iPrinter, iParser, iLocale,
+                iOffsetParsed, iChrono, iZone, pivotYear);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTimeFormatter withPivotYear(int pivotYear) {
+        return withPivotYear(new Integer(pivotYear));
+    }
+
+    
+
+
+
+
+
+    public Integer getPivotYear() {
+      return iPivotYear;
+    }
+
+    
+    
+
+
+
+
+
+    public void printTo(StringBuffer buf, ReadableInstant instant) {
+        checkPrinter();
+        
+        long millis = DateTimeUtils.getInstantMillis(instant);
+        Chronology chrono = DateTimeUtils.getInstantChronology(instant);
+        printTo(buf, millis, chrono);
+    }
+
+    
+
+
+
+
+
+    public void printTo(Writer out, ReadableInstant instant) throws IOException {
+        checkPrinter();
+        
+        long millis = DateTimeUtils.getInstantMillis(instant);
+        Chronology chrono = DateTimeUtils.getInstantChronology(instant);
+        printTo(out, millis, chrono);
+    }
+
+    
+    
+
+
+
+
+
+
+    public void printTo(StringBuffer buf, long instant) {
+        checkPrinter();
+        
+        printTo(buf, instant, null);
+    }
+
+    
+
+
+
+
+
+
+    public void printTo(Writer out, long instant) throws IOException {
+        checkPrinter();
+        
+        printTo(out, instant, null);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public void printTo(StringBuffer buf, ReadablePartial partial) {
+        checkPrinter();
+        if (partial == null) {
+            throw new IllegalArgumentException("The partial must not be null");
+        }
+        
+        iPrinter.printTo(buf, partial, iLocale);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void printTo(Writer out, ReadablePartial partial) throws IOException {
+        checkPrinter();
+        if (partial == null) {
+            throw new IllegalArgumentException("The partial must not be null");
+        }
+        
+        iPrinter.printTo(out, partial, iLocale);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public String print(ReadableInstant instant) {
+        checkPrinter();
+        
+        StringBuffer buf = new StringBuffer(iPrinter.estimatePrintedLength());
+        printTo(buf, instant);
+        return buf.toString();
+    }
+
+    
+
+
+
+
+
+
+
+
+    public String print(long instant) {
+        checkPrinter();
+        
+        StringBuffer buf = new StringBuffer(iPrinter.estimatePrintedLength());
+        printTo(buf, instant);
+        return buf.toString();
+    }
+
+    
+
+
+
+
+
+
+
+
+    public String print(ReadablePartial partial) {
+        checkPrinter();
+        
+        StringBuffer buf = new StringBuffer(iPrinter.estimatePrintedLength());
+        printTo(buf, partial);
+        return buf.toString();
+    }
+
+    private void printTo(StringBuffer buf, long instant, Chronology chrono) {
+        chrono = selectChronology(chrono);
+        
+        
+        DateTimeZone zone = chrono.getZone();
+        int offset = zone.getOffset(instant);
+        long adjustedInstant = instant + offset;
+        if ((instant ^ adjustedInstant) < 0 && (instant ^ offset) >= 0) {
+            
+            zone = DateTimeZone.UTC;
+            offset = 0;
+            adjustedInstant = instant;
+        }
+        iPrinter.printTo(buf, adjustedInstant, chrono.withUTC(), offset, zone, iLocale);
+    }
+
+    private void printTo(Writer buf, long instant, Chronology chrono) throws IOException {
+        chrono = selectChronology(chrono);
+        
+        
+        DateTimeZone zone = chrono.getZone();
+        int offset = zone.getOffset(instant);
+        long adjustedInstant = instant + offset;
+        if ((instant ^ adjustedInstant) < 0 && (instant ^ offset) >= 0) {
+            
+            zone = DateTimeZone.UTC;
+            offset = 0;
+            adjustedInstant = instant;
+        }
+        iPrinter.printTo(buf, adjustedInstant, chrono.withUTC(), offset, zone, iLocale);
+    }
+
+    
+
+
+
+
+    private void checkPrinter() {
+        if (iPrinter == null) {
+            throw new UnsupportedOperationException("Printing not supported");
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int parseInto(ReadWritableInstant instant, String text, int position) {
+        checkParser();
+        if (instant == null) {
+            throw new IllegalArgumentException("Instant must not be null");
+        }
+        
+        long instantMillis = instant.getMillis();
+        Chronology chrono = instant.getChronology();
+        long instantLocal = instantMillis + chrono.getZone().getOffset(instantMillis);
+        chrono = selectChronology(chrono);
+        
+        DateTimeParserBucket bucket = new DateTimeParserBucket
+            (instantLocal, chrono, iLocale, iPivotYear);
+        int newPos = iParser.parseInto(bucket, text, position);
+        instant.setMillis(bucket.computeMillis(false, text));
+        if (iOffsetParsed && bucket.getZone() == null) {
+            int parsedOffset = bucket.getOffset();
+            DateTimeZone parsedZone = DateTimeZone.forOffsetMillis(parsedOffset);
+            chrono = chrono.withZone(parsedZone);
+        }
+        instant.setChronology(chrono);
+        return newPos;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public long parseMillis(String text) {
+        checkParser();
+        
+        Chronology chrono = selectChronology(iChrono);
+        DateTimeParserBucket bucket = new DateTimeParserBucket(0, chrono, iLocale, iPivotYear);
+        int newPos = iParser.parseInto(bucket, text, 0);
+        if (newPos >= 0) {
+            if (newPos >= text.length()) {
+                return bucket.computeMillis(true, text);
+            }
+        } else {
+            newPos = ~newPos;
+        }
+        throw new IllegalArgumentException(FormatUtils.createErrorMessage(text, newPos));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime parseDateTime(String text) {
+        checkParser();
+        
+        Chronology chrono = selectChronology(null);
+        DateTimeParserBucket bucket = new DateTimeParserBucket(0, chrono, iLocale, iPivotYear);
+        int newPos = iParser.parseInto(bucket, text, 0);
+        if (newPos >= 0) {
+            if (newPos >= text.length()) {
+                long millis = bucket.computeMillis(true, text);
+                if (iOffsetParsed && bucket.getZone() == null) {
+                    int parsedOffset = bucket.getOffset();
+                    DateTimeZone parsedZone = DateTimeZone.forOffsetMillis(parsedOffset);
+                    chrono = chrono.withZone(parsedZone);
+                }
+                return new DateTime(millis, chrono);
+            }
+        } else {
+            newPos = ~newPos;
+        }
+        throw new IllegalArgumentException(FormatUtils.createErrorMessage(text, newPos));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime parseMutableDateTime(String text) {
+        checkParser();
+        
+        Chronology chrono = selectChronology(null);
+        DateTimeParserBucket bucket = new DateTimeParserBucket(0, chrono, iLocale, iPivotYear);
+        int newPos = iParser.parseInto(bucket, text, 0);
+        if (newPos >= 0) {
+            if (newPos >= text.length()) {
+                long millis = bucket.computeMillis(true, text);
+                if (iOffsetParsed && bucket.getZone() == null) {
+                    int parsedOffset = bucket.getOffset();
+                    DateTimeZone parsedZone = DateTimeZone.forOffsetMillis(parsedOffset);
+                    chrono = chrono.withZone(parsedZone);
+                }
+                return new MutableDateTime(millis, chrono);
+            }
+        } else {
+            newPos = ~newPos;
+        }
+        throw new IllegalArgumentException(FormatUtils.createErrorMessage(text, newPos));
+    }
+
+    
+
+
+
+
+    private void checkParser() {
+        if (iParser == null) {
+            throw new UnsupportedOperationException("Parsing not supported");
+        }
+    }
+
+    
+    
+
+
+
+
+
+    private Chronology selectChronology(Chronology chrono) {
+        chrono = DateTimeUtils.getChronology(chrono);
+        if (iChrono != null) {
+            chrono = iChrono;
+        }
+        if (iZone != null) {
+            chrono = chrono.withZone(iZone);
+        }
+        return chrono;
+    }
+
+}

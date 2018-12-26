@@ -1,0 +1,236 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.format;
+
+
+
+
+
+
+
+
+
+
+
+public class ISOPeriodFormat {
+    private static final ISOPeriodFormat INSTANCE = new ISOPeriodFormat();
+
+    
+
+
+    public static ISOPeriodFormat getInstance() {
+        return INSTANCE;
+    }
+
+    private transient PeriodFormatter
+        iStandard,
+        iAlternate,
+        iAlternateExtended,
+        iAlternateWithWeeks,
+        iAlternateExtendedWihWeeks;
+
+    private ISOPeriodFormat() {
+    }
+
+    
+
+
+
+
+
+
+
+    public PeriodFormatter standard() {
+        if (iStandard == null) {
+            iStandard = new PeriodFormatterBuilder()
+                .appendLiteral("P")
+                .appendYears()
+                .appendSuffix("Y")
+                .appendMonths()
+                .appendSuffix("M")
+                .appendWeeks()
+                .appendSuffix("W")
+                .appendDays()
+                .appendSuffix("D")
+                .appendSeparatorIfFieldsAfter("T")
+                .appendHours()
+                .appendSuffix("H")
+                .appendMinutes()
+                .appendSuffix("M")
+                .appendSecondsWithOptionalMillis()
+                .appendSuffix("S")
+                .toFormatter();
+        }
+        return iStandard;
+    }
+
+    
+
+
+
+
+
+
+
+    public PeriodFormatter alternate() {
+        if (iAlternate == null) {
+            iAlternate = new PeriodFormatterBuilder()
+                .appendLiteral("P")
+                .printZeroAlways()
+                .minimumPrintedDigits(4)
+                .appendYears()
+                .minimumPrintedDigits(2)
+                .appendMonths()
+                .appendDays()
+                .appendSeparatorIfFieldsAfter("T")
+                .appendHours()
+                .appendMinutes()
+                .appendSecondsWithOptionalMillis()
+                .toFormatter();
+        }
+        return iAlternate;
+    }
+
+    
+
+
+
+
+
+
+
+    public PeriodFormatter alternateExtended() {
+        if (iAlternateExtended == null) {
+            iAlternateExtended = new PeriodFormatterBuilder()
+                .appendLiteral("P")
+                .printZeroAlways()
+                .minimumPrintedDigits(4)
+                .appendYears()
+                .appendSeparator("-")
+                .minimumPrintedDigits(2)
+                .appendMonths()
+                .appendSeparator("-")
+                .appendDays()
+                .appendSeparatorIfFieldsAfter("T")
+                .appendHours()
+                .appendSeparator(":")
+                .appendMinutes()
+                .appendSeparator(":")
+                .appendSecondsWithOptionalMillis()
+                .toFormatter();
+        }
+        return iAlternateExtended;
+    }
+
+    
+
+
+
+
+
+
+
+    public PeriodFormatter alternateWithWeeks() {
+        if (iAlternateWithWeeks == null) {
+            iAlternateWithWeeks = new PeriodFormatterBuilder()
+                .appendLiteral("P")
+                .printZeroAlways()
+                .minimumPrintedDigits(4)
+                .appendYears()
+                .minimumPrintedDigits(2)
+                .appendPrefix("W")
+                .appendWeeks()
+                .appendDays()
+                .appendSeparatorIfFieldsAfter("T")
+                .appendHours()
+                .appendMinutes()
+                .appendSecondsWithOptionalMillis()
+                .toFormatter();
+        }
+        return iAlternateWithWeeks;
+    }
+
+    
+
+
+
+
+
+
+
+    public PeriodFormatter alternateExtendedWithWeeks() {
+        if (iAlternateExtendedWihWeeks == null) {
+            iAlternateExtendedWihWeeks = new PeriodFormatterBuilder()
+                .appendLiteral("P")
+                .printZeroAlways()
+                .minimumPrintedDigits(4)
+                .appendYears()
+                .appendSeparator("-")
+                .minimumPrintedDigits(2)
+                .appendPrefix("W")
+                .appendWeeks()
+                .appendSeparator("-")
+                .appendDays()
+                .appendSeparatorIfFieldsAfter("T")
+                .appendHours()
+                .appendSeparator(":")
+                .appendMinutes()
+                .appendSeparator(":")
+                .appendSecondsWithOptionalMillis()
+                .toFormatter();
+        }
+        return iAlternateExtendedWihWeeks;
+    }
+
+}

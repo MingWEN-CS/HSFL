@@ -1,0 +1,1476 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.JSTypeNative.ALL_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.ARRAY_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.NO_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.UNKNOWN_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.VOID_TYPE;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.google.javascript.rhino.ErrorReporter;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.ScriptRuntime;
+import com.google.javascript.rhino.Token;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+
+public class JSTypeRegistry implements Serializable {
+  private static final long serialVersionUID = 1L;
+
+  
+  
+  
+  
+
+  private final transient ErrorReporter reporter;
+
+  
+  
+  
+  private final JSType[] nativeTypes;
+
+  private final Map<String, JSType> namesToTypes;
+
+  
+  private final Set<String> namespaces = new HashSet<String>();
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  private final Set<String> enumTypeNames = new HashSet<String>();
+
+  
+  
+  
+  private final Set<String> forwardDeclaredTypes = new HashSet<String>();
+
+  
+  
+  private final Map<String, Set<ObjectType>> typesIndexedByProperty =
+      Maps.newHashMap();
+
+  
+  
+  
+  private final Map<String, JSType> greatestSubtypeByProperty =
+      Maps.newHashMap();
+
+  
+  private final Multimap<String, FunctionType> interfaceToImplementors =
+      HashMultimap.create();
+
+  
+  private final Multimap<StaticScope<JSType>, NamedType> unresolvedNamedTypes =
+      ArrayListMultimap.create();
+
+  
+  private final Multimap<StaticScope<JSType>, NamedType> resolvedNamedTypes =
+      ArrayListMultimap.create();
+
+  
+  private boolean lastGeneration = true;
+
+  
+  private String templateTypeName;
+
+  
+  private TemplateType templateType;
+
+  private final boolean tolerateUndefinedValues;
+
+  
+
+
+
+  public static enum ResolveMode {
+    
+
+
+
+    LAZY_EXPRESSIONS,
+
+    
+
+
+
+
+
+
+
+    LAZY_NAMES,
+
+    
+
+
+
+    IMMEDIATE
+  }
+
+  private ResolveMode resolveMode = ResolveMode.LAZY_NAMES;
+
+  
+
+
+  public JSTypeRegistry(ErrorReporter reporter) {
+    this(reporter, false);
+  }
+
+  
+
+
+  public JSTypeRegistry(
+      ErrorReporter reporter, boolean tolerateUndefinedValues) {
+    this.reporter = reporter;
+    nativeTypes = new JSType[JSTypeNative.values().length];
+    namesToTypes = new HashMap<String, JSType>();
+    resetForTypeCheck();
+    this.tolerateUndefinedValues = tolerateUndefinedValues;
+  }
+
+  
+
+
+
+  public void setResolveMode(ResolveMode mode) {
+    this.resolveMode = mode;
+  }
+
+  public ErrorReporter getErrorReporter() {
+    return reporter;
+  }
+
+  public boolean shouldTolerateUndefinedValues() {
+    return tolerateUndefinedValues;
+  }
+
+  
+
+
+  public void resetForTypeCheck() {
+    typesIndexedByProperty.clear();
+    initializeBuiltInTypes();
+    namesToTypes.clear();
+    namespaces.clear();
+    initializeRegistry();
+  }
+
+  private void initializeBuiltInTypes() {
+    
+    BooleanType BOOLEAN_TYPE = new BooleanType(this);
+    registerNativeType(JSTypeNative.BOOLEAN_TYPE, BOOLEAN_TYPE);
+
+    NullType NULL_TYPE = new NullType(this);
+    registerNativeType(JSTypeNative.NULL_TYPE, NULL_TYPE);
+
+    NumberType NUMBER_TYPE = new NumberType(this);
+    registerNativeType(JSTypeNative.NUMBER_TYPE, NUMBER_TYPE);
+
+    StringType STRING_TYPE = new StringType(this);
+    registerNativeType(JSTypeNative.STRING_TYPE, STRING_TYPE);
+
+    UnknownType UNKNOWN_TYPE = new UnknownType(this, false);
+    registerNativeType(JSTypeNative.UNKNOWN_TYPE, UNKNOWN_TYPE);
+    registerNativeType(
+        JSTypeNative.CHECKED_UNKNOWN_TYPE, new UnknownType(this, true));
+
+    VoidType VOID_TYPE = new VoidType(this);
+    registerNativeType(JSTypeNative.VOID_TYPE, VOID_TYPE);
+
+    AllType ALL_TYPE = new AllType(this);
+    registerNativeType(JSTypeNative.ALL_TYPE, ALL_TYPE);
+
+    
+    
+    
+    
+    ObjectType TOP_LEVEL_PROTOTYPE =
+        new FunctionPrototypeType(this, null, null, true);
+    registerNativeType(JSTypeNative.TOP_LEVEL_PROTOTYPE, TOP_LEVEL_PROTOTYPE);
+
+    
+    FunctionType OBJECT_FUNCTION_TYPE =
+        new FunctionType(this, "Object", null,
+            createArrowType(createOptionalParameters(ALL_TYPE), UNKNOWN_TYPE),
+            null, null, true, true);
+    OBJECT_FUNCTION_TYPE.defineDeclaredProperty(
+        "prototype", TOP_LEVEL_PROTOTYPE, true);
+    registerNativeType(JSTypeNative.OBJECT_FUNCTION_TYPE, OBJECT_FUNCTION_TYPE);
+
+    ObjectType OBJECT_PROTOTYPE = OBJECT_FUNCTION_TYPE.getPrototype();
+    registerNativeType(JSTypeNative.OBJECT_PROTOTYPE, OBJECT_PROTOTYPE);
+
+    ObjectType OBJECT_TYPE = OBJECT_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.OBJECT_TYPE, OBJECT_TYPE);
+
+    
+    FunctionType FUNCTION_FUNCTION_TYPE =
+        new FunctionType(this, "Function", null,
+            createArrowType(
+                createParametersWithVarArgs(ALL_TYPE), UNKNOWN_TYPE),
+            null, null, true, true);
+    FUNCTION_FUNCTION_TYPE.setPrototypeBasedOn(OBJECT_TYPE);
+    registerNativeType(
+        JSTypeNative.FUNCTION_FUNCTION_TYPE, FUNCTION_FUNCTION_TYPE);
+
+    ObjectType FUNCTION_PROTOTYPE = FUNCTION_FUNCTION_TYPE.getPrototype();
+    registerNativeType(JSTypeNative.FUNCTION_PROTOTYPE, FUNCTION_PROTOTYPE);
+
+    NoType NO_TYPE = new NoType(this);
+    registerNativeType(JSTypeNative.NO_TYPE, NO_TYPE);
+
+    NoObjectType NO_OBJECT_TYPE = new NoObjectType(this);
+    registerNativeType(JSTypeNative.NO_OBJECT_TYPE, NO_OBJECT_TYPE);
+
+    
+    FunctionType ARRAY_FUNCTION_TYPE =
+      new FunctionType(this, "Array", null,
+          createArrowType(createParametersWithVarArgs(ALL_TYPE), null),
+          null, null, true, true);
+    ARRAY_FUNCTION_TYPE.getInternalArrowType().returnType =
+        ARRAY_FUNCTION_TYPE.getInstanceType();
+
+    ObjectType arrayPrototype = ARRAY_FUNCTION_TYPE.getPrototype();
+    registerNativeType(JSTypeNative.ARRAY_FUNCTION_TYPE, ARRAY_FUNCTION_TYPE);
+
+    ObjectType ARRAY_TYPE = ARRAY_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.ARRAY_TYPE, ARRAY_TYPE);
+
+    
+    FunctionType BOOLEAN_OBJECT_FUNCTION_TYPE =
+        new FunctionType(this, "Boolean", null,
+            createArrowType(createParameters(false, ALL_TYPE), BOOLEAN_TYPE),
+            null, null, true, true);
+    ObjectType booleanPrototype = BOOLEAN_OBJECT_FUNCTION_TYPE.getPrototype();
+    registerNativeType(
+        JSTypeNative.BOOLEAN_OBJECT_FUNCTION_TYPE, BOOLEAN_OBJECT_FUNCTION_TYPE);
+
+    ObjectType BOOLEAN_OBJECT_TYPE =
+        BOOLEAN_OBJECT_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.BOOLEAN_OBJECT_TYPE, BOOLEAN_OBJECT_TYPE);
+
+    
+    FunctionType DATE_FUNCTION_TYPE =
+      new FunctionType(this, "Date", null,
+          createArrowType(
+              createOptionalParameters(UNKNOWN_TYPE, UNKNOWN_TYPE, UNKNOWN_TYPE,
+                  UNKNOWN_TYPE, UNKNOWN_TYPE, UNKNOWN_TYPE, UNKNOWN_TYPE),
+              STRING_TYPE),
+          null, null, true, true);
+    ObjectType datePrototype = DATE_FUNCTION_TYPE.getPrototype();
+    registerNativeType(JSTypeNative.DATE_FUNCTION_TYPE, DATE_FUNCTION_TYPE);
+
+    ObjectType DATE_TYPE = DATE_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.DATE_TYPE, DATE_TYPE);
+
+    
+    FunctionType ERROR_FUNCTION_TYPE = new ErrorFunctionType(this, "Error");
+    registerNativeType(JSTypeNative.ERROR_FUNCTION_TYPE, ERROR_FUNCTION_TYPE);
+
+    ObjectType ERROR_TYPE = ERROR_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.ERROR_TYPE, ERROR_TYPE);
+
+    
+    FunctionType EVAL_ERROR_FUNCTION_TYPE =
+        new ErrorFunctionType(this, "EvalError");
+    EVAL_ERROR_FUNCTION_TYPE.setPrototypeBasedOn(ERROR_TYPE);
+    registerNativeType(
+        JSTypeNative.EVAL_ERROR_FUNCTION_TYPE, EVAL_ERROR_FUNCTION_TYPE);
+
+    ObjectType EVAL_ERROR_TYPE = EVAL_ERROR_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.EVAL_ERROR_TYPE, EVAL_ERROR_TYPE);
+
+    
+    FunctionType RANGE_ERROR_FUNCTION_TYPE =
+        new ErrorFunctionType(this, "RangeError");
+    RANGE_ERROR_FUNCTION_TYPE.setPrototypeBasedOn(ERROR_TYPE);
+    registerNativeType(
+        JSTypeNative.RANGE_ERROR_FUNCTION_TYPE, RANGE_ERROR_FUNCTION_TYPE);
+
+    ObjectType RANGE_ERROR_TYPE = RANGE_ERROR_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.RANGE_ERROR_TYPE, RANGE_ERROR_TYPE);
+
+    
+    FunctionType REFERENCE_ERROR_FUNCTION_TYPE =
+        new ErrorFunctionType(this, "ReferenceError");
+    REFERENCE_ERROR_FUNCTION_TYPE.setPrototypeBasedOn(ERROR_TYPE);
+    registerNativeType(
+        JSTypeNative.REFERENCE_ERROR_FUNCTION_TYPE, REFERENCE_ERROR_FUNCTION_TYPE);
+
+    ObjectType REFERENCE_ERROR_TYPE =
+        REFERENCE_ERROR_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.REFERENCE_ERROR_TYPE, REFERENCE_ERROR_TYPE);
+
+    
+    FunctionType SYNTAX_ERROR_FUNCTION_TYPE =
+        new ErrorFunctionType(this, "SyntaxError");
+    SYNTAX_ERROR_FUNCTION_TYPE.setPrototypeBasedOn(ERROR_TYPE);
+    registerNativeType(
+        JSTypeNative.SYNTAX_ERROR_FUNCTION_TYPE, SYNTAX_ERROR_FUNCTION_TYPE);
+
+    ObjectType SYNTAX_ERROR_TYPE = SYNTAX_ERROR_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.SYNTAX_ERROR_TYPE, SYNTAX_ERROR_TYPE);
+
+    
+    FunctionType TYPE_ERROR_FUNCTION_TYPE =
+        new ErrorFunctionType(this, "TypeError");
+    TYPE_ERROR_FUNCTION_TYPE.setPrototypeBasedOn(ERROR_TYPE);
+    registerNativeType(
+        JSTypeNative.TYPE_ERROR_FUNCTION_TYPE, TYPE_ERROR_FUNCTION_TYPE);
+
+    ObjectType TYPE_ERROR_TYPE = TYPE_ERROR_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.TYPE_ERROR_TYPE, TYPE_ERROR_TYPE);
+
+    
+    FunctionType URI_ERROR_FUNCTION_TYPE =
+        new ErrorFunctionType(this, "URIError");
+    URI_ERROR_FUNCTION_TYPE.setPrototypeBasedOn(ERROR_TYPE);
+    registerNativeType(
+        JSTypeNative.URI_ERROR_FUNCTION_TYPE, URI_ERROR_FUNCTION_TYPE);
+
+    ObjectType URI_ERROR_TYPE = URI_ERROR_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.URI_ERROR_TYPE, URI_ERROR_TYPE);
+
+    
+    FunctionType NUMBER_OBJECT_FUNCTION_TYPE =
+        new FunctionType(this, "Number", null,
+            createArrowType(createParameters(false, ALL_TYPE), NUMBER_TYPE),
+            null, null, true, true);
+    ObjectType numberPrototype = NUMBER_OBJECT_FUNCTION_TYPE.getPrototype();
+    registerNativeType(
+        JSTypeNative.NUMBER_OBJECT_FUNCTION_TYPE, NUMBER_OBJECT_FUNCTION_TYPE);
+
+    ObjectType NUMBER_OBJECT_TYPE =
+        NUMBER_OBJECT_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.NUMBER_OBJECT_TYPE, NUMBER_OBJECT_TYPE);
+
+    
+    FunctionType REGEXP_FUNCTION_TYPE =
+      new FunctionType(this, "RegExp", null,
+          createArrowType(createOptionalParameters(ALL_TYPE, ALL_TYPE)),
+          null, null, true, true);
+    REGEXP_FUNCTION_TYPE.getInternalArrowType().returnType =
+        REGEXP_FUNCTION_TYPE.getInstanceType();
+
+    ObjectType regexpPrototype = REGEXP_FUNCTION_TYPE.getPrototype();
+    registerNativeType(JSTypeNative.REGEXP_FUNCTION_TYPE, REGEXP_FUNCTION_TYPE);
+
+    ObjectType REGEXP_TYPE = REGEXP_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(JSTypeNative.REGEXP_TYPE, REGEXP_TYPE);
+
+    
+    FunctionType STRING_OBJECT_FUNCTION_TYPE =
+        new FunctionType(this, "String", null,
+            createArrowType(createParameters(false, ALL_TYPE), STRING_TYPE),
+            null, null, true, true);
+    ObjectType stringPrototype = STRING_OBJECT_FUNCTION_TYPE.getPrototype();
+    registerNativeType(
+        JSTypeNative.STRING_OBJECT_FUNCTION_TYPE, STRING_OBJECT_FUNCTION_TYPE);
+
+    ObjectType STRING_OBJECT_TYPE =
+        STRING_OBJECT_FUNCTION_TYPE.getInstanceType();
+    registerNativeType(
+        JSTypeNative.STRING_OBJECT_TYPE, STRING_OBJECT_TYPE);
+
+    
+    JSType OBJECT_NUMBER_STRING =
+        createUnionType(OBJECT_TYPE, NUMBER_TYPE, STRING_TYPE);
+    registerNativeType(JSTypeNative.OBJECT_NUMBER_STRING, OBJECT_NUMBER_STRING);
+
+    
+    JSType OBJECT_NUMBER_STRING_BOOLEAN =
+        createUnionType(OBJECT_TYPE, NUMBER_TYPE, STRING_TYPE, BOOLEAN_TYPE);
+    registerNativeType(JSTypeNative.OBJECT_NUMBER_STRING_BOOLEAN,
+        OBJECT_NUMBER_STRING_BOOLEAN);
+
+    
+    JSType NUMBER_STRING_BOOLEAN =
+        createUnionType(NUMBER_TYPE, STRING_TYPE, BOOLEAN_TYPE);
+    registerNativeType(JSTypeNative.NUMBER_STRING_BOOLEAN,
+        NUMBER_STRING_BOOLEAN);
+
+    
+    JSType NUMBER_STRING = createUnionType(NUMBER_TYPE, STRING_TYPE);
+    registerNativeType(JSTypeNative.NUMBER_STRING, NUMBER_STRING);
+
+    
+
+    
+    JSType STRING_VALUE_OR_OBJECT_TYPE =
+        createUnionType(STRING_OBJECT_TYPE, STRING_TYPE);
+    registerNativeType(
+        JSTypeNative.STRING_VALUE_OR_OBJECT_TYPE, STRING_VALUE_OR_OBJECT_TYPE);
+
+    
+    JSType NUMBER_VALUE_OR_OBJECT_TYPE =
+        createUnionType(NUMBER_OBJECT_TYPE, NUMBER_TYPE);
+    registerNativeType(
+        JSTypeNative.NUMBER_VALUE_OR_OBJECT_TYPE, NUMBER_VALUE_OR_OBJECT_TYPE);
+
+    
+    FunctionType U2U_FUNCTION_TYPE =
+        createFunctionType(UNKNOWN_TYPE, true, UNKNOWN_TYPE);
+    registerNativeType(JSTypeNative.U2U_FUNCTION_TYPE, U2U_FUNCTION_TYPE);
+
+    
+    
+    FunctionType U2U_CONSTRUCTOR_TYPE =
+        
+        
+        
+        
+        new FunctionType(this, "Function", null,
+            createArrowType(
+                createParametersWithVarArgs(UNKNOWN_TYPE),
+                UNKNOWN_TYPE),
+            NO_OBJECT_TYPE, null, true, true) {
+          private static final long serialVersionUID = 1L;
+
+          @Override public FunctionType getConstructor() {
+            return registry.getNativeFunctionType(
+                JSTypeNative.FUNCTION_FUNCTION_TYPE);
+          }
+        };
+
+    
+    
+    registerNativeType(JSTypeNative.U2U_CONSTRUCTOR_TYPE, U2U_CONSTRUCTOR_TYPE);
+    registerNativeType(
+        JSTypeNative.FUNCTION_INSTANCE_TYPE, U2U_CONSTRUCTOR_TYPE);
+
+    FUNCTION_FUNCTION_TYPE.setInstanceType(U2U_CONSTRUCTOR_TYPE);
+    U2U_CONSTRUCTOR_TYPE.setImplicitPrototype(FUNCTION_PROTOTYPE);
+
+    
+    FunctionType LEAST_FUNCTION_TYPE =
+        createFunctionType(NO_TYPE, true, ALL_TYPE);
+    registerNativeType(JSTypeNative.LEAST_FUNCTION_TYPE, LEAST_FUNCTION_TYPE);
+
+    
+    ObjectType GLOBAL_THIS = createObjectType("global this", null,
+        UNKNOWN_TYPE );
+    registerNativeType(JSTypeNative.GLOBAL_THIS, GLOBAL_THIS);
+
+    
+    FunctionType GREATEST_FUNCTION_TYPE =
+      createFunctionType(ALL_TYPE, true, NO_TYPE);
+    registerNativeType(JSTypeNative.GREATEST_FUNCTION_TYPE,
+        GREATEST_FUNCTION_TYPE);
+  }
+
+  private void initializeRegistry() {
+    register(getNativeType(JSTypeNative.ARRAY_TYPE));
+    register(getNativeType(JSTypeNative.BOOLEAN_OBJECT_TYPE));
+    register(getNativeType(JSTypeNative.BOOLEAN_TYPE));
+    register(getNativeType(JSTypeNative.DATE_TYPE));
+    register(getNativeType(JSTypeNative.NULL_TYPE));
+    register(getNativeType(JSTypeNative.NULL_TYPE), "Null");
+    register(getNativeType(JSTypeNative.NUMBER_OBJECT_TYPE));
+    register(getNativeType(JSTypeNative.NUMBER_TYPE));
+    register(getNativeType(JSTypeNative.OBJECT_TYPE));
+    register(getNativeType(JSTypeNative.ERROR_TYPE));
+    register(getNativeType(JSTypeNative.URI_ERROR_TYPE));
+    register(getNativeType(JSTypeNative.EVAL_ERROR_TYPE));
+    register(getNativeType(JSTypeNative.TYPE_ERROR_TYPE));
+    register(getNativeType(JSTypeNative.RANGE_ERROR_TYPE));
+    register(getNativeType(JSTypeNative.REFERENCE_ERROR_TYPE));
+    register(getNativeType(JSTypeNative.SYNTAX_ERROR_TYPE));
+    register(getNativeType(JSTypeNative.REGEXP_TYPE));
+    register(getNativeType(JSTypeNative.STRING_OBJECT_TYPE));
+    register(getNativeType(JSTypeNative.STRING_TYPE));
+    register(getNativeType(JSTypeNative.VOID_TYPE));
+    register(getNativeType(JSTypeNative.VOID_TYPE), "Undefined");
+    register(getNativeType(JSTypeNative.VOID_TYPE), "void");
+    register(getNativeType(JSTypeNative.FUNCTION_INSTANCE_TYPE), "Function");
+  }
+
+  private void register(JSType type) {
+    register(type, type.toString());
+  }
+
+  private void register(JSType type, String name) {
+    namesToTypes.put(name, type);
+
+    
+    while (name.indexOf('.') > 0) {
+      name = name.substring(0, name.lastIndexOf('.'));
+      namespaces.add(name);
+    }
+  }
+
+  private void registerNativeType(JSTypeNative typeId, JSType type) {
+    nativeTypes[typeId.ordinal()] = type;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public void registerPropertyOnType(String propertyName, ObjectType owner) {
+    Set<ObjectType> typeSet = typesIndexedByProperty.get(propertyName);
+    if (typeSet == null) {
+      typesIndexedByProperty.put(propertyName, typeSet = Sets.newHashSet());
+    }
+    greatestSubtypeByProperty.remove(propertyName);
+    typeSet.add(owner);
+  }
+
+  
+
+
+
+  public JSType getGreatestSubtypeWithProperty(
+      JSType type, String propertyName) {
+    if (greatestSubtypeByProperty.containsKey(propertyName)) {
+      return greatestSubtypeByProperty.get(propertyName)
+          .getGreatestSubtype(type);
+    }
+    if (typesIndexedByProperty.containsKey(propertyName)) {
+      UnionTypeBuilder builder = new UnionTypeBuilder(this);
+      for (JSType alt : typesIndexedByProperty.get(propertyName)) {
+        builder.addAlternate(alt);
+      }
+      JSType built = builder.build();
+      greatestSubtypeByProperty.put(propertyName, built);
+      return built.getGreatestSubtype(type);
+    }
+    return getNativeType(NO_TYPE);
+  }
+
+  
+
+
+  public boolean canPropertyBeDefined(JSType type, String propertyName) {
+    if (typesIndexedByProperty.containsKey(propertyName)) {
+      for (JSType alt : typesIndexedByProperty.get(propertyName)) {
+        if (alt.isSubtype(type) || type.isSubtype(alt)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+  public Set<ObjectType> getTypesWithProperty(String propertyName) {
+    Set<ObjectType> typeSet = typesIndexedByProperty.get(propertyName);
+    if (typeSet == null) {
+      return Sets.newHashSet(getNativeObjectType(NO_TYPE));
+    }
+    return typeSet;
+  }
+
+  
+
+
+
+
+  public void incrementGeneration() {
+    for (NamedType type : resolvedNamedTypes.values()) {
+      type.clearResolved();
+    }
+    unresolvedNamedTypes.putAll(resolvedNamedTypes);
+    resolvedNamedTypes.clear();
+  }
+
+  boolean isLastGeneration() {
+    return lastGeneration;
+  }
+
+  
+
+
+
+  public void setLastGeneration(boolean lastGeneration) {
+    this.lastGeneration = lastGeneration;
+  }
+
+  
+
+
+
+
+
+  void registerTypeImplementingInterface(
+      FunctionType type, ObjectType interfaceInstance) {
+    interfaceToImplementors.put(interfaceInstance.getReferenceName(), type);
+  }
+
+  
+
+
+
+
+
+  public Collection<FunctionType> getDirectImplementors(
+      ObjectType interfaceInstance) {
+    return interfaceToImplementors.get(interfaceInstance.getReferenceName());
+  }
+
+  
+
+
+
+
+
+
+
+
+  public boolean declareType(String name, JSType t) {
+    if (namesToTypes.containsKey(name)) {
+      return false;
+    }
+    register(t, name);
+    return true;
+  }
+
+  
+
+
+
+  public void forwardDeclareType(String name) {
+    forwardDeclaredTypes.add(name);
+  }
+
+  
+
+
+  public boolean isForwardDeclaredType(String name) {
+    return forwardDeclaredTypes.contains(name);
+  }
+
+  
+  public boolean hasNamespace(String name) {
+    return namespaces.contains(name);
+  }
+
+  
+
+
+
+
+
+  public JSType getType(String jsTypeName) {
+    
+    
+    if (jsTypeName.equals(templateTypeName)) {
+      return templateType;
+    }
+    return namesToTypes.get(jsTypeName);
+  }
+
+  public JSType getNativeType(JSTypeNative typeId) {
+    return nativeTypes[typeId.ordinal()];
+  }
+
+  public ObjectType getNativeObjectType(JSTypeNative typeId) {
+    return (ObjectType) getNativeType(typeId);
+  }
+
+  public FunctionType getNativeFunctionType(JSTypeNative typeId) {
+    return (FunctionType) getNativeType(typeId);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public JSType getType(StaticScope<JSType> scope, String jsTypeName,
+      String sourceName, int lineno, int charno) {
+    JSType type = getType(jsTypeName);
+    if (type == null) {
+      
+      
+      NamedType namedType =
+          new NamedType(this, jsTypeName, sourceName, lineno, charno);
+      unresolvedNamedTypes.put(scope, namedType);
+      type = namedType;
+    }
+    return type;
+  }
+
+  
+
+
+  public void resolveTypesInScope(StaticScope<JSType> scope) {
+    for (NamedType type : unresolvedNamedTypes.get(scope)) {
+      type.resolve(reporter, scope);
+    }
+
+    resolvedNamedTypes.putAll(scope, unresolvedNamedTypes.removeAll(scope));
+
+    if (scope != null && scope.getParentScope() == null) {
+      
+      
+      
+      PrototypeObjectType globalThis = (PrototypeObjectType) getNativeType(
+          JSTypeNative.GLOBAL_THIS);
+      JSType windowType = getType("Window");
+      if (globalThis.isUnknownType()) {
+        ObjectType windowObjType = ObjectType.cast(windowType);
+        if (windowObjType != null) {
+          globalThis.setImplicitPrototype(windowObjType);
+        } else {
+          globalThis.setImplicitPrototype(
+              getNativeObjectType(JSTypeNative.OBJECT_TYPE));
+        }
+      }
+    }
+  }
+
+  
+
+
+
+  public JSType createOptionalType(JSType type) {
+    if (type instanceof UnknownType || type.isAllType()) {
+      return type;
+    } else {
+      return createUnionType(type, getNativeType(JSTypeNative.VOID_TYPE));
+    }
+  }
+
+  
+
+
+
+  public JSType createDefaultObjectUnion(JSType type) {
+    return shouldTolerateUndefinedValues()
+        ? createOptionalNullableType(type)
+        : createNullableType(type);
+  }
+
+  
+
+
+
+  public JSType createNullableType(JSType type) {
+    return createUnionType(type, getNativeType(JSTypeNative.NULL_TYPE));
+  }
+
+  
+
+
+
+  public JSType createOptionalNullableType(JSType type) {
+    return createUnionType(type, getNativeType(JSTypeNative.VOID_TYPE),
+        getNativeType(JSTypeNative.NULL_TYPE));
+  }
+
+  
+
+
+  public JSType createUnionType(JSType... variants) {
+    UnionTypeBuilder builder = new UnionTypeBuilder(this);
+    for (JSType type : variants) {
+      builder.addAlternate(type);
+    }
+    return builder.build();
+  }
+
+  
+
+
+
+  public JSType createUnionType(JSTypeNative... variants) {
+    UnionTypeBuilder builder = new UnionTypeBuilder(this);
+    for (JSTypeNative typeId : variants) {
+      builder.addAlternate(getNativeType(typeId));
+    }
+    return builder.build();
+  }
+
+  
+
+
+  public EnumType createEnumType(String name, JSType elementsType) {
+    return new EnumType(this, name, elementsType);
+  }
+
+  
+
+
+
+
+
+
+
+  ArrowType createArrowType(Node parametersNode, JSType returnType) {
+    return new ArrowType(this, parametersNode, returnType);
+  }
+
+  
+
+
+
+
+
+  ArrowType createArrowType(Node parametersNode) {
+    return new ArrowType(this, parametersNode, null);
+  }
+
+  
+
+
+
+
+
+  public FunctionType createFunctionType(
+      JSType returnType, JSType... parameterTypes) {
+    return createFunctionType(returnType, createParameters(parameterTypes));
+  }
+
+  
+
+
+
+
+
+
+  public FunctionType createFunctionTypeWithVarArgs(
+      JSType returnType, List<JSType> parameterTypes) {
+    return createFunctionType(
+        returnType, createParametersWithVarArgs(parameterTypes));
+  }
+
+  
+
+
+
+
+
+  public FunctionType createFunctionType(
+      JSType returnType, List<JSType> parameterTypes) {
+    return createFunctionType(returnType, createParameters(parameterTypes));
+  }
+
+  
+
+
+
+
+
+
+  public FunctionType createFunctionTypeWithVarArgs(
+      JSType returnType, JSType... parameterTypes) {
+    return createFunctionType(
+        returnType, createParametersWithVarArgs(parameterTypes));
+  }
+
+  
+
+
+
+
+
+  public FunctionType createConstructorType(
+      JSType returnType, JSType... parameterTypes) {
+    return createConstructorType(
+        null, null, createParameters(parameterTypes), returnType);
+  }
+
+  
+
+
+
+
+
+
+  public FunctionType createConstructorTypeWithVarArgs(
+      JSType returnType, JSType... parameterTypes) {
+    return createConstructorType(
+        null, null, createParametersWithVarArgs(parameterTypes), returnType);
+  }
+
+  
+
+
+
+
+
+
+  public JSType createFunctionType(ObjectType instanceType,
+      JSType returnType, List<JSType> parameterTypes) {
+    return new FunctionBuilder(this)
+        .withParamsNode(createParameters(parameterTypes))
+        .withReturnType(returnType)
+        .withTypeOfThis(instanceType)
+        .build();
+  }
+
+  
+
+
+
+
+
+
+
+
+  public JSType createFunctionTypeWithVarArgs(ObjectType instanceType,
+      JSType returnType, List<JSType> parameterTypes) {
+    return new FunctionBuilder(this)
+        .withParamsNode(createParametersWithVarArgs(parameterTypes))
+        .withReturnType(returnType)
+        .withTypeOfThis(instanceType)
+        .build();
+  }
+
+  
+
+
+
+
+
+  public Node createParameters(List<JSType> parameterTypes) {
+    return createParameters(
+        parameterTypes.toArray(new JSType[parameterTypes.size()]));
+  }
+
+  
+
+
+
+
+
+
+
+  public Node createParametersWithVarArgs(List<JSType> parameterTypes) {
+    return createParametersWithVarArgs(
+        parameterTypes.toArray(new JSType[parameterTypes.size()]));
+  }
+
+  
+
+
+
+
+
+  public Node createParameters(JSType... parameterTypes) {
+    return createParameters(false, parameterTypes);
+  }
+
+  
+
+
+
+
+
+
+
+  public Node createParametersWithVarArgs(JSType... parameterTypes) {
+    return createParameters(true, parameterTypes);
+  }
+
+  
+
+
+
+  public Node createOptionalParameters(JSType... parameterTypes) {
+    FunctionParamBuilder builder = new FunctionParamBuilder(this);
+    builder.addOptionalParams(parameterTypes);
+    return builder.build();
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  private Node createParameters(boolean lastVarArgs, JSType... parameterTypes) {
+    FunctionParamBuilder builder = new FunctionParamBuilder(this);
+    int max = parameterTypes.length - 1;
+    for (int i = 0; i <= max; i++) {
+      if (lastVarArgs && i == max) {
+        builder.addVarArgs(parameterTypes[i]);
+      } else {
+        builder.addRequiredParams(parameterTypes[i]);
+      }
+    }
+    return builder.build();
+  }
+
+  
+
+
+
+
+
+
+  public FunctionType createFunctionType(JSType returnType,
+      boolean lastVarArgs, JSType... parameterTypes) {
+    if (lastVarArgs) {
+      return createFunctionTypeWithVarArgs(returnType, parameterTypes);
+    } else {
+      return createFunctionType(returnType, parameterTypes);
+    }
+  }
+
+  
+
+
+
+
+
+  public FunctionType createFunctionTypeWithNewReturnType(
+      FunctionType existingFunctionType, JSType returnType) {
+    return new FunctionBuilder(this)
+        .copyFromOtherFunction(existingFunctionType)
+        .withReturnType(returnType)
+        .build();
+  }
+
+  
+
+
+
+
+
+  public FunctionType createFunctionTypeWithNewThisType(
+      FunctionType existingFunctionType, ObjectType thisType) {
+    return new FunctionBuilder(this)
+        .copyFromOtherFunction(existingFunctionType)
+        .withTypeOfThis(thisType)
+        .build();
+  }
+
+  
+
+
+
+
+
+  public FunctionType createFunctionType(
+      JSType returnType, Node parameters) {
+    return new FunctionBuilder(this)
+        .withParamsNode(parameters)
+        .withReturnType(returnType)
+        .build();
+  }
+
+  
+
+
+
+
+
+
+  public FunctionType createConstructorType(JSType returnType,
+      boolean lastVarArgs, JSType... parameterTypes) {
+    if (lastVarArgs) {
+      return createConstructorTypeWithVarArgs(returnType, parameterTypes);
+    } else {
+      return createConstructorType(returnType, parameterTypes);
+    }
+  }
+
+  
+
+
+  public ObjectType createObjectType(ObjectType implicitPrototype) {
+    return createObjectType(null, null, implicitPrototype);
+  }
+
+  
+
+
+  public RecordType createRecordType(Map<String, JSType> properties) {
+    return new RecordType(this, properties);
+  }
+
+  
+
+
+  public ObjectType createObjectType(String name, Node n,
+      ObjectType implicitPrototype) {
+    return new PrototypeObjectType(this, name, implicitPrototype);
+  }
+
+  
+
+
+  public ObjectType createAnonymousObjectType() {
+    PrototypeObjectType type =
+        new PrototypeObjectType(this, null, null);
+    type.setPrettyPrint(true);
+    return type;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  public FunctionType createConstructorType(String name, Node source,
+      Node parameters, JSType returnType) {
+    return new FunctionType(this, name, source,
+        createArrowType(parameters, returnType), null,
+        null, true, false);
+  }
+
+  
+
+
+
+
+
+  public FunctionType createInterfaceType(String name, Node source) {
+    return FunctionType.forInterface(this, name, source);
+  }
+
+  
+
+
+  public ParameterizedType createParameterizedType(
+      ObjectType objectType, JSType parameterType) {
+    return new ParameterizedType(this, objectType, parameterType);
+  }
+
+  
+
+
+  @VisibleForTesting
+  public JSType createNamedType(String reference,
+      String sourceName, int lineno, int charno) {
+    return new NamedType(this, reference, sourceName, lineno, charno);
+  }
+
+  
+
+
+  public void identifyEnumName(String name) {
+    enumTypeNames.add(name);
+  }
+
+
+  
+
+
+
+
+
+  public JSType createRecordTypeFromNodes(Node n, String sourceName,
+      StaticScope<JSType> scope) {
+
+    RecordTypeBuilder builder = new RecordTypeBuilder(this);
+
+    
+    for (Node fieldTypeNode = n.getFirstChild();
+         fieldTypeNode != null;
+         fieldTypeNode = fieldTypeNode.getNext()) {
+
+      
+      Node fieldNameNode = fieldTypeNode;
+      boolean hasType = false;
+
+      if (fieldTypeNode.getType() == Token.COLON) {
+        fieldNameNode = fieldTypeNode.getFirstChild();
+        hasType = true;
+      }
+
+      String fieldName = fieldNameNode.getString();
+
+      
+      
+      
+      if (fieldName.startsWith("'") || fieldName.startsWith("\"")) {
+        fieldName = fieldName.substring(1, fieldName.length() - 1);
+      }
+
+      
+      JSType fieldType = null;
+
+      if (hasType) {
+        
+        fieldType = createFromTypeNodes(
+            fieldTypeNode.getLastChild(), sourceName, scope);
+      } else {
+        
+        fieldType = getNativeType(JSTypeNative.UNKNOWN_TYPE);
+      }
+
+      
+      builder.addProperty(fieldName, fieldType);
+    }
+
+    return builder.build();
+  }
+
+  
+
+
+
+
+
+  public JSType createFromTypeNodes(Node n, String sourceName,
+      StaticScope<JSType> scope) {
+    return createFromTypeNodes(n, sourceName, scope, false);
+  }
+
+  
+
+
+
+
+
+
+
+  public JSType createFromTypeNodes(Node n, String sourceName,
+      StaticScope<JSType> scope, boolean forgiving) {
+    if (resolveMode == ResolveMode.LAZY_EXPRESSIONS) {
+      return new UnresolvedTypeExpression(this, n, sourceName, forgiving);
+    }
+
+    switch (n.getType()) {
+      case Token.LC: 
+        return createRecordTypeFromNodes(n.getFirstChild(), sourceName, scope);
+
+      case Token.BANG: 
+        return createFromTypeNodes(
+            n.getFirstChild(), sourceName, scope, forgiving)
+            .restrictByNotNullOrUndefined();
+
+      case Token.QMARK: 
+        Node firstChild = n.getFirstChild();
+        if (firstChild == null) {
+          return getNativeType(UNKNOWN_TYPE);
+        }
+        return createDefaultObjectUnion(
+            createFromTypeNodes(firstChild, sourceName, scope, forgiving));
+
+      case Token.EQUALS: 
+        return createOptionalType(
+            createFromTypeNodes(n.getFirstChild(), sourceName, scope));
+
+      case Token.ELLIPSIS: 
+        return createOptionalType(
+            createFromTypeNodes(n.getFirstChild(), sourceName, scope));
+
+      case Token.STAR: 
+        return getNativeType(ALL_TYPE);
+
+      case Token.LB: 
+        
+        return getNativeType(ARRAY_TYPE);
+
+      case Token.PIPE: 
+        UnionTypeBuilder builder = new UnionTypeBuilder(this);
+        for (Node child = n.getFirstChild(); child != null;
+             child = child.getNext()) {
+          builder.addAlternate(createFromTypeNodes(child, sourceName, scope));
+        }
+        return builder.build();
+
+      case Token.EMPTY: 
+        return getNativeType(UNKNOWN_TYPE);
+
+      case Token.VOID: 
+        return getNativeType(VOID_TYPE);
+
+      case Token.STRING:
+        JSType namedType = getType(scope, n.getString(), sourceName,
+            n.getLineno(), n.getCharno());
+        if (forgiving) {
+          namedType.forgiveUnknownNames();
+        }
+        if (resolveMode != ResolveMode.LAZY_NAMES) {
+          namedType = namedType.resolveInternal(reporter, scope);
+        }
+        if ((namedType instanceof ObjectType) &&
+            !(enumTypeNames.contains(n.getString()))) {
+          Node typeList = n.getFirstChild();
+          if (typeList != null &&
+              ("Array".equals(n.getString()) ||
+               "Object".equals(n.getString()))) {
+            JSType parameterType =
+                createFromTypeNodes(
+                    typeList.getLastChild(), sourceName, scope);
+            namedType = new ParameterizedType(
+                this, (ObjectType) namedType, parameterType);
+            if (typeList.hasMoreThanOneChild()) {
+              JSType indexType =
+                  createFromTypeNodes(
+                      typeList.getFirstChild(), sourceName, scope);
+              namedType = new IndexedType(
+                  this, (ObjectType) namedType, indexType);
+            }
+          }
+          return createDefaultObjectUnion(namedType);
+        } else {
+          return namedType;
+        }
+
+      case Token.FUNCTION:
+        ObjectType thisType = null;
+        Node current = n.getFirstChild();
+        if (current.getType() == Token.THIS) {
+          Node thisNode = current.getFirstChild();
+          thisType =
+              ObjectType.cast(
+                  createFromTypeNodes(thisNode, sourceName, scope)
+                  .restrictByNotNullOrUndefined());
+          if (thisType == null) {
+            reporter.warning(
+                ScriptRuntime.getMessage0("msg.jsdoc.function.thisnotobject"),
+                sourceName, thisNode.getLineno(), "", thisNode.getCharno());
+          }
+
+          current = current.getNext();
+        }
+
+        FunctionParamBuilder paramBuilder = new FunctionParamBuilder(this);
+
+        if (current.getType() == Token.LP) {
+          Node args = current.getFirstChild();
+          for (Node arg = current.getFirstChild(); arg != null;
+               arg = arg.getNext()) {
+            if (arg.getType() == Token.ELLIPSIS) {
+              if (arg.getChildCount() == 0) {
+                paramBuilder.addVarArgs(getNativeType(UNKNOWN_TYPE));
+              } else {
+                paramBuilder.addVarArgs(
+                    createFromTypeNodes(
+                        arg.getFirstChild(), sourceName, scope));
+              }
+            } else {
+              JSType type = createFromTypeNodes(arg, sourceName, scope);
+              if (arg.getType() == Token.EQUALS) {
+                boolean addSuccess = paramBuilder.addOptionalParams(type);
+                if (!addSuccess) {
+                  reporter.warning(
+                      ScriptRuntime.getMessage0("msg.jsdoc.function.varargs"),
+                      sourceName, arg.getLineno(), "", arg.getCharno());
+                }
+              } else {
+                paramBuilder.addRequiredParams(type);
+              }
+            }
+          }
+          current = current.getNext();
+        }
+
+        JSType returnType = createFromTypeNodes(current, sourceName, scope);
+
+        return new FunctionBuilder(this)
+            .withParams(paramBuilder)
+            .withReturnType(returnType)
+            .withTypeOfThis(thisType)
+            .build();
+    }
+
+    throw new IllegalStateException(
+        "Unexpected node in type expression: " + n.toString());
+  }
+
+  
+
+
+  public void setTemplateTypeName(String name) {
+    templateTypeName = name;
+    templateType = new TemplateType(this, name);
+  }
+
+  
+
+
+  public void clearTemplateTypeName() {
+    templateTypeName = null;
+    templateType = null;
+  }
+}

@@ -1,0 +1,46 @@
+255,256c255,260
+<             chrono = getInstance(DateTimeZone.UTC, gregorianCutover, minDaysInFirstWeek);
+<             chrono = new GJChronology(ZonedChronology.getInstance(chrono, zone));
+---
+>             chrono = getInstance(DateTimeZone.UTC, cutoverInstant, minDaysInFirstWeek);
+>             chrono = new GJChronology
+>                 (ZonedChronology.getInstance(chrono, zone),
+>                  chrono.iJulianChronology,
+>                  chrono.iGregorianChronology,
+>                  chrono.iCutoverInstant);
+306,307c310,314
+<     private GJChronology(Chronology base) {
+<         super(base, null);
+---
+>     private GJChronology(Chronology base,
+>                          JulianChronology julian,
+>                          GregorianChronology gregorian,
+>                          Instant cutoverInstant) {
+>         super(base, new Object[] {julian, gregorian, cutoverInstant});
+437,441c444
+<         Instant cutover = iCutoverInstant;
+<         if (cutover == null) {
+<             iCutoverInstant = cutover = new Instant(iCutoverMillis);
+<         }
+<         return cutover;
+---
+>         return iCutoverInstant;
+480,483d482
+<         if (getBase() != null) {
+<             return;
+<         }
+< 
+491,494d489
+<         if (julian.getMinimumDaysInFirstWeek() != gregorian.getMinimumDaysInFirstWeek()) {
+<             throw new IllegalArgumentException();
+<         }
+< 
+497a493,500
+> 
+>         if (getBase() != null) {
+>             return;
+>         }
+> 
+>         if (julian.getMinimumDaysInFirstWeek() != gregorian.getMinimumDaysInFirstWeek()) {
+>             throw new IllegalArgumentException();
+>         }

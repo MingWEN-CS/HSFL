@@ -1,0 +1,594 @@
+18a19
+> import com.google.common.base.Preconditions;
+20d20
+< import com.google.common.collect.Maps;
+24,27c24,25
+< 
+< import java.util.Collection;
+< import java.util.Collections;
+< import java.util.Comparator;
+---
+> import java.util.ArrayDeque;
+> import java.util.Deque;
+29c27
+< import java.util.Map;
+---
+> 
+89c87
+<       out.append(escapeString(sourceFile));
+---
+>       out.append(sourceFile);
+92c90
+<       out.append(originalPosition.getLineNumber() + "");
+---
+>       out.append(String.valueOf(originalPosition.getLineNumber()));
+95c93
+<       out.append(originalPosition.getCharacterIndex() + "");
+---
+>       out.append(String.valueOf(originalPosition.getCharacterIndex()));
+99,157c97
+<         out.append(escapeString(originalName));
+<       }
+< 
+<       out.append("]");
+<     }
+<   }
+< 
+< 
+<   
+< 
+< 
+<   private static class LineMapping {
+<     
+< 
+< 
+<     int lineNumber;
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     int length;
+< 
+<     
+< 
+< 
+< 
+<     List<LineCharMapping> characterMappings = Lists.newArrayList();
+< 
+<     
+< 
+< 
+< 
+< 
+<     Map<Integer, LineCharMapping> charToMap = Maps.newHashMap();
+< 
+<     
+< 
+< 
+< 
+<     void appendCharMapTo(Appendable out) throws IOException {
+<       out.append("[");
+< 
+<       for (int j = 0; j <= length; ++j) {
+<         if (j > 0) {
+<           out.append(",");
+<         }
+< 
+<         LineCharMapping current = charToMap.get(j);
+< 
+<         if (current == null) {
+<           out.append("-1");
+<         } else {
+<           out.append(String.valueOf(current.basisMapping.id));
+<         }
+---
+>         out.append(originalName);
+167,188d106
+< 
+<   private static class LineCharMapping {
+<     
+< 
+< 
+<     int startCharacter;
+< 
+<     
+< 
+< 
+<     int endCharacter;
+< 
+<     
+< 
+< 
+< 
+<     Mapping basisMapping;
+<   }
+< 
+<   
+< 
+< 
+213a132,137
+>   private String lastSourceFile = null;
+>   private String lastSourceFileEscaped = null;
+> 
+>   
+> 
+> 
+219c143
+<     Object sourceFile = node.getProp(Node.SOURCEFILE_PROP);
+---
+>     String sourceFile = (String)node.getProp(Node.SOURCEFILE_PROP);
+228a153,160
+>     String escapedSourceFile;
+>     if (lastSourceFile != sourceFile) {  
+>       lastSourceFile = sourceFile;
+>       lastSourceFileEscaped = escapeString(sourceFile);
+>     }
+>     escapedSourceFile = lastSourceFileEscaped;
+> 
+>     
+231c163
+<     mapping.sourceFile = sourceFile.toString();
+---
+>     mapping.sourceFile = escapedSourceFile;
+234c166
+<     Object originalName = node.getProp(Node.ORIGINALNAME_PROP);
+---
+>     String originalName = (String)node.getProp(Node.ORIGINALNAME_PROP);
+236c168
+<       mapping.originalName = originalName.toString();
+---
+>       mapping.originalName = escapeString(originalName);
+239d170
+< 
+301a233,235
+>     
+>     
+>     
+317,324c251,255
+<   private static class LineMappingInformation {
+<     Map<Integer, LineMapping> mappings;
+<     int maxLine;
+< 
+<     public LineMappingInformation(Map<Integer, LineMapping> mappings,
+<                                   int maxLine) {
+<       this.maxLine = maxLine;
+<       this.mappings = mappings;
+---
+>   private int findLastLine() {
+>     int maxLine = 0;
+>     for (Mapping mapping : mappings) {
+>       int endPositionLine = mapping.endPosition.getLineNumber();
+>       maxLine = Math.max(maxLine, endPositionLine);
+325a257,258
+>     
+>     return maxLine + prefixPosition.getLineNumber();
+334,336d266
+<   private LineMappingInformation determineLineMappings() {
+<     int maxLine = 0;
+<     Map<Integer, LineMapping> lineMappings = Maps.newHashMap();
+338,339c268,298
+<     for (Mapping mapping : mappings) {
+<       int prefixLine = prefixPosition.getLineNumber();
+---
+>   public void appendTo(Appendable out, String name) throws IOException {
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+341,342c300
+<       int startPositionLine =
+<           prefixLine + mapping.startPosition.getLineNumber();
+---
+>     int maxLine = findLastLine();
+344c302,308
+<       int endPositionLine = prefixLine + mapping.endPosition.getLineNumber();
+---
+>     
+>     out.append("{ \"file\" : ");
+>     out.append(escapeString(name));
+>     out.append(", \"count\": ");
+>     out.append(String.valueOf(maxLine + 1));
+>     out.append(" }\n");
+>     (new LineMapper(out)).appendLineMappings();
+346,347c310,311
+<       
+<       maxLine = Math.max(maxLine, endPositionLine);
+---
+>     
+>     out.append("\n");
+349,352c313,317
+<       
+<       
+<       for (int i = startPositionLine; i <= endPositionLine; ++i) {
+<         LineMapping lineMapping = lineMappings.get(i);
+---
+>     
+>     
+>     for (int i = 0; i <= maxLine; ++i) {
+>       out.append("[]\n");
+>     }
+354,359c319,320
+<         
+<         if (lineMapping == null) {
+<           lineMapping = new LineMapping();
+<           lineMapping.lineNumber = i;
+<           lineMappings.put(i, lineMapping);
+<         }
+---
+>     
+>     out.append("\n");
+361c322,326
+<         int startCharacter = mapping.startPosition.getCharacterIndex();
+---
+>     for (Mapping mapping : mappings) {
+>       mapping.appendTo(out);
+>       out.append("\n");
+>     }
+>   }
+363,368c328
+<         
+<         
+<         
+<         if (mapping.startPosition.getLineNumber() == 0) {
+<           startCharacter += prefixPosition.getCharacterIndex();
+<         }
+---
+>   
+370d329
+<         int endCharacter = mapping.endPosition.getCharacterIndex();
+372,374d330
+<         if (mapping.endPosition.getLineNumber() == 0) {
+<           endCharacter += prefixPosition.getCharacterIndex();
+<         }
+376,377c332,339
+<         
+<         lineMapping.length = Math.max(lineMapping.length, endCharacter);
+---
+>   private class LineMapper {
+>     
+>     private final Appendable out;
+>     
+>     private int line;
+>     private int col;
+>     
+>     private boolean firstChar = true;
+378a341,359
+>     private final static int UNMAPPED = -1;
+>     private final static String UNMAPPED_STRING = "-1";
+> 
+>     LineMapper(Appendable out) {
+>       this.out = out;
+>     }
+> 
+>     
+>     void appendLineMappings() throws IOException {
+>       Preconditions.checkState(!mappings.isEmpty());
+> 
+>       
+>       openLine();
+> 
+>       
+>       
+>       
+>       Deque<Mapping> stack = new ArrayDeque<Mapping>();
+>       for (Mapping m : mappings) {
+381,384d361
+<         if (i > startPositionLine) {
+<           startCharacter = 0;
+<         }
+< 
+387,388c364,366
+<         if (i < endPositionLine) {
+<           endCharacter = Integer.MAX_VALUE;
+---
+>         while (!stack.isEmpty() && !isOverlapped(stack.peek(), m)) {
+>           Mapping previous = stack.pop();
+>           writeClosedMapping(previous);
+392,395c370,372
+<         LineCharMapping lcm = new LineCharMapping();
+<         lcm.startCharacter = startCharacter;
+<         lcm.endCharacter = endCharacter;
+<         lcm.basisMapping = mapping;
+---
+>         
+>         Mapping parent = stack.peek();
+>         writeCharsBetween(parent, m);
+397c374
+<         lineMapping.characterMappings.add(lcm);
+---
+>         stack.push(m);
+399,405d375
+<     }
+< 
+<     return new LineMappingInformation(lineMappings, maxLine);
+<   }
+< 
+< 
+<   
+406a377,382
+>       
+>       
+>       while (!stack.isEmpty()) {
+>         Mapping m = stack.pop();
+>         writeClosedMapping(m);
+>       }
+407a384,386
+>       
+>       closeLine();
+>     }
+408a388
+>     
+410a391,394
+>     private void openLine() throws IOException {
+>       out.append("[");
+>       this.firstChar = true;
+>     }
+411a396
+>     
+414,441c399,401
+<   private void buildCharacterMappings(Collection<LineMapping> lineMappings) {
+<     for (LineMapping lineMapping : lineMappings) {
+<       for (int i = 0; i <= lineMapping.length; ++i) {
+<         int minLength = Integer.MAX_VALUE;
+<         LineCharMapping current = null;
+< 
+<         Collections.sort(lineMapping.characterMappings,
+<             new Comparator<LineCharMapping>() {
+<             @Override
+<             public int compare(LineCharMapping first, LineCharMapping second) {
+<               Mapping firstBasis = first.basisMapping;
+<               Mapping secondBasis = second.basisMapping;
+< 
+<               String firstName = firstBasis.originalName;
+<               String secondName = secondBasis.originalName;
+< 
+<               firstName = firstName == null ? "" : firstName;
+<               secondName = secondName == null ? "" : secondName;
+< 
+<               return firstName.compareTo(secondName);
+<             }
+<           });
+< 
+<         for (LineCharMapping lcm : lineMapping.characterMappings) {
+<           
+<           if (i < lcm.startCharacter || i > lcm.endCharacter) {
+<             continue;
+<           }
+---
+>     private void closeLine() throws IOException {
+>       out.append("]\n");
+>     }
+443c403
+<           int lcmLength = lcm.endCharacter - lcm.startCharacter;
+---
+>     
+445,449d404
+<           
+<           if (lcmLength == minLength && lcm.basisMapping.originalName != null) {
+<             current = lcm;
+<             continue;
+<           }
+451,455d405
+<           if (lcmLength < minLength) {
+<             minLength = lcmLength;
+<             current = lcm;
+<           }
+<         }
+457c407,411
+<         lineMapping.charToMap.put(i, current);
+---
+>     private void addCharEntry(String id) throws IOException {
+>       if (firstChar) {
+>         firstChar = false;
+>       } else {
+>         out.append(",");
+458a413
+>       out.append(id);
+460,468d414
+<   }
+< 
+<   
+< 
+< 
+<   Mapping getMappingFor(Position position) {
+<     
+<     LineMappingInformation info = determineLineMappings();
+<     Map<Integer, LineMapping> lineMappings = info.mappings;
+471d416
+<     buildCharacterMappings(lineMappings.values());
+473d417
+<     LineMapping lineMapping = lineMappings.get(position.getLineNumber());
+475,476c419,420
+<     if (lineMapping == null) {
+<       return null;
+---
+>     private int getAdjustedLine(Position p) {
+>       return p.getLineNumber() + prefixPosition.getLineNumber();
+479,480c423
+<     LineCharMapping lcm =
+<         lineMapping.charToMap.get(position.getCharacterIndex());
+---
+>     
+483,484c426,431
+<     if (lcm == null) {
+<       return null;
+---
+>     private int getAdjustedCol(Position p) {
+>       int rawLine = p.getLineNumber();
+>       int rawCol = p.getCharacterIndex();
+>       
+>       return (rawLine != 0)
+>           ? rawCol : rawCol + prefixPosition.getCharacterIndex();
+487,488c434
+<     return lcm.basisMapping;
+<   }
+---
+>     
+490d435
+<   
+491a437,442
+>     private boolean isOverlapped(Mapping m1, Mapping m2) {
+>       
+>       int l1 = m1.endPosition.getLineNumber();
+>       int l2 = m2.startPosition.getLineNumber();
+>       int c1 = m1.endPosition.getCharacterIndex();
+>       int c2 = m2.startPosition.getCharacterIndex();
+492a444,445
+>       return (l1 == l2 && c1 >= c2) || l1 > l2;
+>     }
+493a447
+>     
+497,502c451,459
+<   public void appendTo(Appendable out, String name) throws IOException {
+<     
+<     LineMappingInformation info = determineLineMappings();
+< 
+<     Map<Integer, LineMapping> lineMappings = info.mappings;
+<     int maxLine = info.maxLine;
+---
+>     private void writeClosedMapping(Mapping m) throws IOException {
+>       int nextLine = getAdjustedLine(m.endPosition);
+>       int nextCol = getAdjustedCol(m.endPosition);
+>       
+>       
+>       if (line < nextLine || (line == nextLine && col < nextCol)) {
+>         writeCharsUpTo(nextLine, nextCol, m.id);
+>       }
+>     }
+505d461
+<     buildCharacterMappings(lineMappings.values());
+507,536c463,472
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+<     
+---
+> 
+>     private void writeCharsBetween(Mapping prev, Mapping next)
+>         throws IOException {
+>       int nextLine = getAdjustedLine(next.startPosition);
+>       int nextCol = getAdjustedCol(next.startPosition);
+>       
+>       
+>       int id = (prev != null) ? prev.id : UNMAPPED;
+>       writeCharsUpTo(nextLine, nextCol, id);
+>     }
+539,543d474
+<     out.append("{ \"file\" : ");
+<     out.append(escapeString(name));
+<     out.append(", \"count\": ");
+<     out.append((maxLine + 1) + "");
+<     out.append(" }\n");
+545,546d475
+<     for (int i = 0; i <= maxLine; ++i) {
+<       LineMapping lineMapping = lineMappings.get(i);
+548,552d476
+<       if (lineMapping == null) {
+<         out.append("[]");
+<       } else {
+<         lineMapping.appendCharMapTo(out);
+<       }
+554,555c478,482
+<       out.append("\n");
+<     }
+---
+>     private void writeCharsUpTo(
+>         int nextLine, int nextCol, int id)
+>         throws IOException {
+>       Preconditions.checkState(line <= nextLine, "");
+>       Preconditions.checkState(line < nextLine || col <= nextCol);
+557,558c484,487
+<     
+<     out.append("\n");
+---
+>       if (line == nextLine && col == nextCol) {
+>         
+>         return;
+>       }
+560,564c489,496
+<     
+<     
+<     for (int i = 0; i <= maxLine; ++i) {
+<       out.append("[]\n");
+<     }
+---
+>       String idString = (id == UNMAPPED) ? UNMAPPED_STRING : String.valueOf(id);
+>       for (int i = line; i <= nextLine; i++) {
+>         if (i == nextLine) {
+>           for (int j = col; j < nextCol; j++) {
+>             addCharEntry(idString);
+>           }
+>           break;
+>         }
+566,567c498,500
+<     
+<     out.append("\n");
+---
+>         closeLine();
+>         openLine();
+>       }
+569,572c502,503
+<     for (int i = 0; i < mappings.size(); ++i) {
+<       Mapping mapping = mappings.get(i);
+<       mapping.appendTo(out);
+<       out.append("\n");
+---
+>       line = nextLine;
+>       col = nextCol;

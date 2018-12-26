@@ -1,0 +1,159 @@
+58c58,59
+< import org.joda.time.base.*;
+---
+> import org.joda.time.base.BasePeriod;
+> import org.joda.time.field.FieldUtils;
+72c73
+<         extends AbstractPeriod
+---
+>         extends BasePeriod
+272,287d272
+< 
+< 
+<     protected PeriodType checkPeriodType(PeriodType type) {
+<         if (type == null) {
+<             return PeriodType.getAllType();
+<         }
+<         return type;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+289c274,282
+<         super.setPeriod(period);
+---
+>         if (period == null) {
+>             setPeriod(0L);
+>         } else {
+>             setPeriod(
+>                 period.getYears(), period.getMonths(),
+>                 period.getWeeks(), period.getDays(),
+>                 period.getHours(), period.getMinutes(),
+>                 period.getSeconds(), period.getMillis());
+>         }
+318c311,315
+<         super.setPeriod(interval);
+---
+>         if (interval == null) {
+>             setPeriod(0L);
+>         } else {
+>             setPeriod(interval.getStartMillis(), interval.getEndMillis());
+>         }
+343c340,341
+<         super.setPeriod(duration);
+---
+>         long durationMillis = DateTimeUtils.getDurationMillis(duration);
+>         setPeriod(durationMillis);
+370c368,379
+<         super.add(period);
+---
+>         if (period != null) {
+>             setPeriod(
+>                 FieldUtils.safeAdd(getYears(), period.getYears()),
+>                 FieldUtils.safeAdd(getMonths(), period.getMonths()),
+>                 FieldUtils.safeAdd(getWeeks(), period.getWeeks()),
+>                 FieldUtils.safeAdd(getDays(), period.getDays()),
+>                 FieldUtils.safeAdd(getHours(), period.getHours()),
+>                 FieldUtils.safeAdd(getMinutes(), period.getMinutes()),
+>                 FieldUtils.safeAdd(getSeconds(), period.getSeconds()),
+>                 FieldUtils.safeAdd(getMillis(), period.getMillis())
+>             );
+>         }
+389,390c398,408
+<                     int hours, int minutes, int seconds, int millis) {
+<         super.add(years, months, weeks, days, hours, minutes, seconds, millis);
+---
+>                        int hours, int minutes, int seconds, int millis) {
+>         setPeriod(
+>             FieldUtils.safeAdd(getYears(), years),
+>             FieldUtils.safeAdd(getMonths(), months),
+>             FieldUtils.safeAdd(getWeeks(), weeks),
+>             FieldUtils.safeAdd(getDays(), days),
+>             FieldUtils.safeAdd(getHours(), hours),
+>             FieldUtils.safeAdd(getMinutes(), minutes),
+>             FieldUtils.safeAdd(getSeconds(), seconds),
+>             FieldUtils.safeAdd(getMillis(), millis)
+>         );
+401c419,421
+<         super.add(interval);
+---
+>         if (interval != null) {
+>             add(interval.toPeriod(getPeriodType()));
+>         }
+411,414d430
+< 
+< 
+< 
+< 
+416c432,434
+<         super.add(duration);
+---
+>         if (duration != null) {
+>             add(new Period(duration.getMillis(), getPeriodType()));
+>         }
+426,429d443
+< 
+< 
+< 
+< 
+431c445
+<         super.add(duration);
+---
+>         add(new Period(duration, getPeriodType()));
+442c456
+<         super.normalize();
+---
+>         setPeriod(toDurationMillis());
+464c478,480
+<         super.addYears(years);
+---
+>         if (years != 0) {
+>             setYears(FieldUtils.safeAdd(getYears(), years));
+>         }
+486c502,504
+<         super.addMonths(months);
+---
+>         if (months != 0) {
+>             setMonths(FieldUtils.safeAdd(getMonths(), months));
+>         }
+508c526,528
+<         super.addWeeks(weeks);
+---
+>         if (weeks != 0) {
+>             setWeeks(FieldUtils.safeAdd(getWeeks(), weeks));
+>         }
+530c550,552
+<         super.addDays(days);
+---
+>         if (days != 0) {
+>             setDays(FieldUtils.safeAdd(getDays(), days));
+>         }
+552c574,576
+<         super.addHours(hours);
+---
+>         if (hours != 0) {
+>             setHours(FieldUtils.safeAdd(getHours(), hours));
+>         }
+574c598,600
+<         super.addMinutes(minutes);
+---
+>         if (minutes != 0) {
+>             setMinutes(FieldUtils.safeAdd(getMinutes(), minutes));
+>         }
+596c622,624
+<         super.addSeconds(seconds);
+---
+>         if (seconds != 0) {
+>             setSeconds(FieldUtils.safeAdd(getSeconds(), seconds));
+>         }
+618c646,648
+<         super.addMillis(millis);
+---
+>         if (millis != 0) {
+>             setMillis(FieldUtils.safeAdd(getMillis(), millis));
+>         }

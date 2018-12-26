@@ -1,0 +1,36 @@
+1150a1151
+>     boolean madeChanges = false;
+1160a1162
+>       madeChanges = true;
+1181,1189d1182
+<     if (inferred.size() > 0) {
+<       
+<       TemplateTypeReplacer replacer = new TemplateTypeReplacer(
+<           registry, inferred);
+<       Node callTarget = n.getFirstChild();
+< 
+<       FunctionType replacementFnType = fnType.visit(replacer)
+<           .toMaybeFunctionType();
+<       Preconditions.checkNotNull(replacementFnType);
+1191,1192c1184,1192
+<       callTarget.setJSType(replacementFnType);
+<       n.setJSType(replacementFnType.getReturnType());
+---
+>     
+>     
+>     TemplateTypeReplacer replacer = new TemplateTypeReplacer(
+>         registry, inferred);
+>     Node callTarget = n.getFirstChild();
+> 
+>     FunctionType replacementFnType = fnType.visit(replacer)
+>         .toMaybeFunctionType();
+>     Preconditions.checkNotNull(replacementFnType);
+1194,1196c1194,1197
+<       return true;
+<     }
+<     return false;
+---
+>     callTarget.setJSType(replacementFnType);
+>     n.setJSType(replacementFnType.getReturnType());
+> 
+>     return replacer.madeChanges;

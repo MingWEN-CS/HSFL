@@ -1,0 +1,52 @@
+19a20
+> import com.google.common.collect.Maps;
+22a24,25
+> import java.util.Map;
+> import java.util.TreeSet;
+37,38c40,44
+<   private final List<WarningsGuard> guards;
+<   private static final Comparator<WarningsGuard> guardComparator =
+---
+>   
+>   private final Map<WarningsGuard, Integer> orderOfAddition = Maps.newHashMap();
+>   private int numberOfAdds = 0;
+> 
+>   private final Comparator<WarningsGuard> guardComparator =
+42c48,56
+<       return a.getPriority() - b.getPriority();
+---
+>       int priorityDiff = a.getPriority() - b.getPriority();
+>       if (priorityDiff != 0) {
+>         return priorityDiff;
+>       }
+> 
+>       
+>       
+>       return orderOfAddition.get(b).intValue() -
+>           orderOfAddition.get(a).intValue();
+45a60,63
+>   
+>   private final TreeSet<WarningsGuard> guards =
+>       new TreeSet<WarningsGuard>(guardComparator);
+> 
+47d64
+<     this.guards = Lists.newArrayList();
+58c75
+<       addGuards(Lists.reverse(((ComposeWarningsGuard) guard).guards));
+---
+>       addGuards(((ComposeWarningsGuard) guard).guards.descendingSet());
+60,64c77,80
+<       int index = Collections.binarySearch(this.guards, guard, guardComparator);
+<       if (index < 0) {
+<         index = -index - 1;
+<       }
+<       this.guards.add(index, guard);
+---
+>       numberOfAdds++;
+>       orderOfAddition.put(guard, numberOfAdds);
+>       guards.remove(guard);
+>       guards.add(guard);
+123c139
+<     return Collections.unmodifiableList(guards);
+---
+>     return Collections.unmodifiableList(Lists.newArrayList(guards));

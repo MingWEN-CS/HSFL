@@ -1,0 +1,65 @@
+46c46
+<           "{0} is not defined yet, so properties cannot be defined on it");
+---
+>           "{0} is not defined yet, so properties cannot be referenced on it");
+115,116c115
+<     if (isDefined &&
+<         declaration != null &&
+---
+>     boolean singleGlobalParentDecl =
+119,124c118
+<         parent.localSets == 0 &&
+<         parent.declaration.preOrderIndex > declaration.preOrderIndex) {
+<       compiler.report(
+<           JSError.make(declaration.source.getName(), declaration.node,
+<               NAME_DEFINED_LATE_WARNING, parent.fullName()));
+<     }
+---
+>         parent.localSets == 0;
+128c122
+<       if (!isDefined) {
+---
+>       if (!isDefined && !isTypedef(ref)) {
+130,136c124,134
+<       } else {
+<         if (declaration != null &&
+<             ref.getModule() != declaration.getModule() &&
+<             !moduleGraph.dependsOn(
+<                 ref.getModule(), declaration.getModule())) {
+<           reportBadModuleReference(name, ref);
+<         }
+---
+>       } else if (declaration != null &&
+>           ref.getModule() != declaration.getModule() &&
+>           !moduleGraph.dependsOn(
+>               ref.getModule(), declaration.getModule())) {
+>         reportBadModuleReference(name, ref);
+>       } else if (ref.scope.isGlobal() &&
+>           singleGlobalParentDecl &&
+>           parent.declaration.preOrderIndex > ref.preOrderIndex) {
+>         compiler.report(
+>             JSError.make(ref.source.getName(), ref.node,
+>                 NAME_DEFINED_LATE_WARNING, parent.fullName()));
+140a139,150
+>   private boolean isTypedef(Ref ref) {
+>     
+>     Node parent = ref.node.getParent();
+>     if (parent.getType() == Token.EXPR_RESULT) {
+>       JSDocInfo info = ref.node.getJSDocInfo();
+>       if (info != null && info.hasTypedefType()) {
+>         return true;
+>       }
+>     }
+>     return false;
+>   }
+> 
+154,162d163
+<     }
+< 
+<     
+<     Node parent = ref.node.getParent();
+<     if (parent.getType() == Token.EXPR_RESULT) {
+<       JSDocInfo info = ref.node.getJSDocInfo();
+<       if (info != null && info.hasTypedefType()) {
+<         return;
+<       }

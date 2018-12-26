@@ -1,0 +1,191 @@
+55a56
+> 
+124a126,127
+> 
+> 
+126,127c129,130
+<         BoxAndWhiskerItem item 
+<             = BoxAndWhiskerCalculator.calculateBoxAndWhiskerStatistics(list);
+---
+>         BoxAndWhiskerItem item = BoxAndWhiskerCalculator
+>                 .calculateBoxAndWhiskerStatistics(list);
+139,141c142,145
+<     public void add(BoxAndWhiskerItem item, 
+<                     Comparable rowKey, 
+<                     Comparable columnKey) {
+---
+> 
+> 
+>     public void add(BoxAndWhiskerItem item, Comparable rowKey, 
+>             Comparable columnKey) {
+148,154c152,155
+<         if (this.maximumRangeValueRow == r 
+<                 && this.maximumRangeValueColumn == c) {
+<             this.maximumRangeValue = Double.NaN;
+<         }
+<         if (this.minimumRangeValueRow == r 
+<                 && this.minimumRangeValueColumn == c) {
+<             this.minimumRangeValue = Double.NaN;
+---
+>         if ((this.maximumRangeValueRow == r && this.maximumRangeValueColumn 
+>                 == c) || (this.minimumRangeValueRow == r 
+>                 && this.minimumRangeValueColumn == c))  {
+>             updateBounds();
+156a158,165
+>             double minval = Double.NaN;
+>             if (item.getMinOutlier() != null) {
+>                 minval = item.getMinOutlier().doubleValue();
+>             }
+>             double maxval = Double.NaN;
+>             if (item.getMaxOutlier() != null) {
+>                 maxval = item.getMaxOutlier().doubleValue();
+>             }
+158,165c167,176
+<         double minval = Double.NaN;
+<         if (item.getMinOutlier() != null) {
+<             minval = item.getMinOutlier().doubleValue();
+<         }
+<         double maxval = Double.NaN;
+<         if (item.getMaxOutlier() != null) {
+<             maxval = item.getMaxOutlier().doubleValue();
+<         }
+---
+>             if (Double.isNaN(this.maximumRangeValue)) {
+>                 this.maximumRangeValue = maxval;
+>                 this.maximumRangeValueRow = r;
+>                 this.maximumRangeValueColumn = c;
+>             }
+>             else if (maxval > this.maximumRangeValue) {
+>                 this.maximumRangeValue = maxval;
+>                 this.maximumRangeValueRow = r;
+>                 this.maximumRangeValueColumn = c;
+>             }
+167,187c178,187
+<         if (Double.isNaN(this.maximumRangeValue)) {
+<             this.maximumRangeValue = maxval;
+<             this.maximumRangeValueRow = r;
+<             this.maximumRangeValueColumn = c;
+<         }
+<         else if (maxval > this.maximumRangeValue) {
+<             this.maximumRangeValue = maxval;
+<             this.maximumRangeValueRow = r;
+<             this.maximumRangeValueColumn = c;
+<         }
+<         
+<         if (Double.isNaN(this.minimumRangeValue)) {
+<             this.minimumRangeValue = minval;
+<             this.minimumRangeValueRow = r;
+<             this.minimumRangeValueColumn = c;
+<         }
+<         else if (minval < this.minimumRangeValue) {
+<             this.minimumRangeValue = minval;
+<             this.minimumRangeValueRow = r;
+<             this.minimumRangeValueColumn = c;
+<         }
+---
+>             if (Double.isNaN(this.minimumRangeValue)) {
+>                 this.minimumRangeValue = minval;
+>                 this.minimumRangeValueRow = r;
+>                 this.minimumRangeValueColumn = c;
+>             }
+>             else if (minval < this.minimumRangeValue) {
+>                 this.minimumRangeValue = minval;
+>                 this.minimumRangeValueRow = r;
+>                 this.minimumRangeValueColumn = c;
+>             }
+191d190
+< 
+245a245,246
+> 
+> 
+265a267,268
+> 
+> 
+283a287,288
+> 
+> 
+301a307,308
+> 
+> 
+319a327,328
+> 
+> 
+337a347,348
+> 
+> 
+355a367,368
+> 
+> 
+373a387,388
+> 
+> 
+390a406,407
+> 
+> 
+401a419,420
+> 
+> 
+410a430,431
+> 
+> 
+421a443,444
+> 
+> 
+432a456,457
+> 
+> 
+441a467,468
+> 
+> 
+450a478,479
+> 
+> 
+459a489,490
+> 
+> 
+471a503,504
+> 
+> 
+483a517,518
+> 
+> 
+507a543,544
+> 
+> 
+525a563,564
+> 
+> 
+543a583,584
+> 
+> 
+561a603,604
+> 
+> 
+579a623,624
+> 
+> 
+597a643,644
+> 
+> 
+615a663,664
+> 
+> 
+633a683,684
+> 
+> 
+651a703,704
+> 
+> 
+669a723,724
+> 
+> 
+677a733,741
+>     }
+>     
+>     
+> 
+> 
+> 
+>     private void updateBounds() {
+>         this.minimumRangeValue = Double.NaN;
+>         this.maximumRangeValue = Double.NaN;

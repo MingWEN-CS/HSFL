@@ -1,0 +1,438 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.base;
+
+import java.util.Date;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeFieldType;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
+import org.joda.time.MutableDateTime;
+import org.joda.time.ReadableInstant;
+import org.joda.time.chrono.ISOChronology;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class AbstractInstant implements ReadableInstant {
+
+    
+
+
+    protected AbstractInstant() {
+        super();
+    }
+
+    
+    
+
+
+
+
+    public DateTimeZone getZone() {
+        return getChronology().getZone();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int get(DateTimeFieldType type) {
+        if (type == null) {
+            throw new IllegalArgumentException("The DateTimeFieldType must not be null");
+        }
+        return type.getField(getChronology()).get(getMillis());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isSupported(DateTimeFieldType type) {
+        if (type == null) {
+            return false;
+        }
+        return type.getField(getChronology()).isSupported();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int get(DateTimeField field) {
+        if (field == null) {
+            throw new IllegalArgumentException("The DateTimeField must not be null");
+        }
+        return field.get(getMillis());
+    }
+
+    
+    
+
+
+
+
+    public Instant toInstant() {
+        return new Instant(getMillis());
+    }
+
+    
+
+
+
+
+    public DateTime toDateTime() {
+        return new DateTime(getMillis());
+    }
+
+    
+
+
+
+
+    public DateTime toDateTimeISO() {
+        return new DateTime(getMillis(), ISOChronology.getInstance());
+    }
+
+    
+
+
+
+
+
+    public DateTime toDateTime(DateTimeZone zone) {
+        Chronology chrono = DateTimeUtils.getChronology(getChronology());
+        chrono = chrono.withZone(zone);
+        return new DateTime(getMillis(), chrono);
+    }
+
+    
+
+
+
+
+
+    public DateTime toDateTime(Chronology chronology) {
+        return new DateTime(getMillis(), chronology);
+    }
+
+    
+    
+    
+    
+
+    
+
+
+
+
+    public MutableDateTime toMutableDateTime() {
+        return new MutableDateTime(getMillis());
+    }
+
+    
+
+
+
+
+    public MutableDateTime toMutableDateTimeISO() {
+        return new MutableDateTime(getMillis(), ISOChronology.getInstance());
+    }
+
+    
+
+
+
+
+
+    public MutableDateTime toMutableDateTime(DateTimeZone zone) {
+        Chronology chrono = DateTimeUtils.getChronology(getChronology());
+        chrono = chrono.withZone(zone);
+        return new MutableDateTime(getMillis(), chrono);
+    }
+
+    
+
+
+
+
+
+    public MutableDateTime toMutableDateTime(Chronology chronology) {
+        return new MutableDateTime(getMillis(), chronology);
+    }
+
+    
+    
+
+
+
+
+    public Date toDate() {
+        return new Date(getMillis());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public boolean equals(Object readableInstant) {
+        
+        if (this == readableInstant) {
+            return true;
+        }
+        if (readableInstant instanceof ReadableInstant) {
+            ReadableInstant otherInstant = (ReadableInstant) readableInstant;
+            if (getMillis() == otherInstant.getMillis()) {
+                Chronology chrono = getChronology();
+                if (chrono == otherInstant.getChronology()) {
+                    return true;
+                }
+                if (chrono != null && chrono.equals(otherInstant.getChronology())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+    public int hashCode() {
+        
+        return
+            ((int) (getMillis() ^ (getMillis() >>> 32))) +
+            (getChronology().hashCode());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public int compareTo(Object instant) {
+        if (this == instant) {
+            return 0;
+        }
+        
+        ReadableInstant otherInstant = (ReadableInstant) instant;
+        
+        long otherMillis = otherInstant.getMillis();
+        long thisMillis = getMillis();
+        
+        
+        if (thisMillis == otherMillis) {
+            return 0;
+        }
+        if (thisMillis < otherMillis) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean isAfter(long instant) {
+        return (getMillis() > instant);
+    }
+
+    
+
+
+
+
+
+    public boolean isAfterNow() {
+        return isAfter(DateTimeUtils.currentTimeMillis());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isAfter(ReadableInstant instant) {
+        long instantMillis = DateTimeUtils.getInstantMillis(instant);
+        return isAfter(instantMillis);
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean isBefore(long instant) {
+        return (getMillis() < instant);
+    }
+
+    
+
+
+
+
+
+    public boolean isBeforeNow() {
+        return isBefore(DateTimeUtils.currentTimeMillis());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isBefore(ReadableInstant instant) {
+        long instantMillis = DateTimeUtils.getInstantMillis(instant);
+        return isBefore(instantMillis);
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean isEqual(long instant) {
+        return (getMillis() == instant);
+    }
+
+    
+
+
+
+
+
+    public boolean isEqualNow() {
+        return isEqual(DateTimeUtils.currentTimeMillis());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isEqual(ReadableInstant instant) {
+        long instantMillis = DateTimeUtils.getInstantMillis(instant);
+        return isEqual(instantMillis);
+    }
+
+    
+    
+
+
+
+
+    public String toString() {
+        return ISODateTimeFormat.dateTime().print(this);
+    }
+
+    
+    
+
+
+
+
+
+    public String toString(DateTimeFormatter formatter) {
+        if (formatter == null) {
+            return toString();
+        }
+        return formatter.print(this);
+    }
+
+}

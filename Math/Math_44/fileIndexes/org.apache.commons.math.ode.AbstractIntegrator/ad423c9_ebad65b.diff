@@ -1,0 +1,34 @@
+31a32
+> import org.apache.commons.math.exception.MathIllegalArgumentException;
+49c50
+< public abstract class AbstractIntegrator implements FirstOrderIntegrator {
+---
+> public abstract class AbstractIntegrator implements ExpandableFirstOrderIntegrator {
+79c80
+<     private transient FirstOrderDifferentialEquations equations;
+---
+>     private transient ExpandableFirstOrderDifferentialEquations equations;
+191c192
+<     protected void setEquations(final FirstOrderDifferentialEquations equations) {
+---
+>     protected void setEquations(final ExpandableFirstOrderDifferentialEquations equations) {
+195a197,203
+>     public double integrate(FirstOrderDifferentialEquations equations,
+>                             double t0, double[] y0, double t, double[] y)
+>         throws MathIllegalStateException, MathIllegalArgumentException {
+>         return integrate(new ExpandableFirstOrderDifferentialEquations(equations), t0, y0, t, y);
+>     }
+> 
+>     
+339c347
+<     protected void sanityChecks(final FirstOrderDifferentialEquations ode,
+---
+>     protected void sanityChecks(final ExpandableFirstOrderDifferentialEquations ode,
+344c352
+<         if (ode.getDimension() != y0.length) {
+---
+>         if (ode.getMainSetDimension() != y0.length) {
+348c356
+<         if (ode.getDimension() != y.length) {
+---
+>         if (ode.getMainSetDimension() != y.length) {

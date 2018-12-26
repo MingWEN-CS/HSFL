@@ -1,0 +1,893 @@
+65,67c65,66
+< import org.joda.time.ReadableInstant;
+< import org.joda.time.chrono.FractionalDateTimeField;
+< import org.joda.time.chrono.RemainderDateTimeField;
+---
+> import org.joda.time.chrono.MillisDurationField;
+> import org.joda.time.chrono.PreciseDateTimeField;
+90,93d88
+< public class DateTimeFormatterBuilder {
+< 
+<     private static String parseToken(String pattern, int[] indexRef) {
+<         StringBuffer buf = new StringBuffer();
+95,115d89
+<         int i = indexRef[0];
+<         int length = pattern.length();
+< 
+<         char c = pattern.charAt(i);
+<         if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z') {
+<             
+<             
+<             buf.append(c);
+< 
+<             while (i + 1 < length) {
+<                 char peek = pattern.charAt(i + 1);
+<                 if (peek == c) {
+<                     buf.append(c);
+<                     i++;
+<                 } else {
+<                     break;
+<                 }
+<             }
+<         } else {
+<             
+<             buf.append('\'');
+117d90
+<             boolean inLiteral = false;
+119,142c92
+<             for (; i < length; i++) {
+<                 c = pattern.charAt(i);
+<                 
+<                 if (c == '\'') {
+<                     if (i + 1 < length && pattern.charAt(i + 1) == '\'') {
+<                         
+<                         i++;
+<                         buf.append(c);
+<                     } else {
+<                         inLiteral = !inLiteral;
+<                     }
+<                 } else if (!inLiteral &&
+<                            (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z')) {
+<                     i--;
+<                     break;
+<                 } else {
+<                     buf.append(c);
+<                 }
+<             }
+<         }
+< 
+<         indexRef[0] = i;
+<         return buf.toString();
+<     }
+---
+> public class DateTimeFormatterBuilder {
+164c114
+<     public DateTimeFormatterBuilder(DateTimeZone zone) {
+---
+>     public DateTimeFormatterBuilder(final DateTimeZone zone) {
+172c122
+<     public DateTimeFormatterBuilder(DateTimeZone zone, Locale locale) {
+---
+>     public DateTimeFormatterBuilder(final DateTimeZone zone, final Locale locale) {
+182c132
+<     public DateTimeFormatterBuilder(Chronology chrono) {
+---
+>     public DateTimeFormatterBuilder(final Chronology chrono) {
+194c144
+<             throw new IllegalArgumentException("The Chronology must not be null");
+---
+>             chrono = ISOChronology.getInstance();
+197c147
+<             throw new IllegalArgumentException("The Locale must not be null");
+---
+>             locale = Locale.getDefault();
+306c256
+<     public DateTimeFormatterBuilder append(DateTimeFormatter formatter)
+---
+>     public DateTimeFormatterBuilder append(final DateTimeFormatter formatter)
+321c271
+<     public DateTimeFormatterBuilder append(DateTimePrinter printer)
+---
+>     public DateTimeFormatterBuilder append(final DateTimePrinter printer)
+336c286
+<     public DateTimeFormatterBuilder append(DateTimeParser parser) {
+---
+>     public DateTimeFormatterBuilder append(final DateTimeParser parser) {
+348,349c298,299
+<     public DateTimeFormatterBuilder append(DateTimePrinter printer,
+<                                            DateTimeParser parser)
+---
+>     public DateTimeFormatterBuilder append(final DateTimePrinter printer,
+>                                            final DateTimeParser parser)
+374,375c324,325
+<     public DateTimeFormatterBuilder append(DateTimePrinter printer,
+<                                            DateTimeParser[] parsers)
+---
+>     public DateTimeFormatterBuilder append(final DateTimePrinter printer,
+>                                            final DateTimeParser[] parsers)
+405c355
+<     public DateTimeFormatterBuilder appendOptional(DateTimeParser parser) {
+---
+>     public DateTimeFormatterBuilder appendOptional(final DateTimeParser parser) {
+412c362
+<     private DateTimeFormatterBuilder append0(Object element) {
+---
+>     private DateTimeFormatterBuilder append0(final Object element) {
+420,422c370,371
+<     private DateTimeFormatterBuilder append0(DateTimePrinter printer,
+<                                              DateTimeParser parser)
+<     {
+---
+>     private DateTimeFormatterBuilder append0(
+>             final DateTimePrinter printer, final DateTimeParser parser) {
+433c382
+<     public DateTimeFormatterBuilder appendLiteral(char c) {
+---
+>     public DateTimeFormatterBuilder appendLiteral(final char c) {
+441c390,395
+<     public DateTimeFormatterBuilder appendLiteral(String text) {
+---
+> 
+> 
+>     public DateTimeFormatterBuilder appendLiteral(final String text) {
+>         if (text == null) {
+>             throw new IllegalArgumentException("Literal must not be null");
+>         }
+454,456c408,413
+<     public DateTimeFormatterBuilder appendNumeric(DateTimeField field,
+<                                                   int minDigits, int maxDigits)
+<     {
+---
+> 
+>     public DateTimeFormatterBuilder appendNumeric(
+>             DateTimeField field, int minDigits, int maxDigits) {
+>         if (field == null) {
+>             throw new IllegalArgumentException("Field must not be null");
+>         }
+479,481c436,441
+<     public DateTimeFormatterBuilder appendSignedNumeric(DateTimeField field,
+<                                                         int minDigits, int maxDigits)
+<     {
+---
+> 
+>     public DateTimeFormatterBuilder appendSignedNumeric(
+>             DateTimeField field, int minDigits, int maxDigits) {
+>         if (field == null) {
+>             throw new IllegalArgumentException("Field must not be null");
+>         }
+501c461
+<     public DateTimeFormatterBuilder appendText(DateTimeField field) {
+---
+>     public DateTimeFormatterBuilder appendText(final DateTimeField field) {
+511c471
+<     public DateTimeFormatterBuilder appendShortText(DateTimeField field) {
+---
+>     public DateTimeFormatterBuilder appendShortText(final DateTimeField field) {
+526,528c486,491
+<     public DateTimeFormatterBuilder appendFraction(int minDigits, int maxDigits,
+<                                                    int rangeInMillis)
+<     {
+---
+> 
+>     public DateTimeFormatterBuilder appendFraction(
+>             DateTimeField field, int minDigits, int maxDigits) {
+>         if (field.getDurationField().isPrecise() == false) {
+>             throw new IllegalArgumentException("Field duration must be precise");
+>         }
+535c498
+<         return append0(new Fraction(iChrono, minDigits, maxDigits, rangeInMillis));
+---
+>         return append0(new Fraction(iChrono, field, minDigits, maxDigits));
+542,543c505,506
+<     public DateTimeFormatterBuilder appendFractionOfSecond(int minDigits, int maxDigits) {
+<         return appendFraction(minDigits, maxDigits, DateTimeConstants.MILLIS_PER_SECOND);
+---
+>     public DateTimeFormatterBuilder appendFractionOfSecond(final int minDigits, final int maxDigits) {
+>         return appendFraction(iChronoUTC.secondOfDay(), minDigits, maxDigits);
+550,551c513,514
+<     public DateTimeFormatterBuilder appendFractionOfMinute(int minDigits, int maxDigits) {
+<         return appendFraction(minDigits, maxDigits, DateTimeConstants.MILLIS_PER_MINUTE);
+---
+>     public DateTimeFormatterBuilder appendFractionOfMinute(final int minDigits, final int maxDigits) {
+>         return appendFraction(iChronoUTC.minuteOfDay(), minDigits, maxDigits);
+558,559c521,522
+<     public DateTimeFormatterBuilder appendFractionOfHour(int minDigits, int maxDigits) {
+<         return appendFraction(minDigits, maxDigits, DateTimeConstants.MILLIS_PER_HOUR);
+---
+>     public DateTimeFormatterBuilder appendFractionOfHour(final int minDigits, final int maxDigits) {
+>         return appendFraction(iChronoUTC.hourOfDay(), minDigits, maxDigits);
+566,568c529,530
+<     public DateTimeFormatterBuilder appendFractionOfDay(int minDigits, int maxDigits) {
+<         return appendFraction
+<             (minDigits, maxDigits, DateTimeConstants.MILLIS_PER_DAY);
+---
+>     public DateTimeFormatterBuilder appendFractionOfDay(final int minDigits, final int maxDigits) {
+>         return appendFraction(iChronoUTC.dayOfYear(), minDigits, maxDigits);
+576c538
+<     public DateTimeFormatterBuilder appendMillisOfSecond(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendMillisOfSecond(final int minDigits) {
+585c547
+<     public DateTimeFormatterBuilder appendMillisOfDay(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendMillisOfDay(final int minDigits) {
+594c556
+<     public DateTimeFormatterBuilder appendSecondOfMinute(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendSecondOfMinute(final int minDigits) {
+603c565
+<     public DateTimeFormatterBuilder appendSecondOfDay(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendSecondOfDay(final int minDigits) {
+612c574
+<     public DateTimeFormatterBuilder appendMinuteOfHour(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendMinuteOfHour(final int minDigits) {
+621c583
+<     public DateTimeFormatterBuilder appendMinuteOfDay(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendMinuteOfDay(final int minDigits) {
+630c592
+<     public DateTimeFormatterBuilder appendHourOfDay(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendHourOfDay(final int minDigits) {
+639c601
+<     public DateTimeFormatterBuilder appendClockhourOfDay(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendClockhourOfDay(final int minDigits) {
+648c610
+<     public DateTimeFormatterBuilder appendHourOfHalfday(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendHourOfHalfday(final int minDigits) {
+657c619
+<     public DateTimeFormatterBuilder appendClockhourOfHalfday(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendClockhourOfHalfday(final int minDigits) {
+666c628
+<     public DateTimeFormatterBuilder appendDayOfWeek(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendDayOfWeek(final int minDigits) {
+675c637
+<     public DateTimeFormatterBuilder appendDayOfMonth(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendDayOfMonth(final int minDigits) {
+684c646
+<     public DateTimeFormatterBuilder appendDayOfYear(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendDayOfYear(final int minDigits) {
+693c655
+<     public DateTimeFormatterBuilder appendWeekOfWeekyear(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendWeekOfWeekyear(final int minDigits) {
+704c666
+<     public DateTimeFormatterBuilder appendWeekyear(int minDigits, int maxDigits) {
+---
+>     public DateTimeFormatterBuilder appendWeekyear(final int minDigits, final int maxDigits) {
+714c676
+<     public DateTimeFormatterBuilder appendMonthOfYear(int minDigits) {
+---
+>     public DateTimeFormatterBuilder appendMonthOfYear(final int minDigits) {
+725c687
+<     public DateTimeFormatterBuilder appendYear(int minDigits, int maxDigits) {
+---
+>     public DateTimeFormatterBuilder appendYear(final int minDigits, final int maxDigits) {
+736c698
+<     public DateTimeFormatterBuilder appendYearOfEra(int minDigits, int maxDigits) {
+---
+>     public DateTimeFormatterBuilder appendYearOfEra(final int minDigits, final int maxDigits) {
+747c709
+<     public DateTimeFormatterBuilder appendYearOfCentury(int minDigits, int maxDigits) {
+---
+>     public DateTimeFormatterBuilder appendYearOfCentury(final int minDigits, final int maxDigits) {
+758c720
+<     public DateTimeFormatterBuilder appendCenturyOfEra(int minDigits, int maxDigits) {
+---
+>     public DateTimeFormatterBuilder appendCenturyOfEra(final int minDigits, final int maxDigits) {
+843,846c805,807
+<     public DateTimeFormatterBuilder appendTimeZoneOffset(String zeroOffsetText,
+<                                                          boolean showSeparators,
+<                                                          int minFields, int maxFields)
+<     {
+---
+>     public DateTimeFormatterBuilder appendTimeZoneOffset(
+>             final String zeroOffsetText, final boolean showSeparators,
+>             final int minFields, final int maxFields) {
+851,1105d811
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public DateTimeFormatterBuilder appendPattern(String pattern)
+<         throws IllegalArgumentException
+<     {
+<         int length = pattern.length();
+<         int[] indexRef = new int[1];
+< 
+<         for (int i=0; i<length; i++) {
+<             indexRef[0] = i;
+<             String token = parseToken(pattern, indexRef);
+<             i = indexRef[0];
+< 
+<             int tokenLen = token.length();
+<             if (tokenLen == 0) {
+<                 break;
+<             }
+<             char c = token.charAt(0);
+< 
+<             switch (c) {
+<             case 'G': 
+<                 appendEraText();
+<                 break;
+<             case 'C': 
+<                 appendCenturyOfEra(tokenLen, tokenLen);
+<                 break;
+<             case 'x': 
+<             case 'y': 
+<             case 'Y': 
+<                 if (tokenLen == 2) {
+<                     
+<                     
+<                     DateTimeField field;
+<                     switch (c) {
+<                     case 'x':
+<                         field = new RemainderDateTimeField("weekyearOfCentury", iChronoUTC.weekyear(), 100);
+<                         break;
+<                     case 'y': default:
+<                         field = new RemainderDateTimeField("yearOfCentury", iChronoUTC.year(), 100);
+<                         break;
+<                     case 'Y':
+<                         field = new RemainderDateTimeField("yearOfCentury", iChronoUTC.yearOfEra(), 100);
+<                         break;
+<                     }
+<                     appendNumeric(field, 2, 2);
+<                 } else {
+<                     
+<                     int maxDigits = 9;
+< 
+<                     
+<                     if (i + 1 < length) {
+<                         indexRef[0]++;
+<                         if (isNumericToken(parseToken(pattern, indexRef))) {
+<                             
+<                             maxDigits = tokenLen;
+<                         }
+<                         indexRef[0]--;
+<                     }
+< 
+<                     switch (c) {
+<                     case 'x':
+<                         appendWeekyear(tokenLen, maxDigits);
+<                         break;
+<                     case 'y':
+<                         appendYear(tokenLen, maxDigits);
+<                         break;
+<                     case 'Y':
+<                         appendYearOfEra(tokenLen, maxDigits);
+<                         break;
+<                     }
+<                 }
+<                 break;
+<             case 'M': 
+<                 if (tokenLen >= 3) {
+<                     if (tokenLen >= 4) {
+<                         appendMonthOfYearText();
+<                     } else {
+<                         appendMonthOfYearShortText();
+<                     }
+<                 } else {
+<                     appendMonthOfYear(tokenLen);
+<                 }
+<                 break;
+<             case 'd': 
+<                 appendDayOfMonth(tokenLen);
+<                 break;
+<             case 'h': 
+<                 appendClockhourOfHalfday(tokenLen);
+<                 break;
+<             case 'H': 
+<                 appendHourOfDay(tokenLen);
+<                 break;
+<             case 'm': 
+<                 appendMinuteOfHour(tokenLen);
+<                 break;
+<             case 's': 
+<                 appendSecondOfMinute(tokenLen);
+<                 break;
+<             case 'S': 
+<                 appendFractionOfSecond(tokenLen, tokenLen);
+<                 break;
+<             case 'e': 
+<                 appendDayOfWeek(tokenLen);
+<                 break;
+<             case 'E': 
+<                 if (tokenLen >= 4) {
+<                     appendDayOfWeekText();
+<                 } else {
+<                     appendDayOfWeekShortText();
+<                 }
+<                 break;
+<             case 'D': 
+<                 appendDayOfYear(tokenLen);
+<                 break;
+<             case 'w': 
+<                 appendWeekOfWeekyear(tokenLen);
+<                 break;
+<             case 'a': 
+<                 appendHalfdayOfDayText();
+<                 break;
+<             case 'k': 
+<                 appendClockhourOfDay(tokenLen);
+<                 break;
+<             case 'K': 
+<                 appendClockhourOfHalfday(tokenLen);
+<                 break;
+<             case 'z': 
+<                 if (tokenLen >= 4) {
+<                     appendTimeZoneName();
+<                 } else {
+<                     appendTimeZoneShortName();
+<                 }
+<                 break;
+<             case 'Z': 
+<                 if (tokenLen >= 4) {
+<                     appendTimeZoneOffset(null, true, 2, 2);
+<                 } else {
+<                     appendTimeZoneOffset(null, false, 2, 2);
+<                 }
+<                 break;
+<             case '\'': 
+<                 String sub = token.substring(1);
+<                 if (sub.length() == 1) {
+<                     appendLiteral(sub.charAt(0));
+<                 } else {
+<                     
+<                     
+<                     appendLiteral(new String(sub));
+<                 }
+<                 break;
+<             default:
+<                 throw new IllegalArgumentException
+<                     ("Illegal pattern component: " + token);
+<             }
+<         }
+< 
+<         return this;
+<     }
+< 
+<     
+<     private boolean isNumericToken(String token) {
+<         int tokenLen = token.length();
+<         if (tokenLen > 0) {
+<             char c = token.charAt(0);
+<             switch (c) {
+<             case 'c': 
+<             case 'C': 
+<             case 'x': 
+<             case 'y': 
+<             case 'Y': 
+<             case 'd': 
+<             case 'h': 
+<             case 'H': 
+<             case 'm': 
+<             case 's': 
+<             case 'S': 
+<             case 'e': 
+<             case 'D': 
+<             case 'F': 
+<             case 'w': 
+<             case 'W': 
+<             case 'k': 
+<             case 'K': 
+<                 return true;
+<             case 'M': 
+<                 if (tokenLen <= 2) {
+<                     return true;
+<                 }
+<             }
+<         }
+<             
+<         return false;
+<     }
+< 
+1133c839
+<     private boolean isPrinter(Object f) {
+---
+>     private boolean isPrinter(final Object f) {
+1143c849
+<     private boolean isParser(Object f) {
+---
+>     private boolean isParser(final Object f) {
+1153c859
+<     private boolean isFormatter(Object f) {
+---
+>     private boolean isFormatter(final Object f) {
+1174,1178d879
+< 
+<         protected final DateTimeZone getDateTimeZone() {
+<             DateTimeZone zone = iChrono.getDateTimeZone();
+<             return zone == null ? DateTimeZone.UTC : zone;
+<         }
+1195,1196c896,897
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+1200,1201c901,902
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+1205c906
+<         public String print(long millisUTC, DateTimeZone zone, long millisLocal) {
+---
+>         public String print(long instant, DateTimeZone zone, long instantLocal) {
+1251,1252c952,953
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+1256,1257c957,958
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+1261c962
+<         public String print(long millisUTC, DateTimeZone zone, long millisLocal) {
+---
+>         public String print(long instant, DateTimeZone zone, long instantLocal) {
+1284,1286c985,987
+<         NumberFormatter(Chronology chrono,
+<                         DateTimeField field, int maxParsedDigits,
+<                         boolean signed) {
+---
+>         NumberFormatter(
+>                 Chronology chrono, DateTimeField field,
+>                 int maxParsedDigits, boolean signed) {
+1354,1356c1055,1056
+<         UnpaddedNumber(Chronology chrono,
+<                        DateTimeField field, int maxParsedDigits,
+<                        boolean signed)
+---
+>         UnpaddedNumber(Chronology chrono, DateTimeField field,
+>                        int maxParsedDigits, boolean signed)
+1365,1367c1065,1071
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+<             FormatUtils.appendUnpaddedInteger(buf, iField.get(millisLocal));
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+>             try {
+>                 FormatUtils.appendUnpaddedInteger(buf, iField.get(instantLocal));
+>             } catch (RuntimeException e) {
+>                 buf.append('\ufffd');
+>             }
+1370,1372c1074,1080
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+<             FormatUtils.writeUnpaddedInteger(out, iField.get(millisLocal));
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+>             try {
+>                 FormatUtils.writeUnpaddedInteger(out, iField.get(instantLocal));
+>             } catch (RuntimeException e) {
+>                 out.write('\ufffd');
+>             }
+1391,1394c1099,1108
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+<             FormatUtils.appendPaddedInteger
+<                 (buf, iField.get(millisLocal), iMinPrintedDigits);
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+>             try {
+>                 FormatUtils.appendPaddedInteger
+>                     (buf, iField.get(instantLocal), iMinPrintedDigits);
+>             } catch (RuntimeException e) {
+>                 for (int i=iMinPrintedDigits; --i>=0; ) {
+>                     buf.append('\ufffd');
+>                 }
+>             }
+1397,1400c1111,1120
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+<             FormatUtils.writePaddedInteger
+<                 (out, iField.get(millisLocal), iMinPrintedDigits);
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+>             try {
+>                 FormatUtils.writePaddedInteger
+>                     (out, iField.get(instantLocal), iMinPrintedDigits);
+>             } catch (RuntimeException e) {
+>                 for (int i=iMinPrintedDigits; --i>=0; ) {
+>                     out.write('\ufffd');
+>                 }
+>             }
+1411,1412c1131,1132
+<         TextField(Chronology chrono,
+<                   DateTimeField field, Locale locale, boolean isShort) {
+---
+>         TextField(Chronology chrono, DateTimeField field,
+>                   Locale locale, boolean isShort) {
+1420,1423c1140,1147
+<             if (iShort) {
+<                 return iField.getMaximumShortTextLength(iLocale);
+<             } else {
+<                 return iField.getMaximumTextLength(iLocale);
+---
+>             try {
+>                 if (iShort) {
+>                     return iField.getMaximumShortTextLength(iLocale);
+>                 } else {
+>                     return iField.getMaximumTextLength(iLocale);
+>                 }
+>             } catch (RuntimeException e) {
+>                 return 1;
+1427,1429c1151,1157
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+<             buf.append(print(millisUTC, zone, millisLocal));
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+>             try {
+>                 buf.append(print(instant, zone, instantLocal));
+>             } catch (RuntimeException e) {
+>                 buf.append('\ufffd');
+>             }
+1432,1434c1160,1166
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+<             out.write(print(millisUTC, zone, millisLocal));
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+>             try {
+>                 out.write(print(instant, zone, instantLocal));
+>             } catch (RuntimeException e) {
+>                 out.write('\ufffd');
+>             }
+1437c1169
+<         public final String print(long millisUTC, DateTimeZone zone, long millisLocal) {
+---
+>         public final String print(long instant, DateTimeZone zone, long instantLocal) {
+1439c1171
+<                 return iField.getAsShortText(millisLocal, iLocale);
+---
+>                 return iField.getAsShortText(instantLocal, iLocale);
+1441c1173
+<                 return iField.getAsText(millisLocal, iLocale);
+---
+>                 return iField.getAsText(instantLocal, iLocale);
+1475a1208,1209
+>         private final DateTimeField iField;
+>         private final long iRangeMillis;
+1478d1211
+<         private final int iRange;
+1482c1215
+<         private transient DateTimeField iField;
+---
+>         private transient DateTimeField iParseField;
+1484,1485c1217,1218
+<         Fraction(Chronology chrono,
+<                  int minDigits, int maxDigits, int rangeInMillis) {
+---
+>         Fraction(Chronology chrono, DateTimeField field,
+>                  int minDigits, int maxDigits) {
+1486a1220,1221
+>             iField = field;
+>             iRangeMillis = field.getDurationField().getUnitMillis();
+1494d1228
+<             iRange = rangeInMillis;
+1519c1253
+<                 if (((rangeInMillis * scaler) / scaler) == rangeInMillis) {
+---
+>                 if (((iRangeMillis * scaler) / scaler) == iRangeMillis) {
+1534,1535c1268,1269
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+1537c1271
+<                 printTo(buf, null, millisLocal);
+---
+>                 printTo(buf, null, instantLocal);
+1543,1545c1277,1279
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+<             printTo(null, out, millisLocal);
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+>             printTo(null, out, instantLocal);
+1548c1282
+<         private void printTo(StringBuffer buf, Writer out, long millis)
+---
+>         private void printTo(StringBuffer buf, Writer out, long instantLocal)
+1550a1285,1286
+>             int minDigits = iMinDigits;
+> 
+1552,1555c1288,1300
+<             if (millis >= 0) {
+<                 fraction = millis % iRange;
+<             } else {
+<                 fraction = iRange - 1 + (millis + 1) % iRange;
+---
+>             try {
+>                 fraction = iField.remainder(instantLocal);
+>             } catch (RuntimeException e) {
+>                 if (buf != null) {
+>                     while (--minDigits >= 0) {
+>                         buf.append('\ufffd');
+>                     }
+>                 } else {
+>                     while (--minDigits >= 0) {
+>                         out.write('\ufffd');
+>                     }
+>                 }
+>                 return;
+1558,1559d1302
+<             int minDigits = iMinDigits;
+< 
+1574c1317
+<             long scaled = fraction * iScaler / iRange;
+---
+>             long scaled = fraction * iScaler / iRangeMillis;
+1632c1375
+<             long n = iRange;
+---
+>             long n = iRangeMillis;
+1654,1655c1397,1399
+<             if (iField == null) {
+<                 iField = new FractionalDateTimeField("", 1, iRange);
+---
+>             if (iParseField == null) {
+>                 iParseField = new PreciseDateTimeField
+>                     ("", MillisDurationField.INSTANCE, iField.getDurationField());
+1658c1402
+<             bucket.saveField(iField, (int)value);
+---
+>             bucket.saveField(iParseField, (int)value);
+1702,1704c1446,1448
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+<             int offset = (int)(millisLocal - millisUTC);
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+>             int offset = (int)(instantLocal - instant);
+1759,1761c1503,1505
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+<             int offset = (int)(millisLocal - millisUTC);
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+>             int offset = (int)(instantLocal - instant);
+2013,2014c1757,1758
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+2019c1763
+<                 buf.append(zone.getShortName(millisUTC, this.iLocale));
+---
+>                 buf.append(zone.getShortName(instant, this.iLocale));
+2021c1765
+<                 buf.append(zone.getName(millisUTC, this.iLocale));
+---
+>                 buf.append(zone.getName(instant, this.iLocale));
+2025,2026c1769,1770
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+2031c1775
+<                 out.write(zone.getShortName(millisUTC, this.iLocale));
+---
+>                 out.write(zone.getShortName(instant, this.iLocale));
+2033c1777
+<                 out.write(zone.getName(millisUTC, this.iLocale));
+---
+>                 out.write(zone.getName(instant, this.iLocale));
+2037c1781
+<         public String print(long millisUTC, DateTimeZone zone, long millisLocal) {
+---
+>         public String print(long instant, DateTimeZone zone, long instantLocal) {
+2042c1786
+<                 return zone.getShortName(millisUTC, this.iLocale);
+---
+>                 return zone.getShortName(instant, this.iLocale);
+2044c1788
+<                 return zone.getName(millisUTC, this.iLocale);
+---
+>                 return zone.getName(instant, this.iLocale);
+2108,2109c1852,1853
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+2118c1862
+<                 elements[i].printTo(buf, millisUTC, zone, millisLocal);
+---
+>                 elements[i].printTo(buf, instant, zone, instantLocal);
+2122,2123c1866,1867
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) throws IOException {
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) throws IOException {
+2132c1876
+<                 elements[i].printTo(out, millisUTC, zone, millisLocal);
+---
+>                 elements[i].printTo(out, instant, zone, instantLocal);

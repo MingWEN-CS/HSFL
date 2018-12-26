@@ -1,0 +1,22 @@
+380,381c380,381
+<     public final DateTime withZoneRetainFields(DateTimeZone newDateTimeZone) {
+<         newDateTimeZone = (newDateTimeZone == null ? DateTimeZone.getDefault() : newDateTimeZone);
+---
+>     public final DateTime withZoneRetainFields(DateTimeZone newZone) {
+>         newZone = (newZone == null ? DateTimeZone.getDefault() : newZone);
+384c384
+<         if (newDateTimeZone == originalZone) {
+---
+>         if (newZone == originalZone) {
+388,390c388,390
+<         long originalMillis = getMillis();
+<         long newMillis = originalMillis + originalZone.getOffset(originalMillis);
+<         newMillis -= newDateTimeZone.getOffsetFromLocal(newMillis);
+---
+>         long millis = getMillis();
+>         millis += originalZone.getOffset(millis);
+>         millis -= newZone.getOffsetFromLocal(millis);
+392c392
+<         return new DateTime(newMillis, getChronology().withZone(newDateTimeZone));
+---
+>         return new DateTime(millis, getChronology().withZone(newZone));

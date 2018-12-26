@@ -1,0 +1,97 @@
+1a2,97
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.rhino.JSDocInfo;
+> import com.google.javascript.rhino.JSTypeExpression;
+> import com.google.javascript.rhino.Node;
+> import com.google.javascript.rhino.Token;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class CodingConventionAnnotator extends NodeTraversal.AbstractPostOrderCallback
+>     implements CompilerPass {
+> 
+>   private CodingConvention convention;
+>   private AbstractCompiler compiler;
+> 
+>   public CodingConventionAnnotator(AbstractCompiler compiler) {
+>     this.compiler = compiler;
+>     this.convention = compiler.getCodingConvention();
+>   }
+> 
+>   @Override
+>   public void process(Node externs, Node root) {
+>     if (externs != null) {
+>       NodeTraversal.traverse(compiler, externs, this);
+>     }
+>     if (root != null) {
+>       NodeTraversal.traverse(compiler, root, this);
+>     }
+>   }
+> 
+>   @Override
+>   public void visit(NodeTraversal t, Node n, Node parent) {
+>     switch (n.getType()) {
+>       case Token.NAME:
+>       case Token.STRING:
+>         if (convention.isConstant(n.getString())) {
+>           n.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>         }
+>         break;
+> 
+>       case Token.FUNCTION:
+>         JSDocInfo fnInfo = n.getJSDocInfo();
+>         if (fnInfo == null) {
+>           
+>           if (parent.getType() == Token.ASSIGN) {
+>             
+>             fnInfo = parent.getJSDocInfo();
+>           } else if (parent.getType() == Token.NAME) {
+>             
+>             fnInfo = parent.getParent().getJSDocInfo();
+>           }
+>         }
+> 
+>         
+>         
+>         Node args = n.getFirstChild().getNext();
+>         for (Node arg = args.getFirstChild();
+>              arg != null;
+>              arg = arg.getNext()) {
+>           String argName = arg.getString();
+>           JSTypeExpression typeExpr = fnInfo == null ?
+>               null : fnInfo.getParameterType(argName);
+> 
+>           if (convention.isOptionalParameter(argName) ||
+>               typeExpr != null && typeExpr.isOptionalArg()) {
+>             arg.putBooleanProp(Node.IS_OPTIONAL_PARAM, true);
+>           }
+>           if (convention.isVarArgsParameter(arg, argName) ||
+>               typeExpr != null && typeExpr.isVarArgs()) {
+>             arg.putBooleanProp(Node.IS_VAR_ARGS_PARAM, true);
+>           }
+>         }
+>         break;
+>     }
+>   }
+> }

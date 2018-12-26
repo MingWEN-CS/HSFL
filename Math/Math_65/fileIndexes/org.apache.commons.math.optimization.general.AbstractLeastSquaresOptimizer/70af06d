@@ -1,0 +1,341 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.optimization.general;
+
+import org.apache.commons.math.MaxIterationsExceededException;
+import org.apache.commons.math.linear.InvalidMatrixException;
+import org.apache.commons.math.linear.MatrixUtils;
+import org.apache.commons.math.linear.RealMatrix;
+import org.apache.commons.math.linear.decomposition.LUDecompositionImpl;
+import org.apache.commons.math.optimization.ObjectiveException;
+import org.apache.commons.math.optimization.OptimizationException;
+import org.apache.commons.math.optimization.SimpleVectorialValueChecker;
+import org.apache.commons.math.optimization.VectorialConvergenceChecker;
+import org.apache.commons.math.optimization.VectorialDifferentiableObjectiveFunction;
+import org.apache.commons.math.optimization.VectorialDifferentiableOptimizer;
+import org.apache.commons.math.optimization.VectorialPointValuePair;
+
+
+
+
+
+
+
+
+
+public abstract class AbstractLeastSquaresOptimizer implements VectorialDifferentiableOptimizer {
+
+    
+    private static final long serialVersionUID = 5413193243329026789L;
+
+    
+    public static final int DEFAULT_MAX_ITERATIONS = 100;
+
+    
+    private int maxIterations;
+
+    
+    private int iterations;
+
+    
+    private int objectiveEvaluations;
+
+    
+    private int jacobianEvaluations;
+
+    
+    protected VectorialConvergenceChecker checker;
+
+    
+
+
+
+
+
+
+    protected double[][] jacobian;
+
+    
+    protected int cols;
+
+    
+    protected int rows;
+
+    
+    private VectorialDifferentiableObjectiveFunction f;
+
+    
+    protected double[] target;
+
+    
+    protected double[] weights;
+
+    
+    protected double[] variables;
+
+    
+    protected double[] objective;
+
+    
+    protected double[] residuals;
+
+    
+    protected double cost;
+
+    
+
+
+
+    protected AbstractLeastSquaresOptimizer() {
+        setConvergenceChecker(new SimpleVectorialValueChecker());
+        setMaxIterations(DEFAULT_MAX_ITERATIONS);
+    }
+
+    
+    public void setMaxIterations(int maxIterations) {
+        this.maxIterations = maxIterations;
+    }
+
+    
+    public int getMaxIterations() {
+        return maxIterations;
+    }
+
+    
+    public int getIterations() {
+        return iterations;
+    }
+
+    
+    public int getEvaluations() {
+        return objectiveEvaluations;
+    }
+
+    
+    public int getJacobianEvaluations() {
+        return jacobianEvaluations;
+    }
+
+    
+    public void setConvergenceChecker(VectorialConvergenceChecker checker) {
+        this.checker = checker;
+    }
+
+    
+    public VectorialConvergenceChecker getConvergenceChecker() {
+        return checker;
+    }
+
+    
+
+
+
+    protected void incrementIterationsCounter()
+        throws OptimizationException {
+        if (++iterations > maxIterations) {
+            if (++iterations > maxIterations) {
+                throw new OptimizationException(new MaxIterationsExceededException(maxIterations));
+            }
+        }
+    }
+
+    
+
+
+
+
+    protected void updateJacobian() throws ObjectiveException {
+        ++jacobianEvaluations;
+        jacobian = f.jacobian(variables, objective);
+        if (jacobian.length != rows) {
+            throw new ObjectiveException("dimension mismatch {0} != {1}",
+                                         jacobian.length, rows);
+        }
+        for (int i = 0; i < rows; i++) {
+            final double[] ji = jacobian[i];
+            final double factor = -Math.sqrt(weights[i]);
+            for (int j = 0; j < cols; ++j) {
+                ji[j] *= factor;
+            }
+        }
+    }
+
+    
+
+
+
+
+    protected void updateResidualsAndCost()
+        throws ObjectiveException {
+
+        ++objectiveEvaluations;
+        objective = f.objective(variables);
+        if (objective.length != rows) {
+            throw new ObjectiveException("dimension mismatch {0} != {1}",
+                                         objective.length, rows);
+        }
+        cost = 0;
+        for (int i = 0, index = 0; i < rows; i++, index += cols) {
+            final double residual = target[i] - objective[i];
+            residuals[i] = residual;
+            cost += weights[i] * residual * residual;
+        }
+        cost = Math.sqrt(cost);
+
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public double getRMS() {
+        double criterion = 0;
+        for (int i = 0; i < rows; ++i) {
+            final double residual = residuals[i];
+            criterion += weights[i] * residual * residual;
+        }
+        return Math.sqrt(criterion / rows);
+    }
+
+    
+
+
+
+    public double getChiSquare() {
+        double chiSquare = 0;
+        for (int i = 0; i < rows; ++i) {
+            final double residual = residuals[i];
+            chiSquare += residual * residual / weights[i];
+        }
+        return chiSquare;
+    }
+
+    
+
+
+
+
+
+
+
+    public double[][] getCovariances()
+        throws ObjectiveException, OptimizationException {
+
+        
+        updateJacobian();
+
+        
+        double[][] jTj = new double[cols][cols];
+        for (int i = 0; i < cols; ++i) {
+            for (int j = i; j < cols; ++j) {
+                double sum = 0;
+                for (int k = 0; k < rows; ++k) {
+                    sum += jacobian[k][i] * jacobian[k][j];
+                }
+                jTj[i][j] = sum;
+                jTj[j][i] = sum;
+            }
+        }
+
+        try {
+            
+            RealMatrix inverse =
+                new LUDecompositionImpl(MatrixUtils.createRealMatrix(jTj)).getSolver().getInverse();
+            return inverse.getData();
+        } catch (InvalidMatrixException ime) {
+            throw new OptimizationException("unable to compute covariances: singular problem");
+        }
+
+    }
+
+    
+
+
+
+
+
+
+
+
+    public double[] guessParametersErrors()
+        throws ObjectiveException, OptimizationException {
+        if (rows <= cols) {
+            throw new OptimizationException(
+                    "no degrees of freedom ({0} measurements, {1} parameters)",
+                    rows, cols);
+        }
+        double[] errors = new double[cols];
+        final double c = Math.sqrt(getChiSquare() / (rows - cols));
+        double[][] covar = getCovariances();
+        for (int i = 0; i < errors.length; ++i) {
+            errors[i] = Math.sqrt(covar[i][i]) * c;
+        }
+        return errors;
+    }
+
+    
+    public VectorialPointValuePair optimize(final VectorialDifferentiableObjectiveFunction f,
+                                            final double[] target, final double[] weights,
+                                            final double[] startPoint)
+        throws ObjectiveException, OptimizationException, IllegalArgumentException {
+
+        if (target.length != weights.length) {
+            throw new OptimizationException("dimension mismatch {0} != {1}",
+                                            target.length, weights.length);
+        }
+
+        
+        iterations           = 0;
+        objectiveEvaluations = 0;
+        jacobianEvaluations  = 0;
+
+        
+        this.f         = f;
+        this.target    = target.clone();
+        this.weights   = weights.clone();
+        this.variables = startPoint.clone();
+        this.residuals = new double[target.length];
+
+        
+        rows      = target.length;
+        cols      = variables.length;
+        jacobian  = new double[rows][cols];
+
+        cost = Double.POSITIVE_INFINITY;
+
+        return doOptimize();
+
+    }
+
+    
+
+
+
+
+
+
+    abstract protected VectorialPointValuePair doOptimize()
+        throws ObjectiveException, OptimizationException, IllegalArgumentException;
+
+}

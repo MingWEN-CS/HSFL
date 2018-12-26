@@ -1,0 +1,58 @@
+24d23
+< import org.apache.commons.math.MathRuntimeException;
+28a28,29
+> import org.apache.commons.math.exception.OutOfRangeException;
+> import org.apache.commons.math.exception.NotStrictlyPositiveException;
+42d42
+< 
+45d44
+< 
+51d49
+< 
+57d54
+< 
+61,63c58
+<     protected AbstractContinuousDistribution() {
+<         super();
+<     }
+---
+>     protected AbstractContinuousDistribution() {}
+68,75c63
+< 
+< 
+< 
+< 
+<     public double density(double x) throws MathRuntimeException {
+<         throw new MathRuntimeException(new UnsupportedOperationException(),
+<                 LocalizedFormats.NO_DENSITY_FOR_THIS_DISTRIBUTION);
+<     }
+---
+>     public abstract double density(double x);
+87d74
+< 
+91,92c78
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.OUT_OF_RANGE_SIMPLE, p, 0.0, 1.0);
+---
+>             throw new OutOfRangeException(p, 0, 1);
+104c90,91
+<                     throw new FunctionEvaluationException(ex, x, ex.getLocalizablePattern(), ex.getArguments());
+---
+>                     throw new FunctionEvaluationException(ex, x, ex.getLocalizablePattern(),
+>                                                           ex.getArguments());
+122c109
+<         }  catch (ConvergenceException ex) {
+---
+>         } catch (ConvergenceException ex) {
+164a152,153
+> 
+> 
+181c170,171
+<             MathRuntimeException.createIllegalArgumentException(LocalizedFormats.NOT_POSITIVE_SAMPLE_SIZE, sampleSize);
+---
+>             throw new NotStrictlyPositiveException(LocalizedFormats.NUMBER_OF_SAMPLES,
+>                                                    sampleSize);
+208d197
+< 
+212d200
+< 

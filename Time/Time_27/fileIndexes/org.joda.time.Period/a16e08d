@@ -1,0 +1,1119 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.Serializable;
+
+import org.joda.time.base.BasePeriod;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public final class Period
+        extends BasePeriod
+        implements ReadablePeriod, Serializable {
+
+    
+    private static final long serialVersionUID = 741052353876488155L;
+
+    
+    
+
+
+
+
+
+
+    public static Period years(int years) {
+        return new Period(new int[] {years, 0, 0, 0, 0, 0, 0, 0, 0}, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+    public static Period months(int months) {
+        return new Period(new int[] {0, months, 0, 0, 0, 0, 0, 0}, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+    public static Period weeks(int weeks) {
+        return new Period(new int[] {0, 0, weeks, 0, 0, 0, 0, 0}, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+    public static Period days(int days) {
+        return new Period(new int[] {0, 0, 0, days, 0, 0, 0, 0}, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+    public static Period hours(int hours) {
+        return new Period(new int[] {0, 0, 0, 0, hours, 0, 0, 0}, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+    public static Period minutes(int minutes) {
+        return new Period(new int[] {0, 0, 0, 0, 0, minutes, 0, 0}, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+    public static Period seconds(int seconds) {
+        return new Period(new int[] {0, 0, 0, 0, 0, 0, seconds, 0}, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+    public static Period millis(int millis) {
+        return new Period(new int[] {0, 0, 0, 0, 0, 0, 0, millis}, PeriodType.standard());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Period fieldDifference(ReadablePartial start, ReadablePartial end) {
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("ReadablePartial objects must not be null");
+        }
+        if (start.size() != end.size()) {
+            throw new IllegalArgumentException("ReadablePartial objects must have the same set of fields");
+        }
+        DurationFieldType[] types = new DurationFieldType[start.size()];
+        int[] values = new int[start.size()];
+        for (int i = 0, isize = start.size(); i < isize; i++) {
+            if (start.getFieldType(i) != end.getFieldType(i)) {
+                throw new IllegalArgumentException("ReadablePartial objects must have the same set of fields");
+            }
+            types[i] = start.getFieldType(i).getDurationType();
+            if (i > 0 && types[i - 1] == types[i]) {
+                throw new IllegalArgumentException("ReadablePartial objects must not have overlapping fields");
+            }
+            values[i] = end.getValue(i) - start.getValue(i);
+        }
+        return new Period(values, PeriodType.forFields(types));
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period() {
+        super(0L, null, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public Period(int hours, int minutes, int seconds, int millis) {
+        super(0, 0, 0, 0, hours, minutes, seconds, millis, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public Period(int years, int months, int weeks, int days,
+                  int hours, int minutes, int seconds, int millis) {
+        super(years, months, weeks, days, hours, minutes, seconds, millis, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period(int years, int months, int weeks, int days,
+                    int hours, int minutes, int seconds, int millis, PeriodType type) {
+        super(years, months, weeks, days, hours, minutes, seconds, millis, type);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period(long duration) {
+        super(duration, null, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period(long duration, PeriodType type) {
+        super(duration, type, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period(long duration, Chronology chronology) {
+        super(duration, null, chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period(long duration, PeriodType type, Chronology chronology) {
+        super(duration, type, chronology);
+    }
+
+    
+
+
+
+
+
+
+    public Period(long startInstant, long endInstant) {
+        super(startInstant, endInstant, null, null);
+    }
+
+    
+
+
+
+
+
+
+    public Period(long startInstant, long endInstant, PeriodType type) {
+        super(startInstant, endInstant, type, null);
+    }
+
+    
+
+
+
+
+
+
+
+    public Period(long startInstant, long endInstant, Chronology chrono) {
+        super(startInstant, endInstant, null, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+    public Period(long startInstant, long endInstant, PeriodType type, Chronology chrono) {
+        super(startInstant, endInstant, type, chrono);
+    }
+
+    
+
+
+
+
+
+
+    public Period(ReadableInstant startInstant, ReadableInstant endInstant) {
+        super(startInstant, endInstant, null);
+    }
+
+    
+
+
+
+
+
+
+    public Period(ReadableInstant startInstant, ReadableInstant endInstant, PeriodType type) {
+        super(startInstant, endInstant, type);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period(ReadablePartial start, ReadablePartial end) {
+        super(start, end, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period(ReadablePartial start, ReadablePartial end, PeriodType type) {
+        super(start, end, type);
+    }
+
+    
+
+
+
+
+
+    public Period(ReadableInstant startInstant, ReadableDuration duration) {
+        super(startInstant, duration, null);
+    }
+
+    
+
+
+
+
+
+
+    public Period(ReadableInstant startInstant, ReadableDuration duration, PeriodType type) {
+        super(startInstant, duration, type);
+    }
+
+    
+
+
+
+
+
+    public Period(ReadableDuration duration, ReadableInstant endInstant) {
+        super(duration, endInstant, null);
+    }
+
+    
+
+
+
+
+
+
+    public Period(ReadableDuration duration, ReadableInstant endInstant, PeriodType type) {
+        super(duration, endInstant, type);
+    }
+
+    
+
+
+
+
+
+
+
+    public Period(Object period) {
+        super(period, null, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period(Object period, PeriodType type) {
+        super(period, type, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period(Object period, Chronology chrono) {
+        super(period, null, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public Period(Object period, PeriodType type, Chronology chrono) {
+        super(period, type, chrono);
+    }
+
+    
+
+
+
+
+
+    private Period(int[] values, PeriodType type) {
+        super(values, type);
+    }
+
+    
+    
+
+
+
+
+
+    public Period toPeriod() {
+        return this;
+    }
+
+    
+    
+
+
+
+
+    public int getYears() {
+        return getPeriodType().getIndexedField(this, PeriodType.YEAR_INDEX);
+    }
+
+    
+
+
+
+
+    public int getMonths() {
+        return getPeriodType().getIndexedField(this, PeriodType.MONTH_INDEX);
+    }
+
+    
+
+
+
+
+    public int getWeeks() {
+        return getPeriodType().getIndexedField(this, PeriodType.WEEK_INDEX);
+    }
+
+    
+
+
+
+
+    public int getDays() {
+        return getPeriodType().getIndexedField(this, PeriodType.DAY_INDEX);
+    }
+
+    
+    
+
+
+
+
+    public int getHours() {
+        return getPeriodType().getIndexedField(this, PeriodType.HOUR_INDEX);
+    }
+
+    
+
+
+
+
+    public int getMinutes() {
+        return getPeriodType().getIndexedField(this, PeriodType.MINUTE_INDEX);
+    }
+
+    
+
+
+
+
+    public int getSeconds() {
+        return getPeriodType().getIndexedField(this, PeriodType.SECOND_INDEX);
+    }
+
+    
+
+
+
+
+    public int getMillis() {
+        return getPeriodType().getIndexedField(this, PeriodType.MILLI_INDEX);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public Period withPeriodType(PeriodType type) {
+        type = DateTimeUtils.getPeriodType(type);
+        if (type.equals(getPeriodType())) {
+            return this;
+        }
+        return new Period(this, type);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public Period withFields(ReadablePeriod period) {
+        if (period == null) {
+            return this;
+        }
+        int[] newValues = getValues();  
+        newValues = super.mergePeriodInto(newValues, period);
+        return new Period(newValues, getPeriodType());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public Period withField(DurationFieldType field, int value) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field must not be null");
+        }
+        int[] newValues = getValues();  
+        super.setFieldInto(newValues, field, value);
+        return new Period(newValues, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public Period withFieldAdded(DurationFieldType field, int value) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field must not be null");
+        }
+        if (value == 0) {
+            return this;
+        }
+        int[] newValues = getValues();  
+        super.addFieldInto(newValues, field, value);
+        return new Period(newValues, getPeriodType());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public Period withYears(int years) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.YEAR_INDEX, values, years);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period withMonths(int months) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.MONTH_INDEX, values, months);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period withWeeks(int weeks) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.WEEK_INDEX, values, weeks);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period withDays(int days) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.DAY_INDEX, values, days);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period withHours(int hours) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.HOUR_INDEX, values, hours);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period withMinutes(int minutes) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.MINUTE_INDEX, values, minutes);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period withSeconds(int seconds) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.SECOND_INDEX, values, seconds);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period withMillis(int millis) {
+        int[] values = getValues();  
+        getPeriodType().setIndexedField(this, PeriodType.MILLI_INDEX, values, millis);
+        return new Period(values, getPeriodType());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public Period plusYears(int years) {
+        if (years == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.YEAR_INDEX, values, years);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period plusMonths(int months) {
+        if (months == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.MONTH_INDEX, values, months);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period plusWeeks(int weeks) {
+        if (weeks == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.WEEK_INDEX, values, weeks);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period plusDays(int days) {
+        if (days == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.DAY_INDEX, values, days);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period plusHours(int hours) {
+        if (hours == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.HOUR_INDEX, values, hours);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period plusMinutes(int minutes) {
+        if (minutes == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.MINUTE_INDEX, values, minutes);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period plusSeconds(int seconds) {
+        if (seconds == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.SECOND_INDEX, values, seconds);
+        return new Period(values, getPeriodType());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period plusMillis(int millis) {
+        if (millis == 0) {
+            return this;
+        }
+        int[] values = getValues();  
+        getPeriodType().addIndexedField(this, PeriodType.MILLI_INDEX, values, millis);
+        return new Period(values, getPeriodType());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public Period minusYears(int years) {
+        return plusYears(-years);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period minusMonths(int months) {
+        return plusMonths(-months);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period minusWeeks(int weeks) {
+        return plusWeeks(-weeks);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period minusDays(int days) {
+        return plusDays(-days);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period minusHours(int hours) {
+        return plusHours(-hours);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period minusMinutes(int minutes) {
+        return plusMinutes(-minutes);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period minusSeconds(int seconds) {
+        return plusSeconds(-seconds);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Period minusMillis(int millis) {
+        return plusMillis(-millis);
+    }
+
+}

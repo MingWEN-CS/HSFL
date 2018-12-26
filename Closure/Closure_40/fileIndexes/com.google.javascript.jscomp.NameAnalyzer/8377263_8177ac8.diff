@@ -1,0 +1,233 @@
+19a20
+> import com.google.common.collect.HashMultimap;
+22a24
+> import com.google.common.collect.Multimap;
+34d35
+< 
+42a44
+> import java.util.PriorityQueue;
+134a137,160
+>   private final Map<String, AliasSet> aliases = Maps.newHashMap();
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private static class AliasSet {
+>     Set<String> names = Sets.newHashSet();
+> 
+>     
+>     AliasSet(String name1, String name2) {
+>       names.add(name1);
+>       names.add(name2);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+201a228,230
+>     boolean hasWrittenDescendants = false;
+> 
+>     
+258a288
+> 
+516c546,563
+<           recordDepScope(parent, ns);
+---
+>           if (parent.getType() == Token.FOR && !NodeUtil.isForIn(parent)) {
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             if (parent.getFirstChild().getNext() != n) {
+>               recordDepScope(n, ns);
+>             } else {
+>               recordDepScope(nameNode, ns);
+>             }
+>           } else {
+>             recordDepScope(parent, ns);
+>           }
+600,604c647
+<             JsName name = getName(ns.prototypeClass, false);
+<             if (name != null) {
+<               name.prototypeNames.add(ns.prototypeProperty);
+<               refNodes.add(new PrototypeSetNode(name, n));
+<             }
+---
+>             recordPrototypeSet(ns.prototypeClass, ns.prototypeProperty, n);
+631a675,721
+> 
+>       
+>       
+>       if (node.getType() == Token.GETELEM) {
+>         recordWriteOnProperties(name);
+>       } else if (name.indexOf('.') != -1) {
+>         recordWriteOnProperties(name.substring(0, name.lastIndexOf('.')));
+>       }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private void recordPrototypeSet(String className, String prototypeProperty,
+>         Node node) {
+>       JsName name = getName(className, false);
+>       if (name != null) {
+>         name.prototypeNames.add(prototypeProperty);
+>         refNodes.add(new PrototypeSetNode(name, node));
+>         recordWriteOnProperties(className);
+>       }
+>     }
+> 
+>     
+> 
+> 
+>     private void recordWriteOnProperties(String parentName) {
+>       do {
+>         JsName parent = getName(parentName, true);
+>         if (parent.hasWrittenDescendants) {
+>           
+>           
+>           return;
+>         } else {
+>           parent.hasWrittenDescendants = true;
+>         }
+> 
+>         if (parentName.indexOf('.') == -1) {
+>           return;
+>         }
+>         parentName = parentName.substring(0, parentName.lastIndexOf('.'));
+>       } while(true);
+747,749c837,838
+<         recordReference(nameInfo.name,
+<                         nameInfo.superclass,
+<                         RefType.INHERITANCE);
+---
+>         recordReference(
+>             nameInfo.name, nameInfo.superclass, RefType.INHERITANCE);
+756,758c845,846
+<           recordReference(nameInfo.name,
+<                           nodeName,
+<                           RefType.REGULAR);
+---
+>           recordReference(
+>               nameInfo.name, nodeName, RefType.REGULAR);
+812c900,908
+<         recordReference(referringName, name, RefType.REGULAR);
+---
+>         if ((parent.getType() == Token.NAME ||
+>              parent.getType() == Token.ASSIGN) &&
+>             scopes.get(parent) == referring) {
+>           recordAlias(referringName, name);
+>         } else {
+>           RefType depType = referring.onlyAffectsClassDef ?
+>               RefType.INHERITANCE : RefType.REGULAR;
+>           recordReference(referringName, name, depType);
+>         }
+905a1002,1004
+> 
+>     
+>     
+906a1006,1010
+> 
+>     
+>     
+>     referenceAliases();
+> 
+916a1021,1057
+>   private void recordAlias(String fromName, String toName) {
+>     recordReference(fromName, toName, RefType.REGULAR);
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     AliasSet toNameAliasSet = aliases.get(toName);
+>     AliasSet fromNameAliasSet = aliases.get(fromName);
+>     AliasSet resultSet = null;
+>     if (toNameAliasSet == null && fromNameAliasSet == null) {
+>       resultSet = new AliasSet(toName, fromName);
+>     } else if (toNameAliasSet != null && fromNameAliasSet != null) {
+>       resultSet = toNameAliasSet;
+>       resultSet.names.addAll(fromNameAliasSet.names);
+>       for (String name : fromNameAliasSet.names) {
+>         aliases.put(name, resultSet);
+>       }
+>     } else if (toNameAliasSet != null) {
+>       resultSet = toNameAliasSet;
+>       resultSet.names.add(fromName);
+>     } else {
+>       resultSet = fromNameAliasSet;
+>       resultSet.names.add(toName);
+>     }
+>     aliases.put(fromName, resultSet);
+>     aliases.put(toName, resultSet);
+>   }
+> 
+>   
+> 
+> 
+918a1060,1064
+>     if (fromName.equals(toName)) {
+>       
+>       return;
+>     }
+> 
+923c1069
+<     if (!referenceGraph.isConnectedInDirection(from, to)) {
+---
+>     if (!referenceGraph.isConnectedInDirection(from, depType, to)) {
+1061a1208,1239
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void referenceAliases() {
+>     for (Map.Entry<String, AliasSet> entry : aliases.entrySet()) {
+>       JsName name = getName(entry.getKey(), false);
+>       if (name.hasWrittenDescendants) {
+>         for (String alias : entry.getValue().names) {
+>           recordReference(alias, entry.getKey(), RefType.REGULAR);
+>         }
+>       }

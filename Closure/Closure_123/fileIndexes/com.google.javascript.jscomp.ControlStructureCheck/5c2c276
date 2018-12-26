@@ -1,0 +1,188 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+
+
+
+
+
+class ControlStructureCheck implements CompilerPass {
+
+  private AbstractCompiler compiler;
+
+  private String sourceName = null;
+
+  
+  private Deque<String> switchLabels = new ArrayDeque<String>();
+
+  static final DiagnosticType INVALID_BREAK = DiagnosticType.error(
+      "JSC_INVALID_BREAK",
+      "unlabeled break must be inside loop or switch");
+
+  static final DiagnosticType INVALID_CONTINUE = DiagnosticType.error(
+      "JSC_INVALID_CONTINUE",
+      "continue must be inside loop");
+
+  static final DiagnosticType INVALID_LABEL_CONTINUE = DiagnosticType.error(
+      "JSC_INVALID_LABEL_CONTINUE",
+      "continue can only target labels of loop structures");
+
+  ControlStructureCheck(AbstractCompiler compiler) {
+    this.compiler = compiler;
+  }
+
+  @Override
+  public void process(Node externs, Node root) {
+    check(root, false, false);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private void check(Node node, boolean inLoop, boolean inSwitch) {
+    switch (node.getType()) {
+      case Token.FUNCTION:
+        
+        Deque<String> oldSwitchLabels = switchLabels;
+        switchLabels = new ArrayDeque<String>();
+
+        
+        
+        Node body = node.getFirstChild().getNext().getNext();
+        check(body, false, false);
+
+        
+        switchLabels = oldSwitchLabels;
+        break;
+
+      case Token.FOR:
+        Node child = node.getFirstChild();
+        check(child, inLoop, inSwitch);
+        child = child.getNext();
+        check(child, inLoop, inSwitch);
+        child = child.getNext();
+        
+        if (child.getNext() == null) {
+          
+          check(child, true, inSwitch);
+        } else {
+          check(child, inLoop, inSwitch);
+          check(child.getNext(), true, inSwitch);
+        }
+        break;
+
+      case Token.WHILE:
+        check(node.getFirstChild(), inLoop, inSwitch);
+        check(node.getFirstChild().getNext(), true, inSwitch);
+        break;
+
+      case Token.DO:
+        check(node.getFirstChild(), true, inSwitch);
+        break;
+
+      case Token.SWITCH:
+        check(node.getFirstChild(), inLoop, inSwitch);
+        for (Node cChild = node.getFirstChild().getNext(); cChild != null;) {
+          Node next = cChild.getNext();
+          check(cChild, inLoop, true);
+          cChild = next;
+        }
+        break;
+
+      case Token.SCRIPT:
+        
+        sourceName = (String) node.getProp(Node.SOURCENAME_PROP);
+        for (Node sChild = node.getFirstChild(); sChild != null;) {
+          Node next = sChild.getNext();
+          check(sChild, false, false);
+          sChild = next;
+        }
+        break;
+
+      case Token.LABEL:
+        Node switchNode = node.getLastChild();
+
+        
+        if (switchNode.getType() == Token.SWITCH) {
+          String label = node.getFirstChild().getString();
+          switchLabels.addFirst(label);
+          check(node.getFirstChild().getNext(), inLoop, inSwitch);
+          switchLabels.removeFirst();
+        } else {
+          check(node.getFirstChild().getNext(), inLoop, inSwitch);
+        }
+        break;
+
+      case Token.BREAK:
+        
+        if (!node.hasChildren() && !inLoop && !inSwitch) {
+          report(node, INVALID_BREAK);
+        }
+        break;
+
+      case Token.CONTINUE:
+        
+        
+        if (!inLoop) {
+          report(node, INVALID_CONTINUE);
+        }
+        if (node.hasChildren()) {
+          
+          Node label = node.getFirstChild();
+          if (switchLabels.contains(label.getString())) {
+            report(node, INVALID_LABEL_CONTINUE);
+          }
+        }
+        break;
+
+      default:
+        for (Node bChild = node.getFirstChild(); bChild != null;) {
+          Node next = bChild.getNext();
+          check(bChild, inLoop, inSwitch);
+          bChild = next;
+        }
+    }
+  }
+
+  private void report(Node n, DiagnosticType error) {
+    compiler.report(JSError.make(sourceName, n, error));
+  }
+}

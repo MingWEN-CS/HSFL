@@ -1,0 +1,32 @@
+80c80
+<     private transient ExpandableStatefulODE equations;
+---
+>     private transient ExpandableStatefulODE expandable;
+192c192
+<         this.equations = equations;
+---
+>         this.expandable = equations;
+208,210c208,210
+<         final ExpandableStatefulODE expandable = new ExpandableStatefulODE(equations);
+<         expandable.setTime(t0);
+<         expandable.setPrimaryState(y0);
+---
+>         final ExpandableStatefulODE expandableODE = new ExpandableStatefulODE(equations);
+>         expandableODE.setTime(t0);
+>         expandableODE.setPrimaryState(y0);
+213c213
+<         integrate(expandable, t);
+---
+>         integrate(expandableODE, t);
+216,217c216,217
+<         System.arraycopy(expandable.getPrimaryState(), 0, y, 0, y.length);
+<         return expandable.getTime();
+---
+>         System.arraycopy(expandableODE.getPrimaryState(), 0, y, 0, y.length);
+>         return expandableODE.getTime();
+250c250
+<         equations.computeDerivatives(t, y, yDot);
+---
+>         expandable.computeDerivatives(t, y, yDot);
+376a377
+> 

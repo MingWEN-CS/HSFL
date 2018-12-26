@@ -1,0 +1,107 @@
+276a277,352
+> 
+> 
+> 
+>     public int[] add(PartialInstant instant, int fieldIndex, int[] values, int valueToAdd) {
+>         
+>         
+>         
+>         DateTimeField nextField = null;
+>         
+>         while (valueToAdd > 0) {
+>             int max = getMaximumValue(instant, values);
+>             long proposed = values[fieldIndex] + valueToAdd;
+>             if (proposed <= max) {
+>                 values[fieldIndex] = (int) proposed;
+>                 return values;
+>             }
+>             if (nextField == null) {
+>                 if (fieldIndex == 0) {
+>                     throw new IllegalArgumentException("Maximum value exceeded for add");
+>                 }
+>                 nextField = instant.getField(fieldIndex - 1);
+>                 if (getRangeDurationField() != nextField.getDurationField()) {
+>                     throw new IllegalArgumentException("Fields invalid for add");
+>                 }
+>             }
+>             valueToAdd -= (max + 1) - values[fieldIndex];
+>             values = nextField.add(instant, fieldIndex - 1, values, 1);
+>             values[fieldIndex] = getMinimumValue(instant, values);
+>         }
+>         while (valueToAdd < 0) {
+>             int min = getMinimumValue(instant, values);
+>             long proposed = values[fieldIndex] + valueToAdd;
+>             if (proposed >= min) {
+>                 values[fieldIndex] = (int) proposed;
+>                 return values;
+>             }
+>             if (nextField == null) {
+>                 if (fieldIndex == 0) {
+>                     throw new IllegalArgumentException("Maximum value exceeded for add");
+>                 }
+>                 nextField = instant.getField(fieldIndex - 1);
+>                 if (getRangeDurationField() != nextField.getDurationField()) {
+>                     throw new IllegalArgumentException("Fields invalid for add");
+>                 }
+>             }
+>             valueToAdd -= (min - 1) - values[fieldIndex];
+>             values = nextField.add(instant, fieldIndex - 1, values, -1);
+>             values[fieldIndex] = getMaximumValue(instant, values);
+>         }
+>         return values;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+556a633,646
+> 
+> 
+> 
+> 
+>     public int getMinimumValue(PartialInstant instant, int[] values) {
+>         return getMinimumValue(instant);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+580a671,684
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int getMaximumValue(PartialInstant instant, int[] values) {
+>         return getMaximumValue(instant);

@@ -1,0 +1,122 @@
+486,488c486,528
+<   public boolean isEquivalentTo(JSType jsType) {
+<     if (jsType instanceof ProxyObjectType) {
+<       return jsType.isEquivalentTo(this);
+---
+>   public final boolean isEquivalentTo(JSType jsType) {
+>     return checkEquivalenceHelper(jsType, false);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public final boolean differsFrom(JSType that) {
+>     return !checkEquivalenceHelper(that, true);
+>   }
+> 
+>   
+> 
+> 
+>   boolean checkEquivalenceHelper(JSType that, boolean tolerateUnknowns) {
+>     if (this == that) {
+>       return true;
+>     }
+> 
+>     boolean thisUnknown = isUnknownType();
+>     boolean thatUnknown = that.isUnknownType();
+>     if (isUnknownType() || that.isUnknownType()) {
+>       if (tolerateUnknowns) {
+>         
+>         
+>         return thisUnknown && thatUnknown;
+>       } else if (thisUnknown && thatUnknown &&
+>           (isNominalType() ^ that.isNominalType())) {
+>         
+>         
+>         
+>         return false;
+>       }
+>     }
+> 
+>     if (isUnionType() && that.isUnionType()) {
+>       return this.toMaybeUnionType().checkUnionEquivalenceHelper(
+>           that.toMaybeUnionType(), tolerateUnknowns);
+489a530,580
+> 
+>     if (isFunctionType() && that.isFunctionType()) {
+>       return this.toMaybeFunctionType().checkFunctionEquivalenceHelper(
+>           that.toMaybeFunctionType(), tolerateUnknowns);
+>     }
+> 
+>     if (isRecordType() && that.isRecordType()) {
+>       return this.toMaybeRecordType().checkRecordEquivalenceHelper(
+>           that.toMaybeRecordType(), tolerateUnknowns);
+>     }
+> 
+>     ParameterizedType thisParamType = toMaybeParameterizedType();
+>     ParameterizedType thatParamType = that.toMaybeParameterizedType();
+>     if (thisParamType != null || thatParamType != null) {
+>       
+>       boolean paramsMatch = false;
+>       if (thisParamType != null && thatParamType != null) {
+>         paramsMatch = thisParamType.getParameterType().checkEquivalenceHelper(
+>             thatParamType.getParameterType(), tolerateUnknowns);
+>       } else if (tolerateUnknowns) {
+>         paramsMatch = true;
+>       } else {
+>         paramsMatch = false;
+>       }
+> 
+>       JSType thisRootType = thisParamType == null ?
+>           this : thisParamType.getReferencedTypeInternal();
+>       JSType thatRootType = thatParamType == null ?
+>           that : thatParamType.getReferencedTypeInternal();
+>       return paramsMatch &&
+>           thisRootType.checkEquivalenceHelper(thatRootType, tolerateUnknowns);
+>     }
+> 
+>     if (isNominalType() && that.isNominalType()) {
+>       return toObjectType().getReferenceName().equals(
+>           that.toObjectType().getReferenceName());
+>     }
+> 
+>     
+>     if (this instanceof ProxyObjectType) {
+>       return ((ProxyObjectType) this)
+>           .getReferencedTypeInternal().checkEquivalenceHelper(
+>               that, tolerateUnknowns);
+>     }
+> 
+>     if (that instanceof ProxyObjectType) {
+>       return checkEquivalenceHelper(
+>           ((ProxyObjectType) that).getReferencedTypeInternal(),
+>           tolerateUnknowns);
+>     }
+> 
+494c585
+<     return this == jsType;
+---
+>     return this == that;
+1083,1099d1173
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   public boolean differsFrom(JSType that) {
+<     
+<     if (!this.isUnknownType() && !that.isUnknownType()) {
+<       return !this.isEquivalentTo(that);
+<     }
+<     
+<     return this.isUnknownType() ^ that.isUnknownType();

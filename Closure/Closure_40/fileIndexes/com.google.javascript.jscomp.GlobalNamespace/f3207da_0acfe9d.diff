@@ -1,0 +1,72 @@
+29a30
+> import com.google.javascript.rhino.jstype.StaticReference;
+31a33
+> import com.google.javascript.rhino.jstype.StaticSourceFile;
+499c501
+<       Ref set = new Ref(t, n, Ref.Type.SET_FROM_GLOBAL,
+---
+>       Ref set = new Ref(t, n, nameObj, Ref.Type.SET_FROM_GLOBAL,
+505c507
+<         Ref get = new Ref(t, n, Ref.Type.ALIASING_GET,
+---
+>         Ref get = new Ref(t, n, nameObj, Ref.Type.ALIASING_GET,
+568,570c570,573
+<       Name node = getOrCreateName(name);
+<       Ref set = new Ref(t, n, Ref.Type.SET_FROM_LOCAL, currentPreOrderIndex++);
+<       node.addRef(set);
+---
+>       Name nameObj = getOrCreateName(name);
+>       Ref set = new Ref(t, n, nameObj,
+>           Ref.Type.SET_FROM_LOCAL, currentPreOrderIndex++);
+>       nameObj.addRef(set);
+574,575c577,579
+<         Ref get = new Ref(t, n, Ref.Type.ALIASING_GET, currentPreOrderIndex++);
+<         node.addRef(get);
+---
+>         Ref get = new Ref(t, n, nameObj,
+>             Ref.Type.ALIASING_GET, currentPreOrderIndex++);
+>         nameObj.addRef(get);
+710c714
+<       Name node = getOrCreateName(name);
+---
+>       Name nameObj = getOrCreateName(name);
+713c717
+<       node.addRef(new Ref(t, n, type, currentPreOrderIndex++));
+---
+>       nameObj.addRef(new Ref(t, n, nameObj, type, currentPreOrderIndex++));
+1105c1109
+<   static class Ref {
+---
+>   static class Ref implements StaticReference {
+1117d1120
+<     final Type type;
+1118a1122,1123
+>     final Name name;
+>     final Type type;
+1134,1135c1139,1141
+<     Ref(NodeTraversal t, Node name, Type type, int index) {
+<       this.node = name;
+---
+>     Ref(NodeTraversal t, Node node, Name name, Type type, int index) {
+>       this.node = node;
+>       this.name = name;
+1143a1150
+>       this.name = original.name;
+1153a1161
+>       this.name = null;
+1154a1163,1177
+>     }
+> 
+>     @Override
+>     public Node getNode() {
+>       return node;
+>     }
+> 
+>     @Override
+>     public StaticSourceFile getSourceFile() {
+>       return source;
+>     }
+> 
+>     @Override
+>     public StaticSlot<JSType> getSymbol() {
+>       return name;

@@ -1,0 +1,59 @@
+242c242,243
+<           if (propNameNode.getType() == Token.STRING &&
+---
+>           
+>           if (propNameNode.getType() != Token.NUMBER &&
+381,382c382
+<             Property prop = new AssignmentProperty(grandParent,
+<                 grandParent.getParent(), t.getModule());
+---
+>             Property prop = new AssignmentProperty(grandParent, t.getModule());
+391,392d390
+<             
+<             
+395c393,395
+<               if (key.getType() == Token.STRING) {
+---
+>               
+>               
+>               if (key.getType() != Token.NUMBER) {
+516,518d515
+< 
+<     
+<     Node getValueParent();
+528c525
+<     private final Node node;
+---
+>     private final Node exprNode;
+534,536c531,532
+< 
+<     AssignmentProperty(Node node, Node parent, JSModule module) {
+<       this.node = node;
+---
+>     AssignmentProperty(Node node, JSModule module) {
+>       this.exprNode = node;
+542c538
+<       NodeUtil.removeChild(node.getParent(), node);
+---
+>       NodeUtil.removeChild(exprNode.getParent(), exprNode);
+547c543
+<       return getValueParent().getFirstChild().getFirstChild();
+---
+>       return getAssignNode().getFirstChild().getFirstChild();
+552c548
+<       return getValueParent().getLastChild();
+---
+>       return getAssignNode().getLastChild();
+555,557c551,552
+<     @Override
+<     public Node getValueParent() {
+<       return node.getFirstChild();
+---
+>     private Node getAssignNode() {
+>       return exprNode.getFirstChild();
+601,605d595
+<     }
+< 
+<     @Override
+<     public Node getValueParent() {
+<       return map;

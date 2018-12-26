@@ -1,0 +1,36 @@
+67a68
+>   private final boolean declared;
+69a71,74
+>   RecordType(JSTypeRegistry registry, Map<String, RecordProperty> properties) {
+>     this(registry, properties, true);
+>   }
+> 
+78c83,88
+<   RecordType(JSTypeRegistry registry, Map<String, RecordProperty> properties) {
+---
+> 
+> 
+> 
+> 
+>   RecordType(JSTypeRegistry registry, Map<String, RecordProperty> properties,
+>       boolean declared) {
+80a91
+>     this.declared = declared;
+88c99,105
+<       defineDeclaredProperty(property, prop.getType(), prop.getPropertyNode());
+---
+>       if (declared) {
+>         defineDeclaredProperty(
+>             property, prop.getType(), prop.getPropertyNode());
+>       } else {
+>         defineSynthesizedProperty(
+>             property, prop.getType(), prop.getPropertyNode());
+>       }
+94a112,116
+>   
+>   boolean isSynthetic() {
+>     return !declared;
+>   }
+> 
+143a166
+>       builder.setSynthesized(true);

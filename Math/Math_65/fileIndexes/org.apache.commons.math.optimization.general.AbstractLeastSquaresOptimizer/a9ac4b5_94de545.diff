@@ -1,0 +1,56 @@
+82c82
+<     private DifferentiableMultivariateVectorialFunction f;
+---
+>     private DifferentiableMultivariateVectorialFunction function;
+88c88
+<     protected double[] target;
+---
+>     protected double[] targetValues;
+91c91
+<     protected double[] weights;
+---
+>     protected double[] residualsWeights;
+151,152c151,152
+<     public void setConvergenceChecker(VectorialConvergenceChecker checker) {
+<         this.checker = checker;
+---
+>     public void setConvergenceChecker(VectorialConvergenceChecker convergenceChecker) {
+>         this.checker = convergenceChecker;
+185c185
+<             final double factor = -Math.sqrt(weights[i]);
+---
+>             final double factor = -Math.sqrt(residualsWeights[i]);
+205c205
+<         objective = f.value(point);
+---
+>         objective = function.value(point);
+212c212
+<             final double residual = target[i] - objective[i];
+---
+>             final double residual = targetValues[i] - objective[i];
+214c214
+<             cost += weights[i] * residual * residual;
+---
+>             cost += residualsWeights[i] * residual * residual;
+234c234
+<             criterion += weights[i] * residual * residual;
+---
+>             criterion += residualsWeights[i] * residual * residual;
+247c247
+<             chiSquare += residual * residual / weights[i];
+---
+>             chiSquare += residual * residual / residualsWeights[i];
+332,337c332,337
+<         this.f         = f;
+<         jF             = f.jacobian();
+<         this.target    = target.clone();
+<         this.weights   = weights.clone();
+<         this.point     = startPoint.clone();
+<         this.residuals = new double[target.length];
+---
+>         function         = f;
+>         jF               = f.jacobian();
+>         targetValues     = target.clone();
+>         residualsWeights = weights.clone();
+>         this.point       = startPoint.clone();
+>         this.residuals   = new double[target.length];

@@ -1,0 +1,564 @@
+20a21,22
+> import com.google.common.collect.Lists;
+> import com.google.common.collect.Maps;
+27a30
+> import java.util.Map;
+46a50,69
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+65c88,111
+<   private final Multimap<Var, Assign> assigns = ArrayListMultimap.create();
+---
+>   private final List<Var> maybeUnreferenced = Lists.newArrayList();
+> 
+>   
+> 
+> 
+>   private final List<Scope> allFunctionScopes = Lists.newArrayList();
+> 
+>   
+> 
+> 
+>   private final Multimap<Var, Assign> assignsByVar =
+>       ArrayListMultimap.create();
+> 
+>   
+> 
+> 
+>   private final Map<Node, Assign> assignsByNode = Maps.newHashMap();
+> 
+>   
+> 
+> 
+> 
+>   private final Multimap<Var, Continuation> continuations =
+>       ArrayListMultimap.create();
+92,93c138,144
+<       interpretAssigns(scope);
+<       removeUnreferencedVars(scope);
+---
+>       collectMaybeUnreferencedVars(scope);
+>     }
+> 
+>     interpretAssigns();
+>     removeUnreferencedVars();
+>     for (Scope fnScope : allFunctionScopes) {
+>       removeUnreferencedFunctionArgs(fnScope);
+101a153,156
+> 
+> 
+> 
+> 
+103a159
+>     Var var = null;
+105,112d160
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+116c164,170
+<         if (traverseFunctionWhenFirstSeen(n, scope)) {
+---
+>         if (NodeUtil.isFunctionDeclaration(n)) {
+>           var = scope.getVar(n.getFirstChild().getString());
+>         }
+> 
+>         if (var != null && isRemovableVar(var)) {
+>           continuations.put(var, new Continuation(n, scope));
+>         } else {
+121,122c175,177
+<       case Token.NAME:
+<         if (parent.getType() != Token.VAR) {
+---
+>       case Token.ASSIGN:
+>         Assign maybeAssign = Assign.maybeCreateAssign(n);
+>         if (maybeAssign != null) {
+125,131c180,187
+<           
+<           Var var = scope.getVar(n.getString());
+<           if (var != null && !referenced.contains(var)) {
+<             Assign maybeAssign = Assign.maybeCreateAssign(n);
+<             if (maybeAssign == null) {
+<               markReferencedVar(var);
+<             } else {
+---
+>           var = scope.getVar(maybeAssign.nameNode.getString());
+>           if (var != null) {
+>             assignsByVar.put(var, maybeAssign);
+>             assignsByNode.put(maybeAssign.nameNode, maybeAssign);
+> 
+>             if (isRemovableVar(var) &&
+>                 !maybeAssign.mayHaveSecondarySideEffects) {
+>               
+134c190,221
+<               assigns.put(var, maybeAssign);
+---
+>               continuations.put(var, new Continuation(n, scope));
+>               return;
+>             }
+>           }
+>         }
+>         break;
+> 
+>       case Token.NAME:
+>         var = scope.getVar(n.getString());
+>         if (parent.getType() == Token.VAR) {
+>           Node value = n.getFirstChild();
+>           if (value != null && var != null && isRemovableVar(var) &&
+>               !NodeUtil.mayHaveSideEffects(value)) {
+>             
+>             
+>             
+>             continuations.put(var, new Continuation(n, scope));
+>             return;
+>           }
+>         } else {
+>           
+>           
+>           if (var != null) {
+>             
+>             
+>             
+>             if (isRemovableVar(var)) {
+>               if (!assignsByNode.containsKey(n)) {
+>                 markReferencedVar(var);
+>               }
+>             } else {
+>               markReferencedVar(var);
+146,156c233,237
+<   
+< 
+< 
+< 
+<   private boolean traverseFunctionWhenFirstSeen(Node n, Scope scope) {
+<     return NodeUtil.isFunctionExpression(n) || isExportedFunction(n, scope);
+<   }
+< 
+<   
+< 
+< 
+---
+>   private boolean isRemovableVar(Var var) {
+>     
+>     if (!removeGlobals && var.isGlobal()) {
+>       return false;
+>     }
+158,159d238
+<   private boolean isExportedFunction(Node n, Scope scope) {
+<     Preconditions.checkState(NodeUtil.isFunctionDeclaration(n));
+160a240,243
+>     if (referenced.contains(var)) {
+>       return false;
+>     }
+> 
+162,164c245,249
+<     return (!removeGlobals && scope.isGlobal()) ||
+<         compiler.getCodingConvention().isExported(
+<            n.getFirstChild().getString());
+---
+>     if (compiler.getCodingConvention().isExported(var.getName())) {
+>       return false;
+>     }
+> 
+>     return true;
+175c260
+<   private void traverseFunction(Node n, Scope scope) {
+---
+>   private void traverseFunction(Node n, Scope parentScope) {
+183c268,269
+<     Scope fnScope = new SyntacticScopeCreator(compiler).createScope(n, scope);
+---
+>     Scope fnScope =
+>         new SyntacticScopeCreator(compiler).createScope(n, parentScope);
+186,188c272,273
+<     interpretAssigns(fnScope);
+<     removeUnreferencedFunctionArgs(n, fnScope);
+<     removeUnreferencedVars(fnScope);
+---
+>     collectMaybeUnreferencedVars(fnScope);
+>     allFunctionScopes.add(fnScope);
+194a280,291
+>   private void collectMaybeUnreferencedVars(Scope scope) {
+>     for (Iterator<Var> it = scope.getVars(); it.hasNext(); ) {
+>       Var var = it.next();
+>       if (isRemovableVar(var)) {
+>         maybeUnreferenced.add(var);
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+197c294
+<   private void removeUnreferencedFunctionArgs(Node function, Scope fnScope) {
+---
+>   private void removeUnreferencedFunctionArgs(Scope fnScope) {
+198a296,298
+>     Node function = fnScope.getRootNode();
+>     Preconditions.checkState(function.getType() == Token.FUNCTION);
+> 
+210,211c310
+<         fnScope.undeclare(var);
+<         finishRemove(var);
+---
+>         compiler.reportCodeChange();
+229,234d327
+<   private void interpretAssigns(Scope scope) {
+<     for (Iterator<Var> it = scope.getVars(); it.hasNext(); ) {
+<       Var var = it.next();
+<       if (!referenced.contains(var)) {
+<         boolean assignedToUnknownValue = false;
+<         boolean hasPropertyAssign = false;
+236,239c329,348
+<         if (var.getParentNode().getType() == Token.VAR) {
+<           Node value = var.getInitialValue();
+<           assignedToUnknownValue = value != null &&
+<               !NodeUtil.isLiteralValue(value, true);
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void interpretAssigns() {
+>     boolean changes = false;
+>     do {
+>       changes = false;
+> 
+>       
+>       
+>       
+>       for (int current = 0; current < maybeUnreferenced.size(); current++) {
+>         Var var = maybeUnreferenced.get(current);
+>         if (referenced.contains(var)) {
+>           maybeUnreferenced.remove(current);
+>           current--;
+241,243c350,351
+<           
+<           assignedToUnknownValue = true;
+<         }
+---
+>           boolean assignedToUnknownValue = false;
+>           boolean hasPropertyAssign = false;
+245,249c353,358
+<         for (Assign assign : assigns.get(var)) {
+<           if (assign.isPropertyAssign) {
+<             hasPropertyAssign = true;
+<           } else if (!NodeUtil.isLiteralValue(
+<               assign.assignNode.getLastChild(), true)) {
+---
+>           if (var.getParentNode().getType() == Token.VAR) {
+>             Node value = var.getInitialValue();
+>             assignedToUnknownValue = value != null &&
+>                 !NodeUtil.isLiteralValue(value, true);
+>           } else {
+>             
+252d360
+<         }
+254,255c362,375
+<         if (assignedToUnknownValue && hasPropertyAssign) {
+<           markReferencedVar(var);
+---
+>           for (Assign assign : assignsByVar.get(var)) {
+>             if (assign.isPropertyAssign) {
+>               hasPropertyAssign = true;
+>             } else if (!NodeUtil.isLiteralValue(
+>                 assign.assignNode.getLastChild(), true)) {
+>               assignedToUnknownValue = true;
+>             }
+>           }
+> 
+>           if (assignedToUnknownValue && hasPropertyAssign) {
+>             changes = markReferencedVar(var) || changes;
+>             maybeUnreferenced.remove(current);
+>             current--;
+>           }
+258c378
+<     }
+---
+>     } while (changes);
+261d380
+< 
+265,267c384,385
+< 
+<   private void finishRemove(Var var) {
+<     for (Assign assign : assigns.get(var)) {
+---
+>   private void removeAllAssigns(Var var) {
+>     for (Assign assign : assignsByVar.get(var)) {
+268a387
+>       compiler.reportCodeChange();
+270d388
+<     compiler.reportCodeChange();
+276,277d393
+<   private void markReferencedVar(Var var) {
+<     referenced.add(var);
+279,284c395,399
+<     Node parent = var.getParentNode();
+<     if (parent.getType() == Token.FUNCTION) {
+<       
+<       
+<       if (!traverseFunctionWhenFirstSeen(parent, var.getScope())) {
+<         traverseFunction(parent, var.scope);
+---
+> 
+>   private boolean markReferencedVar(Var var) {
+>     if (referenced.add(var)) {
+>       for (Continuation c : continuations.get(var)) {
+>         c.apply();
+285a401
+>       return true;
+286a403
+>     return false;
+292c409,410
+<   private void removeUnreferencedVars(Scope scope) {
+---
+> 
+>   private void removeUnreferencedVars() {
+295c413
+<     for (Iterator<Var> it = scope.getVars(); it.hasNext(); ) {
+---
+>     for (Iterator<Var> it = maybeUnreferenced.iterator(); it.hasNext(); ) {
+298,299c416,419
+<       if (!referenced.contains(var) &&
+<           (var.isLocal() || !convention.isExported(var.name))) {
+---
+>       
+>       
+>       
+>       removeAllAssigns(var);
+301,311c421,431
+<         compiler.addToDebugLog("Unreferenced var: " + var.name);
+<         Node nameNode = var.nameNode;
+<         Node toRemove = nameNode.getParent();
+<         Node parent = toRemove.getParent();
+< 
+<         Preconditions.checkState(
+<             toRemove.getType() == Token.VAR ||
+<             toRemove.getType() == Token.FUNCTION ||
+<             toRemove.getType() == Token.LP &&
+<             parent.getType() == Token.FUNCTION,
+<             "We should only declare vars and functions and function args");
+---
+>       compiler.addToDebugLog("Unreferenced var: " + var.name);
+>       Node nameNode = var.nameNode;
+>       Node toRemove = nameNode.getParent();
+>       Node parent = toRemove.getParent();
+> 
+>       Preconditions.checkState(
+>           toRemove.getType() == Token.VAR ||
+>           toRemove.getType() == Token.FUNCTION ||
+>           toRemove.getType() == Token.LP &&
+>           parent.getType() == Token.FUNCTION,
+>           "We should only declare vars and functions and function args");
+313,346c433,491
+<         if (toRemove.getType() == Token.LP &&
+<             parent.getType() == Token.FUNCTION) {
+<           
+<           
+<         } else if (NodeUtil.isFunctionExpression(toRemove)) {
+<           if (!preserveFunctionExpressionNames) {
+<             toRemove.getFirstChild().setString("");
+<             finishRemove(var);
+<           }
+<           
+<         } else if (parent != null &&
+<             parent.getType() == Token.FOR &&
+<             parent.getChildCount() < 4) {
+<           
+<         } else if (toRemove.getType() == Token.VAR &&
+<                    nameNode.hasChildren() &&
+<                    NodeUtil.mayHaveSideEffects(nameNode.getFirstChild())) {
+<           
+<           
+<           
+<           if (toRemove.getChildCount() == 1) {
+<             parent.replaceChild(toRemove,
+<                 new Node(Token.EXPR_RESULT, nameNode.removeFirstChild()));
+<             finishRemove(var);
+<           }
+<         } else if (toRemove.getType() == Token.VAR &&
+<                    toRemove.getChildCount() > 1) {
+<           
+<           
+<           toRemove.removeChild(nameNode);
+<           finishRemove(var);
+<         } else if (parent != null) {
+<           NodeUtil.removeChild(parent, toRemove);
+<           finishRemove(var);
+---
+>       if (toRemove.getType() == Token.LP &&
+>           parent.getType() == Token.FUNCTION) {
+>         
+>         
+>       } else if (NodeUtil.isFunctionExpression(toRemove)) {
+>         if (!preserveFunctionExpressionNames) {
+>           toRemove.getFirstChild().setString("");
+>           compiler.reportCodeChange();
+>         }
+>         
+>       } else if (parent != null &&
+>           parent.getType() == Token.FOR &&
+>           parent.getChildCount() < 4) {
+>         
+>       } else if (toRemove.getType() == Token.VAR &&
+>           nameNode.hasChildren() &&
+>           NodeUtil.mayHaveSideEffects(nameNode.getFirstChild())) {
+>         
+>         
+>         
+>         if (toRemove.getChildCount() == 1) {
+>           parent.replaceChild(toRemove,
+>               new Node(Token.EXPR_RESULT, nameNode.removeFirstChild()));
+>           compiler.reportCodeChange();
+>         }
+>       } else if (toRemove.getType() == Token.VAR &&
+>           toRemove.getChildCount() > 1) {
+>         
+>         
+>         toRemove.removeChild(nameNode);
+>         compiler.reportCodeChange();
+>       } else if (parent != null) {
+>         NodeUtil.removeChild(parent, toRemove);
+>         compiler.reportCodeChange();
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private class Continuation {
+>     private final Node node;
+>     private final Scope scope;
+> 
+>     Continuation(Node node, Scope scope) {
+>       this.node = node;
+>       this.scope = scope;
+>     }
+> 
+>     void apply() {
+>       if (NodeUtil.isFunctionDeclaration(node)) {
+>         traverseFunction(node, scope);
+>       } else {
+>         for (Node child = node.getFirstChild();
+>              child != null; child = child.getNext()) {
+>           traverseNode(child, node, scope);
+355a501,502
+>     final Node nameNode;
+> 
+360c507,518
+<     Assign(Node assignNode, boolean isPropertyAssign) {
+---
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     final boolean mayHaveSecondarySideEffects;
+> 
+>     Assign(Node assignNode, Node nameNode, boolean isPropertyAssign) {
+362a521
+>       this.nameNode = nameNode;
+363a523,527
+> 
+>       this.mayHaveSecondarySideEffects =
+>           assignNode.getParent().getType() != Token.EXPR_RESULT ||
+>           NodeUtil.mayHaveSideEffects(assignNode.getFirstChild()) ||
+>           NodeUtil.mayHaveSideEffects(assignNode.getLastChild());
+370,371c534,535
+<     static Assign maybeCreateAssign(Node name) {
+<       Preconditions.checkState(name.getType() == Token.NAME);
+---
+>     static Assign maybeCreateAssign(Node assignNode) {
+>       Preconditions.checkState(NodeUtil.isAssignmentOp(assignNode));
+375,380c539,541
+<       Node previous = name;
+<       Node current = name.getParent();
+<       while (previous == current.getFirstChild() &&
+<           NodeUtil.isGet(current)) {
+<         previous = current;
+<         current = current.getParent();
+---
+>       Node current = assignNode.getFirstChild();
+>       while (NodeUtil.isGet(current)) {
+>         current = current.getFirstChild();
+384,386c545,546
+<       if (previous == current.getFirstChild() &&
+<           NodeUtil.isAssignmentOp(current)) {
+<         return new Assign(current, isPropAssign);
+---
+>       if (current.getType() == Token.NAME) {
+>         return new Assign(assignNode, current, isPropAssign);
+395c555,557
+<       Node replacement = assignNode.getLastChild().detachFromParent();
+---
+>       Node parent = assignNode.getParent();
+>       if (mayHaveSecondarySideEffects) {
+>         Node replacement = assignNode.getLastChild().detachFromParent();
+397,404c559,567
+<       
+<       for (Node current = assignNode.getFirstChild();
+<            current.getType() != Token.NAME;
+<            current = current.getFirstChild()) {
+<         if (current.getType() == Token.GETELEM) {
+<           replacement = new Node(Token.COMMA,
+<               current.getLastChild().detachFromParent(), replacement);
+<           replacement.copyInformationFrom(current);
+---
+>         
+>         for (Node current = assignNode.getFirstChild();
+>              current.getType() != Token.NAME;
+>              current = current.getFirstChild()) {
+>           if (current.getType() == Token.GETELEM) {
+>             replacement = new Node(Token.COMMA,
+>                 current.getLastChild().detachFromParent(), replacement);
+>             replacement.copyInformationFrom(current);
+>           }
+406d568
+<       }
+408,409c570,579
+<       assignNode.getParent().replaceChild(
+<           assignNode, replacement);
+---
+>         parent.replaceChild(assignNode, replacement);
+>       } else {
+>         Node gramps = parent.getParent();
+>         if (parent.getType() == Token.EXPR_RESULT) {
+>           gramps.removeChild(parent);
+>         } else {
+>           parent.replaceChild(assignNode,
+>               assignNode.getLastChild().detachFromParent());
+>         }
+>       }

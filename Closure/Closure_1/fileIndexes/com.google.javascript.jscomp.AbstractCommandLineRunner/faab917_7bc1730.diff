@@ -1,0 +1,73 @@
+55d54
+< import java.util.Set;
+56a56
+> import java.util.Set;
+213a214
+>       boolean processCommonJSModules,
+227c228,235
+<     } else if (manageClosureDependencies ||
+---
+>     } else if (processCommonJSModules) {
+>       return new DependencyOptions()
+>         .setDependencyPruning(false)
+>         .setDependencySorting(true)
+>         .setMoocherDropping(false)
+>         .setEntryPoints(closureEntryPoints);
+>     }
+>     else if (manageClosureDependencies ||
+267a276
+>         config.processCommonJSModules,
+744a754,761
+> 
+>     boolean createCommonJsModules = false;
+>     if (options.processCommonJSModules) {
+>       if (moduleSpecs.size() == 1 && "auto".equals(moduleSpecs.get(0))) {
+>         createCommonJsModules = true;
+>         moduleSpecs.remove(0);
+>       }
+>     }
+759a777,781
+>     if (createCommonJsModules) {
+>       
+>       modules = Lists.newArrayList(compiler.getDegenerateModuleGraph()
+>           .getAllModules());
+>     }
+819a842
+>       outputModuleGraphJson();
+821a845
+>       outputModuleGraphJson();
+1435a1460,1480
+>   private void outputModuleGraphJson() throws IOException {
+>     if (config.outputModuleDependencies != null &&
+>         config.outputModuleDependencies != "") {
+>       Writer out = fileNameToOutputWriter2(config.outputModuleDependencies);
+>       printModuleGraphJsonTo(compiler.getDegenerateModuleGraph(), out);
+>       out.close();
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   @VisibleForTesting
+>   void printModuleGraphJsonTo(JSModuleGraph graph,
+>       Appendable out) throws IOException {
+>     out.append(compiler.getDegenerateModuleGraph().toJson().toString());
+>   }
+> 
+>   
+> 
+> 
+1954a2000,2011
+>       return this;
+>     }
+> 
+>     private String outputModuleDependencies = null;
+> 
+>     
+> 
+> 
+> 
+>     CommandLineConfig setOutputModuleDependencies(String
+>         outputModuleDependencies) {
+>       this.outputModuleDependencies = outputModuleDependencies;

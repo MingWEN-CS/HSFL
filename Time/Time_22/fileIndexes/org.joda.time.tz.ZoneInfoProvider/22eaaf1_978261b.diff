@@ -1,0 +1,63 @@
+56a57
+> import java.io.DataInputStream;
+61d61
+< import java.io.ObjectInputStream;
+65a66
+> import java.util.TreeMap;
+74a76,77
+> 
+> 
+77,78c80,81
+<         ObjectInputStream oin = new ObjectInputStream(in);
+<         Map map;
+---
+>         Map map = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+>         DataInputStream din = new DataInputStream(in);
+80,82c83
+<             map = (Map)oin.readObject();
+<         } catch (ClassNotFoundException e) {
+<             throw new IOException(e.toString());
+---
+>             ZoneInfoCompiler.readZoneInfoMap(din, map);
+85c86
+<                 oin.close();
+---
+>                 din.close();
+95c96
+<     private ClassLoader iLoader;
+---
+>     private final ClassLoader iLoader;
+117a119
+>         iLoader = null;
+130,131c132
+<         this(resourcePath, null);
+<         iLoader = getClass().getClassLoader();
+---
+>         this(resourcePath, null, false);
+144a146,156
+>         this(resourcePath, loader, true);
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private ZoneInfoProvider(String resourcePath,
+>                              ClassLoader loader, boolean favorSystemLoader) 
+>         throws IOException
+>     {
+153a166,170
+> 
+>         if (loader == null && !favorSystemLoader) {
+>             loader = getClass().getClassLoader();
+>         }
+> 
+217c234,239
+<                 throw new IOException("Resource not found: " + path);
+---
+>                 StringBuffer buf = new StringBuffer(40);
+>                 buf.append("Resource not found: \"");
+>                 buf.append(path);
+>                 buf.append("\" ClassLoader: ");
+>                 buf.append(iLoader != null ? iLoader.toString() : "system");
+>                 throw new IOException(buf.toString());

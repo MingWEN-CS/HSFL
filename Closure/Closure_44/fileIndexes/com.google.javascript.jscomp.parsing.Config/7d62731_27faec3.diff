@@ -1,0 +1,36 @@
+18a19
+> import com.google.common.collect.ImmutableMap;
+20a22
+> import java.util.Map;
+45c47,51
+<   final Set<String> annotationWhitelist;
+---
+>   final Map<String, Annotation> annotationNames;
+> 
+>   
+> 
+> 
+50c56
+<     this.annotationWhitelist = annotationWhitelist;
+---
+>     this.annotationNames = buildAnnotationNames(annotationWhitelist);
+51a58,76
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private static Map<String, Annotation> buildAnnotationNames(
+>       Set<String> annotationWhitelist) {
+>     ImmutableMap.Builder<String, Annotation> annotationBuilder =
+>         ImmutableMap.builder();
+>     annotationBuilder.putAll(Annotation.recognizedAnnotations);
+>     for (String unrecognizedAnnotation : annotationWhitelist) {
+>       if (!Annotation.recognizedAnnotations.containsKey(
+>               unrecognizedAnnotation)) {
+>         annotationBuilder.put(
+>             unrecognizedAnnotation, Annotation.NOT_IMPLEMENTED);
+>       }
+>     }
+>     return annotationBuilder.build();

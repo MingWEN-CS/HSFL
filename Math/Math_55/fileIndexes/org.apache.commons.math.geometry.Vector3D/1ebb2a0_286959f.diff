@@ -1,0 +1,109 @@
+21a22,23
+> import org.apache.commons.math.util.MathUtils;
+> 
+54c56,71
+<   private static final long serialVersionUID = -6155041477622120793L;
+---
+>   public static final Vector3D NaN = new Vector3D(Double.NaN, Double.NaN, Double.NaN);
+> 
+>   
+>   public static final Vector3D POSITIVE_INFINITY =
+>       new Vector3D(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+> 
+>   
+>   public static final Vector3D NEGATIVE_INFINITY =
+>       new Vector3D(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+> 
+>   
+>   private static final Vector3DFormat DEFAULT_FORMAT =
+>       Vector3DFormat.getInstance();
+> 
+>   
+>   private static final long serialVersionUID = 5133268763396045979L;
+343a361,438
+>   public boolean isNaN() {
+>       return Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z);        
+>   }
+>   
+>   
+> 
+> 
+> 
+> 
+> 
+>   public boolean isInfinite() {
+>       return !isNaN() && (Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z));        
+>   }
+>   
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public boolean equals(Object other) {
+> 
+>     if (this == other) { 
+>       return true;
+>     }
+> 
+>     if (other == null) {
+>       return false;
+>     }
+> 
+>     try {
+> 
+>         Vector3D rhs = (Vector3D)other;
+>       if (rhs.isNaN()) {
+>           return this.isNaN();
+>       }
+> 
+>       return (Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(rhs.x)) &&
+>              (Double.doubleToRawLongBits(y) == Double.doubleToRawLongBits(rhs.y)) &&
+>              (Double.doubleToRawLongBits(z) == Double.doubleToRawLongBits(rhs.z)); 
+> 
+>     } catch (ClassCastException ex) {
+>         
+>         return false;
+>     }
+> 
+>   }
+>   
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   public int hashCode() {
+>       if (isNaN()) {
+>           return 8;
+>       }
+>       return 31 * (23 * MathUtils.hash(x) +  19 * MathUtils.hash(y) +  MathUtils.hash(z));
+>   }
+> 
+>   
+> 
+> 
+> 
+387a483,489
+>   }
+> 
+>   
+> 
+> 
+>   public String toString() {
+>       return DEFAULT_FORMAT.format(this);

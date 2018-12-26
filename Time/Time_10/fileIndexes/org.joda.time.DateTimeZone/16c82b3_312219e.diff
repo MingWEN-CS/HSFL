@@ -1,0 +1,96 @@
+28a29
+> import java.util.TimeZone;
+117c118
+<                 cDefault = getInstance(System.getProperty("user.timezone"));
+---
+>                 cDefault = forID(System.getProperty("user.timezone"));
+122c123
+<                 cDefault = getInstance(java.util.TimeZone.getDefault());
+---
+>                 cDefault = forTimeZone(TimeZone.getDefault());
+133a135
+>     
+160a163
+>     
+175c178
+<     public static DateTimeZone getInstance(String id) throws IllegalArgumentException {
+---
+>     public static DateTimeZone forID(String id) {
+209,210c212,213
+<     public static DateTimeZone getInstance(int hoursOffset) throws IllegalArgumentException {
+<         return getInstance(hoursOffset, 0);
+---
+>     public static DateTimeZone forOffsetHours(int hoursOffset) throws IllegalArgumentException {
+>         return forOffsetHoursMinutes(hoursOffset, 0);
+226c229
+<     public static DateTimeZone getInstance(int hoursOffset, int minutesOffset) throws IllegalArgumentException {
+---
+>     public static DateTimeZone forOffsetHoursMinutes(int hoursOffset, int minutesOffset) throws IllegalArgumentException {
+245,246c248
+<         String id = printOffset(offset);
+<         return fixedOffsetZone(id, offset);
+---
+>         return forOffsetMillis(offset);
+254a257,263
+>     public static DateTimeZone forOffsetMillis(int millisOffset) {
+>         String id = printOffset(millisOffset);
+>         return fixedOffsetZone(id, millisOffset);
+>     }
+> 
+>     
+> 
+261c270,274
+<     public static DateTimeZone getInstance(java.util.TimeZone zone) {
+---
+> 
+> 
+> 
+> 
+>     public static DateTimeZone forTimeZone(TimeZone zone) {
+301a315,352
+>     
+> 
+> 
+> 
+> 
+>     public static DateTimeZone getInstance(String id) {
+>         return forID(id);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public static DateTimeZone getInstance(int hours) {
+>         return forOffsetHours(hours);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public static DateTimeZone getInstance(int hours, int mins) {
+>         return forOffsetHoursMinutes(hours, mins);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public static DateTimeZone getInstance(TimeZone jdkZone) {
+>         return forTimeZone(jdkZone);
+>     }
+> 
+>     
+>     
+308a360,362
+>         if (offset == 0) {
+>             return DateTimeZone.UTC;
+>         }
+928c982
+<             return getInstance(iID);
+---
+>             return forID(iID);

@@ -1,0 +1,631 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.Node;
+
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+
+
+
+
+
+
+
+class CodePrinter {
+  
+  static final int DEFAULT_LINE_LENGTH_THRESHOLD = 500;
+
+
+  
+  
+  
+  
+
+  
+  
+  
+
+  private interface HasGetCode {
+    String getCode();
+  }
+
+  private abstract static class MappedCodePrinter extends CodeConsumer {
+    final private Stack<Mapping> mappings;
+    final private List<Mapping> allMappings;
+    final private boolean createSrcMap;
+
+    MappedCodePrinter(boolean createSrcMap) {
+      this.createSrcMap = createSrcMap;
+      this.mappings = createSrcMap ? new Stack<Mapping>() : null;
+      this.allMappings = createSrcMap ? new ArrayList<Mapping>() : null;
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static class Mapping {
+      Node node;
+      Position start;
+      Position end;
+    }
+
+    
+
+
+
+    @Override
+    void startSourceMapping(Node node) {
+      if (createSrcMap
+          && node.getProp(Node.SOURCEFILE_PROP) != null
+          && node.getLineno() > 0) {
+        int line = getCurrentLineIndex();
+        int index = getCurrentCharIndex();
+
+        
+        if (index >= 0) {
+          Mapping mapping = new Mapping();
+          mapping.node = node;
+          mapping.start = new Position(line, index);
+          mappings.push(mapping);
+          allMappings.add(mapping);
+        }
+      }
+    }
+
+    
+
+
+
+    @Override
+    void endSourceMapping(Node node) {
+      if (createSrcMap
+          && node.getProp(Node.SOURCEFILE_PROP) != null
+          && node.getLineno() > 0) {
+        int line = getCurrentLineIndex();
+        int index = getCurrentCharIndex();
+
+        
+        if (index >= 0) {
+          Preconditions.checkState(
+              !mappings.empty(), "Mismatch in start and end of mapping");
+
+          Mapping mapping = mappings.pop();
+          mapping.end = new Position(line, index);
+        }
+      }
+    }
+
+    
+
+
+
+
+    @Override
+    void generateSourceMap(SourceMap map){
+      if (createSrcMap) {
+        for (Mapping mapping : allMappings) {
+          map.addMapping(mapping.node, mapping.start, mapping.end);
+        }
+      }
+    }
+
+    
+
+
+
+
+    void reportLineCut(int lineIndex, int characterPosition) {
+      if (createSrcMap) {
+        for (Mapping mapping : allMappings) {
+          mapping.start = convertPosition(mapping.start, lineIndex,
+                                          characterPosition);
+
+          if (mapping.end != null) {
+            mapping.end = convertPosition(mapping.end, lineIndex,
+                                          characterPosition);
+          }
+        }
+      }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private Position convertPosition(Position position, int lineIndex,
+                                     int characterPosition) {
+      int pLine = position.getLineNumber();
+      int pChar = position.getCharacterIndex();
+
+      
+      
+      if (position.getLineNumber() == lineIndex) {
+        if (position.getCharacterIndex() >= characterPosition) {
+          pLine++;
+          pChar -= characterPosition;
+        }
+      }
+
+      
+      
+      if (position.getLineNumber() > lineIndex) {
+        pLine++;
+      }
+
+      return new Position(pLine, pChar);
+    }
+  }
+
+  private static class PrettyCodePrinter
+      extends MappedCodePrinter
+      implements HasGetCode {
+    
+    static final String INDENT = "  ";
+
+    private final StringBuilder code = new StringBuilder(1024);
+    private final int lineLengthThreshold;
+    private int indent = 0;
+    private int lineLength = 0;
+    private int lineIndex = 0;
+
+    
+
+
+
+    private PrettyCodePrinter(
+        int lineLengthThreshold, boolean createSourceMap) {
+      super(createSourceMap);
+      this.lineLengthThreshold = lineLengthThreshold;
+    }
+
+    public String getCode() {
+      return code.toString();
+    }
+
+    @Override
+    char getLastChar() {
+      return (code.length() > 0) ? code.charAt(code.length() - 1) : '\0';
+    }
+
+    @Override
+    int getCurrentBufferLength() {
+      return code.length();
+    }
+
+    @Override
+    int getCurrentCharIndex() {
+      return lineLength;
+    }
+
+    @Override
+    int getCurrentLineIndex() {
+      return lineIndex;
+    }
+
+    
+
+
+    @Override
+    void append(String str) {
+      
+      if (lineLength == 0) {
+        for (int i = 0; i < indent; i++) {
+          code.append(INDENT);
+          lineLength += INDENT.length();
+        }
+      }
+      code.append(str);
+      lineLength += str.length();
+    }
+
+    
+
+
+
+    @Override
+    void startNewLine() {
+      if (lineLength > 0) {
+        code.append('\n');
+        lineIndex++;
+        lineLength = 0;
+      }
+    }
+
+    @Override
+    void maybeLineBreak() {
+      maybeCutLine();
+    }
+
+    
+
+
+
+    @Override
+    void maybeCutLine() {
+      if (lineLength > lineLengthThreshold) {
+        startNewLine();
+      }
+    }
+
+    @Override
+    void endLine() {
+      startNewLine();
+    }
+
+    @Override
+    void appendBlockStart() {
+      append(" {");
+      indent++;
+    }
+
+    @Override
+    void appendBlockEnd() {
+      endLine();
+      indent--;
+      append("}");
+    }
+
+    @Override
+    void listSeparator() {
+      add(", ");
+      maybeLineBreak();
+    }
+
+    @Override
+    void endFunction(boolean statementContext) {
+      super.endFunction(statementContext);
+      if (statementContext) {
+        startNewLine();
+      }
+    }
+
+    @Override
+    void beginCaseBody() {
+      super.beginCaseBody();
+      indent++;
+      endLine();
+    }
+
+    @Override
+    void endCaseBody() {
+      super.endCaseBody();
+      indent--;
+      endStatement();
+    }
+
+    @Override
+    void appendOp(String op, boolean binOp) {
+      if (binOp) {
+        if (getLastChar() != ' ') {
+          append(" ");
+        }
+        append(op);
+        append(" ");
+      } else {
+        append(op);
+      }
+    }
+
+    
+
+
+
+
+    @Override
+    boolean shouldPreserveExtraBlocks() {
+      
+      
+      
+      return true;
+    }
+  }
+
+
+  static class CompactCodePrinter
+      extends MappedCodePrinter
+      implements HasGetCode {
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    private final StringBuilder code = new StringBuilder(1024);
+
+    private final boolean lineBreak;
+    private final int lineLengthThreshold;
+
+    private int lineIndex = 0;
+    private int lineLength = 0;
+    private int lineStartPosition = 0;
+    private int preferredBreakPosition = 0;
+
+  
+
+
+
+
+
+
+    private CompactCodePrinter(boolean lineBreak, int lineLengthThreshold,
+        boolean createSrcMap) {
+      super(createSrcMap);
+      this.lineBreak = lineBreak;
+      this.lineLengthThreshold = lineLengthThreshold;
+    }
+
+    public String getCode() {
+      return code.toString();
+    }
+
+    @Override
+    char getLastChar() {
+      return (code.length() > 0) ? code.charAt(code.length() - 1) : '\0';
+    }
+
+    @Override
+    int getCurrentBufferLength() {
+      return code.length();
+    }
+
+    @Override
+    int getCurrentCharIndex() {
+      return lineLength;
+    }
+
+    @Override
+    int getCurrentLineIndex() {
+      return lineIndex;
+    }
+
+    
+
+
+    @Override
+    void append(String str) {
+      code.append(str);
+      lineLength += str.length();
+    }
+
+    
+
+
+    @Override
+    void startNewLine() {
+      if (lineLength > 0) {
+        code.append('\n');
+        lineLength = 0;
+        lineIndex++;
+        lineStartPosition = code.length();
+      }
+    }
+
+    @Override
+    void maybeLineBreak() {
+      if (lineBreak) {
+        if (sawFunction) {
+          startNewLine();
+          sawFunction = false;
+        }
+      }
+
+      
+      
+      
+      int len = code.length();
+      if (preferredBreakPosition == len - 1) {
+        char ch = code.charAt(len - 1);
+        if (ch == ';') {
+          preferredBreakPosition = len;
+        }
+      }
+      maybeCutLine();
+    }
+
+    
+
+
+
+    @Override
+    void maybeCutLine() {
+      if (lineLength > lineLengthThreshold) {
+        
+        if (preferredBreakPosition > lineStartPosition &&
+            preferredBreakPosition < lineStartPosition + lineLength) {
+          int position = preferredBreakPosition;
+          code.insert(position, '\n');
+          reportLineCut(lineIndex, position - lineStartPosition);
+          lineIndex++;
+          lineLength -= (position - lineStartPosition);
+          lineStartPosition = position + 1;
+        } else {
+          startNewLine();
+        }
+      }
+    }
+
+    @Override
+    void notePreferredLineBreak() {
+      preferredBreakPosition = code.length();
+    }
+  }
+
+  static class Builder {
+    private final Node root;
+    private boolean prettyPrint = false;
+    private boolean lineBreak = false;
+    private boolean outputTypes = false;
+    private int lineLengthThreshold = DEFAULT_LINE_LENGTH_THRESHOLD;
+    private SourceMap sourceMap = null;
+    
+    
+    private Charset outputCharset = null;
+    private boolean validation = true;
+
+    
+
+
+
+    Builder(Node node) {
+      root = node;
+    }
+
+    
+
+
+
+    Builder setPrettyPrint(boolean prettyPrint) {
+      this.prettyPrint = prettyPrint;
+      return this;
+    }
+
+    
+
+
+
+    Builder setLineBreak(boolean lineBreak) {
+      this.lineBreak = lineBreak;
+      return this;
+    }
+
+    
+
+
+
+    Builder setOutputTypes(boolean outputTypes) {
+      this.outputTypes = outputTypes;
+      return this;
+    }
+
+    
+
+
+
+
+
+    Builder setLineLengthThreshold(int threshold) {
+      this.lineLengthThreshold = threshold;
+      return this;
+    }
+
+    
+
+
+
+
+
+    Builder setSourceMap(SourceMap sourceMap) {
+      this.sourceMap = sourceMap;
+      return this;
+    }
+
+    
+
+
+
+    Builder setOutputCharset(Charset outCharset) {
+      this.outputCharset = outCharset;
+      return this;
+    }
+
+    
+
+
+    Builder setValidation(boolean validation) {
+      this.validation = validation;
+      return this;
+    }
+
+    
+
+
+    String build() {
+      if (root == null) {
+        throw new IllegalStateException(
+            "Cannot build without root node being specified");
+      }
+
+      Format outputFormat = outputTypes
+          ? Format.TYPED
+          : prettyPrint
+              ? Format.PRETTY
+              : Format.COMPACT;
+
+      return toSource(root, outputFormat, lineBreak, lineLengthThreshold,
+          sourceMap, outputCharset, validation);
+    }
+  }
+
+  enum Format {
+    COMPACT,
+    PRETTY,
+    TYPED
+  }
+
+  
+
+
+  private static String toSource(Node root, Format outputFormat,
+                                 boolean lineBreak,  int lineLengthThreshold,
+                                 SourceMap sourceMap,
+                                 Charset outputCharset,
+                                 boolean validation) {
+    boolean createSourceMap = (sourceMap != null);
+    CodeConsumer cp =
+        outputFormat == Format.COMPACT
+        ? new CompactCodePrinter(
+            lineBreak, lineLengthThreshold, createSourceMap)
+        : new PrettyCodePrinter(lineLengthThreshold, createSourceMap);
+    CodeGenerator cg =
+        outputFormat == Format.TYPED
+        ? new TypedCodeGenerator(cp, outputCharset)
+        : new CodeGenerator(cp, outputCharset, validation);
+    cg.add(root);
+
+    String code = ((HasGetCode) cp).getCode();
+
+    if (createSourceMap) {
+      cp.generateSourceMap(sourceMap);
+    }
+
+    return code;
+  }
+}

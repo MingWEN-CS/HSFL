@@ -1,0 +1,201 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optim.nonlinear.scalar.noderiv;
+
+import java.util.Comparator;
+import org.apache.commons.math3.analysis.MultivariateFunction;
+import org.apache.commons.math3.exception.NullArgumentException;
+import org.apache.commons.math3.optim.GoalType;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.PointValuePair;
+import org.apache.commons.math3.optim.SimpleValueChecker;
+import org.apache.commons.math3.optim.OptimizationData;
+import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateOptimizer;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class SimplexOptimizer extends MultivariateOptimizer {
+    
+    private AbstractSimplex simplex;
+
+    
+
+
+    public SimplexOptimizer(ConvergenceChecker<PointValuePair> checker) {
+        super(checker);
+    }
+
+    
+
+
+
+    public SimplexOptimizer(double rel, double abs) {
+        this(new SimpleValueChecker(rel, abs));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public PointValuePair optimize(OptimizationData... optData) {
+        
+        parseOptimizationData(optData);
+        
+        return super.optimize(optData);
+    }
+
+    
+    @Override
+    protected PointValuePair doOptimize() {
+        if (simplex == null) {
+            throw new NullArgumentException();
+        }
+
+        
+        
+        final MultivariateFunction evalFunc
+            = new MultivariateFunction() {
+                public double value(double[] point) {
+                    return computeObjectiveValue(point);
+                }
+            };
+
+        final boolean isMinim = getGoalType() == GoalType.MINIMIZE;
+        final Comparator<PointValuePair> comparator
+            = new Comparator<PointValuePair>() {
+            public int compare(final PointValuePair o1,
+                               final PointValuePair o2) {
+                final double v1 = o1.getValue();
+                final double v2 = o2.getValue();
+                return isMinim ? Double.compare(v1, v2) : Double.compare(v2, v1);
+            }
+        };
+
+        
+        simplex.build(getStartPoint());
+        simplex.evaluate(evalFunc, comparator);
+
+        PointValuePair[] previous = null;
+        int iteration = 0;
+        final ConvergenceChecker<PointValuePair> checker = getConvergenceChecker();
+        while (true) {
+            if (iteration > 0) {
+                boolean converged = true;
+                for (int i = 0; i < simplex.getSize(); i++) {
+                    PointValuePair prev = previous[i];
+                    converged = converged &&
+                        checker.converged(iteration, prev, simplex.getPoint(i));
+                }
+                if (converged) {
+                    
+                    return simplex.getPoint(0);
+                }
+            }
+
+            
+            previous = simplex.getPoints();
+            simplex.iterate(evalFunc, comparator);
+            ++iteration;
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private void parseOptimizationData(OptimizationData... optData) {
+        
+        
+        for (OptimizationData data : optData) {
+            if (data instanceof AbstractSimplex) {
+                simplex = (AbstractSimplex) data;
+                
+                
+                break;
+            }
+        }
+    }
+}

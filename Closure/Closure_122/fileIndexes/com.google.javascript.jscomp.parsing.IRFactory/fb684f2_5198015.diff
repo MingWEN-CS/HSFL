@@ -1,0 +1,78 @@
+240a241,243
+> 
+> 
+> 
+276c279,283
+<         return jsDocParser.retrieveAndResetParsedJSDocInfo();
+---
+>         JSDocInfo info = jsDocParser.retrieveAndResetParsedJSDocInfo();
+>         if (info != null) {
+>           validateTypeAnnotations(info, node, irNode);
+>         }
+>         return info;
+281a289,347
+>   private void validateTypeAnnotations(
+>       JSDocInfo info, AstNode node, Node irNode) {
+>     if (info.getType() != null) {
+>       boolean valid = false;
+>       switch (node.getType()) {
+>         
+>         case com.google.javascript.rhino.head.Token.LP:
+>           valid = node instanceof ParenthesizedExpression;
+>           break;
+>         
+>         case com.google.javascript.rhino.head.Token.VAR:
+>           valid = true;
+>           break;
+>         
+>         case com.google.javascript.rhino.head.Token.FUNCTION:
+>           FunctionNode fnNode = (FunctionNode)node;
+>           valid = fnNode.getFunctionType() == FunctionNode.FUNCTION_STATEMENT;
+>           break;
+>         
+>         case com.google.javascript.rhino.head.Token.GET:
+>         case com.google.javascript.rhino.head.Token.SET:
+>         case com.google.javascript.rhino.head.Token.NAME:
+>         case com.google.javascript.rhino.head.Token.NUMBER:
+>         case com.google.javascript.rhino.head.Token.STRING:
+>           valid = node.getParent() instanceof ObjectProperty;
+>           break;
+> 
+>         
+>         case com.google.javascript.rhino.head.Token.ASSIGN:
+>           if (node instanceof Assignment) {
+>             valid = isExprStmt(node.getParent())
+>                 && isPropAccess(((Assignment)node).getLeft());
+>           }
+>           break;
+> 
+>         
+>         case com.google.javascript.rhino.head.Token.GETPROP:
+>         case com.google.javascript.rhino.head.Token.GETELEM:
+>           valid = isExprStmt(node.getParent());
+>           break;
+>       }
+>       if (!valid) {
+>         errorReporter.warning(MISPLACED_TYPE_ANNOTATION,
+>             sourceName,
+>             node.getLineno(), "", 0);
+>       }
+>     }
+>   }
+> 
+>   private boolean isPropAccess(AstNode node) {
+>     return node.getType() == com.google.javascript.rhino.head.Token.GETPROP
+>         || node.getType() == com.google.javascript.rhino.head.Token.GETELEM;
+>   }
+> 
+>   private boolean isExprStmt(AstNode node) {
+>     return node.getType() == com.google.javascript.rhino.head.Token.EXPR_RESULT
+>         || node.getType() == com.google.javascript.rhino.head.Token.EXPR_VOID;
+>   }
+> 
+796c862,864
+<       Node node = newNode(transformTokenType(exprNode.getType()), transform(exprNode.getTarget()));
+---
+>       Node node = newNode(
+>           transformTokenType(exprNode.getType()),
+>           transform(exprNode.getTarget()));

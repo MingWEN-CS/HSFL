@@ -1,0 +1,381 @@
+56a57,62
+> import org.joda.time.chrono.UnsupportedDateTimeField;
+> import org.joda.time.chrono.UnsupportedDurationField;
+> 
+> 
+> 
+> 
+77a84,85
+>     static final long serialVersionUID = -7310865996721419676L;
+> 
+118,119c126,131
+<     public long getTimeOnlyMillis(long millis) {
+<         return dayOfYear().remainder(millis);
+---
+> 
+> 
+> 
+> 
+>     public long getDateOnlyMillis(long instant) {
+>         return dayOfYear().roundFloor(instant);
+129,130c141,151
+<     public long getDateOnlyMillis(long millis) {
+<         return dayOfYear().roundFloor(millis);
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getDateOnlyMillis(int year, int monthOfYear, int dayOfMonth)
+>         throws IllegalArgumentException
+>     {
+>         return getDateTimeMillis(year, monthOfYear, dayOfMonth, 0);
+133a155,168
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getTimeOnlyMillis(long instant) {
+>         return dayOfYear().remainder(instant);
+>     }
+> 
+134a170,194
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getTimeOnlyMillis(int hourOfDay, int minuteOfHour,
+>                                   int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException
+>     {
+>         long instant = hourOfDay().set(0, hourOfDay);
+>         instant = minuteOfHour().set(instant, minuteOfHour);
+>         instant = secondOfMinute().set(instant, secondOfMinute);
+>         return millisOfSecond().set(instant, millisOfSecond);
+>     }
+> 
+141,142c201,217
+<     public DateTimeField millisOfSecond() {
+<         throw new UnsupportedOperationException("millisOfSecond is unsupported for " + getClass().getName());
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+>                                   int millisOfDay)
+>         throws IllegalArgumentException
+>     {
+>         long instant = year().set(0, year);
+>         instant = monthOfYear().set(instant, monthOfYear);
+>         instant = dayOfMonth().set(instant, dayOfMonth);
+>         return millisOfDay().set(instant, millisOfDay);
+150a226,305
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getDateTimeMillis(long instant,
+>                                   int hourOfDay, int minuteOfHour,
+>                                   int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException
+>     {
+>         instant = hourOfDay().set(instant, hourOfDay);
+>         instant = minuteOfHour().set(instant, minuteOfHour);
+>         instant = secondOfMinute().set(instant, secondOfMinute);
+>         return millisOfSecond().set(instant, millisOfSecond);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+>                                   int hourOfDay, int minuteOfHour,
+>                                   int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException
+>     {
+>         long instant = year().set(0, year);
+>         instant = monthOfYear().set(instant, monthOfYear);
+>         instant = dayOfMonth().set(instant, dayOfMonth);
+>         instant = hourOfDay().set(instant, hourOfDay);
+>         instant = minuteOfHour().set(instant, minuteOfHour);
+>         instant = secondOfMinute().set(instant, secondOfMinute);
+>         return millisOfSecond().set(instant, millisOfSecond);
+>     }
+> 
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+>     public DurationField millis() {
+>         return UnsupportedDurationField.getInstance("millis");
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public DateTimeField millisOfSecond() {
+>         return UnsupportedDateTimeField.getInstance("millisOfSecond", millis());
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+152c307
+<         throw new UnsupportedOperationException("millisOfDay is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("millisOfDay", millis());
+161a317,324
+>     public DurationField seconds() {
+>         return UnsupportedDurationField.getInstance("seconds");
+>     }
+> 
+>     
+> 
+> 
+> 
+164c327
+<         throw new UnsupportedOperationException("secondOfMinute is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("secondOfMinute", seconds());
+172d334
+< 
+174c336
+<         throw new UnsupportedOperationException("secondOfDay is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("secondOfDay", seconds());
+183a346,353
+>     public DurationField minutes() {
+>         return UnsupportedDurationField.getInstance("minutes");
+>     }
+> 
+>     
+> 
+> 
+> 
+186c356
+<         throw new UnsupportedOperationException("minuteOfHour is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("minuteOfHour", minutes());
+194d363
+< 
+196c365
+<         throw new UnsupportedOperationException("minuteOfDay is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("minuteOfDay", minutes());
+205a375,382
+>     public DurationField hours() {
+>         return UnsupportedDurationField.getInstance("hours");
+>     }
+> 
+>     
+> 
+> 
+> 
+208c385
+<         throw new UnsupportedOperationException("hourOfDay is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("hourOfDay", hours());
+216d392
+< 
+218c394
+<         throw new UnsupportedOperationException("clockhourOfDay is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("clockhourOfDay", hours());
+226d401
+< 
+228c403
+<         throw new UnsupportedOperationException("hourOfHalfday is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("hourOfHalfday", hours());
+236d410
+< 
+238c412
+<         throw new UnsupportedOperationException("clockhourOfHalfday is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("clockhourOfHalfday", hours());
+246d419
+< 
+248c421,422
+<         throw new UnsupportedOperationException("halfdayOfDay is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance
+>             ("halfdayOfDay", UnsupportedDurationField.getInstance("halfdays"));
+257a432,439
+>     public DurationField days() {
+>         return UnsupportedDurationField.getInstance("days");
+>     }
+> 
+>     
+> 
+> 
+> 
+263c445
+<         throw new UnsupportedOperationException("dayOfWeek is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("dayOfWeek", days());
+271d452
+< 
+273c454
+<         throw new UnsupportedOperationException("dayOfMonth is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("dayOfMonth", days());
+281d461
+< 
+283c463
+<         throw new UnsupportedOperationException("dayOfYear is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("dayOfYear", days());
+292a473,480
+>     public DurationField weeks() {
+>         return UnsupportedDurationField.getInstance("weeks");
+>     }
+> 
+>     
+> 
+> 
+> 
+295c483
+<         throw new UnsupportedOperationException("weekOfWeekyear is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("weekOfWeekyear", weeks());
+302a491,498
+>     public DurationField weekyears() {
+>         return UnsupportedDurationField.getInstance("weekyears");
+>     }
+> 
+>     
+> 
+> 
+> 
+305c501
+<         throw new UnsupportedOperationException("weekyear is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("weekyear", weekyears());
+314a511,518
+>     public DurationField months() {
+>         return UnsupportedDurationField.getInstance("months");
+>     }
+> 
+>     
+> 
+> 
+> 
+317c521
+<         throw new UnsupportedOperationException("monthOfYear is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("monthOfYear", months());
+326a531,538
+>     public DurationField years() {
+>         return UnsupportedDurationField.getInstance("years");
+>     }
+> 
+>     
+> 
+> 
+> 
+329c541
+<         throw new UnsupportedOperationException("year is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("year", years());
+337d548
+< 
+339c550
+<         throw new UnsupportedOperationException("yearOfEra is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("yearOfEra", years());
+347d557
+< 
+349c559
+<         throw new UnsupportedOperationException("yearOfCentury is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("yearOfCentury", years());
+356a567,574
+>     public DurationField centuries() {
+>         return UnsupportedDurationField.getInstance("centuries");
+>     }
+> 
+>     
+> 
+> 
+> 
+359c577
+<         throw new UnsupportedOperationException("centuryOfEra is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("centuryOfEra", centuries());
+366a585,592
+>     public DurationField eras() {
+>         return UnsupportedDurationField.getInstance("eras");
+>     }
+> 
+>     
+> 
+> 
+> 
+369c595
+<         throw new UnsupportedOperationException("era is unsupported for " + getClass().getName());
+---
+>         return UnsupportedDateTimeField.getInstance("era", eras());
+370a597,603
+> 
+>     
+> 
+> 
+> 
+> 
+>     public abstract String toString();

@@ -1,0 +1,65 @@
+163c163,168
+<     Node typeAst = parseAndRecordTypeNode(next());
+---
+>     JsDocToken token = next();
+>     int lineno = stream.getLineno();
+>     int startCharno = stream.getCharno();
+>     Node typeAst = parseTypeExpression(token);
+>     recordTypeNode(lineno, startCharno, typeAst, token == JsDocToken.LC);
+> 
+171a177,186
+>   private void recordTypeNode(int lineno, int startCharno, Node typeAst,
+>       boolean matchingLC) {
+>     if (typeAst != null) {
+>       int endLineno = stream.getLineno();
+>       int endCharno = stream.getCharno();
+>       jsdocBuilder.markTypeNode(
+>           typeAst, lineno, startCharno, endLineno, endCharno, matchingLC);
+>     }
+>   }
+> 
+1241,1252d1255
+<     return parseAndRecordTypeNode(token, token == JsDocToken.LC);
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private Node parseAndRecordTypeNode(JsDocToken token, boolean matchingLC) {
+1254c1257
+<         matchingLC, false);
+---
+>         token == JsDocToken.LC, false);
+1291,1297c1294
+<     if (typeNode != null) {
+<       int endLineno = stream.getLineno();
+<       int endCharno = stream.getCharno();
+< 
+<       jsdocBuilder.markTypeNode(typeNode, lineno, startCharno,
+<           endLineno, endCharno, true);
+<     }
+---
+>     recordTypeNode(lineno, startCharno, typeNode, true);
+1326,1333c1323
+<     if (typeNode != null) {
+<       int endLineno = stream.getLineno();
+<       int endCharno = stream.getCharno();
+< 
+<       jsdocBuilder.markTypeNode(
+<           typeNode, lineno, startCharno, endLineno, endCharno, matchingLC);
+<     }
+< 
+---
+>     recordTypeNode(lineno, startCharno, typeNode, matchingLC);
+1865a1856
+>       
+1873c1864,1865
+<           token == JsDocToken.GT) {
+---
+>           token == JsDocToken.GT ||
+>           token == JsDocToken.EOC) {

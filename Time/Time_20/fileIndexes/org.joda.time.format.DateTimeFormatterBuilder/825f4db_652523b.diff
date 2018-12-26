@@ -1,0 +1,148 @@
+721c721,738
+<         return append0(new TwoDigitYear(DateTimeFieldType.year(), pivot));
+---
+>         return appendTwoDigitYear(pivot, false);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendTwoDigitYear(int pivot, boolean lenientParse) {
+>         return append0(new TwoDigitYear(DateTimeFieldType.year(), pivot, lenientParse));
+743c760,777
+<         return append0(new TwoDigitYear(DateTimeFieldType.weekyear(), pivot));
+---
+>         return appendTwoDigitWeekyear(pivot, false);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendTwoDigitWeekyear(int pivot, boolean lenientParse) {
+>         return append0(new TwoDigitYear(DateTimeFieldType.weekyear(), pivot, lenientParse));
+1144,1145c1178
+<                 value = Integer.parseInt
+<                     (text.substring(position, position += length));
+---
+>                 value = Integer.parseInt(text.substring(position, position += length));
+1151c1184,1188
+<                 value = text.charAt(i++) - '0';
+---
+>                 try {
+>                     value = text.charAt(i++) - '0';
+>                 } catch (StringIndexOutOfBoundsException e) {
+>                     return ~position;
+>                 }
+1296a1334
+>         private final boolean iLenientParse;
+1298c1336
+<         TwoDigitYear(DateTimeFieldType type, int pivot) {
+---
+>         TwoDigitYear(DateTimeFieldType type, int pivot, boolean lenientParse) {
+1301a1340
+>             iLenientParse = lenientParse;
+1305c1344
+<             return 2;
+---
+>             return iLenientParse ? 4 : 2;
+1309,1313c1348
+<             int pivot = iPivot;
+<             
+<             if (bucket.getPivotYear() != null) {
+<                 pivot = bucket.getPivotYear().intValue();
+<             }
+---
+>             int limit = text.length() - position;
+1315,1317c1350,1410
+<             int limit = Math.min(2, text.length() - position);
+<             if (limit < 2) {
+<                 return ~position;
+---
+>             if (!iLenientParse) {
+>                 limit = Math.min(2, limit);
+>                 if (limit < 2) {
+>                     return ~position;
+>                 }
+>             } else {
+>                 boolean hasSignChar = false;
+>                 boolean negative = false;
+>                 int length = 0;
+>                 while (length < limit) {
+>                     char c = text.charAt(position + length);
+>                     if (length == 0 && (c == '-' || c == '+')) {
+>                         hasSignChar = true;
+>                         negative = c == '-';
+>                         if (negative) {
+>                             length++;
+>                         } else {
+>                             
+>                             position++;
+>                             limit--;
+>                         }
+>                         continue;
+>                     }
+>                     if (c < '0' || c > '9') {
+>                         break;
+>                     }
+>                     length++;
+>                 }
+>                 
+>                 if (length == 0) {
+>                     return ~position;
+>                 }
+> 
+>                 if (hasSignChar || length != 2) {
+>                     int value;
+>                     if (length >= 9) {
+>                         
+>                         
+>                         value = Integer.parseInt(text.substring(position, position += length));
+>                     } else {
+>                         int i = position;
+>                         if (negative) {
+>                             i++;
+>                         }
+>                         try {
+>                             value = text.charAt(i++) - '0';
+>                         } catch (StringIndexOutOfBoundsException e) {
+>                             return ~position;
+>                         }
+>                         position += length;
+>                         while (i < position) {
+>                             value = ((value << 3) + (value << 1)) + text.charAt(i++) - '0';
+>                         }
+>                         if (negative) {
+>                             value = -value;
+>                         }
+>                     }
+>                     
+>                     bucket.saveField(iType, value);
+>                     return position;
+>                 }
+1330a1424,1429
+> 
+>             int pivot = iPivot;
+>             
+>             if (bucket.getPivotYear() != null) {
+>                 pivot = bucket.getPivotYear().intValue();
+>             }

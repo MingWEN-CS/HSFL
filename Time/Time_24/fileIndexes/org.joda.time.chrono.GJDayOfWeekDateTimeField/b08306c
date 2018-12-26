@@ -1,0 +1,178 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.chrono;
+
+import java.util.Locale;
+
+import org.joda.time.DateTimeConstants;
+import org.joda.time.DurationField;
+import org.joda.time.field.PreciseDurationDateTimeField;
+
+
+
+
+
+
+
+
+
+
+final class GJDayOfWeekDateTimeField extends PreciseDurationDateTimeField {
+    
+    
+    private static final long serialVersionUID = -3857947176719041436L;
+
+    private final AbstractGJChronology iChronology;
+
+    
+
+
+    GJDayOfWeekDateTimeField(AbstractGJChronology chronology, DurationField days) {
+        super("dayOfWeek", days);
+        iChronology = chronology;
+    }
+
+    
+
+
+
+
+
+    public int get(long instant) {
+        return iChronology.getDayOfWeek(instant);
+    }
+
+    
+
+
+
+
+
+
+    protected String getAsText(int fieldValue, Locale locale) {
+        return GJLocaleSymbols.forLocale(locale).dayOfWeekValueToText(fieldValue);
+    }
+
+    
+
+
+
+
+
+
+    protected String getAsShortText(int fieldValue, Locale locale) {
+        return GJLocaleSymbols.forLocale(locale).dayOfWeekValueToShortText(fieldValue);
+    }
+
+    
+
+
+
+
+
+
+
+    protected int convertText(String text, Locale locale) {
+        return GJLocaleSymbols.forLocale(locale).dayOfWeekTextToValue(text);
+    }
+
+    public DurationField getRangeDurationField() {
+        return iChronology.weeks();
+    }
+
+    
+
+
+
+
+    public int getMinimumValue() {
+        return DateTimeConstants.MONDAY;
+    }
+
+    
+
+
+
+
+    public int getMaximumValue() {
+        return DateTimeConstants.SUNDAY;
+    }
+
+    
+
+
+
+
+
+    public int getMaximumTextLength(Locale locale) {
+        return GJLocaleSymbols.forLocale(locale).getDayOfWeekMaxTextLength();
+    }
+
+    
+
+
+
+
+
+    public int getMaximumShortTextLength(Locale locale) {
+        return GJLocaleSymbols.forLocale(locale).getDayOfWeekMaxShortTextLength();
+    }
+
+    
+
+
+    private Object readResolve() {
+        return iChronology.dayOfWeek();
+    }
+}

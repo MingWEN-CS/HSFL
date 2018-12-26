@@ -1,0 +1,32 @@
+131,135c131
+<         if (left.getType() == Token.NUMBER && right.getType() == Token.NUMBER) {
+<           return tryFoldOp(subtree, left, right);
+<         } else {
+<           return subtree;
+<         }
+---
+>         return tryFoldArithmeticOp(subtree, left, right);
+141c137
+<           return tryFoldOp(subtree, left, right);
+---
+>           return tryFoldArithmeticOp(subtree, left, right);
+495c491
+<       return tryFoldOp(n, left, right);
+---
+>       return tryFoldArithmeticOp(n, left, right);
+504,509c500,507
+<   private Node tryFoldOp(Node n, Node left, Node right) {
+<     Node result = performArithmeticOp(n.getType(), left, right);
+<     if (result != null) {
+<       n.getParent().replaceChild(n, result);
+<       reportCodeChange();
+<       return result;
+---
+>   private Node tryFoldArithmeticOp(Node n, Node left, Node right) {
+>     if (left.getType() == Token.NUMBER && right.getType() == Token.NUMBER) {
+>       Node result = performArithmeticOp(n.getType(), left, right);
+>       if (result != null) {
+>         n.getParent().replaceChild(n, result);
+>         reportCodeChange();
+>         return result;
+>       }

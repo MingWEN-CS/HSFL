@@ -1,0 +1,117 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.analysis.function;
+
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.analysis.DifferentiableUnivariateRealFunction;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+
+
+
+
+
+
+public class Sinc implements DifferentiableUnivariateRealFunction {
+    
+
+
+
+
+    private static final double SHORTCUT = 1e-9;
+    
+    private final boolean normalized;
+
+    
+
+
+    public Sinc() {
+        this(false);
+    }
+
+    
+
+
+
+
+
+    public Sinc(boolean normalized) {
+        this.normalized = normalized;
+    }
+
+    
+    public double value(double x) {
+        if (normalized) {
+            final double piTimesX = Math.PI * x;
+            return sinc(piTimesX);
+        } else {
+            return sinc(x);
+        }
+    }
+
+    
+    public UnivariateRealFunction derivative() {
+        if (normalized) {
+            return new UnivariateRealFunction() {
+                
+                public double value(double x) {
+                    final double piTimesX = Math.PI * x;
+                    return sincDerivative(piTimesX);
+                }
+            };
+        } else {
+            return new UnivariateRealFunction() {
+                
+                public double value(double x) {
+                    return sincDerivative(x);
+                }
+            };
+        }
+    }
+
+    
+
+
+
+    private static double sinc(double x) {
+        
+        
+        
+        
+        return FastMath.abs(x) < SHORTCUT ? 1 :
+            FastMath.sin(x) / x;
+    }
+
+    
+
+
+
+    private static double sincDerivative(double x) {
+        
+        
+        
+        
+        return FastMath.abs(x) < SHORTCUT ? 0 :
+            (FastMath.cos(x) - FastMath.sin(x) / x) / x;
+    }
+}

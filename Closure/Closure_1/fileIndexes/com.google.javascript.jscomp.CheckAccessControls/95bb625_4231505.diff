@@ -1,0 +1,29 @@
+31a32
+> import com.google.javascript.rhino.jstype.StaticSourceFile;
+339,344c340,349
+<         if (visibility == Visibility.PRIVATE &&
+<             !t.getInput().getName().equals(docInfo.getSourceName())) {
+<           if (docInfo.isConstructor() &&
+<               isValidPrivateConstructorAccess(parent)) {
+<             return;
+<           }
+---
+>         if (visibility == Visibility.PRIVATE) {
+>           StaticSourceFile varSrc = var.getSourceFile();
+>           StaticSourceFile refSrc = name.getStaticSourceFile();
+>           if (varSrc != null &&
+>               refSrc != null &&
+>               !varSrc.getName().equals(refSrc.getName())) {
+>             if (docInfo.isConstructor() &&
+>                 isValidPrivateConstructorAccess(parent)) {
+>               return;
+>             }
+346,348c351,354
+<           compiler.report(
+<               t.makeError(name, BAD_PRIVATE_GLOBAL_ACCESS,
+<                   name.getString(), docInfo.getSourceName()));
+---
+>             compiler.report(
+>                 t.makeError(name, BAD_PRIVATE_GLOBAL_ACCESS,
+>                     name.getString(), varSrc.getName()));
+>           }

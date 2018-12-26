@@ -1,0 +1,42 @@
+37d36
+< import com.google.javascript.rhino.jstype.EnumElementType;
+334,335c333,334
+<     } else if (type instanceof EnumElementType) {
+<       addInvalidatingType(((EnumElementType) type).getPrimitiveType());
+---
+>     } else if (type.isEnumElementType()) {
+>       addInvalidatingType(type.toMaybeEnumElementType().getPrimitiveType());
+774c773
+<       } else if (type instanceof EnumElementType) {
+---
+>       } else if (type.isEnumElementType()) {
+776c775
+<             ((EnumElementType) type).getPrimitiveType());
+---
+>             type.toMaybeEnumElementType().getPrimitiveType());
+826c825,829
+<       if (type instanceof EnumElementType) {
+---
+>       if (type == null) {
+>         return null;
+>       }
+> 
+>       if (type.isEnumElementType()) {
+828c831
+<             field, ((EnumElementType) type).getPrimitiveType());
+---
+>             field, type.toMaybeEnumElementType().getPrimitiveType());
+898,899c901,902
+<         if (objType instanceof FunctionType) {
+<           constructor = (FunctionType) objType;
+---
+>         if (objType.isFunctionType()) {
+>           constructor = objType.toMaybeFunctionType();
+1006c1009
+<       } else if (jsType instanceof EnumElementType) {
+---
+>       } else if (jsType.isEnumElementType()) {
+1008c1011
+<             cType, ((EnumElementType) jsType).getPrimitiveType(), prop);
+---
+>             cType, jsType.toMaybeEnumElementType().getPrimitiveType(), prop);

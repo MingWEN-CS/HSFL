@@ -1,0 +1,70 @@
+57a58
+> import org.joda.time.base.BaseDateTime;
+104c105,106
+< public class MutableDateTime extends AbstractDateTime
+---
+> public class MutableDateTime
+>         extends BaseDateTime
+130d131
+<     
+213a215
+> 
+231a234
+> 
+248a252
+> 
+332a337
+> 
+401a407,408
+> 
+> 
+437c444,445
+<         super.setMillis(instant);
+---
+>         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+>         setMillis(converter.getInstantMillis(instant));  
+447,448c455,457
+<     public void add(final long duration) {
+<         setMillis(getMillis() + duration);
+---
+> 
+>     public void add(long duration) {
+>         setMillis(FieldUtils.safeAdd(getMillis(), duration));  
+464c473
+<     public void add(final Object duration) {
+---
+>     public void add(Object duration) {
+482,487c491,492
+<     public void add(final Object duration, final int scalar) {
+<         
+<         if (duration instanceof ReadableDuration) {
+<             ReadableDuration d = (ReadableDuration) duration;
+<             add(FieldUtils.safeMultiply(d.getMillis(), scalar));
+<         } else if (duration instanceof ReadablePeriod) {
+---
+>     public void add(Object duration, int scalar) {
+>         if (duration instanceof ReadablePeriod) {
+502a508,509
+> 
+> 
+524c531,535
+<         super.setZone(zone);
+---
+>         zone = DateTimeUtils.getZone(zone);
+>         Chronology chrono = getChronology();
+>         if (chrono.getZone() != zone) {
+>             setChronology(chrono.withZone(zone));  
+>         }
+539c550,559
+<         super.setZoneRetainFields(zone);
+---
+>         zone = DateTimeUtils.getZone(zone);
+>         DateTimeZone originalZone = getZone();
+>         originalZone = (originalZone == null ? DateTimeZone.getDefault() : originalZone);
+>         if (zone == originalZone) {
+>             return;
+>         }
+>         
+>         long millis = originalZone.getMillisKeepLocal(zone, getMillis());
+>         setChronology(getChronology().withZone(zone));  
+>         setMillis(millis);

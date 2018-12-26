@@ -1,0 +1,59 @@
+26a27
+> import com.google.common.collect.Sets;
+50,53c51
+<   
+< 
+< 
+<   private Map<JSModule, Integer> moduleDepths;
+---
+>   private Set<JSModule> modules;
+86c84
+<     moduleDepths = Maps.newHashMapWithExpectedSize(modulesInDepOrder.size());
+---
+>     modules = Sets.newHashSetWithExpectedSize(modulesInDepOrder.size());
+92,93c90,91
+<         Integer depDepth = moduleDepths.get(dep);
+<         if (depDepth == null) {
+---
+>         int depDepth = dep.getDepth();
+>         if (depDepth < 0) {
+102c100,101
+<       moduleDepths.put(module, depth);
+---
+>       module.setDepth(depth);
+>       modules.add(module);
+114c113
+<     return moduleDepths.keySet();
+---
+>     return modules;
+131c130
+<     return moduleDepths.size();
+---
+>     return modules.size();
+145,154d143
+< 
+< 
+<   int getDepth(JSModule module) {
+<     return moduleDepths.get(module);
+<   }
+< 
+<   
+< 
+< 
+< 
+175,176c164,165
+<     int m1Depth = getDepth(m1);
+<     int m2Depth = getDepth(m2);
+---
+>     int m1Depth = m1.getDepth();
+>     int m2Depth = m2.getDepth();
+263c252
+<     for (JSModule module : moduleDepths.keySet()) {
+---
+>     for (JSModule module : modules) {
+381,382c370,371
+<     int d1 = getDepth(m1);
+<     int d2 = getDepth(m2);
+---
+>     int d1 = m1.getDepth();
+>     int d2 = m2.getDepth();

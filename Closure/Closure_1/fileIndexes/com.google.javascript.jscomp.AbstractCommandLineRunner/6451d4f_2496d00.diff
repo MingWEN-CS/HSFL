@@ -1,0 +1,81 @@
+906,911c906,907
+<   @VisibleForTesting
+<   String expandManifest(JSModule forModule) {
+<     if (Strings.isEmpty(config.outputManifest)) {
+<       return null;
+<     }
+<     return expandCommandLinePath(config.outputManifest, forModule);
+---
+>   private String expandManifest(JSModule forModule, String manifestName) {
+>     return expandCommandLinePath(manifestName, forModule);
+1146c1142
+<   private boolean shouldGenerateManifestPerModule() {
+---
+>   private boolean shouldGenerateManifestPerModule(String outputManifest) {
+1148,1149c1144,1145
+<         && config.outputManifest != null
+<         && config.outputManifest.contains("%outname%");
+---
+>         && outputManifest != null
+>         && outputManifest.contains("%outname%");
+1157,1158c1153,1154
+<     String outputManifest = config.outputManifest;
+<     if (Strings.isEmpty(outputManifest)) {
+---
+>     List<String> outputManifests = config.outputManifests;
+>     if (outputManifests.isEmpty()) {
+1162,1169c1158,1160
+<     JSModuleGraph graph = compiler.getModuleGraph();
+<     if (shouldGenerateManifestPerModule()) {
+<       
+<       Iterable<JSModule> modules = graph.getAllModules();
+<       for (JSModule module : modules) {
+<         Writer out = fileNameToOutputWriter(expandManifest(module));
+<         printManifestTo(module.getInputs(), out);
+<         out.close();
+---
+>     for (String outputManifest : outputManifests) {
+>       if (outputManifest.isEmpty()) {
+>         continue;
+1171,1175c1162,1172
+<     } else {
+<       
+<       Writer out = fileNameToOutputWriter(expandManifest(null));
+<       if (graph == null) {
+<         printManifestTo(compiler.getInputsInOrder(), out);
+---
+> 
+>       JSModuleGraph graph = compiler.getModuleGraph();
+>       if (shouldGenerateManifestPerModule(outputManifest)) {
+>         
+>         Iterable<JSModule> modules = graph.getAllModules();
+>         for (JSModule module : modules) {
+>           Writer out = fileNameToOutputWriter(
+>               expandManifest(module, outputManifest));
+>           printManifestTo(module.getInputs(), out);
+>           out.close();
+>         }
+1177c1174,1182
+<         printModuleGraphManifestTo(graph, out);
+---
+>         
+>         Writer out = fileNameToOutputWriter(
+>             expandManifest(null, outputManifest));
+>         if (graph == null) {
+>           printManifestTo(compiler.getInputsInOrder(), out);
+>         } else {
+>           printModuleGraphManifestTo(graph, out);
+>         }
+>         out.close();
+1179d1183
+<       out.close();
+1621c1625
+<     private String outputManifest = "";
+---
+>     private List<String> outputManifests = ImmutableList.of();
+1626,1627c1630,1631
+<     CommandLineConfig setOutputManifest(String outputManifest) {
+<       this.outputManifest = outputManifest;
+---
+>     CommandLineConfig setOutputManifest(List<String> outputManifests) {
+>       this.outputManifests = outputManifests;

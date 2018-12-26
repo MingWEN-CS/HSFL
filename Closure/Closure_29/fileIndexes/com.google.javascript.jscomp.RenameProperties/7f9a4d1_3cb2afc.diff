@@ -1,0 +1,157 @@
+20d19
+< import com.google.common.collect.Sets;
+23,26d21
+< import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+< import com.google.javascript.jscomp.graph.Graph.GraphEdge;
+< import com.google.javascript.jscomp.graph.LinkedUndirectedGraph;
+< import com.google.javascript.jscomp.graph.UndiGraph;
+31,40c26
+< import java.util.ArrayList;
+< import java.util.Arrays;
+< import java.util.Collection;
+< import java.util.Comparator;
+< import java.util.HashMap;
+< import java.util.HashSet;
+< import java.util.List;
+< import java.util.Map;
+< import java.util.Set;
+< import java.util.TreeSet;
+---
+> import java.util.*;
+81,90d66
+< 
+< 
+< 
+< 
+< 
+< 
+<   private final UndiGraph<Property, PropertyAffinity> affinityGraph =
+<       LinkedUndirectedGraph.createWithoutAnnotations();
+< 
+<   
+97,109c73
+<   private static final Comparator<Property> FREQUENCY_COMPARATOR =
+<     new Comparator<Property>() {
+<       public int compare(Property p1, Property p2) {
+< 
+<         
+< 
+< 
+<         if (p1.numOccurrences != p2.numOccurrences) {
+<           return p2.numOccurrences - p1.numOccurrences;
+< 
+<         
+< 
+< 
+---
+>   
+113,114c77,83
+<         } else if (p1.affinityScore != p2.affinityScore) {
+<           return p2.affinityScore - p1.affinityScore;
+---
+>   private static final Comparator<Property> FREQUENCY_COMPARATOR =
+>       new Comparator<Property>() {
+>         public int compare(Property p1, Property p2) {
+>           if (p1.numOccurrences != p2.numOccurrences) {
+>             return p2.numOccurrences - p1.numOccurrences;
+>           }
+>           return p1.oldName.compareTo(p2.oldName);
+116,122c85
+< 
+<         
+< 
+< 
+<         return p1.oldName.compareTo(p2.oldName);
+<        }
+<     };
+---
+>       };
+211d173
+<     computeAffinityScores();
+292,316d253
+< 
+< 
+< 
+<   private void computeAffinityScores() {
+<     for (Property p : propertyMap.values()) {
+<       for (Property other : propertyMap.values()) {
+<         if (p != other && p.numOccurrences < other.numOccurrences) {
+<           List<GraphEdge<Property,PropertyAffinity>> edges =
+<               affinityGraph.getEdges(p, other);
+<           if (!edges.isEmpty()) {
+<             p.affinityScore += edges.get(0)
+<                 .getValue().affinity + other.numOccurrences;
+<           }
+<         }
+<       }
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+328a266
+> 
+329a268
+> 
+378d316
+< 
+385,388c323
+<   private class ProcessProperties extends AbstractPostOrderCallback implements
+<       ScopedCallback {
+< 
+<     private Set<Property> currentHighAffinityProperties = null;
+---
+>   private class ProcessProperties extends AbstractPostOrderCallback {
+510d444
+<         affinityGraph.createNode(prop);
+513,542d446
+<       if (currentHighAffinityProperties != null) {
+<         currentHighAffinityProperties.add(prop);
+<       }
+<     }
+< 
+<     @Override
+<     public void enterScope(NodeTraversal t) {
+<       if (!t.inGlobalScope() && t.getScope().getParent().isGlobal()) {
+<         currentHighAffinityProperties = Sets.newHashSet();
+<       }
+<     }
+< 
+<     @Override
+<     public void exitScope(NodeTraversal t) {
+<       if (!t.inGlobalScope() && t.getScope().getParent().isGlobal()) {
+<         for (Property p1 : currentHighAffinityProperties) {
+<           for (Property p2 : currentHighAffinityProperties) {
+<             if (p1.oldName.compareTo(p2.oldName) < 0) {
+<               List<GraphEdge<Property,PropertyAffinity>> edges =
+<                   affinityGraph.getEdges(p1, p2);
+<               if (edges.isEmpty()) {
+<                 affinityGraph.connect(p1, new PropertyAffinity(1), p2);
+<               } else {
+<                 edges.get(0).getValue().increase();
+<               }
+<             }
+<           }
+<         }
+<         currentHighAffinityProperties = null;
+<       }
+555d458
+<     int affinityScore = 0;
+559,570d461
+<     }
+<   }
+< 
+<   private class PropertyAffinity {
+<     private int affinity = 0;
+< 
+<     private PropertyAffinity(int affinity) {
+<       this.affinity = affinity;
+<     }
+< 
+<     private void increase() {
+<       affinity++;

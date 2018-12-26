@@ -1,0 +1,79 @@
+24a25
+> import com.google.common.base.Throwables;
+36a38
+> import java.io.Flushable;
+91c93
+<   private Appendable out;
+---
+>   private Appendable jsOutput;
+117,118c119,120
+<     this.out = out;
+<     this.err = err;
+---
+>     this.jsOutput = Preconditions.checkNotNull(out);
+>     this.err = Preconditions.checkNotNull(err);
+290a293,300
+>     try {
+>       if (jsOutput instanceof Closeable) {
+>         ((Closeable) jsOutput).close();
+>       }
+>     } catch (IOException e) {
+>       throw Throwables.propagate(e);
+>     }
+> 
+608,610c618,620
+<       out = fileNameToOutputWriter(options.jsOutputFile);
+<     } else if (out instanceof OutputStream) {
+<       out = streamToOutputWriter((OutputStream) out);
+---
+>       jsOutput = fileNameToOutputWriter(options.jsOutputFile);
+>     } else if (jsOutput instanceof OutputStream) {
+>       jsOutput = streamToOutputWriter((OutputStream) jsOutput);
+625,626c635,638
+<     if (out instanceof Closeable) {
+<       ((Closeable) out).close();
+---
+>     
+>     
+>     if (jsOutput instanceof Flushable) {
+>       ((Flushable) jsOutput).flush();
+644,645c656,658
+<         out.append(DotFormatter.toDot(compiler.getPassConfig().getPassGraph()));
+<         out.append('\n');
+---
+>         jsOutput.append(
+>             DotFormatter.toDot(compiler.getPassConfig().getPassGraph()));
+>         jsOutput.append('\n');
+655,656c668,670
+<         DotFormatter.appendDot(compiler.getRoot().getLastChild(), cfg, out);
+<         out.append('\n');
+---
+>         DotFormatter.appendDot(
+>             compiler.getRoot().getLastChild(), cfg, jsOutput);
+>         jsOutput.append('\n');
+663c677
+<         out.append("Code contains errors; no tree was generated.\n");
+---
+>         jsOutput.append("Code contains errors; no tree was generated.\n");
+666,667c680,681
+<         compiler.getRoot().appendStringTree(out);
+<         out.append("\n");
+---
+>         compiler.getRoot().appendStringTree(jsOutput);
+>         jsOutput.append("\n");
+674c688,689
+<         writeOutput(out, compiler, compiler.toSource(), config.outputWrapper,
+---
+>         writeOutput(
+>             jsOutput, compiler, compiler.toSource(), config.outputWrapper,
+1212,1213c1227,1228
+<         out.append("Best time: " + bestRunTime + "\n");
+<         out.append("Worst time: " + worstRunTime + "\n");
+---
+>         jsOutput.append("Best time: " + bestRunTime + "\n");
+>         jsOutput.append("Worst time: " + worstRunTime + "\n");
+1217c1232,1233
+<           out.append("\nLoop " + i + ":\n" + Joiner.on("\n").join(loop)+ "\n");
+---
+>           jsOutput.append(
+>               "\nLoop " + i + ":\n" + Joiner.on("\n").join(loop)+ "\n");

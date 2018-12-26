@@ -1,0 +1,73 @@
+491,492c491,492
+<   public final boolean isEquivalentTo(JSType jsType) {
+<     return checkEquivalenceHelper(jsType, false);
+---
+>   public final boolean isEquivalentTo(JSType that) {
+>     return checkEquivalenceHelper(that, EquivalenceMethod.IDENTITY);
+498a499,508
+>   public final boolean isInvariant(JSType that) {
+>     return checkEquivalenceHelper(that, EquivalenceMethod.INVARIANT);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+504c514
+<     return !checkEquivalenceHelper(that, true);
+---
+>     return !checkEquivalenceHelper(that, EquivalenceMethod.DATA_FLOW);
+510c520
+<   boolean checkEquivalenceHelper(JSType that, boolean tolerateUnknowns) {
+---
+>   boolean checkEquivalenceHelper(JSType that, EquivalenceMethod eqMethod) {
+517,518c527,532
+<     if (isUnknownType() || that.isUnknownType()) {
+<       if (tolerateUnknowns) {
+---
+>     if (thisUnknown || thatUnknown) {
+>       if (eqMethod == EquivalenceMethod.INVARIANT) {
+>         
+>         
+>         return true;
+>       } else if (eqMethod == EquivalenceMethod.DATA_FLOW) {
+533c547
+<           that.toMaybeUnionType(), tolerateUnknowns);
+---
+>           that.toMaybeUnionType(), eqMethod);
+538c552
+<           that.toMaybeFunctionType(), tolerateUnknowns);
+---
+>           that.toMaybeFunctionType(), eqMethod);
+543c557
+<           that.toMaybeRecordType(), tolerateUnknowns);
+---
+>           that.toMaybeRecordType(), eqMethod);
+553,556c567,568
+<             thatParamType.getParameterType(), tolerateUnknowns);
+<       } else if (tolerateUnknowns) {
+<         paramsMatch = true;
+<       } else {
+---
+>             thatParamType.getParameterType(), eqMethod);
+>       } else if (eqMethod == EquivalenceMethod.IDENTITY) {
+557a570,574
+>       } else {
+>         
+>         
+>         
+>         paramsMatch = true;
+565c582
+<           thisRootType.checkEquivalenceHelper(thatRootType, tolerateUnknowns);
+---
+>           thisRootType.checkEquivalenceHelper(thatRootType, eqMethod);
+577c594
+<               that, tolerateUnknowns);
+---
+>               that, eqMethod);
+583c600
+<           tolerateUnknowns);
+---
+>           eqMethod);

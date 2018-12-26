@@ -1,0 +1,51 @@
+90,91c90
+<   private final UndiGraph<Property, PropertyAffinity> affinityGraph =
+<       LinkedUndirectedGraph.createWithoutAnnotations();
+---
+>   private final UndiGraph<Property, PropertyAffinity> affinityGraph;
+155c154,155
+<   RenameProperties(AbstractCompiler compiler,
+---
+> 
+>   RenameProperties(AbstractCompiler compiler, boolean affinity,
+157c157
+<     this(compiler, generatePseudoNames, null, null);
+---
+>     this(compiler, affinity, generatePseudoNames, null, null);
+169c169,170
+<   RenameProperties(AbstractCompiler compiler,
+---
+> 
+>   RenameProperties(AbstractCompiler compiler, boolean affinity,
+171c172
+<     this(compiler, generatePseudoNames, prevUsedPropertyMap, null);
+---
+>     this(compiler, affinity, generatePseudoNames, prevUsedPropertyMap, null);
+184a186
+> 
+185a188
+>       boolean affinity,
+192a196,200
+>     if (affinity) {
+>       this.affinityGraph = LinkedUndirectedGraph.createWithoutAnnotations();
+>     } else {
+>       this.affinityGraph = null;
+>     }
+214c222,224
+<     computeAffinityScores();
+---
+>     if (affinityGraph != null) {
+>       computeAffinityScores();
+>     }
+516c526,528
+<         affinityGraph.createNode(prop);
+---
+>         if (affinityGraph != null) {
+>           affinityGraph.createNode(prop);
+>         }
+532a545,547
+>       if (affinityGraph == null) {
+>         return;
+>       }
+568a584
+>     

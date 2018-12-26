@@ -1,0 +1,111 @@
+697,806d696
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   static boolean isLValue(Node n) {
+<     return getRValue(n) != null;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+<   static Node getRValue(Node n) {
+<     Node current = n;
+<     Node ancestor;
+<     while ((ancestor = current.getParent()) != null) {
+<       switch (ancestor.getType()) {
+<         case Token.EXPR_RESULT:
+<         case Token.GETPROP:
+<           
+<           
+<           break;
+<         case Token.ASSIGN:
+<           if (ancestor.getFirstChild() == current) {
+<             
+<             return ancestor.getLastChild();
+<           }
+<           
+<           
+<           break;
+< 
+<         case Token.SCRIPT:
+<         case Token.FUNCTION:
+<         case Token.LP:
+<         case Token.BLOCK:
+<           
+<           return null;
+< 
+<         case Token.VAR:
+<           
+<           if (n.hasChildren()) {
+<             return n.getFirstChild();
+<           } else {
+<             return null;
+<           }
+< 
+<         default:
+<           
+<           return null;
+<       }
+<       current = ancestor;
+<     }
+< 
+<     
+<     return null;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   static boolean isRValue(Node n) {
+<     Node current = n;
+<     Node parent;
+<     while ((parent = current.getParent()) != null) {
+<       switch (parent.getType()) {
+<         case Token.EXPR_RESULT:
+<         case Token.GETPROP:
+<           
+<           
+<           break;
+<         case Token.ASSIGN:
+<           if (parent.getFirstChild() != current) {
+<             
+<             return true;
+<           }
+<           
+<           
+<           break;
+< 
+<         case Token.SCRIPT:
+<         case Token.FUNCTION:
+<         case Token.LP:
+<         case Token.BLOCK:
+<         case Token.VAR:
+<           return false;
+< 
+<         default:
+<           
+<           return true;
+<       }
+<       current = parent;
+<     }
+< 
+<     
+<     return false;
+<   }
+< 
+<   
+< 
+< 

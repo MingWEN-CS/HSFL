@@ -1,0 +1,48 @@
+802,803c802,803
+<       if (functionType instanceof FunctionType) {
+<         FunctionType fnType = (FunctionType) functionType;
+---
+>       if (functionType.isFunctionType()) {
+>         FunctionType fnType = functionType.toMaybeFunctionType();
+884c884
+<       JSType iParameterType = iParameter.getJSType();
+---
+>       JSType iParameterType = getJSType(iParameter);
+889,890c889,890
+<       if (iParameterType instanceof FunctionType) {
+<         FunctionType iParameterFnType = (FunctionType) iParameterType;
+---
+>       if (iParameterType.isFunctionType()) {
+>         FunctionType iParameterFnType = iParameterType.toMaybeFunctionType();
+893c893
+<             iArgumentType instanceof FunctionType &&
+---
+>             iArgumentType.isFunctionType() &&
+940,941c940,941
+<           if (jParameterType instanceof FunctionType) {
+<             FunctionType jParameterFnType = (FunctionType) jParameterType;
+---
+>           if (jParameterType.isFunctionType()) {
+>             FunctionType jParameterFnType = jParameterType.toMaybeFunctionType();
+952c952
+<                   jArgumentType instanceof FunctionType) {
+---
+>                   jArgumentType.isFunctionType()) {
+958c958
+<                   FunctionType jArgumentFnType = (FunctionType) jArgumentType;
+---
+>                   FunctionType jArgumentFnType = jArgumentType.toMaybeFunctionType();
+1009,1011c1009,1017
+<       } else if (constructorType instanceof FunctionType) {
+<         FunctionType ct = (FunctionType) constructorType;
+<         if (ct.isConstructor()) {
+---
+>       } else {
+>         FunctionType ct = constructorType.toMaybeFunctionType();
+>         if (ct == null && constructorType instanceof FunctionType) {
+>           
+>           
+>           
+>           ct = (FunctionType) constructorType;
+>         }
+>         if (ct != null && ct.isConstructor()) {

@@ -1,0 +1,565 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.io.IOException;
+import java.io.Writer;
+
+import org.apache.commons.lang.exception.NestableRuntimeException;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class StringEscapeUtils {
+
+    
+
+
+
+
+
+
+
+    public StringEscapeUtils() {
+    }
+
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static String escapeJava(String str) {
+        return escapeJavaStyleString(str, false);
+    }
+
+    
+
+
+
+
+
+
+    public static void escapeJava(Writer out, String str) throws IOException {
+        escapeJavaStyleString(out, str, false);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static String escapeJavaScript(String str) {
+        return escapeJavaStyleString(str, true);
+    }
+
+    
+
+
+
+
+
+
+    public static void escapeJavaScript(Writer out, String str) throws IOException {
+        escapeJavaStyleString(out, str, true);
+    }
+
+    private static String escapeJavaStyleString(String str, boolean escapeSingleQuotes) {
+        try {
+            StringPrintWriter writer = new StringPrintWriter(str.length() * 2);
+            escapeJavaStyleString(writer, str, escapeSingleQuotes);
+            return writer.getString();
+        } catch (IOException ioe) {
+            
+            ioe.printStackTrace();
+            return null;
+        }
+    }
+
+    private static void escapeJavaStyleString(Writer out, String str, boolean escapeSingleQuote) throws IOException {
+        int sz;
+        sz = str.length();
+        for (int i = 0; i < sz; i++) {
+            char ch = str.charAt(i);
+
+            
+            if (ch > 0xfff) {
+                out.write("\\u" + hex(ch));
+            } else if (ch > 0xff) {
+                out.write("\\u0" + hex(ch));
+            } else if (ch > 0x7f) {
+                out.write("\\u00" + hex(ch));
+            } else if (ch < 32) {
+                switch (ch) {
+                    case '\b':
+                        out.write('\\');
+                        out.write('b');
+                        break;
+                    case '\n':
+                        out.write('\\');
+                        out.write('n');
+                        break;
+                    case '\t':
+                        out.write('\\');
+                        out.write('t');
+                        break;
+                    case '\f':
+                        out.write('\\');
+                        out.write('f');
+                        break;
+                    case '\r':
+                        out.write('\\');
+                        out.write('r');
+                        break;
+                    default :
+                        if (ch > 0xf) {
+                            out.write("\\u00" + hex(ch));
+                        } else {
+                            out.write("\\u000" + hex(ch));
+                        }
+                        break;
+                }
+            } else {
+                switch (ch) {
+                    case '\'':
+                        if (escapeSingleQuote) out.write('\\');
+                        out.write('\'');
+                        break;
+                    case '"':
+                        out.write('\\');
+                        out.write('"');
+                        break;
+                    case '\\':
+                        out.write('\\');
+                        out.write('\\');
+                        break;
+                    default :
+                        out.write(ch);
+                        break;
+                }
+            }
+        }
+    }
+
+    private static String hex(char ch) {
+        return Integer.toHexString(ch).toUpperCase();
+    }
+
+    
+
+
+
+
+    public static String unescapeJava(String str) {
+        try {
+            StringPrintWriter writer = new StringPrintWriter(str.length());
+            unescapeJava(writer, str);
+            return writer.getString();
+        } catch (IOException ioe) {
+            
+            ioe.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void unescapeJava(Writer out, String str) throws IOException {
+        int sz = str.length();
+        StringBuffer unicode = new StringBuffer(4);
+        boolean hadSlash = false;
+        boolean inUnicode = false;
+        for (int i = 0; i < sz; i++) {
+            char ch = str.charAt(i);
+            if (inUnicode) {
+                
+                
+                unicode.append(ch);
+                if (unicode.length() == 4) {
+                    
+                    
+                    try {
+                        int value = Integer.parseInt(unicode.toString(), 16);
+                        out.write((char) value);
+                        unicode.setLength(0);
+                        inUnicode = false;
+                        hadSlash = false;
+                    } catch (NumberFormatException nfe) {
+                        throw new NestableRuntimeException("Unable to parse unicode value: " + unicode, nfe);
+                    }
+                }
+                continue;
+            }
+            if (hadSlash) {
+                
+                hadSlash = false;
+                switch (ch) {
+                    case '\\':
+                        out.write('\\');
+                        break;
+                    case '\'':
+                        out.write('\'');
+                        break;
+                    case '\"':
+                        out.write('"');
+                        break;
+                    case 'r':
+                        out.write('\r');
+                        break;
+                    case 'f':
+                        out.write('\f');
+                        break;
+                    case 't':
+                        out.write('\t');
+                        break;
+                    case 'n':
+                        out.write('\n');
+                        break;
+                    case 'b':
+                        out.write('\b');
+                        break;
+                    case 'u':
+                        {
+                            
+                            inUnicode = true;
+                            break;
+                        }
+                    default :
+                        out.write(ch);
+                        break;
+                }
+                continue;
+            } else if (ch == '\\') {
+                hadSlash = true;
+                continue;
+            }
+            out.write(ch);
+        }
+        if (hadSlash) {
+            
+            
+            out.write('\\');
+        }
+    }
+
+    public static String unescapeJavaScript(String str) {
+        return unescapeJava(str);
+    }
+
+    public static void unescapeJavaScript(Writer out, String str) throws IOException {
+        unescapeJava(out, str);
+    }
+
+    
+    
+
+    private static class Entities {
+        
+        
+        static Object[][] entities = {
+            
+            {"quot", new Integer(34)}, 
+            {"amp", new Integer(38)}, 
+            {"lt", new Integer(60)}, 
+            {"gt", new Integer(62)}, 
+            {"nbsp", new Integer(160)}, 
+            {"iexcl", new Integer(161)}, 
+            {"cent", new Integer(162)}, 
+            {"pound", new Integer(163)}, 
+            {"curren", new Integer(164)}, 
+            {"yen", new Integer(165)}, 
+            {"brvbar", new Integer(166)}, 
+            {"sect", new Integer(167)}, 
+            {"uml", new Integer(168)}, 
+            {"copy", new Integer(169)}, 
+            {"ordf", new Integer(170)}, 
+            {"laquo", new Integer(171)}, 
+            {"not", new Integer(172)}, 
+            {"shy", new Integer(173)}, 
+            {"reg", new Integer(174)}, 
+            {"macr", new Integer(175)}, 
+            {"deg", new Integer(176)}, 
+            {"plusmn", new Integer(177)}, 
+            {"sup2", new Integer(178)}, 
+            {"sup3", new Integer(179)}, 
+            {"acute", new Integer(180)}, 
+            {"micro", new Integer(181)}, 
+            {"para", new Integer(182)}, 
+            {"middot", new Integer(183)}, 
+            {"cedil", new Integer(184)}, 
+            {"sup1", new Integer(185)}, 
+            {"ordm", new Integer(186)}, 
+            {"raquo", new Integer(187)}, 
+            {"frac14", new Integer(188)}, 
+            {"frac12", new Integer(189)}, 
+            {"frac34", new Integer(190)}, 
+            {"iquest", new Integer(191)}, 
+            {"Agrave", new Integer(192)}, 
+            {"Aacute", new Integer(193)}, 
+            {"Acirc", new Integer(194)}, 
+            {"Atilde", new Integer(195)}, 
+            {"Auml", new Integer(196)}, 
+            {"Aring", new Integer(197)}, 
+            {"AElig", new Integer(198)}, 
+            {"Ccedil", new Integer(199)}, 
+            {"Egrave", new Integer(200)}, 
+            {"Eacute", new Integer(201)}, 
+            {"Ecirc", new Integer(202)}, 
+            {"Euml", new Integer(203)}, 
+            {"Igrave", new Integer(204)}, 
+            {"Iacute", new Integer(205)}, 
+            {"Icirc", new Integer(206)}, 
+            {"Iuml", new Integer(207)}, 
+            {"ETH", new Integer(208)}, 
+            {"Ntilde", new Integer(209)}, 
+            {"Ograve", new Integer(210)}, 
+            {"Oacute", new Integer(211)}, 
+            {"Ocirc", new Integer(212)}, 
+            {"Otilde", new Integer(213)}, 
+            {"Ouml", new Integer(214)}, 
+            {"times", new Integer(215)}, 
+            {"Oslash", new Integer(216)}, 
+            {"Ugrave", new Integer(217)}, 
+            {"Uacute", new Integer(218)}, 
+            {"Ucirc", new Integer(219)}, 
+            {"Uuml", new Integer(220)}, 
+            {"Yacute", new Integer(221)}, 
+            {"THORN", new Integer(222)}, 
+            {"szlig", new Integer(223)}, 
+            {"agrave", new Integer(224)}, 
+            {"aacute", new Integer(225)}, 
+            {"acirc", new Integer(226)}, 
+            {"atilde", new Integer(227)}, 
+            {"auml", new Integer(228)}, 
+            {"aring", new Integer(229)}, 
+            {"aelig", new Integer(230)}, 
+            {"ccedil", new Integer(231)}, 
+            {"egrave", new Integer(232)}, 
+            {"eacute", new Integer(233)}, 
+            {"ecirc", new Integer(234)}, 
+            {"euml", new Integer(235)}, 
+            {"igrave", new Integer(236)}, 
+            {"iacute", new Integer(237)}, 
+            {"icirc", new Integer(238)}, 
+            {"iuml", new Integer(239)}, 
+            {"eth", new Integer(240)}, 
+            {"ntilde", new Integer(241)}, 
+            {"ograve", new Integer(242)}, 
+            {"oacute", new Integer(243)}, 
+            {"ocirc", new Integer(244)}, 
+            {"otilde", new Integer(245)}, 
+            {"ouml", new Integer(246)}, 
+            {"divide", new Integer(247)}, 
+            {"oslash", new Integer(248)}, 
+            {"ugrave", new Integer(249)}, 
+            {"uacute", new Integer(250)}, 
+            {"ucirc", new Integer(251)}, 
+            {"uuml", new Integer(252)}, 
+            {"yacute", new Integer(253)}, 
+            {"thorn", new Integer(254)}, 
+            {"yuml", new Integer(255)}, 
+            {"euro", new Integer(8364)}, 
+        };
+
+        private Map mapNameToValue;
+        private Map mapValueToName;
+
+        public Entities() {
+            mapNameToValue = new HashMap();
+            mapValueToName = new HashMap();
+            for (int i = 0; i < entities.length; ++i) {
+                mapNameToValue.put(entities[i][0], entities[i][1]);
+                mapValueToName.put(entities[i][1], entities[i][0]);
+            }
+        }
+
+        public String entityName(int value) {
+            return (String) mapValueToName.get(new Integer(value));
+        }
+
+        public Integer entityValue(String name) {
+            return (Integer) mapNameToValue.get(name);
+        }
+    }
+
+    private static Entities entities;
+
+    private static void initEntities() {
+        if (entities == null)
+            entities = new Entities();
+    }
+
+    private static String entityName(char ch) {
+        initEntities();
+        return entities.entityName(ch);
+    }
+
+    private static Integer entityValue(String entity) {
+        initEntities();
+        return entities.entityValue(entity);
+    }
+
+    
+
+
+
+
+
+
+    public static String escapeHtml(String str) {
+        StringBuffer buf = new StringBuffer(str.length() * 2);
+        int i;
+        for (i = 0; i < str.length(); ++i) {
+            char ch = str.charAt(i);
+            String entity = entityName(ch);
+            if (entity == null) {
+                if (((int) ch) > 128) {   
+                    int intValue = ((int) ch);
+                    buf.append("&#" + intValue + ";");
+                } else {
+                    buf.append(ch);
+                }
+            } else {
+                buf.append("&" + entity + ";");
+            }
+        }
+        return buf.toString();
+    }
+
+    
+
+
+
+
+
+
+    public static String unescapeHtml(String str) {
+        StringBuffer buf = new StringBuffer(str.length());
+        int i;
+        for (i = 0; i < str.length(); ++i) {
+            char ch = str.charAt(i);
+            if (ch == '&') {
+                int semi = str.indexOf(';', i + 1);
+                if (semi == -1) {
+                    buf.append(ch);
+                    continue;
+                }
+                String entity = str.substring(i + 1, semi);
+                Integer iso;
+                if (entity.charAt(0) == '#') {
+                    iso = new Integer(entity.substring(1));
+                } else {
+                    iso = entityValue(entity);
+                }
+                if (iso == null) {
+                    buf.append("&" + entity + ";");
+                } else {
+                    buf.append((char) (iso.intValue()));
+                }
+                i = semi;
+            } else {
+                buf.append(ch);
+            }
+        }
+        return buf.toString();
+    }
+
+}

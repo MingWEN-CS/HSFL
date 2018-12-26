@@ -1,0 +1,72 @@
+170a171,173
+>   
+>   
+>   private PhaseOptimizer phaseOptimizer = null;
+818c821
+<     PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker,
+---
+>     phaseOptimizer = new PhaseOptimizer(this, tracker,
+850a854
+>     phaseOptimizer = null;
+1899c1903
+<     PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker, null);
+---
+>     phaseOptimizer = new PhaseOptimizer(this, tracker, null);
+1907a1912
+>     phaseOptimizer = null;
+1972c1977
+<   protected final CodeChangeHandler recentChange = new CodeChangeHandler();
+---
+>   protected final RecentChange recentChange = new RecentChange();
+1988a1994,2044
+>   }
+> 
+>   @Override
+>   void setScope(Node n) {
+>     if (phaseOptimizer != null) {
+>       phaseOptimizer.setScope(n);
+>     }
+>   }
+> 
+>   @Override
+>   Node getJsRoot() {
+>     return jsRoot;
+>   }
+> 
+>   @Override
+>   boolean hasScopeChanged(Node n) {
+>     if (phaseOptimizer != null) {
+>       return phaseOptimizer.hasScopeChanged(n);
+>     }
+>     return true;
+>   }
+> 
+>   @Override
+>   void reportChangeToScope(Node n) {
+>     if (phaseOptimizer != null) {
+>       phaseOptimizer.reportChangeToScope(n);
+>       phaseOptimizer.startCrossScopeReporting();
+>       reportCodeChange();
+>       phaseOptimizer.endCrossScopeReporting();
+>     } else {
+>       reportCodeChange();
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   @VisibleForTesting
+>   void setPhaseOptimizer(PhaseOptimizer po) {
+>     this.phaseOptimizer = po;
+>   }
+> 
+>   @Override
+>   Node getEnclosingScope(Node n) {
+>     while (n != jsRoot) {
+>       n = n.getParent();
+>       if (n.isFunction()) { return n; }
+>     }
+>     return n;

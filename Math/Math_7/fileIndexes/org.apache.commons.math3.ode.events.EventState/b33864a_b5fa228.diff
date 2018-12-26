@@ -1,0 +1,16 @@
+180c180
+<             double tb = t0 + ((t1 > t0) ? convergence : -convergence);
+---
+>             double tb = t0 + (interpolator.isForward() ? convergence : -convergence);
+210c210,214
+<                     if (Double.isNaN(previousEventTime) ||
+---
+>                     if (Math.abs(root - ta) <= convergence) {
+>                         
+>                         ta = tb;
+>                         ga = gb;
+>                     } else if (Double.isNaN(previousEventTime) ||
+316c320
+<         (nextAction == EventHandler.RESET_DERIVATIVES);
+---
+>                (nextAction == EventHandler.RESET_DERIVATIVES);

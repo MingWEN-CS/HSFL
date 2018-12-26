@@ -1,0 +1,233 @@
+30c30
+< public class OpenMapRealVector implements SparseRealVector, Serializable {
+---
+> public class OpenMapRealVector extends AbstractRealVector implements SparseRealVector, Serializable {
+45c45,48
+<     private double epsilon;
+---
+>     private double minusEpsilon;
+> 
+>     
+>     private double plusEpsilon;
+57c60
+<         this(0, DEFAULT_ZERO_TOLERANCE);
+---
+>         this(0, DEFAULT_ZERO_TOLERANCE, 0);
+65c68
+<         this(dimension, DEFAULT_ZERO_TOLERANCE);
+---
+>         this(dimension, DEFAULT_ZERO_TOLERANCE, 0);
+73c76,77
+<     public OpenMapRealVector(int dimension, double epsilon) {
+---
+> 
+>     public OpenMapRealVector(int dimension, double epsilon, double defaultValue) {
+75,76c79,80
+<         entries = new OpenIntToDoubleHashMap(0.0);
+<         this.epsilon = epsilon;
+---
+>         entries = new OpenIntToDoubleHashMap(defaultValue);
+>         setDefault(defaultValue, epsilon);
+87c91,92
+<         epsilon = v.getEpsilon();
+---
+>         minusEpsilon = v.minusEpsilon;
+>         plusEpsilon = v.plusEpsilon;
+105c110,111
+<     public OpenMapRealVector(int dimension, int expectedSize, double epsilon) {
+---
+> 
+>     public OpenMapRealVector(int dimension, int expectedSize, double epsilon, double defaultValue) {
+107,108c113,114
+<         entries = new OpenIntToDoubleHashMap(expectedSize, 0.0);
+<         this.epsilon = epsilon;
+---
+>         entries = new OpenIntToDoubleHashMap(expectedSize, defaultValue);
+>         setDefault(defaultValue, epsilon);
+129c135
+<         this.epsilon = epsilon;
+---
+>         setDefault(0, epsilon);
+132c138
+<             if (!isZero(value)) {
+---
+>             if (!isDefaultValue(value)) {
+144c150
+<         this(values, DEFAULT_ZERO_TOLERANCE);
+---
+>         this(values, DEFAULT_ZERO_TOLERANCE, 0);
+153c159,160
+<     public OpenMapRealVector(Double[] values, double epsilon) {
+---
+> 
+>     public OpenMapRealVector(Double[] values, double epsilon, double defaultValue) {
+155,156c162,163
+<         entries = new OpenIntToDoubleHashMap(0.0);
+<         this.epsilon = epsilon;
+---
+>         entries = new OpenIntToDoubleHashMap(defaultValue);
+>         setDefault(defaultValue, epsilon);
+159c166
+<             if (!isZero(value)) {
+---
+>             if (!isDefaultValue(value)) {
+172c179,180
+<         epsilon = v.getEpsilon();
+---
+>         plusEpsilon = v.plusEpsilon;
+>         minusEpsilon = v.minusEpsilon;
+182c190
+<         epsilon = DEFAULT_ZERO_TOLERANCE;
+---
+>         setDefault(0, DEFAULT_ZERO_TOLERANCE);
+185c193
+<             if (!isZero(value)) {
+---
+>             if (!isDefaultValue(value)) {
+195,196c203,208
+<     private OpenIntToDoubleHashMap getEntries() {
+<         return entries;
+---
+>     private void setDefault(double defaultValue, double epsilon) {
+>       if (epsilon < 0) {
+>         throw new IllegalArgumentException("default tolerance must be > 0 :" + epsilon);
+>       }
+>       plusEpsilon  = defaultValue + epsilon;
+>       minusEpsilon = defaultValue - epsilon;
+203,205c215,216
+< 
+<     protected boolean isZero(double value) {
+<         return value > -epsilon && value < epsilon;
+---
+>     private OpenIntToDoubleHashMap getEntries() {
+>         return entries;
+212,218d222
+<     public double getEpsilon() {
+<         return epsilon;
+<     }
+< 
+<     
+< 
+< 
+220,221c224,225
+<     public void setEpsilon(double epsilon) {
+<         this.epsilon = epsilon;
+---
+>     protected boolean isDefaultValue(double value) {
+>         return value < plusEpsilon && value > minusEpsilon;
+225c229
+<     public OpenMapRealVector add(RealVector v) throws IllegalArgumentException {
+---
+>     public RealVector add(RealVector v) throws IllegalArgumentException {
+228a233,234
+>         } else {
+>             return super.add(v);
+230d235
+<         return add(v.getData());
+241,242c246,249
+<         OpenMapRealVector res = copy();
+<         Iterator iter = v.getEntries().iterator();
+---
+>         boolean copyThis = entries.size() > v.entries.size();
+>         OpenMapRealVector res = copyThis ? this.copy() : v.copy();
+>         Iterator iter = copyThis ? v.entries.iterator() : entries.iterator();
+>         OpenIntToDoubleHashMap randomAccess = copyThis ? entries : v.entries;
+246,247c253,254
+<             if (entries.containsKey(key)) {
+<                 res.setEntry(key, entries.get(key) + iter.value());
+---
+>             if (randomAccess.containsKey(key)) {
+>                 res.setEntry(key, randomAccess.get(key) + iter.value());
+256,265d262
+<     public OpenMapRealVector add(double[] v) throws IllegalArgumentException {
+<         checkVectorDimensions(v.length);
+<         OpenMapRealVector res = new OpenMapRealVector(getDimension());
+<         for (int i = 0; i < v.length; i++) {
+<             res.setEntry(i, v[i] + getEntry(i));
+<         }
+<         return res;
+<     }
+< 
+<     
+309,335d305
+<     
+<     public double dotProduct(RealVector v) throws IllegalArgumentException {
+<         checkVectorDimensions(v.getDimension());
+<         double res = 0;
+<         Iterator iter = entries.iterator();
+<         while (iter.hasNext()) {
+<             iter.advance();
+<             res += v.getEntry(iter.key()) * iter.value();
+<         }
+<         return res;
+<     }
+< 
+<     
+<     public double dotProduct(double[] v) throws IllegalArgumentException {
+<         checkVectorDimensions(v.length);
+<         double res = 0;
+<         Iterator iter = entries.iterator();
+<         while (iter.hasNext()) {
+<             int idx = iter.key();
+<             double value = 0;
+<             if (idx < v.length) {
+<                 value = v[idx];
+<             }
+<             res += value * iter.value();
+<         }
+<         return res;
+<     }
+1102c1072
+<         if (!isZero(value)) {
+---
+>         if (!isDefaultValue(value)) {
+1188c1158
+<         if (isZero(norm)) {
+---
+>         if (isDefaultValue(norm)) {
+1199,1229d1168
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     private void checkIndex(final int index) throws MatrixIndexException {
+<         if (index < 0 || index >= getDimension()) {
+<             throw new MatrixIndexException(
+<                     "index {0} out of allowed range [{1}, {2}]",
+<                     index, 0, getDimension() - 1);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void checkVectorDimensions(int n) throws IllegalArgumentException {
+<         if (getDimension() != n) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     "vector length mismatch: got {0} but expected {1}",
+<                     getDimension(), n);
+<         }
+<     }
+1246c1185
+<         temp = Double.doubleToLongBits(epsilon);
+---
+>         temp = Double.doubleToLongBits(plusEpsilon) + Double.doubleToLongBits(minusEpsilon);
+1279,1280c1218,1223
+<         if (Double.doubleToLongBits(epsilon) !=
+<             Double.doubleToLongBits(other.epsilon)) {
+---
+>         if (Double.doubleToLongBits(minusEpsilon) !=
+>             Double.doubleToLongBits(other.minusEpsilon)) {
+>             return false;
+>         }
+>         if (Double.doubleToLongBits(plusEpsilon) !=
+>             Double.doubleToLongBits(other.plusEpsilon)) {

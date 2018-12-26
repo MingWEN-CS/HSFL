@@ -1,0 +1,26 @@
+53c53
+<     this.rootRenamer = new ContextualRenamer();
+---
+>     this(new ContextualRenamer());
+541a542,562
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static class BoilerplateRenamer extends ContextualRenamer {
+>     private final Supplier<String> uniqueIdSupplier;
+>     private final String idPrefix;
+>     
+>     BoilerplateRenamer(
+>         Supplier<String> uniqueIdSupplier,
+>         String idPrefix) {
+>       this.uniqueIdSupplier = uniqueIdSupplier;
+>       this.idPrefix = idPrefix;
+>     }
+> 
+>     @Override
+>     public Renamer forChildScope() {
+>       return new InlineRenamer(uniqueIdSupplier, idPrefix, false);

@@ -1,0 +1,149 @@
+18a19,20
+> import static com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+> 
+23c25
+< import static com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+---
+> import com.google.javascript.jscomp.Scope.Var;
+42a45,46
+>   private static final String MSG_FALLBACK_FUNCTION_NAME =
+>       "goog.getMsgWithFallback";
+73a78,88
+>   static final DiagnosticType BAD_FALLBACK_SYNTAX =
+>       DiagnosticType.error("JSC_MSG_BAD_FALLBACK_SYNTAX",
+>           String.format(
+>               "Bad syntax. " +
+>               "Expected syntax: goog.getMsgWithFallback(MSG_1, MSG_2)",
+>               MSG_FALLBACK_FUNCTION_NAME));
+> 
+>   static final DiagnosticType FALLBACK_ARG_ERROR =
+>       DiagnosticType.error("JSC_MSG_FALLBACK_ARG_ERROR",
+>           "Could not find message entry for fallback argument {0}");
+> 
+113a129,131
+>   private final Map<Var, JsMessage> unnamedMessages =
+>       Maps.newHashMap();
+> 
+199c217,218
+<         if (MSG_FUNCTION_NAME.equals(node.getFirstChild().getQualifiedName())) {
+---
+>         String fnName = node.getFirstChild().getQualifiedName();
+>         if (MSG_FUNCTION_NAME.equals(fnName)) {
+200a220,221
+>         } else if (MSG_FALLBACK_FUNCTION_NAME.equals(fnName)) {
+>           visitFallbackFunctionCall(traversal, node);
+253c274
+<       checkIfMessageDuplicated(traversal.getSourceName(), messageKey, msgNode);
+---
+>       checkIfMessageDuplicated(extractedMessage, messageKey, msgNode);
+254a276,277
+>     trackMessage(traversal, extractedMessage,
+>         messageKey, msgNode, isUnnamedMsg);
+287c310,347
+<   private void checkIfMessageDuplicated(String sourceName, String msgName,
+---
+>   private void trackMessage(
+>       NodeTraversal t, JsMessage message, String msgName,
+>       Node msgNode, boolean isUnnamedMessage) {
+>     if (!isUnnamedMessage) {
+>       MessageLocation location = new MessageLocation(message, msgNode);
+>       messageNames.put(msgName, location);
+>     } else if (msgNode.isName()) {
+>       Var var = t.getScope().getVar(msgName);
+>       if (var != null) {
+>         unnamedMessages.put(var, message);
+>       }
+>     }
+>   }
+> 
+>   
+>   private JsMessage getTrackedMessage(NodeTraversal t, String msgName) {
+>     boolean isUnnamedMessage = isUnnamedMessageName(msgName);
+>     if (!isUnnamedMessage) {
+>       MessageLocation location = messageNames.get(msgName);
+>       return location == null ? null : location.message;
+>     } else {
+>       Var var = t.getScope().getVar(msgName);
+>       if (var != null) {
+>         return unnamedMessages.get(var);
+>       }
+>     }
+>     return null;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void checkIfMessageDuplicated(JsMessage message, String msgName,
+291,296c351,353
+<       compiler.report(JSError.make(sourceName, msgNode, MESSAGE_DUPLICATE_KEY,
+<           msgName, location.sourceName, Integer.toString(location.lineNo)));
+<     } else {
+<       MessageLocation location =
+<           new MessageLocation(sourceName, msgNode.getLineno());
+<       messageNames.put(msgName, location);
+---
+>       compiler.report(JSError.make(msgNode, MESSAGE_DUPLICATE_KEY,
+>           msgName, location.messageNode.getSourceFileName(),
+>           Integer.toString(location.messageNode.getLineno())));
+723a781,811
+>   
+>   private void visitFallbackFunctionCall(NodeTraversal t, Node call) {
+>     
+>     
+>     if (call.getChildCount() != 3 ||
+>         !call.getChildAtIndex(1).isName() ||
+>         !call.getChildAtIndex(2).isName()) {
+>       compiler.report(t.makeError(call, BAD_FALLBACK_SYNTAX));
+>       return;
+>     }
+> 
+>     Node firstArg = call.getChildAtIndex(1);
+>     JsMessage firstMessage = getTrackedMessage(t, firstArg.getString());
+>     if (firstMessage == null) {
+>       compiler.report(
+>           t.makeError(firstArg, FALLBACK_ARG_ERROR, firstArg.getString()));
+>       return;
+>     }
+> 
+>     Node secondArg = firstArg.getNext();
+>     JsMessage secondMessage = getTrackedMessage(
+>         t, call.getChildAtIndex(2).getString());
+>     if (secondMessage == null) {
+>       compiler.report(
+>           t.makeError(secondArg, FALLBACK_ARG_ERROR, secondArg.getString()));
+>       return;
+>     }
+> 
+>     processMessageFallback(call, firstMessage, secondMessage);
+>   }
+> 
+744a833,841
+> 
+> 
+> 
+>   void processMessageFallback(Node callNode, JsMessage message1,
+>       JsMessage message2) {}
+> 
+>   
+> 
+> 
+840,841c937,938
+<     private final String sourceName;
+<     private final int lineNo;
+---
+>     private final JsMessage message;
+>     private final Node messageNode;
+843,845c940,942
+<     private MessageLocation(String sourceName, int lineNo) {
+<       this.sourceName = sourceName;
+<       this.lineNo = lineNo;
+---
+>     private MessageLocation(JsMessage message, Node messageNode) {
+>       this.message = message;
+>       this.messageNode = messageNode;

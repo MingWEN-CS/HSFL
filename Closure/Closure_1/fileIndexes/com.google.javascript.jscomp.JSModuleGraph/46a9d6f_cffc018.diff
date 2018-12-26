@@ -1,0 +1,40 @@
+19a20
+> import com.google.common.collect.ImmutableList;
+35d35
+< import java.util.Collections;
+52c52
+<   private Set<JSModule> modules;
+---
+>   private List<JSModule> modules;
+78c78
+<     this(Lists.<JSModule>newArrayList(modulesInDepOrder));
+---
+>     this(ImmutableList.copyOf(modulesInDepOrder));
+85c85,88
+<     modules = Sets.newHashSetWithExpectedSize(modulesInDepOrder.size());
+---
+>     Preconditions.checkState(
+>         modulesInDepOrder.size() == Sets.newHashSet(modulesInDepOrder).size(),
+>         "Found duplicate modules");
+>     modules = ImmutableList.copyOf(modulesInDepOrder);
+102d104
+<       modules.add(module);
+120,129d121
+< 
+<   Iterable<JSModule> getAllModulesInDependencyOrder() {
+<     List<JSModule> modules = Lists.newArrayList(getAllModules());
+<     Collections.sort(modules, new DepthComparator());
+<     return modules;
+<   }
+< 
+<   
+< 
+< 
+388c380
+<     for (JSModule module : getAllModulesInDependencyOrder()) {
+---
+>     for (JSModule module : getAllModules()) {
+398c390
+<     for (JSModule module : getAllModulesInDependencyOrder()) {
+---
+>     for (JSModule module : getAllModules()) {

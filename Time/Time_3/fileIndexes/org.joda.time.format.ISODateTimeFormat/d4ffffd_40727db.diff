@@ -1,0 +1,390 @@
+61c61
+< import org.joda.time.chrono.iso.ISOChronology;
+---
+> import org.joda.time.chrono.ISOChronology;
+153a154
+>         lse, 
+155a157
+>         lte, 
+167a170
+>         hmsl, 
+172a176
+>         dhmsl, 
+176a181,183
+>         tx,  
+>         tt,  
+>         ttx,  
+177a185
+>         dtx, 
+180a189
+>         wdtx, 
+183a193,195
+>         btx,  
+>         btt, 
+>         bttx, 
+184a197
+>         bdtx, 
+187c200,201
+<         bwdt; 
+---
+>         bwdt, 
+>         bwdtx; 
+409a424,425
+> 
+> 
+419a436,437
+> 
+> 
+423c441
+<                 .append(hourMinuteSecondFraction())
+---
+>                 .append(hourMinuteSecondMillis())
+433a452,507
+> 
+> 
+> 
+>     public DateTimeFormatter timeNoMillis() {
+>         if (tx == null) {
+>             tx = new DateTimeFormatterBuilder(iChrono)
+>                 .append(hourMinuteSecond())
+>                 .append(offsetElement())
+>                 .toFormatter();
+>         }
+>         return tx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter tTime() {
+>         if (tt == null) {
+>             tt = new DateTimeFormatterBuilder(iChrono)
+>                 .append(literalTElement())
+>                 .append(time())
+>                 .toFormatter();
+>         }
+>         return tt;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter tTimeNoMillis() {
+>         if (ttx == null) {
+>             ttx = new DateTimeFormatterBuilder(iChrono)
+>                 .append(literalTElement())
+>                 .append(timeNoMillis())
+>                 .toFormatter();
+>         }
+>         return ttx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+438,439c512
+<                 .appendLiteral('T')
+<                 .append(time())
+---
+>                 .append(tTime())
+448a522,540
+> 
+> 
+> 
+>     public DateTimeFormatter dateTimeNoMillis() {
+>         if (dtx == null) {
+>             dtx = new DateTimeFormatterBuilder(iChrono)
+>                 .append(date())
+>                 .append(tTimeNoMillis())
+>                 .toFormatter();
+>         }
+>         return dtx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+456a549,551
+> 
+> 
+> 
+461,462c556
+<                 .appendLiteral('T')
+<                 .append(time())
+---
+>                 .append(tTime())
+468a563,579
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter weekDateTimeNoMillis() {
+>         if (wdtx == null) {
+>             wdtx = new DateTimeFormatterBuilder(iChrono)
+>                 .append(weekDate())
+>                 .append(tTimeNoMillis())
+>                 .toFormatter();
+>         }
+>         return wdtx;
+>     }
+> 
+>     
+472a584,585
+> 
+> 
+488a602,604
+> 
+> 
+> 
+495c611,613
+<                 .appendTimeZoneOffset("", false, 1, 2)
+---
+>                 .appendLiteral('.')
+>                 .appendMillisOfSecond(3)
+>                 .appendTimeZoneOffset("Z", false, 2, 2)
+504a623,680
+> 
+> 
+> 
+>     public DateTimeFormatter basicTimeNoMillis() {
+>         if (btx == null) {
+>             btx = new DateTimeFormatterBuilder(iChrono)
+>                 .appendHourOfDay(2)
+>                 .appendMinuteOfHour(2)
+>                 .appendSecondOfMinute(2)
+>                 .appendTimeZoneOffset("Z", false, 2, 2)
+>                 .toFormatter();
+>         }
+>         return btx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter basicTTime() {
+>         if (btt == null) {
+>             btt = new DateTimeFormatterBuilder(iChrono)
+>                 .append(literalTElement())
+>                 .append(basicTime())
+>                 .toFormatter();
+>         }
+>         return btt;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter basicTTimeNoMillis() {
+>         if (bttx == null) {
+>             bttx = new DateTimeFormatterBuilder(iChrono)
+>                 .append(literalTElement())
+>                 .append(basicTimeNoMillis())
+>                 .toFormatter();
+>         }
+>         return bttx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+509,510c685
+<                 .appendLiteral('T')
+<                 .append(basicTime())
+---
+>                 .append(basicTTime())
+519a695,713
+> 
+> 
+> 
+>     public DateTimeFormatter basicDateTimeNoMillis() {
+>         if (bdtx == null) {
+>             bdtx = new DateTimeFormatterBuilder(iChrono)
+>                 .append(basicDate())
+>                 .append(basicTTimeNoMillis())
+>                 .toFormatter();
+>         }
+>         return bdtx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+535a730,732
+> 
+> 
+> 
+540,541c737
+<                 .appendLiteral('T')
+<                 .append(basicTime())
+---
+>                 .append(basicTTime())
+547a744,760
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter basicWeekDateTimeNoMillis() {
+>         if (bwdtx == null) {
+>             bwdtx = new DateTimeFormatterBuilder(iChrono)
+>                 .append(basicWeekDate())
+>                 .append(basicTTimeNoMillis())
+>                 .toFormatter();
+>         }
+>         return bwdtx;
+>     }
+> 
+>     
+550a764,765
+> 
+> 
+558a774,775
+> 
+> 
+572a790,791
+> 
+> 
+586a806,807
+> 
+> 
+594a816,817
+> 
+> 
+608a832,833
+> 
+> 
+622a848,849
+> 
+> 
+630a858,859
+> 
+> 
+644a874,875
+> 
+> 
+660a892,912
+> 
+> 
+>     public DateTimeFormatter hourMinuteSecondMillis() {
+>         if (hmsl == null) {
+>             hmsl = new DateTimeFormatterBuilder(iChrono)
+>                 .append(hourElement())
+>                 .append(minuteElement())
+>                 .append(secondElement())
+>                 .append(millisElement())
+>                 .toFormatter();
+>         }
+>         return hmsl;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+676a929,930
+> 
+> 
+681c935
+<                 .appendLiteral('T')
+---
+>                 .append(literalTElement())
+691a946,947
+> 
+> 
+696c952
+<                 .appendLiteral('T')
+---
+>                 .append(literalTElement())
+707a964,965
+> 
+> 
+712c970
+<                 .appendLiteral('T')
+---
+>                 .append(literalTElement())
+723a982,1001
+> 
+> 
+>     public DateTimeFormatter dateHourMinuteSecondMillis() {
+>         if (dhmsl == null) {
+>             dhmsl = new DateTimeFormatterBuilder(iChrono)
+>                 .append(date())
+>                 .append(literalTElement())
+>                 .append(hourMinuteSecondMillis())
+>                 .toFormatter();
+>         }
+>         return dhmsl;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+728c1006
+<                 .appendLiteral('T')
+---
+>                 .append(literalTElement())
+802a1081,1089
+>     
+>     private DateTimeFormatter literalTElement() {
+>         if (lte == null) {
+>             lte = new DateTimeFormatterBuilder(iChrono)
+>                 .appendLiteral('T')
+>                 .toFormatter();
+>         }
+>         return lte;
+>     }
+830a1118,1127
+>     }
+> 
+>     private DateTimeFormatter millisElement() {
+>         if (lse == null) {
+>             lse = new DateTimeFormatterBuilder(iChrono)
+>                 .appendLiteral('.')
+>                 .appendMillisOfSecond(3)
+>                 .toFormatter();
+>         }
+>         return lse;

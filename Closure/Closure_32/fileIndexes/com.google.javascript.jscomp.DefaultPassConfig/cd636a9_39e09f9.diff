@@ -1,0 +1,47 @@
+335,339d334
+<     if (options.optimizeParameters) {
+<       passes.add(removeUselessParameters);
+<     }
+< 
+<     
+427c422,424
+<     if (options.devirtualizePrototypeMethods) {
+---
+>     if (options.devirtualizePrototypeMethods
+>         || options.optimizeReturns
+>         || options.optimizeParameters) {
+1208,1225d1204
+<   private final PassFactory removeUselessParameters =
+<       new PassFactory("optimizeParameters", true) {
+<     @Override
+<     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+<       return new CompilerPass() {
+<         @Override public void process(Node externs, Node root) {
+<           NameReferenceGraphConstruction c =
+<               new NameReferenceGraphConstruction(compiler);
+<           c.process(externs, root);
+< 
+<           (new OptimizeParameters(compiler, c.getNameReferenceGraph())).process(
+<               externs, root);
+<         }
+<       };
+<     }
+<   };
+< 
+<   
+1308a1288
+>         
+1311,1313c1291,1299
+<       
+<       
+<       passes.addPass(new DevirtualizePrototypeMethods(compiler));
+---
+> 
+>       if (options.optimizeParameters) {
+>         
+>         passes.addPass(new OptimizeParameters(compiler));
+>       }
+> 
+>       if (options.devirtualizePrototypeMethods) {
+>         passes.addPass(new DevirtualizePrototypeMethods(compiler));
+>       }

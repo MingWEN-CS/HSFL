@@ -1,0 +1,133 @@
+223c223
+<     private final ArrayList iRuleSets;
+---
+>     private final ArrayList<RuleSet> iRuleSets;
+226c226
+<         iRuleSets = new ArrayList(10);
+---
+>         iRuleSets = new ArrayList<RuleSet>(10);
+255c255
+<             RuleSet lastRuleSet = (RuleSet)iRuleSets.get(iRuleSets.size() - 1);
+---
+>             RuleSet lastRuleSet = iRuleSets.get(iRuleSets.size() - 1);
+265a266
+> 
+322c323
+<         return (RuleSet)iRuleSets.get(iRuleSets.size() - 1);
+---
+>         return iRuleSets.get(iRuleSets.size() - 1);
+338c339
+<         ArrayList transitions = new ArrayList();
+---
+>         ArrayList<Transition> transitions = new ArrayList<Transition>();
+349c350
+<             RuleSet rs = (RuleSet)iRuleSets.get(i);
+---
+>             RuleSet rs = iRuleSets.get(i);
+390c391
+<             Transition tr = (Transition)transitions.get(0);
+---
+>             Transition tr = transitions.get(0);
+402c403
+<     private boolean addTransition(ArrayList transitions, Transition tr) {
+---
+>     private boolean addTransition(ArrayList<Transition> transitions, Transition tr) {
+409c410
+<         Transition last = (Transition)transitions.get(size - 1);
+---
+>         Transition last = transitions.get(size - 1);
+418c419
+<             offsetForLast = ((Transition)transitions.get(size - 2)).getWallOffset();
+---
+>             offsetForLast = transitions.get(size - 2).getWallOffset();
+952c953
+<         private ArrayList iRules;
+---
+>         private ArrayList<Rule> iRules;
+963c964
+<             iRules = new ArrayList(10);
+---
+>             iRules = new ArrayList<Rule>(10);
+972c973
+<             iRules = new ArrayList(rs.iRules);
+---
+>             iRules = new ArrayList<Rule>(rs.iRules);
+1017c1018
+<             ArrayList copy = new ArrayList(iRules);
+---
+>             ArrayList<Rule> copy = new ArrayList<Rule>(iRules);
+1041,1043c1042
+<                         Iterator it = copy.iterator();
+<                         while (it.hasNext()) {
+<                             Rule rule = (Rule)it.next();
+---
+>                         for (Rule rule : copy) {
+1089c1088
+<             Iterator it = iRules.iterator();
+---
+>             Iterator<Rule> it = iRules.iterator();
+1091c1090
+<                 Rule rule = (Rule)it.next();
+---
+>                 Rule rule = it.next();
+1143,1144c1142,1143
+<                 Rule startRule = (Rule)iRules.get(0);
+<                 Rule endRule = (Rule)iRules.get(1);
+---
+>                 Rule startRule = iRules.get(0);
+>                 Rule endRule = iRules.get(1);
+1388c1387,1388
+<         static PrecalculatedZone create(String id, boolean outputID, ArrayList transitions, DSTZone tailZone) {
+---
+>         static PrecalculatedZone create(String id, boolean outputID, ArrayList<Transition> transitions,
+>                                         DSTZone tailZone) {
+1401c1401
+<                 Transition tr = (Transition)transitions.get(i);
+---
+>                 Transition tr = transitions.get(i);
+1424a1425,1427
+> 
+>             Chronology chrono = ISOChronology.getInstanceUTC();
+> 
+1432c1435
+<                 Period p = new Period(trans[i], trans[i + 1], PeriodType.yearMonthDay());
+---
+>                 Period p = new Period(trans[i], trans[i + 1], PeriodType.yearMonthDay(), chrono);
+1440,1441c1443,1447
+<                     System.out.println("Fixing duplicate name key - " + nextNameKey);
+<                     System.out.println("     - " + new DateTime(trans[i]) + " - " + new DateTime(trans[i + 1]));
+---
+>                     if (ZoneInfoCompiler.verbose()) {
+>                         System.out.println("Fixing duplicate name key - " + nextNameKey);
+>                         System.out.println("     - " + new DateTime(trans[i], chrono) +
+>                                            " - " + new DateTime(trans[i + 1], chrono));
+>                     }
+1449a1456
+> 
+1451,1452c1458,1463
+<                 if (tailZone.iStartRecurrence.getNameKey().equals(tailZone.iEndRecurrence.getNameKey())) {
+<                     System.out.println("Fixing duplicate recurrent name key - " + tailZone.iStartRecurrence.getNameKey());
+---
+>                 if (tailZone.iStartRecurrence.getNameKey()
+>                     .equals(tailZone.iEndRecurrence.getNameKey())) {
+>                     if (ZoneInfoCompiler.verbose()) {
+>                         System.out.println("Fixing duplicate recurrent name key - " +
+>                                            tailZone.iStartRecurrence.getNameKey());
+>                     }
+1469c1480,1481
+<             return new PrecalculatedZone((outputID ? id : ""), trans, wallOffsets, standardOffsets, nameKeys, tailZone);
+---
+>             return new PrecalculatedZone
+>                 ((outputID ? id : ""), trans, wallOffsets, standardOffsets, nameKeys, tailZone);
+1629c1641
+<             Set poolSet = new HashSet();
+---
+>             Set<String> poolSet = new HashSet<String>();
+1639c1651
+<             Iterator it = poolSet.iterator();
+---
+>             Iterator<String> it = poolSet.iterator();
+1641c1653
+<                 pool[i] = (String)it.next();
+---
+>                 pool[i] = it.next();

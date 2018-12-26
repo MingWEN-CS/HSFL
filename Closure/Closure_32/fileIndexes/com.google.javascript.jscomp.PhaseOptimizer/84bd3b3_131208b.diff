@@ -1,0 +1,73 @@
+24a25
+> import java.util.Random;
+31d31
+< 
+51a52,56
+>   
+>   
+>   private static boolean randomizeLoops = false;
+>   private static List<List<String>> loopsRun = Lists.newArrayList();
+> 
+61a67,89
+>   static void randomizeLoops() {
+>     randomizeLoops = true;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static List<List<String>> getLoopsRun() {
+>     return loopsRun;
+>   }
+> 
+>   
+> 
+> 
+>   static void clearLoopsRun() {
+>     loopsRun.clear();
+>   }
+> 
+>   
+> 
+> 
+> 
+245c273
+<     private List<CompilerPass> myPasses = Lists.newArrayList();
+---
+>     private final List<NamedPass> myPasses = Lists.newArrayList();
+251a280,290
+>     
+> 
+> 
+>     private List<String> getPassOrder() {
+>       List<String> order = Lists.newArrayList();
+>       for (NamedPass pass : myPasses) {
+>         order.add(pass.name);
+>       }
+>       return order;
+>     }
+> 
+254a294,302
+>       if (randomizeLoops) {
+>         List<NamedPass> mixedupPasses = Lists.newArrayList();
+>         Random random = new Random();
+>         while (myPasses.size() > 0) {
+>           mixedupPasses.add(
+>               myPasses.remove(random.nextInt(myPasses.size())));
+>         }
+>         myPasses.addAll(mixedupPasses);
+>       }
+260c308
+<         do {
+---
+>         out: do {
+270c318
+<               return;
+---
+>               break out;
+274a323,326
+> 
+>         if (randomizeLoops) {
+>           loopsRun.add(getPassOrder());
+>         }

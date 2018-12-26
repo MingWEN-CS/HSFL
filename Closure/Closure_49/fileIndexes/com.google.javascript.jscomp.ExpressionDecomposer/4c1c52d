@@ -1,0 +1,813 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ExpressionDecomposer {
+
+  
+
+
+  enum DecompositionType {
+    UNDECOMPOSABLE,
+    MOVABLE,
+    DECOMPOSABLE
+  }
+
+  private final AbstractCompiler compiler;
+  private final Supplier<String> safeNameIdSupplier;
+  private final Set<String> knownConstants;
+
+  public ExpressionDecomposer(
+      AbstractCompiler compiler,
+      Supplier<String> safeNameIdSupplier,
+      Set<String> constNames) {
+    Preconditions.checkNotNull(compiler);
+    Preconditions.checkNotNull(safeNameIdSupplier);
+    Preconditions.checkNotNull(constNames);
+    this.compiler = compiler;
+    this.safeNameIdSupplier = safeNameIdSupplier;
+    this.knownConstants = constNames;
+  }
+
+  
+  private static final int MAX_INTERATIONS = 100;
+
+  
+
+
+
+
+  void maybeDecomposeExpression(Node expression) {
+    
+    int i = 0;
+    while (DecompositionType.DECOMPOSABLE == canExposeExpression(expression)) {
+      exposeExpression(expression);
+      if (i > MAX_INTERATIONS) {
+        throw new IllegalStateException(
+            "DecomposeExpression depth exceeded on :\n" +
+            expression.toStringTree());
+      }
+    }
+  }
+
+  
+
+
+
+
+  void exposeExpression(Node expression) {
+    Node expressionRoot = findExpressionRoot(expression);
+    Preconditions.checkState(expressionRoot != null);
+    exposeExpression(expressionRoot, expression);
+    compiler.reportCodeChange();
+  }
+
+  
+  
+  
+  
+  
+
+
+
+  void moveExpression(Node expression) {
+    String resultName = getTempValueName();  
+    Node injectionPoint = findInjectionPoint(expression);
+    Preconditions.checkNotNull(injectionPoint);
+    Node injectionPointParent = injectionPoint.getParent();
+    Preconditions.checkNotNull(injectionPointParent);
+    Preconditions.checkState(NodeUtil.isStatementBlock(injectionPointParent));
+
+    
+    Node expressionParent = expression.getParent();
+    expressionParent.replaceChild(
+        expression, Node.newString(Token.NAME, resultName));
+
+    
+    Node newExpressionRoot = NodeUtil.newVarNode(resultName, expression);
+    injectionPointParent.addChildBefore(newExpressionRoot, injectionPoint);
+    compiler.reportCodeChange();
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private void exposeExpression(Node expressionRoot, Node subExpression) {
+    Node nonconditionalExpr = findNonconditionalParent(
+        subExpression, expressionRoot);
+    
+    boolean hasFollowingSideEffects = NodeUtil.mayHaveSideEffects(
+        nonconditionalExpr);
+
+    Node exprInjectionPoint = findInjectionPoint(nonconditionalExpr);
+    DecompositionState state = new DecompositionState();
+    state.sideEffects = hasFollowingSideEffects;
+    state.extractBeforeStatement = exprInjectionPoint;
+
+    
+    for (Node child = nonconditionalExpr, parent = child.getParent();
+         parent != expressionRoot;
+         child = parent, parent = child.getParent()) {
+      int parentType = parent.getType();
+      Preconditions.checkState(
+          !isConditionalOp(parent) || child == parent.getFirstChild());
+      if (parentType == Token.ASSIGN) {
+          if (isSafeAssign(parent, state.sideEffects)) {
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+          } else {
+            
+            Node left = parent.getFirstChild();
+            int type = left.getType();
+            if (left != child) {
+              Preconditions.checkState(NodeUtil.isGet(left));
+              if (type == Token.GETELEM) {
+                decomposeSubExpressions(left.getLastChild(), null, state);
+              }
+              decomposeSubExpressions(left.getFirstChild(), null, state);
+            }
+          }
+      } else if (parentType == Token.CALL
+          && NodeUtil.isGet(parent.getFirstChild())) {
+        
+        
+        if (!maybeExternMethod(parent.getFirstChild())) {
+          throw new IllegalStateException(
+              "External object method calls can not be decomposed.");
+        } else {
+          Node functionExpression = parent.getFirstChild();
+          decomposeSubExpressions(
+              functionExpression.getNext(), child, state);
+          
+          if (isExpressionTreeUnsafe(functionExpression, state.sideEffects)) {
+            
+            
+            state.sideEffects = true;
+
+            
+            Node replacement = rewriteCallExpression(parent, state);
+            
+            parent = replacement;
+          }
+        }
+      } else {
+        decomposeSubExpressions(
+            parent.getFirstChild(), child, state);
+      }
+    }
+
+    
+    
+    
+    
+    
+    if (nonconditionalExpr == subExpression) {
+      
+      
+      
+      
+    } else {
+      Node parent = nonconditionalExpr.getParent();
+      boolean needResult = parent.getType() != Token.EXPR_RESULT;
+      Node extractedConditional = extractConditional(
+          nonconditionalExpr, exprInjectionPoint, needResult);
+    }
+  }
+
+  
+
+
+  private boolean maybeExternMethod(Node node) {
+    
+    return true;
+  }
+
+  
+
+
+
+  private static Node findNonconditionalParent(
+      Node subExpression, Node expressionRoot) {
+     Node result = subExpression;
+
+     for (Node child = subExpression, parent = child.getParent();
+          parent != expressionRoot;
+          child = parent, parent = child.getParent()) {
+       if (isConditionalOp(parent)) {
+         
+         
+         if (child != parent.getFirstChild()) {
+           result = parent;
+         }
+       }
+     }
+
+     return result;
+  }
+
+  
+
+
+
+
+  private static class DecompositionState {
+    boolean sideEffects;
+    Node extractBeforeStatement;
+  }
+
+  
+
+
+
+  private void decomposeSubExpressions(
+      Node n, Node stopNode, DecompositionState state) {
+
+    if (n == null || n == stopNode) {
+      return;
+    }
+
+    
+    
+    
+    
+    decomposeSubExpressions(
+        n.getNext(), stopNode, state);
+
+    
+    
+    if (isExpressionTreeUnsafe(n, state.sideEffects)) {
+      
+      
+      state.sideEffects = true;
+      state.extractBeforeStatement = extractExpression(
+          n, state.extractBeforeStatement);
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+  private Node extractConditional(
+      Node expr, Node injectionPoint, boolean needResult) {
+    Node parent = expr.getParent();
+    String tempName = getTempValueName();
+
+    
+    Node first = expr.getFirstChild();
+    Node second = first.getNext();
+    Node last = expr.getLastChild();
+
+    
+    expr.detachChildren();
+
+    
+    Node cond = null;
+    Node trueExpr = new Node(Token.BLOCK);
+    Node falseExpr = new Node(Token.BLOCK);
+    switch (expr.getType()) {
+      case Token.HOOK:
+        
+        cond = first;
+        trueExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+            buildResultExpression(second, needResult, tempName)));
+        falseExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+            buildResultExpression(last, needResult, tempName)));
+        break;
+      case Token.AND:
+        
+        cond = buildResultExpression(first, needResult, tempName);
+        trueExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+            buildResultExpression(last, needResult, tempName)));
+        break;
+      case Token.OR:
+        
+        cond = buildResultExpression(first, needResult, tempName);
+        falseExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+            buildResultExpression(last, needResult, tempName)));
+        break;
+      default:
+        
+        throw new IllegalStateException("Unexpected.");
+    }
+
+    Node ifNode;
+    if (falseExpr.hasChildren()) {
+      ifNode = new Node(Token.IF, cond, trueExpr, falseExpr);
+    } else {
+      ifNode = new Node(Token.IF, cond, trueExpr);
+    }
+
+    if (needResult) {
+      Node tempVarNode = new Node(Token.VAR,
+          Node.newString(Token.NAME, tempName));
+      Node injectionPointParent = injectionPoint.getParent();
+      injectionPointParent.addChildBefore(tempVarNode, injectionPoint);
+      injectionPointParent.addChildAfter(ifNode, tempVarNode);
+
+      
+      Node replacementValueNode = Node.newString(Token.NAME, tempName);
+      parent.replaceChild(expr, replacementValueNode);
+    } else {
+      
+      
+      Preconditions.checkArgument(parent.getType() == Token.EXPR_RESULT);
+      Node gramps = parent.getParent();
+      gramps.replaceChild(parent, ifNode);
+    }
+
+    return ifNode;
+  }
+
+  
+
+
+
+
+
+
+
+
+  private static Node buildResultExpression(
+      Node expr, boolean needResult, String tempName) {
+    if (needResult) {
+      return new Node(Token.ASSIGN,
+          Node.newString(Token.NAME, tempName),
+          expr);
+    } else {
+      return expr;
+    }
+  }
+
+  
+
+
+
+
+
+  private Node extractExpression(Node expr, Node injectionPoint) {
+    Node parent = expr.getParent();
+    
+    String tempName = getTempConstantValueName();
+
+    
+    Node replacementValueNode = Node.newString(Token.NAME, tempName);
+    parent.replaceChild(expr, replacementValueNode);
+
+    
+    Node tempNameNode = Node.newString(Token.NAME, tempName);
+    tempNameNode.addChildrenToBack(expr);
+    Node tempVarNode = new Node(Token.VAR, tempNameNode);
+
+    Node injectionPointParent = injectionPoint.getParent();
+    injectionPointParent.addChildBefore(tempVarNode, injectionPoint);
+
+    
+    
+    
+    if (NodeUtil.isAssignmentOp(parent) && !NodeUtil.isAssign(parent)) {
+      Node gParent = parent.getParent();
+      Node assignBack = new Node(Token.ASSIGN,
+          expr.cloneTree(),
+          tempNameNode.cloneNode());
+      if (NodeUtil.isExpressionNode(gParent)) {
+        gParent.getParent().addChildAfter(
+            NodeUtil.newExpr(assignBack), gParent);
+      } else {
+        
+        
+        Node comma = new Node(Token.COMMA);
+        gParent.replaceChild(parent, comma);
+        comma.addChildrenToFront(assignBack);
+        comma.addChildrenToFront(parent);
+      }
+    }
+    return tempVarNode;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  private Node rewriteCallExpression(Node call, DecompositionState state) {
+    Preconditions.checkArgument(call.getType() == Token.CALL);
+    Node first = call.getFirstChild();
+    Preconditions.checkArgument(NodeUtil.isGet(first));
+
+    
+    
+    Node getVarNode = extractExpression(
+        first, state.extractBeforeStatement);
+    state.extractBeforeStatement = getVarNode;
+
+    
+    
+    Node getExprNode = getVarNode.getFirstChild().getFirstChild();
+    Preconditions.checkArgument(NodeUtil.isGet(getExprNode));
+    Node thisVarNode = extractExpression(
+        getExprNode.getFirstChild(), state.extractBeforeStatement);
+    state.extractBeforeStatement = thisVarNode;
+
+    
+    Node thisNameNode = thisVarNode.getFirstChild();
+    Node functionNameNode = getVarNode.getFirstChild();
+
+    
+    
+    
+    
+    
+    
+    
+    
+    Node newCall = new Node(Token.CALL,
+        new Node(Token.GETPROP,
+            functionNameNode.cloneNode(),
+            Node.newString("call")),
+        thisNameNode.cloneNode(), call.getLineno(), call.getCharno());
+
+    
+    call.removeFirstChild();
+    if (call.hasChildren()) {
+      
+      newCall.addChildrenToBack(call.removeChildren());
+    }
+
+    
+    Node callParent = call.getParent();
+    callParent.replaceChild(call, newCall);
+
+    return newCall;
+  }
+
+  private String tempNamePrefix = "JSCompiler_temp_";
+
+  
+
+
+  @VisibleForTesting
+  public void setTempNamePrefix(String tempNamePrefix) {
+    this.tempNamePrefix = tempNamePrefix;
+  }
+
+  
+
+
+  private String getTempValueName(){
+    return tempNamePrefix + safeNameIdSupplier.get();
+  }
+
+  
+
+
+  private String getTempConstantValueName(){
+    String sName = tempNamePrefix + "const_" + safeNameIdSupplier.get();
+    this.knownConstants.add(sName);
+    return sName;
+  }
+
+  
+
+
+
+  static Node findInjectionPoint(Node subExpression) {
+    Node expressionRoot = findExpressionRoot(subExpression);
+    Preconditions.checkNotNull(expressionRoot);
+
+    Node injectionPoint = expressionRoot;
+
+    Node parent = injectionPoint.getParent();
+    while (parent.getType() == Token.LABEL) {
+      injectionPoint = parent;
+      parent = injectionPoint.getParent();
+    }
+
+    Preconditions.checkState(
+        NodeUtil.isStatementBlock(injectionPoint.getParent()));
+    return injectionPoint;
+  }
+
+  
+
+
+  private static boolean isConditionalOp(Node n) {
+    switch(n.getType()) {
+      case Token.HOOK:
+      case Token.AND:
+      case Token.OR:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  
+
+
+
+
+  static Node findExpressionRoot(Node subExpression) {
+    Node child = subExpression;
+    for (Node parent : child.getAncestors()) {
+      int parentType = parent.getType();
+      switch (parentType) {
+        
+        
+        
+        
+        case Token.EXPR_RESULT:
+        case Token.IF:
+        case Token.SWITCH:
+        case Token.RETURN:
+        case Token.VAR:
+          Preconditions.checkState(child == parent.getFirstChild());
+          return parent;
+        
+        case Token.SCRIPT:
+        case Token.BLOCK:
+        case Token.LABEL:
+        case Token.CASE:
+        case Token.DEFAULT:
+          return null;
+      }
+      child = parent;
+    }
+
+    throw new IllegalStateException("Unexpected AST structure.");
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  DecompositionType canExposeExpression(Node subExpression) {
+    Node expressionRoot = findExpressionRoot(subExpression);
+    if (expressionRoot != null) {
+      return isSubexpressionMovable(expressionRoot, subExpression);
+    }
+    return DecompositionType.UNDECOMPOSABLE;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private DecompositionType isSubexpressionMovable(
+      Node expressionRoot, Node subExpression) {
+    boolean requiresDecomposition = false;
+    boolean seenSideEffects = NodeUtil.mayHaveSideEffects(subExpression);
+
+    Node child = subExpression;
+    for (Node parent : child.getAncestors()) {
+      if (parent == expressionRoot) {
+        
+        
+        return requiresDecomposition
+            ? DecompositionType.DECOMPOSABLE
+            : DecompositionType.MOVABLE;
+      }
+
+      int parentType = parent.getType();
+
+      if (isConditionalOp(parent)) {
+        
+        
+        if (child != parent.getFirstChild()) {
+          requiresDecomposition = true;
+        }
+      } else {
+        
+        
+        
+        
+        
+
+        
+        if (isSafeAssign(parent, seenSideEffects)) {
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        } else {
+          
+          for (Node n : parent.children()) {
+            if (n == child) {
+              
+              
+              break;
+            }
+
+            if (isExpressionTreeUnsafe(
+                n, seenSideEffects)) {
+              seenSideEffects = true;
+              requiresDecomposition = true;
+            }
+          }
+
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          Node first = parent.getFirstChild();
+          if (requiresDecomposition
+              && parent.getType() == Token.CALL
+              && NodeUtil.isGet(first)) {
+            if (maybeExternMethod(first)) {
+              return DecompositionType.UNDECOMPOSABLE;
+            } else {
+              return DecompositionType.DECOMPOSABLE;
+            }
+          }
+        }
+      }
+      
+      child = parent;
+    }
+
+    
+    throw new IllegalStateException("Unexpected.");
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private boolean isSafeAssign(Node n, boolean seenSideEffects) {
+    if (n.getType() == Token.ASSIGN) {
+      Node lhs = n.getFirstChild();
+      switch (lhs.getType()) {
+        case Token.NAME:
+          return true;
+        case Token.GETPROP:
+          return !isExpressionTreeUnsafe(lhs.getFirstChild(), seenSideEffects);
+        case Token.GETELEM:
+          return !isExpressionTreeUnsafe(lhs.getFirstChild(), seenSideEffects)
+              && !isExpressionTreeUnsafe(lhs.getLastChild(), seenSideEffects);
+      }
+    }
+    return false;
+  }
+
+  
+
+
+
+  private boolean isExpressionTreeUnsafe(
+      Node n, boolean followingSideEffectsExist) {
+    if (followingSideEffectsExist) {
+      
+      
+
+      
+      return NodeUtil.canBeSideEffected(n, this.knownConstants);
+    } else {
+      
+      
+      return NodeUtil.mayHaveSideEffects(n);
+    }
+  }
+}

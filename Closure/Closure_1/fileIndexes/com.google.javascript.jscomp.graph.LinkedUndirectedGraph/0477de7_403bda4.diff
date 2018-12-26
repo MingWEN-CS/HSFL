@@ -1,0 +1,139 @@
+47a48,72
+>   public static <N, E> LinkedUndirectedGraph<N, E> createWithoutAnnotations() {
+>     return new LinkedUndirectedGraph<N, E>(false, false);
+>   }
+> 
+>   public static <N, E> LinkedUndirectedGraph<N, E> createWithNodeAnnotations() {
+>     return new LinkedUndirectedGraph<N, E>(true, false);
+>   }
+> 
+>   public static <N, E> LinkedUndirectedGraph<N, E> createWithEdgeAnnotations() {
+>     return new LinkedUndirectedGraph<N, E>(false, true);
+>   }
+> 
+>   public static <N, E> LinkedUndirectedGraph<N, E> create() {
+>     return new LinkedUndirectedGraph<N, E>(true, true);
+>   }
+> 
+>   private final boolean useNodeAnnotations;
+>   private final boolean useEdgeAnnotations;
+> 
+>   protected LinkedUndirectedGraph(
+>       boolean useNodeAnnotations, boolean useEdgeAnnotations) {
+>     this.useNodeAnnotations = useNodeAnnotations;
+>     this.useEdgeAnnotations = useEdgeAnnotations;
+>   }
+> 
+52a78,79
+>         useEdgeAnnotations ?
+>         new AnnotatedLinkedUndirectedGraphEdge<N, E>(src, edgeValue, dest) :
+74c101,103
+<       node = new LinkedUndirectedGraphNode<N, E>(nodeValue);
+---
+>       node = useNodeAnnotations ?
+>           new AnnotatedLinkedUndirectedGraphNode<N, E>(nodeValue) :
+>           new LinkedUndirectedGraphNode<N, E>(nodeValue);
+246,248d274
+<     private Annotation annotation;
+<     private int id;
+<     private static int totalNodes = 0;
+250c276
+<     public LinkedUndirectedGraphNode(N nodeValue) {
+---
+>     LinkedUndirectedGraphNode(N nodeValue) {
+252d277
+<       this.id = totalNodes++;
+260d284
+<     @SuppressWarnings("unchecked")
+263c287,288
+<       return (A) annotation;
+---
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with node annotations turned off");
+267,268c292,294
+<     public N getValue() {
+<       return value;
+---
+>     public void setAnnotation(Annotation data) {
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with node annotations turned off");
+272,273c298,299
+<     public void setAnnotation(Annotation data) {
+<       annotation = data;
+---
+>     public N getValue() {
+>       return value;
+283c309
+<       return "LDN" + id;
+---
+>       return "LDN" + hashCode();
+324a351,374
+>   static class AnnotatedLinkedUndirectedGraphNode<N, E>
+>       extends LinkedUndirectedGraphNode<N, E> {
+> 
+>     protected Annotation annotation;
+> 
+>     AnnotatedLinkedUndirectedGraphNode(N nodeValue) {
+>       super(nodeValue);
+>     }
+> 
+>     @SuppressWarnings("unchecked")
+>     @Override
+>     public <A extends Annotation> A getAnnotation() {
+>       return (A) annotation;
+>     }
+> 
+>     @Override
+>     public void setAnnotation(Annotation data) {
+>       annotation = data;
+>     }
+>   }
+> 
+>   
+> 
+> 
+331d380
+<     protected Annotation annotation;
+333c382
+<     public LinkedUndirectedGraphEdge(UndiGraphNode<N, E> nodeA, E edgeValue,
+---
+>     LinkedUndirectedGraphEdge(UndiGraphNode<N, E> nodeA, E edgeValue,
+355d403
+<     @SuppressWarnings("unchecked")
+358c406,407
+<       return (A) annotation;
+---
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with edge annotations turned off");
+363c412,413
+<       annotation = data;
+---
+>       throw new UnsupportedOperationException(
+>           "Graph initialized with edge annotations turned off");
+390a441,466
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   static class AnnotatedLinkedUndirectedGraphEdge<N, E>
+>       extends LinkedUndirectedGraphEdge<N, E> {
+> 
+>     protected Annotation annotation;
+> 
+>     AnnotatedLinkedUndirectedGraphEdge(
+>         UndiGraphNode<N, E> nodeA, E edgeValue,
+>         UndiGraphNode<N, E> nodeB) {
+>       super(nodeA, edgeValue, nodeB);
+>     }
+> 
+>     @SuppressWarnings("unchecked")
+>     @Override
+>     public <A extends Annotation> A getAnnotation() {
+>       return (A) annotation;
+>     }
+> 
+>     @Override
+>     public void setAnnotation(Annotation data) {
+>       annotation = data;

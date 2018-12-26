@@ -1,0 +1,452 @@
+26d25
+< import java.text.SimpleDateFormat;
+30,31d28
+< import java.util.GregorianCalendar;
+< import java.util.HashMap;
+34d30
+< import java.util.Map;
+35a32,33
+> import java.util.concurrent.ConcurrentHashMap;
+> import java.util.concurrent.ConcurrentMap;
+102,103c100,105
+<     
+<     private static String cDefaultPattern; 
+---
+>     private static final FormatCache<FastDateFormat> cache= new FormatCache<FastDateFormat>() {
+>         @Override
+>         protected FastDateFormat createInstance(String pattern,    TimeZone timeZone, Locale locale) {
+>             return new FastDateFormat(pattern, timeZone, locale);
+>         }
+>     };
+105,110c107,108
+<     private static final Map<FastDateFormat, FastDateFormat> cInstanceCache =
+<         new HashMap<FastDateFormat, FastDateFormat>(7);
+<     private static final Map<Object, FastDateFormat> cDateInstanceCache = new HashMap<Object, FastDateFormat>(7);
+<     private static final Map<Object, FastDateFormat> cTimeInstanceCache = new HashMap<Object, FastDateFormat>(7);
+<     private static final Map<Object, FastDateFormat> cDateTimeInstanceCache = new HashMap<Object, FastDateFormat>(7);
+<     private static final Map<Object, String> cTimeZoneDisplayCache = new HashMap<Object, String>(7);
+---
+>     private static ConcurrentMap<TimeZoneDisplayKey, String> cTimeZoneDisplayCache =
+>         new ConcurrentHashMap<TimeZoneDisplayKey, String>(7);
+123,126d120
+<     private final boolean mTimeZoneForced;
+<     
+< 
+< 
+131,134d124
+<     private final boolean mLocaleForced;
+<     
+< 
+< 
+149c139
+<         return getInstance(getDefaultPattern(), null, null);
+---
+>         return cache.getDateTimeInstance(SHORT, SHORT, null, null);
+162c152
+<         return getInstance(pattern, null, null);
+---
+>         return cache.getInstance(pattern, null, null);
+177c167
+<         return getInstance(pattern, timeZone, null);
+---
+>         return cache.getInstance(pattern, timeZone, null);
+191c181
+<         return getInstance(pattern, null, locale);
+---
+>         return cache.getInstance(pattern, null, locale);
+207,215c197,198
+<     public static synchronized FastDateFormat getInstance(String pattern, TimeZone timeZone, Locale locale) {
+<         FastDateFormat emptyFormat = new FastDateFormat(pattern, timeZone, locale);
+<         FastDateFormat format = cInstanceCache.get(emptyFormat);
+<         if (format == null) {
+<             format = emptyFormat;
+<             format.init();  
+<             cInstanceCache.put(format, format);  
+<         }
+<         return format;
+---
+>     public static FastDateFormat getInstance(String pattern, TimeZone timeZone, Locale locale) {
+>         return cache.getInstance(pattern, timeZone, locale);
+230c213
+<         return getDateInstance(style, null, null);
+---
+>         return cache.getDateTimeInstance(style, null, null, null);
+245c228
+<         return getDateInstance(style, null, locale);
+---
+>         return cache.getDateTimeInstance(style, null, null, locale);
+261c244
+<         return getDateInstance(style, timeZone, null);
+---
+>         return cache.getDateTimeInstance(style, null, timeZone, null);
+263a247
+>     
+275,299c259,260
+<     public static synchronized FastDateFormat getDateInstance(int style, TimeZone timeZone, Locale locale) {
+<         Object key = Integer.valueOf(style);
+<         if (timeZone != null) {
+<             key = new Pair(key, timeZone);
+<         }
+< 
+<         if (locale == null) {
+<             locale = Locale.getDefault();
+<         }
+< 
+<         key = new Pair(key, locale);
+< 
+<         FastDateFormat format = cDateInstanceCache.get(key);
+<         if (format == null) {
+<             try {
+<                 SimpleDateFormat formatter = (SimpleDateFormat) DateFormat.getDateInstance(style, locale);
+<                 String pattern = formatter.toPattern();
+<                 format = getInstance(pattern, timeZone, locale);
+<                 cDateInstanceCache.put(key, format);
+< 
+<             } catch (ClassCastException ex) {
+<                 throw new IllegalArgumentException("No date pattern for locale: " + locale);
+<             }
+<         }
+<         return format;
+---
+>     public static FastDateFormat getDateInstance(int style, TimeZone timeZone, Locale locale) {
+>         return cache.getDateTimeInstance(style, null, timeZone, locale);
+314c275
+<         return getTimeInstance(style, null, null);
+---
+>         return cache.getDateTimeInstance(null, style, null, null);
+329c290
+<         return getTimeInstance(style, null, locale);
+---
+>         return cache.getDateTimeInstance(null, style, null, locale);
+345c306
+<         return getTimeInstance(style, timeZone, null);
+---
+>         return cache.getDateTimeInstance(null, style, timeZone, null);
+360,385c321,322
+<     public static synchronized FastDateFormat getTimeInstance(int style, TimeZone timeZone, Locale locale) {
+<         Object key = Integer.valueOf(style);
+<         if (timeZone != null) {
+<             key = new Pair(key, timeZone);
+<         }
+<         if (locale != null) {
+<             key = new Pair(key, locale);
+<         }
+< 
+<         FastDateFormat format = cTimeInstanceCache.get(key);
+<         if (format == null) {
+<             if (locale == null) {
+<                 locale = Locale.getDefault();
+<             }
+< 
+<             try {
+<                 SimpleDateFormat formatter = (SimpleDateFormat) DateFormat.getTimeInstance(style, locale);
+<                 String pattern = formatter.toPattern();
+<                 format = getInstance(pattern, timeZone, locale);
+<                 cTimeInstanceCache.put(key, format);
+< 
+<             } catch (ClassCastException ex) {
+<                 throw new IllegalArgumentException("No date pattern for locale: " + locale);
+<             }
+<         }
+<         return format;
+---
+>     public static FastDateFormat getTimeInstance(int style, TimeZone timeZone, Locale locale) {
+>         return cache.getDateTimeInstance(null, style, timeZone, locale);
+400,402c337,338
+<     public static FastDateFormat getDateTimeInstance(
+<             int dateStyle, int timeStyle) {
+<         return getDateTimeInstance(dateStyle, timeStyle, null, null);
+---
+>     public static FastDateFormat getDateTimeInstance(int dateStyle, int timeStyle) {
+>         return cache.getDateTimeInstance(dateStyle, timeStyle, null, null);
+417,419c353,354
+<     public static FastDateFormat getDateTimeInstance(
+<             int dateStyle, int timeStyle, Locale locale) {
+<         return getDateTimeInstance(dateStyle, timeStyle, null, locale);
+---
+>     public static FastDateFormat getDateTimeInstance(int dateStyle, int timeStyle, Locale locale) {
+>         return cache.getDateTimeInstance(dateStyle, timeStyle, null, locale);
+435,436c370
+<     public static FastDateFormat getDateTimeInstance(
+<             int dateStyle, int timeStyle, TimeZone timeZone) {
+---
+>     public static FastDateFormat getDateTimeInstance(int dateStyle, int timeStyle, TimeZone timeZone) {
+452,477c386,388
+<     public static synchronized FastDateFormat getDateTimeInstance(int dateStyle, int timeStyle, TimeZone timeZone,
+<             Locale locale) {
+< 
+<         Object key = new Pair(Integer.valueOf(dateStyle), Integer.valueOf(timeStyle));
+<         if (timeZone != null) {
+<             key = new Pair(key, timeZone);
+<         }
+<         if (locale == null) {
+<             locale = Locale.getDefault();
+<         }
+<         key = new Pair(key, locale);
+< 
+<         FastDateFormat format = cDateTimeInstanceCache.get(key);
+<         if (format == null) {
+<             try {
+<                 SimpleDateFormat formatter = (SimpleDateFormat) DateFormat.getDateTimeInstance(dateStyle, timeStyle,
+<                         locale);
+<                 String pattern = formatter.toPattern();
+<                 format = getInstance(pattern, timeZone, locale);
+<                 cDateTimeInstanceCache.put(key, format);
+< 
+<             } catch (ClassCastException ex) {
+<                 throw new IllegalArgumentException("No date time pattern for locale: " + locale);
+<             }
+<         }
+<         return format;
+---
+>     public static FastDateFormat getDateTimeInstance(
+>             int dateStyle, int timeStyle, TimeZone timeZone, Locale locale) {
+>         return cache.getDateTimeInstance(dateStyle, timeStyle, timeZone, locale);
+491,492c402,403
+<     static synchronized String getTimeZoneDisplay(TimeZone tz, boolean daylight, int style, Locale locale) {
+<         Object key = new TimeZoneDisplayKey(tz, daylight, style, locale);
+---
+>     static String getTimeZoneDisplay(TimeZone tz, boolean daylight, int style, Locale locale) {
+>         TimeZoneDisplayKey key = new TimeZoneDisplayKey(tz, daylight, style, locale);
+497c408,411
+<             cTimeZoneDisplayCache.put(key, value);
+---
+>             String prior = cTimeZoneDisplayCache.putIfAbsent(key, value);
+>             if (prior != null) {
+>                 value= prior;
+>             }
+503,514d416
+< 
+< 
+< 
+< 
+<     private static synchronized String getDefaultPattern() {
+<         if (cDefaultPattern == null) {
+<             cDefaultPattern = new SimpleDateFormat().toPattern();
+<         }
+<         return cDefaultPattern;
+<     }
+< 
+<     
+524,528d425
+< 
+< 
+< 
+< 
+< 
+530,533d426
+<         super();
+<         if (pattern == null) {
+<             throw new IllegalArgumentException("The pattern must not be null");
+<         }
+535,539d427
+< 
+<         mTimeZoneForced = (timeZone != null);
+<         if (timeZone == null) {
+<             timeZone = TimeZone.getDefault();
+<         }
+541,545d428
+< 
+<         mLocaleForced = (locale != null);
+<         if (locale == null) {
+<             locale = Locale.getDefault();
+<         }
+546a430,431
+> 
+>         init();
+552c437
+<     protected void init() {
+---
+>     private void init() {
+665c550
+<                     rule = new TimeZoneNameRule(mTimeZone, mTimeZoneForced, mLocale, TimeZone.LONG);
+---
+>                     rule = new TimeZoneNameRule(mTimeZone, mLocale, TimeZone.LONG);
+667c552
+<                     rule = new TimeZoneNameRule(mTimeZone, mTimeZoneForced, mLocale, TimeZone.SHORT);
+---
+>                     rule = new TimeZoneNameRule(mTimeZone, mLocale, TimeZone.SHORT);
+815c700
+<         Calendar c = new GregorianCalendar(mTimeZone, mLocale);
+---
+>         Calendar c = Calendar.getInstance(mTimeZone, mLocale);
+852c737
+<         Calendar c = new GregorianCalendar(mTimeZone);
+---
+>         Calendar c = Calendar.getInstance(mTimeZone, mLocale);
+866,870d750
+<         if (mTimeZoneForced) {
+<             calendar.getTimeInMillis(); 
+<             calendar = (Calendar) calendar.clone();
+<             calendar.setTimeZone(mTimeZone);
+<         }
+883,886c763,764
+<         Rule[] rules = mRules;
+<         int len = mRules.length;
+<         for (int i = 0; i < len; i++) {
+<             rules[i].appendTo(buf, calendar);
+---
+>         for (Rule rule : mRules) {
+>             rule.appendTo(buf, calendar);
+925,927d802
+< 
+< 
+< 
+937,947d811
+< 
+< 
+<     public boolean getTimeZoneOverridesCalendar() {
+<         return mTimeZoneForced;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+979,988c843,845
+<         if (
+<             (mPattern == other.mPattern || mPattern.equals(other.mPattern)) &&
+<             (mTimeZone == other.mTimeZone || mTimeZone.equals(other.mTimeZone)) &&
+<             (mLocale == other.mLocale || mLocale.equals(other.mLocale)) &&
+<             (mTimeZoneForced == other.mTimeZoneForced) &&
+<             (mLocaleForced == other.mLocaleForced)
+<             ) {
+<             return true;
+<         }
+<         return false;
+---
+>         return mPattern.equals(other.mPattern)
+>             && mTimeZone.equals(other.mTimeZone) 
+>             && mLocale.equals(other.mLocale);
+998,1004c855
+<         int total = 0;
+<         total += mPattern.hashCode();
+<         total += mTimeZone.hashCode();
+<         total += (mTimeZoneForced ? 1 : 0);
+<         total += mLocale.hashCode();
+<         total += (mLocaleForced ? 1 : 0);
+<         return total;
+---
+>         return mPattern.hashCode() + 13 * (mTimeZone.hashCode() + 13 * mLocale.hashCode());
+1520,1522d1370
+<         private final boolean mTimeZoneForced;
+<         private final Locale mLocale;
+<         private final int mStyle;
+1533,1534c1381
+< 
+<         TimeZoneNameRule(TimeZone timeZone, boolean timeZoneForced, Locale locale, int style) {
+---
+>         TimeZoneNameRule(TimeZone timeZone, Locale locale, int style) {
+1536,1538d1382
+<             mTimeZoneForced = timeZoneForced;
+<             mLocale = locale;
+<             mStyle = style;
+1540,1546c1384,1385
+<             if (timeZoneForced) {
+<                 mStandard = getTimeZoneDisplay(timeZone, false, style, locale);
+<                 mDaylight = getTimeZoneDisplay(timeZone, true, style, locale);
+<             } else {
+<                 mStandard = null;
+<                 mDaylight = null;
+<             }
+---
+>             mStandard = getTimeZoneDisplay(timeZone, false, style, locale);
+>             mDaylight = getTimeZoneDisplay(timeZone, true, style, locale);
+1553,1559c1392
+<             if (mTimeZoneForced) {
+<                 return Math.max(mStandard.length(), mDaylight.length());
+<             } else if (mStyle == TimeZone.SHORT) {
+<                 return 4;
+<             } else {
+<                 return 40;
+<             }
+---
+>             return Math.max(mStandard.length(), mDaylight.length());
+1566,1571c1399,1400
+<             if (mTimeZoneForced) {
+<                 if (mTimeZone.useDaylightTime() && calendar.get(Calendar.DST_OFFSET) != 0) {
+<                     buffer.append(mDaylight);
+<                 } else {
+<                     buffer.append(mStandard);
+<                 }
+---
+>             if (mTimeZone.useDaylightTime() && calendar.get(Calendar.DST_OFFSET) != 0) {
+>                 buffer.append(mDaylight);
+1573,1578c1402
+<                 TimeZone timeZone = calendar.getTimeZone();
+<                 if (timeZone.useDaylightTime() && calendar.get(Calendar.DST_OFFSET) != 0) {
+<                     buffer.append(getTimeZoneDisplay(timeZone, true, mStyle, mLocale));
+<                 } else {
+<                     buffer.append(getTimeZoneDisplay(timeZone, false, mStyle, mLocale));
+<                 }
+---
+>                 buffer.append(mStandard);
+1668c1492
+<             return mStyle * 31 + mLocale.hashCode();
+---
+>             return (mStyle * 31 + mLocale.hashCode() ) * 31 + mTimeZone.hashCode();
+1689,1751d1512
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     private static class Pair {
+<         private final Object mObj1;
+<         private final Object mObj2;
+< 
+<         
+< 
+< 
+< 
+< 
+<         public Pair(Object obj1, Object obj2) {
+<             mObj1 = obj1;
+<             mObj2 = obj2;
+<         }
+< 
+<         
+< 
+< 
+<         @Override
+<         public boolean equals(Object obj) {
+<             if (this == obj) {
+<                 return true;
+<             }
+< 
+<             if (!(obj instanceof Pair)) {
+<                 return false;
+<             }
+< 
+<             Pair key = (Pair)obj;
+< 
+<             return
+<                 (mObj1 == null ?
+<                  key.mObj1 == null : mObj1.equals(key.mObj1)) &&
+<                 (mObj2 == null ?
+<                  key.mObj2 == null : mObj2.equals(key.mObj2));
+<         }
+< 
+<         
+< 
+< 
+<         @Override
+<         public int hashCode() {
+<             return
+<                 (mObj1 == null ? 0 : mObj1.hashCode()) +
+<                 (mObj2 == null ? 0 : mObj2.hashCode());
+<         }
+< 
+<         
+< 
+< 
+<         @Override
+<         public String toString() {
+<             return "[" + mObj1 + ':' + mObj2 + ']';
+<         }
+<     }
+< 

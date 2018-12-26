@@ -1,0 +1,202 @@
+23a24
+> import org.apache.commons.math3.exception.NotPositiveException;
+26a28,29
+> import org.apache.commons.math3.exception.NumberIsTooSmallException;
+> import org.apache.commons.math3.exception.OutOfRangeException;
+62c65,67
+<     protected AbstractRealMatrix(final int rowDimension, final int columnDimension) {
+---
+>     protected AbstractRealMatrix(final int rowDimension,
+>         final int columnDimension)
+>         throws NotStrictlyPositiveException {
+78,79c83,84
+<     public RealMatrix add(RealMatrix m) {
+<         
+---
+>     public RealMatrix add(RealMatrix m)
+>         throws MatrixDimensionMismatchException {
+95,96c100,101
+<     public RealMatrix subtract(final RealMatrix m) {
+<         
+---
+>     public RealMatrix subtract(final RealMatrix m)
+>         throws MatrixDimensionMismatchException {
+140,141c145,146
+<     public RealMatrix multiply(final RealMatrix m) {
+<         
+---
+>     public RealMatrix multiply(final RealMatrix m)
+>         throws DimensionMismatchException {
+162c167,168
+<     public RealMatrix preMultiply(final RealMatrix m) {
+---
+>     public RealMatrix preMultiply(final RealMatrix m)
+>         throws DimensionMismatchException {
+167c173,174
+<     public RealMatrix power(final int p) {
+---
+>     public RealMatrix power(final int p)
+>         throws NotPositiveException, NonSquareMatrixException {
+169c176
+<             throw new IllegalArgumentException("p must be >= 0");
+---
+>             throw new NotPositiveException(LocalizedFormats.NOT_POSITIVE_EXPONENT, p);
+305c312,313
+<                                    final int startColumn, final int endColumn) {
+---
+>                                    final int startColumn, final int endColumn)
+>         throws OutOfRangeException, NumberIsTooSmallException {
+320,321c328,330
+<     public RealMatrix getSubMatrix(final int[] selectedRows, final int[] selectedColumns) {
+<         
+---
+>     public RealMatrix getSubMatrix(final int[] selectedRows,
+>                                    final int[] selectedColumns)
+>         throws NullArgumentException, NoDataException, OutOfRangeException {
+324d332
+<         
+343,344c351,353
+<                               final double[][] destination) {
+<         
+---
+>                               final double[][] destination)
+>         throws OutOfRangeException, NumberIsTooSmallException,
+>         MatrixDimensionMismatchException {
+353d361
+<         
+381,382c389,392
+<     public void copySubMatrix(int[] selectedRows, int[] selectedColumns, double[][] destination) {
+<         
+---
+>     public void copySubMatrix(int[] selectedRows, int[] selectedColumns,
+>                               double[][] destination)
+>         throws OutOfRangeException, NullArgumentException, NoDataException,
+>         MatrixDimensionMismatchException {
+390d399
+<         
+401c410,411
+<         throws NoDataException, DimensionMismatchException, NullArgumentException {
+---
+>         throws NoDataException, OutOfRangeException,
+>         DimensionMismatchException, NullArgumentException {
+432c442
+<     public RealMatrix getRowMatrix(final int row) {
+---
+>     public RealMatrix getRowMatrix(final int row) throws OutOfRangeException {
+444c454,455
+<     public void setRowMatrix(final int row, final RealMatrix matrix) {
+---
+>     public void setRowMatrix(final int row, final RealMatrix matrix)
+>         throws OutOfRangeException, MatrixDimensionMismatchException {
+459c470,471
+<     public RealMatrix getColumnMatrix(final int column) {
+---
+>     public RealMatrix getColumnMatrix(final int column)
+>         throws OutOfRangeException {
+471c483,484
+<     public void setColumnMatrix(final int column, final RealMatrix matrix) {
+---
+>     public void setColumnMatrix(final int column, final RealMatrix matrix)
+>         throws OutOfRangeException, MatrixDimensionMismatchException {
+486c499,500
+<     public RealVector getRowVector(final int row) {
+---
+>     public RealVector getRowVector(final int row)
+>         throws OutOfRangeException {
+491c505,506
+<     public void setRowVector(final int row, final RealVector vector) {
+---
+>     public void setRowVector(final int row, final RealVector vector)
+>         throws OutOfRangeException, MatrixDimensionMismatchException {
+504c519,520
+<     public RealVector getColumnVector(final int column) {
+---
+>     public RealVector getColumnVector(final int column)
+>         throws OutOfRangeException {
+509c525,526
+<     public void setColumnVector(final int column, final RealVector vector) {
+---
+>     public void setColumnVector(final int column, final RealVector vector)
+>         throws OutOfRangeException, MatrixDimensionMismatchException {
+522c539
+<     public double[] getRow(final int row) {
+---
+>     public double[] getRow(final int row) throws OutOfRangeException {
+534c551,552
+<     public void setRow(final int row, final double[] array) {
+---
+>     public void setRow(final int row, final double[] array)
+>         throws OutOfRangeException, MatrixDimensionMismatchException {
+546c564
+<     public double[] getColumn(final int column) {
+---
+>     public double[] getColumn(final int column) throws OutOfRangeException {
+558c576,577
+<     public void setColumn(final int column, final double[] array) {
+---
+>     public void setColumn(final int column, final double[] array)
+>         throws OutOfRangeException, MatrixDimensionMismatchException {
+576c595,596
+<     public void addToEntry(int row, int column, double increment) {
+---
+>     public void addToEntry(int row, int column, double increment)
+>         throws OutOfRangeException {
+582c602,603
+<     public void multiplyEntry(int row, int column, double factor) {
+---
+>     public void multiplyEntry(int row, int column, double factor)
+>         throws OutOfRangeException {
+629c650
+<     public double getTrace() {
+---
+>     public double getTrace() throws NonSquareMatrixException {
+643c664,665
+<     public double[] operate(final double[] v) {
+---
+>     public double[] operate(final double[] v)
+>         throws DimensionMismatchException {
+664c686,687
+<     public RealVector operate(final RealVector v) {
+---
+>     public RealVector operate(final RealVector v)
+>         throws DimensionMismatchException {
+688c711
+<     public double[] preMultiply(final double[] v) {
+---
+>     public double[] preMultiply(final double[] v) throws DimensionMismatchException {
+709c732
+<     public RealVector preMultiply(final RealVector v) {
+---
+>     public RealVector preMultiply(final RealVector v) throws DimensionMismatchException {
+764c787,788
+<                                  final int startColumn, final int endColumn) {
+---
+>                                  final int startColumn, final int endColumn)
+>         throws OutOfRangeException, NumberIsTooSmallException {
+781c805,806
+<                                  final int startColumn, final int endColumn) {
+---
+>                                  final int startColumn, final int endColumn)
+>         throws OutOfRangeException, NumberIsTooSmallException {
+824c849,850
+<                                     final int startColumn, final int endColumn) {
+---
+>                                     final int startColumn, final int endColumn)
+>         throws OutOfRangeException, NumberIsTooSmallException {
+841c867,868
+<                                     final int startColumn, final int endColumn) {
+---
+>                                     final int startColumn, final int endColumn)
+>         throws OutOfRangeException, NumberIsTooSmallException {
+866c893,895
+<                                        final int startColumn, final int endColumn) {
+---
+>                                        final int startColumn,
+>                                        final int endColumn)
+>         throws OutOfRangeException, NumberIsTooSmallException {
+873c902,904
+<                                        final int startColumn, final int endColumn) {
+---
+>                                        final int startColumn,
+>                                        final int endColumn)
+>         throws OutOfRangeException, NumberIsTooSmallException {

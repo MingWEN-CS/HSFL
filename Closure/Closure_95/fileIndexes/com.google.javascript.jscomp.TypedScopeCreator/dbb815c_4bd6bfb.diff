@@ -1,0 +1,41 @@
+896,897c896,905
+<       if (scope.isDeclared(variableName, false)) {
+<         Var oldVar = scope.getVar(variableName);
+---
+>       
+>       
+>       Scope scopeToDeclareIn = scope;
+> 
+>         
+>         
+> 
+>       
+>       if (scopeToDeclareIn.isDeclared(variableName, false)) {
+>         Var oldVar = scopeToDeclareIn.getVar(variableName);
+905c913
+<         scope.declare(variableName, n, type, input, inferred);
+---
+>         scopeToDeclareIn.declare(variableName, n, type, input, inferred);
+924c932
+<         if (scope.isGlobal() && type instanceof FunctionType) {
+---
+>         if (scopeToDeclareIn.isGlobal() && type instanceof FunctionType) {
+928c936
+<             scope.declare(variableName + ".prototype", n,
+---
+>             scopeToDeclareIn.declare(variableName + ".prototype", n,
+936a945,958
+>     }
+> 
+>     
+> 
+> 
+>     private boolean isQnameRootedInGlobalScope(Node n) {
+>       Node root = NodeUtil.getRootOfQualifiedName(n);
+>       if (root.getType() == Token.NAME) {
+>         Var var = scope.getVar(root.getString());
+>         if (var != null) {
+>           return var.isGlobal();
+>         }
+>       }
+>       return false;

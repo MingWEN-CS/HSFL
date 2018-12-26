@@ -1,0 +1,95 @@
+80a81,83
+>   
+>   private final ObjectType unknownType;
+> 
+88a92,93
+>     this.unknownType = registry.getNativeObjectType(UNKNOWN_TYPE);
+> 
+89a95,96
+>     inferArguments(functionScope);
+> 
+108c115,148
+<         new Scope(functionScope.getRootNode(), functionScope.getTypeOfThis()));
+---
+>         Scope.createLatticeBottom(functionScope.getRootNode()));
+>   }
+> 
+>   
+> 
+> 
+>   private void inferArguments(Scope functionScope) {
+>     Node functionNode = functionScope.getRootNode();
+>     Node astParameters = functionNode.getFirstChild().getNext();
+>     FunctionType functionType =
+>         JSType.toMaybeFunctionType(functionNode.getJSType());
+>     if (functionType != null) {
+>       Node parameterTypes = functionType.getParametersNode();
+>       if (parameterTypes != null) {
+>         Node parameterTypeNode = parameterTypes.getFirstChild();
+>         for (Node astParameter : astParameters.children()) {
+>           if (parameterTypeNode == null) {
+>             return;
+>           }
+> 
+>           Var var = functionScope.getVar(astParameter.getString());
+>           Preconditions.checkNotNull(var);
+>           if (var.isTypeInferred() &&
+>               var.getType() == unknownType &&
+>               parameterTypeNode.getJSType() != null) {
+>             JSType newType = parameterTypeNode.getJSType();
+>             var.setType(newType);
+>             astParameter.setJSType(newType);
+>           }
+> 
+>           parameterTypeNode = parameterTypeNode.getNext();
+>         }
+>       }
+>     }
+497c537
+<               leftType == null ? getNativeType(UNKNOWN_TYPE) : leftType,
+---
+>               leftType == null ? unknownType : leftType,
+643c683
+<             type = getNativeType(UNKNOWN_TYPE);
+---
+>             type = unknownType;
+695c735
+<           valueType = getNativeType(UNKNOWN_TYPE);
+---
+>           valueType = unknownType;
+710c750
+<               oldType == null ? getNativeType(UNKNOWN_TYPE) : oldType,
+---
+>               oldType == null ? unknownType : oldType,
+714c754
+<         n.setJSType(getNativeType(UNKNOWN_TYPE));
+---
+>         n.setJSType(unknownType);
+728c768
+<     JSType type = getNativeType(UNKNOWN_TYPE);
+---
+>     JSType type = unknownType;
+733c773
+<         type = getNativeType(UNKNOWN_TYPE);
+---
+>         type = unknownType;
+738c778
+<         type = getNativeType(UNKNOWN_TYPE);
+---
+>         type = unknownType;
+953d992
+<           iArgument.putBooleanProp(Node.INFERRED_FUNCTION, true);
+1118c1157
+<         type = getNativeType(UNKNOWN_TYPE);
+---
+>         type = unknownType;
+1217d1255
+<     JSType unknownType = getNativeType(UNKNOWN_TYPE);
+1252c1290
+<       return getNativeType(UNKNOWN_TYPE);
+---
+>       return unknownType;
+1476c1514
+<       return getNativeType(UNKNOWN_TYPE);
+---
+>       return unknownType;

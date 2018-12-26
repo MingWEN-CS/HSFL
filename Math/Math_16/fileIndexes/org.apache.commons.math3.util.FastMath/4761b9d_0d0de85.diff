@@ -1,0 +1,157 @@
+3408a3409,3564
+>     public static double scalb(final double d, final int n) {
+> 
+>         
+>         if ((n > -1023) && (n < 1024)) {
+>             return d * Double.longBitsToDouble(((long) (n + 1023)) << 52);
+>         }
+> 
+>         
+>         if (Double.isNaN(d) || Double.isInfinite(d) || (d == 0)) {
+>             return d;
+>         }
+> 
+>         
+>         final long bits = Double.doubleToLongBits(d);
+>         final long sign = bits & 0x8000000000000000L;
+>         int  exponent   = ((int) (bits >>> 52)) & 0x7ff;
+>         long mantissa   = bits & 0x000fffffffffffffL;
+> 
+>         
+>         int scaledExponent = exponent + n;
+> 
+>         if (n < 0) {
+>             
+>             if (scaledExponent > 0) {
+>                 
+>                 return Double.longBitsToDouble(sign | (((long) scaledExponent) << 52) | mantissa);
+>             } else if (scaledExponent > -53) {
+>                 
+> 
+>                 
+>                 mantissa = mantissa | (1L << 52);
+> 
+>                 
+>                 final long mostSignificantLostBit = mantissa & (1L << (-scaledExponent));
+>                 mantissa = mantissa >>> (1 - scaledExponent);
+>                 if (mostSignificantLostBit != 0) {
+>                     
+>                     mantissa++;
+>                 }
+>                 return Double.longBitsToDouble(sign | mantissa);
+> 
+>             } else {
+>                 
+>                 return (sign == 0L) ? 0.0 : -0.0;
+>             }
+>         } else {
+>             
+>             if (exponent == 0) {
+> 
+>                 
+>                 while ((mantissa >>> 52) != 1) {
+>                     mantissa = mantissa << 1;
+>                     --scaledExponent;
+>                 }
+>                 ++scaledExponent;
+>                 mantissa = mantissa & 0x000fffffffffffffL;
+> 
+>                 if (scaledExponent < 2047) {
+>                     return Double.longBitsToDouble(sign | (((long) scaledExponent) << 52) | mantissa);
+>                 } else {
+>                     return (sign == 0L) ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+>                 }
+> 
+>             } else if (scaledExponent < 2047) {
+>                 return Double.longBitsToDouble(sign | (((long) scaledExponent) << 52) | mantissa);
+>             } else {
+>                 return (sign == 0L) ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+>             }
+>         }
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public static float scalb(final float f, final int n) {
+> 
+>         
+>         if ((n > -127) && (n < 128)) {
+>             return f * Float.intBitsToFloat((n + 127) << 23);
+>         }
+> 
+>         
+>         if (Float.isNaN(f) || Float.isInfinite(f) || (f == 0f)) {
+>             return f;
+>         }
+> 
+>         
+>         final int bits = Float.floatToIntBits(f);
+>         final int sign = bits & 0x80000000;
+>         int  exponent  = (bits >>> 23) & 0xff;
+>         int mantissa   = bits & 0x007fffff;
+> 
+>         
+>         int scaledExponent = exponent + n;
+> 
+>         if (n < 0) {
+>             
+>             if (scaledExponent > 0) {
+>                 
+>                 return Float.intBitsToFloat(sign | (scaledExponent << 23) | mantissa);
+>             } else if (scaledExponent > -24) {
+>                 
+> 
+>                 
+>                 mantissa = mantissa | (1 << 23);
+> 
+>                 
+>                 final int mostSignificantLostBit = mantissa & (1 << (-scaledExponent));
+>                 mantissa = mantissa >>> (1 - scaledExponent);
+>                 if (mostSignificantLostBit != 0) {
+>                     
+>                     mantissa++;
+>                 }
+>                 return Float.intBitsToFloat(sign | mantissa);
+> 
+>             } else {
+>                 
+>                 return (sign == 0) ? 0.0f : -0.0f;
+>             }
+>         } else {
+>             
+>             if (exponent == 0) {
+> 
+>                 
+>                 while ((mantissa >>> 23) != 1) {
+>                     mantissa = mantissa << 1;
+>                     --scaledExponent;
+>                 }
+>                 ++scaledExponent;
+>                 mantissa = mantissa & 0x007fffff;
+> 
+>                 if (scaledExponent < 255) {
+>                     return Float.intBitsToFloat(sign | (scaledExponent << 23) | mantissa);
+>                 } else {
+>                     return (sign == 0) ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
+>                 }
+> 
+>             } else if (scaledExponent < 255) {
+>                 return Float.intBitsToFloat(sign | (scaledExponent << 23) | mantissa);
+>             } else {
+>                 return (sign == 0) ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
+>             }
+>         }
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 

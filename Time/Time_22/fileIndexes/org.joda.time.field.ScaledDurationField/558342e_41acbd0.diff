@@ -1,0 +1,66 @@
+108c108,109
+<         return getWrappedField().getMillis(value * iScalar);
+---
+>         long scaled = ((long) value) * ((long) iScalar);
+>         return getWrappedField().getMillis(scaled);
+112c113,114
+<         return getWrappedField().getMillis(value * iScalar);
+---
+>         long scaled = FieldUtils.safeMultiply(value, iScalar);
+>         return getWrappedField().getMillis(scaled);
+116c118,119
+<         return getWrappedField().getMillis(value * iScalar, instant);
+---
+>         long scaled = ((long) value) * ((long) iScalar);
+>         return getWrappedField().getMillis(scaled, instant);
+120c123,124
+<         return getWrappedField().getMillis(value * iScalar, instant);
+---
+>         long scaled = FieldUtils.safeMultiply(value, iScalar);
+>         return getWrappedField().getMillis(scaled, instant);
+124c128,129
+<         return getWrappedField().add(instant, value * iScalar);
+---
+>         long scaled = ((long) value) * ((long) iScalar);
+>         return getWrappedField().add(instant, scaled);
+128c133,134
+<         return getWrappedField().add(instant, value * iScalar);
+---
+>         long scaled = FieldUtils.safeMultiply(value, iScalar);
+>         return getWrappedField().add(instant, scaled);
+143a150
+>     
+150a158,190
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean equals(Object obj) {
+>         if (this == obj) {
+>             return true;
+>         } else if (obj instanceof ScaledDurationField) {
+>             ScaledDurationField other = (ScaledDurationField) obj;
+>             return (getWrappedField().equals(other.getWrappedField())) &&
+>                    (getType() == other.getType()) &&
+>                    (iScalar == other.iScalar);
+>         }
+>         return false;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public int hashCode() {
+>         long scalar = iScalar;
+>         int hash = (int) (scalar ^ (scalar >>> 32));
+>         hash += getType().hashCode();
+>         hash += getWrappedField().hashCode();
+>         return hash;
+>     }
+> 

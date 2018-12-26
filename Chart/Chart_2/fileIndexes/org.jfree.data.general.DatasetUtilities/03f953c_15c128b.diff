@@ -1,0 +1,533 @@
+117a118,122
+> 
+> 
+> 
+> 
+> 
+130a136
+> import org.jfree.data.category.CategoryRangeInfo;
+133a140,141
+> import org.jfree.data.statistics.BoxAndWhiskerXYDataset;
+> import org.jfree.data.statistics.StatisticalCategoryDataset;
+137a146,147
+> import org.jfree.data.xy.XYDomainInfo;
+> import org.jfree.data.xy.XYRangeInfo;
+269,274c279,281
+<                                                           Comparable key,
+<                                                           double minimumPercent)
+<     {
+<         return DatasetUtilities.createConsolidatedPieDataset(
+<             source, key, minimumPercent, 2
+<         );
+---
+>             Comparable key, double minimumPercent) {
+>         return DatasetUtilities.createConsolidatedPieDataset(source, key,
+>                 minimumPercent, 2);
+293,295c300
+<                                                           Comparable key,
+<                                                           double minimumPercent,
+<                                                           int minItems) {
+---
+>             Comparable key, double minimumPercent, int minItems) {
+355,356c360
+<                                                         String columnKeyPrefix,
+<                                                         double[][] data) {
+---
+>             String columnKeyPrefix, double[][] data) {
+384,385c388
+<                                                         String columnKeyPrefix,
+<                                                         Number[][] data) {
+---
+>             String columnKeyPrefix, Number[][] data) {
+413,414c416
+<                                                         Comparable[] columnKeys,
+<                                                         double[][] data) {
+---
+>             Comparable[] columnKeys, double[][] data) {
+428,429c430
+<                 "Duplicate items in 'columnKeys'."
+<             );
+---
+>                     "Duplicate items in 'columnKeys'.");
+434,435c435
+<                 + "the data array."
+<             );
+---
+>                 + "the data array.");
+444,445c444
+<                 + "columns in the data array."
+<             );
+---
+>                 + "columns in the data array.");
+502a502,526
+>         
+>         XYSeries series = sampleFunction2DToSeries(f, start, end, samples,
+>                 seriesKey);
+>         XYSeriesCollection collection = new XYSeriesCollection(series);
+>         return collection;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static XYSeries sampleFunction2DToSeries(Function2D f,
+>             double start, double end, int samples, Comparable seriesKey) {
+> 
+522,523c546
+<         XYSeriesCollection collection = new XYSeriesCollection(series);
+<         return collection;
+---
+>         return series;
+660a684,709
+>     public static Range findDomainBounds(XYDataset dataset,
+>             List visibleSeriesKeys, boolean includeInterval) {
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         Range result = null;
+>         if (dataset instanceof XYDomainInfo) {
+>             XYDomainInfo info = (XYDomainInfo) dataset;
+>             result = info.getDomainBounds(visibleSeriesKeys, includeInterval);
+>         }
+>         else {
+>             result = iterateToFindDomainBounds(dataset, visibleSeriesKeys,
+>                     includeInterval);
+>         }
+>         return result;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+767a817,847
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Range findRangeBounds(CategoryDataset dataset,
+>             List visibleSeriesKeys, boolean includeInterval) {
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         Range result = null;
+>         if (dataset instanceof CategoryRangeInfo) {
+>             CategoryRangeInfo info = (CategoryRangeInfo) dataset;
+>             result = info.getRangeBounds(visibleSeriesKeys, includeInterval);
+>         }
+>         else {
+>             result = iterateToFindRangeBounds(dataset, visibleSeriesKeys,
+>                     includeInterval);
+>         }
+>         return result;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+808a889,940
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Range findRangeBounds(XYDataset dataset,
+>             List visibleSeriesKeys, Range xRange, boolean includeInterval) {
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         Range result = null;
+>         if (dataset instanceof XYRangeInfo) {
+>             XYRangeInfo info = (XYRangeInfo) dataset;
+>             result = info.getRangeBounds(visibleSeriesKeys, xRange,
+>                     includeInterval);
+>         }
+>         else {
+>             result = iterateToFindRangeBounds(dataset, visibleSeriesKeys,
+>                     xRange, includeInterval);
+>         }
+>         return result;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Range iterateCategoryRangeBounds(CategoryDataset dataset,
+>             boolean includeInterval) {
+>         return iterateRangeBounds(dataset, includeInterval);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+881a1014,1131
+> 
+> 
+> 
+>     public static Range iterateToFindRangeBounds(CategoryDataset dataset,
+>             List visibleSeriesKeys, boolean includeInterval) {
+> 
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         if (visibleSeriesKeys == null) {
+>             throw new IllegalArgumentException(
+>                     "Null 'visibleSeriesKeys' argument.");
+>         }
+> 
+>         double minimum = Double.POSITIVE_INFINITY;
+>         double maximum = Double.NEGATIVE_INFINITY;
+>         int columnCount = dataset.getColumnCount();
+>         if (includeInterval && dataset instanceof IntervalCategoryDataset) {
+>             
+>             
+>             IntervalCategoryDataset icd = (IntervalCategoryDataset) dataset;
+>             Number lvalue, uvalue;
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.getRowIndex(seriesKey);
+>                 for (int column = 0; column < columnCount; column++) {
+>                     lvalue = icd.getStartValue(series, column);
+>                     uvalue = icd.getEndValue(series, column);
+>                     if (lvalue != null && !Double.isNaN(lvalue.doubleValue())) {
+>                         minimum = Math.min(minimum, lvalue.doubleValue());
+>                     }
+>                     if (uvalue != null && !Double.isNaN(uvalue.doubleValue())) {
+>                         maximum = Math.max(maximum, uvalue.doubleValue());
+>                     }
+>                 }
+>             }
+>         }
+>         else if (includeInterval
+>                 && dataset instanceof StatisticalCategoryDataset) {
+>             
+>             
+>             StatisticalCategoryDataset scd
+>                     = (StatisticalCategoryDataset) dataset;
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.getRowIndex(seriesKey);
+>                 for (int column = 0; column < columnCount; column++) {
+>                     Number meanN = scd.getMeanValue(series, column);
+>                     if (meanN != null) {
+>                         double std = 0.0;
+>                         Number stdN = scd.getStdDevValue(series, column);
+>                         if (stdN != null) {
+>                             std = stdN.doubleValue();
+>                             if (Double.isNaN(std)) {
+>                                 std = 0.0;
+>                             }
+>                         }
+>                         double mean = meanN.doubleValue();
+>                         if (!Double.isNaN(mean)) {
+>                             minimum = Math.min(minimum, mean - std);
+>                             maximum = Math.max(maximum, mean + std);
+>                         }
+>                     }
+>                 }
+>             }
+>         }
+>         else {
+>             
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.getRowIndex(seriesKey);
+>                 for (int column = 0; column < columnCount; column++) {
+>                     Number value = dataset.getValue(series, column);
+>                     if (value != null) {
+>                         double v = value.doubleValue();
+>                         if (!Double.isNaN(v)) {
+>                             minimum = Math.min(minimum, v);
+>                             maximum = Math.max(maximum, v);
+>                         }
+>                     }
+>                 }
+>             }
+>         }
+>         if (minimum == Double.POSITIVE_INFINITY) {
+>             return null;
+>         }
+>         else {
+>             return new Range(minimum, maximum);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Range iterateXYRangeBounds(XYDataset dataset) {
+>         return iterateRangeBounds(dataset);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+973a1224,1428
+> 
+> 
+>     public static Range iterateToFindDomainBounds(XYDataset dataset,
+>             List visibleSeriesKeys, boolean includeInterval) {
+> 
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         if (visibleSeriesKeys == null) {
+>             throw new IllegalArgumentException(
+>                     "Null 'visibleSeriesKeys' argument.");
+>         }
+> 
+>         double minimum = Double.POSITIVE_INFINITY;
+>         double maximum = Double.NEGATIVE_INFINITY;
+> 
+>         if (includeInterval && dataset instanceof IntervalXYDataset) {
+>             
+>             IntervalXYDataset ixyd = (IntervalXYDataset) dataset;
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.indexOf(seriesKey);
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double lvalue = ixyd.getStartXValue(series, item);
+>                     double uvalue = ixyd.getEndXValue(series, item);
+>                     if (!Double.isNaN(lvalue)) {
+>                         minimum = Math.min(minimum, lvalue);
+>                     }
+>                     if (!Double.isNaN(uvalue)) {
+>                         maximum = Math.max(maximum, uvalue);
+>                     }
+>                 }
+>             }
+>         }
+>         else {
+>             
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.indexOf(seriesKey);
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double x = dataset.getXValue(series, item);
+>                     if (!Double.isNaN(x)) {
+>                         minimum = Math.min(minimum, x);
+>                         maximum = Math.max(maximum, x);
+>                     }
+>                 }
+>             }
+>         }
+> 
+>         if (minimum == Double.POSITIVE_INFINITY) {
+>             return null;
+>         }
+>         else {
+>             return new Range(minimum, maximum);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Range iterateToFindRangeBounds(XYDataset dataset,
+>             List visibleSeriesKeys, Range xRange, boolean includeInterval) {
+> 
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         if (visibleSeriesKeys == null) {
+>             throw new IllegalArgumentException(
+>                     "Null 'visibleSeriesKeys' argument.");
+>         }
+>         if (xRange == null) {
+>             throw new IllegalArgumentException("Null 'xRange' argument");
+>         }
+> 
+>         double minimum = Double.POSITIVE_INFINITY;
+>         double maximum = Double.NEGATIVE_INFINITY;
+> 
+>         
+>         if (includeInterval && dataset instanceof OHLCDataset) {
+>             
+>             OHLCDataset ohlc = (OHLCDataset) dataset;
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.indexOf(seriesKey);
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double x = ohlc.getXValue(series, item);
+>                     if (xRange.contains(x)) {
+>                         double lvalue = ohlc.getLowValue(series, item);
+>                         double uvalue = ohlc.getHighValue(series, item);
+>                         if (!Double.isNaN(lvalue)) {
+>                             minimum = Math.min(minimum, lvalue);
+>                         }
+>                         if (!Double.isNaN(uvalue)) {
+>                             maximum = Math.max(maximum, uvalue);
+>                         }
+>                     }
+>                 }
+>             }
+>         }
+>         else if (includeInterval && dataset instanceof BoxAndWhiskerXYDataset) {
+>             
+>             BoxAndWhiskerXYDataset bx = (BoxAndWhiskerXYDataset) dataset;
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.indexOf(seriesKey);
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double x = bx.getXValue(series, item);
+>                     if (xRange.contains(x)) {
+>                         Number lvalue = bx.getMinRegularValue(series, item);
+>                         Number uvalue = bx.getMaxRegularValue(series, item);
+>                         if (lvalue != null) {
+>                             minimum = Math.min(minimum, lvalue.doubleValue());
+>                         }
+>                         if (uvalue != null) {
+>                             maximum = Math.max(maximum, uvalue.doubleValue());
+>                         }
+>                     }
+>                 }
+>             }
+>         }
+>         else if (includeInterval && dataset instanceof IntervalXYDataset) {
+>             
+>             IntervalXYDataset ixyd = (IntervalXYDataset) dataset;
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.indexOf(seriesKey);
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double x = ixyd.getXValue(series, item);
+>                     if (xRange.contains(x)) {
+>                         double lvalue = ixyd.getStartYValue(series, item);
+>                         double uvalue = ixyd.getEndYValue(series, item);
+>                         if (!Double.isNaN(lvalue)) {
+>                             minimum = Math.min(minimum, lvalue);
+>                         }
+>                         if (!Double.isNaN(uvalue)) {
+>                             maximum = Math.max(maximum, uvalue);
+>                         }
+>                     }
+>                 }
+>             }
+>         }
+>         else {
+>             
+>             Iterator iterator = visibleSeriesKeys.iterator();
+>             while (iterator.hasNext()) {
+>                 Comparable seriesKey = (Comparable) iterator.next();
+>                 int series = dataset.indexOf(seriesKey);
+>                 int itemCount = dataset.getItemCount(series);
+>                 for (int item = 0; item < itemCount; item++) {
+>                     double x = dataset.getXValue(series, item);
+>                     double y = dataset.getYValue(series, item);
+>                     if (xRange.contains(x)) {
+>                         if (!Double.isNaN(y)) {
+>                             minimum = Math.min(minimum, y);
+>                             maximum = Math.max(maximum, y);
+>                         }
+>                     }
+>                 }
+>             }
+>         }
+>         if (minimum == Double.POSITIVE_INFINITY) {
+>             return null;
+>         }
+>         else {
+>             return new Range(minimum, maximum);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1088d1542
+<         
+1093d1546
+<         

@@ -1,0 +1,84 @@
+807c807,808
+<   static boolean containsFunctionDeclaration(Node n) {
+---
+> 
+>   static boolean containsFunction(Node n) {
+815c816
+<     return containsType(n, Token.THIS);
+---
+>     return containsType(n, Token.THIS, new MatchNotFunction());
+1244c1245
+<         Predicates.<Node>not(new MatchNodeType(Token.FUNCTION)));
+---
+>         new MatchNotFunction());
+1412,1420d1412
+< 
+<   static boolean containsTypeInOuterScope(Node node, int type) {
+<     return containsType(node, type,
+<         Predicates.<Node>not(new MatchNodeType(Token.FUNCTION)));
+<   }
+< 
+<   
+< 
+< 
+1675c1667
+<         Predicates.<Node>not(new MatchNodeType(Token.FUNCTION)));
+---
+>         new MatchNotFunction());
+1783a1776
+> 
+1787,1788c1780,1783
+<   static boolean isNodeTypeReferenced(Node node, int type) {
+<     return isNodeTypeReferenced(node, type, Predicates.<Node>alwaysTrue());
+---
+>   static class MatchDeclaration implements Predicate<Node> {
+>     public boolean apply(Node n) {
+>       return isFunctionDeclaration(n) || n.getType() == Token.VAR;
+>     }
+1794,1796c1789,1792
+<   static boolean isNodeTypeReferenced(
+<       Node node, int type, Predicate<Node> traverseChildrenPred) {
+<     return has(node, new MatchNodeType(type), traverseChildrenPred);
+---
+>   static class MatchNotFunction implements Predicate<Node>{
+>     public boolean apply(Node n) {
+>       return !isFunction(n);
+>     }
+1802,1803c1798,1813
+<   static int getNodeTypeReferenceCount(Node node, int type) {
+<     return getCount(node, new MatchNodeType(type));
+---
+>   static class MatchShallowStatement implements Predicate<Node>{
+>     public boolean apply(Node n) {
+>       Node parent = n.getParent();
+>       return n.getType() == Token.BLOCK
+>           || (!isFunction(n) && (parent == null
+>               || isControlStructure(parent)
+>               || isStatementBlock(parent)));
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   static int getNodeTypeReferenceCount(
+>       Node node, int type, Predicate<Node> traverseChildrenPred) {
+>     return getCount(node, new MatchNodeType(type), traverseChildrenPred);
+1826c1836,1837
+<     return getCount(node, new MatchNameNode(name) );
+---
+>     return getCount(
+>         node, new MatchNameNode(name), Predicates.<Node>alwaysTrue());
+1856c1867,1868
+<   static int getCount(Node n, Predicate<Node> pred) {
+---
+>   static int getCount(
+>       Node n, Predicate<Node> pred, Predicate<Node> traverseChildrenPred) {
+1863,1864c1875,1878
+<     for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+<       total += getCount(c, pred);
+---
+>     if (traverseChildrenPred.apply(n)) {
+>       for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+>         total += getCount(c, pred, traverseChildrenPred);
+>       }

@@ -1,0 +1,150 @@
+44,51d43
+<   static final DiagnosticType EXPECTED_OBJECTLIT_ERROR = DiagnosticType.error(
+<       "JSC_EXPECTED_OBJECTLIT_ERROR",
+<       "method \"{0}\" expected an object literal argument");
+< 
+<   static final DiagnosticType EXPECTED_STRING_ERROR = DiagnosticType.error(
+<       "JSC_EXPECTED_STRING_ERROR",
+<       "method \"{0}\" expected an object string argument");
+< 
+54,58c46
+<       "method \"{0}\" called with invalid argument");
+< 
+<   static final DiagnosticType INVALID_STYLE_ERROR = DiagnosticType.error(
+<       "JSC_INVALID_CSS_NAME_MAP_STYLE_ERROR",
+<       "Invalid CSS name map style {0}");
+---
+>       "method \"{0}\" called with a non-string argument");
+94,97d81
+<   static final DiagnosticType INVALID_CSS_RENAMING_MAP = DiagnosticType.warning(
+<       "INVALID_CSS_RENAMING_MAP",
+<       "Invalid entries in css renaming map: {0}");
+< 
+522c506
+<     if (verifySetCssNameMapping(t, left, arg)) {
+---
+>     if (verifyArgument(t, left, arg, Token.OBJECTLIT)) {
+526c510
+< 
+---
+>       JSError error = null;
+533,536c517,522
+<           compiler.report(
+<               t.makeError(n,
+<                   NON_STRING_PASSED_TO_SET_CSS_NAME_MAPPING_ERROR));
+<           return;
+---
+>           error = t.makeError(n,
+>               NON_STRING_PASSED_TO_SET_CSS_NAME_MAPPING_ERROR);
+>         }
+>         if (error != null) {
+>           compiler.report(error);
+>           break;
+541,580c527,535
+<       String styleStr = "BY_PART";
+<       if (arg.getNext() != null) {
+<         styleStr = arg.getNext().getString();
+<       }
+< 
+<       final CssRenamingMap.Style style;
+<       try {
+<         style = CssRenamingMap.Style.valueOf(styleStr);
+<       } catch (IllegalArgumentException e) {
+<         compiler.report(
+<             t.makeError(n, INVALID_STYLE_ERROR, styleStr));
+<         return;
+<       }
+< 
+<       if (style == CssRenamingMap.Style.BY_PART) {
+<         
+<         List<String> errors = Lists.newArrayList();
+<         for (String key : cssNames.keySet()) {
+<           if (key.contains("-")) {
+<             errors.add(key);
+<           }
+<         }
+<         if (errors.size() != 0) {
+<           compiler.report(
+<             t.makeError(n, INVALID_CSS_RENAMING_MAP, errors.toString()));
+<         }
+<       } else if (style == CssRenamingMap.Style.BY_WHOLE) {
+<         
+<         
+<         
+<         
+<         List<String> errors = Lists.newArrayList();
+<         for (Map.Entry<String, String> b : cssNames.entrySet()) {
+<           if (b.getKey().length() > 10) continue;
+<           for (Map.Entry<String, String> a : cssNames.entrySet()) {
+<             String combined = cssNames.get(a.getKey() + "-" + b.getKey());
+<             if (combined != null &&
+<                 !combined.equals(a.getValue() + "-" + b.getValue())) {
+<               errors.add("map(" + a.getKey() + "-" + b.getKey() +") != map(" +
+<                          a.getKey() + ")-map(" + b.getKey() +")");
+---
+>       
+>       
+>       if (error == null) {
+>         CssRenamingMap cssRenamingMap = new CssRenamingMap() {
+>           public String get(String value) {
+>             if (cssNames.containsKey(value)) {
+>               return cssNames.get(value);
+>             } else {
+>               return value;
+583,587c538,541
+<         }
+<         if (errors.size() != 0) {
+<           compiler.report(
+<             t.makeError(n, INVALID_CSS_RENAMING_MAP, errors.toString()));
+<         }
+---
+>         };
+>         compiler.setCssRenamingMap(cssRenamingMap);
+>         parent.getParent().removeChild(parent);
+>         compiler.reportCodeChange();
+589,601d542
+< 
+<       CssRenamingMap cssRenamingMap = new CssRenamingMap() {
+<         public String get(String value) {
+<           return cssNames.get(value);
+<         }
+< 
+<         public CssRenamingMap.Style getStyle() {
+<           return style;
+<         }
+<       };
+<       compiler.setCssRenamingMap(cssRenamingMap);
+<       parent.getParent().removeChild(parent);
+<       compiler.reportCodeChange();
+605d545
+< 
+679,707d618
+<     }
+<     if (diagnostic != null) {
+<       compiler.report(
+<           t.makeError(methodName,
+<               diagnostic, methodName.getQualifiedName()));
+<       return false;
+<     }
+<     return true;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   private boolean verifySetCssNameMapping(NodeTraversal t, Node methodName,
+<       Node firstArg) {
+<     DiagnosticType diagnostic = null;
+<     if (firstArg == null) {
+<       diagnostic = NULL_ARGUMENT_ERROR;
+<     } else if (firstArg.getType() != Token.OBJECTLIT) {
+<       diagnostic = EXPECTED_OBJECTLIT_ERROR;
+<     } else if (firstArg.getNext() != null) {
+<       Node secondArg = firstArg.getNext();
+<       if (secondArg.getType() != Token.STRING) {
+<         diagnostic = EXPECTED_STRING_ERROR;
+<       } else if (secondArg.getNext() != null) {
+<         diagnostic = TOO_MANY_ARGUMENTS_ERROR;
+<       }

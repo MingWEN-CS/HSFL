@@ -1,0 +1,84 @@
+34d33
+< import org.apache.commons.math.distribution.GammaDistributionImpl;
+687a687,695
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+689c697,765
+<         return nextInversionDeviate(new GammaDistributionImpl(shape, scale));
+---
+>         if (shape < 1) {
+>             
+> 
+> 
+> 
+> 
+> 
+>             
+> 
+>             while (true) {
+>                 
+>                 final double u = this.nextUniform(0, 1);
+>                 final double bGS = 1 + shape/FastMath.E;
+>                 final double p = bGS*u;
+> 
+>                 if (p <= 1) {
+>                     
+> 
+>                     final double x = FastMath.pow(p, 1/shape);
+>                     final double u2 = this.nextUniform(0.0, 1);
+> 
+>                     if (u2 > FastMath.exp(-x)) {
+>                         
+>                         continue;
+>                     } else {
+>                         return scale*x;
+>                     }
+>                 } else {
+>                     
+> 
+>                     final double x = -1 * FastMath.log((bGS-p)/shape);
+>                     final double u2 = this.nextUniform(0, 1);
+> 
+>                     if (u2 > FastMath.pow(x, shape - 1)) {
+>                         
+>                         continue;
+>                     } else {
+>                         return scale*x;
+>                     }
+>                 }
+>             }
+>         }
+> 
+>         
+> 
+>         final RandomGenerator generator = this.getRan();
+>         final double d = shape - 0.333333333333333333;
+>         final double c = 1.0 / (3*FastMath.sqrt(d));
+> 
+>         while (true) {
+>             final double x = generator.nextGaussian();
+>             final double v = (1+c*x)*(1+c*x)*(1+c*x);
+> 
+>             if (v <= 0) {
+>                 continue;
+>             }
+> 
+>             final double xx = x*x;
+>             final double u = this.nextUniform(0, 1);
+> 
+>             
+>             if (u < 1 - 0.0331*xx*xx) {
+>                 return scale*d*v;
+>             }
+> 
+>             if (FastMath.log(u) < 0.5*xx + d*(1 - v + FastMath.log(v))) {
+>                 return scale*d*v;
+>             }
+>         }

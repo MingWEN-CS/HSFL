@@ -1,0 +1,59 @@
+18a19
+> import com.google.common.annotations.VisibleForTesting;
+123c124
+<         writer.write(entry.getKey());
+---
+>         writer.write(escape(entry.getKey()));
+125c126
+<         writer.write(entry.getValue());
+---
+>         writer.write(escape(entry.getValue()));
+155c156
+<       int pos = line.lastIndexOf(SEPARATOR);
+---
+>       int pos = findIndexOfChar(line, SEPARATOR);
+159c160,162
+<       map.put(line.substring(0, pos), line.substring(pos + 1));
+---
+>       map.put(
+>           unescape(line.substring(0, pos)),
+>           unescape(line.substring(pos + 1)));
+163a167,198
+>   private static String escape(String value) {
+>     return value.replace("\\", "\\\\")
+>         .replace(":", "\\:")
+>         .replace("\n", "\\n");
+>   }
+> 
+>   private static int findIndexOfChar(String value, char stopChar) {
+>     int len = value.length();
+>     for (int i=0; i<len; i++) {
+>       char c = value.charAt(i);
+>       if (c == '\\' && ++i < len) {
+>         c = value.charAt(i);
+>       } else if (c == stopChar){
+>         return i;
+>       }
+>     }
+>     return -1;
+>   }
+> 
+>   private static String unescape(CharSequence value) {
+>     StringBuilder sb = new StringBuilder();
+>     int len = value.length();
+>     for (int i=0; i<len; i++) {
+>       char c = value.charAt(i);
+>       if (c == '\\' && ++i < len) {
+>         c = value.charAt(i);
+>       }
+>       sb.append(c);
+>     }
+>     return sb.toString();
+>   }
+> 
+171a207,211
+>   }
+> 
+>   @VisibleForTesting
+>   Map<String, String> toMap() {
+>     return map;

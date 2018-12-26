@@ -1,0 +1,95 @@
+34a35
+> import java.io.BufferedReader;
+105a107
+>   private Map<String, String> rootRelativePathsMap = null;
+371a374,381
+>         if (!config.outputManifests.isEmpty()) {
+>           throw new FlagUsageException("Manifest files cannot be generated " +
+>               "when the input is from stdin.");
+>         }
+>         if (!config.outputBundles.isEmpty()) {
+>           throw new FlagUsageException("Bundle files cannot be generated " +
+>               "when the input is from stdin.");
+>         }
+709a720,721
+>     rootRelativePathsMap = constructRootRelativePathsMap();
+> 
+1145,1148d1156
+<   
+< 
+< 
+< 
+1156a1165,1168
+>   
+> 
+> 
+> 
+1234d1245
+<     List<String> names = Lists.newArrayList();
+1236c1247,1252
+<       names.add(input.getName());
+---
+>       String rootRelativePath = rootRelativePathsMap.get(input.getName());
+>       String displayName = rootRelativePath != null
+>                                ? rootRelativePath
+>                                : input.getName();
+>       out.append(displayName);
+>       out.append("\n");
+1238,1240d1253
+<     String result = Joiner.on("\n").join(names);
+<     out.append(result);
+<     out.append("\n");
+1250c1263,1266
+<       out.append("
+---
+>       String rootRelativePath = rootRelativePathsMap.get(input.getName());
+>       String displayName = rootRelativePath != null
+>                                ? rootRelativePath
+>                                : input.getName();
+1252,1254c1268,1269
+<       if (file.canRead()) {
+<         Files.copy(file, inputCharset, out);
+<       }
+---
+>       out.append("
+>       out.append(displayName);
+1255a1271,1294
+>       Files.copy(file, inputCharset, out);
+>       out.append("\n");
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private Map<String, String> constructRootRelativePathsMap()
+>       throws IOException {
+>     Map<String, String> rootRelativePathsMap = Maps.newLinkedHashMap();
+>     if (!config.manifestMapFile.equals("")) {
+>       File mapFile = new File(config.manifestMapFile);
+>       BufferedReader br = Files.newReader(mapFile, Charsets.UTF_8);
+>       String line;
+>       while ((line = br.readLine()) != null) {
+>         int colonIndex = line.indexOf(':');
+>         Preconditions.checkState(colonIndex > 0);
+>         String execPath = line.substring(0, colonIndex);
+>         String rootRelativePath = line.substring(colonIndex + 1);
+>         Preconditions.checkState(rootRelativePath.indexOf(':') == -1);
+>         rootRelativePathsMap.put(execPath, rootRelativePath);
+>       }
+1256a1296
+>     return rootRelativePathsMap;
+1707a1748,1759
+> 
+>     
+> 
+> 
+> 
+>     private String manifestMapFile = "";
+> 
+>     CommandLineConfig setManifestMapFile(String manifestMapFile) {
+>       this.manifestMapFile = manifestMapFile;
+>       return this;
+>     }
+> 

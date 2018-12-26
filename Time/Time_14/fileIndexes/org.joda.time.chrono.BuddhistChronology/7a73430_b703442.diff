@@ -1,0 +1,31 @@
+62a63
+> import org.joda.time.DateTimeFieldType;
+211c212
+<             fields.year = new OffsetDateTimeField(field, field.getName(), BUDDHIST_OFFSET);
+---
+>             fields.year = new OffsetDateTimeField(field, BUDDHIST_OFFSET);
+214c215,216
+<             fields.yearOfEra = new OffsetDateTimeField(fields.year, field.getName(), BUDDHIST_OFFSET);
+---
+>             fields.yearOfEra = new OffsetDateTimeField(
+>                 fields.year, DateTimeFieldType.yearOfEra(), BUDDHIST_OFFSET);
+217c219
+<             fields.weekyear = new OffsetDateTimeField(field, field.getName(), BUDDHIST_OFFSET);
+---
+>             fields.weekyear = new OffsetDateTimeField(field, BUDDHIST_OFFSET);
+219,224c221,228
+<             field = new OffsetDateTimeField(fields.yearOfEra, "", 99);
+<             fields.centuryOfEra = new DividedDateTimeField(field, "centuryOfEra", "centuries", 100);
+<             
+<             field = new RemainderDateTimeField
+<                 ((DividedDateTimeField)fields.centuryOfEra, "");
+<             fields.yearOfCentury = new OffsetDateTimeField(field, "yearOfCentury", 1);
+---
+>             field = new OffsetDateTimeField(fields.yearOfEra, 99);
+>             fields.centuryOfEra = new DividedDateTimeField(
+>                 field, DateTimeFieldType.centuryOfEra(), "centuries", 100);
+>             
+>             field = new RemainderDateTimeField(
+>                 (DividedDateTimeField) fields.centuryOfEra);
+>             fields.yearOfCentury = new OffsetDateTimeField(
+>                 field, DateTimeFieldType.yearOfCentury(), 1);

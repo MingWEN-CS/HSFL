@@ -1,0 +1,49 @@
+18a19,20
+> import com.google.common.base.Predicate;
+> import com.google.common.base.Predicates;
+113c115
+<       String fnName, Node fnNode) {
+---
+>       final String fnName, Node fnNode) {
+118,120c120,123
+<     if (NodeUtil.isNameReferenced(block, fnName)) {
+<       return false;
+<     }
+---
+>     
+>     
+>     
+>     
+122,128c125,126
+<     String fnRecursionName = fnNode.getFirstChild().getString();
+<     if (fnRecursionName != null
+<         && !fnRecursionName.isEmpty()
+<         && !fnRecursionName.equals(fnName)
+<         && NodeUtil.isNameReferenced(block, fnRecursionName)) {
+<       return false;
+<     }
+---
+>     final String fnRecursionName = fnNode.getFirstChild().getString();
+>     Preconditions.checkState(fnRecursionName != null);
+130,133c128,139
+<     
+<     if (NodeUtil.isNameReferenced(block, "arguments")) {
+<       return false;
+<     }
+---
+>     Predicate<Node> p = new Predicate<Node>(){
+>       public boolean apply(Node n) {
+>         if (n.getType() == Token.NAME) {
+>           return n.getString().equals("arguments")
+>             || n.getString().equals("eval")
+>             || n.getString().equals(fnName)
+>             || (!fnRecursionName.isEmpty()
+>                 && n.getString().equals(fnRecursionName));
+>         }
+>         return false;
+>       }
+>     };
+135c141
+<     return true;
+---
+>     return !NodeUtil.has(block, p, Predicates.<Node>alwaysTrue());

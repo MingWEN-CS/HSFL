@@ -1,0 +1,42 @@
+193,195c193,195
+<             "output to the specified path. If %module% is added, " +
+<             "a source map will be generated for each module, with the " +
+<             " module's name placed into the path at that spot")
+---
+>             "output to the specified path. The %outname% placeholder will " +
+>             "expand to the name of the output file that the source map " +
+>             "corresponds to.")
+713c713
+<           mapOut = openSourceMapStream(options, moduleFilePrefix, null);
+---
+>           mapOut = openSourceMapStream(options, moduleFilePrefix);
+718,719c718,719
+<             mapOut =
+<                 openSourceMapStream(options, moduleFilePrefix, m.getName());
+---
+>             mapOut = openSourceMapStream(
+>                 options, moduleFilePrefix + m.getName() + ".js");
+797c797
+<         && options.sourceMapOutputPath.contains("%module%");
+---
+>         && options.sourceMapOutputPath.contains("%outname%");
+833,836c833,834
+< 
+< 
+<   private PrintStream openSourceMapStream(B options, String path,
+<       String module) throws IOException {
+---
+>   private PrintStream openSourceMapStream(B options, String path)
+>       throws IOException {
+842,846c840
+< 
+<     
+<     if (module != null) {
+<       sourceMapPath = sourceMapPath.replace("%module%", module);
+<     }
+---
+>     sourceMapPath = sourceMapPath.replace("%outname%", path);
+875c869
+<     PrintStream out = openSourceMapStream(options, path, null);
+---
+>     PrintStream out = openSourceMapStream(options, path + ".js");

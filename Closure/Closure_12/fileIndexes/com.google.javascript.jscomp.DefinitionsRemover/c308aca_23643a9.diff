@@ -1,0 +1,32 @@
+39a40
+>     
+63a65,93
+> 
+>   
+> 
+> 
+>   static boolean isDefinitionNode(Node n) {
+>     
+>     Node parent = n.getParent();
+>     if (parent == null) {
+>       return false;
+>     }
+> 
+>     if (NodeUtil.isVarDeclaration(n) && n.hasChildren()) {
+>       return true;
+>     } else if (NodeUtil.isFunction(parent) && parent.getFirstChild() == n) {
+>       if (!NodeUtil.isFunctionExpression(parent)) {
+>         return true;
+>       } else if (!n.getString().equals("")) {
+>         return true;
+>       }
+>     } else if (NodeUtil.isAssign(parent) && parent.getFirstChild() == n) {
+>       return true;
+>     } else if (NodeUtil.isObjectLitKey(n, parent)) {
+>       return true;
+>     } else if (parent.getType() == Token.LP) {
+>       return true;
+>     }
+>     return false;
+>   }
+> 

@@ -1,0 +1,45 @@
+76a77,78
+> import com.google.javascript.rhino.jstype.TemplateTypeMap;
+> import com.google.javascript.rhino.jstype.TemplateTypeMapReplacer;
+931a934,941
+>           ObjectType prototypeOwner = getPrototypeOwnerType(ownerType);
+>           TemplateTypeMap prototypeOwnerTypeMap = null;
+>           if (prototypeOwner != null &&
+>               prototypeOwner.getTypeOfThis() != null) {
+>               prototypeOwnerTypeMap =
+>                   prototypeOwner.getTypeOfThis().getTemplateTypeMap();
+>           }
+> 
+934c944,945
+<             overriddenType = findOverriddenFunction(ownerType, propName);
+---
+>             overriddenType = findOverriddenFunction(
+>                 ownerType, propName, prototypeOwnerTypeMap);
+937,938d947
+<           ObjectType prototypeOwner = getPrototypeOwnerType(ownerType);
+< 
+993c1002,1004
+<         ObjectType ownerType, String propName) {
+---
+>         ObjectType ownerType, String propName, TemplateTypeMap typeMap) {
+>       FunctionType result = null;
+> 
+998c1009
+<         return propType.toMaybeFunctionType();
+---
+>         result =  propType.toMaybeFunctionType();
+1006c1017,1018
+<             return propType.toMaybeFunctionType();
+---
+>             result = propType.toMaybeFunctionType();
+>             break;
+1011c1023,1029
+<       return null;
+---
+>       if (result != null && typeMap != null && !typeMap.isEmpty()) {
+>         result = result.visit(
+>             new TemplateTypeMapReplacer(typeRegistry, typeMap))
+>             .toMaybeFunctionType();
+>       }
+> 
+>       return result;

@@ -1,0 +1,123 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino;
+
+import com.google.javascript.rhino.jstype.JSType;
+import com.google.javascript.rhino.jstype.JSTypeRegistry;
+import com.google.javascript.rhino.jstype.StaticScope;
+
+import java.io.Serializable;
+
+
+
+
+
+
+
+
+public final class JSTypeExpression implements Serializable {
+  private static final long serialVersionUID = 1L;
+
+  
+  private final Node root;
+
+  
+  private final String sourceName;
+
+  public JSTypeExpression(Node root, String sourceName) {
+    this.root = root;
+    this.sourceName = sourceName;
+  }
+
+  
+
+
+
+  public static JSTypeExpression makeOptionalArg(JSTypeExpression expr) {
+    if (expr.isOptionalArg() || expr.isVarArgs()) {
+      return expr;
+    } else {
+      return new JSTypeExpression(
+          new Node(Token.EQUALS, expr.root), expr.sourceName);
+    }
+  }
+
+  
+
+
+  public boolean isOptionalArg() {
+    return root.getType() == Token.EQUALS;
+  }
+
+  
+
+
+  public boolean isVarArgs() {
+    return root.getType() == Token.ELLIPSIS;
+  }
+
+  
+
+
+  public JSType evaluate(StaticScope<JSType> scope, JSTypeRegistry registry) {
+    JSType type = registry.createFromTypeNodes(root, sourceName, scope);
+    root.setJSType(type);
+    return type;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return other instanceof JSTypeExpression &&
+        ((JSTypeExpression) other).root.isEquivalentTo(root);
+  }
+
+  @Override
+  public int hashCode() {
+    return root.toStringTree().hashCode();
+  }
+
+  
+
+
+
+  public Node getRoot() {
+    return root;
+  }
+}

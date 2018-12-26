@@ -1,0 +1,125 @@
+18a19
+> import com.google.common.collect.Lists;
+20a22,23
+> import com.google.javascript.rhino.IR;
+> import com.google.javascript.rhino.JSDocInfoBuilder;
+23a27
+> import java.util.List;
+35c39,41
+< final class CheckSideEffects extends AbstractPostOrderCallback {
+---
+> 
+> final class CheckSideEffects extends AbstractPostOrderCallback
+>     implements HotSwapCompilerPass {
+40a47,48
+>   static final String PROTECTOR_FN = "JSCOMPILER_PRESERVE";
+> 
+43c51,59
+<   CheckSideEffects(CheckLevel level) {
+---
+>   private final List<Node> problemNodes = Lists.newArrayList();
+> 
+>   private final AbstractCompiler compiler;
+> 
+>   private final boolean protectSideEffectFreeCode;
+> 
+>   CheckSideEffects(AbstractCompiler compiler, CheckLevel level,
+>       boolean protectSideEffectFreeCode) {
+>     this.compiler = compiler;
+44a61,80
+>     this.protectSideEffectFreeCode = protectSideEffectFreeCode;
+>   }
+> 
+>   @Override
+>   public void process(Node externs, Node root) {
+>     NodeTraversal.traverse(compiler, root, this);
+> 
+>     
+>     
+>     
+>     
+>     
+>     if (protectSideEffectFreeCode) {
+>       protectSideEffects();
+>     }
+>   }
+> 
+>   @Override
+>   public void hotSwapScript(Node scriptRoot, Node originalRoot) {
+>     NodeTraversal.traverse(compiler, scriptRoot, this);
+58c94
+<     if (parent == null)
+---
+>     if (parent == null) {
+59a96
+>     }
+122a160,228
+>       
+>       
+>       if (!NodeUtil.isStatement(n)) {
+>         problemNodes.add(n);
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private void protectSideEffects() {
+>     if (!problemNodes.isEmpty()) {
+>       addExtern();
+>       for (Node n : problemNodes) {
+>         Node name = IR.name(PROTECTOR_FN).srcref(n);
+>         name.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>         Node replacement = IR.call(name).srcref(n);
+>         replacement.putBooleanProp(Node.FREE_CALL, true);
+>         n.getParent().replaceChild(n, replacement);
+>         replacement.addChildToBack(n);
+>       }
+>       compiler.reportCodeChange();
+>     }
+>   }
+> 
+>   private void addExtern() {
+>     Node name = IR.name(PROTECTOR_FN);
+>     name.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>     Node var = IR.var(name);
+>     
+>     JSDocInfoBuilder builder = new JSDocInfoBuilder(false);
+>     builder.recordNoAlias();
+>     var.setJSDocInfo(builder.build(var));
+>     CompilerInput input = compiler.getSynthesizedExternsInput();
+>     input.getAstRoot(compiler).addChildrenToBack(var);
+>     compiler.reportCodeChange();
+>   }
+> 
+>   
+> 
+> 
+>   static class StripProtection extends AbstractPostOrderCallback implements CompilerPass {
+> 
+>     private final AbstractCompiler compiler;
+> 
+>     StripProtection(AbstractCompiler compiler) {
+>       this.compiler = compiler;
+>     }
+> 
+>     @Override
+>     public void process(Node externs, Node root) {
+>       NodeTraversal.traverse(compiler, root, this);
+>     }
+> 
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       if (n.isCall()) {
+>         Node target = n.getFirstChild();
+>         
+>         
+>         if (target.isName() && target.getString().equals(PROTECTOR_FN)) {
+>           Node expr = n.getLastChild();
+>           n.detachChildren();
+>           parent.replaceChild(n, expr);
+>         }
+>       }

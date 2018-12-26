@@ -1,0 +1,30 @@
+316c316,317
+<     if (n == null) {
+---
+>     String sourceFileName = getBestSourceFileName(n);
+>     if (sourceFileName == null) {
+322c323
+<     String src = compiler.getSourceLine(sourceName, lineNumber);
+---
+>     String src = compiler.getSourceLine(sourceFileName, lineNumber);
+326c327
+<     return sourceName + ":" + lineNumber + ":" + columnNumber + "\n"
+---
+>     return sourceFileName + ":" + lineNumber + ":" + columnNumber + "\n"
+649c650,651
+<     JSError error = JSError.make(getSourceName(), n, diagnosticType, arguments);
+---
+>     JSError error = JSError.make(getBestSourceFileName(n),
+>         n, diagnosticType, arguments);
+671c673
+<     return JSError.make(getSourceName(), n, level, type, arguments);
+---
+>     return JSError.make(getBestSourceFileName(n), n, level, type, arguments);
+682c684,688
+<     return JSError.make(getSourceName(), n, type, arguments);
+---
+>     return JSError.make(getBestSourceFileName(n), n, type, arguments);
+>   }
+> 
+>   private String getBestSourceFileName(Node n) {
+>     return n == null ? sourceName : n.getSourceFileName();

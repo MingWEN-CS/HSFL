@@ -1,0 +1,14 @@
+357c357
+<   private void declareNativeType(Scope scope, String name, JSType t) {
+---
+>   private static void declareNativeType(Scope scope, String name, JSType t) {
+1670c1670,1676
+<         return false;
+---
+>         String className = qName.substring(0, qName.lastIndexOf(".prototype"));
+>         Var slot = scope.getSlot(className);
+>         JSType classType = slot == null ? null : slot.getType();
+>         if (classType != null
+>             && (classType.isConstructor() || classType.isInterface())) {
+>           return false;
+>         }

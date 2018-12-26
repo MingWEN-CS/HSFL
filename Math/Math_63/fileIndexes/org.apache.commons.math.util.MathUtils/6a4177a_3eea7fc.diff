@@ -1,0 +1,93 @@
+412a413,418
+> 
+> 
+> 
+> 
+> 
+> 
+424a431,439
+>     public static boolean equalsIncludingNaN(double x, double y) {
+>         return (Double.isNaN(x) && Double.isNaN(y)) || equals(x, y, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+430c445,459
+<       return equals(x, y) || (Math.abs(y - x) <= eps);
+---
+>         return equals(x, y, 1) || Math.abs(y - x) <= eps;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equalsIncludingNaN(double x, double y, double eps) {
+>         return equalsIncludingNaN(x, y) || (Math.abs(y - x) <= eps);
+446a476,478
+> 
+> 
+> 
+463c495,512
+<         return Math.abs(xInt - yInt) <= maxUlps;
+---
+>         final boolean isEqual = (Math.abs(xInt - yInt) <= maxUlps);
+> 
+>         return isEqual && !Double.isNaN(x) && !Double.isNaN(y);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equalsIncludingNaN(double x, double y, int maxUlps) {
+>         return (Double.isNaN(x) && Double.isNaN(y)) || equals(x, y, maxUlps);
+475a525,530
+> 
+> 
+> 
+> 
+> 
+> 
+484a540,564
+>                 return false;
+>             }
+>         }
+>         return true;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean equalsIncludingNaN(double[] x, double[] y) {
+>         if ((x == null) || (y == null)) {
+>             return !((x == null) ^ (y == null));
+>         }
+>         if (x.length != y.length) {
+>             return false;
+>         }
+>         for (int i = 0; i < x.length; ++i) {
+>             if (!equalsIncludingNaN(x[i], y[i])) {

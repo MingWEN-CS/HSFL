@@ -1,0 +1,16 @@
+1167,1168c1167,1178
+<           cb.append("
+<             .append(String.valueOf(inputSeqNum))
+---
+>           Preconditions.checkState(root.getType() == Token.SCRIPT);
+>           
+>           String delimiter = options_.inputDelimiter;
+>           
+>           String sourceName = (String)root.getProp(Node.SOURCENAME_PROP);
+>           Preconditions.checkState(sourceName != null);
+>           Preconditions.checkState(!sourceName.isEmpty());
+>           
+>           delimiter = delimiter.replaceAll("%name%", sourceName)
+>             .replaceAll("%num%", String.valueOf(inputSeqNum));
+> 
+>           cb.append(delimiter)

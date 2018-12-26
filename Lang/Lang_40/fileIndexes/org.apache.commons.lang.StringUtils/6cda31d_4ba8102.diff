@@ -1,0 +1,145 @@
+121a122
+> 
+5009a5011,5152
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int indexOfDifference(String[] strs) {
+>         if (strs == null || strs.length <= 1) {
+>             return -1;
+>         }
+>         boolean anyStringNull = false;
+>         boolean allStringsNull = true;
+>         int arrayLen = strs.length;
+>         int shortestStrLen = Integer.MAX_VALUE;
+>         int longestStrLen = 0;
+> 
+>         
+>         
+>         
+>         for (int i=0; i<arrayLen; i++) {
+>             if (strs[i] == null) {
+>                 anyStringNull = true;
+>                 shortestStrLen = 0;
+>             } else {   
+>                 allStringsNull = false;
+>                 shortestStrLen = Math.min(strs[i].length(), shortestStrLen);
+>                 longestStrLen = Math.max(strs[i].length(), longestStrLen);
+>             }
+>         }
+> 
+>         
+>         if (allStringsNull || (longestStrLen == 0 && !anyStringNull)) {
+>             return -1;
+>         }
+> 
+>         
+>         if (shortestStrLen == 0) {
+>             return 0;
+>         } 
+> 
+>         
+>         int firstDiff = -1;
+>         for (int stringPos = 0; stringPos<shortestStrLen; stringPos++) {
+>             char comparisonChar = strs[0].charAt(stringPos);
+>             for (int arrayPos = 1; arrayPos<arrayLen; arrayPos++) {
+>                 if (strs[arrayPos].charAt(stringPos) != comparisonChar) {
+>                     firstDiff = stringPos;
+>                     break;
+>                 }
+>             }
+>             if (firstDiff != -1) {
+>                 break;
+>             }
+>         }
+> 
+>         if (firstDiff == -1 && shortestStrLen != longestStrLen) {
+>             
+>             
+>             
+>             return shortestStrLen;
+>         } else {
+>             return firstDiff;
+>         }
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String getCommonPrefix(String[] strs) {
+>         if (strs == null || strs.length == 0) {
+>             return EMPTY;
+>         }
+>         int smallestIndexOfDiff = indexOfDifference(strs);
+>         if (smallestIndexOfDiff == -1) {
+>             
+>             if (strs[0] == null) {
+>                 return EMPTY;
+>             } else {
+>                 return strs[0];
+>             }
+>         } else if (smallestIndexOfDiff == 0) {
+>             
+>             return EMPTY;
+>         } else {
+>             
+>             return strs[0].substring(0, smallestIndexOfDiff);
+>         }
+>     }  
+>     

@@ -1,0 +1,123 @@
+45d44
+< import com.google.common.collect.ImmutableList;
+73,74c72
+<   private final ImmutableList<String> templateKeys;
+<   private final ImmutableList<JSType> templatizedTypes;
+---
+>   protected final TemplateTypeMap templateTypeMap;
+111c109
+<     this(registry, null, null);
+---
+>     this(registry, null);
+114,115c112
+<   JSType(JSTypeRegistry registry, ImmutableList<String> templateKeys,
+<       ImmutableList<JSType> templatizedTypes) {
+---
+>   JSType(JSTypeRegistry registry, TemplateTypeMap templateTypeMap) {
+118,143c115,116
+<     
+<     int keysLength = templateKeys == null ? 0 : templateKeys.size();
+<     int typesLength = templatizedTypes == null ? 0 : templatizedTypes.size();
+<     if (typesLength > keysLength) {
+<       throw new IllegalArgumentException(
+<           "Cannot have more templatized types than template keys");
+<     } else if (typesLength < keysLength) {
+<       
+<       
+<       
+<       ImmutableList.Builder<JSType> builder = ImmutableList.builder();
+<       if (typesLength > 0) {
+<         builder.addAll(templatizedTypes);
+<       }
+<       for (int i = 0; i < keysLength - typesLength; i++) {
+<         builder.add(registry.getNativeType(JSTypeNative.UNKNOWN_TYPE));
+<       }
+<       templatizedTypes = builder.build();
+<     } else if (keysLength == 0 && typesLength == 0) {
+<       
+<       templateKeys = ImmutableList.of();
+<       templatizedTypes = ImmutableList.of();
+<     }
+< 
+<     this.templateKeys = templateKeys;
+<     this.templatizedTypes = templatizedTypes;
+---
+>     this.templateTypeMap = templateTypeMap == null ?
+>         registry.createTemplateTypeMap(null, null) : templateTypeMap;
+477,484c450
+<     if (isTemplatized()) {
+<       for (JSType templatizedType : templatizedTypes) {
+<         if (templatizedType.hasAnyTemplateTypes()) {
+<           return true;
+<         }
+<       }
+<     }
+<     return false;
+---
+>     return templateTypeMap.hasAnyTemplateTypesInternal();
+490,491c456,457
+<   public boolean isTemplatized() {
+<     return !templateKeys.isEmpty();
+---
+>   public TemplateTypeMap getTemplateTypeMap() {
+>     return templateTypeMap;
+493,551d458
+< 
+<   
+< 
+< 
+<   public ImmutableList<String> getTemplateKeys() {
+<     return templateKeys;
+<   }
+< 
+<   public ImmutableList<JSType> getTemplatizedTypes() {
+<     return templatizedTypes;
+<   }
+< 
+<   
+< 
+< 
+< 
+<   public boolean hasTemplatizedType(String key) {
+<     return templateKeys.contains(key);
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   public JSType getTemplatizedType(String key) {
+<      int index = templateKeys.indexOf(key);
+<      if (index < 0) {
+<        return registry.getNativeType(JSTypeNative.UNKNOWN_TYPE);
+<      }
+<      return templatizedTypes.get(index);
+<   }
+< 
+<   
+< 
+< 
+< 
+<   static boolean hasEquivalentTemplateTypes(
+<       JSType type1, JSType type2, EquivalenceMethod eqMethod) {
+<     ImmutableList<JSType> templatizedTypes1 = type1.getTemplatizedTypes();
+<     ImmutableList<JSType> templatizedTypes2 = type2.getTemplatizedTypes();
+<     int nTemplatizedTypes1 = templatizedTypes1.size();
+<     int nTemplatizedTypes2 = templatizedTypes2.size();
+< 
+<     if (nTemplatizedTypes1 != nTemplatizedTypes2) {
+<       return false;
+<     }
+< 
+<     for (int i = 0; i < nTemplatizedTypes1; i++) {
+<       JSType templatizedType1 = templatizedTypes1.get(i);
+<       JSType templatizedType2 = templatizedTypes2.get(i);
+<       if (templatizedType1.checkEquivalenceHelper(templatizedType2, eqMethod)) {
+<         return false;
+<       }
+<     }
+< 
+<     return true;
+<   }
+< 

@@ -1,0 +1,247 @@
+68a69
+> import org.joda.time.DurationFieldType;
+288,289c289
+<                     DateTimeField field;
+<                     Chronology chronoUTC = builder.getChronology().withUTC();
+---
+>                     DateTimeFieldType type;
+292,293c292,293
+<                         field = new RemainderDateTimeField
+<                             (chronoUTC.weekyear(), DateTimeFieldType.weekyearOfCentury(), 100);
+---
+>                         type = new RemainderType(DateTimeFieldType.weekyear(),
+>                                                  DateTimeFieldType.weekyearOfCentury(), 100);
+296,297c296,297
+<                         field = new RemainderDateTimeField
+<                             (chronoUTC.year(), DateTimeFieldType.yearOfCentury(), 100);
+---
+>                         type = new RemainderType(DateTimeFieldType.year(),
+>                                                  DateTimeFieldType.yearOfCentury(), 100);
+300,301c300,301
+<                         field = new RemainderDateTimeField
+<                             (chronoUTC.yearOfEra(), DateTimeFieldType.yearOfCentury(), 100);
+---
+>                         type = new RemainderType(DateTimeFieldType.yearOfEra(),
+>                                                  DateTimeFieldType.yearOfCentury(), 100);
+304c304
+<                     builder.appendDecimal(field, 2, 2);
+---
+>                     builder.appendDecimal(type, 2, 2);
+656a657,693
+>     static class RemainderType extends DateTimeFieldType {
+>         private final DateTimeFieldType iWrappedType;
+>         private final DateTimeFieldType iType;
+>         private final int iDivisor;
+> 
+>         private transient RemainderDateTimeField iRecent;
+> 
+>         RemainderType(DateTimeFieldType wrappedType, DateTimeFieldType type, int divisor) {
+>             super(type.getName());
+>             iWrappedType = wrappedType;
+>             iType = type;
+>             iDivisor = divisor;
+>         }
+> 
+>         public DurationFieldType getDurationType() {
+>             return iType.getDurationType();
+>         }
+> 
+>         public DurationFieldType getRangeDurationType() {
+>             return iType.getRangeDurationType();
+>         }
+> 
+>         public DateTimeField getField(Chronology chrono) {
+>             DateTimeField wrappedField = iWrappedType.getField(chrono);
+>             RemainderDateTimeField field = iRecent;
+>             if (field.getWrappedField() == wrappedField) {
+>                 return field;
+>             }
+>             field = new RemainderDateTimeField(wrappedField, iType, iDivisor);
+>             iRecent = field;
+>             return field;
+>         }
+>     }
+> 
+>     
+> 
+> 
+660c697
+<         FPrinter(final DateTimePrinter printer) {
+---
+>         FPrinter(DateTimePrinter printer) {
+673c710
+<         public void printTo(final StringBuffer buf, final ReadableInstant instant) {
+---
+>         public void printTo(StringBuffer buf, ReadableInstant instant) {
+677c714
+<         public void printTo(final Writer out, final ReadableInstant instant) throws IOException {
+---
+>         public void printTo(Writer out, ReadableInstant instant) throws IOException {
+681c718
+<         public void printTo(final StringBuffer buf, final long instant) {
+---
+>         public void printTo(StringBuffer buf, long instant) {
+685c722
+<         public void printTo(final Writer out, final long instant) throws IOException {
+---
+>         public void printTo(Writer out, long instant) throws IOException {
+689c726
+<         public void printTo(final StringBuffer buf, final long instant, final DateTimeZone zone) {
+---
+>         public void printTo(StringBuffer buf, long instant, DateTimeZone zone) {
+693c730
+<         public void printTo(final Writer out, final long instant, final DateTimeZone zone)
+---
+>         public void printTo(Writer out, long instant, DateTimeZone zone)
+698,699c735,736
+<         public void printTo(final StringBuffer buf, final long instant,
+<                             final DateTimeZone zone, final long instantLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+703,704c740,741
+<         public void printTo(final Writer out, final long instant,
+<                             final DateTimeZone zone, final long instantLocal)
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal)
+717c754
+<         public String print(final ReadableInstant instant) {
+---
+>         public String print(ReadableInstant instant) {
+721c758
+<         public String print(final long instant) {
+---
+>         public String print(long instant) {
+725c762
+<         public String print(final long instant, final DateTimeZone zone) {
+---
+>         public String print(long instant, DateTimeZone zone) {
+729c766
+<         public String print(final long instant, final DateTimeZone zone, final long instantLocal) {
+---
+>         public String print(long instant, DateTimeZone zone, long instantLocal) {
+741c778
+<         public int parseInto(final DateTimeParserBucket bucket, final String text, final int position) {
+---
+>         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+745c782
+<         public int parseInto(final ReadWritableInstant instant, final String text, final int position) {
+---
+>         public int parseInto(ReadWritableInstant instant, String text, int position) {
+749c786
+<         public long parseMillis(final String text) {
+---
+>         public long parseMillis(String text) {
+753c790
+<         public long parseMillis(final String text, final long instantLocal) {
+---
+>         public long parseMillis(String text, long instantLocal) {
+757c794
+<         public DateTime parseDateTime(final String text) {
+---
+>         public DateTime parseDateTime(String text) {
+761c798
+<         public DateTime parseDateTime(final String text, final ReadableInstant instant) {
+---
+>         public DateTime parseDateTime(String text, ReadableInstant instant) {
+765c802
+<         public MutableDateTime parseMutableDateTime(final String text) {
+---
+>         public MutableDateTime parseMutableDateTime(String text) {
+769,770c806,807
+<         public MutableDateTime parseMutableDateTime(final String text,
+<                                                     final ReadableInstant instant) {
+---
+>         public MutableDateTime parseMutableDateTime(String text,
+>                                                     ReadableInstant instant) {
+786c823
+<         FParser(final DateTimeParser parser) {
+---
+>         FParser(DateTimeParser parser) {
+799c836
+<         public void printTo(final StringBuffer buf, final ReadableInstant instant) {
+---
+>         public void printTo(StringBuffer buf, ReadableInstant instant) {
+803c840
+<         public void printTo(final Writer out, final ReadableInstant instant) throws IOException {
+---
+>         public void printTo(Writer out, ReadableInstant instant) throws IOException {
+807c844
+<         public void printTo(final StringBuffer buf, final long instant) {
+---
+>         public void printTo(StringBuffer buf, long instant) {
+811c848
+<         public void printTo(final Writer out, final long instant) throws IOException {
+---
+>         public void printTo(Writer out, long instant) throws IOException {
+815c852
+<         public void printTo(final StringBuffer buf, final long instant, final DateTimeZone zone) {
+---
+>         public void printTo(StringBuffer buf, long instant, DateTimeZone zone) {
+819c856
+<         public void printTo(final Writer out, final long instant, final DateTimeZone zone) {
+---
+>         public void printTo(Writer out, long instant, DateTimeZone zone) {
+823,824c860,861
+<         public void printTo(final StringBuffer buf, final long instant,
+<                             final DateTimeZone zone, final long instantLocal) {
+---
+>         public void printTo(StringBuffer buf, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+828,829c865,866
+<         public void printTo(final Writer out, final long instant,
+<                             final DateTimeZone zone, final long instantLocal) {
+---
+>         public void printTo(Writer out, long instant,
+>                             DateTimeZone zone, long instantLocal) {
+841c878
+<         public String print(final ReadableInstant instant) {
+---
+>         public String print(ReadableInstant instant) {
+845c882
+<         public String print(final long instant) {
+---
+>         public String print(long instant) {
+849c886
+<         public String print(final long instant, final DateTimeZone zone) {
+---
+>         public String print(long instant, DateTimeZone zone) {
+853c890
+<         public String print(final long instant, final DateTimeZone zone, final long instantLocal) {
+---
+>         public String print(long instant, DateTimeZone zone, long instantLocal) {
+865c902
+<         public int parseInto(final DateTimeParserBucket bucket, final String text, final int position) {
+---
+>         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+869c906
+<         public int parseInto(final ReadWritableInstant instant, final String text, final int position) {
+---
+>         public int parseInto(ReadWritableInstant instant, String text, int position) {
+873c910
+<         public long parseMillis(final String text) {
+---
+>         public long parseMillis(String text) {
+877c914
+<         public long parseMillis(final String text, final long instantLocal) {
+---
+>         public long parseMillis(String text, long instantLocal) {
+881c918
+<         public DateTime parseDateTime(final String text) {
+---
+>         public DateTime parseDateTime(String text) {
+885c922
+<         public DateTime parseDateTime(final String text, final ReadableInstant instant) {
+---
+>         public DateTime parseDateTime(String text, ReadableInstant instant) {
+889c926
+<         public MutableDateTime parseMutableDateTime(final String text) {
+---
+>         public MutableDateTime parseMutableDateTime(String text) {
+893,894c930,931
+<         public MutableDateTime parseMutableDateTime(final String text,
+<                                                     final ReadableInstant instant) {
+---
+>         public MutableDateTime parseMutableDateTime(String text,
+>                                                     ReadableInstant instant) {

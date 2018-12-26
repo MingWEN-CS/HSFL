@@ -1,0 +1,54 @@
+244c244
+<     int result = 0;
+---
+>     int exitCode = 0;
+245a246
+>     Throwable error = null;
+251c252
+<       for (int i = 0; i < runs && result == 0; i++) {
+---
+>       for (int i = 0; i < runs && exitCode == 0; i++) {
+253c254
+<         result = doRun();
+---
+>         exitCode = doRun();
+256,258d256
+<     } catch (AbstractCommandLineRunner.FlagUsageException e) {
+<       System.err.println(e.getMessage());
+<       result = -1;
+260,261c258,273
+<       t.printStackTrace();
+<       result = -2;
+---
+>       error = t;
+>     }
+>     exit(runTimeStats, error, exitCode);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   void exit(RunTimeStats runTimeStats, Throwable error, int exitCode) {
+>     if (error instanceof AbstractCommandLineRunner.FlagUsageException) {
+>       System.err.println(error.getMessage());
+>       exitCode = 2;
+>     } else if (error != null) {
+>       error.printStackTrace();
+>       exitCode = 37;
+269c281
+<       exitCodeReceiverForTesting.apply(result);
+---
+>       exitCodeReceiverForTesting.apply(exitCode);
+271c283
+<       System.exit(result);
+---
+>       System.exit(exitCode);
+1120c1132
+<   private class RunTimeStats {
+---
+>   class RunTimeStats {
+1123c1135
+<     private long lastStartTime = 0;
+---
+>     long lastStartTime = 0;

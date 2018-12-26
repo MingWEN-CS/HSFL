@@ -1,0 +1,231 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.field;
+
+import org.joda.time.DateTimeField;
+
+
+
+
+
+
+
+
+
+public class FieldUtils {
+
+    
+
+
+    private FieldUtils() {
+        super();
+    }
+    
+    
+    
+
+
+
+
+
+
+    public static int safeAdd(int val1, int val2) {
+        long total = ((long) val1) + ((long) val2);
+        if (total < Integer.MIN_VALUE || total > Integer.MAX_VALUE) {
+            throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+        }
+        return (int) total;
+    }
+    
+    
+
+
+
+
+
+
+    public static long safeAdd(long val1, long val2) {
+        long total = val1 + val2;
+        if (val1 > 0 && val2 > 0 && total < 0) {
+            throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+        }
+        if (val1 < 0 && val2 < 0 && total > 0) {
+            throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+        }
+        return total;
+    }
+    
+    
+
+
+
+
+
+
+    public static long safeSubtract(long val1, long val2) {
+        if (val2 == Long.MIN_VALUE) {
+            if (val1 <= 0L) {
+                return (val1 - val2);
+            }
+            throw new ArithmeticException("The calculation caused an overflow: " + val1 +" - " + val2);
+        }
+        return safeAdd(val1, -val2);
+    }
+    
+    
+
+
+
+
+
+
+    public static long safeMultiply(long val1, long val2) {
+        if (val1 == 0  || val2 == 0) {
+            return 0L;
+        }
+        long total = val1 * val2;
+        if (total / val2 != val1) {
+            throw new ArithmeticException("The calculation caused an overflow: " + val1 +" * " + val2);
+        }
+        return total;
+    }
+    
+    
+
+
+
+
+
+    public static int safeToInt(long value) {
+        if (Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE) {
+            return (int) value;
+        }
+        throw new ArithmeticException("Value cannot fit in an int: " + value);
+    }
+    
+    
+
+
+
+
+
+
+    public static int safeMultiplyToInt(long val1, long val2) {
+        long val = FieldUtils.safeMultiply(val1, val2);
+        return FieldUtils.safeToInt(val);
+    }
+    
+    
+
+
+
+
+
+
+
+    public static void verifyValueBounds(DateTimeField field, 
+                                         int value, int lowerBound, int upperBound) {
+        if ((value < lowerBound) || (value > upperBound)) {
+            throw new IllegalArgumentException(
+                "Value "
+                    + value
+                    + " for "
+                    + field.getName()
+                    + " must be in the range ["
+                    + lowerBound
+                    + ','
+                    + upperBound
+                    + ']');
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    public static void verifyValueBounds(String fieldName,
+                                         int value, int lowerBound, int upperBound) {
+        if ((value < lowerBound) || (value > upperBound)) {
+            throw new IllegalArgumentException(
+                "Value "
+                    + value
+                    + " for "
+                    + fieldName
+                    + " must be in the range ["
+                    + lowerBound
+                    + ','
+                    + upperBound
+                    + ']');
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static int getWrappedValue(int currentValue, int wrapValue,
+                                      int minValue, int maxValue) {
+        return getWrappedValue(currentValue + wrapValue, minValue, maxValue);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public static int getWrappedValue(int value, int minValue, int maxValue) {
+        if (minValue >= maxValue) {
+            throw new IllegalArgumentException("MIN > MAX");
+        }
+
+        int wrapRange = maxValue - minValue + 1;
+        value -= minValue;
+
+        if (value >= 0) {
+            return (value % wrapRange) + minValue;
+        }
+
+        int remByRange = (-value) % wrapRange;
+
+        if (remByRange == 0) {
+            return 0 + minValue;
+        }
+        return (wrapRange - remByRange) + minValue;
+    }
+
+}

@@ -1,0 +1,21 @@
+249c249,251
+<     if ((long) x == x && !negativeZero) {
+---
+>     if (negativeZero) {
+>       addConstant("-0");
+>     } else if ((long) x == x) {
+262c264,271
+<         addConstant(Long.toString(value));
+---
+>         long valueAbs = Math.abs(value);
+>         if (Long.toHexString(valueAbs).length() + 2 <
+>             Long.toString(valueAbs).length()) {
+>           addConstant((value < 0 ? "-" : "") + "0x" +
+>               Long.toHexString(valueAbs));
+>         } else {
+>           addConstant(Long.toString(value));
+>         }
+265c274
+<       addConstant(String.valueOf(x));
+---
+>       addConstant(String.valueOf(x).replace(".0E", "E"));

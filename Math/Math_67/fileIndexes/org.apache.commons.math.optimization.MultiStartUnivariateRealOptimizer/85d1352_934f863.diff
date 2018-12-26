@@ -1,0 +1,95 @@
+20,21d19
+< import java.util.Arrays;
+< 
+68a67,69
+>     private double[] optimaValues;
+> 
+>     
+188a190
+> 
+196a199,224
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double[] getOptimaValues() throws IllegalStateException {
+>         if (optimaValues == null) {
+>             throw MathRuntimeException.createIllegalStateException("no optimum computed yet");
+>         }
+>         return optimaValues.clone();
+>     }
+> 
+>     
+202a231
+>         optimaValues     = new double[starts];
+214,216c243,246
+<                 optima[i] = optimizer.optimize(f, goalType,
+<                                                Math.min(bound1, bound2),
+<                                                Math.max(bound1, bound2));
+---
+>                 optima[i]       = optimizer.optimize(f, goalType,
+>                                                      Math.min(bound1, bound2),
+>                                                      Math.max(bound1, bound2));
+>                 optimaValues[i] = optimizer.getFunctionValue();
+218c248,249
+<                 optima[i] = Double.NaN;
+---
+>                 optima[i]       = Double.NaN;
+>                 optimaValues[i] = Double.NaN;
+220c251,252
+<                 optima[i] = Double.NaN;
+---
+>                 optima[i]       = Double.NaN;
+>                 optimaValues[i] = Double.NaN;
+233a266,267
+>                 optimaValues[i] = optimaValues[--lastNaN];
+>                 optimaValues[lastNaN + 1] = Double.NaN;
+236,241c270,296
+<         Arrays.sort(optima, 0, lastNaN);
+<         if (goalType == GoalType.MAXIMIZE) {
+<             for (int i = 0, j = lastNaN - 1; i < j; ++i, --j) {
+<                 double tmp = optima[i];
+<                 optima[i] = optima[j];
+<                 optima[j] = tmp;
+---
+> 
+>         double currX = optima[0];
+>         double currY = optimaValues[0];
+>         for (int j = 1; j < lastNaN; ++j) {
+>             final double prevY = currY;
+>             currX = optima[j];
+>             currY = optimaValues[j];
+>             if ((goalType == GoalType.MAXIMIZE) ^ (currY < prevY)) {
+>                 
+>                 int i = j - 1;
+>                 double mIX = optima[i];
+>                 double mIY = optimaValues[i];
+>                 while ((i >= 0) && ((goalType == GoalType.MAXIMIZE) ^ (currY < mIY))) {
+>                     optima[i + 1]       = mIX;
+>                     optimaValues[i + 1] = mIY;
+>                     if (i-- != 0) {
+>                         mIX = optima[i];
+>                         mIY = optimaValues[i];
+>                     } else {
+>                         mIX = Double.NaN;
+>                         mIY = Double.NaN;
+>                     }
+>                 }
+>                 optima[i + 1]       = currX;
+>                 optimaValues[i + 1] = currY;
+>                 currX = optima[j];
+>                 currY = optimaValues[j];

@@ -1,0 +1,60 @@
+20a21
+> import com.google.javascript.jscomp.CompilerOptions.AliasTransformation;
+24a26
+> import com.google.javascript.rhino.SourcePosition;
+50a53
+>   private final AliasTransformationHandler transformationHandler;
+83,84c86,87
+<   ScopedAliases(
+<       AbstractCompiler compiler, AliasTransformationHandler codeChanges) {
+---
+>   ScopedAliases(AbstractCompiler compiler,
+>       AliasTransformationHandler transformationHandler) {
+85a89
+>     this.transformationHandler = transformationHandler;
+93a98
+> 
+176a182,183
+>     private AliasTransformation transformation = null;
+> 
+199a207,211
+>       Node n = t.getCurrentNode().getParent();
+>       if (n != null && isCallToScopeMethod(n)) {
+>         transformation = transformationHandler.logAliasTransformation(
+>             n.getProp(Node.SOURCENAME_PROP).toString(), getSourceRegion(n));
+>       }
+205a218
+>         transformation = null;
+219a233,249
+>     private SourcePosition<AliasTransformation> getSourceRegion(Node n) {
+>       Node testNode = n;
+>       Node next = null;
+>       for (; next != null || testNode.getType() == Token.SCRIPT;) {
+>         next = testNode.getNext();
+>         testNode = testNode.getParent();
+>       }
+> 
+>       int endLine = next == null ? Integer.MAX_VALUE : next.getLineno();
+>       int endChar = next == null ? Integer.MAX_VALUE : next.getCharno();
+>       SourcePosition<AliasTransformation> pos =
+>           new SourcePosition<AliasTransformation>() {};
+>       pos.setPositionInformation(
+>           n.getLineno(), n.getCharno(), endLine, endChar);
+>       return pos;
+>     }
+> 
+247a278
+> 
+252c283,285
+<             aliases.put(n.getString(), t.getScope().getVar(n.getString()));
+---
+>             String name = n.getString();
+>             Var aliasVar = t.getScope().getVar(name);
+>             aliases.put(name, aliasVar);
+254,255c287,289
+< 
+<             
+---
+>             String qualifiedName =
+>                 aliasVar.getInitialValue().getQualifiedName();
+>             transformation.addAlias(name, qualifiedName);

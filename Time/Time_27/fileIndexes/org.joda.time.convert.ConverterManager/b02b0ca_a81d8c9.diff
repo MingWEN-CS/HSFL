@@ -1,0 +1,114 @@
+97a98,106
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+113a123
+>     private ConverterSet iTimePeriodConverters;
+138a149,155
+>         iTimePeriodConverters = new ConverterSet(new Converter[] {
+>             ReadableTimePeriodConverter.INSTANCE,
+>             ReadableIntervalConverter.INSTANCE,
+>             StringConverter.INSTANCE,
+>             NullConverter.INSTANCE,
+>         });
+> 
+144c161
+<     
+---
+> 
+328a346,432
+>     public TimePeriodConverter getTimePeriodConverter(Object object) {
+>         TimePeriodConverter converter =
+>             (TimePeriodConverter)iTimePeriodConverters.select(object == null ? null : object.getClass());
+>         if (converter != null) {
+>             return converter;
+>         }
+>         throw new IllegalArgumentException("No period converter found for type: " +
+>             (object == null ? "null" : object.getClass().getName()));
+>     }
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+>     public TimePeriodConverter[] getTimePeriodConverters() {
+>         ConverterSet set = iTimePeriodConverters;
+>         TimePeriodConverter[] converters = new TimePeriodConverter[set.size()];
+>         set.copyInto(converters);
+>         return converters;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public TimePeriodConverter addTimePeriodConverter(TimePeriodConverter converter)
+>             throws SecurityException {
+>         
+>         checkAlterTimePeriodConverters();
+>         if (converter == null) {
+>             return null;
+>         }
+>         TimePeriodConverter[] removed = new TimePeriodConverter[1];
+>         iTimePeriodConverters = iTimePeriodConverters.add(converter, removed);
+>         return removed[0];
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public TimePeriodConverter removeTimePeriodConverter(TimePeriodConverter converter)
+>             throws SecurityException {
+>         
+>         checkAlterTimePeriodConverters();
+>         if (converter == null) {
+>             return null;
+>         }
+>         TimePeriodConverter[] removed = new TimePeriodConverter[1];
+>         iTimePeriodConverters = iTimePeriodConverters.remove(converter, removed);
+>         return removed[0];
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+>     private void checkAlterTimePeriodConverters() throws SecurityException {
+>         SecurityManager sm = System.getSecurityManager();
+>         if (sm != null) {
+>             sm.checkPermission(new JodaTimePermission("ConverterManager.alterTimePeriodConverters"));
+>         }
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+413a518
+>             iTimePeriodConverters.size() + " period," +

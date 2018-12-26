@@ -1,0 +1,415 @@
+58a59
+> import java.util.List;
+116c117
+<     public DateTimeFormatterBuilder(final DateTimeZone zone) {
+---
+>     public DateTimeFormatterBuilder(DateTimeZone zone) {
+124c125
+<     public DateTimeFormatterBuilder(final DateTimeZone zone, final Locale locale) {
+---
+>     public DateTimeFormatterBuilder(DateTimeZone zone, Locale locale) {
+134c135
+<     public DateTimeFormatterBuilder(final Chronology chrono) {
+---
+>     public DateTimeFormatterBuilder(Chronology chrono) {
+265c266
+<     public DateTimeFormatterBuilder append(final DateTimeFormatter formatter)
+---
+>     public DateTimeFormatterBuilder append(DateTimeFormatter formatter)
+281c282
+<     public DateTimeFormatterBuilder append(final DateTimePrinter printer)
+---
+>     public DateTimeFormatterBuilder append(DateTimePrinter printer)
+297c298
+<     public DateTimeFormatterBuilder append(final DateTimeParser parser) {
+---
+>     public DateTimeFormatterBuilder append(DateTimeParser parser) {
+310,311c311,312
+<     public DateTimeFormatterBuilder append(final DateTimePrinter printer,
+<                                            final DateTimeParser parser)
+---
+>     public DateTimeFormatterBuilder append(DateTimePrinter printer,
+>                                            DateTimeParser parser)
+337,338c338,339
+<     public DateTimeFormatterBuilder append(final DateTimePrinter printer,
+<                                            final DateTimeParser[] parsers)
+---
+>     public DateTimeFormatterBuilder append(DateTimePrinter printer,
+>                                            DateTimeParser[] parsers)
+371c372
+<     public DateTimeFormatterBuilder appendOptional(final DateTimeParser parser) {
+---
+>     public DateTimeFormatterBuilder appendOptional(DateTimeParser parser) {
+378c379
+<     private DateTimeFormatterBuilder append0(final Object element) {
+---
+>     private DateTimeFormatterBuilder append0(Object element) {
+387c388
+<             final DateTimePrinter printer, final DateTimeParser parser) {
+---
+>             DateTimePrinter printer, DateTimeParser parser) {
+400c401
+<     public DateTimeFormatterBuilder appendLiteral(final char c) {
+---
+>     public DateTimeFormatterBuilder appendLiteral(char c) {
+411c412
+<     public DateTimeFormatterBuilder appendLiteral(final String text) {
+---
+>     public DateTimeFormatterBuilder appendLiteral(String text) {
+430,432c431,433
+<             DateTimeField field, int minDigits, int maxDigits) {
+<         if (field == null) {
+<             throw new IllegalArgumentException("Field must not be null");
+---
+>             DateTimeFieldType fieldType, int minDigits, int maxDigits) {
+>         if (fieldType == null) {
+>             throw new IllegalArgumentException("Field type must not be null");
+439a441
+>         DateTimeField field = fieldType.getField(iChronoUTC);
+459,461c461,463
+<             DateTimeField field, int minDigits, int maxDigits) {
+<         if (field == null) {
+<             throw new IllegalArgumentException("Field must not be null");
+---
+>             DateTimeFieldType fieldType, int minDigits, int maxDigits) {
+>         if (fieldType == null) {
+>             throw new IllegalArgumentException("Field type must not be null");
+468a471
+>         DateTimeField field = fieldType.getField(iChronoUTC);
+483c486,491
+<     public DateTimeFormatterBuilder appendText(final DateTimeField field) {
+---
+> 
+>     public DateTimeFormatterBuilder appendText(DateTimeFieldType fieldType) {
+>         if (fieldType == null) {
+>             throw new IllegalArgumentException("Field type must not be null");
+>         }
+>         DateTimeField field = fieldType.getField(iChronoUTC);
+494c502,507
+<     public DateTimeFormatterBuilder appendShortText(final DateTimeField field) {
+---
+> 
+>     public DateTimeFormatterBuilder appendShortText(DateTimeFieldType fieldType) {
+>         if (fieldType == null) {
+>             throw new IllegalArgumentException("Field type must not be null");
+>         }
+>         DateTimeField field = fieldType.getField(iChronoUTC);
+512,514c525,527
+<             DateTimeField field, int minDigits, int maxDigits) {
+<         if (field.getDurationField().isPrecise() == false) {
+<             throw new IllegalArgumentException("Field duration must be precise");
+---
+>             DateTimeFieldType fieldType, int minDigits, int maxDigits) {
+>         if (fieldType == null) {
+>             throw new IllegalArgumentException("Field type must not be null");
+521a535
+>         DateTimeField field = fieldType.getField(iChronoUTC);
+530,531c544,545
+<     public DateTimeFormatterBuilder appendFractionOfSecond(final int minDigits, final int maxDigits) {
+<         return appendFraction(iChronoUTC.secondOfDay(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendFractionOfSecond(int minDigits, int maxDigits) {
+>         return appendFraction(DateTimeFieldType.secondOfDay(), minDigits, maxDigits);
+539,540c553,554
+<     public DateTimeFormatterBuilder appendFractionOfMinute(final int minDigits, final int maxDigits) {
+<         return appendFraction(iChronoUTC.minuteOfDay(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendFractionOfMinute(int minDigits, int maxDigits) {
+>         return appendFraction(DateTimeFieldType.minuteOfDay(), minDigits, maxDigits);
+548,549c562,563
+<     public DateTimeFormatterBuilder appendFractionOfHour(final int minDigits, final int maxDigits) {
+<         return appendFraction(iChronoUTC.hourOfDay(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendFractionOfHour(int minDigits, int maxDigits) {
+>         return appendFraction(DateTimeFieldType.hourOfDay(), minDigits, maxDigits);
+557,558c571,572
+<     public DateTimeFormatterBuilder appendFractionOfDay(final int minDigits, final int maxDigits) {
+<         return appendFraction(iChronoUTC.dayOfYear(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendFractionOfDay(int minDigits, int maxDigits) {
+>         return appendFraction(DateTimeFieldType.dayOfYear(), minDigits, maxDigits);
+567,568c581,582
+<     public DateTimeFormatterBuilder appendMillisOfSecond(final int minDigits) {
+<         return appendDecimal(iChronoUTC.millisOfSecond(), minDigits, 3);
+---
+>     public DateTimeFormatterBuilder appendMillisOfSecond(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.millisOfSecond(), minDigits, 3);
+577,578c591,592
+<     public DateTimeFormatterBuilder appendMillisOfDay(final int minDigits) {
+<         return appendDecimal(iChronoUTC.millisOfDay(), minDigits, 8);
+---
+>     public DateTimeFormatterBuilder appendMillisOfDay(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.millisOfDay(), minDigits, 8);
+587,588c601,602
+<     public DateTimeFormatterBuilder appendSecondOfMinute(final int minDigits) {
+<         return appendDecimal(iChronoUTC.secondOfMinute(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendSecondOfMinute(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.secondOfMinute(), minDigits, 2);
+597,598c611,612
+<     public DateTimeFormatterBuilder appendSecondOfDay(final int minDigits) {
+<         return appendDecimal(iChronoUTC.secondOfDay(), minDigits, 5);
+---
+>     public DateTimeFormatterBuilder appendSecondOfDay(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.secondOfDay(), minDigits, 5);
+607,608c621,622
+<     public DateTimeFormatterBuilder appendMinuteOfHour(final int minDigits) {
+<         return appendDecimal(iChronoUTC.minuteOfHour(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendMinuteOfHour(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.minuteOfHour(), minDigits, 2);
+617,618c631,632
+<     public DateTimeFormatterBuilder appendMinuteOfDay(final int minDigits) {
+<         return appendDecimal(iChronoUTC.minuteOfDay(), minDigits, 4);
+---
+>     public DateTimeFormatterBuilder appendMinuteOfDay(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.minuteOfDay(), minDigits, 4);
+627,628c641,642
+<     public DateTimeFormatterBuilder appendHourOfDay(final int minDigits) {
+<         return appendDecimal(iChronoUTC.hourOfDay(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendHourOfDay(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.hourOfDay(), minDigits, 2);
+637,638c651,652
+<     public DateTimeFormatterBuilder appendClockhourOfDay(final int minDigits) {
+<         return appendDecimal(iChronoUTC.clockhourOfDay(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendClockhourOfDay(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.clockhourOfDay(), minDigits, 2);
+647,648c661,662
+<     public DateTimeFormatterBuilder appendHourOfHalfday(final int minDigits) {
+<         return appendDecimal(iChronoUTC.hourOfHalfday(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendHourOfHalfday(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.hourOfHalfday(), minDigits, 2);
+657,658c671,672
+<     public DateTimeFormatterBuilder appendClockhourOfHalfday(final int minDigits) {
+<         return appendDecimal(iChronoUTC.clockhourOfHalfday(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendClockhourOfHalfday(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.clockhourOfHalfday(), minDigits, 2);
+667,668c681,682
+<     public DateTimeFormatterBuilder appendDayOfWeek(final int minDigits) {
+<         return appendDecimal(iChronoUTC.dayOfWeek(), minDigits, 1);
+---
+>     public DateTimeFormatterBuilder appendDayOfWeek(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.dayOfWeek(), minDigits, 1);
+677,678c691,692
+<     public DateTimeFormatterBuilder appendDayOfMonth(final int minDigits) {
+<         return appendDecimal(iChronoUTC.dayOfMonth(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendDayOfMonth(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.dayOfMonth(), minDigits, 2);
+687,688c701,702
+<     public DateTimeFormatterBuilder appendDayOfYear(final int minDigits) {
+<         return appendDecimal(iChronoUTC.dayOfYear(), minDigits, 3);
+---
+>     public DateTimeFormatterBuilder appendDayOfYear(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.dayOfYear(), minDigits, 3);
+697,698c711,712
+<     public DateTimeFormatterBuilder appendWeekOfWeekyear(final int minDigits) {
+<         return appendDecimal(iChronoUTC.weekOfWeekyear(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendWeekOfWeekyear(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.weekOfWeekyear(), minDigits, 2);
+709,710c723,724
+<     public DateTimeFormatterBuilder appendWeekyear(final int minDigits, final int maxDigits) {
+<         return appendSignedDecimal(iChronoUTC.weekyear(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendWeekyear(int minDigits, int maxDigits) {
+>         return appendSignedDecimal(DateTimeFieldType.weekyear(), minDigits, maxDigits);
+719,720c733,734
+<     public DateTimeFormatterBuilder appendMonthOfYear(final int minDigits) {
+<         return appendDecimal(iChronoUTC.monthOfYear(), minDigits, 2);
+---
+>     public DateTimeFormatterBuilder appendMonthOfYear(int minDigits) {
+>         return appendDecimal(DateTimeFieldType.monthOfYear(), minDigits, 2);
+731,732c745,746
+<     public DateTimeFormatterBuilder appendYear(final int minDigits, final int maxDigits) {
+<         return appendSignedDecimal(iChronoUTC.year(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendYear(int minDigits, int maxDigits) {
+>         return appendSignedDecimal(DateTimeFieldType.year(), minDigits, maxDigits);
+754c768,769
+<         return append0(new TwoDigitYear(iChrono, iChronoUTC.year(), pivot));
+---
+>         DateTimeField field = DateTimeFieldType.year().getField(iChronoUTC);
+>         return append0(new TwoDigitYear(iChrono, field, pivot));
+765,766c780,781
+<     public DateTimeFormatterBuilder appendYearOfEra(final int minDigits, final int maxDigits) {
+<         return appendDecimal(iChronoUTC.yearOfEra(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendYearOfEra(int minDigits, int maxDigits) {
+>         return appendDecimal(DateTimeFieldType.yearOfEra(), minDigits, maxDigits);
+777,778c792,793
+<     public DateTimeFormatterBuilder appendYearOfCentury(final int minDigits, final int maxDigits) {
+<         return appendDecimal(iChronoUTC.yearOfCentury(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendYearOfCentury(int minDigits, int maxDigits) {
+>         return appendDecimal(DateTimeFieldType.yearOfCentury(), minDigits, maxDigits);
+789,790c804,805
+<     public DateTimeFormatterBuilder appendCenturyOfEra(final int minDigits, final int maxDigits) {
+<         return appendSignedDecimal(iChronoUTC.centuryOfEra(), minDigits, maxDigits);
+---
+>     public DateTimeFormatterBuilder appendCenturyOfEra(int minDigits, int maxDigits) {
+>         return appendSignedDecimal(DateTimeFieldType.centuryOfEra(), minDigits, maxDigits);
+800c815
+<         return appendText(iChronoUTC.halfdayOfDay());
+---
+>         return appendText(DateTimeFieldType.halfdayOfDay());
+810c825
+<         return appendText(iChronoUTC.dayOfWeek());
+---
+>         return appendText(DateTimeFieldType.dayOfWeek());
+821c836
+<         return appendShortText(iChronoUTC.dayOfWeek());
+---
+>         return appendShortText(DateTimeFieldType.dayOfWeek());
+832c847
+<         return appendText(iChronoUTC.monthOfYear());
+---
+>         return appendText(DateTimeFieldType.monthOfYear());
+842c857
+<         return appendShortText(iChronoUTC.monthOfYear());
+---
+>         return appendShortText(DateTimeFieldType.monthOfYear());
+852c867
+<         return appendText(iChronoUTC.era());
+---
+>         return appendText(DateTimeFieldType.era());
+892,893c907,908
+<             final String zeroOffsetText, final boolean showSeparators,
+<             final int minFields, final int maxFields) {
+---
+>             String zeroOffsetText, boolean showSeparators,
+>             int minFields, int maxFields) {
+938c953
+<     private boolean isPrinter(final Object f) {
+---
+>     private boolean isPrinter(Object f) {
+948c963
+<     private boolean isParser(final Object f) {
+---
+>     private boolean isParser(Object f) {
+958c973
+<     private boolean isFormatter(final Object f) {
+---
+>     private boolean isFormatter(Object f) {
+2179c2194
+<         Composite(Chronology chrono, ArrayList elementPairs) {
+---
+>         Composite(Chronology chrono, List elementPairs) {
+2182,2185c2197,2198
+<             int len = elementPairs.size() / 2;
+< 
+<             boolean isPrinter = true;
+<             boolean isParser = true;
+---
+>             List printerList = new ArrayList();
+>             List parserList = new ArrayList();
+2187,2188c2200
+<             int printEst = 0;
+<             int parseEst = 0;
+---
+>             decompose(elementPairs, printerList, parserList);
+2190,2197c2202,2210
+<             DateTimePrinter[] printers = new DateTimePrinter[len];
+<             DateTimeParser[] parsers = new DateTimeParser[len];
+<             for (int i=0; i<len; i++) {
+<                 Object element = elementPairs.get(i * 2);
+<                 if (element == null || !(element instanceof DateTimePrinter)) {
+<                     isPrinter = false;
+<                 } else {
+<                     DateTimePrinter printer = (DateTimePrinter)element;
+---
+>             if (printerList.size() <= 0) {
+>                 iPrinters = null;
+>                 iPrintedLengthEstimate = 0;
+>             } else {
+>                 int size = printerList.size();
+>                 iPrinters = new DateTimePrinter[size];
+>                 int printEst = 0;
+>                 for (int i=0; i<size; i++) {
+>                     DateTimePrinter printer = (DateTimePrinter)printerList.get(i);
+2199c2212
+<                     printers[i] = printer;
+---
+>                     iPrinters[i] = printer;
+2200a2214,2215
+>                 iPrintedLengthEstimate = printEst;
+>             }
+2202,2206c2217,2225
+<                 element = elementPairs.get(i * 2 + 1);
+<                 if (element == null || !(element instanceof DateTimeParser)) {
+<                     isParser = false;
+<                 } else {
+<                     DateTimeParser parser = (DateTimeParser)element;
+---
+>             if (parserList.size() <= 0) {
+>                 iParsers = null;
+>                 iParsedLengthEstimate = 0;
+>             } else {
+>                 int size = parserList.size();
+>                 iParsers = new DateTimeParser[size];
+>                 int parseEst = 0;
+>                 for (int i=0; i<size; i++) {
+>                     DateTimeParser parser = (DateTimeParser)parserList.get(i);
+2208c2227
+<                     parsers[i] = parser;
+---
+>                     iParsers[i] = parser;
+2209a2229
+>                 iParsedLengthEstimate = parseEst;
+2211,2222d2230
+< 
+<             if (!isPrinter) {
+<                 printers = null;
+<             }
+<             if (!isParser) {
+<                 parsers = null;
+<             }
+< 
+<             iPrinters = printers;
+<             iParsers = parsers;
+<             iPrintedLengthEstimate = printEst;
+<             iParsedLengthEstimate = parseEst;
+2303a2312,2346
+> 
+>         
+> 
+> 
+> 
+>         private void decompose(List elementPairs, List printerList, List parserList) {
+>             int size = elementPairs.size();
+>             for (int i=0; i<size; i+=2) {
+>                 Object element = elementPairs.get(i);
+>                 if (element != null && element instanceof DateTimePrinter) {
+>                     if (element instanceof Composite) {
+>                         addArrayToList(printerList, ((Composite)element).iPrinters);
+>                     } else {
+>                         printerList.add(element);
+>                     }
+>                 }
+> 
+>                 element = elementPairs.get(i + 1);
+>                 if (element != null && element instanceof DateTimeParser) {
+>                     if (element instanceof Composite) {
+>                         addArrayToList(parserList, ((Composite)element).iParsers);
+>                     } else {
+>                         parserList.add(element);
+>                     }
+>                 }
+>             }
+>         }
+> 
+>         private void addArrayToList(List list, Object[] array) {
+>             if (array != null) {
+>                 for (int i=0; i<array.length; i++) {
+>                     list.add(array[i]);
+>                 }
+>             }
+>         }
+2332c2375
+<         public int parseInto(final DateTimeParserBucket bucket, final String text, final int position) {
+---
+>         public int parseInto(DateTimeParserBucket bucket, String text, int position) {

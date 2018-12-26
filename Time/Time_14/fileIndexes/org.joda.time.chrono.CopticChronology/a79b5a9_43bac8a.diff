@@ -1,0 +1,41 @@
+202a203,238
+>     
+>     long setYear(long instant, int year) {
+>         
+>         int thisYear = getYear(instant);
+>         int dayOfYear = getDayOfYear(instant, thisYear);
+>         int millisOfDay = getMillisOfDay(instant);
+> 
+>         if (dayOfYear > 365) {
+>             
+>             if (!isLeapYear(year)) {
+>                 
+>                 dayOfYear--;
+>             }
+>         }
+> 
+>         instant = getYearMonthDayMillis(year, 1, dayOfYear);
+>         instant += millisOfDay;
+>         return instant;
+>     }
+> 
+>     long getYearDifference(long minuendInstant, long subtrahendInstant) {
+>         
+>         int minuendYear = getYear(minuendInstant);
+>         int subtrahendYear = getYear(subtrahendInstant);
+> 
+>         
+>         long minuendRem = minuendInstant - getYearMillis(minuendYear);
+>         long subtrahendRem = subtrahendInstant - getYearMillis(subtrahendYear);
+> 
+>         int difference = minuendYear - subtrahendYear;
+>         if (minuendRem < subtrahendRem) {
+>             difference--;
+>         }
+>         return difference;
+>     }
+> 
+282c318
+<             fields.year = new CopticYearDateTimeField(this);
+---
+>             fields.year = new BasicYearDateTimeField(this);

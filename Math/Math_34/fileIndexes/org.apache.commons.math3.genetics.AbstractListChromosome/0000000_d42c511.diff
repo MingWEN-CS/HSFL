@@ -1,0 +1,102 @@
+1a2,102
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math3.genetics;
+> 
+> import java.util.ArrayList;
+> import java.util.Arrays;
+> import java.util.Collections;
+> import java.util.List;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public abstract class AbstractListChromosome<T> extends Chromosome {
+> 
+>     
+>     private final List<T> representation;
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public AbstractListChromosome(final List<T> representation) {
+>         checkValidity(representation);
+>         this.representation = Collections.unmodifiableList(new ArrayList<T> (representation));
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public AbstractListChromosome(final T[] representation) {
+>         this(Arrays.asList(representation));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected abstract void checkValidity(List<T> chromosomeRepresentation) throws InvalidRepresentationException;
+> 
+>     
+> 
+> 
+> 
+>     protected List<T> getRepresentation() {
+>         return representation;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public int getLength() {
+>         return getRepresentation().size();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public abstract AbstractListChromosome<T> newFixedLengthChromosome(final List<T> chromosomeRepresentation);
+> 
+>     
+> 
+> 
+>     @Override
+>     public String toString() {
+>         return String.format("(f=%s %s)", getFitness(), getRepresentation());
+>     }
+> }

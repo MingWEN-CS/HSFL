@@ -1,0 +1,120 @@
+580,589d579
+<   @Override
+<   public JSType getLeastSupertype(JSType that) {
+<     return supAndInfHelper(that, true);
+<   }
+< 
+<   @Override
+<   public JSType getGreatestSubtype(JSType that) {
+<     return supAndInfHelper(that, false);
+<   }
+< 
+598c588
+<   private JSType supAndInfHelper(JSType that, boolean leastSuper) {
+---
+>   FunctionType supAndInfHelper(FunctionType that, boolean leastSuper) {
+612,615c602,606
+<     if (isFunctionType() && that.isFunctionType()) {
+<       if (isEquivalentTo(that)) {
+<         return this;
+<       }
+---
+>     
+>     
+>     
+>     
+>     Preconditions.checkNotNull(that);
+617c608,610
+<       FunctionType other = that.toMaybeFunctionType();
+---
+>     if (isEquivalentTo(that)) {
+>       return this;
+>     }
+619,643c612,618
+<       
+<       
+<       
+<       
+<       if (other != null &&
+<           isOrdinaryFunction() && that.isOrdinaryFunction() &&
+<           !this.call.hasUnknownParamsOrReturn() &&
+<           !other.call.hasUnknownParamsOrReturn()) {
+< 
+<         
+<         
+<         boolean isSubtypeOfThat = this.isSubtype(that);
+<         boolean isSubtypeOfThis = that.isSubtype(this);
+<         if (isSubtypeOfThat && !isSubtypeOfThis) {
+<           return leastSuper ? that : this;
+<         } else if (isSubtypeOfThis && !isSubtypeOfThat) {
+<           return leastSuper ? this : that;
+<         }
+< 
+<         
+<         FunctionType merged = tryMergeFunctionPiecewise(other, leastSuper);
+<         if (merged != null) {
+<           return merged;
+<         }
+<       }
+---
+>     
+>     
+>     
+>     
+>     if (isOrdinaryFunction() && that.isOrdinaryFunction() &&
+>         !this.call.hasUnknownParamsOrReturn() &&
+>         !that.call.hasUnknownParamsOrReturn()) {
+647,649c622,624
+<       JSType functionInstance = registry.getNativeType(
+<           JSTypeNative.FUNCTION_INSTANCE_TYPE);
+<       if (functionInstance.isEquivalentTo(that)) {
+---
+>       boolean isSubtypeOfThat = this.isSubtype(that);
+>       boolean isSubtypeOfThis = that.isSubtype(this);
+>       if (isSubtypeOfThat && !isSubtypeOfThis) {
+651c626
+<       } else if (functionInstance.isEquivalentTo(this)) {
+---
+>       } else if (isSubtypeOfThis && !isSubtypeOfThat) {
+656,665c631,644
+<       
+<       
+<       
+<       
+<       
+<       FunctionType greatestFn =
+<           registry.getNativeFunctionType(JSTypeNative.U2U_CONSTRUCTOR_TYPE);
+<       FunctionType leastFn =
+<           registry.getNativeFunctionType(JSTypeNative.LEAST_FUNCTION_TYPE);
+<       return leastSuper ? greatestFn : leastFn;
+---
+>       FunctionType merged = tryMergeFunctionPiecewise(that, leastSuper);
+>       if (merged != null) {
+>         return merged;
+>       }
+>     }
+> 
+>     
+>     
+>     JSType functionInstance = registry.getNativeType(
+>         JSTypeNative.FUNCTION_INSTANCE_TYPE);
+>     if (functionInstance.isEquivalentTo(that)) {
+>       return leastSuper ? that : this;
+>     } else if (functionInstance.isEquivalentTo(this)) {
+>       return leastSuper ? this : that;
+668,670c647,657
+<     return leastSuper ?
+<         super.getLeastSupertype(that) :
+<         super.getGreatestSubtype(that);
+---
+>     
+>     
+>     
+>     
+>     
+>     
+>     FunctionType greatestFn =
+>         registry.getNativeFunctionType(JSTypeNative.U2U_CONSTRUCTOR_TYPE);
+>     FunctionType leastFn =
+>         registry.getNativeFunctionType(JSTypeNative.LEAST_FUNCTION_TYPE);
+>     return leastSuper ? greatestFn : leastFn;

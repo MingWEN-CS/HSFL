@@ -1,0 +1,95 @@
+23d22
+< import javax.annotation.Nullable;
+25d23
+< import com.google.common.collect.ImmutableList;
+30a29
+> import com.google.javascript.rhino.Token;
+41a41
+> import javax.annotation.Nullable;
+179d178
+<           String name = currentParam.getString();
+184,185c183,184
+<               codingConvention.isOptionalParameter(name),
+<               codingConvention.isVarArgsParameter(currentParam, name));
+---
+>               codingConvention.isOptionalParameter(currentParam),
+>               codingConvention.isVarArgsParameter(currentParam));
+314,325c313,317
+<   FunctionTypeBuilder inferParameterTypes(Node argsParent,
+<       @Nullable JSDocInfo info) {
+<     if (argsParent == null) {
+<       return inferParameterTypes(info);
+<     }
+< 
+<     List<String> argsList = ImmutableList.of();
+<     if (argsParent.getFirstChild() != null) {
+<       argsList = Lists.newArrayList();
+<       for (Node n : argsParent.children()) {
+<         argsList.add(n.getString());
+<       }
+---
+>   FunctionTypeBuilder inferParameterTypes(JSDocInfo info) {
+>     
+>     Node lp = new Node(Token.LP);
+>     for (String name : info.getParameterNames()) {
+>       lp.addChildToBack(Node.newString(Token.NAME, name));
+328,335c320
+<     return inferParameterTypes(argsList, info);
+<   }
+< 
+<   
+< 
+< 
+<   FunctionTypeBuilder inferParameterTypes(JSDocInfo info) {
+<     return inferParameterTypes(info.getParameterNames(), info);
+---
+>     return inferParameterTypes(lp, info);
+342c327
+<   private FunctionTypeBuilder inferParameterTypes(Iterable<String> argList,
+---
+>   FunctionTypeBuilder inferParameterTypes(@Nullable Node argsParent,
+343a329,336
+>     if (argsParent == null) {
+>       if (info == null) {
+>         return this;
+>       } else {
+>         return inferParameterTypes(info);
+>       }
+>     }
+> 
+351c344,345
+<     for (String argumentName : argList) {
+---
+>     for (Node arg : argsParent.children()) {
+>       String argumentName = arg.getString();
+368,369c362,363
+<           isOptionalParameter(argumentName, info),
+<           isVarArgsParameter(argumentName, info));
+---
+>           isOptionalParameter(arg, info),
+>           isVarArgsParameter(arg, info));
+377,379c371
+<       if (!isVarArgsParameter(inexistentName, info)) {
+<         reportWarning(INEXISTANT_PARAM, inexistentName, fnName);
+<       }
+---
+>       reportWarning(INEXISTANT_PARAM, inexistentName, fnName);
+390,391c382,383
+<       String paramName, @Nullable JSDocInfo info) {
+<     if (codingConvention.isOptionalParameter(paramName)) {
+---
+>       Node param, @Nullable JSDocInfo info) {
+>     if (codingConvention.isOptionalParameter(param)) {
+394a387
+>     String paramName = param.getString();
+403,404d395
+< 
+< 
+406,407c397,398
+<       String paramName, @Nullable JSDocInfo info) {
+<     if (codingConvention.isVarArgsParameter(null, paramName)) {
+---
+>       Node param, @Nullable JSDocInfo info) {
+>     if (codingConvention.isVarArgsParameter(param)) {
+410a402
+>     String paramName = param.getString();

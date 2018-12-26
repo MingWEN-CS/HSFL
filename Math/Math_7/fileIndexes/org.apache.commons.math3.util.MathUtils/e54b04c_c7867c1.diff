@@ -1,0 +1,31 @@
+2654,2655d2653
+<         final int lenMinusOne = len - 1;
+<         final double[] sHigh = new double[lenMinusOne];
+2657,2659c2655,2659
+<         sHigh[0] = prodHigh[0] + prodHigh[1];
+<         double sPrime = sHigh[0] - prodHigh[1];
+<         double sLowSum = (prodHigh[1] - (sHigh[0] - sPrime)) + (prodHigh[0] - sPrime);
+---
+>         final double prodHighCur = prodHigh[0];
+>         double prodHighNext = prodHigh[1];
+>         double sHighPrev = prodHighCur + prodHighNext;
+>         double sPrime = sHighPrev - prodHighNext;
+>         double sLowSum = (prodHighNext - (sHighPrev - sPrime)) + (prodHighCur - sPrime);
+2660a2661
+>         final int lenMinusOne = len - 1;
+2662,2666c2663,2667
+<             final int prev = i - 1;
+<             final int next = i + 1;
+<             sHigh[i] = sHigh[prev] + prodHigh[next];
+<             sPrime = sHigh[i] - prodHigh[next];
+<             sLowSum += (prodHigh[next] - (sHigh[i] - sPrime)) + (sHigh[prev] - sPrime);
+---
+>             prodHighNext = prodHigh[i + 1];
+>             final double sHighCur = sHighPrev + prodHighNext;
+>             sPrime = sHighCur - prodHighNext;
+>             sLowSum += (prodHighNext - (sHighCur - sPrime)) + (sHighPrev - sPrime);
+>             sHighPrev = sHighCur;
+2669c2670
+<         return sHigh[lenMinusOne - 1] + (prodLowSum + sLowSum);
+---
+>         return sHighPrev + (prodLowSum + sLowSum);

@@ -1,0 +1,38 @@
+29c29
+< import org.joda.time.convert.InstantConverter;
+---
+> import org.joda.time.convert.PartialConverter;
+257a258
+> 
+277a279
+> 
+279c281
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+---
+>         PartialConverter converter = ConverterManager.getInstance().getPartialConverter(instant);
+281d282
+<         long millis = converter.getInstantMillis(instant, chronology);
+283,285d283
+<         
+<         long localMillis = chronology.getZone().getMillisKeepLocal(DateTimeZone.UTC, millis);
+<         iLocalMillis = localMillis;
+286a285,286
+>         int[] values = converter.getPartialValues(this, instant, chronology, ISODateTimeFormat.dateOptionalTimeParser());
+>         iLocalMillis = iChronology.getDateTimeMillis(values[0], values[1], values[2], values[3]);
+303a304
+> 
+305,311c306,311
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+<         Chronology chrono = DateTimeUtils.getChronology(converter.getChronology(instant, chronology));
+<         long millis = converter.getInstantMillis(instant, chrono);
+<         
+<         long localMillis = chrono.getZone().getMillisKeepLocal(DateTimeZone.UTC, millis);
+<         iLocalMillis = localMillis;
+<         iChronology = chrono.withUTC();
+---
+>         PartialConverter converter = ConverterManager.getInstance().getPartialConverter(instant);
+>         chronology = converter.getChronology(instant, chronology);
+>         chronology = DateTimeUtils.getChronology(chronology);
+>         iChronology = chronology.withUTC();
+>         int[] values = converter.getPartialValues(this, instant, chronology, ISODateTimeFormat.dateOptionalTimeParser());
+>         iLocalMillis = iChronology.getDateTimeMillis(values[0], values[1], values[2], values[3]);

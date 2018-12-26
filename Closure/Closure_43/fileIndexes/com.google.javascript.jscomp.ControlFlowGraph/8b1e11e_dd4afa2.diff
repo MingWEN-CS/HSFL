@@ -1,0 +1,81 @@
+141,163c141,145
+<       switch (parent.getType()) {
+<         case Token.BLOCK:
+<         case Token.SCRIPT:
+<         case Token.TRY:
+<         case Token.FINALLY:
+<           return false;
+<         case Token.FUNCTION:
+<           return n == parent.getFirstChild().getNext();
+<         case Token.WHILE:
+<         case Token.DO:
+<         case Token.IF:
+<           return NodeUtil.getConditionExpression(parent) == n;
+<         case Token.FOR:
+<           if (parent.getChildCount() == 4) {
+<             return NodeUtil.getConditionExpression(parent) == n;
+<           } else {
+<             return n != parent.getLastChild();
+<           }
+<         case Token.SWITCH:
+<         case Token.CASE:
+<         case Token.CATCH:
+<         case Token.WITH:
+<           return n == parent.getFirstChild();
+---
+>       return !isEnteringNewCfgNode(n);
+>     }
+>   }
+>   
+>   
+165,167c147,192
+<         default:
+<           return true;
+<       }
+---
+> 
+> 
+>   public static boolean isEnteringNewCfgNode(Node n) {
+>     Node parent = n.getParent();
+>     switch (parent.getType()) {
+>       case Token.BLOCK:
+>       case Token.SCRIPT:
+>       case Token.TRY:
+>       case Token.FINALLY:
+>         return true;
+>       case Token.FUNCTION:
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         return n != parent.getFirstChild().getNext();
+>       case Token.WHILE:
+>       case Token.DO:
+>       case Token.IF:
+>         
+>         
+>         return NodeUtil.getConditionExpression(parent) != n;
+>         
+>       case Token.FOR:
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         if (parent.getChildCount() == 4) {
+>           return NodeUtil.getConditionExpression(parent) != n;
+>         } else {
+>           return n == parent.getLastChild();
+>         }
+>       case Token.SWITCH:
+>       case Token.CASE:
+>       case Token.CATCH:
+>       case Token.WITH:
+>         return n != parent.getFirstChild();
+>       default:
+>         return false;

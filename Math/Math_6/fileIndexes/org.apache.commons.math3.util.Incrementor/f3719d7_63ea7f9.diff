@@ -1,0 +1,69 @@
+17c17,22
+< package org.apache.commons.math.util;
+---
+> package org.apache.commons.math3.util;
+> 
+> import org.apache.commons.math3.exception.MaxCountExceededException;
+> 
+> 
+> 
+19d23
+< import org.apache.commons.math.exception.MaxCountExceededException;
+36c40,44
+<     private int count;
+---
+>     private int count = 0;
+>     
+> 
+> 
+>     private final MaxCountExceededCallback maxCountCallback;
+52a61,78
+>         this(max,
+>              new MaxCountExceededCallback() {
+>                  
+>                  public void trigger(int max) {
+>                      throw new MaxCountExceededException(max);
+>                  }
+>              });
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Incrementor(int max,
+>                        MaxCountExceededCallback cb) {
+54c80
+<         count = 0;
+---
+>         maxCountCallback = cb;
+114a141,148
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+117c151
+<             throw new MaxCountExceededException(maximalCount);
+---
+>             maxCountCallback.trigger(maximalCount);
+125a160,172
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public interface MaxCountExceededCallback {
+>         
+> 
+> 
+> 
+> 
+>         void trigger(int maximalCount);

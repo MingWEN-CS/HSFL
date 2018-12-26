@@ -1,0 +1,69 @@
+264,265c264,265
+<     public boolean isEquivalentTo(Node node) {
+<       return (node instanceof NumberNode
+---
+>     boolean isEquivalentTo(Node node, boolean recurse) {
+>       return (super.isEquivalentTo(node, recurse)
+314,316c314,316
+<     public boolean isEquivalentTo(Node node) {
+<       return (node instanceof StringNode &&
+<          this.str.equals(((StringNode) node).str));
+---
+>     boolean isEquivalentTo(Node node, boolean recurse) {
+>       return (super.isEquivalentTo(node, recurse)
+>           && this.str.equals(((StringNode) node).str));
+1405,1412c1405
+<     boolean eq = false;
+< 
+<     if (type == node2.getType() && getChildCount() == node2.getChildCount()
+<         && getNodeClass(this) == getNodeClass(node2)) {
+<       eq = this.isEquivalentTo(node2);
+<     }
+< 
+<     if (!eq) {
+---
+>     if (!isEquivalentTo(node2, false)) {
+1420a1414,1416
+>       if (node2 == null) {
+>         throw new IllegalStateException();
+>       }
+1444,1449c1440,1441
+<     boolean eq = false;
+< 
+<     if (type == node2.getType()
+<         && getChildCount() == node2.getChildCount()
+<         && getClass() == node2.getClass()
+<         && JSType.isEquivalent(jsType, node2.getJSType())) {
+---
+>     
+>     boolean eq = this.isEquivalentTo(node2, false);
+1451,1452c1443
+<       eq = this.isEquivalentTo(node2);
+<     }
+---
+>     eq = eq && JSType.isEquivalent(jsType, node2.getJSType());
+1595a1587,1597
+>     return isEquivalentTo(node, true);
+>   }
+> 
+>   
+>   boolean isEquivalentTo(Node node, boolean recurse) {
+>     if (type != node.getType()
+>         || getChildCount() != node.getChildCount()
+>         || getNodeClass(this) != getNodeClass(node)) {
+>       return false;
+>     }
+> 
+1630a1633,1644
+> 
+>     if (recurse) {
+>       Node n, n2;
+>       for (n = first, n2 = node.first;
+>            n != null;
+>            n = n.next, n2 = n2.next) {
+>         if (!n.isEquivalentTo(n2, true)) {
+>           return false;
+>         }
+>       }
+>     }
+> 

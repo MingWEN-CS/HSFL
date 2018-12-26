@@ -1,0 +1,21 @@
+511c511,516
+<         defineSlot(name, var, functionType);
+---
+>         if (functionType.isReturnTypeInferred() &&
+>             scope.isLocal()) {
+>           defineSlot(name, var, null);
+>         } else {
+>           defineSlot(name, var, functionType);
+>         }
+571a577
+>       Node fnBlock = isFnLiteral ? parametersNode.getNext() : null;
+601,602c607,608
+<                 propType = findOverriddenFunction(
+<                     ownerType, lvalueNode.getLastChild().getString());
+---
+>                 String propName = lvalueNode.getLastChild().getString();
+>                 propType = findOverriddenFunction(ownerType, propName);
+611a618
+>                     .inferReturnStatements(fnBlock)
+628a636
+>             .inferReturnStatements(fnBlock)

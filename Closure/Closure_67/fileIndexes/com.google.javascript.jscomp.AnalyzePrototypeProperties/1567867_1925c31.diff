@@ -1,0 +1,123 @@
+27d26
+< import com.google.javascript.jscomp.graph.FixedPointGraphTraversal.EdgeCallback;
+28a28
+> import com.google.javascript.jscomp.graph.FixedPointGraphTraversal.EdgeCallback;
+90c90,93
+<   private final NameInfo globalNode = new NameInfo(null);
+---
+>   private final NameInfo globalNode = new NameInfo("[global]");
+> 
+>   
+>   private final NameInfo externNode = new NameInfo("[extern]");
+93c96
+<   private final NameInfo externNode = new NameInfo(null);
+---
+>   private final NameInfo anonymousNode = new NameInfo("[anonymous]");
+187,188c190,205
+<   private class ProcessProperties implements NodeTraversal.Callback {
+<     private Stack<NameInfo> symbolStack = new Stack<NameInfo>();
+---
+>   private class ProcessProperties implements NodeTraversal.ScopedCallback {
+>     private Stack<NameContext> symbolStack = new Stack<NameContext>();
+> 
+>     private ProcessProperties() {
+>       symbolStack.push(new NameContext(globalNode));
+>     }
+> 
+>     @Override
+>     public void enterScope(NodeTraversal t) {
+>       symbolStack.peek().scope = t.getScope();
+>     }
+> 
+>     @Override
+>     public void exitScope(NodeTraversal t) {
+> 
+>     }
+192,194c209,211
+<         symbolStack.push(getNameInfoForName(
+<                 n.getFirstChild().getLastChild().getString(), PROPERTY));
+<       } else if (isGlobalFunctionDeclaration(t, n, parent)) {
+---
+>         symbolStack.push(new NameContext(getNameInfoForName(
+>                 n.getFirstChild().getLastChild().getString(), PROPERTY)));
+>       } else if (isGlobalFunctionDeclaration(t, n)) {
+198c215,217
+<         symbolStack.push(getNameInfoForName(name, VAR));
+---
+>         symbolStack.push(new NameContext(getNameInfoForName(name, VAR)));
+>       } else if (NodeUtil.isFunction(n)) {
+>         symbolStack.push(new NameContext(anonymousNode));
+252,261c271,277
+<           } else {
+<             int level = 0;
+<             for (Scope s = t.getScope(); s != var.getScope();
+<                 s = s.getParent()) {
+<               level++;
+<             }
+<             for (level = symbolStack.size() < level ?
+<                 symbolStack.size() : level; level != 0; level--) {
+<               symbolStack.get(symbolStack.size() - level)
+<                   .readClosureVariables = true;
+---
+>           } else if (var.getScope() != t.getScope()){
+>             for (int i = symbolStack.size() - 1; i >= 0; i--) {
+>               NameContext context = symbolStack.get(i);
+>               context.name.readClosureVariables = true;
+>               if (context.scope == var.getScope()) {
+>                 break;
+>               }
+268c284,285
+<           isGlobalFunctionDeclaration(t, n, parent)) {
+---
+>           isGlobalFunctionDeclaration(t, n) ||
+>           NodeUtil.isFunction(n)) {
+274,279c291,297
+<       if (symbolStack.empty()) {
+<         addGlobalUseOfSymbol(name, module, type);
+<       } else {
+<         NameInfo info = getNameInfoForName(name, type);
+<         if (!symbolStack.peek().equals(info)) {
+<           symbolGraph.connect(symbolStack.peek(), module, info);
+---
+>       NameInfo info = getNameInfoForName(name, type);
+>       NameInfo def = null;
+>       
+>       for (int i = symbolStack.size() - 1; i >= 0; i--) {
+>         def = symbolStack.get(i).name;
+>         if (def != anonymousNode) {
+>           break;
+281a300,302
+>       if (!def.equals(info)) {
+>         symbolGraph.connect(def, module, info);
+>       }
+288,289c309
+<     private boolean isGlobalFunctionDeclaration(NodeTraversal t,
+<         Node n, Node parent) {
+---
+>     private boolean isGlobalFunctionDeclaration(NodeTraversal t, Node n) {
+292c312,313
+<            n.getType() == Token.FUNCTION && parent.getType() == Token.NAME);
+---
+>            n.getType() == Token.FUNCTION &&
+>            n.getParent().getType() == Token.NAME);
+325c346
+<           isGlobalFunctionDeclaration(t, parent, gramps) ||
+---
+>           isGlobalFunctionDeclaration(t, parent) ||
+328c349
+<           isGlobalFunctionDeclaration(t, firstChild, nameNode)) {
+---
+>           isGlobalFunctionDeclaration(t, firstChild)) {
+581a603,614
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private class NameContext {
+>     final NameInfo name;
+>     Scope scope;
+>     NameContext(NameInfo name) {
+>       this.name = name;

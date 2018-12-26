@@ -1,0 +1,195 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.distribution;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.special.Beta;
+
+
+
+
+
+
+
+public class FDistributionImpl
+    extends AbstractContinuousDistribution
+    implements FDistribution, Serializable  {
+
+    
+    private double numeratorDegreesOfFreedom;
+
+    
+    private double denominatorDegreesOfFreedom;
+    
+    
+
+
+
+
+    public FDistributionImpl(double numeratorDegreesOfFreedom,
+            double denominatorDegreesOfFreedom) {
+        super();
+        setNumeratorDegreesOfFreedom(numeratorDegreesOfFreedom);
+        setDenominatorDegreesOfFreedom(denominatorDegreesOfFreedom);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public double cummulativeProbability(double x) throws MathException {
+        double ret;
+        if (x <= 0.0) {
+            ret = 0.0;
+        } else {
+            double n = getNumeratorDegreesOfFreedom();
+            double m = getDenominatorDegreesOfFreedom();
+            
+            ret = Beta.regularizedBeta((n * x) / (m + n * x),
+                0.5 * n,
+                0.5 * m);
+        }
+        return ret;
+    }
+        
+    
+
+
+
+
+
+
+
+
+    protected double getDomainLowerBound(double p) {
+        return 0.0;
+    }
+
+    
+
+
+
+
+
+
+
+
+    protected double getDomainUpperBound(double p) {
+        return Double.MAX_VALUE;
+    }
+
+    
+
+
+
+
+
+
+
+    protected double getInitialDomain(double p) {
+        return getDenominatorDegreesOfFreedom() /
+            (getDenominatorDegreesOfFreedom() - 2.0);
+    }
+    
+    
+
+
+
+    public void setNumeratorDegreesOfFreedom(double degreesOfFreedom) {
+        if (degreesOfFreedom <= 0.0) {
+            throw new IllegalArgumentException(
+                "degrees of freedom must be positive.");
+        }
+        this.numeratorDegreesOfFreedom = degreesOfFreedom;
+    }
+    
+    
+
+
+
+    public double getNumeratorDegreesOfFreedom() {
+        return numeratorDegreesOfFreedom;
+    }
+    
+    
+
+
+
+    public void setDenominatorDegreesOfFreedom(double degreesOfFreedom) {
+        if (degreesOfFreedom <= 0.0) {
+            throw new IllegalArgumentException(
+                "degrees of freedom must be positive.");
+        }
+        this.denominatorDegreesOfFreedom = degreesOfFreedom;
+    }
+    
+    
+
+
+
+    public double getDenominatorDegreesOfFreedom() {
+        return denominatorDegreesOfFreedom;
+    }
+}

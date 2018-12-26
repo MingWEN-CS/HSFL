@@ -1,0 +1,202 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
+
+
+
+
+
+
+
+
+
+
+public class MathException extends Exception {
+    
+    
+    private static final long serialVersionUID = 5924076008552401454L;
+
+    
+    private static ResourceBundle cachedResources = null;
+ 
+    
+
+
+    private final String pattern;
+
+    
+
+
+    private final Object[] arguments;
+
+    
+
+
+
+
+
+
+    private static String translate(String s, Locale locale) {
+        try {
+            if ((cachedResources == null) || (! cachedResources.getLocale().equals(locale))) {
+                
+                cachedResources =
+                    ResourceBundle.getBundle("org.apache.commons.math.MessagesResources", locale);
+            }
+
+            if (cachedResources.getLocale().getLanguage().equals(locale.getLanguage())) {
+                
+                return cachedResources.getString(s);
+            }
+            
+        } catch (MissingResourceException mre) {
+            
+        }
+
+        
+        
+        return s;
+
+    }
+
+    
+
+
+
+
+
+
+    private static String buildMessage(String pattern, Object[] arguments, Locale locale) {
+        return (pattern == null) ? "" : new MessageFormat(translate(pattern, locale), locale).format(arguments);        
+    }
+
+    
+
+
+
+    public MathException() {
+        super();
+        this.pattern   = null;
+        this.arguments = new Object[0];
+    }
+    
+    
+
+
+
+
+
+
+    public MathException(String pattern, Object[] arguments) {
+      super(buildMessage(pattern, arguments, Locale.US));
+      this.pattern   = pattern;
+      this.arguments = (arguments == null) ? new Object[0] : arguments.clone();
+    }
+
+    
+
+
+
+
+
+
+    public MathException(Throwable rootCause) {
+        super(rootCause);
+        this.pattern   = getMessage();
+        this.arguments = new Object[0];
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+    public MathException(String pattern, Object[] arguments, Throwable rootCause) {
+      super(buildMessage(pattern, arguments, Locale.US), rootCause);
+      this.pattern   = pattern;
+      this.arguments = (arguments == null) ? new Object[0] : arguments.clone();
+    }
+
+    
+
+
+
+
+    public String getPattern() {
+        return pattern;
+    }
+
+    
+
+
+
+
+    public Object[] getArguments() {
+        return arguments.clone();
+    }
+
+    
+
+
+
+
+
+
+    public String getMessage(Locale locale) {
+        return buildMessage(pattern, arguments, locale);
+    }
+
+    
+    public String getLocalizedMessage() {
+        return getMessage(Locale.getDefault());
+    }
+
+    
+
+
+    public void printStackTrace() {
+        printStackTrace(System.err);
+    }
+    
+    
+
+
+
+
+    public void printStackTrace(PrintStream out) {
+        synchronized (out) {
+            PrintWriter pw = new PrintWriter(out, false);
+            printStackTrace(pw);
+            
+            pw.flush();
+        }
+    }
+
+}

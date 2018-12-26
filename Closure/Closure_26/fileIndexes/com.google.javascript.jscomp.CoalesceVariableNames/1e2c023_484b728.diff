@@ -1,0 +1,86 @@
+203,209d202
+< 
+<     
+<     
+<     
+<     
+<     
+<     Set<Var> unsafeCrossRangeSet = Sets.newHashSet();
+212,233d204
+<     for (DiGraphNode<Node, Branch> cfgNode : cfg.getDirectedGraphNodes()) {
+<       if (cfg.isImplicitReturn(cfgNode)) {
+<         continue;
+<       }
+< 
+<       for (Iterator<Var> i = scope.getVars(); i.hasNext();) {
+<         final Var v = i.next();
+< 
+<         if (!unsafeCrossRangeSet.contains(v)) {
+<           FlowState<LiveVariableLattice> state = cfgNode.getAnnotation();
+<           PrescreenCrossLiveRange check =
+<               new PrescreenCrossLiveRange(v, state.getOut());
+< 
+<           NodeTraversal.traverse(compiler, cfgNode.getValue(), check);
+< 
+<           if (!check.isSafe()) {
+<             unsafeCrossRangeSet.add(v);
+<           }
+<         }
+<       }
+<     }
+< 
+298,302d268
+<         if (!unsafeCrossRangeSet.contains(v1) &&
+<             !unsafeCrossRangeSet.contains(v2)) {
+<           continue NEXT_VAR_PAIR;
+<         }
+< 
+307a274
+> 
+463,508d429
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private static class PrescreenCrossLiveRange
+<       extends AbstractCfgNodeTraversalCallback {
+<     private int count;
+<     private final LiveVariableLattice lattice;
+<     private final Var var;
+< 
+<     
+<     
+<     
+<     
+<     
+<     private boolean hasDeadAssignment = false;
+< 
+<     public PrescreenCrossLiveRange(Var var, LiveVariableLattice lattice) {
+<       this.lattice = lattice;
+<       this.var = var;
+<     }
+< 
+<     @Override
+<     public void visit(NodeTraversal t, Node n, Node parent) {
+<       if (!NodeUtil.isName(n) || !var.name.equals(n.getString())) {
+<         return;
+<       }
+<       count++;
+<       if (
+<           ((NodeUtil.isAssign(parent) && parent.getFirstChild() == n) ||
+<           (NodeUtil.isVar(parent) && n.hasChildren()))
+< 
+<           && !lattice.isLive(var)) {
+<         hasDeadAssignment = true;
+<       }
+<     }
+< 
+<     private boolean isSafe() {
+<       return count < 2 && !hasDeadAssignment;

@@ -1,0 +1,60 @@
+6126c6126
+<     public static boolean startsWith(String str, String prefix) {
+---
+>     public static boolean startsWith(CharSequence str, CharSequence prefix) {
+6151c6151
+<     public static boolean startsWithIgnoreCase(String str, String prefix) {
+---
+>     public static boolean startsWithIgnoreCase(CharSequence str, CharSequence prefix) {
+6166c6166
+<     private static boolean startsWith(String str, String prefix, boolean ignoreCase) {
+---
+>     private static boolean startsWith(CharSequence str, CharSequence prefix, boolean ignoreCase) {
+6173c6173
+<         return str.regionMatches(ignoreCase, 0, prefix, 0, prefix.length());
+---
+>         return regionMatchesSequence(str, ignoreCase, 0, prefix, 0, prefix.length());
+6194c6194
+<     public static boolean startsWithAny(String string, String... searchStrings) {
+---
+>     public static boolean startsWithAny(CharSequence string, CharSequence... searchStrings) {
+6199c6199
+<             String searchString = searchStrings[i];
+---
+>             CharSequence searchString = searchStrings[i];
+6232c6232
+<     public static boolean endsWith(String str, String suffix) {
+---
+>     public static boolean endsWith(CharSequence str, CharSequence suffix) {
+6258c6258
+<     public static boolean endsWithIgnoreCase(String str, String suffix) {
+---
+>     public static boolean endsWithIgnoreCase(CharSequence str, CharSequence suffix) {
+6273c6273
+<     private static boolean endsWith(String str, String suffix, boolean ignoreCase) {
+---
+>     private static boolean endsWith(CharSequence str, CharSequence suffix, boolean ignoreCase) {
+6281c6281
+<         return str.regionMatches(ignoreCase, strOffset, suffix, 0, suffix.length());
+---
+>         return regionMatchesSequence(str, ignoreCase, strOffset, suffix, 0, suffix.length());
+6350c6350
+<     public static boolean endsWithAny(String string, String... searchStrings) {
+---
+>     public static boolean endsWithAny(CharSequence string, CharSequence... searchStrings) {
+6355c6355
+<             String searchString = searchStrings[i];
+---
+>             CharSequence searchString = searchStrings[i];
+6490a6491,6501
+>         }
+>     }
+> 
+>     static boolean regionMatchesSequence(CharSequence cs, boolean ignoreCase, int thisStart, 
+>                                          CharSequence substring, int start, int length)
+>     {
+>         if (cs instanceof String && substring instanceof String) {
+>             return ((String) cs).regionMatches(ignoreCase, thisStart, ((String)substring), start, length);
+>         } else {
+>             
+>             return cs.toString().regionMatches(ignoreCase, thisStart, substring.toString(), start, length);

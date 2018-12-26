@@ -1,0 +1,85 @@
+774a775,858
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String unescapeCsv(String str) {
+>         if (str == null) {
+>             return null;
+>         }
+>         try {
+>             StringWriter writer = new StringWriter();
+>             unescapeCsv(writer, str);
+>             return writer.toString();
+>         } catch (IOException ioe) {
+>             
+>             ioe.printStackTrace();
+>             return null;
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void unescapeCsv(Writer out, String str) throws IOException {
+>         if (str == null) {
+>             return;
+>         }
+>         if (str.length() < 2) {
+>             out.write(str);
+>             return;
+>         }
+>         if ( str.charAt(0) != CSV_QUOTE || str.charAt(str.length() - 1) != CSV_QUOTE ) {
+>             out.write(str);
+>             return;
+>         }
+> 
+>         
+>         String quoteless = str.substring(1, str.length() - 1);
+> 
+>         if ( StringUtils.containsAny(quoteless, CSV_SEARCH_CHARS) ) {
+>             
+>             str = StringUtils.replace(quoteless, "" + CSV_QUOTE + CSV_QUOTE, Character.toString(CSV_QUOTE));
+>         }
+> 
+>         out.write(str);
+>     }
+> 

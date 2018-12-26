@@ -1,0 +1,83 @@
+77a78,81
+>   private boolean dirtyState;
+> 
+> 
+>   
+96a101
+>     this.dirtyState         = true;
+116a122
+>     this.dirtyState   = true;
+154,155c160,162
+<     finalized = interpolator.finalized;
+<     forward   = interpolator.forward;
+---
+>     finalized  = interpolator.finalized;
+>     forward    = interpolator.forward;
+>     dirtyState = interpolator.dirtyState;
+176a184
+>     this.dirtyState   = true;
+213,217c221,223
+<     currentTime      = t;
+<     h                = currentTime - previousTime;
+<     interpolatedTime = t;
+<     System.arraycopy(currentState, 0, interpolatedState, 0,
+<                      currentState.length);
+---
+>     currentTime = t;
+>     h           = currentTime - previousTime;
+>     setInterpolatedTime(t);
+220c226
+<     finalized = false;
+---
+>     finalized  = false;
+240,241c246
+<   public void setInterpolatedTime(final double time)
+<       throws DerivativeException {
+---
+>   public void setInterpolatedTime(final double time) {
+243,245c248
+<       final double oneMinusThetaH = currentTime - interpolatedTime;
+<       final double theta = (h == 0) ? 0 : (h - oneMinusThetaH) / h;
+<       computeInterpolatedState(theta, oneMinusThetaH);
+---
+>       dirtyState       = true;
+263,264c266,267
+<   protected abstract void computeInterpolatedState(double theta,
+<                                                    double oneMinusThetaH)
+---
+>   protected abstract void computeInterpolatedStateAndDerivatives(double theta,
+>                                                                  double oneMinusThetaH)
+268,269c271,282
+<   public double[] getInterpolatedState() {
+<     return interpolatedState;
+---
+>   public double[] getInterpolatedState() throws DerivativeException {
+> 
+>       
+>       if (dirtyState) {
+>           final double oneMinusThetaH = currentTime - interpolatedTime;
+>           final double theta = (h == 0) ? 0 : (h - oneMinusThetaH) / h;
+>           computeInterpolatedStateAndDerivatives(theta, oneMinusThetaH);
+>           dirtyState = false;
+>       }
+> 
+>       return interpolatedState;
+> 
+273,274c286,297
+<   public double[] getInterpolatedDerivatives() {
+<     return interpolatedDerivatives;
+---
+>   public double[] getInterpolatedDerivatives() throws DerivativeException {
+> 
+>       
+>       if (dirtyState) {
+>           final double oneMinusThetaH = currentTime - interpolatedTime;
+>           final double theta = (h == 0) ? 0 : (h - oneMinusThetaH) / h;
+>           computeInterpolatedStateAndDerivatives(theta, oneMinusThetaH);
+>           dirtyState = false;
+>       }
+> 
+>       return interpolatedDerivatives;
+> 
+400a424
+>     dirtyState    = true;

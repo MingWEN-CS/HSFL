@@ -1,0 +1,356 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.base;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.ReadablePartial;
+import org.joda.time.convert.ConverterManager;
+import org.joda.time.convert.InstantConverter;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class BasePartial
+        extends AbstractPartial
+        implements ReadablePartial, Serializable {
+
+    
+    private static final long serialVersionUID = 2353678632973660L;
+
+    
+    private Chronology iChronology;
+    
+    private int[] iValues;
+    
+    private transient DateTimeField[] iFields;
+
+    
+    
+
+
+
+
+
+
+
+    protected BasePartial() {
+        this(DateTimeUtils.currentTimeMillis(), null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected BasePartial(Chronology chronology) {
+        this(DateTimeUtils.currentTimeMillis(), chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected BasePartial(long instant) {
+        this(instant, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected BasePartial(long instant, Chronology chronology) {
+        super();
+        chronology = DateTimeUtils.getChronology(chronology);
+        iChronology = chronology.withUTC();
+        iFields = initFields(iChronology);
+        iValues = initValues(instant, chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected BasePartial(Object instant) {
+        super();
+        InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+        long millis = converter.getInstantMillis(instant);
+        Chronology chronology = converter.getChronology(instant);
+        chronology = DateTimeUtils.getChronology(chronology);
+        iChronology = chronology.withUTC();
+        iFields = initFields(iChronology);
+        iValues = initValues(millis, chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected BasePartial(Object instant, Chronology chronology) {
+        super();
+        InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+        long millis = converter.getInstantMillis(instant, chronology);
+        chronology = converter.getChronology(instant, chronology);
+        chronology = DateTimeUtils.getChronology(chronology);
+        iChronology = chronology.withUTC();
+        iFields = initFields(iChronology);
+        iValues = initValues(millis, chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected BasePartial(int[] values, Chronology chronology) {
+        super();
+        chronology = DateTimeUtils.getChronology(chronology);
+        iChronology = chronology.withUTC();
+        iFields = initFields(iChronology);
+        chronology.validate(this, values);
+        iValues = (int[]) values.clone();
+    }
+
+    
+
+
+
+
+
+
+
+
+    protected BasePartial(BasePartial other, int[] values) {
+        super();
+        iFields = other.iFields;
+        iValues = values;
+        iChronology = other.iChronology;
+    }
+
+    
+    
+
+
+
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        iFields = initFields(iChronology);
+    }
+
+    
+
+
+
+
+
+    protected abstract DateTimeField[] initFields(Chronology chrono);
+
+    
+
+
+
+
+
+
+    protected abstract int[] initValues(long instant, Chronology chrono);
+
+    
+    
+
+
+
+
+    public int getFieldSize() {
+        return iFields.length;
+    }
+
+    
+
+
+
+
+
+
+    public DateTimeField getField(int index) {
+        return iFields[index];
+    }
+
+    
+
+
+
+
+
+
+    public int getValue(int index) {
+        return iValues[index];
+    }
+
+    
+    
+
+
+
+
+
+
+    public DateTimeField[] getFields() {
+        return (DateTimeField[]) iFields.clone();
+    }
+
+    
+
+
+
+
+
+
+
+    public int[] getValues() {
+        return (int[]) iValues.clone();
+    }
+
+    
+
+
+
+
+
+
+
+    public Chronology getChronology() {
+        return iChronology;
+    }
+
+    
+    
+
+
+
+
+
+
+    protected void setValue(int index, int value) {
+        DateTimeField field = getField(index);
+        iValues = field.set(this, index, iValues, value);
+    }
+
+    
+
+
+
+
+    protected void setValues(int[] values) {
+        getChronology().validate(this, values);
+        iValues = values;
+    }
+
+}

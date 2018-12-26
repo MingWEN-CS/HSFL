@@ -1,0 +1,61 @@
+1a2,61
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.rhino.Node;
+> import com.google.javascript.rhino.Token;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class SyntheticAst implements SourceAst {
+>   private static final long serialVersionUID = 1L;
+> 
+>   private final String sourceName;
+> 
+>   private Node root;
+> 
+>   SyntheticAst(String sourceName) {
+>     this.sourceName = sourceName;
+>     clearAst();
+>   }
+> 
+>   @Override
+>   public Node getAstRoot(AbstractCompiler compiler) {
+>     return root;
+>   }
+> 
+>   @Override
+>   public void clearAst() {
+>     root = new Node(Token.SCRIPT);
+>     root.putProp(Node.SOURCENAME_PROP, sourceName);
+>   }
+> 
+>   @Override
+>   public SourceFile getSourceFile() {
+>     return null;
+>   }
+> 
+>   @Override
+>   public void setSourceFile(SourceFile file) {
+>     throw new IllegalStateException(
+>         "Cannot set a source file for a synthetic AST");
+>   }
+> }

@@ -1,0 +1,156 @@
+79d78
+< public class Duration extends AbstractDuration implements ReadableDuration, Serializable {
+81,82d79
+<     
+<     public static final Duration ZERO = new Duration();
+84,85d80
+<     
+<     private static final long serialVersionUID = 741052353876488155L;
+87d81
+<     
+92,94c86,93
+<     public Duration() {
+<         super((DurationType) null);
+<     }
+---
+> 
+> 
+> public class Duration
+>         extends AbstractDuration
+>         implements ReadableDuration, Serializable {
+> 
+>     
+>     public static final Duration ZERO = new Duration(0L);
+96a96
+>     private static final long serialVersionUID = 741052353876488155L;
+97a98
+>     
+102,103c103,104
+<     public Duration(DurationType type) {
+<         super(type);
+---
+>     public Duration(long duration) {
+>         super(duration, null, false);
+112,115c113,114
+< 
+< 
+<     public Duration(Object duration) {
+<         super(duration, null);
+---
+>     public Duration(long duration, DurationType type) {
+>         super(duration, type, false);
+127,128c126,127
+<     public Duration(Object duration, DurationType type) {
+<         super(duration, type);
+---
+>     public Duration(int hours, int minutes, int seconds, int millis) {
+>         super(0, 0, 0, 0, hours, minutes, seconds, millis, null, false);
+142,143c141,144
+<     public Duration(int days, int hours, int minutes, int seconds, int millis) {
+<         super(0, 0, 0, days, hours, minutes, seconds, millis, DurationType.getDayHourType());
+---
+> 
+>     public Duration(int years, int months, int weeks, int days,
+>                     int hours, int minutes, int seconds, int millis) {
+>         super(years, months, weeks, days, hours, minutes, seconds, millis, null, false);
+161,162c162,163
+<                     int hours, int minutes, int seconds, int millis) {
+<         super(years, months, weeks, days, hours, minutes, seconds, millis, null);
+---
+>                     int hours, int minutes, int seconds, int millis, DurationType type) {
+>         super(years, months, weeks, days, hours, minutes, seconds, millis, type, false);
+171a173,175
+>     public Duration(long startInstant, long endInstant) {
+>         super(startInstant, endInstant, null, false);
+>     }
+172a177
+>     
+179,181c184,186
+<     public Duration(int years, int months, int weeks, int days,
+<                     int hours, int minutes, int seconds, int millis, DurationType type) {
+<         super(years, months, weeks, days, hours, minutes, seconds, millis, type);
+---
+> 
+>     public Duration(long startInstant, long endInstant, DurationType type) {
+>         super(startInstant, endInstant, type, false);
+191,192c196,197
+<     public Duration(long startInstant, long endInstant) {
+<         super(startInstant, endInstant, null);
+---
+>     public Duration(ReadableInstant startInstant, ReadableInstant endInstant) {
+>         super(startInstant, endInstant, null, false);
+203,204c208,209
+<     public Duration(long startInstant, long endInstant, DurationType type) {
+<         super(startInstant, endInstant, type);
+---
+>     public Duration(ReadableInstant startInstant, ReadableInstant endInstant, DurationType type) {
+>         super(startInstant, endInstant, type, false);
+214,215c219,221
+<     public Duration(ReadableInstant startInstant, ReadableInstant endInstant) {
+<         super(startInstant, endInstant, null);
+---
+> 
+>     public Duration(Object duration) {
+>         super(duration, null, false);
+226,227c232,234
+<     public Duration(ReadableInstant startInstant, ReadableInstant endInstant, DurationType type) {
+<         super(startInstant, endInstant, type);
+---
+> 
+>     public Duration(Object duration, DurationType type) {
+>         super(duration, type, false);
+230a238
+>     
+237,238c245,250
+<     public Duration(long duration) {
+<         super(duration, null);
+---
+> 
+>     protected final DurationType checkDurationType(DurationType type) {
+>         if (type == null) {
+>             return DurationType.getAllType();
+>         }
+>         return type;
+241a254
+>     
+249,250c262,269
+<     public Duration(long duration, DurationType type) {
+<         super(duration, type);
+---
+>     public Duration withDurationTypeUsingTotalMillis(DurationType type) {
+>         if (type == null) {
+>             type = DurationType.getAllType();
+>         }
+>         if (type.equals(getDurationType())) {
+>             return this;
+>         }
+>         return new Duration(getTotalMillis(), type);
+254d272
+<     
+262c280
+<     public Duration withDurationType(DurationType type) {
+---
+>     public Duration withDurationTypeUsingFields(DurationType type) {
+269c287,299
+<         return new Duration(getTotalMillis(), type);
+---
+>         return new Duration(getYears(), getMonths(), getWeeks(), getDays(),
+>                     getHours(), getMinutes(), getSeconds(), getMillis(), type);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Duration withFieldsNormalized() {
+>         return new Duration(getTotalMillis(), getDurationType());
+296,301d325
+<     }
+< 
+<     
+< 
+< 
+<     protected final void normalize() {

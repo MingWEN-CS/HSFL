@@ -1,0 +1,80 @@
+2610a2611,2689
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String[] splitByCharacterType(String str) {
+>         return splitByCharacterType(str, false);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String[] splitByCharacterType(String str, boolean camelCase) {
+>         if (str == null) {
+>             return null;
+>         }
+>         if (str.length() == 0) {
+>             return ArrayUtils.EMPTY_STRING_ARRAY;
+>         }
+>         char[] c = str.toCharArray();
+>         List list = new ArrayList();
+>         int tokenStart = 0;
+>         int currentType = Character.getType(c[tokenStart]);
+>         for (int pos = tokenStart + 1; pos < c.length; pos++) {
+>             int type = Character.getType(c[pos]);
+>             if (type == currentType) {
+>                 continue;
+>             }
+>             if (camelCase && type == Character.LOWERCASE_LETTER
+>                     && currentType == Character.UPPERCASE_LETTER) {
+>                 int newTokenStart = pos - 1;
+>                 if (newTokenStart != tokenStart) {
+>                     list.add(new String(c, tokenStart, newTokenStart - tokenStart));
+>                     tokenStart = newTokenStart;
+>                 }
+>             } else {
+>                 list.add(new String(c, tokenStart, pos - tokenStart));
+>                 tokenStart = pos;
+>             }
+>             currentType = type;
+>         }
+>         list.add(new String(c, tokenStart, c.length - tokenStart));
+>         return (String[]) list.toArray(new String[list.size()]);
+>     }
+> 
+>     

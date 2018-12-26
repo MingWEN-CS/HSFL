@@ -1,0 +1,362 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.field;
+
+import java.util.Locale;
+import java.io.Serializable;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DurationField;
+import org.joda.time.ReadableInstant;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class AbstractReadableInstantFieldProperty implements Serializable {
+    
+    
+    private static final long serialVersionUID = 1971226328211649661L;
+
+    
+
+
+    public AbstractReadableInstantFieldProperty() {
+        super();
+    }
+
+    
+    
+
+
+
+
+    public abstract DateTimeField getField();
+
+    
+
+
+
+
+    public String getName() {
+        return getField().getName();
+    }
+
+    
+
+
+
+
+    public abstract ReadableInstant getReadableInstant();
+
+    
+    
+
+
+
+
+
+    public int get() {
+        return getField().get(getReadableInstant().getMillis());
+    }
+
+    
+
+
+
+
+
+
+    public String getAsText(Locale locale) {
+        return getField().getAsText(getReadableInstant().getMillis(), locale);
+    }
+
+    
+
+
+
+
+
+    public final String getAsText() {
+        return getAsText(null);
+    }
+
+    
+
+
+
+
+
+
+    public String getAsShortText(Locale locale) {
+        return getField().getAsShortText(getReadableInstant().getMillis(), locale);
+    }
+
+    
+
+
+
+
+
+    public final String getAsShortText() {
+        return getAsShortText(null);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public int getDifference(ReadableInstant instant) {
+        if (instant == null) {
+            return getField().getDifference(getReadableInstant().getMillis(), DateTimeUtils.currentTimeMillis());
+        }
+        return getField().getDifference(getReadableInstant().getMillis(), instant.getMillis());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public long getDifferenceAsLong(ReadableInstant instant) {
+        if (instant == null) {
+            return getField().getDifferenceAsLong(getReadableInstant().getMillis(), DateTimeUtils.currentTimeMillis());
+        }
+        return getField().getDifferenceAsLong(getReadableInstant().getMillis(), instant.getMillis());
+    }
+
+    
+    
+
+
+
+
+
+    public DurationField getDurationField() {
+        return getField().getDurationField();
+    }
+
+    
+
+
+
+
+
+    public DurationField getRangeDurationField() {
+        return getField().getRangeDurationField();
+    }
+
+    
+
+
+
+
+
+    public boolean isLeap() {
+        return getField().isLeap(getReadableInstant().getMillis());
+    }
+
+    
+
+
+
+
+
+    public int getLeapAmount() {
+        return getField().getLeapAmount(getReadableInstant().getMillis());
+    }
+
+    
+
+
+
+    public DurationField getLeapDurationField() {
+        return getField().getLeapDurationField();
+    }
+
+    
+    
+
+
+
+
+
+    public int getMinimumValueOverall() {
+        return getField().getMinimumValue();
+    }
+
+    
+
+
+
+
+
+    public int getMinimumValue() {
+        return getField().getMinimumValue(getReadableInstant().getMillis());
+    }
+
+    
+
+
+
+
+
+    public int getMaximumValueOverall() {
+        return getField().getMaximumValue();
+    }
+
+    
+
+
+
+
+
+    public int getMaximumValue() {
+        return getField().getMaximumValue(getReadableInstant().getMillis());
+    }
+
+    
+
+
+
+
+
+
+    public int getMaximumTextLength(Locale locale) {
+        return getField().getMaximumTextLength(locale);
+    }
+
+    
+
+
+
+
+
+
+    public int getMaximumShortTextLength(Locale locale) {
+        return getField().getMaximumShortTextLength(locale);
+    }
+
+
+    
+
+
+
+
+
+    public long remainder() {
+        return getField().remainder(getReadableInstant().getMillis());
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public int compareTo(ReadableInstant instant) {
+        if (instant == null) {
+            throw new IllegalArgumentException("The instant must not be null");
+        }
+        int thisValue = get();
+        int otherValue = instant.get(getField());
+        if (thisValue < otherValue) {
+            return -1;
+        } else if (thisValue > otherValue) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    
+    
+
+
+
+
+    public String toString() {
+        return "Property[" + getName() + "]";
+    }
+
+}

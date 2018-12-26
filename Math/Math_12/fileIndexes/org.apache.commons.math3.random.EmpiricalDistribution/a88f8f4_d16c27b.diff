@@ -1,0 +1,75 @@
+30d29
+< import org.apache.commons.math3.exception.MathIllegalArgumentException;
+192c191,192
+<     public void load(double[] in) throws NullArgumentException {
+---
+> 
+>     public void load(double[] in) throws NullArgumentException, MathIllegalStateException {
+196c196,197
+<             fillBinStats(in);
+---
+>             
+>             fillBinStats(new ArrayDataAdapter(in));
+211c212,213
+<     public void load(URL url) throws IOException, NullArgumentException {
+---
+> 
+>     public void load(URL url) throws IOException, NullArgumentException, ZeroException {
+220a223
+>             
+222c225
+<             fillBinStats(in);
+---
+>             fillBinStats(new StreamDataAdapter(in));
+245a249
+>             
+247c251
+<             fillBinStats(in);
+---
+>             fillBinStats(new StreamDataAdapter(in));
+283,309d286
+< 
+< 
+<     private class DataAdapterFactory{
+<         
+< 
+< 
+< 
+< 
+< 
+<         public DataAdapter getAdapter(Object in) {
+<             if (in instanceof BufferedReader) {
+<                 BufferedReader inputStream = (BufferedReader) in;
+<                 return new StreamDataAdapter(inputStream);
+<             } else if (in instanceof double[]) {
+<                 double[] inputArray = (double[]) in;
+<                 return new ArrayDataAdapter(inputArray);
+<             } else {
+<                 throw new MathIllegalArgumentException(
+<                       LocalizedFormats.INPUT_DATA_FROM_UNSUPPORTED_DATASOURCE,
+<                       in.getClass().getName(),
+<                       BufferedReader.class.getName(), double[].class.getName());
+<             }
+<         }
+<     }
+<     
+< 
+< 
+401c378,379
+<     private void fillBinStats(Object in) throws IOException {
+---
+>     private void fillBinStats(final DataAdapter da)
+>         throws IOException {
+417,418d394
+<         DataAdapterFactory aFactory = new DataAdapterFactory();
+<         DataAdapter da = aFactory.getAdapter(in);
+458c434
+<         double x = randomData.nextUniform(0,1);
+---
+>         final double x = randomData.nextUniform(0,1);
+466,467c442,443
+<                         return randomData.nextGaussian
+<                             (stats.getMean(),stats.getStandardDeviation());
+---
+>                        return randomData.nextGaussian(stats.getMean(),
+>                                                       stats.getStandardDeviation());

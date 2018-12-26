@@ -1,0 +1,30 @@
+44a45
+>   private final boolean assumeStrictThis;
+54c55,56
+<       boolean allowDecomposition) {
+---
+>       boolean allowDecomposition,
+>       boolean assumeStrictThis) {
+59a62
+>     this.assumeStrictThis = assumeStrictThis;
+200,202c203,207
+<         Node thisValue = callNode.getFirstChild().getNext();
+<         if (thisValue == null || thisValue.getType() != Token.THIS) {
+<           return false;
+---
+>         if (!assumeStrictThis) {
+>           Node thisValue = callNode.getFirstChild().getNext();
+>           if (thisValue == null || thisValue.getType() != Token.THIS) {
+>             return false;
+>           }
+256c261
+<           safeReturnNode, null, argMap);
+---
+>           null, safeReturnNode, null, argMap);
+634,635c639,641
+<         Preconditions.checkNotNull(cArg);
+<         Preconditions.checkState(cArg.getType() == Token.THIS);
+---
+>         if (cArg == null || cArg.getType() != Token.THIS) {
+>           return CanInlineResult.NO;
+>         }

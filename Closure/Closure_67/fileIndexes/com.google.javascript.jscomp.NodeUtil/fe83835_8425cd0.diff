@@ -1,0 +1,44 @@
+1373a1374,1380
+>   static boolean isTryCatchNodeContainer(Node n) {
+>     Node parent = n.getParent();
+>     return parent.getType() == Token.TRY
+>         && parent.getFirstChild().getNext() == n;
+>   }
+> 
+>   
+1375c1382,1390
+<     if (isTryFinallyNode(parent, node)) { 
+---
+>     if (isTryFinallyNode(parent, node)) {
+>       if (NodeUtil.hasCatchHandler(getCatchBlock(parent))) {
+>         
+>         parent.removeChild(node);
+>       } else {
+>         
+>         node.detachChildren();
+>       }
+>     } else if (node.getType() == Token.CATCH) {
+1377c1392,1400
+<       parent.removeChild(node);
+---
+>       Node tryNode = node.getParent().getParent();
+>       Preconditions.checkState(NodeUtil.hasFinally(tryNode));
+>       node.detachFromParent();
+>     } else if (isTryCatchNodeContainer(node)) {
+>       
+>       
+>       Node tryNode = node.getParent();
+>       Preconditions.checkState(NodeUtil.hasFinally(tryNode));
+>       node.detachChildren();
+1409a1433,1443
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   static void maybeAddFinally(Node tryNode) {
+>     Preconditions.checkState(tryNode.getType() == Token.TRY);
+>     if (!NodeUtil.hasFinally(tryNode)) {
+>       tryNode.addChildrenToBack(new Node(Token.BLOCK)
+>           .copyInformationFrom(tryNode));

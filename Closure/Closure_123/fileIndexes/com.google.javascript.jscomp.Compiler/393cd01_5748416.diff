@@ -1,0 +1,114 @@
+58a59,62
+> import java.util.concurrent.ExecutionException;
+> import java.util.concurrent.ExecutorService;
+> import java.util.concurrent.Executors;
+> import java.util.concurrent.ThreadFactory;
+140,142d143
+<   private boolean useThreads = true;
+< 
+<   
+184a186,210
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private ExecutorService compilerExecutor =
+>       Executors.newCachedThreadPool(new ThreadFactory() {
+>     @Override public Thread newThread(Runnable r) {
+>       return new Thread(null, r, "jscompiler", COMPILER_STACK_SIZE);
+>     }
+>   });
+> 
+>   
+> 
+> 
+>   private Thread compilerThread = null;
+> 
+>   
+>   private boolean useThreads = true;
+> 
+623,630d648
+<   private <T> T runInCompilerThread(final Callable<T> callable) {
+<     return runCallable(callable, useThreads, options.tracer.isOn());
+<   }
+< 
+<   static <T> T runCallableWithLargeStack(final Callable<T> callable) {
+<     return runCallable(callable, true, false);
+<   }
+< 
+632,642c650,652
+<   static <T> T runCallable(
+<       final Callable<T> callable, boolean useLargeStackThread, boolean trace) {
+< 
+<     
+<     
+<     
+<     
+<     
+< 
+<     final boolean dumpTraceReport = trace;
+<     final Object[] result = new Object[1];
+---
+>   <T> T runInCompilerThread(final Callable<T> callable) {
+>     final boolean dumpTraceReport = options != null && options.tracer.isOn();
+>     T result = null;
+644c654
+<     Runnable runnable = new Runnable() {
+---
+>     Callable<T> bootCompilerThread = new Callable<T>() {
+646c656
+<       public void run() {
+---
+>       public T call() {
+647a658
+>           compilerThread = Thread.currentThread();
+651c662
+<           result[0] = callable.call();
+---
+>           return callable.call();
+654a666
+>           compilerThread = null;
+658a671
+>         return null;
+662,671c675,686
+<     if (useLargeStackThread) {
+<       Thread th = new Thread(null, runnable, "jscompiler", COMPILER_STACK_SIZE);
+<       th.start();
+<       while (true) {
+<         try {
+<           th.join();
+<           break;
+<         } catch (InterruptedException ignore) {
+<           
+<         }
+---
+>     Preconditions.checkState(
+>         compilerThread == null || compilerThread == Thread.currentThread(),
+>         "Please do not share the Compiler across threads");
+> 
+>     
+>     if (useThreads && compilerThread == null) {
+>       try {
+>         result = compilerExecutor.submit(bootCompilerThread).get();
+>       } catch (InterruptedException e) {
+>         throw Throwables.propagate(e);
+>       } catch (ExecutionException e) {
+>         throw Throwables.propagate(e);
+674c689,693
+<       runnable.run();
+---
+>       try {
+>         result = callable.call();
+>       } catch (Exception e) {
+>         exception[0] = e;
+>       }
+682c701
+<     return (T) result[0];
+---
+>     return result;

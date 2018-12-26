@@ -1,0 +1,444 @@
+40a41,42
+>   private final static int UNMAPPED = -1;
+> 
+49c51
+<     int id;
+---
+>     int id = UNMAPPED;
+84c86,102
+<     void appendTo(Appendable out) throws IOException {
+---
+>     boolean used = false;
+>   }
+> 
+>   private class MappingWriter {
+>     
+> 
+> 
+>     private String lastSourceFile = null;
+>     private String lastSourceFileEscaped = null;
+>     private int lastLine = 0;
+>     private String lastLineString = String.valueOf(0);
+> 
+>     
+> 
+> 
+>     private void appendMappingTo(
+>         Mapping m, Appendable out) throws IOException {
+87c105,112
+<       out.append(sourceFile);
+---
+>       String sourceFile = m.sourceFile;
+>       
+>       String escapedSourceFile;
+>       if (lastSourceFile != sourceFile) { 
+>         lastSourceFile = sourceFile;
+>         lastSourceFileEscaped = escapeString(sourceFile);
+>       }
+>       escapedSourceFile = lastSourceFileEscaped;
+88a114
+>       out.append(escapedSourceFile);
+90c116,123
+<       out.append(String.valueOf(originalPosition.getLineNumber()));
+---
+> 
+>       int line = m.originalPosition.getLineNumber();
+>       if (line != lastLine) {
+>         lastLineString = String.valueOf(line);
+>       }
+>       String lineValue = lastLineString;
+> 
+>       out.append(lineValue);
+93c126,127
+<       out.append(String.valueOf(originalPosition.getCharacterIndex()));
+---
+>       out.append(String.valueOf(
+>           m.originalPosition.getCharacterIndex()));
+95c129
+<       if (originalName != null) {
+---
+>       if (m.originalName != null) {
+97c131
+<         out.append(originalName);
+---
+>         out.append(escapeString(m.originalName));
+100c134,145
+<       out.append("]");
+---
+>       out.append("]\n");
+>     }
+> 
+>     
+> 
+> 
+>     void appendMappings(Appendable out) throws IOException {
+>       for (Mapping m : mappings) {
+>         if (m.used) {
+>           appendMappingTo(m, out);
+>         }
+>       }
+132,137d176
+<   private String lastSourceFile = null;
+<   private String lastSourceFileEscaped = null;
+< 
+<   
+< 
+< 
+153,160d191
+<     String escapedSourceFile;
+<     if (lastSourceFile != sourceFile) {  
+<       lastSourceFile = sourceFile;
+<       lastSourceFileEscaped = escapeString(sourceFile);
+<     }
+<     escapedSourceFile = lastSourceFileEscaped;
+< 
+<     
+162,163c193
+<     mapping.id = mappings.size();
+<     mapping.sourceFile = escapedSourceFile;
+---
+>     mapping.sourceFile = sourceFile;
+168c198
+<       mapping.originalName = escapeString(originalName);
+---
+>       mapping.originalName = originalName;
+171,181c201,212
+<     
+<     
+<     
+<     
+<     int offsetLine = offsetPosition.getLineNumber();
+<     int startOffsetPosition = offsetPosition.getCharacterIndex();
+<     int endOffsetPosition = offsetPosition.getCharacterIndex();
+< 
+<     if (startPosition.getLineNumber() > 0) {
+<       startOffsetPosition = 0;
+<     }
+---
+>     if (offsetPosition.getLineNumber() == 0
+>         && offsetPosition.getCharacterIndex() == 0) {
+>       mapping.startPosition = startPosition;
+>       mapping.endPosition = endPosition;
+>     } else {
+>       
+>       
+>       
+>       
+>       int offsetLine = offsetPosition.getLineNumber();
+>       int startOffsetPosition = offsetPosition.getCharacterIndex();
+>       int endOffsetPosition = offsetPosition.getCharacterIndex();
+183,185c214,216
+<     if (endPosition.getLineNumber() > 0) {
+<       endOffsetPosition = 0;
+<     }
+---
+>       if (startPosition.getLineNumber() > 0) {
+>         startOffsetPosition = 0;
+>       }
+187,189c218,220
+<     mapping.startPosition =
+<         new Position(startPosition.getLineNumber() + offsetLine,
+<                      startPosition.getCharacterIndex() + startOffsetPosition);
+---
+>       if (endPosition.getLineNumber() > 0) {
+>         endOffsetPosition = 0;
+>       }
+191,193c222,229
+<     mapping.endPosition =
+<         new Position(endPosition.getLineNumber() + offsetLine,
+<                      endPosition.getCharacterIndex() + endOffsetPosition);
+---
+>       mapping.startPosition =
+>           new Position(startPosition.getLineNumber() + offsetLine,
+>                        startPosition.getCharacterIndex() + startOffsetPosition);
+> 
+>       mapping.endPosition =
+>           new Position(endPosition.getLineNumber() + offsetLine,
+>                        endPosition.getCharacterIndex() + endOffsetPosition);
+>     }
+251,263d286
+<   private int findLastLine() {
+<     int maxLine = 0;
+<     for (Mapping mapping : mappings) {
+<       int endPositionLine = mapping.endPosition.getLineNumber();
+<       maxLine = Math.max(maxLine, endPositionLine);
+<     }
+<     
+<     return maxLine + prefixPosition.getLineNumber();
+<   }
+< 
+<   
+< 
+< 
+300c323
+<     int maxLine = findLastLine();
+---
+>     int maxLine = prepMappings();
+322,325c345
+<     for (Mapping mapping : mappings) {
+<       mapping.appendTo(out);
+<       out.append("\n");
+<     }
+---
+>     (new MappingWriter()).appendMappings(out);
+330a351,353
+>   private int prepMappings() throws IOException {
+>     
+>     (new MappingTraversal()).traverse(new UsedMappingCheck());
+332d354
+<   private class LineMapper {
+334c356,365
+<     private final Appendable out;
+---
+>     int id = 0;
+>     int maxLine = 0;
+>     for (Mapping m : mappings) {
+>       if (m.used) {
+>         m.id = id++;
+>         int endPositionLine = m.endPosition.getLineNumber();
+>         maxLine = Math.max(maxLine, endPositionLine);
+>       }
+>     }
+> 
+336,337c367,373
+<     private int line;
+<     private int col;
+---
+>     return maxLine + prefixPosition.getLineNumber();
+>   }
+> 
+>   private class LineMapper implements MappingVisitor {
+>     
+>     private final Appendable out;
+> 
+341d376
+<     private final static int UNMAPPED = -1;
+343a379,381
+>     private int lastId = UNMAPPED;
+>     private String lastIdString = UNMAPPED_STRING;
+> 
+349,350d386
+<     void appendLineMappings() throws IOException {
+<       Preconditions.checkState(!mappings.isEmpty());
+352,353d387
+<       
+<       openLine();
+355,367c389,390
+<       
+<       
+<       
+<       Deque<Mapping> stack = new ArrayDeque<Mapping>();
+<       for (Mapping m : mappings) {
+<         
+<         
+<         
+<         
+<         while (!stack.isEmpty() && !isOverlapped(stack.peek(), m)) {
+<           Mapping previous = stack.pop();
+<           writeClosedMapping(previous);
+<         }
+---
+>     public void visit(Mapping m, int line, int col, int nextLine, int nextCol)
+>       throws IOException {
+368a392,393
+>       int id = (m != null) ? m.id : UNMAPPED;
+>       if (lastId != id) {
+371,372c396,399
+<         Mapping parent = stack.peek();
+<         writeCharsBetween(parent, m);
+---
+>         lastIdString = (id == UNMAPPED) ? UNMAPPED_STRING : String.valueOf(id);
+>         lastId = id;
+>       }
+>       String idString = lastIdString;
+374c401,410
+<         stack.push(m);
+---
+>       for (int i = line; i <= nextLine; i++) {
+>         if (i == nextLine) {
+>           for (int j = col; j < nextCol; j++) {
+>             addCharEntry(idString);
+>           }
+>           break;
+>         }
+> 
+>         closeLine();
+>         openLine();
+375a412,416
+>     }
+> 
+>     
+>     void appendLineMappings() throws IOException {
+>       Preconditions.checkState(!mappings.isEmpty());
+378,382c419,421
+<       
+<       while (!stack.isEmpty()) {
+<         Mapping m = stack.pop();
+<         writeClosedMapping(m);
+<       }
+---
+>       openLine();
+> 
+>       (new MappingTraversal()).traverse(this);
+392,393c431,434
+<       out.append("[");
+<       this.firstChar = true;
+---
+>       if (out != null) {
+>         out.append("[");
+>         this.firstChar = true;
+>       }
+400c441,443
+<       out.append("]\n");
+---
+>       if (out != null) {
+>         out.append("]\n");
+>       }
+408,411c451,534
+<       if (firstChar) {
+<         firstChar = false;
+<       } else {
+<         out.append(",");
+---
+>       if (out != null) {
+>         if (firstChar) {
+>           firstChar = false;
+>         } else {
+>           out.append(",");
+>         }
+>         out.append(id);
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private class UsedMappingCheck implements MappingVisitor {
+>     
+> 
+> 
+>     @Override
+>     public void visit(Mapping m, int line, int col, int nextLine, int nextCol)
+>         throws IOException {
+>       if (m != null) {
+>         m.used = true;
+>       }
+>     }
+>   }
+> 
+>   private interface MappingVisitor {
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     void visit(Mapping m, int line, int col, int endLine, int endCol)
+>         throws IOException;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private class MappingTraversal {
+>     
+>     private int line;
+>     private int col;
+> 
+>     MappingTraversal() {
+>     }
+> 
+>     
+>     void traverse(MappingVisitor v) throws IOException {
+>       Preconditions.checkState(!mappings.isEmpty());
+> 
+>       
+>       
+>       
+>       Deque<Mapping> stack = new ArrayDeque<Mapping>();
+>       for (Mapping m : mappings) {
+>         
+>         
+>         
+>         
+>         while (!stack.isEmpty() && !isOverlapped(stack.peek(), m)) {
+>           Mapping previous = stack.pop();
+>           maybeVisit(v, previous);
+>         }
+> 
+>         
+>         
+>         Mapping parent = stack.peek();
+>         maybeVisitParent(v, parent, m);
+> 
+>         stack.push(m);
+>       }
+> 
+>       
+>       
+>       while (!stack.isEmpty()) {
+>         Mapping m = stack.pop();
+>         maybeVisit(v, m);
+413d535
+<       out.append(id);
+451c573
+<     private void writeClosedMapping(Mapping m) throws IOException {
+---
+>     private void maybeVisit(MappingVisitor v, Mapping m) throws IOException {
+457c579
+<         writeCharsUpTo(nextLine, nextCol, m.id);
+---
+>         visit(v, m, nextLine, nextCol);
+464c586
+<     private void writeCharsBetween(Mapping prev, Mapping next)
+---
+>     private void maybeVisitParent(MappingVisitor v, Mapping parent, Mapping m)
+466,468c588,589
+<       int nextLine = getAdjustedLine(next.startPosition);
+<       int nextCol = getAdjustedCol(next.startPosition);
+<       
+---
+>       int nextLine = getAdjustedLine(m.startPosition);
+>       int nextCol = getAdjustedCol(m.startPosition);
+470,471c591,594
+<       int id = (prev != null) ? prev.id : UNMAPPED;
+<       writeCharsUpTo(nextLine, nextCol, id);
+---
+>       Preconditions.checkState(line < nextLine || col <= nextCol);
+>       if (line < nextLine || (line == nextLine && col < nextCol)) {
+>         visit(v, parent, nextLine, nextCol);
+>       }
+478,479c601,602
+<     private void writeCharsUpTo(
+<         int nextLine, int nextCol, int id)
+---
+>     private void visit(MappingVisitor v, Mapping m,
+>         int nextLine, int nextCol)
+481,482c604,605
+<       Preconditions.checkState(line <= nextLine, "");
+<       Preconditions.checkState(line < nextLine || col <= nextCol);
+---
+>       Preconditions.checkState(line <= nextLine);
+>       Preconditions.checkState(line < nextLine || col < nextCol);
+485a609
+>         Preconditions.checkState(false);
+489,500c613
+<       String idString = (id == UNMAPPED) ? UNMAPPED_STRING : String.valueOf(id);
+<       for (int i = line; i <= nextLine; i++) {
+<         if (i == nextLine) {
+<           for (int j = col; j < nextCol; j++) {
+<             addCharEntry(idString);
+<           }
+<           break;
+<         }
+< 
+<         closeLine();
+<         openLine();
+<       }
+---
+>       v.visit(m, line, col, nextLine, nextCol);

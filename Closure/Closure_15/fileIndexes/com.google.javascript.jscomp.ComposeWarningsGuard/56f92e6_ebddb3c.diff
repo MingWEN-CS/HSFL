@@ -1,0 +1,36 @@
+49a50
+>   private boolean demoteErrors = false;
+87a89,93
+>       ComposeWarningsGuard composeGuard = (ComposeWarningsGuard) guard;
+>       if (composeGuard.demoteErrors) {
+>         this.demoteErrors = composeGuard.demoteErrors;
+>       }
+> 
+89c95
+<       addGuards(((ComposeWarningsGuard) guard).guards.descendingSet());
+---
+>       addGuards(composeGuard.guards.descendingSet());
+108a115,117
+>         if (demoteErrors && newLevel == CheckLevel.ERROR) {
+>           return CheckLevel.WARNING;
+>         }
+161a171
+>     safeGuard.demoteErrors = true;
+163,177c173
+<       if (guard instanceof StrictWarningsGuard) {
+<         continue;
+<       } else if (guard instanceof DiagnosticGroupWarningsGuard) {
+<         DiagnosticGroupWarningsGuard dgGuard =
+<             (DiagnosticGroupWarningsGuard) guard;
+<         if (dgGuard.level == CheckLevel.ERROR) {
+<           safeGuard.addGuard(
+<               new DiagnosticGroupWarningsGuard(
+<                   dgGuard.group, CheckLevel.WARNING));
+<         } else {
+<         safeGuard.addGuard(guard);
+<         }
+<       } else {
+<         safeGuard.addGuard(guard);
+<       }
+---
+>       safeGuard.addGuard(guard);

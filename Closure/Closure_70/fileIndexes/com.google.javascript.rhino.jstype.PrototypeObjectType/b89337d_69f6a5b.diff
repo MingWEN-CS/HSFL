@@ -1,0 +1,41 @@
+47a48
+> import com.google.javascript.rhino.Node;
+228c229
+<       boolean inExterns) {
+---
+>       boolean inExterns, Node propertyNode) {
+232c233
+<     properties.put(name, new Property(type, inferred, inExterns));
+---
+>     properties.put(name, new Property(type, inferred, inExterns, propertyNode));
+236a238,250
+>   public Node getPropertyNode(String propertyName) {
+>     Property p = properties.get(propertyName);
+>     if (p != null) {
+>       return p.propertyNode;
+>     }
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype != null) {
+>       return implicitPrototype.getPropertyNode(propertyName);
+>     }
+>     return null;
+>   }
+> 
+>   @Override
+254c268
+<             inExterns);
+---
+>             inExterns, null);
+483a498,503
+> 
+> 
+> 
+>     private final Node propertyNode;
+> 
+>     
+486c506
+<     private Property(JSType type, boolean inferred, boolean inExterns) {
+---
+>     private Property(JSType type, boolean inferred, boolean inExterns, Node propertyNode) {
+489a510
+>       this.propertyNode = propertyNode;

@@ -1,0 +1,62 @@
+164a165,167
+> 
+>     NodeTraversal.traverse(compiler, root, new DiscoverEnums(typeRegistry));
+> 
+211a215,247
+>   private static class DiscoverEnums extends AbstractShallowCallback {
+>     private final JSTypeRegistry registry;
+> 
+>     DiscoverEnums(JSTypeRegistry registry) {
+>       this.registry = registry;
+>     }
+> 
+>     @Override
+>     public void visit(NodeTraversal t, Node node, Node parent) {
+>       Node nameNode = null;
+>       switch (node.getType()) {
+>         case Token.NAME:
+>           nameNode = node;
+>           break;
+>         case Token.VAR:
+>           if (node.hasOneChild()) {
+>             nameNode = node.getFirstChild();
+>           }
+>           break;
+>         case Token.ASSIGN:
+>           nameNode = node.getFirstChild();
+>           break;
+>       }
+> 
+>       if (nameNode != null) {
+>         JSDocInfo info = node.getJSDocInfo();
+>         if (info != null && info.hasEnumParameterType()) {
+>           registry.identifyEnumName(nameNode.getQualifiedName());
+>         }
+>       }
+>     }
+>   }
+> 
+283c319
+<           jsType = info.getType().evaluate(scope);
+---
+>           jsType = info.getType().evaluate(scope, typeRegistry);
+394c430
+<                     info.getEnumParameterType().evaluate(scope)));
+---
+>                     info.getEnumParameterType().evaluate(scope, typeRegistry)));
+432c468
+<               info.getEnumParameterType().evaluate(scope));
+---
+>               info.getEnumParameterType().evaluate(scope, typeRegistry));
+483c519
+<         JSType type = info.getType().evaluate(scope);
+---
+>         JSType type = info.getType().evaluate(scope, typeRegistry);
+937c973
+<       JSType realType = info.getTypedefType().evaluate(scope);
+---
+>       JSType realType = info.getTypedefType().evaluate(scope, typeRegistry);
+969c1005
+<           realType = info.getType().evaluate(scope);
+---
+>           realType = info.getType().evaluate(scope, typeRegistry);

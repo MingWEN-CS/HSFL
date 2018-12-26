@@ -1,0 +1,1179 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
+import com.google.javascript.jscomp.DefinitionsRemover.Definition;
+import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.jscomp.graph.DiGraph;
+import com.google.javascript.jscomp.graph.FixedPointGraphTraversal;
+import com.google.javascript.jscomp.graph.FixedPointGraphTraversal.EdgeCallback;
+import com.google.javascript.jscomp.graph.LinkedDirectedGraph;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class PureFunctionIdentifier implements CompilerPass {
+  static final DiagnosticType INVALID_NO_SIDE_EFFECT_ANNOTATION =
+      DiagnosticType.error(
+          "JSC_INVALID_NO_SIDE_EFFECT_ANNOTATION",
+          "@nosideeffects may only appear in externs files.");
+
+  static final DiagnosticType INVALID_MODIFIES_ANNOTATION =
+    DiagnosticType.error(
+        "JSC_INVALID_MODIFIES_ANNOTATION",
+        "@modifies may only appear in externs files.");
+
+  private final AbstractCompiler compiler;
+  private final DefinitionProvider definitionProvider;
+
+  
+  private final Map<Node, FunctionInformation> functionSideEffectMap;
+
+  
+  private final List<Node> allFunctionCalls;
+
+  
+  
+  private Node externs;
+  private Node root;
+
+  public PureFunctionIdentifier(AbstractCompiler compiler,
+                                DefinitionProvider definitionProvider) {
+    this.compiler = compiler;
+    this.definitionProvider = definitionProvider;
+    this.functionSideEffectMap = Maps.newHashMap();
+    this.allFunctionCalls = Lists.newArrayList();
+    this.externs = null;
+    this.root = null;
+  }
+
+  @Override
+  public void process(Node externsAst, Node srcAst) {
+    if (externs != null || root != null) {
+      throw new IllegalStateException(
+          "It is illegal to call PureFunctionIdentifier.process " +
+          "twice the same instance.  Please use a new " +
+          "PureFunctionIdentifier instance each time.");
+    }
+
+    externs = externsAst;
+    root = srcAst;
+
+    NodeTraversal.traverse(compiler, externs, new FunctionAnalyzer(true));
+    NodeTraversal.traverse(compiler, root, new FunctionAnalyzer(false));
+
+    propagateSideEffects();
+
+    markPureFunctionCalls();
+  }
+
+  
+
+
+
+
+  String getDebugReport() {
+    Preconditions.checkNotNull(externs);
+    Preconditions.checkNotNull(root);
+
+    StringBuilder sb = new StringBuilder();
+
+    FunctionNames functionNames = new FunctionNames(compiler);
+    functionNames.process(null, externs);
+    functionNames.process(null, root);
+
+    sb.append("Pure functions:\n");
+    for (Map.Entry<Node, FunctionInformation> entry :
+             functionSideEffectMap.entrySet()) {
+      Node function = entry.getKey();
+      FunctionInformation functionInfo = entry.getValue();
+
+      boolean isPure =
+          functionInfo.mayBePure() && !functionInfo.mayHaveSideEffects();
+      if (isPure) {
+        sb.append("  " + functionNames.getFunctionName(function) + "\n");
+      }
+    }
+    sb.append("\n");
+
+    for (Map.Entry<Node, FunctionInformation> entry :
+             functionSideEffectMap.entrySet()) {
+      Node function = entry.getKey();
+      FunctionInformation functionInfo = entry.getValue();
+
+      Set<String> depFunctionNames = Sets.newHashSet();
+      for (Node callSite : functionInfo.getCallsInFunctionBody()) {
+        Collection<Definition> defs =
+            getCallableDefinitions(definitionProvider,
+                                   callSite.getFirstChild());
+
+        if (defs == null) {
+          depFunctionNames.add("<null def list>");
+          continue;
+        }
+
+        for (Definition def : defs) {
+          depFunctionNames.add(
+              functionNames.getFunctionName(def.getRValue()));
+        }
+      }
+
+      sb.append(functionNames.getFunctionName(function) + " " +
+                functionInfo.toString() +
+                " Calls: " + depFunctionNames + "\n");
+    }
+
+    return sb.toString();
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  private static Collection<Definition> getCallableDefinitions(
+      DefinitionProvider definitionProvider, Node name) {
+    if (NodeUtil.isGetProp(name) || NodeUtil.isName(name)) {
+      List<Definition> result = Lists.newArrayList();
+
+      Collection<Definition> decls =
+          definitionProvider.getDefinitionsReferencedAt(name);
+      if (decls == null) {
+        return null;
+      }
+
+      for (Definition current : decls) {
+        Node rValue = current.getRValue();
+        if ((rValue != null) && NodeUtil.isFunction(rValue)) {
+          result.add(current);
+        } else {
+          return null;
+        }
+      }
+
+      return result;
+    } else if (name.getType() == Token.OR || name.getType() == Token.HOOK) {
+      Node firstVal;
+      if (name.getType() == Token.HOOK) {
+        firstVal = name.getFirstChild().getNext();
+      } else {
+        firstVal = name.getFirstChild();
+      }
+
+      Collection<Definition> defs1 = getCallableDefinitions(definitionProvider,
+                                                            firstVal);
+      Collection<Definition> defs2 = getCallableDefinitions(definitionProvider,
+                                                            firstVal.getNext());
+      if (defs1 != null && defs2 != null) {
+        defs1.addAll(defs2);
+        return defs1;
+      } else {
+        return null;
+      }
+    } else if (NodeUtil.isFunctionExpression(name)) {
+      
+      
+      
+
+      
+      
+      
+      
+      
+      return Lists.newArrayList(
+          (Definition)
+              new DefinitionsRemover.FunctionExpressionDefinition(name, false));
+    } else {
+      return null;
+    }
+  }
+
+  
+
+
+
+
+
+  private void propagateSideEffects() {
+    
+    DiGraph<FunctionInformation, Node> sideEffectGraph =
+        new LinkedDirectedGraph<FunctionInformation, Node>();
+
+    
+    for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+      sideEffectGraph.createNode(functionInfo);
+    }
+
+    
+    for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+      if (!functionInfo.mayHaveSideEffects()) {
+        continue;
+      }
+
+      for (Node callSite : functionInfo.getCallsInFunctionBody()) {
+        Node callee = callSite.getFirstChild();
+        Collection<Definition> defs =
+            getCallableDefinitions(definitionProvider, callee);
+        if (defs == null) {
+          
+          
+          
+          
+          
+          
+          functionInfo.setTaintsUnknown();
+          break;
+        }
+
+        for (Definition def : defs) {
+          Node defValue = def.getRValue();
+          FunctionInformation dep = functionSideEffectMap.get(defValue);
+          Preconditions.checkNotNull(dep);
+          sideEffectGraph.connect(dep, callSite, functionInfo);
+        }
+      }
+    }
+
+    
+    FixedPointGraphTraversal.newTraversal(new SideEffectPropagationCallback())
+        .computeFixedPoint(sideEffectGraph);
+
+    
+    for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+      if (functionInfo.mayBePure()) {
+        functionInfo.setIsPure();
+      }
+    }
+  }
+
+  
+
+
+  private void markPureFunctionCalls() {
+    for (Node callNode : allFunctionCalls) {
+      Node name = callNode.getFirstChild();
+      Collection<Definition> defs =
+          getCallableDefinitions(definitionProvider, name);
+      
+      SideEffectFlags flags = new SideEffectFlags();
+      if (defs == null) {
+        flags.setMutatesGlobalState();
+        flags.setThrows();
+        flags.setReturnsTainted();
+      } else {
+        flags.clearAllFlags();
+        for (Definition def : defs) {
+          FunctionInformation functionInfo =
+              functionSideEffectMap.get(def.getRValue());
+          Preconditions.checkNotNull(functionInfo);
+          
+          
+          if (functionInfo.mutatesGlobalState()) {
+            flags.setMutatesGlobalState();
+          }
+
+          if (functionInfo.functionThrows) {
+            flags.setThrows();
+          }
+
+          if (!NodeUtil.isNew(callNode)) {
+            if (functionInfo.taintsThis) {
+              flags.setMutatesThis();
+            }
+          }
+
+          if (functionInfo.taintsReturn) {
+            flags.setReturnsTainted();
+          }
+
+          if (flags.areAllFlagsSet()) {
+            break;
+          }
+        }
+      }
+
+      
+      if (NodeUtil.isCall(callNode)) {
+        Preconditions.checkState(compiler != null);
+        if (!NodeUtil.functionCallHasSideEffects(callNode, compiler)) {
+          flags.clearSideEffectFlags();
+        }
+      } else if (NodeUtil.isNew(callNode)) {
+        
+        if (!NodeUtil.constructorCallHasSideEffects(callNode)) {
+          flags.clearSideEffectFlags();
+        }
+      }
+
+      callNode.setSideEffectFlags(flags.valueOf());
+    }
+  }
+
+  private static class SideEffectFlags {
+    private int value = Node.SIDE_EFFECTS_ALL;
+
+    int valueOf() {
+      return value;
+    }
+
+    
+    void setAllFlags() {
+      value = Node.SIDE_EFFECTS_ALL;
+    }
+
+    
+    void clearAllFlags() {
+      value = Node.NO_SIDE_EFFECTS | Node.FLAG_LOCAL_RESULTS;
+    }
+
+    boolean areAllFlagsSet() {
+      return value == Node.SIDE_EFFECTS_ALL;
+    }
+
+    
+
+
+
+    void clearSideEffectFlags() {
+      value |= Node.NO_SIDE_EFFECTS;
+    }
+
+    void setMutatesGlobalState() {
+      
+      removeFlag(Node.FLAG_GLOBAL_STATE_UNMODIFIED);
+      removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+      removeFlag(Node.FLAG_THIS_UNMODIFIED);
+    }
+
+    void setThrows() {
+      removeFlag(Node.FLAG_NO_THROWS);
+    }
+
+    void setMutatesThis() {
+      removeFlag(Node.FLAG_THIS_UNMODIFIED);
+    }
+
+    void setMutatesArguments() {
+      removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+    }
+
+    void setReturnsTainted() {
+      removeFlag(Node.FLAG_LOCAL_RESULTS);
+    }
+
+    private void removeFlag(int flag) {
+      value &= ~flag;
+    }
+  }
+
+  
+
+
+
+
+  private class FunctionAnalyzer implements ScopedCallback {
+    private final boolean inExterns;
+
+    FunctionAnalyzer(boolean inExterns) {
+      this.inExterns = inExterns;
+    }
+
+    @Override
+    public boolean shouldTraverse(NodeTraversal traversal,
+                                  Node node,
+                                  Node parent) {
+
+      
+      
+      
+      
+      if (NodeUtil.isFunction(node)) {
+        Node gramp = parent.getParent();
+        visitFunction(traversal, node, parent, gramp);
+      }
+
+      return true;
+    }
+
+    @Override
+    public void visit(NodeTraversal traversal, Node node, Node parent) {
+
+      if (inExterns) {
+        return;
+      }
+
+      if (!NodeUtil.nodeTypeMayHaveSideEffects(node)
+          && node.getType() != Token.RETURN) {
+        return;
+      }
+
+      if (NodeUtil.isCall(node) || NodeUtil.isNew(node)) {
+        allFunctionCalls.add(node);
+      }
+
+      Node enclosingFunction = traversal.getEnclosingFunction();
+      if (enclosingFunction != null) {
+        FunctionInformation sideEffectInfo =
+            functionSideEffectMap.get(enclosingFunction);
+        Preconditions.checkNotNull(sideEffectInfo);
+
+        if (NodeUtil.isAssignmentOp(node)) {
+          visitAssignmentOrUnaryOperator(
+              sideEffectInfo, traversal.getScope(),
+              node, node.getFirstChild(), node.getLastChild());
+        } else {
+          switch(node.getType()) {
+            case Token.CALL:
+            case Token.NEW:
+              visitCall(sideEffectInfo, node);
+              break;
+            case Token.DELPROP:
+            case Token.DEC:
+            case Token.INC:
+              visitAssignmentOrUnaryOperator(
+                  sideEffectInfo, traversal.getScope(),
+                  node, node.getFirstChild(), null);
+              break;
+            case Token.NAME:
+              
+              
+              
+              Preconditions.checkArgument(
+                  NodeUtil.isVarDeclaration(node));
+              Node value = node.getFirstChild();
+              
+              
+              
+              if (value != null && !isKnownLocalValue(value)) {
+                Scope scope = traversal.getScope();
+                Var var = scope.getVar(node.getString());
+                sideEffectInfo.blacklistLocal(var);
+              }
+              break;
+            case Token.THROW:
+              visitThrow(sideEffectInfo);
+              break;
+            case Token.RETURN:
+              if (node.hasChildren()
+                  && !isKnownLocalValue(node.getFirstChild())) {
+                sideEffectInfo.setTaintsReturn();
+              }
+              break;
+            default:
+              throw new IllegalArgumentException(
+                  "Unhandled side effect node type " +
+                  Token.name(node.getType()));
+          }
+        }
+      }
+    }
+
+    @Override
+    public void enterScope(NodeTraversal t) {
+      
+    }
+
+    @Override
+    public void exitScope(NodeTraversal t) {
+      if (t.inGlobalScope()) {
+        return;
+      }
+
+      
+      
+      FunctionInformation sideEffectInfo =
+        functionSideEffectMap.get(t.getScopeRoot());
+      if (sideEffectInfo.mutatesGlobalState()){
+        sideEffectInfo.resetLocalVars();
+        return;
+      }
+
+      for (Iterator<Var> i = t.getScope().getVars(); i.hasNext();) {
+        Var v = i.next();
+        boolean localVar = false;
+        
+        if (v.getParentNode().getType() == Token.VAR) {
+          
+          sideEffectInfo.knownLocals.add(v.getName());
+          localVar = true;
+        }
+
+        
+        if (!localVar || sideEffectInfo.blacklisted.contains(v)) {
+          if (sideEffectInfo.taintedLocals.contains(v)) {
+            
+            
+            sideEffectInfo.setTaintsUnknown();
+            sideEffectInfo.resetLocalVars();
+            break;
+          }
+        }
+      }
+
+      sideEffectInfo.taintedLocals = null;
+      sideEffectInfo.blacklisted = null;
+    }
+
+
+    
+
+
+
+
+
+
+
+
+
+    private void visitAssignmentOrUnaryOperator(
+        FunctionInformation sideEffectInfo,
+        Scope scope, Node op, Node lhs, Node rhs) {
+      if (NodeUtil.isName(lhs)) {
+        Var var = scope.getVar(lhs.getString());
+        if (var == null || var.scope != scope) {
+          sideEffectInfo.setTaintsGlobalState();
+        } else {
+          
+          
+          
+
+          
+          
+          Preconditions.checkState(
+              NodeUtil.isAssignmentOp(op)
+              || isIncDec(op) || op.getType() == Token.DELPROP);
+          if (rhs != null && NodeUtil.isAssign(op) && !isKnownLocalValue(rhs)) {
+            sideEffectInfo.blacklistLocal(var);
+          }
+        }
+      } else if (NodeUtil.isGet(lhs)) {
+        if (NodeUtil.isThis(lhs.getFirstChild())) {
+          sideEffectInfo.setTaintsThis();
+        } else {
+          Var var = null;
+          Node objectNode = lhs.getFirstChild();
+          if (NodeUtil.isName(objectNode)) {
+            var = scope.getVar(objectNode.getString());
+          }
+          if (var == null || var.scope != scope) {
+            sideEffectInfo.setTaintsUnknown();
+          } else {
+            
+            
+            
+            sideEffectInfo.addTaintedLocalObject(var);
+          }
+        }
+      } else {
+        
+        
+
+        
+        
+        
+        
+        sideEffectInfo.setTaintsUnknown();
+      }
+    }
+
+    
+
+
+    private void visitCall(FunctionInformation sideEffectInfo, Node node) {
+      
+      if (NodeUtil.isCall(node)
+          && !NodeUtil.functionCallHasSideEffects(node, compiler)) {
+        return;
+      }
+
+      
+      if (NodeUtil.isNew(node)
+          && !NodeUtil.constructorCallHasSideEffects(node)) {
+        return;
+      }
+
+      sideEffectInfo.appendCall(node);
+    }
+
+    
+
+
+    private void visitFunction(NodeTraversal traversal,
+                               Node node,
+                               Node parent,
+                               Node gramp) {
+      Preconditions.checkArgument(!functionSideEffectMap.containsKey(node));
+
+      FunctionInformation sideEffectInfo = new FunctionInformation(inExterns);
+      functionSideEffectMap.put(node, sideEffectInfo);
+
+      JSDocInfo info = getJSDocInfoForFunction(node, parent, gramp);
+      if (info != null) {
+        boolean hasSpecificSideEffects = false;
+        if (hasSideEffectsThisAnnotation(info)) {
+          if (inExterns) {
+            hasSpecificSideEffects = true;
+            sideEffectInfo.setTaintsThis();
+          } else {
+            traversal.report(node, INVALID_MODIFIES_ANNOTATION);
+          }
+        }
+
+        if (hasSideEffectsArgumentsAnnotation(info)) {
+          if (inExterns) {
+            hasSpecificSideEffects = true;
+            sideEffectInfo.setTaintsArguments();
+          } else {
+            traversal.report(node, INVALID_MODIFIES_ANNOTATION);
+          }
+        }
+
+        if (!hasSpecificSideEffects) {
+          if (hasNoSideEffectsAnnotation(info)) {
+            if (inExterns) {
+              sideEffectInfo.setIsPure();
+            } else {
+              traversal.report(node, INVALID_NO_SIDE_EFFECT_ANNOTATION);
+            }
+          } else if (inExterns) {
+            sideEffectInfo.setTaintsGlobalState();
+          }
+        }
+      } else {
+        if (inExterns) {
+          sideEffectInfo.setTaintsGlobalState();
+        }
+      }
+    }
+
+    
+
+
+    private void visitThrow(FunctionInformation sideEffectInfo) {
+      sideEffectInfo.setFunctionThrows();
+    }
+
+    
+
+
+    private JSDocInfo getJSDocInfoForFunction(
+        Node node, Node parent, Node gramp) {
+      JSDocInfo info = node.getJSDocInfo();
+      if (info != null) {
+        return info;
+      } else if (NodeUtil.isName(parent)) {
+        return gramp.hasOneChild() ? gramp.getJSDocInfo() : null;
+      } else if (NodeUtil.isAssign(parent)) {
+        return parent.getJSDocInfo();
+      } else {
+        return null;
+      }
+    }
+
+    
+
+
+
+    private boolean hasNoSideEffectsAnnotation(JSDocInfo docInfo) {
+      Preconditions.checkNotNull(docInfo);
+      return docInfo.isNoSideEffects();
+    }
+
+    
+
+
+
+    private boolean hasSideEffectsThisAnnotation(JSDocInfo docInfo) {
+      Preconditions.checkNotNull(docInfo);
+      return (docInfo.getModifies().contains("this"));
+    }
+
+    
+
+
+
+    private boolean hasSideEffectsArgumentsAnnotation(JSDocInfo docInfo) {
+      Preconditions.checkNotNull(docInfo);
+      Set<String> modifies = docInfo.getModifies();
+      
+      
+      return (modifies.size() > 1
+          || (modifies.size() == 1 && !modifies.contains("this")));
+    }
+  }
+
+  private static boolean isIncDec(Node n) {
+    int type = n.getType();
+    return (type == Token.INC || type == Token.DEC);
+  }
+
+  
+
+
+
+  @VisibleForTesting
+  static boolean isKnownLocalValue(Node value) {
+    
+    
+    switch (value.getType()) {
+      case Token.ASSIGN:
+      case Token.COMMA:
+        return isKnownLocalValue(value.getLastChild());
+      case Token.AND:
+      case Token.OR:
+        return isKnownLocalValue(value.getFirstChild()) &&
+           isKnownLocalValue(value.getLastChild());
+      case Token.HOOK:
+        return isKnownLocalValue(value.getFirstChild().getNext()) &&
+           isKnownLocalValue(value.getLastChild());
+      case Token.INC:
+      case Token.DEC:
+        if (value.getBooleanProp(Node.INCRDECR_PROP)) {
+          return isKnownLocalValue(value.getFirstChild());
+        } else {
+          return true;
+        }
+      case Token.THIS:
+        
+        return false;
+      case Token.NAME:
+        
+        
+
+        
+        return NodeUtil.isImmutableValue(value);
+      case Token.GETELEM:
+      case Token.GETPROP:
+        
+        return false;
+      case Token.CALL:
+        
+        
+        return false;
+      case Token.NEW:
+        return true;
+      case Token.FUNCTION:
+      case Token.REGEXP:
+      case Token.ARRAYLIT:
+      case Token.OBJECTLIT:
+        
+        return true;
+      case Token.IN:
+        
+        return true;
+      default:
+        
+        
+        
+        if (NodeUtil.isAssignmentOp(value)
+            || NodeUtil.isSimpleOperator(value)
+            || NodeUtil.isImmutableValue(value)) {
+          return true;
+        }
+
+        throw new IllegalStateException(
+            "Unexpected expression node" + value +
+            "\n parent:" + value.getParent());
+    }
+  }
+
+  
+
+
+  private static class SideEffectPropagationCallback
+      implements EdgeCallback<FunctionInformation, Node> {
+    public boolean traverseEdge(FunctionInformation callee,
+                                Node callSite,
+                                FunctionInformation caller) {
+      Preconditions.checkArgument(callSite.getType() == Token.CALL ||
+                                  callSite.getType() == Token.NEW);
+
+      boolean changed = false;
+      if (!caller.mutatesGlobalState() && callee.mutatesGlobalState()) {
+        caller.setTaintsGlobalState();
+        changed = true;
+      }
+
+      if (!caller.functionThrows() && callee.functionThrows()) {
+        caller.setFunctionThrows();
+        changed = true;
+      }
+
+      if (callee.mutatesThis()) {
+        
+        
+        if (callSite.getType() != Token.NEW) {
+          Node objectNode = getCallThisObject(callSite);
+          if (objectNode != null && NodeUtil.isName(objectNode)
+              && !isCallOrApply(callSite)) {
+            
+            
+            
+            
+            String name = objectNode.getString();
+            if (!caller.knownLocals.contains(name)) {
+              if (!caller.mutatesGlobalState()) {
+                caller.setTaintsGlobalState();
+                changed = true;
+              }
+            }
+          } else if (objectNode != null && NodeUtil.isThis(objectNode)) {
+            if (!caller.mutatesThis()) {
+              caller.setTaintsThis();
+              changed = true;
+            }
+          } else if (objectNode != null && isKnownLocalValue(objectNode)
+              && !isCallOrApply(callSite)) {
+            
+            
+            
+            
+          } else if (!caller.mutatesGlobalState()) {
+            caller.setTaintsGlobalState();
+            changed = true;
+          }
+        }
+      }
+
+      return changed;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+  private static Node getCallThisObject(Node callSite) {
+    Node callTarget = callSite.getFirstChild();
+    if (!NodeUtil.isGet(callTarget)) {
+
+      
+      return null;
+    }
+
+    String propString = callTarget.getLastChild().getString();
+    if (propString.equals("call") || propString.equals("apply")) {
+      return callTarget.getNext();
+    } else {
+      return callTarget.getFirstChild();
+    }
+  }
+
+  private static boolean isCallOrApply(Node callSite) {
+    Node callTarget = callSite.getFirstChild();
+    if (NodeUtil.isGet(callTarget)) {
+      String propString = callTarget.getLastChild().getString();
+      if (propString.equals("call") || propString.equals("apply")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  
+
+
+
+  private static class FunctionInformation {
+    private final boolean extern;
+    private final List<Node> callsInFunctionBody = Lists.newArrayList();
+    private Set<Var> blacklisted = Sets.newHashSet();
+    private Set<Var> taintedLocals = Sets.newHashSet();
+    private Set<String> knownLocals = Sets.newHashSet();
+    private boolean pureFunction = false;
+    private boolean functionThrows = false;
+    private boolean taintsGlobalState = false;
+    private boolean taintsThis = false;
+    private boolean taintsArguments = false;
+    private boolean taintsUnknown = false;
+    private boolean taintsReturn = false;
+
+    FunctionInformation(boolean extern) {
+      this.extern = extern;
+      checkInvariant();
+    }
+
+    
+
+
+    void addTaintedLocalObject(Var var) {
+      taintedLocals.add(var);
+    }
+
+    void resetLocalVars() {
+      blacklisted = null;
+      taintedLocals = null;
+      knownLocals = Collections.emptySet();
+    }
+
+    
+
+
+    public void blacklistLocal(Var var) {
+      blacklisted.add(var);
+    }
+
+    
+
+
+    boolean isExtern() {
+      return extern;
+    }
+
+    
+
+
+    boolean mayBePure() {
+      return !(functionThrows ||
+               taintsGlobalState ||
+               taintsThis ||
+               taintsArguments ||
+               taintsUnknown);
+    }
+
+    
+
+
+    boolean mayHaveSideEffects() {
+      return !pureFunction;
+    }
+
+    
+
+
+    void setIsPure() {
+      pureFunction = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setTaintsGlobalState() {
+      taintsGlobalState = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setTaintsThis() {
+      taintsThis = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setTaintsArguments() {
+      taintsArguments = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setFunctionThrows() {
+      functionThrows = true;
+      checkInvariant();
+    }
+
+    
+
+
+
+    void setTaintsUnknown() {
+      taintsUnknown = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setTaintsReturn() {
+      taintsReturn = true;
+      checkInvariant();
+    }
+
+
+    
+
+
+    boolean mutatesGlobalState() {
+      
+      return taintsGlobalState || taintsArguments || taintsUnknown;
+    }
+
+    
+
+
+    boolean mutatesThis() {
+      return taintsThis;
+    }
+
+    
+
+
+    boolean functionThrows() {
+      return functionThrows;
+    }
+
+    
+
+
+
+    private void checkInvariant() {
+      boolean invariant = mayBePure() || mayHaveSideEffects();
+      if (!invariant) {
+        throw new IllegalStateException("Invariant failed.  " + toString());
+      }
+    }
+
+    
+
+
+    void appendCall(Node callNode) {
+      callsInFunctionBody.add(callNode);
+    }
+
+    
+
+
+    List<Node> getCallsInFunctionBody() {
+      return callsInFunctionBody;
+    }
+
+    @Override
+    public String toString() {
+      List<String> status = Lists.newArrayList();
+      if (extern) {
+        status.add("extern");
+      }
+
+      if (pureFunction) {
+        status.add("pure");
+      }
+
+      if (taintsThis) {
+        status.add("this");
+      }
+
+      if (taintsGlobalState) {
+        status.add("global");
+      }
+
+      if (functionThrows) {
+        status.add("throw");
+      }
+
+      if (taintsUnknown) {
+        status.add("complex");
+      }
+
+      return "Side effects: " + status.toString();
+    }
+  }
+
+  
+
+
+
+  static class Driver implements CompilerPass {
+    private final AbstractCompiler compiler;
+    private final String reportPath;
+    private final boolean useNameReferenceGraph;
+
+    Driver(AbstractCompiler compiler, String reportPath,
+        boolean useNameReferenceGraph) {
+      this.compiler = compiler;
+      this.reportPath = reportPath;
+      this.useNameReferenceGraph = useNameReferenceGraph;
+    }
+
+    @Override
+    public void process(Node externs, Node root) {
+      DefinitionProvider definitionProvider = null;
+      if (useNameReferenceGraph) {
+        NameReferenceGraphConstruction graphBuilder =
+            new NameReferenceGraphConstruction(compiler);
+        graphBuilder.process(externs, root);
+        definitionProvider = graphBuilder.getNameReferenceGraph();
+      } else {
+        SimpleDefinitionFinder defFinder = new SimpleDefinitionFinder(compiler);
+        defFinder.process(externs, root);
+        definitionProvider = defFinder;
+      }
+
+      PureFunctionIdentifier pureFunctionIdentifier =
+          new PureFunctionIdentifier(compiler, definitionProvider);
+      pureFunctionIdentifier.process(externs, root);
+
+      if (reportPath != null) {
+        try {
+          Files.write(pureFunctionIdentifier.getDebugReport(),
+              new File(reportPath),
+              Charsets.UTF_8);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+}

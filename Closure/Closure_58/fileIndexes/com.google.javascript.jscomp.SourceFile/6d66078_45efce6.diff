@@ -1,0 +1,792 @@
+1,260c1,16
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< package com.google.javascript.jscomp;
+< 
+< import com.google.common.base.Charsets;
+< import com.google.common.io.Files;
+< 
+< import com.google.common.io.CharStreams;
+< import com.google.common.annotations.VisibleForTesting;
+< 
+< import java.io.File;
+< import java.io.IOException;
+< import java.io.InputStream;
+< import java.io.InputStreamReader;
+< import java.io.Reader;
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< public abstract class SourceFile {
+< 
+<   
+< 
+< 
+<   public interface Generator {
+<     public String getCode();
+<   }
+< 
+<   
+< 
+< 
+< 
+<   private static final int SOURCE_EXCERPT_REGION_LENGTH = 5;
+< 
+<   private final String fileName;
+< 
+<   
+<   
+<   
+<   private int lastOffset;
+<   private int lastLine;
+< 
+<   private String code = null;
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   SourceFile(String fileName) {
+<     this.fileName = fileName;
+<     
+<     this.lastOffset = 0;
+<     this.lastLine = 1;
+<   }
+< 
+<   
+<   
+< 
+<   
+< 
+< 
+< 
+<   public String getCode() throws IOException {
+<     return code;
+<   }
+< 
+<   @VisibleForTesting
+<   String getCodeNoCache() {
+<     return code;
+<   }
+< 
+<   private void setCode(String sourceCode) {
+<     code = sourceCode;
+<   }
+< 
+<   
+<   
+<   
+<   
+<   public void clearCachedSource() {
+<     
+<     
+<   }
+< 
+<   
+<   public String getName() {
+<     return fileName;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   public String getLine(int lineNumber) {
+<     String js = "";
+<     try {
+<       
+<       
+<       
+<       js = getCode();
+<     } catch (IOException e) {
+<       return null;
+<     }
+< 
+<     int pos = 0;
+<     int startLine = 1;
+< 
+<     
+<     
+<     if (lineNumber >= lastLine) {
+<       pos = lastOffset;
+<       startLine = lastLine;
+<     }
+< 
+<     for (int n = startLine; n < lineNumber; n++) {
+<       int nextpos = js.indexOf('\n', pos);
+<       if (nextpos == -1) {
+<         return null;
+<       }
+<       pos = nextpos + 1;
+<     }
+< 
+<     
+<     lastOffset = pos;
+<     lastLine = lineNumber;
+< 
+<     return (js.indexOf('\n', pos) == -1) ? null :
+<         js.substring(pos, js.indexOf('\n', pos));
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   public Region getRegion(int lineNumber) {
+<     String js = "";
+<     try {
+<       js = getCode();
+<     } catch (IOException e) {
+<       return null;
+<     }
+<     int pos = 0;
+<     int startLine = Math.max(1,
+<         lineNumber - (SOURCE_EXCERPT_REGION_LENGTH + 1) / 2 + 1);
+<     for (int n = 1; n < startLine; n++) {
+<       int nextpos = js.indexOf('\n', pos);
+<       if (nextpos == -1) {
+<         break;
+<       }
+<       pos = nextpos + 1;
+<     }
+<     int end = pos;
+<     int endLine = startLine;
+<     for (int n = 0; n < SOURCE_EXCERPT_REGION_LENGTH; n++, endLine++) {
+<       end = js.indexOf('\n', end);
+<       if (end == -1) {
+<         break;
+<       }
+<       end++;
+<     }
+<     if (lineNumber >= endLine) {
+<       return null;
+<     }
+<     if (end == -1) {
+<       int last = js.length() - 1;
+<       if (js.charAt(last) == '\n') {
+<         return
+<             new SimpleRegion(startLine, endLine, js.substring(pos, last));
+<       } else {
+<         return new SimpleRegion(startLine, endLine, js.substring(pos));
+<       }
+<     } else {
+<       return new SimpleRegion(startLine, endLine, js.substring(pos, end));
+<     }
+<   }
+< 
+<   public static SourceFile fromFile(String fileName) {
+<     return fromFile(new File(fileName));
+<   }
+< 
+<   public static SourceFile fromFile(File file) {
+<     return new OnDisk(file);
+<   }
+< 
+<   public static SourceFile fromCode(String fileName, String code) {
+<     return new Preloaded(fileName, code);
+<   }
+< 
+<   public static SourceFile fromInputStream(String fileName, InputStream s)
+<       throws IOException {
+<     return fromCode(fileName,
+<         CharStreams.toString(new InputStreamReader(s, Charsets.UTF_8)));
+<   }
+< 
+<   public static SourceFile fromReader(String fileName, Reader r)
+<       throws IOException {
+<     return fromCode(fileName, CharStreams.toString(r));
+<   }
+< 
+<   public static SourceFile fromGenerator(String fileName,
+<       Generator generator) {
+<     return new Generated(fileName, generator);
+<   }
+< 
+< 
+<   
+<   
+< 
+<   
+< 
+< 
+<   static class Preloaded extends SourceFile {
+< 
+<     Preloaded(String fileName, String code) {
+<       super(fileName);
+<       super.setCode(code);
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+<   static class Generated extends SourceFile {
+<     private final Generator generator;
+< 
+<     
+<     Generated(String fileName, Generator generator) {
+<       super(fileName);
+<       this.generator = generator;
+---
+> <!DOCTYPE HTML PUBLIC "-
+> <!--NewPage-->
+> <HTML>
+> <HEAD>
+> <TITLE>
+> SourceFile (Compiler)
+> </TITLE>
+> 
+> 
+> <LINK REL ="stylesheet" TYPE="text/css" HREF="../../../../dev_javadoc.css" TITLE="Style">
+> 
+> <SCRIPT type="text/javascript">
+> function windowTitle()
+> {
+>     if (location.href.indexOf('is-external=true') == -1) {
+>         parent.document.title="SourceFile (Compiler)";
+262,312d17
+< 
+<     @Override
+<     public synchronized String getCode() throws IOException {
+<       String cachedCode = super.getCode();
+< 
+<       if (cachedCode == null) {
+<         cachedCode = generator.getCode();
+<         super.setCode(cachedCode);
+<       }
+<       return cachedCode;
+<     }
+< 
+<     
+<     
+<     @Override
+<     public void clearCachedSource() {
+<       super.setCode(null);
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   static class OnDisk extends SourceFile {
+<     private final File file;
+< 
+<     OnDisk(File file) {
+<       super(file.getPath());
+<       this.file = file;
+<     }
+< 
+<     @Override
+<     public synchronized String getCode() throws IOException {
+<       String cachedCode = super.getCode();
+< 
+<       if (cachedCode == null) {
+<         cachedCode = Files.toString(file, Charsets.UTF_8);
+<         super.setCode(cachedCode);
+<       }
+<       return cachedCode;
+<     }
+< 
+<     
+<     
+<     @Override
+<     public void clearCachedSource() {
+<       super.setCode(null);
+<     }
+<   }
+313a19,479
+> </SCRIPT>
+> <NOSCRIPT>
+> </NOSCRIPT>
+> 
+> </HEAD>
+> 
+> <BODY BGCOLOR="white" onload="windowTitle();">
+> <HR>
+> 
+> 
+> <!-- ========= START OF TOP NAVBAR ======= -->
+> <A NAME="navbar_top"><!-- --></A>
+> <A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+> <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+> <TR>
+> <TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+> <A NAME="navbar_top_firstrow"><!-- --></A>
+> <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+>   <TR ALIGN="center" VALIGN="top">
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../index-all.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+>   </TR>
+> </TABLE>
+> </TD>
+> <TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+> </EM>
+> </TD>
+> </TR>
+> 
+> <TR>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceExcerptProvider.SourceExcerpt.html" title="enum in com.google.javascript.jscomp"><B>PREV CLASS</B></A>&nbsp;
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.Generator.html" title="interface in com.google.javascript.jscomp"><B>NEXT CLASS</B></A></FONT></TD>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+>   <A HREF="../../../../index.html?com/google/javascript/jscomp/SourceFile.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+> &nbsp;<A HREF="SourceFile.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+> &nbsp;<SCRIPT type="text/javascript">
+>   <!--
+>   if(window==top) {
+>     document.writeln('<A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>');
+>   }
+>   
+> </SCRIPT>
+> <NOSCRIPT>
+>   <A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>
+> </NOSCRIPT>
+> 
+> 
+> </FONT></TD>
+> </TR>
+> <TR>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+>   SUMMARY:&nbsp;<A HREF="#nested_class_summary">NESTED</A>&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+> DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+> </TR>
+> </TABLE>
+> <A NAME="skip-navbar_top"></A>
+> <!-- ========= END OF TOP NAVBAR ========= -->
+> 
+> <HR>
+> <!-- ======== START OF CLASS DATA ======== -->
+> <H2>
+> <FONT SIZE="-1">
+> com.google.javascript.jscomp</FONT>
+> <BR>
+> Class SourceFile</H2>
+> <PRE>
+> <A HREF="http:
+>   <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.javascript.jscomp.SourceFile</B>
+> </PRE>
+> <DL>
+> <DT><B>Direct Known Subclasses:</B> <DD><A HREF="../../../../com/google/javascript/jscomp/JSSourceFile.html" title="class in com.google.javascript.jscomp">JSSourceFile</A></DD>
+> </DL>
+> <HR>
+> <DL>
+> <DT><PRE>public abstract class <B>SourceFile</B><DT>extends <A HREF="http:
+> </PRE>
+> 
+> <P>
+> An abstract representation of a source file that provides access to
+>  language-neutral features. The source file can be loaded from various
+>  locations, such as from disk or from a preloaded string.
+> <P>
+> 
+> <P>
+> <HR>
+> 
+> <P>
+> <!-- ======== NESTED CLASS SUMMARY ======== -->
+> 
+> <A NAME="nested_class_summary"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+> <B>Nested Class Summary</B></FONT></TH>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;interface</CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.Generator.html" title="interface in com.google.javascript.jscomp">SourceFile.Generator</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A JavaScript source code provider.</TD>
+> </TR>
+> </TABLE>
+> &nbsp;
+> <!-- ========== METHOD SUMMARY =========== -->
+> 
+> <A NAME="method_summary"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+> <B>Method Summary</B></FONT></TH>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>&nbsp;void</CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#clearCachedSource()">clearCachedSource</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#fromCode(java.lang.String, java.lang.String)">fromCode</A></B>(<A HREF="http:
+>          <A HREF="http:
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#fromFile(java.io.File)">fromFile</A></B>(<A HREF="http:
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#fromFile(java.lang.String)">fromFile</A></B>(<A HREF="http:
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#fromGenerator(java.lang.String, com.google.javascript.jscomp.SourceFile.Generator)">fromGenerator</A></B>(<A HREF="http:
+>               <A HREF="../../../../com/google/javascript/jscomp/SourceFile.Generator.html" title="interface in com.google.javascript.jscomp">SourceFile.Generator</A>&nbsp;generator)</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#fromInputStream(java.lang.String, java.io.InputStream)">fromInputStream</A></B>(<A HREF="http:
+>                 <A HREF="http:
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#fromReader(java.lang.String, java.io.Reader)">fromReader</A></B>(<A HREF="http:
+>            <A HREF="http:
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>&nbsp;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#getCode()">getCode</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gets all the code in this source file.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>&nbsp;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#getLine(int)">getLine</A></B>(int&nbsp;lineNumber)</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gets the source line for the indicated line number.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>&nbsp;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#getName()">getName</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns a unique name for the source file.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>&nbsp;<A HREF="../../../../com/google/javascript/jscomp/Region.html" title="interface in com.google.javascript.jscomp">Region</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/SourceFile.html#getRegion(int)">getRegion</A></B>(int&nbsp;lineNumber)</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Get a region around the indicated line number.</TD>
+> </TR>
+> </TABLE>
+> &nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+> <TH ALIGN="left"><B>Methods inherited from class java.lang.<A HREF="http:
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD><CODE><A HREF="http:
+> </TR>
+> </TABLE>
+> &nbsp;
+> <P>
+> 
+> <!-- ============ METHOD DETAIL ========== -->
+> 
+> <A NAME="method_detail"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+> <B>Method Detail</B></FONT></TH>
+> </TR>
+> </TABLE>
+> 
+> <A NAME="getCode()"><!-- --></A><H3>
+> getCode</H3>
+> <PRE>
+> public <A HREF="http:
+>                throws <A HREF="http:
+> <DL>
+> <DD>Gets all the code in this source file.
+> <P>
+> <DD><DL>
+> 
+> <DT><B>Throws:</B>
+> <DD><CODE><A HREF="http:
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="clearCachedSource()"><!-- --></A><H3>
+> clearCachedSource</H3>
+> <PRE>
+> public void <B>clearCachedSource</B>()</PRE>
+> <DL>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="getName()"><!-- --></A><H3>
+> getName</H3>
+> <PRE>
+> public <A HREF="http:
+> <DL>
+> <DD>Returns a unique name for the source file.
+> <P>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="getLine(int)"><!-- --></A><H3>
+> getLine</H3>
+> <PRE>
+> public <A HREF="http:
+> <DL>
+> <DD>Gets the source line for the indicated line number.
+> <P>
+> <DD><DL>
+> <DT><B>Parameters:</B><DD><CODE>lineNumber</CODE> - the line number, 1 being the first line of the file.
+> <DT><B>Returns:</B><DD>The line indicated. Does not include the newline at the end
+>      of the file. Returns <code>null</code> if it does not exist,
+>      or if there was an IO exception.</DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="getRegion(int)"><!-- --></A><H3>
+> getRegion</H3>
+> <PRE>
+> public <A HREF="../../../../com/google/javascript/jscomp/Region.html" title="interface in com.google.javascript.jscomp">Region</A> <B>getRegion</B>(int&nbsp;lineNumber)</PRE>
+> <DL>
+> <DD>Get a region around the indicated line number. The exact definition of a
+>  region is implementation specific, but it must contain the line indicated
+>  by the line number. A region must not start or end by a carriage return.
+> <P>
+> <DD><DL>
+> <DT><B>Parameters:</B><DD><CODE>lineNumber</CODE> - the line number, 1 being the first line of the file.
+> <DT><B>Returns:</B><DD>The line indicated. Returns <code>null</code> if it does not exist,
+>      or if there was an IO exception.</DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="fromFile(java.lang.String)"><!-- --></A><H3>
+> fromFile</H3>
+> <PRE>
+> public static <A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A> <B>fromFile</B>(<A HREF="http:
+> <DL>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="fromFile(java.io.File)"><!-- --></A><H3>
+> fromFile</H3>
+> <PRE>
+> public static <A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A> <B>fromFile</B>(<A HREF="http:
+> <DL>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="fromCode(java.lang.String, java.lang.String)"><!-- --></A><H3>
+> fromCode</H3>
+> <PRE>
+> public static <A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A> <B>fromCode</B>(<A HREF="http:
+>                                   <A HREF="http:
+> <DL>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="fromInputStream(java.lang.String, java.io.InputStream)"><!-- --></A><H3>
+> fromInputStream</H3>
+> <PRE>
+> public static <A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A> <B>fromInputStream</B>(<A HREF="http:
+>                                          <A HREF="http:
+>                                   throws <A HREF="http:
+> <DL>
+> <DD><DL>
+> 
+> <DT><B>Throws:</B>
+> <DD><CODE><A HREF="http:
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="fromReader(java.lang.String, java.io.Reader)"><!-- --></A><H3>
+> fromReader</H3>
+> <PRE>
+> public static <A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A> <B>fromReader</B>(<A HREF="http:
+>                                     <A HREF="http:
+>                              throws <A HREF="http:
+> <DL>
+> <DD><DL>
+> 
+> <DT><B>Throws:</B>
+> <DD><CODE><A HREF="http:
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="fromGenerator(java.lang.String, com.google.javascript.jscomp.SourceFile.Generator)"><!-- --></A><H3>
+> fromGenerator</H3>
+> <PRE>
+> public static <A HREF="../../../../com/google/javascript/jscomp/SourceFile.html" title="class in com.google.javascript.jscomp">SourceFile</A> <B>fromGenerator</B>(<A HREF="http:
+>                                        <A HREF="../../../../com/google/javascript/jscomp/SourceFile.Generator.html" title="interface in com.google.javascript.jscomp">SourceFile.Generator</A>&nbsp;generator)</PRE>
+> <DL>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <!-- ========= END OF CLASS DATA ========= -->
+> <HR>
+> 
+> 
+> <!-- ======= START OF BOTTOM NAVBAR ====== -->
+> <A NAME="navbar_bottom"><!-- --></A>
+> <A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+> <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+> <TR>
+> <TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+> <A NAME="navbar_bottom_firstrow"><!-- --></A>
+> <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+>   <TR ALIGN="center" VALIGN="top">
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../index-all.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+>   </TR>
+> </TABLE>
+> </TD>
+> <TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+> </EM>
+> </TD>
+> </TR>
+> 
+> <TR>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceExcerptProvider.SourceExcerpt.html" title="enum in com.google.javascript.jscomp"><B>PREV CLASS</B></A>&nbsp;
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/SourceFile.Generator.html" title="interface in com.google.javascript.jscomp"><B>NEXT CLASS</B></A></FONT></TD>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+>   <A HREF="../../../../index.html?com/google/javascript/jscomp/SourceFile.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+> &nbsp;<A HREF="SourceFile.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+> &nbsp;<SCRIPT type="text/javascript">
+>   <!--
+>   if(window==top) {
+>     document.writeln('<A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>');
+>   }
+>   
+> </SCRIPT>
+> <NOSCRIPT>
+>   <A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>
+> </NOSCRIPT>
+> 
+> 
+> </FONT></TD>
+> </TR>
+> <TR>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+>   SUMMARY:&nbsp;<A HREF="#nested_class_summary">NESTED</A>&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+> DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+> </TR>
+> </TABLE>
+> <A NAME="skip-navbar_bottom"></A>
+> <!-- ======== END OF BOTTOM NAVBAR ======= -->
+> 
+> <HR>
+> 
+>         <div id="footer">
+>           <div id="footerlogo">
+>             <img src="http:
+>                  alt="Google colored balls">
+>           </div>
+> 
+>           <div id="copyright">
+>           <p>&copy; 2009 Google -
+>             <a href="http:
+>             <a href="http:
+>             <a href="http:
+>           </p>
+>           </div>
+>         </div>
+>       
+>       
+> </BODY>
+> </HTML>

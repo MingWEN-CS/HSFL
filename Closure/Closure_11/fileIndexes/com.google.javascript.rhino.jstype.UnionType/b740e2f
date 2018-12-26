@@ -1,0 +1,478 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.UNKNOWN;
+
+import com.google.common.base.Pair;
+
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class UnionType extends JSType {
+  private static final long serialVersionUID = 1L;
+
+  final Set<JSType> alternates;
+
+  
+
+
+
+
+  UnionType(JSTypeRegistry registry, Set<JSType> alternates) {
+    super(registry);
+    this.alternates = alternates;
+  }
+
+  
+
+
+
+
+  public Iterable<JSType> getAlternates() {
+    return alternates;
+  }
+
+  @Override
+  public void forgiveUnknownNames() {
+    for (JSType type : getAlternates()) {
+      type.forgiveUnknownNames();
+    }
+  }
+
+  
+
+
+
+
+
+  @Override
+  public boolean matchesNumberContext() {
+    
+    for (JSType t : alternates) {
+      if (t.matchesNumberContext()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  @Override
+  public boolean matchesStringContext() {
+    
+    for (JSType t : alternates) {
+      if (t.matchesStringContext()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  @Override
+  public boolean matchesObjectContext() {
+    
+    for (JSType t : alternates) {
+      if (t.matchesObjectContext()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public JSType findPropertyType(String propertyName) {
+    JSType propertyType = null;
+
+    for (JSType alternate : getAlternates()) {
+      
+      if (alternate.isNullType() || alternate.isVoidType()) {
+        continue;
+      }
+
+      JSType altPropertyType = alternate.findPropertyType(propertyName);
+      if (altPropertyType == null) {
+        continue;
+      }
+
+      if (propertyType == null) {
+        propertyType = altPropertyType;
+      } else {
+        propertyType = propertyType.getLeastSupertype(altPropertyType);
+      }
+    }
+
+    return propertyType;
+  }
+
+  @Override
+  public boolean canAssignTo(JSType that) {
+    boolean canAssign = true;
+    for (JSType t : alternates) {
+      if (t.isUnknownType()) {
+        return true;
+      }
+      canAssign &= t.canAssignTo(that);
+    }
+    return canAssign;
+  }
+
+  @Override
+  public boolean canBeCalled() {
+    for (JSType t : alternates) {
+      if (!t.canBeCalled()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public JSType restrictByNotNullOrUndefined() {
+    UnionTypeBuilder restricted = new UnionTypeBuilder(registry);
+    for (JSType t : alternates) {
+      restricted.addAlternate(t.restrictByNotNullOrUndefined());
+    }
+    return restricted.build();
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    TernaryValue result = null;
+    for (JSType t : alternates) {
+      TernaryValue test = t.testForEquality(that);
+      if (result == null) {
+        result = test;
+      } else if (!result.equals(test)) {
+        return UNKNOWN;
+      }
+    }
+    return result;
+  }
+
+  
+
+
+
+
+
+
+
+  @Override
+  public boolean isNullable() {
+    for (JSType t : alternates) {
+      if (t.isNullable()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isUnknownType() {
+    for (JSType t : alternates) {
+      if (t.isUnknownType()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public JSType getLeastSupertype(JSType that) {
+    if (!that.isUnknownType()) {
+      for (JSType alternate : alternates) {
+        if (!alternate.isUnknownType() && that.isSubtype(alternate)) {
+          return this;
+        }
+      }
+    }
+
+    return getLeastSupertype(this, that);
+  }
+
+  @Override
+  public JSType getGreatestSubtype(JSType that) {
+    if (that instanceof UnionType) {
+      return meet((UnionType) that);
+    }
+    return getGreatestSubtype(this, that);
+  }
+
+  private JSType meet(UnionType that) {
+    UnionTypeBuilder builder = new UnionTypeBuilder(registry);
+    for (JSType alternate : alternates) {
+      if (alternate.isSubtype(that)) {
+        builder.addAlternate(alternate);
+      }
+    }
+    for (JSType otherAlternate : that.alternates) {
+      if (otherAlternate.isSubtype(this)) {
+        builder.addAlternate(otherAlternate);
+      }
+    }
+    JSType result = builder.build();
+    return result == null ? getNativeType(JSTypeNative.NO_TYPE) : result;
+  }
+
+  
+
+
+
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof UnionType) {
+      UnionType that = (UnionType) object;
+      return alternates.equals(that.alternates);
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return alternates.hashCode();
+  }
+
+  @Override
+  public boolean isUnionType() {
+    return true;
+  }
+
+  @Override
+  public boolean isObject() {
+    for (JSType alternate : alternates) {
+      if (!alternate.isObject()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  public boolean contains(JSType alternate) {
+    return alternates.contains(alternate);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public JSType getRestrictedUnion(JSType type) {
+    UnionTypeBuilder restricted = new UnionTypeBuilder(registry);
+    for (JSType t : alternates) {
+      if (t.isUnknownType() || !t.isSubtype(type)) {
+        restricted.addAlternate(t);
+      }
+    }
+    return restricted.build();
+  }
+
+  @Override public String toString() {
+    StringBuilder result = new StringBuilder();
+    boolean firstAlternate = true;
+
+    result.append("(");
+    SortedSet<JSType> sorted = new TreeSet<JSType>(ALPHA);
+    sorted.addAll(alternates);
+    for (JSType t : sorted) {
+      if (!firstAlternate) {
+        result.append("|");
+      }
+      result.append(t.toString());
+      firstAlternate = false;
+    }
+    result.append(")");
+    return result.toString();
+  }
+
+  @Override
+  public boolean isSubtype(JSType that) {
+    for (JSType element : alternates) {
+      if (!element.isSubtype(that)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public JSType getRestrictedTypeGivenToBooleanOutcome(boolean outcome) {
+    
+    UnionTypeBuilder restricted = new UnionTypeBuilder(registry);
+    for (JSType element : alternates) {
+      restricted.addAlternate(
+          element.getRestrictedTypeGivenToBooleanOutcome(outcome));
+    }
+    return restricted.build();
+  }
+
+  @Override
+  public BooleanLiteralSet getPossibleToBooleanOutcomes() {
+    BooleanLiteralSet literals = BooleanLiteralSet.EMPTY;
+    for (JSType element : alternates) {
+      literals = literals.union(element.getPossibleToBooleanOutcomes());
+      if (literals == BooleanLiteralSet.BOTH) {
+        break;
+      }
+    }
+    return literals;
+  }
+
+  @Override
+  public Pair<JSType, JSType> getTypesUnderEquality(JSType that) {
+    UnionTypeBuilder thisRestricted = new UnionTypeBuilder(registry);
+    UnionTypeBuilder thatRestricted = new UnionTypeBuilder(registry);
+    for (JSType element : alternates) {
+      Pair<JSType, JSType> p = element.getTypesUnderEquality(that);
+      if (p.first != null) {
+        thisRestricted.addAlternate(p.first);
+      }
+      if (p.second != null) {
+        thatRestricted.addAlternate(p.second);
+      }
+    }
+    return Pair.of(
+        thisRestricted.build(),
+        thatRestricted.build());
+  }
+
+  @Override
+  public Pair<JSType, JSType> getTypesUnderInequality(JSType that) {
+    UnionTypeBuilder thisRestricted = new UnionTypeBuilder(registry);
+    UnionTypeBuilder thatRestricted = new UnionTypeBuilder(registry);
+    for (JSType element : alternates) {
+      Pair<JSType, JSType> p = element.getTypesUnderInequality(that);
+      if (p.first != null) {
+        thisRestricted.addAlternate(p.first);
+      }
+      if (p.second != null) {
+        thatRestricted.addAlternate(p.second);
+      }
+    }
+    return Pair.of(
+        thisRestricted.build(),
+        thatRestricted.build());
+  }
+
+  @Override
+  public Pair<JSType, JSType> getTypesUnderShallowInequality(JSType that) {
+    UnionTypeBuilder thisRestricted = new UnionTypeBuilder(registry);
+    UnionTypeBuilder thatRestricted = new UnionTypeBuilder(registry);
+    for (JSType element : alternates) {
+      Pair<JSType, JSType> p = element.getTypesUnderShallowInequality(that);
+      if (p.first != null) {
+        thisRestricted.addAlternate(p.first);
+      }
+      if (p.second != null) {
+        thatRestricted.addAlternate(p.second);
+      }
+    }
+    return Pair.of(
+        thisRestricted.build(),
+        thatRestricted.build());
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseUnionType(this);
+  }
+}

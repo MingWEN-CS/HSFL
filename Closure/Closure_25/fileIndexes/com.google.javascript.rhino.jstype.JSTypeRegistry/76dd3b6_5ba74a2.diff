@@ -1,0 +1,22 @@
+587c587,605
+<   public void registerPropertyOnType(String propertyName, ObjectType owner) {
+---
+>   public void registerPropertyOnType(String propertyName, JSType type) {
+>     ObjectType owner = null;
+> 
+>     
+>     
+>     if (type instanceof ObjectType) {
+>       owner = (ObjectType) type;
+>     } else if (getNativeType(ALL_TYPE).isSubtype(type)) {
+>       owner = getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+>     } else if (type instanceof UnionType) {
+>       for (JSType alternate : ((UnionType) type).getAlternates()) {
+>         registerPropertyOnType(propertyName, alternate);
+>       }
+>     }
+> 
+>     if (owner == null) {
+>       return;
+>     }
+> 

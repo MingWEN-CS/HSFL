@@ -1,0 +1,27 @@
+815a816,817
+> 
+>     JSType narrowed;
+822,826c824
+<       JSType type = getJSType(assertedNode);
+<       JSType narrowed = type.restrictByNotNullOrUndefined();
+<       if (type != narrowed) {
+<         callNode.setJSType(narrowed);
+<       }
+---
+>       narrowed = getJSType(assertedNode).restrictByNotNullOrUndefined();
+830,835c828,830
+<       JSType narrowed = type.getGreatestSubtype(getNativeType(assertedType));
+<       if (type != narrowed) {
+<         if (assertedNodeName != null) {
+<           scope = narrowScope(scope, assertedNode, narrowed);
+<         }
+<         callNode.setJSType(narrowed);
+---
+>       narrowed = type.getGreatestSubtype(getNativeType(assertedType));
+>       if (assertedNodeName != null && type.differsFrom(narrowed)) {
+>         scope = narrowScope(scope, assertedNode, narrowed);
+836a832,835
+>     }
+> 
+>     if (getJSType(callNode).differsFrom(narrowed)) {
+>       callNode.setJSType(narrowed);

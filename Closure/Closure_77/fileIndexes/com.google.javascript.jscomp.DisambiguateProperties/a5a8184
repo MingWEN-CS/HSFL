@@ -1,0 +1,967 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import static com.google.common.base.Preconditions.checkState;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.ConcreteType.ConcreteFunctionType;
+import com.google.javascript.jscomp.ConcreteType.ConcreteInstanceType;
+import com.google.javascript.jscomp.ConcreteType.ConcreteUnionType;
+import com.google.javascript.jscomp.ConcreteType.ConcreteUniqueType;
+import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+import com.google.javascript.jscomp.TypeValidator.TypeMismatch;
+import com.google.javascript.jscomp.graph.StandardUnionFind;
+import com.google.javascript.jscomp.graph.UnionFind;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.jstype.FunctionPrototypeType;
+import com.google.javascript.rhino.jstype.FunctionType;
+import com.google.javascript.rhino.jstype.JSType;
+import com.google.javascript.rhino.jstype.JSTypeNative;
+import com.google.javascript.rhino.jstype.JSTypeRegistry;
+import com.google.javascript.rhino.jstype.ObjectType;
+import com.google.javascript.rhino.jstype.StaticScope;
+import com.google.javascript.rhino.jstype.UnionType;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+import java.util.logging.Logger;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class DisambiguateProperties<T> implements CompilerPass {
+  private static final Logger logger = Logger.getLogger(
+      DisambiguateProperties.class.getName());
+
+  
+  
+  static final DiagnosticType INVALIDATION = DiagnosticType.warning(
+      "JSC_INVALIDATION",
+      "Property disambiguator skipping all instances of property {0} "
+      + "because of type {1} node {2}");
+  private final boolean showInvalidationWarnings = false;
+
+  private final AbstractCompiler compiler;
+  private final TypeSystem<T> typeSystem;
+
+  private class Property {
+    
+    final String name;
+
+    
+    private UnionFind<T> types;
+
+    
+
+
+
+    Set<T> typesToSkip = Sets.newHashSet();
+
+    
+
+
+
+    boolean skipRenaming;
+
+    
+    Set<Node> renameNodes = Sets.newHashSet();
+
+    
+
+
+
+
+    final Map<Node, T> rootTypes = Maps.newHashMap();
+
+    Property(String name) {
+      this.name = name;
+    }
+
+    
+    UnionFind<T> getTypes() {
+      if (types == null) {
+        types = new StandardUnionFind<T>();
+      }
+      return types;
+    }
+
+    
+
+
+
+
+    boolean addType(T type, T top, T relatedType) {
+      checkState(!skipRenaming, "Attempt to record skipped property: %s", name);
+      if (typeSystem.isInvalidatingType(top)) {
+        invalidate();
+        return false;
+      } else {
+        if (typeSystem.isTypeToSkip(top)) {
+          addTypeToSkip(top);
+        }
+
+        if (relatedType == null) {
+          getTypes().add(top);
+        } else {
+          getTypes().union(top, relatedType);
+        }
+        typeSystem.recordInterfaces(type, top, this);
+        return true;
+      }
+    }
+
+    
+    void addTypeToSkip(T type) {
+      for (T skipType : typeSystem.getTypesToSkipForType(type)) {
+        typesToSkip.add(skipType);
+        getTypes().union(skipType, type);
+      }
+    }
+
+    
+    void expandTypesToSkip() {
+      
+      
+      if (shouldRename()) {
+        int count = 0;
+        while (true) {
+          
+          checkState(++count < 10, "Stuck in loop expanding types to skip.");
+
+          
+          
+          Set<T> rootTypesToSkip = Sets.newHashSet();
+          for (T subType : typesToSkip) {
+            rootTypesToSkip.add(types.find(subType));
+          }
+          typesToSkip.addAll(rootTypesToSkip);
+
+          Set<T> newTypesToSkip = Sets.newHashSet();
+          Set<T> allTypes = types.elements();
+          int originalTypesSize = allTypes.size();
+          for (T subType : allTypes) {
+            if (!typesToSkip.contains(subType)
+                && typesToSkip.contains(types.find(subType))) {
+              newTypesToSkip.add(subType);
+            }
+          }
+
+          for (T newType : newTypesToSkip) {
+            addTypeToSkip(newType);
+          }
+
+          
+          if (types.elements().size() == originalTypesSize) {
+            break;
+          }
+        }
+      }
+    }
+
+    
+    boolean shouldRename() {
+      return !skipRenaming && types != null
+          && types.allEquivalenceClasses().size() > 1;
+    }
+
+    
+
+
+
+
+    boolean shouldRename(T type) {
+      return !skipRenaming && !typesToSkip.contains(type);
+    }
+
+    
+
+
+
+    boolean invalidate() {
+      boolean changed = !skipRenaming;
+      skipRenaming = true;
+      types = null;
+      return changed;
+    }
+
+    
+
+
+
+
+
+
+
+
+    boolean scheduleRenaming(Node node, T type) {
+      if (!skipRenaming) {
+        if (typeSystem.isInvalidatingType(type)) {
+          invalidate();
+          return false;
+        }
+        renameNodes.add(node);
+        rootTypes.put(node, type);
+      }
+      return true;
+    }
+  }
+
+  private Map<String, Property> properties = Maps.newHashMap();
+
+  static DisambiguateProperties<JSType> forJSTypeSystem(
+      AbstractCompiler compiler) {
+    return new DisambiguateProperties<JSType>(
+        compiler, new JSTypeSystem(compiler));
+  }
+
+  static DisambiguateProperties<ConcreteType> forConcreteTypeSystem(
+      AbstractCompiler compiler, TightenTypes tt) {
+    return new DisambiguateProperties<ConcreteType>(
+        compiler, new ConcreteTypeSystem(tt, compiler.getCodingConvention()));
+  }
+
+  
+
+
+
+  private DisambiguateProperties(AbstractCompiler compiler,
+                                 TypeSystem<T> typeSystem) {
+    this.compiler = compiler;
+    this.typeSystem = typeSystem;
+  }
+
+  public void process(Node externs, Node root) {
+    for (TypeMismatch mis : compiler.getTypeValidator().getMismatches()) {
+      addInvalidatingType(mis.first);
+      addInvalidatingType(mis.second);
+    }
+
+    StaticScope<T> scope = typeSystem.getRootScope();
+    NodeTraversal.traverse(compiler, externs, new FindExternProperties());
+    NodeTraversal.traverse(compiler, root, new FindRenameableProperties());
+    renameProperties();
+  }
+
+  
+
+
+  private void addInvalidatingType(JSType type) {
+    type = type.restrictByNotNullOrUndefined();
+    if (type instanceof UnionType) {
+      for (JSType alt : ((UnionType) type).getAlternates()) {
+        addInvalidatingType(alt);
+      }
+      return;
+    }
+
+    typeSystem.addInvalidatingType(type);
+    if (type instanceof ObjectType &&
+        ((ObjectType) type).getImplicitPrototype() != null) {
+      typeSystem.addInvalidatingType(
+          ((ObjectType) type).getImplicitPrototype());
+    }
+  }
+
+
+  
+  protected Property getProperty(String name) {
+    if (!properties.containsKey(name)) {
+      properties.put(name, new Property(name));
+    }
+    return properties.get(name);
+  }
+
+  
+  T getTypeWithProperty(String field, T type) {
+    return typeSystem.getTypeWithProperty(field, type);
+  }
+
+  
+  private abstract class AbstractScopingCallback implements ScopedCallback {
+    protected final Stack<StaticScope<T>> scopes =
+        new Stack<StaticScope<T>>();
+
+    public boolean shouldTraverse(NodeTraversal t, Node n, Node parent) {
+      return true;
+    }
+
+    public void enterScope(NodeTraversal t) {
+      if (t.inGlobalScope()) {
+        scopes.push(typeSystem.getRootScope());
+      } else {
+        scopes.push(typeSystem.getFunctionScope(t.getScopeRoot()));
+      }
+    }
+
+    public void exitScope(NodeTraversal t) {
+      scopes.pop();
+    }
+
+    
+    protected StaticScope<T> getScope() {
+      return scopes.peek();
+    }
+  }
+
+  
+
+
+
+  private class FindExternProperties extends AbstractScopingCallback {
+    @Override public void visit(NodeTraversal t, Node n, Node parent) {
+      if (n.getType() == Token.GETPROP) {
+        String field = n.getLastChild().getString();
+        T type = typeSystem.getType(getScope(), n.getFirstChild(), field);
+        Property prop = getProperty(field);
+        if (typeSystem.isInvalidatingType(type)) {
+          prop.invalidate();
+        } else {
+          prop.addTypeToSkip(type);
+
+          
+          
+          
+          if ((type = typeSystem.getInstanceFromPrototype(type)) != null) {
+            prop.getTypes().add(type);
+            prop.typesToSkip.add(type);
+          }
+        }
+      }
+    }
+  }
+
+  
+
+
+
+  private class FindRenameableProperties extends AbstractScopingCallback {
+    @Override
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      if (n.getType() == Token.GETPROP) {
+        handleGetProp(t, n);
+      } else if (n.getType() == Token.OBJECTLIT) {
+        handleObjectLit(t, n);
+      }
+    }
+
+    
+
+
+    private void handleGetProp(NodeTraversal t, Node n) {
+      String name = n.getLastChild().getString();
+      T type = typeSystem.getType(getScope(), n.getFirstChild(), name);
+
+      Property prop = getProperty(name);
+      if (!prop.scheduleRenaming(n.getLastChild(),
+                                 processProperty(t, prop, type, null))) {
+        if (showInvalidationWarnings) {
+          compiler.report(JSError.make(
+              t.getSourceName(), n, INVALIDATION, name,
+              (type == null ? "null" : type.toString()), n.toString()));
+        }
+      }
+    }
+
+    
+
+
+    private void handleObjectLit(NodeTraversal t, Node n) {
+      Node child = n.getFirstChild();
+      while (child != null) {
+        if (child.getType() == Token.STRING) {
+          
+          String name = child.getString();
+          T type = typeSystem.getType(getScope(), n, name);
+
+          Property prop = getProperty(name);
+          if (!prop.scheduleRenaming(child,
+                                     processProperty(t, prop, type, null))) {
+            if (showInvalidationWarnings) {
+              compiler.report(JSError.make(
+                  t.getSourceName(), child, INVALIDATION, name,
+                  (type == null ? "null" : type.toString()), n.toString()));
+            }
+          }
+        }
+
+        child = child.getNext().getNext();
+      }
+    }
+
+    
+
+
+
+
+
+
+    private T processProperty(
+        NodeTraversal t, Property prop, T type, T relatedType) {
+      type = typeSystem.restrictByNotNullOrUndefined(type);
+      if (prop.skipRenaming || typeSystem.isInvalidatingType(type)) {
+        return null;
+      }
+
+      Iterable<T> alternatives = typeSystem.getTypeAlternatives(type);
+      if (alternatives != null) {
+        T firstType = null;
+        for (T subType : alternatives) {
+          T lastType = processProperty(t, prop, subType, firstType);
+          if (lastType != null) {
+            firstType = firstType == null ? lastType : firstType;
+          }
+        }
+        return firstType;
+      } else {
+        T topType = typeSystem.getTypeWithProperty(prop.name, type);
+        if (typeSystem.isInvalidatingType(topType)) {
+          return null;
+        }
+        prop.addType(type, topType, relatedType);
+        return topType;
+      }
+    }
+  }
+
+  
+  void renameProperties() {
+    int propsRenamed = 0, propsSkipped = 0, instancesRenamed = 0,
+        instancesSkipped = 0, singleTypeProps = 0;
+
+    for (Property prop : properties.values()) {
+      if (prop.shouldRename()) {
+        Map<T, String> propNames = buildPropNames(prop.getTypes(), prop.name);
+
+        ++propsRenamed;
+        prop.expandTypesToSkip();
+        UnionFind<T> types = prop.getTypes();
+        for (Node node : prop.renameNodes) {
+          T rootType = prop.rootTypes.get(node);
+          if (prop.shouldRename(rootType)) {
+            String newName = propNames.get(rootType);
+            node.setString(newName);
+            compiler.reportCodeChange();
+            ++instancesRenamed;
+          } else {
+            ++instancesSkipped;
+          }
+        }
+      } else {
+        if (prop.skipRenaming) {
+          ++propsSkipped;
+        } else {
+          ++singleTypeProps;
+        }
+      }
+    }
+    logger.info("Renamed " + instancesRenamed + " instances of "
+                + propsRenamed + " properties.");
+    logger.info("Skipped renaming " + instancesSkipped + " invalidated "
+                + "properties, " + propsSkipped + " instances of properties "
+                + "that were skipped for specific types and " + singleTypeProps
+                + " properties that were referenced from only one type.");
+  }
+
+  
+
+
+
+  private Map<T, String> buildPropNames(UnionFind<T> types, String name) {
+    Map<T, String> names = Maps.newHashMap();
+    for (Set<T> set : types.allEquivalenceClasses()) {
+      checkState(!set.isEmpty());
+
+      String typeName = null;
+      for (T type : set) {
+        if (typeName == null || type.toString().compareTo(typeName) < 0) {
+          typeName = type.toString();
+        }
+      }
+
+      String newName;
+      if ("{...}".equals(typeName)) {
+        newName = name;
+      } else {
+        newName = typeName.replaceAll("[^\\w$]", "_") + "$" + name;
+      }
+
+      for (T type : set) {
+        names.put(type, newName);
+      }
+    }
+    return names;
+  }
+
+  
+  Multimap<String, Collection<T>> getRenamedTypesForTesting() {
+    Multimap<String, Collection<T>> ret = HashMultimap.create();
+    for (Map.Entry<String, Property> entry: properties.entrySet()) {
+      Property prop = entry.getValue();
+      if (!prop.skipRenaming) {
+        for (Collection<T> c : prop.getTypes().allEquivalenceClasses()) {
+          if (!c.isEmpty() && !prop.typesToSkip.contains(c.iterator().next())) {
+            ret.put(entry.getKey(), c);
+          }
+        }
+      }
+    }
+    return ret;
+  }
+
+  
+  private interface TypeSystem<T> {
+    
+    
+
+    
+    StaticScope<T> getRootScope();
+
+    
+    StaticScope<T> getFunctionScope(Node node);
+
+    
+
+
+
+
+
+
+
+    T getType(StaticScope<T> scope, Node node, String prop);
+
+    
+
+
+
+
+
+    boolean isInvalidatingType(T type);
+
+    
+
+
+
+    void addInvalidatingType(JSType type);
+
+    
+
+
+
+
+    ImmutableSet<T> getTypesToSkipForType(T type);
+
+    
+
+
+
+    boolean isTypeToSkip(T type);
+
+    
+    T restrictByNotNullOrUndefined(T type);
+
+    
+
+
+
+
+    Iterable<T> getTypeAlternatives(T type);
+
+    
+
+
+
+    T getTypeWithProperty(String field, T type);
+
+    
+
+
+
+    T getInstanceFromPrototype(T type);
+
+    
+
+
+
+    void recordInterfaces(T type, T relatedType,
+                          DisambiguateProperties<T>.Property p);
+  }
+
+  
+  private static class JSTypeSystem implements TypeSystem<JSType> {
+    private final Set<JSType> invalidatingTypes;
+    private JSTypeRegistry registry;
+
+    public JSTypeSystem(AbstractCompiler compiler) {
+      registry = compiler.getTypeRegistry();
+      invalidatingTypes = Sets.newHashSet(
+          registry.getNativeType(JSTypeNative.ALL_TYPE),
+          registry.getNativeType(JSTypeNative.NO_OBJECT_TYPE),
+          registry.getNativeType(JSTypeNative.NO_TYPE),
+          registry.getNativeType(JSTypeNative.FUNCTION_PROTOTYPE),
+          registry.getNativeType(JSTypeNative.OBJECT_PROTOTYPE),
+          registry.getNativeType(JSTypeNative.TOP_LEVEL_PROTOTYPE),
+          registry.getNativeType(JSTypeNative.UNKNOWN_TYPE));
+
+    }
+
+    @Override public void addInvalidatingType(JSType type) {
+      checkState(!type.isUnionType());
+      invalidatingTypes.add(type);
+    }
+
+    @Override public StaticScope<JSType> getRootScope() { return null; }
+
+    @Override public StaticScope<JSType> getFunctionScope(Node node) {
+      return null;
+    }
+
+    @Override public JSType getType(
+        StaticScope<JSType> scope, Node node, String prop) {
+      if (node.getJSType() == null) {
+        return registry.getNativeType(JSTypeNative.UNKNOWN_TYPE);
+      }
+      return node.getJSType();
+    }
+
+    @Override public boolean isInvalidatingType(JSType type) {
+      return (type == null) || invalidatingTypes.contains(type)
+          || (type instanceof ObjectType &&
+              !((ObjectType) type).hasReferenceName())
+          || (type.isNamedType() && type.isUnknownType());
+    }
+
+    @Override public ImmutableSet<JSType> getTypesToSkipForType(JSType type) {
+      type = type.restrictByNotNullOrUndefined();
+      if (type instanceof UnionType) {
+        Set<JSType> types = Sets.newHashSet(type);
+        for (JSType alt : ((UnionType) type).getAlternates()) {
+          types.addAll(getTypesToSkipForTypeNonUnion(type));
+        }
+        return ImmutableSet.copyOf(types);
+      }
+      return ImmutableSet.copyOf(getTypesToSkipForTypeNonUnion(type));
+    }
+
+    private Set<JSType> getTypesToSkipForTypeNonUnion(JSType type) {
+      Set<JSType> types = Sets.newHashSet();
+      JSType skipType = type;
+      while (skipType != null) {
+        types.add(skipType);
+        if (skipType instanceof ObjectType) {
+          skipType = ((ObjectType) skipType).getImplicitPrototype();
+        } else {
+          break;
+        }
+      }
+      return types;
+    }
+
+    @Override public boolean isTypeToSkip(JSType type) {
+      return type.isEnumType() || (type.autoboxesTo() != null);
+    }
+
+    @Override public JSType restrictByNotNullOrUndefined(JSType type) {
+      return type.restrictByNotNullOrUndefined();
+    }
+
+    @Override public Iterable<JSType> getTypeAlternatives(JSType type) {
+      if (type.isUnionType()) {
+        return ((UnionType) type).getAlternates();
+      } else if (type instanceof ObjectType
+          && ((ObjectType) type).getConstructor() != null
+          && ((ObjectType) type).getConstructor().isInterface()) {
+        List<JSType> list = Lists.newArrayList();
+        for (FunctionType impl
+            : registry.getDirectImplementors((ObjectType) type)) {
+          list.add(impl.getInstanceType());
+        }
+        return list;
+      } else {
+        return null;
+      }
+    }
+
+    @Override public JSType getTypeWithProperty(String field, JSType type) {
+      if (!(type instanceof ObjectType)) {
+        if (type.autoboxesTo() != null) {
+          type = type.autoboxesTo();
+        } else {
+          return null;
+        }
+      }
+
+      
+      
+      
+      ObjectType foundType = null;
+      ObjectType objType = (ObjectType) type;
+      while (objType != null && objType.getImplicitPrototype() != objType) {
+        if (objType.hasOwnProperty(field)) {
+          foundType = objType;
+        }
+        objType = objType.getImplicitPrototype();
+      }
+      return foundType;
+    }
+
+    @Override public JSType getInstanceFromPrototype(JSType type) {
+      if (type.isFunctionPrototypeType()) {
+        FunctionPrototypeType prototype = (FunctionPrototypeType) type;
+        FunctionType owner = prototype.getOwnerFunction();
+        if (owner.isConstructor() || owner.isInterface()) {
+          return ((FunctionPrototypeType) type).getOwnerFunction()
+              .getInstanceType();
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public void recordInterfaces(JSType type, JSType relatedType,
+                                 DisambiguateProperties<JSType>.Property p) {
+      if (type instanceof ObjectType) {
+        FunctionType constructor;
+        if (type instanceof FunctionType) {
+          constructor = (FunctionType) type;
+        } else if (type instanceof FunctionPrototypeType) {
+          constructor = ((FunctionPrototypeType) type).getOwnerFunction();
+        } else {
+          constructor = ((ObjectType) type).getConstructor();
+        }
+        while (constructor != null) {
+          List<ObjectType> interfaces = constructor.getImplementedInterfaces();
+          for (ObjectType itype : interfaces) {
+            JSType top = getTypeWithProperty(p.name, itype);
+            if (top != null) {
+              p.addType(itype, top, relatedType);
+            } else {
+              recordInterfaces(itype, relatedType, p);
+            }
+
+            
+            if (p.skipRenaming) return;
+          }
+          if (constructor.isInterface() || constructor.isConstructor()) {
+            constructor = constructor.getSuperClassConstructor();
+          } else {
+            constructor = null;
+          }
+        }
+      }
+    }
+  }
+
+  
+  private static class ConcreteTypeSystem implements TypeSystem<ConcreteType> {
+    private final TightenTypes tt;
+    private int nextUniqueId;
+    private CodingConvention codingConvention;
+    private final Set<JSType> invalidatingTypes = Sets.newHashSet();
+
+    
+    
+    private static final JSTypeNative [] nativeTypes = new JSTypeNative[] {
+        JSTypeNative.BOOLEAN_OBJECT_TYPE,
+        JSTypeNative.NUMBER_OBJECT_TYPE,
+        JSTypeNative.STRING_OBJECT_TYPE
+    };
+
+    public ConcreteTypeSystem(TightenTypes tt, CodingConvention convention) {
+      this.tt = tt;
+      this.codingConvention = convention;
+    }
+
+    @Override public void addInvalidatingType(JSType type) {
+      checkState(!type.isUnionType());
+      invalidatingTypes.add(type);
+    }
+
+    @Override public StaticScope<ConcreteType> getRootScope() {
+      return tt.getTopScope();
+    }
+
+    @Override public StaticScope<ConcreteType> getFunctionScope(Node decl) {
+      ConcreteFunctionType func = tt.getConcreteFunction(decl);
+      return (func != null) ?
+          func.getScope() : (StaticScope<ConcreteType>) null;
+    }
+
+    @Override
+    public ConcreteType getType(
+        StaticScope<ConcreteType> scope, Node node, String prop) {
+      if (scope != null) {
+        ConcreteType c = tt.inferConcreteType(
+            (TightenTypes.ConcreteScope) scope, node);
+        return maybeAddAutoboxes(c, node, prop);
+      } else {
+        return null;
+      }
+    }
+
+    
+
+
+
+
+    private ConcreteType maybeAddAutoboxes(
+        ConcreteType cType, Node node, String prop) {
+      JSType jsType = node.getJSType();
+      if (jsType == null) {
+        return cType;
+      } else if (jsType.isUnknownType()) {
+        for (JSTypeNative nativeType : nativeTypes) {
+          ConcreteType concrete = tt.getConcreteInstance(
+              tt.getTypeRegistry().getNativeObjectType(nativeType));
+          if (concrete != null && !concrete.getPropertyType(prop).isNone()) {
+            cType = cType.unionWith(concrete);
+          }
+        }
+        return cType;
+      }
+
+      return maybeAddAutoboxes(cType, jsType, prop);
+    }
+
+    private ConcreteType maybeAddAutoboxes(
+        ConcreteType cType, JSType jsType, String prop) {
+      jsType = jsType.restrictByNotNullOrUndefined();
+      if (jsType instanceof UnionType) {
+        for (JSType alt : ((UnionType) jsType).getAlternates()) {
+          return maybeAddAutoboxes(cType, alt, prop);
+        }
+      }
+
+      if (jsType.autoboxesTo() != null) {
+        JSType autoboxed = jsType.autoboxesTo();
+        return cType.unionWith(tt.getConcreteInstance((ObjectType) autoboxed));
+      } else if (jsType.unboxesTo() != null) {
+        return cType.unionWith(tt.getConcreteInstance((ObjectType) jsType));
+      }
+
+      return cType;
+    }
+
+    @Override public boolean isInvalidatingType(ConcreteType type) {
+      
+      
+      return (type == null) || type.isAll() || type.isFunction()
+        || (type.isInstance()
+            && invalidatingTypes.contains(type.toInstance().instanceType));
+    }
+
+    @Override
+    public ImmutableSet<ConcreteType> getTypesToSkipForType(ConcreteType type) {
+      return ImmutableSet.of(type);
+    }
+
+    @Override public boolean isTypeToSkip(ConcreteType type) {
+      
+      return type.isInstance()
+        && !(type.toInstance().isFunctionPrototype()
+             || type.toInstance().instanceType.isInstanceType());
+    }
+
+    @Override
+    public ConcreteType restrictByNotNullOrUndefined(ConcreteType type) {
+      
+      return type;
+    }
+
+    @Override
+    public Iterable<ConcreteType> getTypeAlternatives(ConcreteType type) {
+      if (type.isUnion()) {
+        return ((ConcreteUnionType) type).getAlternatives();
+      } else {
+        return null;
+      }
+    }
+
+    @Override public ConcreteType getTypeWithProperty(String field,
+                                                      ConcreteType type) {
+      if (type.isInstance()) {
+        ConcreteInstanceType instanceType = (ConcreteInstanceType) type;
+        return instanceType.getInstanceTypeWithProperty(field);
+      } else if (type.isFunction()) {
+        if ("prototype".equals(field)
+            || codingConvention.isSuperClassReference(field)) {
+          return type;
+        }
+      } else if (type.isNone()) {
+        
+        
+        
+        return new ConcreteUniqueType(++nextUniqueId);
+      } else if (type.isUnion()) {
+        
+        for (ConcreteType t : ((ConcreteUnionType) type).getAlternatives()) {
+          ConcreteType ret = getTypeWithProperty(field, t);
+          if (ret != null) {
+            return ret;
+          }
+        }
+      }
+      return null;
+    }
+
+    @Override public ConcreteType getInstanceFromPrototype(ConcreteType type) {
+      if (type.isInstance()) {
+        ConcreteInstanceType instanceType = (ConcreteInstanceType) type;
+        if (instanceType.isFunctionPrototype()) {
+          return instanceType.getConstructorType().getInstanceType();
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public void recordInterfaces(ConcreteType type, ConcreteType relatedType,
+        DisambiguateProperties<ConcreteType>.Property p) {
+      
+    }
+  }
+}

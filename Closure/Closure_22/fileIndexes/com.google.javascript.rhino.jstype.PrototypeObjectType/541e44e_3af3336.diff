@@ -1,0 +1,54 @@
+43a44,45
+> import com.google.common.base.Preconditions;
+> import com.google.common.collect.ImmutableList;
+83a86,90
+>   
+>   private FunctionType ownerFunction = null;
+> 
+>   
+>   
+311c318
+<     if (isNative()) {
+---
+>     if (isNativeObjectType()) {
+347,354d353
+<   
+< 
+< 
+< 
+<   boolean isNative() {
+<     return nativeType;
+<   }
+< 
+429a429,430
+>     } else if (ownerFunction != null) {
+>       return ownerFunction.getReferenceName() + ".prototype";
+437c438
+<     return className != null;
+---
+>     return className != null || ownerFunction != null;
+585a587,610
+>   }
+> 
+>   void setOwnerFunction(FunctionType type) {
+>     Preconditions.checkState(ownerFunction == null);
+>     ownerFunction = type;
+>   }
+> 
+>   @Override
+>   public FunctionType getOwnerFunction() {
+>     return ownerFunction;
+>   }
+> 
+>   @Override
+>   public Iterable<ObjectType> getCtorImplementedInterfaces() {
+>     return isFunctionPrototypeType()
+>         ? getOwnerFunction().getImplementedInterfaces()
+>         : ImmutableList.<ObjectType>of();
+>   }
+> 
+>   @Override
+>   public Iterable<ObjectType> getCtorExtendedInterfaces() {
+>     return isFunctionPrototypeType()
+>         ? getOwnerFunction().getExtendedInterfaces()
+>         : ImmutableList.<ObjectType>of();

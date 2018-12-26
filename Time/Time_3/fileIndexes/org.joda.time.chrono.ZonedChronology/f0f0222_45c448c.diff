@@ -1,0 +1,36 @@
+27c27
+< import org.joda.time.Instant;
+---
+> import org.joda.time.IllegalInstantException;
+31d30
+< import org.joda.time.format.DateTimeFormat;
+138c137
+<     private long localToUTC(long instant) {
+---
+>     private long localToUTC(long localInstant) {
+140,145c139,142
+<         int offset = zone.getOffsetFromLocal(instant);
+<         instant -= offset;
+<         if (offset != zone.getOffset(instant)) {
+<             throw new IllegalArgumentException
+<                 ("Illegal instant due to time zone offset transition: " +
+<                     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS").print(new Instant(instant)));
+---
+>         int offset = zone.getOffsetFromLocal(localInstant);
+>         localInstant -= offset;
+>         if (offset != zone.getOffset(localInstant)) {
+>             throw new IllegalInstantException(localInstant, zone.getID());
+147c144
+<         return instant;
+---
+>         return localInstant;
+469,472c466,469
+<                 throw new IllegalFieldValueException(iField.getType(), Integer.valueOf(value),
+<                     "Illegal instant due to time zone offset transition: " +
+<                     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS").print(new Instant(localInstant)) +
+<                     " (" + iZone.getID() + ")");
+---
+>                 IllegalInstantException cause = new IllegalInstantException(localInstant,  iZone.getID());
+>                 IllegalFieldValueException ex = new IllegalFieldValueException(iField.getType(), Integer.valueOf(value), cause.getMessage());
+>                 ex.initCause(cause);
+>                 throw ex;

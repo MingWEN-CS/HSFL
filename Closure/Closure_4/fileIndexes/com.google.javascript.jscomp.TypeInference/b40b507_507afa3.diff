@@ -1,0 +1,294 @@
+31a32
+> import com.google.common.collect.Maps;
+45a47
+> import com.google.javascript.rhino.jstype.ModificationVisitor;
+46a49
+> import com.google.javascript.rhino.jstype.ParameterizedType;
+47a51,52
+> import com.google.javascript.rhino.jstype.TemplateType;
+> import com.google.javascript.rhino.jstype.UnionType;
+48a54
+> import java.util.Collections;
+60,69d65
+<   static final DiagnosticType TEMPLATE_TYPE_NOT_OBJECT_TYPE =
+<       DiagnosticType.warning(
+<       "JSC_TEMPLATE_TYPE_NOT_OBJECT_TYPE",
+<       "The template type must be an object type.\nActual: {0}");
+< 
+<   static final DiagnosticType TEMPLATE_TYPE_OF_THIS_EXPECTED =
+<       DiagnosticType.warning(
+<       "JSC_TEMPLATE_TYPE_OF_THIS_EXPECTED",
+<       "A function type with the template type as the type of this must be a " +
+<       "parameter type");
+70a67
+>   
+787,794c784,789
+<     if (functionType != null) {
+<       if (functionType.isFunctionType()) {
+<         FunctionType fnType = functionType.toMaybeFunctionType();
+<         n.setJSType(fnType.getReturnType());
+<         backwardsInferenceFromCallSite(n, fnType);
+<       } else if (functionType.equals(getNativeType(CHECKED_UNKNOWN_TYPE))) {
+<         n.setJSType(getNativeType(CHECKED_UNKNOWN_TYPE));
+<       }
+---
+>     if (functionType.isFunctionType()) {
+>       FunctionType fnType = functionType.toMaybeFunctionType();
+>       n.setJSType(fnType.getReturnType());
+>       backwardsInferenceFromCallSite(n, fnType);
+>     } else if (functionType.equals(getNativeType(CHECKED_UNKNOWN_TYPE))) {
+>       n.setJSType(getNativeType(CHECKED_UNKNOWN_TYPE));
+882a878,881
+>     boolean updatedFnType = inferTemplatedTypesForCall(n, fnType);
+>     if (updatedFnType) {
+>       fnType = n.getFirstChild().getJSType().toMaybeFunctionType();
+>     }
+884d882
+<     updateTypeOfThisOnClosure(n, fnType);
+929,931c927,933
+<       if (iParameterType.isFunctionType()) {
+<         FunctionType iParameterFnType = iParameterType.toMaybeFunctionType();
+< 
+---
+>       
+>       
+>       
+>       JSType restrictedParameter = iParameterType
+>           .restrictByNotNullOrUndefined()
+>           .toMaybeFunctionType();
+>       if (restrictedParameter != null) {
+935c937
+<           iArgument.setJSType(iParameterFnType);
+---
+>           iArgument.setJSType(restrictedParameter);
+942c944,1007
+<   
+---
+>   private Map<TemplateType, JSType> inferTemplateTypesFromParameters(
+>       FunctionType fnType, Node call) {
+>     if (fnType.getTemplateTypeNames().isEmpty()
+>         || !call.hasMoreThanOneChild()) {
+>       return Collections.emptyMap();
+>     }
+> 
+>     Map<TemplateType, JSType> resolvedTypes = Maps.newIdentityHashMap();
+>     maybeResolveTemplateTypeFromNodes(
+>         fnType.getParameters(),
+>         call.getChildAtIndex(1).siblings(),
+>         resolvedTypes);
+>     return resolvedTypes;
+>   }
+> 
+>   private void maybeResolveTemplatedType(
+>       JSType paramType,
+>       JSType argType,
+>       Map<TemplateType, JSType> resolvedTypes) {
+>     if (paramType.isTemplateType()) {
+>       
+>       resolvedTemplateType(
+>           resolvedTypes, paramType.toMaybeTemplateType(), argType);
+>     } else if (paramType.isUnionType()) {
+>       
+>       UnionType unionType = paramType.toMaybeUnionType();
+>       for (JSType alernative : unionType.getAlternates()) {
+>         maybeResolveTemplatedType(alernative, argType, resolvedTypes);
+>       }
+>     } else if (paramType.isFunctionType()) {
+>       FunctionType paramFunctionType = paramType.toMaybeFunctionType();
+>       FunctionType argFunctionType = argType
+>           .restrictByNotNullOrUndefined()
+>           .collapseUnion()
+>           .toMaybeFunctionType();
+>       if (argFunctionType != null && argFunctionType.isSubtype(paramType)) {
+>         
+>         maybeResolveTemplatedType(
+>             paramFunctionType.getReturnType(),
+>             argFunctionType.getReturnType(), resolvedTypes);
+>         
+>         maybeResolveTemplateTypeFromNodes(
+>             paramFunctionType.getParameters(),
+>             argFunctionType.getParameters(), resolvedTypes);
+>       }
+>     } else if (paramType.isParameterizedType()) {
+>       ParameterizedType paramObjectType = paramType.toMaybeParameterizedType();
+>       JSType typeParameter = paramObjectType.getParameterType();
+>       Preconditions.checkNotNull(typeParameter);
+>       if (typeParameter != null) {
+>         
+>         ObjectType argObjectType = argType
+>             .restrictByNotNullOrUndefined()
+>             .collapseUnion()
+>             .toMaybeParameterizedType();
+>         if (argObjectType != null && argObjectType.isSubtype(paramType)) {
+>           JSType argTypeParameter = argObjectType.getParameterType();
+>           Preconditions.checkNotNull(argTypeParameter);
+>           maybeResolveTemplatedType(
+>               typeParameter, argTypeParameter, resolvedTypes);
+>         }
+>       }
+>     }
+>   }
+943a1009,1027
+>   private void maybeResolveTemplateTypeFromNodes(
+>       Iterable<Node> declParams,
+>       Iterable<Node> callParams,
+>       Map<TemplateType, JSType> resolvedTypes) {
+>     maybeResolveTemplateTypeFromNodes(
+>         declParams.iterator(), callParams.iterator(), resolvedTypes);
+>   }
+> 
+>   private void maybeResolveTemplateTypeFromNodes(
+>       Iterator<Node> declParams,
+>       Iterator<Node> callParams,
+>       Map<TemplateType, JSType> resolvedTypes) {
+>     while (declParams.hasNext() && callParams.hasNext()) {
+>       maybeResolveTemplatedType(
+>           getJSType(declParams.next()),
+>           getJSType(callParams.next()),
+>           resolvedTypes);
+>     }
+>   }
+944a1029,1061
+>   private void resolvedTemplateType(
+>       Map<TemplateType, JSType> map, TemplateType template, JSType resolved) {
+>     JSType previous = map.get(template);
+>     if (!resolved.isUnknownType()) {
+>       if (previous == null) {
+>         map.put(template, resolved);
+>       } else {
+>         JSType join = previous.getLeastSupertype(resolved);
+>         map.put(template, join);
+>       }
+>     }
+>   }
+> 
+>   private static class TemplateTypeReplacer extends ModificationVisitor {
+>     private final Map<TemplateType, JSType> replacements;
+>     private final JSTypeRegistry registry;
+> 
+>     TemplateTypeReplacer(
+>         JSTypeRegistry registry, Map<TemplateType, JSType> replacements) {
+>       super(registry);
+>       this.registry = registry;
+>       this.replacements = replacements;
+>     }
+> 
+>     @Override
+>     public JSType caseTemplateType(TemplateType type) {
+>       JSType replacement = replacements.get(type);
+>       return replacement != null ?
+>           replacement : registry.getNativeType(UNKNOWN_TYPE);
+>     }
+>   }
+> 
+>   
+947,948d1063
+<   private void updateTypeOfThisOnClosure(Node n, FunctionType fnType) {
+<     
+949a1065,1067
+> 
+>   private boolean inferTemplatedTypesForCall(
+>       Node n, FunctionType fnType) {
+951c1069
+<       return;
+---
+>       return false;
+954,955d1071
+<     int i = 0;
+<     int childCount = n.getChildCount();
+957,976c1073,1083
+<     for (Node iParameter : fnType.getParameters()) {
+<       JSType iParameterType =
+<           getJSType(iParameter).restrictByNotNullOrUndefined();
+<       if (iParameterType.isTemplateType()) {
+<         
+<         ObjectType iArgumentType = null;
+<         if (i + 1 < childCount) {
+<           Node iArgument = n.getChildAtIndex(i + 1);
+<           iArgumentType = getJSType(iArgument)
+<               .restrictByNotNullOrUndefined()
+<               .collapseUnion()
+<               .toObjectType();
+<           if (iArgumentType == null) {
+<             compiler.report(
+<                 JSError.make(NodeUtil.getSourceName(iArgument), iArgument,
+<                     TEMPLATE_TYPE_NOT_OBJECT_TYPE,
+<                     getJSType(iArgument).toString()));
+<             return;
+<           }
+<         }
+---
+>     Map<TemplateType, JSType> inferred = inferTemplateTypesFromParameters(
+>         fnType, n);
+>     if (inferred.size() > 0) {
+>       
+>       TemplateTypeReplacer replacer = new TemplateTypeReplacer(
+>           registry, inferred);
+>       Node callTarget = n.getFirstChild();
+> 
+>       FunctionType replacementFnType = fnType.visit(replacer)
+>           .toMaybeFunctionType();
+>       Preconditions.checkNotNull(replacementFnType);
+978,1024c1085,1086
+<         
+<         boolean foundTemplateTypeOfThisParameter = false;
+<         int j = 0;
+<         for (Node jParameter : fnType.getParameters()) {
+<           JSType jParameterType =
+<               getJSType(jParameter).restrictByNotNullOrUndefined();
+<           if (jParameterType.isFunctionType()) {
+<             FunctionType jParameterFnType = jParameterType.toMaybeFunctionType();
+<             if (jParameterFnType.getTypeOfThis().equals(iParameterType)) {
+<               foundTemplateTypeOfThisParameter = true;
+<               
+<               if (j + 1 >= childCount) {
+<                 
+<                 return;
+<               }
+<               Node jArgument = n.getChildAtIndex(j + 1);
+<               JSType jArgumentType = getJSType(jArgument);
+<               if (jArgument.isFunction() &&
+<                   jArgumentType.isFunctionType()) {
+<                 if (iArgumentType != null &&
+<                     
+<                     !iArgumentType.isNoType()) {
+<                   
+<                   
+<                   FunctionType jArgumentFnType = jArgumentType.toMaybeFunctionType();
+<                   if (jArgumentFnType.getTypeOfThis().isUnknownType()) {
+<                     
+<                     
+<                     jArgument.setJSType(
+<                         registry.createFunctionTypeWithNewThisType(
+<                             jArgumentFnType, iArgumentType));
+<                   }
+<                 } else {
+<                   
+<                   if (NodeUtil.referencesThis(
+<                           NodeUtil.getFunctionBody(jArgument))) {
+<                     compiler.report(JSError.make(NodeUtil.getSourceName(n), n,
+<                         FUNCTION_LITERAL_UNDEFINED_THIS));
+<                   }
+<                 }
+<               }
+<               
+<               
+<             }
+<           }
+<           j++;
+<         }
+---
+>       callTarget.setJSType(replacementFnType);
+>       n.setJSType(replacementFnType.getReturnType());
+1026,1032c1088
+<         if (!foundTemplateTypeOfThisParameter) {
+<           compiler.report(JSError.make(NodeUtil.getSourceName(n), n,
+<               TEMPLATE_TYPE_OF_THIS_EXPECTED));
+<           return;
+<         }
+<       }
+<       i++;
+---
+>       return true;
+1033a1090
+>     return false;

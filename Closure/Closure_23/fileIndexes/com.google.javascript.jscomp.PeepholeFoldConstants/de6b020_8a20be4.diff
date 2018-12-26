@@ -1,0 +1,108 @@
+553c553
+<   private Node tryFoldLeftChildAdd(Node n, Node left, Node right) {
+---
+>   private Node tryFoldChildAddString(Node n, Node left, Node right) {
+556,557c556
+<         left.getType() == Token.ADD &&
+<         left.getChildCount() == 2) {
+---
+>         left.getType() == Token.ADD) {
+565,566c564,574
+<       if (lr.getType() != Token.STRING) {
+<         return n;
+---
+>       if (lr.getType() == Token.STRING) {
+>         String leftString = NodeUtil.getStringValue(lr);
+>         String rightString = NodeUtil.getStringValue(right);
+>         if (leftString != null && rightString != null) {
+>           left.removeChild(ll);
+>           String result = leftString + rightString;
+>           n.replaceChild(left, ll);
+>           n.replaceChild(right, Node.newString(result));
+>           reportCodeChange();
+>           return n;
+>         }
+567a576
+>     }
+569,576c578,597
+<       String leftString = NodeUtil.getStringValue(lr);
+<       String rightString = NodeUtil.getStringValue(right);
+<       if (leftString != null && rightString != null) {
+<         left.removeChild(ll);
+<         String result = leftString + rightString;
+<         n.replaceChild(left, ll);
+<         n.replaceChild(right, Node.newString(result));
+<         reportCodeChange();
+---
+>     if (NodeUtil.isLiteralValue(left, false) &&
+>         right.getType() == Token.ADD) {
+> 
+>       Node rl = right.getFirstChild();
+>       Node rr = right.getLastChild();
+> 
+>       
+>       
+>       
+>       if (rl.getType() == Token.STRING) {
+>         String leftString = NodeUtil.getStringValue(left);
+>         String rightString = NodeUtil.getStringValue(rl);
+>         if (leftString != null && rightString != null) {
+>           right.removeChild(rr);
+>           String result = leftString + rightString;
+>           n.replaceChild(right, rr);
+>           n.replaceChild(left, Node.newString(result));
+>           reportCodeChange();
+>           return n;
+>         }
+586c607
+<   private Node tryFoldAddConstant(Node n, Node left, Node right) {
+---
+>   private Node tryFoldAddConstantString(Node n, Node left, Node right) {
+589d609
+< 
+599,601d618
+<     } else {
+<       
+<       return tryFoldArithmeticOp(n, left, right);
+603a621,622
+> 
+> 
+628,629c647,648
+<         && (left.getType() != Token.NUMBER
+<             || right.getType() != Token.NUMBER)) {
+---
+>         && (NodeUtil.mayBeString(left, false)
+>             || NodeUtil.mayBeString(right, false))) {
+719d737
+<     
+721c739,743
+<       NodeUtil.isAssociative(opType) && NodeUtil.isCommutative(opType));
+---
+>         (NodeUtil.isAssociative(opType) && NodeUtil.isCommutative(opType))
+>         || n.getType() == Token.ADD);
+> 
+>     Preconditions.checkState(
+>         n.getType() != Token.ADD || !NodeUtil.mayBeString(n));
+757,760c779,787
+<     if (NodeUtil.isLiteralValue(left, false) &&
+<         NodeUtil.isLiteralValue(right, false)) {
+<       
+<       return tryFoldAddConstant(node, left, right);
+---
+>     if (NodeUtil.mayBeString(node, true)) {
+>       if (NodeUtil.isLiteralValue(left, false) &&
+>           NodeUtil.isLiteralValue(right, false)) {
+>         
+>         return tryFoldAddConstantString(node, left, right);
+>       } else {
+>         
+>         return tryFoldChildAddString(node, left, right);
+>       }
+763c790,794
+<       return tryFoldLeftChildAdd(node, left, right);
+---
+>       Node result = tryFoldArithmeticOp(node, left, right);
+>       if (result != node) {
+>         return result;
+>       }
+>       return tryFoldLeftChildOp(node, left, right);

@@ -1,0 +1,152 @@
+22d21
+< import java.util.HashMap;
+26d24
+< import java.util.Map;
+27a26,27
+> import java.util.concurrent.ConcurrentHashMap;
+> import java.util.concurrent.ConcurrentMap;
+43,44c43,44
+<     
+<     private static List<Locale> cAvailableLocaleList; 
+---
+>     private static final ConcurrentMap<String, List<Locale>> cLanguagesByCountry = 
+>         new ConcurrentHashMap<String, List<Locale>>();
+47,56c47,48
+<     
+<     private static Set<Locale> cAvailableLocaleSet;   
+< 
+<     
+<     private static final Map<String, List<Locale>> cLanguagesByCountry = 
+<         Collections.synchronizedMap(new HashMap<String, List<Locale>>());
+< 
+<     
+<     private static final Map<String, List<Locale>> cCountriesByLanguage = 
+<         Collections.synchronizedMap(new HashMap<String, List<Locale>>());
+---
+>     private static final ConcurrentMap<String, List<Locale>> cCountriesByLanguage = 
+>         new ConcurrentHashMap<String, List<Locale>>();
+198,213c190
+<         if(cAvailableLocaleList == null) { 
+<             initAvailableLocaleList(); 
+<         }
+<         return cAvailableLocaleList;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private static synchronized void initAvailableLocaleList() {
+<         if(cAvailableLocaleList == null) {
+<             List<Locale> list = Arrays.asList(Locale.getAvailableLocales());
+<             cAvailableLocaleList = Collections.unmodifiableList(list);
+<         }
+---
+>         return SyncAvoid.AVAILABLE_LOCALE_LIST;
+227,241c204
+<         if(cAvailableLocaleSet == null) { 
+<             initAvailableLocaleSet(); 
+<         }
+<         return cAvailableLocaleSet;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private static synchronized void initAvailableLocaleSet() {
+<         if(cAvailableLocaleSet == null) {
+<             cAvailableLocaleSet = Collections.unmodifiableSet( new HashSet<Locale>(availableLocaleList()) );
+<         }
+---
+>         return SyncAvoid.AVAILABLE_LOCALE_SET;
+266c229,232
+<         List<Locale> langs = cLanguagesByCountry.get(countryCode);  
+---
+>         if (countryCode == null) {
+>             return Collections.emptyList();
+>         }
+>         List<Locale> langs = cLanguagesByCountry.get(countryCode);
+268,276c234,240
+<             if (countryCode != null) {
+<                 langs = new ArrayList<Locale>();
+<                 List<Locale> locales = availableLocaleList();
+<                 for (int i = 0; i < locales.size(); i++) {
+<                     Locale locale = locales.get(i);
+<                     if (countryCode.equals(locale.getCountry()) &&
+<                             locale.getVariant().length() == 0) {
+<                         langs.add(locale);
+<                     }
+---
+>             langs = new ArrayList<Locale>();
+>             List<Locale> locales = availableLocaleList();
+>             for (int i = 0; i < locales.size(); i++) {
+>                 Locale locale = locales.get(i);
+>                 if (countryCode.equals(locale.getCountry()) &&
+>                         locale.getVariant().length() == 0) {
+>                     langs.add(locale);
+278,280d241
+<                 langs = Collections.unmodifiableList(langs);
+<             } else {
+<                 langs = Collections.emptyList();
+282c243,245
+<             cLanguagesByCountry.put(countryCode, langs);  
+---
+>             langs = Collections.unmodifiableList(langs);
+>             cLanguagesByCountry.putIfAbsent(countryCode, langs);
+>             langs = cLanguagesByCountry.get(countryCode);
+298c261,264
+<         List<Locale> countries = cCountriesByLanguage.get(languageCode);  
+---
+>         if (languageCode == null) {
+>             return Collections.emptyList();
+>         }
+>         List<Locale> countries = cCountriesByLanguage.get(languageCode);
+300,309c266,273
+<             if (languageCode != null) {
+<                 countries = new ArrayList<Locale>();
+<                 List<Locale> locales = availableLocaleList();
+<                 for (int i = 0; i < locales.size(); i++) {
+<                     Locale locale = locales.get(i);
+<                     if (languageCode.equals(locale.getLanguage()) &&
+<                             locale.getCountry().length() != 0 &&
+<                             locale.getVariant().length() == 0) {
+<                         countries.add(locale);
+<                     }
+---
+>             countries = new ArrayList<Locale>();
+>             List<Locale> locales = availableLocaleList();
+>             for (int i = 0; i < locales.size(); i++) {
+>                 Locale locale = locales.get(i);
+>                 if (languageCode.equals(locale.getLanguage()) &&
+>                         locale.getCountry().length() != 0 &&
+>                         locale.getVariant().length() == 0) {
+>                     countries.add(locale);
+311,313d274
+<                 countries = Collections.unmodifiableList(countries);
+<             } else {
+<                 countries = Collections.emptyList();
+315c276,278
+<             cCountriesByLanguage.put(languageCode, countries);  
+---
+>             countries = Collections.unmodifiableList(countries);
+>             cCountriesByLanguage.putIfAbsent(languageCode, countries);
+>             countries = cCountriesByLanguage.get(languageCode);
+317a281,295
+>     }
+> 
+>     
+>     
+>     static class SyncAvoid {
+>         
+>         private static List<Locale> AVAILABLE_LOCALE_LIST;
+>         
+>         private static Set<Locale> AVAILABLE_LOCALE_SET;
+>         
+>         static {
+>             List<Locale> list = new ArrayList<Locale>(Arrays.asList(Locale.getAvailableLocales()));  
+>             AVAILABLE_LOCALE_LIST = Collections.unmodifiableList(list);
+>             AVAILABLE_LOCALE_SET = Collections.unmodifiableSet(new HashSet<Locale>(availableLocaleList()));
+>         }

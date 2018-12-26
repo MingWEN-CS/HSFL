@@ -1,0 +1,794 @@
+27d26
+< import org.joda.time.DateTime;
+32,34d30
+< import org.joda.time.MutableDateTime;
+< import org.joda.time.ReadWritableInstant;
+< import org.joda.time.ReadableInstant;
+129a126,153
+>     static final int FULL = 0;  
+>     
+>     static final int LONG = 1;  
+>     
+>     static final int MEDIUM = 2;  
+>     
+>     static final int SHORT = 3;  
+>     
+>     static final int NONE = 4;
+> 
+>     
+>     static final int DATE = 0;
+>     
+>     static final int TIME = 1;
+>     
+>     static final int DATETIME = 2;
+> 
+>     
+>     private static final Map cPatternedCache = new HashMap(7);
+>     
+>     private static final DateTimeFormatter[] cStyleCache = new DateTimeFormatter[25];
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+133c157,180
+<     private static Map cInstanceCache = new HashMap(7);
+---
+>     public static DateTimeFormatter forPattern(String pattern) {
+>         return createFormatterForPattern(pattern);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter forStyle(String style) {
+>         return createFormatterForStyle(style);
+>     }
+141,142c188,192
+<     public static DateTimeFormat getInstance() {
+<         return getInstance(Locale.getDefault());
+---
+> 
+> 
+> 
+>     public static DateTimeFormatter shortDate() {
+>         return createFormatterForStyleIndex(SHORT, NONE);
+151,160c201,204
+<     public synchronized static DateTimeFormat getInstance(Locale locale) {
+<         if (locale == null) {
+<             locale = Locale.getDefault();
+<         }
+<         DateTimeFormat dtf = (DateTimeFormat) cInstanceCache.get(locale);
+<         if (dtf == null) {
+<             dtf = new DateTimeFormat(locale);
+<             cInstanceCache.put(locale, dtf);
+<         }
+<         return dtf;
+---
+> 
+> 
+>     public static DateTimeFormatter mediumDate() {
+>         return createFormatterForStyleIndex(MEDIUM, NONE);
+163a208,243
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter longDate() {
+>         return createFormatterForStyleIndex(LONG, NONE);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter fullDate() {
+>         return createFormatterForStyleIndex(FULL, NONE);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter shortTime() {
+>         return createFormatterForStyleIndex(NONE, SHORT);
+>     }
+> 
+172c252,368
+<     public static void appendPatternTo(DateTimeFormatterBuilder builder, String pattern) {
+---
+>     public static DateTimeFormatter mediumTime() {
+>         return createFormatterForStyleIndex(NONE, MEDIUM);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter longTime() {
+>         return createFormatterForStyleIndex(NONE, LONG);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter fullTime() {
+>         return createFormatterForStyleIndex(NONE, FULL);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter shortDateTime() {
+>         return createFormatterForStyleIndex(SHORT, SHORT);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter mediumDateTime() {
+>         return createFormatterForStyleIndex(MEDIUM, MEDIUM);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter longDateTime() {
+>         return createFormatterForStyleIndex(LONG, LONG);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter fullDateTime() {
+>         return createFormatterForStyleIndex(FULL, FULL);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     static void appendPatternTo(DateTimeFormatterBuilder builder, String pattern) {
+>         parsePatternTo(builder, pattern);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+>     public static DateTimeFormat getInstance() {
+>         return new DateTimeFormat();
+>     }
+> 
+>     
+>     
+> 
+> 
+>     private DateTimeFormat() {
+>         super();
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void parsePatternTo(DateTimeFormatterBuilder builder, String pattern) {
+328c524,532
+<     private static String parseToken(final String pattern, final int[] indexRef) {
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String parseToken(String pattern, int[] indexRef) {
+381c585,590
+<     private static boolean isNumericToken(final String token) {
+---
+> 
+> 
+> 
+> 
+> 
+>     private static boolean isNumericToken(String token) {
+417,425d625
+<     private final Locale iLocale;
+< 
+<     
+<     private transient Map iPatternedCache = new HashMap(7);
+< 
+<     
+<     private transient Map iStyledCache = new HashMap(7);
+< 
+<     
+430,433d629
+<     private DateTimeFormat(final Locale locale) {
+<         super();
+<         iLocale = locale;
+<     }
+435,447d630
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public synchronized DateTimeFormatter forPattern(final String pattern) {
+<         DateTimeFormatter formatter = (DateTimeFormatter) iPatternedCache.get(pattern);
+<         if (formatter != null) {
+<             return formatter;
+<         }
+448a632
+>     private static DateTimeFormatter createFormatterForPattern(String pattern) {
+451a636,642
+>         DateTimeFormatter formatter = null;
+>         synchronized (cPatternedCache) {
+>             formatter = (DateTimeFormatter) cPatternedCache.get(pattern);
+>             if (formatter == null) {
+>                 DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
+>                 parsePatternTo(builder, pattern);
+>                 formatter = builder.toFormatter();
+453,464c644,645
+<         DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder(iLocale);
+<         appendPatternTo(builder, pattern);
+< 
+<         if (builder.canBuildFormatter()) {
+<             formatter = builder.toFormatter();
+<         } else if (builder.canBuildPrinter()) {
+<             formatter = new FPrinter(builder.toPrinter());
+<         } else if (builder.canBuildParser()) {
+<             
+<             formatter = new FParser(builder.toParser());
+<         } else {
+<             throw new UnsupportedOperationException("Pattern unsupported: " + pattern);
+---
+>                 cPatternedCache.put(pattern, formatter);
+>             }
+466,467d646
+< 
+<         iPatternedCache.put(pattern, formatter);
+480,484c659,661
+<     public synchronized DateTimeFormatter forStyle(final String style) {
+<         DateTimeFormatter formatter = (DateTimeFormatter)iStyledCache.get(style);
+<         if (formatter == null) {
+<             formatter = forPattern(getPatternForStyle(style));
+<             iStyledCache.put(style, formatter);
+---
+>     private static DateTimeFormatter createFormatterForStyle(String style) {
+>         if (style == null || style.length() != 2) {
+>             throw new IllegalArgumentException("Invalid style specification: " + style);
+486c663,668
+<         return formatter;
+---
+>         int dateStyle = selectStyle(style.charAt(0));
+>         int timeStyle = selectStyle(style.charAt(1));
+>         if (dateStyle == NONE && timeStyle == NONE) {
+>             throw new IllegalArgumentException("Style '--' is invalid");
+>         }
+>         return createFormatterForStyleIndex(dateStyle, timeStyle);
+496,512c678,694
+< 
+< 
+< 
+<     public String getPatternForStyle(final String style) {
+<         if (style == null || style.length() != 2) {
+<             throw new IllegalArgumentException("Invalid style specification: " + style);
+<         }
+< 
+<         if (style.charAt(1) == '-') {
+<             
+<             return getDatePattern(style.charAt(0));
+<         } else if (style.charAt(0) == '-') {
+<             
+<             return getTimePattern(style.charAt(1));
+<         } else {
+<             
+<             return getDateTimePattern(style.charAt(0), style.charAt(1));
+---
+>     private static DateTimeFormatter createFormatterForStyleIndex(int dateStyle, int timeStyle) {
+>         int index = dateStyle * 5 + timeStyle;
+>         DateTimeFormatter f = null;
+>         synchronized (cStyleCache) {
+>             f = cStyleCache[index];
+>             if (f == null) {
+>                 int type = DATETIME;
+>                 if (dateStyle == NONE) {
+>                     type = TIME;
+>                 } else if (timeStyle == NONE) {
+>                     type = DATE;
+>                 }
+>                 LengthLocaleFormatter llf = new LengthLocaleFormatter(
+>                         dateStyle, timeStyle, type);
+>                 f = new DateTimeFormatter(llf, llf);
+>                 cStyleCache[index] = f;
+>             }
+513a696
+>         return f;
+516,523c699,700
+<     private String getDatePattern(final char style) {
+<         int istyle = selectStyle(style);
+<         try {
+<             return ((SimpleDateFormat)DateFormat.getDateInstance(istyle, iLocale)).toPattern();
+<         } catch (ClassCastException e) {
+<             throw new IllegalArgumentException("No date pattern for locale: " + iLocale);
+<         }
+<     }
+---
+>     
+> 
+525,532d701
+<     private String getTimePattern(final char style) {
+<         int istyle = selectStyle(style);
+<         try {
+<             return ((SimpleDateFormat)DateFormat.getTimeInstance(istyle, iLocale)).toPattern();
+<         } catch (ClassCastException e) {
+<             throw new IllegalArgumentException("No time pattern for locale: " + iLocale);
+<         }
+<     }
+534,543d702
+<     private String getDateTimePattern(final char dateStyle, final char timeStyle) {
+<         int idateStyle = selectStyle(dateStyle);
+<         int itimeStyle = selectStyle(timeStyle);
+<         try {
+<             return ((SimpleDateFormat)DateFormat.getDateTimeInstance
+<                     (idateStyle, itimeStyle, iLocale)).toPattern();
+<         } catch (ClassCastException e) {
+<             throw new IllegalArgumentException("No datetime pattern for locale: " + iLocale);
+<         }
+<     }
+545,546c704,706
+<     private int selectStyle(final char c) {
+<         switch (c) {
+---
+> 
+>     private static int selectStyle(char ch) {
+>         switch (ch) {
+548c708
+<             return DateFormat.SHORT;
+---
+>             return SHORT;
+550c710
+<             return DateFormat.MEDIUM;
+---
+>             return MEDIUM;
+552c712
+<             return DateFormat.LONG;
+---
+>             return LONG;
+554c714,716
+<             return DateFormat.FULL;
+---
+>             return FULL;
+>         case '-':
+>             return NONE;
+556c718
+<             throw new IllegalArgumentException("Invalid style character: " + c);
+---
+>             throw new IllegalArgumentException("Invalid style character: " + ch);
+598a761,762
+>     static class LengthLocaleFormatter
+>             implements DateTimePrinter, DateTimeParser {
+599a764,768
+>         private static final Map cCache = new HashMap();  
+>         
+>         private final int iDateStyle;
+>         private final int iTimeStyle;
+>         private final int iType;
+601,604c770
+<     static class FPrinter implements DateTimeFormatter {
+<         private final DateTimePrinter iPrinter;
+< 
+<         FPrinter(DateTimePrinter printer) {
+---
+>         LengthLocaleFormatter(int dateStyle, int timeStyle, int type) {
+606c772,774
+<             iPrinter = printer;
+---
+>             iDateStyle = dateStyle;
+>             iTimeStyle = timeStyle;
+>             iType = type;
+610,665c778
+<             return iPrinter.estimatePrintedLength();
+<         }
+< 
+<         public void printTo(StringBuffer buf, ReadableInstant instant) {
+<             iPrinter.printTo(buf, instant);
+<         }
+< 
+<         public void printTo(Writer out, ReadableInstant instant) throws IOException {
+<             iPrinter.printTo(out, instant);
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant) {
+<             iPrinter.printTo(buf, instant);
+<         }
+< 
+<         public void printTo(Writer out, long instant) throws IOException {
+<             iPrinter.printTo(out, instant);
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant, DateTimeZone zone) {
+<             iPrinter.printTo(buf, instant, zone);
+<         }
+< 
+<         public void printTo(Writer out, long instant, DateTimeZone zone)
+<             throws IOException {
+<             iPrinter.printTo(out, instant, zone);
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant, Chronology chrono) {
+<             iPrinter.printTo(buf, instant, chrono);
+<         }
+< 
+<         public void printTo(Writer out, long instant, Chronology chrono) throws IOException {
+<             iPrinter.printTo(out, instant, chrono);
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+<             iPrinter.printTo(buf, instant, chrono, displayOffset, displayZone);
+<         }
+< 
+<         public void printTo(Writer out, long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+<             iPrinter.printTo(out, instant, chrono, displayOffset, displayZone);
+<         }
+< 
+<         public void printTo(StringBuffer buf, ReadablePartial instant) {
+<             iPrinter.printTo(buf, instant);
+<         }
+< 
+<         public void printTo(Writer out, ReadablePartial instant) throws IOException {
+<             iPrinter.printTo(out, instant);
+<         }
+< 
+<         public String print(ReadableInstant instant) {
+<             return iPrinter.print(instant);
+---
+>             return 40;  
+668,669c781,785
+<         public String print(long instant) {
+<             return iPrinter.print(instant);
+---
+>         public void printTo(
+>                 StringBuffer buf, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) {
+>             DateTimePrinter p = getFormatter(locale).getPrinter();
+>             p.printTo(buf, instant, chrono, displayOffset, displayZone, locale);
+672,673c788,792
+<         public String print(long instant, DateTimeZone zone) {
+<             return iPrinter.print(instant, zone);
+---
+>         public void printTo(
+>                 Writer out, long instant, Chronology chrono,
+>                 int displayOffset, DateTimeZone displayZone, Locale locale) throws IOException {
+>             DateTimePrinter p = getFormatter(locale).getPrinter();
+>             p.printTo(out, instant, chrono, displayOffset, displayZone, locale);
+676,677c795,797
+<         public String print(long instant, Chronology chrono) {
+<             return iPrinter.print(instant, chrono);
+---
+>         public void printTo(StringBuffer buf, ReadablePartial partial, Locale locale) {
+>             DateTimePrinter p = getFormatter(locale).getPrinter();
+>             p.printTo(buf, partial, locale);
+680,686c800,802
+<         public String print(long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+<             return iPrinter.print(instant, chrono, displayOffset, displayZone);
+<         }
+< 
+<         public String print(ReadablePartial partial) {
+<             return iPrinter.print(partial);
+---
+>         public void printTo(Writer out, ReadablePartial partial, Locale locale) throws IOException {
+>             DateTimePrinter p = getFormatter(locale).getPrinter();
+>             p.printTo(out, partial, locale);
+690c806
+<             return 0;
+---
+>             return 40;  
+694,718c810,811
+<             throw unsupported();
+<         }
+< 
+<         public int parseInto(ReadWritableInstant instant, String text, int position) {
+<             throw unsupported();
+<         }
+< 
+<         public long parseMillis(String text) {
+<             throw unsupported();
+<         }
+< 
+<         public long parseMillis(String text, Chronology chrono) {
+<             throw unsupported();
+<         }
+< 
+<         public long parseMillis(String text, long instantLocal) {
+<             throw unsupported();
+<         }
+< 
+<         public long parseMillis(String text, long instant, Chronology chrono) {
+<             throw unsupported();
+<         }
+< 
+<         public DateTime parseDateTime(String text) {
+<             throw unsupported();
+---
+>             DateTimeParser p = getFormatter(bucket.getLocale()).getParser();
+>             return p.parseInto(bucket, text, position);
+721,739c814,825
+<         public DateTime parseDateTime(String text, Chronology chrono) {
+<             throw unsupported();
+<         }
+< 
+<         public DateTime parseDateTime(String text, ReadableInstant instant) {
+<             throw unsupported();
+<         }
+< 
+<         public MutableDateTime parseMutableDateTime(String text) {
+<             throw unsupported();
+<         }
+< 
+<         public MutableDateTime parseMutableDateTime(String text, Chronology chrono) {
+<             throw unsupported();
+<         }
+< 
+<         public MutableDateTime parseMutableDateTime(String text,
+<                                                     ReadableInstant instant) {
+<             throw unsupported();
+---
+>         private DateTimeFormatter getFormatter(Locale locale) {
+>             String key = Integer.toString(iType + iDateStyle << 4 + iTimeStyle << 8) + locale.toString();
+>             DateTimeFormatter f = null;
+>             synchronized (cCache) {
+>                 f = (DateTimeFormatter) cCache.get(key);
+>                 if (f == null) {
+>                     String pattern = getPattern(locale);
+>                     f = DateTimeFormat.forPattern(pattern);
+>                     cCache.put(key, f);
+>                 }
+>             }
+>             return f;
+742,743c828,844
+<         private UnsupportedOperationException unsupported() {
+<             return new UnsupportedOperationException("Parsing not supported");
+---
+>         private String getPattern(Locale locale) {
+>             DateFormat f = null;
+>             switch (iType) {
+>                 case DATE:
+>                     f = DateFormat.getDateInstance(iDateStyle, locale);
+>                     break;
+>                 case TIME:
+>                     f = DateFormat.getTimeInstance(iTimeStyle, locale);
+>                     break;
+>                 case DATETIME:
+>                     f = DateFormat.getDateTimeInstance(iDateStyle, iTimeStyle, locale);
+>                     break;
+>             }
+>             if (f instanceof SimpleDateFormat == false) {
+>                 throw new IllegalArgumentException("No datetime pattern for locale: " + locale);
+>             }
+>             return ((SimpleDateFormat) f).toPattern();
+747,893d847
+<     
+<     
+< 
+< 
+<     static class FParser implements DateTimeFormatter {
+<         private final DateTimeParser iParser;
+< 
+<         FParser(DateTimeParser parser) {
+<             super();
+<             iParser = parser;
+<         }
+< 
+<         public int estimatePrintedLength() {
+<             return 0;
+<         }
+< 
+<         public void printTo(StringBuffer buf, ReadableInstant instant) {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(Writer out, ReadableInstant instant) throws IOException {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant) {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(Writer out, long instant) throws IOException {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant, DateTimeZone zone) {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(Writer out, long instant, DateTimeZone zone) {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant, Chronology chrono) {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(Writer out, long instant, Chronology chrono) throws IOException {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(StringBuffer buf, long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(Writer out, long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) throws IOException {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(StringBuffer buf, ReadablePartial instant) {
+<             throw unsupported();
+<         }
+< 
+<         public void printTo(Writer out, ReadablePartial instant) throws IOException {
+<             throw unsupported();
+<         }
+< 
+<         public String print(ReadableInstant instant) {
+<             throw unsupported();
+<         }
+< 
+<         public String print(long instant) {
+<             throw unsupported();
+<         }
+< 
+<         public String print(long instant, DateTimeZone zone) {
+<             throw unsupported();
+<         }
+< 
+<         public String print(long instant, Chronology chrono) {
+<             throw unsupported();
+<         }
+< 
+<         public String print(long instant, Chronology chrono,
+<                             int displayOffset, DateTimeZone displayZone) {
+<             throw unsupported();
+<         }
+< 
+<         public String print(ReadablePartial partial) {
+<             throw unsupported();
+<         }
+< 
+<         public int estimateParsedLength() {
+<             return iParser.estimateParsedLength();
+<         }
+< 
+<         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+<             return iParser.parseInto(bucket, text, position);
+<         }
+< 
+<         public int parseInto(ReadWritableInstant instant, String text, int position) {
+<             return iParser.parseInto(instant, text, position);
+<         }
+< 
+<         public long parseMillis(String text) {
+<             return iParser.parseMillis(text);
+<         }
+< 
+<         public long parseMillis(String text, Chronology chrono) {
+<             return iParser.parseMillis(text, chrono);
+<         }
+< 
+<         public long parseMillis(String text, long instant) {
+<             return iParser.parseMillis(text, instant);
+<         }
+< 
+<         public long parseMillis(String text, long instant, Chronology chrono) {
+<             return iParser.parseMillis(text, instant, chrono);
+<         }
+< 
+<         public DateTime parseDateTime(String text) {
+<             return iParser.parseDateTime(text);
+<         }
+< 
+<         public DateTime parseDateTime(String text, Chronology chrono) {
+<             return iParser.parseDateTime(text, chrono);
+<         }
+< 
+<         public DateTime parseDateTime(String text, ReadableInstant instant) {
+<             return iParser.parseDateTime(text, instant);
+<         }
+< 
+<         public MutableDateTime parseMutableDateTime(String text) {
+<             return iParser.parseMutableDateTime(text);
+<         }
+< 
+<         public MutableDateTime parseMutableDateTime(String text, Chronology chrono) {
+<             return iParser.parseMutableDateTime(text, chrono);
+<         }
+< 
+<         public MutableDateTime parseMutableDateTime(String text, ReadableInstant instant) {
+<             return iParser.parseMutableDateTime(text, instant);
+<         }
+< 
+<         private UnsupportedOperationException unsupported() {
+<             return new UnsupportedOperationException("Printing not supported");
+<         }
+<     }

@@ -1,0 +1,118 @@
+73c73
+< public abstract class AssembledChronology extends AbstractChronology {
+---
+> public abstract class AssembledChronology extends BaseChronology {
+75c75
+<     static final long serialVersionUID = -6728465968995518215L;
+---
+>     private static final long serialVersionUID = -6728465968995518215L;
+83a84
+>     private transient DurationField iHalfdays;
+109a111
+>     private transient DateTimeField iWeekyearOfCentury;
+149,187d150
+<     public long getDateOnlyMillis(long instant) {
+<         Chronology base;
+<         if ((base = iBase) != null) {
+<             return base.getDateOnlyMillis(instant);
+<         }
+<         return super.getDateOnlyMillis(instant);
+<     }
+< 
+<     public long getDateOnlyMillis(int year, int monthOfYear, int dayOfMonth)
+<         throws IllegalArgumentException
+<     {
+<         Chronology base;
+<         if ((base = iBase) != null && (iBaseFlags & 4) == 4) {
+<             
+<             return base.getDateOnlyMillis(year, monthOfYear, dayOfMonth);
+<         }
+<         return super.getDateOnlyMillis(year, monthOfYear, dayOfMonth);
+<     }
+< 
+<     public long getTimeOnlyMillis(long instant) {
+<         Chronology base;
+<         if ((base = iBase) != null) {
+<             return base.getTimeOnlyMillis(instant);
+<         }
+<         return super.getTimeOnlyMillis(instant);
+<     }
+< 
+<     public long getTimeOnlyMillis(int hourOfDay, int minuteOfHour,
+<                                   int secondOfMinute, int millisOfSecond)
+<         throws IllegalArgumentException
+<     {
+<         Chronology base;
+<         if ((base = iBase) != null && (iBaseFlags & 1) == 1) {
+<             
+<             return base.getTimeOnlyMillis(hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+<         }
+<         return super.getTimeOnlyMillis(hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+<     }
+< 
+200c163
+<     public long getDateTimeMillis(long instant,
+---
+>     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+206c169
+<         if ((base = iBase) != null && (iBaseFlags & 1) == 1) {
+---
+>         if ((base = iBase) != null && (iBaseFlags & 5) == 5) {
+208,209c171,172
+<             return base.getDateTimeMillis
+<                 (instant, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+---
+>             return base.getDateTimeMillis(year, monthOfYear, dayOfMonth,
+>                                           hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+211,212c174,175
+<         return super.getDateTimeMillis
+<             (instant, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+---
+>         return super.getDateTimeMillis(year, monthOfYear, dayOfMonth,
+>                                        hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+215c178
+<     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+---
+>     public long getDateTimeMillis(long instant,
+221c184
+<         if ((base = iBase) != null && (iBaseFlags & 5) == 5) {
+---
+>         if ((base = iBase) != null && (iBaseFlags & 1) == 1) {
+223,224c186,187
+<             return base.getDateTimeMillis(year, monthOfYear, dayOfMonth,
+<                                           hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+---
+>             return base.getDateTimeMillis
+>                 (instant, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+226,227c189,190
+<         return super.getDateTimeMillis(year, monthOfYear, dayOfMonth,
+<                                        hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+---
+>         return super.getDateTimeMillis
+>             (instant, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+277a241,244
+>     public final DurationField halfdays() {
+>         return iHalfdays;
+>     }
+> 
+321a289,292
+>     public final DateTimeField weekyearOfCentury() {
+>         return iWeekyearOfCentury;
+>     }
+> 
+397a369
+>             iHalfdays  = (f = fields.halfdays)  != null ? f : super.halfdays();
+424a397
+>             iWeekyearOfCentury  = (f = fields.weekyearOfCentury)  != null ? f : super.weekyearOfCentury();
+465a439
+>         public DurationField halfdays;
+491a466
+>         public DateTimeField weekyearOfCentury;
+519a495,497
+>                 if (isSupported(f = chrono.halfdays())) {
+>                     halfdays = f;
+>                 }
+591a570,572
+>                 }
+>                 if (isSupported(f = chrono.weekyearOfCentury())) {
+>                     weekyearOfCentury = f;

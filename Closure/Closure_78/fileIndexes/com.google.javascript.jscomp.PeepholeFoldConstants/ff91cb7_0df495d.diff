@@ -1,0 +1,72 @@
+26a27
+> import java.util.Locale;
+67a69,71
+>   
+>   private static final Locale ROOT_LOCALE = new Locale("");
+> 
+1231,1237c1235
+<     Node firstArg = callTarget.getNext();
+<     if (firstArg == null) {
+<       return subtree;
+<     }
+< 
+<     if (!NodeUtil.isGet(callTarget) ||
+<         !NodeUtil.isImmutableValue(firstArg)) {
+---
+>     if (!NodeUtil.isGet(callTarget)) {
+1250,1257c1248,1265
+<     if (functionNameString.equals("indexOf") ||
+<         functionNameString.equals("lastIndexOf")) {
+<       subtree = tryFoldStringIndexOf(subtree, functionNameString,
+<           stringNode, firstArg);
+<     } else if (functionNameString.equals("substr")) {
+<       subtree = tryFoldStringSubstr(subtree, stringNode, firstArg);
+<     } else if (functionNameString.equals("substring")) {
+<       subtree = tryFoldStringSubstring(subtree, stringNode, firstArg);
+---
+>     Node firstArg = callTarget.getNext();
+>     if (firstArg == null) {
+>       if (functionNameString.equals("toLowerCase")) {
+>         subtree = tryFoldStringToLowerCase(subtree, stringNode);
+>       } else if (functionNameString.equals("toUpperCase")) {
+>         subtree = tryFoldStringToUpperCase(subtree, stringNode);
+>       }
+>       return subtree;
+>     } else if (NodeUtil.isImmutableValue(firstArg)) {
+>       if (functionNameString.equals("indexOf") ||
+>           functionNameString.equals("lastIndexOf")) {
+>         subtree = tryFoldStringIndexOf(subtree, functionNameString,
+>             stringNode, firstArg);
+>       } else if (functionNameString.equals("substr")) {
+>         subtree = tryFoldStringSubstr(subtree, stringNode, firstArg);
+>       } else if (functionNameString.equals("substring")) {
+>         subtree = tryFoldStringSubstring(subtree, stringNode, firstArg);
+>       }
+1261c1269,1293
+<  }
+---
+>   }
+> 
+>   
+> 
+> 
+>   private Node tryFoldStringToLowerCase(Node subtree, Node stringNode) {
+>     
+>     String lowered = stringNode.getString().toLowerCase(ROOT_LOCALE);
+>     Node replacement = Node.newString(lowered);
+>     subtree.getParent().replaceChild(subtree, replacement);
+>     reportCodeChange();
+>     return replacement;
+>   }
+> 
+>   
+> 
+> 
+>   private Node tryFoldStringToUpperCase(Node subtree, Node stringNode) {
+>     
+>     String uppered = stringNode.getString().toUpperCase(ROOT_LOCALE);
+>     Node replacement = Node.newString(uppered);
+>     subtree.getParent().replaceChild(subtree, replacement);
+>     reportCodeChange();
+>     return replacement;
+>   }

@@ -1,0 +1,57 @@
+285,286c285,301
+<       if (defs == null) {
+<         continue;
+---
+>       boolean hasSideEffects = true;
+>       if (defs != null) {
+>         hasSideEffects = false;
+>         for (Definition def : defs) {
+>           FunctionInformation functionInfo =
+>               functionSideEffectMap.get(def.getRValue());
+>           Preconditions.checkNotNull(functionInfo);
+> 
+>           if ((NodeUtil.isCall(callNode)
+>                   && functionInfo.mayHaveSideEffects())
+>                || (NodeUtil.isNew(callNode)
+>                       && (functionInfo.mutatesGlobalState()
+>                           || functionInfo.functionThrows()))) {
+>             hasSideEffects = true;
+>             break;
+>           }
+>         }
+289,299c304,313
+<       boolean hasSideEffects = false;
+<       for (Definition def : defs) {
+<         FunctionInformation functionInfo =
+<             functionSideEffectMap.get(def.getRValue());
+<         Preconditions.checkNotNull(functionInfo);
+< 
+<         if ((NodeUtil.isCall(callNode) && functionInfo.mayHaveSideEffects()) ||
+<             (NodeUtil.isNew(callNode) && (functionInfo.mutatesGlobalState() ||
+<                                           functionInfo.functionThrows()))) {
+<           hasSideEffects = true;
+<           break;
+---
+>       
+>       if (NodeUtil.isCall(callNode)) {
+>         Preconditions.checkState(compiler != null);
+>         if (!NodeUtil.functionCallHasSideEffects(callNode, compiler)) {
+>           hasSideEffects = false;
+>         }
+>       } else if (NodeUtil.isNew(callNode)) {
+>         
+>         if (!NodeUtil.constructorCallHasSideEffects(callNode)) {
+>           hasSideEffects = false;
+422a437,448
+>       
+>       if (NodeUtil.isCall(node)
+>           && !NodeUtil.functionCallHasSideEffects(node, compiler)) {
+>         return;
+>       }
+> 
+>       
+>       if (NodeUtil.isNew(node)
+>           && !NodeUtil.constructorCallHasSideEffects(node)) {
+>         return;
+>       }
+> 

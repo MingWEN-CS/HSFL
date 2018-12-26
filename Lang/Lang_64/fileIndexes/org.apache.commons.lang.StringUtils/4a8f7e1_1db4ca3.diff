@@ -1,0 +1,26 @@
+116a117
+> 
+2959c2960
+<         if (text == null || isEmpty(repl) || with == null || max == 0) {
+---
+>         if (isEmpty(text) || isEmpty(repl) || with == null || max == 0) {
+2962,2965c2963,2972
+< 
+<         StringBuffer buf = new StringBuffer(text.length());
+<         int start = 0, end = 0;
+<         while ((end = text.indexOf(repl, start)) != -1) {
+---
+>         int start = 0;
+>         int end = text.indexOf(repl, start);
+>         if (end == -1) {
+>             return text;
+>         }
+>         int increase = with.length() - repl.length();
+>         increase = (increase < 0 ? 0 : increase);
+>         increase *= (max < 0 ? 16 : (max > 64 ? 64 : max));
+>         StringBuffer buf = new StringBuffer(text.length() + increase);
+>         while (end != -1) {
+2968d2974
+< 
+2971a2978
+>             end = text.indexOf(repl, start);

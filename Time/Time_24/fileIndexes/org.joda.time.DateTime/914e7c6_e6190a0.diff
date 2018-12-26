@@ -1,0 +1,46 @@
+62d61
+< import org.joda.time.field.FieldUtils;
+391a391
+>         newChronology = DateTimeUtils.getChronology(newChronology);
+515c515
+<         return partial.resolveDateTime(this);
+---
+>         return withMillis(getChronology().set(partial, getMillis()));
+534a535,536
+> 
+> 
+557a560,561
+> 
+> 
+581,582c585
+<         long add = FieldUtils.safeMultiply(durationToAdd, scalar);
+<         long instant = FieldUtils.safeAdd(getMillis(), add);
+---
+>         long instant = getChronology().add(getMillis(), durationToAdd, scalar);
+715a719,744
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Property property(DateTimeFieldType type) {
+>         DateTimeField field = type.getField(getChronology());
+>         if (field.isSupported() == false) {
+>             throw new IllegalArgumentException("Field '" + type + "' is not supported");
+>         }
+>         return new Property(this, field);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+>     public DateMidnight toDateMidnight() {
+>         return new DateMidnight(getMillis(), getChronology());

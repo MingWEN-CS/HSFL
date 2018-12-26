@@ -1,0 +1,24 @@
+138a139
+> 
+159c160,162
+<     public static boolean reflectionEquals(Object lhs, Object rhs, boolean testTransients) {
+---
+> 
+>     public static boolean reflectionEquals(Object lhs, Object rhs, 
+>             boolean testTransients) {
+176,181c179,186
+<                 try {
+<                     equalsBuilder.append(f.get(lhs), f.get(rhs));
+<                 } catch (IllegalAccessException e) {
+<                     
+<                     
+<                     throw new InternalError("Unexpected IllegalAccessException");
+---
+>                 if (!Modifier.isStatic(f.getModifiers())) {
+>                     try {
+>                         equalsBuilder.append(f.get(lhs), f.get(rhs));
+>                     } catch (IllegalAccessException e) {
+>                         
+>                         
+>                         throw new InternalError("Unexpected IllegalAccessException");
+>                     }

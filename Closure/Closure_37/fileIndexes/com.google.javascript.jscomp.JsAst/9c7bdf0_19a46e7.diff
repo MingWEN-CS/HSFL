@@ -1,0 +1,33 @@
+50c50
+<       createAst(compiler);
+---
+>       parse(compiler);
+75c75
+<   private void createAst(AbstractCompiler compiler) {
+---
+>   private void parse(AbstractCompiler compiler) {
+77,88c77,78
+<       parse(compiler, sourceFile.getName(), sourceFile.getCode());
+<     } catch (IOException e) {
+<       compiler.report(
+<           JSError.make(AbstractCompiler.READ_ERROR, sourceFile.getName()));
+<     }
+<   }
+< 
+<   private void parse(AbstractCompiler compiler, String sourceName,
+<       String sourceStr) {
+<     try {
+<       logger_.fine("Parsing: " + sourceName);
+<       root = ParserRunner.parse(sourceName, sourceStr,
+---
+>       logger_.fine("Parsing: " + sourceFile.getName());
+>       root = ParserRunner.parse(sourceFile, sourceFile.getCode(),
+93c83,84
+<       compiler.report(JSError.make(AbstractCompiler.READ_ERROR, sourceName));
+---
+>       compiler.report(
+>           JSError.make(AbstractCompiler.READ_ERROR, sourceFile.getName()));
+105c96
+<     root.putProp(Node.SOURCENAME_PROP, sourceName);
+---
+>     root.setStaticSourceFile(sourceFile);

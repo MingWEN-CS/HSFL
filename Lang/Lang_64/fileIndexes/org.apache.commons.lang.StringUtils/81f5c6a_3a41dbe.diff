@@ -1,0 +1,114 @@
+2063a2064,2176
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String[] splitByWholeSeparator(String str, String separator) {
+>         return splitByWholeSeparator( str, separator, -1 ) ;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String[] splitByWholeSeparator( String str, String separator, int max ) {
+>         if (str == null) {
+>             return null;
+>         }
+> 
+>         int len = str.length() ;
+> 
+>         if (len == 0) {
+>             return ArrayUtils.EMPTY_STRING_ARRAY;
+>         }
+> 
+>         if ( ( separator == null ) || ( "".equals( separator ) ) ) {
+>             
+>             return split( str, null, max ) ;
+>         }
+> 
+> 
+>         int separatorLength = separator.length() ;
+> 
+>         ArrayList substrings = new ArrayList() ;
+>         int numberOfSubstrings = 0 ;
+>         int beg = 0 ;
+>         int end = 0 ;
+>         while ( end < len ) {
+>             end = str.indexOf( separator, beg ) ;
+> 
+>             if ( end > -1 ) {
+>                 if ( end > beg ) {
+>                     numberOfSubstrings += 1 ;
+> 
+>                     if ( numberOfSubstrings == max ) {
+>                         end = len ;
+>                         substrings.add( str.substring( beg ) ) ;
+>                     } else {
+>                         
+>                         
+>                         substrings.add( str.substring( beg, end ) ) ;
+> 
+>                         
+>                         
+>                         
+>                         beg = end + separatorLength ;
+>                     }
+>                 } else {
+>                     
+>                     beg = end + separatorLength ;
+>                 }
+>             } else {
+>                 
+>                 substrings.add( str.substring( beg ) ) ;
+>                 end = len ;
+>             }
+>         }
+> 
+>         return (String[]) substrings.toArray( new String[substrings.size()] ) ;
+>     }
+> 
+> 
+>     

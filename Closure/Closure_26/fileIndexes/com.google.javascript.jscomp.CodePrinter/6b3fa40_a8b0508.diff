@@ -1,0 +1,41 @@
+20a21
+> import com.google.javascript.rhino.Token;
+351a353,390
+>       return true;
+>     }
+> 
+>     
+> 
+> 
+>     private Node getTryForCatch(Node n) {
+>       return n.getParent().getParent();
+>     }
+> 
+>     
+> 
+> 
+> 
+>     @Override
+>     boolean breakAfterBlockFor(Node n,  boolean isStatementContext) {
+>       Preconditions.checkState(n.getType() == Token.BLOCK);
+>       Node parent = n.getParent();
+>       if (parent != null) {
+>         int type = parent.getType();
+>         switch (type) {
+>           case Token.DO:
+>             
+>             return false;
+>           case Token.FUNCTION:
+>             
+>             return false;
+>           case Token.TRY:
+>             
+>             return n != parent.getFirstChild();
+>           case Token.CATCH:
+>             
+>             return !NodeUtil.hasFinally(getTryForCatch(parent));
+>           case Token.IF:
+>             
+>             return n == parent.getLastChild();
+>         }
+>       }

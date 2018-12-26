@@ -1,0 +1,159 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optimization.linear;
+
+import java.util.Collection;
+import java.util.Collections;
+
+import org.apache.commons.math3.exception.MathIllegalStateException;
+import org.apache.commons.math3.exception.MaxCountExceededException;
+import org.apache.commons.math3.optimization.GoalType;
+import org.apache.commons.math3.optimization.PointValuePair;
+
+
+
+
+
+
+
+
+
+public abstract class AbstractLinearOptimizer implements LinearOptimizer {
+
+    
+    public static final int DEFAULT_MAX_ITERATIONS = 100;
+
+    
+
+
+
+    private LinearObjectiveFunction function;
+
+    
+
+
+
+    private Collection<LinearConstraint> linearConstraints;
+
+    
+
+
+
+    private GoalType goal;
+
+    
+
+
+
+    private boolean nonNegative;
+
+    
+    private int maxIterations;
+
+    
+    private int iterations;
+
+    
+
+
+    protected AbstractLinearOptimizer() {
+        setMaxIterations(DEFAULT_MAX_ITERATIONS);
+    }
+
+    
+
+
+    protected boolean restrictToNonNegative() {
+        return nonNegative;
+    }
+
+    
+
+
+    protected GoalType getGoalType() {
+        return goal;
+    }
+
+    
+
+
+    protected LinearObjectiveFunction getFunction() {
+        return function;
+    }
+
+    
+
+
+    protected Collection<LinearConstraint> getConstraints() {
+        return Collections.unmodifiableCollection(linearConstraints);
+    }
+
+    
+    public void setMaxIterations(int maxIterations) {
+        this.maxIterations = maxIterations;
+    }
+
+    
+    public int getMaxIterations() {
+        return maxIterations;
+    }
+
+    
+    public int getIterations() {
+        return iterations;
+    }
+
+    
+
+
+
+    protected void incrementIterationsCounter()
+        throws MaxCountExceededException {
+        if (++iterations > maxIterations) {
+            throw new MaxCountExceededException(maxIterations);
+        }
+    }
+
+    
+    public PointValuePair optimize(final LinearObjectiveFunction f,
+                                       final Collection<LinearConstraint> constraints,
+                                       final GoalType goalType, final boolean restrictToNonNegative)
+         throws MathIllegalStateException {
+
+        
+        this.function          = f;
+        this.linearConstraints = constraints;
+        this.goal              = goalType;
+        this.nonNegative       = restrictToNonNegative;
+
+        iterations  = 0;
+
+        
+        return doOptimize();
+
+    }
+
+    
+
+
+
+
+    protected abstract PointValuePair doOptimize()
+        throws MathIllegalStateException;
+
+}

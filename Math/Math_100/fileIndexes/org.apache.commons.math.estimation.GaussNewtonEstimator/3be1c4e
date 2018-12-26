@@ -1,0 +1,239 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.estimation;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.linear.InvalidMatrixException;
+import org.apache.commons.math.linear.RealMatrix;
+import org.apache.commons.math.linear.RealMatrixImpl;
+
+
+
+
+
+
+
+
+
+
+
+
+public class GaussNewtonEstimator
+  implements Estimator, Serializable {
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public GaussNewtonEstimator(int maxIterations,
+                               double convergence,
+                               double steadyStateThreshold) {
+    this.maxIterations        = maxIterations;
+    this.steadyStateThreshold = steadyStateThreshold;
+    this.convergence          = convergence;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public void estimate(EstimationProblem problem)
+    throws EstimationException {
+    int    iterations = 0;
+    double previous   = 0.0;
+    double current    = 0.0;
+
+    
+    do {
+
+      if (++iterations > maxIterations) {
+        throw new EstimationException ("unable to converge in {0} iterations",
+                                       new String[] {
+                                         Integer.toString(maxIterations)
+                                       });
+      }
+
+      
+      linearEstimate(problem);
+
+      previous = current;
+      current  = evaluateCriterion(problem);
+
+    } while ((iterations < 2)
+             || (Math.abs(previous - current) > (current * steadyStateThreshold)
+                 && (Math.abs(current) > convergence)));
+
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public void linearEstimate(EstimationProblem problem)
+    throws EstimationException {
+
+    EstimatedParameter[]  parameters   = problem.getUnboundParameters();
+    WeightedMeasurement[] measurements = problem.getMeasurements();
+
+    
+    RealMatrix b              = new RealMatrixImpl(parameters.length, 1);
+    RealMatrix a              = new RealMatrixImpl(parameters.length, parameters.length);
+    double[] grad             = new double[parameters.length];
+    RealMatrixImpl bDecrement = new RealMatrixImpl(parameters.length, 1);
+    double[][] bDecrementData = bDecrement.getDataRef();
+    RealMatrixImpl wGradGradT = new RealMatrixImpl(parameters.length, parameters.length);
+    double[][] wggData        = wGradGradT.getDataRef();
+    for (int i = 0; i < measurements.length; ++i) {
+        if (! measurements [i].isIgnored()) {
+
+            double weight   = measurements[i].getWeight();
+            double residual = measurements[i].getResidual();
+
+            
+            for (int j = 0; j < parameters.length; ++j) {
+                grad[j] = measurements[i].getPartial(parameters[j]);
+                bDecrementData[j][0] = weight * residual * grad[j];
+            }
+
+            
+            for (int k = 0; k < parameters.length; ++k) {
+                double[] wggRow = wggData[k];
+                double gk = grad[k];
+                for (int l = 0; l < parameters.length; ++l) {
+                    wggRow[l] =  weight * gk * grad[l];
+                }
+            }
+
+            
+            a = a.add(wGradGradT);
+            b = b.add(bDecrement);
+
+        }
+    }
+
+    try {
+
+      
+      RealMatrix dX = a.solve(b);
+
+      
+      for (int i = 0; i < parameters.length; ++i) {
+        parameters[i].setEstimate(parameters[i].getEstimate() + dX.getEntry(i, 0));
+      }
+
+    } catch(InvalidMatrixException e) {
+      throw new EstimationException(e);
+    }
+
+  }
+
+  private double evaluateCriterion(EstimationProblem problem) {
+    double criterion = 0.0;
+    WeightedMeasurement[] measurements = problem.getMeasurements();
+
+    for (int i = 0; i < measurements.length; ++i) {
+      double residual = measurements[i].getResidual();
+      criterion      += measurements[i].getWeight() * residual * residual;
+    }
+
+    return criterion;
+
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  public double getRMS(EstimationProblem problem) {
+    double criterion = evaluateCriterion(problem);
+    int n = problem.getMeasurements().length;
+    return Math.sqrt(criterion / n);
+  }
+
+  private int    maxIterations;
+  private double steadyStateThreshold;
+  private double convergence;
+
+  private static final long serialVersionUID = -7606628156644194170L;
+
+}

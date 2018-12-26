@@ -1,0 +1,54 @@
+62a63,64
+>   private Var arguments;
+> 
+177c179
+<       return NodeUtil.isConstantName(nameNode);
+---
+>       return nameNode != null && NodeUtil.isConstantName(nameNode);
+287a290,324
+>   
+>   public static class Arguments extends Var {
+>     Arguments(Scope scope) {
+>       super(
+>         false, 
+>         "arguments", 
+>         null,  
+>         
+>         null,  
+>         scope,
+>         -1,    
+>         null,  
+>         false, 
+>         null   
+>         );
+>     }
+> 
+>     @Override public boolean equals(Object other) {
+>       if (!(other instanceof Arguments)) {
+>         return false;
+>       }
+> 
+>       Arguments otherVar = (Arguments) other;
+>       return otherVar.scope.getRootNode() == scope.getRootNode();
+>     }
+> 
+>     @Override public int hashCode() {
+>       return System.identityHashCode(this);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+442a480,489
+>   }
+> 
+>   
+> 
+> 
+>   public Var getArgumentsVar() {
+>     if (arguments == null) {
+>       arguments = new Arguments(this);
+>     }
+>     return arguments;

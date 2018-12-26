@@ -1,0 +1,52 @@
+19a20
+> import java.util.ArrayList;
+20a22
+> import java.util.Collections;
+24d25
+< import org.apache.commons.math.ode.sampling.DummyStepHandler;
+38c39
+<     protected StepHandler handler;
+---
+>     protected Collection<StepHandler> stepHandlers;
+54c55
+<         handler = DummyStepHandler.getInstance();
+---
+>         stepHandlers = new ArrayList<StepHandler>();
+66,67c67,68
+<     public void setStepHandler(final StepHandler handler) {
+<         this.handler = handler;
+---
+>     public void addStepHandler(final StepHandler handler) {
+>         stepHandlers.add(handler);
+71,72c72,78
+<     public StepHandler getStepHandler() {
+<         return handler;
+---
+>     public Collection<StepHandler> getStepHandlers() {
+>         return Collections.unmodifiableCollection(stepHandlers);
+>     }
+> 
+>     
+>     public void clearStepHandlers() {
+>         stepHandlers.clear();
+85c91
+<     public Collection<EventHandler> getEventsHandlers() {
+---
+>     public Collection<EventHandler> getEventHandlers() {
+90c96
+<     public void clearEventsHandlers() {
+---
+>     public void clearEventHandlers() {
+91a98,109
+>     }
+> 
+>     
+> 
+> 
+>     protected boolean requiresDenseOutput() {
+>         for (StepHandler handler : stepHandlers) {
+>             if (handler.requiresDenseOutput()) {
+>                 return true;
+>             }
+>         }
+>         return false;

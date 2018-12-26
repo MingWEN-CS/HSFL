@@ -1,0 +1,104 @@
+360c360
+<           computeFollowNode(node)); 
+---
+>           computeFollowNode(node, this)); 
+375c375
+<         computeFollowNode(node));
+---
+>         computeFollowNode(node, this));
+386c386
+<         computeFollowNode(node));
+---
+>         computeFollowNode(node, this));
+405c405
+<           computeFollowNode(forNode));
+---
+>           computeFollowNode(forNode, this));
+423c423
+<           computeFollowNode(forNode));
+---
+>           computeFollowNode(forNode, this));
+439c439
+<         createEdge(node, Branch.UNCOND, computeFollowNode(node));
+---
+>         createEdge(node, Branch.UNCOND, computeFollowNode(node, this));
+461c461
+<         createEdge(node, Branch.ON_FALSE, computeFollowNode(node));
+---
+>         createEdge(node, Branch.ON_FALSE, computeFollowNode(node, this));
+500c500
+<       createEdge(node, Branch.UNCOND, computeFollowNode(node));
+---
+>       createEdge(node, Branch.UNCOND, computeFollowNode(node, this));
+532c532
+<     createEdge(node, Branch.UNCOND, computeFollowNode(node));
+---
+>     createEdge(node, Branch.UNCOND, computeFollowNode(node, this));
+581c581
+<       createEdge(lastJump, Branch.UNCOND, computeFollowNode(cur));
+---
+>       createEdge(lastJump, Branch.UNCOND, computeFollowNode(cur, this));
+583c583
+<       finallyMap.put(lastJump, computeFollowNode(cur));
+---
+>       finallyMap.put(lastJump, computeFollowNode(cur, this));
+652c652
+<     createEdge(node, Branch.UNCOND, computeFollowNode(node));
+---
+>     createEdge(node, Branch.UNCOND, computeFollowNode(node, this));
+656,657c656,661
+<   private Node computeFollowNode(Node node) {
+<     return computeFollowNode(node, node);
+---
+>   static Node computeFollowNode(Node node, ControlFlowAnalysis cfa) {
+>     return computeFollowNode(node, node, cfa);
+>   }
+> 
+>   static Node computeFollowNode(Node node) {
+>     return computeFollowNode(node, node, null);
+670c674,675
+<   private Node computeFollowNode(Node fromNode, Node node) {
+---
+>   private static Node computeFollowNode(
+>       Node fromNode, Node node, ControlFlowAnalysis cfa) {
+690c695,696
+<     if (parent == null || parent.getType() == Token.FUNCTION || node == root) {
+---
+>     if (parent == null || parent.getType() == Token.FUNCTION ||
+>         (cfa != null && node == cfa.root)) {
+698c704
+<         return computeFollowNode(fromNode, parent);
+---
+>         return computeFollowNode(fromNode, parent, cfa);
+712c718
+<           return computeFollowNode(fromNode, parent);
+---
+>           return computeFollowNode(fromNode, parent, cfa);
+730c736
+<             return computeFollowNode(fromNode, parent);
+---
+>             return computeFollowNode(fromNode, parent, cfa);
+737c743
+<             return computeFollowNode(fromNode, parent);
+---
+>             return computeFollowNode(fromNode, parent, cfa);
+741,742c747,750
+<           for (Node finallyNode : finallyMap.get(parent)) {
+<             createEdge(fromNode, Branch.UNCOND, finallyNode);
+---
+>           if (cfa != null) {
+>             for (Node finallyNode : cfa.finallyMap.get(parent)) {
+>               cfa.createEdge(fromNode, Branch.UNCOND, finallyNode);
+>             }
+744c752
+<           return computeFollowNode(fromNode, parent);
+---
+>           return computeFollowNode(fromNode, parent, cfa);
+761c769
+<       return computeFollowNode(fromNode, parent);
+---
+>       return computeFollowNode(fromNode, parent, cfa);
+770c778
+<   private static Node computeFallThrough(Node n) {
+---
+>   static Node computeFallThrough(Node n) {

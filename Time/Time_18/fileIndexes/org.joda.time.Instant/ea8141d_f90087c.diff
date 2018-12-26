@@ -1,0 +1,108 @@
+56,58c56
+< import java.text.ParseException;
+< import java.util.Calendar;
+< import java.util.Date;
+---
+> import java.io.Serializable;
+59a58,59
+> import org.joda.time.convert.InstantConverter;
+> import org.joda.time.convert.ConverterManager;
+61d60
+< import org.joda.time.format.DateTimeParser;
+75c74,78
+< public final class Instant extends AbstractInstant implements ReadableInstant {
+---
+> 
+> public final class Instant extends AbstractInstant
+>         implements ReadableInstant, Serializable {
+> 
+>     static final long serialVersionUID = 3299096530934209741L;
+85d87
+< 
+96c98
+<     public Instant(long millis) {
+---
+>     public Instant(long instant) {
+98c100
+<         iMillis = millis;
+---
+>         iMillis = instant;
+109,111d110
+<         if (instant == null) {
+<             throw new IllegalArgumentException("The ReadableInstant must not be null");
+<         }
+121c120,123
+<     public Instant(Date date) {
+---
+> 
+> 
+> 
+>     public Instant(Object instant) {
+123,126c125,126
+<         if (date == null) {
+<             throw new IllegalArgumentException("The Date must not be null");
+<         }
+<         iMillis = date.getTime();
+---
+>         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+>         iMillis = converter.getInstantMillis(instant);
+135,143d134
+<     public Instant(Calendar calendar) {
+<         super();
+<         if (calendar == null) {
+<             throw new IllegalArgumentException("The Calendar must not be null");
+<         }
+<         iMillis = calendar.getTime().getTime();
+<     }
+< 
+<     
+149,153c140,143
+< 
+<     public Instant(String str) throws ParseException {
+<         super();
+<         if (str == null) {
+<             throw new IllegalArgumentException("The String must not be null");
+---
+>     protected ReadableInstant create(long instant, Chronology chrono) {
+>         
+>         if (instant == getMillis()) {
+>             return this;
+155,156c145
+<         DateTimeParser p = ISODateTimeFormat.getInstanceUTC().dateTimeParser();
+<         iMillis = p.parseMillis(str);
+---
+>         return new Instant(instant);
+158c147,149
+< 
+---
+>     
+>     
+>     
+163a155,157
+>     public final long getMillis() {
+>         return iMillis;
+>     }
+164a159
+>     
+170,175c165,166
+<     protected ReadableInstant create(long millis, Chronology chrono) {
+<         
+<         if (millis == getMillis()) {
+<             return this;
+<         }
+<         return new Instant(millis);
+---
+>     public final long getMillis(ReadableInstant base) {
+>         return iMillis;
+177,179c168
+<     
+<     
+<     
+---
+> 
+185c174,176
+<     public final long getMillis() {
+---
+> 
+> 
+>     public final long getMillis(ReadableInstant base, DateTimeZone zone) {

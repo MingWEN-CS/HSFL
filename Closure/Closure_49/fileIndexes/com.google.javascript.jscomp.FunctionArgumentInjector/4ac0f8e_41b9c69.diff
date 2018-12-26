@@ -1,0 +1,29 @@
+173c173
+<         fnNode, null, names, unsafeNames);
+---
+>         fnNode.getLastChild(), null, names, unsafeNames, false);
+191a192,194
+> 
+> 
+> 
+193c196,197
+<       Node n, Node parent, Set<String> names, Set<String> unsafe) {
+---
+>       Node n, Node parent, Set<String> names, Set<String> unsafe,
+>       boolean inInnerFunction) {
+197c201
+<         if (canNameValueChange(n, parent)) {
+---
+>         if (inInnerFunction || canNameValueChange(n, parent)) {
+200a205,211
+>     } else if (n.getType() == Token.FUNCTION) {
+>       
+>       
+>       
+>       
+>       
+>       inInnerFunction = true;
+204c215
+<       findModifiedParameters(c, n, names, unsafe);
+---
+>       findModifiedParameters(c, n, names, unsafe, inInnerFunction);

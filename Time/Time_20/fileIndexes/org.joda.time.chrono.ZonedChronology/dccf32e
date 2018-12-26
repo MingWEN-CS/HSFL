@@ -1,0 +1,453 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.chrono;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
+import java.util.Locale;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeZone;
+
+
+
+
+
+
+
+
+public class ZonedChronology extends Chronology {
+    private final Chronology iChronology;
+    private final DateTimeZone iZone;
+
+    private transient DateTimeField iYearField;
+    private transient DateTimeField iYearOfEraField;
+    private transient DateTimeField iYearOfCenturyField;
+    private transient DateTimeField iCenturyOfEraField;
+    private transient DateTimeField iEraField;
+    private transient DateTimeField iDayOfWeekField;
+    private transient DateTimeField iDayOfMonthField;
+    private transient DateTimeField iDayOfYearField;
+    private transient DateTimeField iMonthOfYearField;
+    private transient DateTimeField iWeekOfWeekyearField;
+    private transient DateTimeField iWeekyearField;
+
+    private transient DateTimeField iMillisOfSecondField;
+    private transient DateTimeField iMillisOfDayField;
+    private transient DateTimeField iSecondOfMinuteField;
+    private transient DateTimeField iSecondOfDayField;
+    private transient DateTimeField iMinuteOfHourField;
+    private transient DateTimeField iMinuteOfDayField;
+    private transient DateTimeField iHourOfDayField;
+    private transient DateTimeField iHourOfHalfdayField;
+    private transient DateTimeField iClockhourOfDayField;
+    private transient DateTimeField iClockhourOfHalfdayField;
+    private transient DateTimeField iHalfdayOfDayField;
+
+    
+
+
+
+
+
+
+
+    public ZonedChronology(Chronology chrono, DateTimeZone zone) {
+        if (chrono == null) {
+            throw new IllegalArgumentException("Must supply a chronology");
+        }
+        chrono = chrono.withUTC();
+        if (chrono == null) {
+            throw new IllegalArgumentException("UTC chronology must not be null");
+        }
+        if (zone == null) {
+            throw new IllegalArgumentException("DateTimeZone must not be null");
+        }
+
+        iChronology = chrono;
+        iZone = zone;
+        setFields();
+    }
+
+    private void setFields() {
+        Chronology c = iChronology;
+        DateTimeZone z = iZone;
+
+        iYearField = new ZonedDateField(c.year(), z);
+        iYearOfEraField = new ZonedDateField(c.yearOfEra(), z);
+        iYearOfCenturyField = new ZonedDateField(c.yearOfCentury(), z);
+        iCenturyOfEraField = new ZonedDateField(c.centuryOfEra(), z);
+        iEraField = new ZonedDateField(c.era(), z);
+        iDayOfMonthField = new ZonedDateField(c.dayOfMonth(), z);
+        iDayOfWeekField = new ZonedDateField(c.dayOfWeek(), z);
+        iDayOfYearField = new ZonedDateField(c.dayOfYear(), z);
+        iMonthOfYearField = new ZonedDateField(c.monthOfYear(), z);
+        iWeekOfWeekyearField = new ZonedDateField(c.weekOfWeekyear(), z);
+        iWeekyearField = new ZonedDateField(c.weekyear(), z);
+        
+        iMillisOfSecondField = new ZonedTimeField(c.millisOfSecond(), z);
+        iMillisOfDayField = new ZonedTimeField(c.millisOfDay(), z);
+        iSecondOfMinuteField = new ZonedTimeField(c.secondOfMinute(), z);
+        iSecondOfDayField = new ZonedTimeField(c.secondOfDay(), z);
+        iMinuteOfHourField = new ZonedTimeField(c.minuteOfHour(), z);
+        iMinuteOfDayField = new ZonedTimeField(c.minuteOfDay(), z);
+        iHourOfDayField = new ZonedTimeField(c.hourOfDay(), z);
+        iHourOfHalfdayField = new ZonedTimeField(c.hourOfHalfday(), z);
+        iClockhourOfDayField = new ZonedTimeField(c.clockhourOfDay(), z);
+        iClockhourOfHalfdayField = new ZonedTimeField(c.clockhourOfHalfday(), z);
+
+        
+        iHalfdayOfDayField = new ZonedDateField(c.halfdayOfDay(), z);
+    }
+
+    public DateTimeZone getDateTimeZone() {
+        return iZone;
+    }
+
+    public Chronology withUTC() {
+        return iChronology;
+    }
+
+    public Chronology withDateTimeZone(DateTimeZone zone) {
+        if (zone == null) {
+            throw new IllegalArgumentException("The DateTimeZone must not be null");
+        }
+        if (zone == iZone) {
+            return this;
+        }
+        if (zone == DateTimeZone.UTC) {
+            return iChronology;
+        }
+        return new ZonedChronology(iChronology, zone);
+    }
+
+    
+    
+
+    public DateTimeField millisOfSecond() {
+        return iMillisOfSecondField;
+    }
+
+    public DateTimeField millisOfDay() {
+        return iMillisOfDayField;
+    }
+
+    
+    
+
+    public DateTimeField secondOfMinute() {
+        return iSecondOfMinuteField;
+    }
+
+    public DateTimeField secondOfDay() {
+        return iSecondOfDayField;
+    }
+
+    
+    
+
+    public DateTimeField minuteOfHour() {
+        return iMinuteOfHourField;
+    }
+
+    public DateTimeField minuteOfDay() {
+        return iMinuteOfDayField;
+    }
+
+    
+    
+
+    public DateTimeField hourOfDay() {
+        return iHourOfDayField;
+    }
+
+    public DateTimeField clockhourOfDay() {
+        return iClockhourOfDayField;
+    }
+
+    public DateTimeField hourOfHalfday() {
+        return iHourOfHalfdayField;
+    }
+
+    public DateTimeField clockhourOfHalfday() {
+        return iClockhourOfHalfdayField;
+    }
+
+    public DateTimeField halfdayOfDay() {
+        return iHalfdayOfDayField;
+    }
+
+    
+    
+    
+    public DateTimeField dayOfWeek() {
+        return iDayOfWeekField;
+    }
+
+    public DateTimeField dayOfMonth() {
+        return iDayOfMonthField;
+    }
+
+    public DateTimeField dayOfYear() {
+        return iDayOfYearField;
+    }
+
+    
+    
+    
+    public DateTimeField weekOfWeekyear() {
+        return iWeekOfWeekyearField;
+    }
+
+    public DateTimeField weekyear() {
+        return iWeekyearField;
+    }
+
+    
+    
+    
+    public DateTimeField monthOfYear() {
+        return iMonthOfYearField;
+    }
+
+    
+    
+    
+    public DateTimeField year() {
+        return iYearField;
+    }
+
+    public DateTimeField yearOfEra() {
+        return iYearOfEraField;
+    }
+
+    public DateTimeField yearOfCentury() {
+        return iYearOfCenturyField;
+    }
+
+    public DateTimeField centuryOfEra() {
+        return iCenturyOfEraField;
+    }
+
+    public DateTimeField era() {
+        return iEraField;
+    }
+
+    private void readObject(ObjectInputStream in)
+        throws IOException, ClassNotFoundException
+    {
+        in.defaultReadObject();
+        setFields();
+    }
+
+    
+
+
+
+
+
+    static class ZonedDateField extends DateTimeField {
+        final DateTimeField iField;
+        final DateTimeZone iZone;
+        
+        ZonedDateField(DateTimeField field, DateTimeZone zone) {
+            super(field.getName());
+            iField = field;
+            this.iZone = zone;
+        }
+        
+        public int get(long millis) {
+            return iField.get(millis + this.iZone.getOffset(millis));
+        }
+        
+        public String getAsText(long millis, Locale locale) {
+            return iField.getAsText(millis + this.iZone.getOffset(millis), locale);
+        }
+        
+        public String getAsShortText(long millis, Locale locale) {
+            return iField.getAsShortText(millis + this.iZone.getOffset(millis), locale);
+        }
+        
+        public long add(long millis, int value) {
+            millis = iField.add(millis + this.iZone.getOffset(millis), value);
+            return millis - this.iZone.getOffsetFromLocal(millis);
+        }
+        
+        public long add(long millis, long value) {
+            millis = iField.add(millis + this.iZone.getOffset(millis), value);
+            return millis - this.iZone.getOffsetFromLocal(millis);
+        }
+
+        public long addWrapped(long millis, int value) {
+            millis = iField.addWrapped(millis + this.iZone.getOffset(millis), value);
+            return millis - this.iZone.getOffsetFromLocal(millis);
+        }
+
+        public long getDifference(long minuendMillis, long subtrahendMillis) {
+            return iField.getDifference(minuendMillis + this.iZone.getOffset(minuendMillis),
+                                        subtrahendMillis + this.iZone.getOffset(subtrahendMillis));
+        }
+
+        public long set(long millis, int value) {
+            long offset = this.iZone.getOffset(millis);
+            
+            millis = iField.set(millis + offset, value);
+            long offsetFromLocal = this.iZone.getOffsetFromLocal(millis);
+            millis -= offsetFromLocal;
+            
+            if (offset != offsetFromLocal) {
+                if (get(millis) != value) {
+                    throw new IllegalArgumentException
+                        ("Illegal value for " + iField.getName() + ": " + value);
+                }
+            }
+            
+            return millis;
+        }
+        
+        public long set(long millis, String text, Locale locale) {
+            millis = iField.set(millis + this.iZone.getOffset(millis), text, locale);
+            
+            return millis - this.iZone.getOffsetFromLocal(millis);
+        }
+        
+        public boolean isLeap(long millis) {
+            return iField.isLeap(millis + this.iZone.getOffset(millis));
+        }
+
+        public int getLeapAmount(long millis) {
+            return iField.getLeapAmount(millis + this.iZone.getOffset(millis));
+        }
+        
+        public long getUnitMillis() {
+            return iField.getUnitMillis();
+        }
+
+        public long getRangeMillis() {
+            return iField.getRangeMillis();
+        }
+
+        public int getMinimumValue() {
+            return iField.getMinimumValue();
+        }
+        
+        public int getMinimumValue(long millis) {
+            return iField.getMinimumValue(millis + this.iZone.getOffset(millis));
+        }
+        
+        public int getMaximumValue() {
+            return iField.getMaximumValue();
+        }
+        
+        public int getMaximumValue(long millis) {
+            return iField.getMaximumValue(millis + this.iZone.getOffset(millis));
+        }
+        
+        public long roundFloor(long millis) {
+            millis = iField.roundFloor(millis + this.iZone.getOffset(millis));
+            return millis - this.iZone.getOffsetFromLocal(millis);
+        }
+        
+        public long roundCeiling(long millis) {
+            millis = iField.roundCeiling(millis + this.iZone.getOffset(millis));
+            return millis - this.iZone.getOffsetFromLocal(millis);
+        }
+
+        public long remainder(long millis) {
+            millis = iField.remainder(millis + this.iZone.getOffset(millis));
+            return millis - this.iZone.getOffsetFromLocal(millis);
+        }
+
+        public int getMaximumTextLength(Locale locale) {
+            return iField.getMaximumTextLength(locale);
+        }
+        
+        public int getMaximumShortTextLength(Locale locale) {
+            return iField.getMaximumShortTextLength(locale);
+        }
+    }
+
+    static class ZonedTimeField extends ZonedDateField {
+        ZonedTimeField(DateTimeField field, DateTimeZone zone) {
+            super(field, zone);
+        }
+
+        
+        
+        
+        
+
+        public long add(long millis, int value) {
+            int offset = this.iZone.getOffset(millis);
+            return iField.add(millis + offset, value) - offset;
+        }
+        
+        public long add(long millis, long value) {
+            int offset = this.iZone.getOffset(millis);
+            return iField.add(millis + offset, value) - offset;
+        }
+
+        public long addWrapped(long millis, int value) {
+            int offset = this.iZone.getOffset(millis);
+            return iField.addWrapped(millis + offset, value) - offset;
+        }
+
+        public long getDifference(long minuendMillis, long subtrahendMillis) {
+            int offset = this.iZone.getOffset(subtrahendMillis);
+            return iField.getDifference(minuendMillis + offset, subtrahendMillis + offset);
+        }
+    }
+}

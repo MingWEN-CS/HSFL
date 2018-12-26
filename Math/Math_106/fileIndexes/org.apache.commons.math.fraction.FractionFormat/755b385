@@ -1,0 +1,388 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.fraction;
+
+import java.io.Serializable;
+import java.text.FieldPosition;
+import java.text.Format;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.util.Locale;
+
+import org.apache.commons.math.ConvergenceException;
+
+
+
+
+
+
+
+
+
+public class FractionFormat extends Format implements Serializable {
+    
+    
+    static final long serialVersionUID = -6337346779577272306L;
+
+    
+    private NumberFormat denominatorFormat;
+
+    
+    private NumberFormat numeratorFormat;
+    
+    
+
+
+
+    public FractionFormat() {
+        this(getDefaultNumberFormat());
+    }
+
+    
+
+
+
+
+    public FractionFormat(NumberFormat format) {
+        this(format, (NumberFormat)format.clone());
+    }
+
+    
+
+
+
+
+
+    public FractionFormat(NumberFormat numeratorFormat,
+            NumberFormat denominatorFormat)
+    {
+        super();
+        this.numeratorFormat = numeratorFormat;
+        this.denominatorFormat = denominatorFormat;
+    }
+
+    
+
+
+
+
+
+
+    public static String formatFraction(Fraction f) {
+        return getImproperInstance().format(f);
+    }
+    
+    
+
+
+
+
+    public static Locale[] getAvailableLocales() {
+        return NumberFormat.getAvailableLocales();
+    }
+    
+    
+
+
+
+    public static FractionFormat getImproperInstance() {
+        return getImproperInstance(Locale.getDefault());
+    }
+    
+    
+
+
+
+
+    public static FractionFormat getImproperInstance(Locale locale) {
+        NumberFormat f = getDefaultNumberFormat(locale);
+        return new FractionFormat(f);
+    }
+    
+    
+
+
+
+    public static FractionFormat getProperInstance() {
+        return getProperInstance(Locale.getDefault());
+    }
+    
+    
+
+
+
+
+    public static FractionFormat getProperInstance(Locale locale) {
+        NumberFormat f = getDefaultNumberFormat(locale);
+        return new ProperFractionFormat(f);
+    }
+    
+    
+
+
+
+
+
+    protected static NumberFormat getDefaultNumberFormat() {
+        return getDefaultNumberFormat(Locale.getDefault());
+    }
+    
+    
+
+
+
+
+
+
+    private static NumberFormat getDefaultNumberFormat(Locale locale) {
+        NumberFormat nf = NumberFormat.getNumberInstance(locale);
+        nf.setMaximumFractionDigits(0);
+        nf.setParseIntegerOnly(true);
+        return nf;
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+    public StringBuffer format(Fraction fraction, StringBuffer toAppendTo,
+            FieldPosition pos) {
+        
+        pos.setBeginIndex(0);
+        pos.setEndIndex(0);
+
+        getNumeratorFormat().format(fraction.getNumerator(), toAppendTo, pos);
+        toAppendTo.append(" / ");
+        getDenominatorFormat().format(fraction.getDenominator(), toAppendTo,
+            pos);
+        
+        return toAppendTo;
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public StringBuffer format(Object obj, StringBuffer toAppendTo,
+            FieldPosition pos)
+    {
+        StringBuffer ret = null;
+        
+        if (obj instanceof Fraction) {
+            ret = format( (Fraction)obj, toAppendTo, pos);
+        } else if (obj instanceof Number) {
+            try {
+                ret = format( new Fraction(((Number)obj).doubleValue()),
+                    toAppendTo, pos);
+            } catch (ConvergenceException ex) {
+                throw new IllegalArgumentException(
+                    "Cannot convert given object to a fraction.");
+            }
+        } else { 
+            throw new IllegalArgumentException(
+                "Cannot format given object as a fraction");
+        }
+        
+        return ret;
+    }
+
+    
+
+
+
+    public NumberFormat getDenominatorFormat() {
+        return denominatorFormat;
+    }
+    
+    
+
+
+
+    public NumberFormat getNumeratorFormat() {
+        return numeratorFormat;
+    }
+
+    
+
+
+
+
+
+
+    public Fraction parse(String source) throws ParseException {
+        ParsePosition parsePosition = new ParsePosition(0);
+        Fraction result = parse(source, parsePosition);
+        if (parsePosition.getIndex() == 0) {
+            throw new ParseException("Unparseable fraction number: \"" +
+                source + "\"", parsePosition.getErrorIndex());
+        }
+        return result;
+    }
+    
+    
+
+
+
+
+
+
+    public Fraction parse(String source, ParsePosition pos) {
+        int initialIndex = pos.getIndex();
+
+        
+        parseAndIgnoreWhitespace(source, pos);
+
+        
+        Number num = getNumeratorFormat().parse(source, pos);
+        if (num == null) {
+            
+            
+            
+            pos.setIndex(initialIndex);
+            return null;
+        }
+
+        
+        int startIndex = pos.getIndex();
+        char c = parseNextCharacter(source, pos);
+        switch (c) {
+        case 0 :
+            
+            
+            return new Fraction(num.intValue(), 1);
+        case '/' :
+            
+            break;
+        default :
+            
+            
+            
+            pos.setIndex(initialIndex);
+            pos.setErrorIndex(startIndex);
+            return null;
+        }
+
+        
+        parseAndIgnoreWhitespace(source, pos);
+
+        
+        Number den = getDenominatorFormat().parse(source, pos);
+        if (den == null) {
+            
+            
+            
+            pos.setIndex(initialIndex);
+            return null;
+        }
+
+        return new Fraction(num.intValue(), den.intValue());
+    }
+
+    
+
+
+
+
+
+
+    public Object parseObject(String source, ParsePosition pos) {
+        return parse(source, pos);
+    }
+    
+    
+
+
+
+
+
+    public void setDenominatorFormat(NumberFormat format) {
+        if (format == null) {
+            throw new IllegalArgumentException(
+                "denominator format can not be null.");
+        }
+        this.denominatorFormat = format;
+    }
+    
+    
+
+
+
+
+
+    public void setNumeratorFormat(NumberFormat format) {
+        if (format == null) {
+            throw new IllegalArgumentException(
+                "numerator format can not be null.");
+        }
+        this.numeratorFormat = format;
+    }
+     
+    
+
+
+
+
+
+    protected static void parseAndIgnoreWhitespace(
+        String source, ParsePosition pos)
+    {
+        parseNextCharacter(source, pos);
+        pos.setIndex(pos.getIndex() - 1);
+    }
+
+    
+
+
+
+
+
+    protected static char parseNextCharacter(String source, ParsePosition pos) {
+         int index = pos.getIndex();
+         int n = source.length();
+         char ret = 0;
+
+         if (index < n) {
+             char c;
+             do {
+                 c = source.charAt(index++);
+             } while (Character.isWhitespace(c) && index < n);
+             pos.setIndex(index);
+         
+             if (index < n) {
+                 ret = c;
+             }
+         }
+         
+         return ret;
+    }
+}

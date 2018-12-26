@@ -1,0 +1,150 @@
+24,25d23
+< import com.google.javascript.jscomp.MakeDeclaredNamesUnique.ContextualRenamer;
+< import com.google.javascript.rhino.IR;
+301c299,304
+<     UNSUPPORTED,
+---
+>     UNSUPPORTED() {
+>       @Override
+>       public void prepare(FunctionInjector injector, Node callNode) {
+>         throw new IllegalStateException("unexpected");
+>       }
+>     },
+308c311,316
+<     SIMPLE_CALL,
+---
+>     SIMPLE_CALL() {
+>       @Override
+>       public void prepare(FunctionInjector injector, Node callNode) {
+>         
+>       }
+>     },
+318,319c326,331
+<     SIMPLE_ASSIGNMENT,
+< 
+---
+>     SIMPLE_ASSIGNMENT() {
+>       @Override
+>       public void prepare(FunctionInjector injector, Node callNode) {
+>         
+>       }
+>     },
+329,330c341,346
+<     VAR_DECL_SIMPLE_ASSIGNMENT,
+< 
+---
+>     VAR_DECL_SIMPLE_ASSIGNMENT() {
+>       @Override
+>       public void prepare(FunctionInjector injector, Node callNode) {
+>         
+>       }
+>     },
+344c360,370
+<     EXPRESSION,
+---
+>     EXPRESSION() {
+>       @Override
+>       public void prepare(FunctionInjector injector, Node callNode) {
+>         injector.getDecomposer().moveExpression(callNode);
+> 
+>         
+>         CallSiteType callSiteType = injector.classifyCallSite(callNode);
+>         Preconditions.checkState(this != callSiteType);
+>         callSiteType.prepare(injector, callNode);
+>       }
+>     },
+351c377,389
+<     DECOMPOSABLE_EXPRESSION,
+---
+>     DECOMPOSABLE_EXPRESSION() {
+>       @Override
+>       public void prepare(FunctionInjector injector, Node callNode) {
+>         injector.getDecomposer().maybeExposeExpression(callNode);
+> 
+>         
+>         CallSiteType callSiteType = injector.classifyCallSite(callNode);
+>         Preconditions.checkState(this != callSiteType);
+>         callSiteType.prepare(injector, callNode);
+>       }
+>     };
+> 
+>     public abstract void prepare(FunctionInjector injector, Node callNode);
+398a437,450
+>   private ExpressionDecomposer getDecomposer() {
+>     return new ExpressionDecomposer(
+>         compiler, safeNameIdSupplier, knownConstants);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   void maybePrepareCall(Node callNode) {
+>     CallSiteType callSiteType = classifyCallSite(callNode);
+>     callSiteType.prepare(this, callNode);
+>   }
+> 
+436,441c488,489
+<         resultName = getUniqueResultName();
+<         
+<         
+<         
+<         needsDefaultReturnResult = isCallInLoop;
+<         break;
+---
+>         throw new IllegalStateException(
+>             "Movable expressions must be moved before inlining.");
+445c493
+<             "Decomposable expressions must decomposed before inlining.");
+---
+>             "Decomposable expressions must be decomposed before inlining.");
+484,507d531
+<       case EXPRESSION:
+<         
+<         
+<         
+<         
+<         Node injectionPoint = ExpressionDecomposer.findInjectionPoint(callNode);
+<         Preconditions.checkNotNull(injectionPoint);
+<         Node injectionPointParent = injectionPoint.getParent();
+<         Preconditions.checkNotNull(injectionPointParent);
+<         Preconditions.checkState(
+<             NodeUtil.isStatementBlock(injectionPointParent));
+< 
+<         
+<         newBlock.addChildrenToFront(
+<             NodeUtil.newVarNode(resultName, null)
+<                  .copyInformationFromForTree(callNode));
+<         
+<         
+<         injectionPointParent.addChildBefore(newBlock, injectionPoint);
+<         
+<         
+<         parent.replaceChild(callNode, IR.name(resultName));
+<         break;
+< 
+541c565
+<     AFTER_DECOMPOSITION,
+---
+>     AFTER_PREPARATION,
+564c588,589
+<         && callSiteType == CallSiteType.DECOMPOSABLE_EXPRESSION) {
+---
+>         && (callSiteType == CallSiteType.DECOMPOSABLE_EXPRESSION
+>             || callSiteType == CallSiteType.EXPRESSION)) {
+573,574c598,600
+<     if (callSiteType == CallSiteType.DECOMPOSABLE_EXPRESSION)  {
+<       return CanInlineResult.AFTER_DECOMPOSITION;
+---
+>     if (callSiteType == CallSiteType.DECOMPOSABLE_EXPRESSION
+>         || callSiteType == CallSiteType.EXPRESSION) {
+>       return CanInlineResult.AFTER_PREPARATION;
+722,729d747
+<   }
+< 
+<   
+< 
+< 
+<   private String getUniqueResultName() {
+<     return "JSCompiler_inline_result"
+<         + ContextualRenamer.UNIQUE_ID_SEPARATOR + safeNameIdSupplier.get();

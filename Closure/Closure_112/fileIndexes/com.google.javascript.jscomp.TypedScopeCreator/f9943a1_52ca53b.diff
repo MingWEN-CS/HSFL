@@ -1,0 +1,40 @@
+1608,1609c1608,1616
+<                    n.isUnscopedQualifiedName()) {
+<           inferred = false;
+---
+>             n.isUnscopedQualifiedName()) {
+> 
+>           
+>           AstFunctionContents contents =
+>               getFunctionAnalysisResults(scope.getRootNode());
+>           if (contents == null ||
+>               !contents.getEscapedQualifiedNames().contains(qName)) {
+>             inferred = false;
+>           }
+1947c1954,1964
+<       } else if (n.isName() && NodeUtil.isLValue(n)) {
+---
+>       }
+> 
+>       if (t.getScopeDepth() <= 2) {
+>         
+>         
+>         
+>         
+>         return;
+>       }
+> 
+>       if (n.isName() && NodeUtil.isLValue(n)) {
+1954a1972,1983
+>           }
+>         }
+>       } else if (n.isGetProp() && n.isUnscopedQualifiedName() &&
+>           NodeUtil.isLValue(n)) {
+>         String name = NodeUtil.getRootOfQualifiedName(n).getString();
+>         Scope scope = t.getScope();
+>         Var var = scope.getVar(name);
+>         if (var != null) {
+>           Scope ownerScope = var.getScope();
+>           if (scope != ownerScope && ownerScope.isLocal()) {
+>             data.get(ownerScope.getRootNode())
+>                 .recordEscapedQualifiedName(n.getQualifiedName());

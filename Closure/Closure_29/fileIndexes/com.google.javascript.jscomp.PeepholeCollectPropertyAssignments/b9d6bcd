@@ -1,0 +1,277 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.IR;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+
+public class PeepholeCollectPropertyAssignments
+    extends AbstractPeepholeOptimization {
+
+  @Override
+  Node optimizeSubtree(Node subtree) {
+    if (!subtree.isScript() && !subtree.isBlock()) {
+      return subtree;
+    }
+
+    boolean codeChanged = false;
+
+    
+    
+    for (Node child = subtree.getFirstChild();
+         child != null; child = child.getNext()) {
+      if (!child.isVar() && !NodeUtil.isExprAssign(child)) {
+        continue;
+      }
+      if (!isPropertyAssignmentToName(child.getNext())) {
+        
+        continue;
+      }
+
+      Preconditions.checkState(child.hasOneChild());
+      Node name = getName(child);
+      if (!name.isName()) {
+        
+        continue;
+      }
+      Node value = getValue(child);
+      if (value == null || !isInterestingValue(value)) {
+        
+        continue;
+      }
+
+      Node propertyCandidate;
+      while ((propertyCandidate = child.getNext()) != null) {
+        
+        
+        if (!collectProperty(propertyCandidate, name.getString(), value)) {
+          break;
+        }
+        codeChanged = true;
+      }
+    }
+
+    if (codeChanged) {
+      reportCodeChange();
+    }
+    return subtree;
+  }
+
+  private Node getName(Node n) {
+    if (n.isVar()) {
+      return n.getFirstChild();
+    } else if (NodeUtil.isExprAssign(n)) {
+      return n.getFirstChild().getFirstChild();
+    }
+    throw new IllegalStateException();
+  }
+
+  private Node getValue(Node n) {
+    if (n.isVar()) {
+      return n.getFirstChild().getFirstChild();
+    } else if (NodeUtil.isExprAssign(n)) {
+      return n.getFirstChild().getLastChild();
+    }
+    throw new IllegalStateException();
+  }
+
+  boolean isInterestingValue(Node n) {
+    return n.isObjectLit() || n.isArrayLit();
+  }
+
+  private boolean isPropertyAssignmentToName(Node propertyCandidate) {
+    if (propertyCandidate == null) { return false; }
+    
+    if (!NodeUtil.isExprAssign(propertyCandidate)) {
+      return false;
+    }
+
+    Node expr = propertyCandidate.getFirstChild();
+
+    
+    Node lhs = expr.getFirstChild();
+    if (!NodeUtil.isGet(lhs)) {
+      return false;
+    }
+
+    
+    Node obj = lhs.getFirstChild();
+    if (!obj.isName()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean collectProperty(
+      Node propertyCandidate, String name, Node value) {
+    if (!isPropertyAssignmentToName(propertyCandidate)) {
+      return false;
+    }
+
+    Node lhs = propertyCandidate.getFirstChild().getFirstChild();
+    
+    if (!name.equals(lhs.getFirstChild().getString())) {
+      return false;
+    }
+
+    Node rhs = lhs.getNext();
+    
+    if (NodeUtil.mayHaveSideEffects(rhs)
+        || NodeUtil.canBeSideEffected(rhs)) {
+      return false;
+    }
+    
+    if (mightContainForwardReference(rhs, name)) {
+      return false;
+    }
+
+    switch (value.getType()) {
+      case Token.ARRAYLIT:
+        if (!collectArrayProperty(value, propertyCandidate)) {
+          return false;
+        }
+        break;
+      case Token.OBJECTLIT:
+        if (!collectObjectProperty(value, propertyCandidate)) {
+          return false;
+        }
+        break;
+      default:
+        throw new IllegalStateException();
+    }
+    return true;
+  }
+
+
+  private boolean collectArrayProperty(
+      Node arrayLiteral, Node propertyCandidate) {
+    Node assignment = propertyCandidate.getFirstChild();
+    final int sizeOfArrayAtStart = arrayLiteral.getChildCount();
+    int maxIndexAssigned = sizeOfArrayAtStart - 1;
+
+    Node lhs = assignment.getFirstChild();
+    Node rhs = lhs.getNext();
+    if (!lhs.isGetElem()) {
+      return false;
+    }
+    Node obj = lhs.getFirstChild();
+    Node property = obj.getNext();
+    
+    if (!property.isNumber()) {
+      return false;
+    }
+    
+    double dindex = property.getDouble();
+    if (!(dindex >= 0)  
+        || Double.isInfinite(dindex) || dindex > 0x7fffffffL) {
+      return false;
+    }
+    int index = (int) dindex;
+    if (dindex != index) {
+      return false;
+    }
+    
+    
+    if (maxIndexAssigned + 4 < index) {
+      return false;
+    }
+    if (index > maxIndexAssigned) {
+      while (maxIndexAssigned < index - 1) {
+        
+        
+        
+        Node emptyNode = IR.empty().srcref(arrayLiteral);
+        arrayLiteral.addChildToBack(emptyNode);
+        ++maxIndexAssigned;
+      }
+      arrayLiteral.addChildToBack(rhs.detachFromParent());
+    } else {
+      
+      Node currentValue = arrayLiteral.getChildAtIndex(index);
+      if (!currentValue.isEmpty()) {
+        
+        return false;
+      }
+      arrayLiteral.replaceChild(currentValue, rhs.detachFromParent());
+    }
+
+    propertyCandidate.detachFromParent();
+    return true;
+  }
+
+  private boolean collectObjectProperty(
+      Node objectLiteral, Node propertyCandidate) {
+    Node assignment = propertyCandidate.getFirstChild();
+    Node lhs = assignment.getFirstChild(), rhs = lhs.getNext();
+    Node obj = lhs.getFirstChild();
+    Node property = obj.getNext();
+
+    
+    if (lhs.isGetElem()
+        && (!property.isString()
+            && !property.isNumber())) {
+      return false;
+    }
+
+    String propertyName;
+    if (property.isNumber()) {
+      propertyName = NodeUtil.getStringValue(property);
+    } else {
+      propertyName = property.getString();
+    }
+
+    Node newProperty = Node.newString(propertyName)
+        .copyInformationFrom(property);
+    
+    if (lhs.isGetElem()) {
+      newProperty.setQuotedString();
+    }
+    Node newValue = rhs.detachFromParent();
+    newProperty.addChildToBack(newValue);
+    objectLiteral.addChildToBack(newProperty);
+
+    propertyCandidate.detachFromParent();
+    return true;
+  }
+
+
+  private static boolean mightContainForwardReference(
+      Node node, String varName) {
+    if (node.isName()) {
+      return varName.equals(node.getString());
+    }
+    for (Node child = node.getFirstChild(); child != null;
+         child = child.getNext()) {
+      if (mightContainForwardReference(child, varName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+}

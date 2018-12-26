@@ -1,0 +1,23 @@
+3120c3120
+<   static boolean isExpressionUnconditionallyExecuted(Node n) {
+---
+>   static boolean isExecutedExactlyOnce(Node n) {
+3134,3135c3134,3141
+<           if (parent.getFirstChild() != n) {
+<             return false;
+---
+>           if (NodeUtil.isForIn(parent)) {
+>             if (parent.getChildAtIndex(1) != n) {
+>               return false;
+>             }
+>           } else {
+>             if (parent.getFirstChild() != n) {
+>               return false;
+>             }
+3144c3150,3153
+<           return false;
+---
+>           if (!hasFinally(parent) || parent.getLastChild() != n) {
+>             return false;
+>           }
+>           continue inspect;

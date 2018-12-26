@@ -1,0 +1,93 @@
+573,574c573,574
+<         JSType valueType = getDeclaredTypeInAnnotation(
+<             t, name, name.getJSDocInfo());
+---
+>         JSType valueType = getDeclaredPropType(
+>             t, name.getJSDocInfo(), name, value);
+596c596
+<     JSType getDeclaredTypeInAnnotation(
+---
+>     private JSType getDeclaredTypeInAnnotation(
+601c601
+<     JSType getDeclaredTypeInAnnotation(String sourceName,
+---
+>     private JSType getDeclaredTypeInAnnotation(String sourceName,
+699,709c699,702
+<       
+<       
+<       
+<       
+<       
+<       if (value != null && value.getType() == Token.FUNCTION) {
+<         FunctionType valueType = (FunctionType) value.getJSType();
+<         if (info != null || scope.isGlobal() ||
+<             !valueType.isReturnTypeInferred()) {
+<           type = value.getJSType();
+<         }
+---
+>       if (value != null && value.getType() == Token.FUNCTION &&
+>           shouldUseFunctionLiteralType(
+>               (FunctionType) value.getJSType(), info, name)) {
+>         type = value.getJSType();
+745a739,757
+>     private boolean shouldUseFunctionLiteralType(
+>         FunctionType type, JSDocInfo info, Node lValue) {
+>       if (info != null) {
+>         return true;
+>       }
+>       if (lValue != null &&
+>           NodeUtil.isObjectLitKey(lValue, lValue.getParent())) {
+>         return false;
+>       }
+>       return scope.isGlobal() || !type.isReturnTypeInferred();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+1113,1114c1125,1126
+<     private JSType getDeclaredGetPropType(NodeTraversal t, JSDocInfo info,
+<         Node n, @Nullable Node rhsValue) {
+---
+>     private JSType getDeclaredPropType(NodeTraversal t, JSDocInfo info,
+>         Node lValue, @Nullable Node rValue) {
+1116,1118c1128,1132
+<         return getDeclaredTypeInAnnotation(t, n, info);
+<       } else if (rhsValue != null && rhsValue.getType() == Token.FUNCTION) {
+<         return rhsValue.getJSType();
+---
+>         return getDeclaredTypeInAnnotation(t, lValue, info);
+>       } else if (rValue != null && rValue.getType() == Token.FUNCTION &&
+>           shouldUseFunctionLiteralType(
+>               (FunctionType) rValue.getJSType(), info, lValue)) {
+>         return rValue.getJSType();
+1120,1121c1134,1135
+<         if (rhsValue != null && rhsValue.getType() == Token.OBJECTLIT) {
+<           return rhsValue.getJSType();
+---
+>         if (rValue != null && rValue.getType() == Token.OBJECTLIT) {
+>           return rValue.getJSType();
+1124c1138
+<               rhsValue, n.getQualifiedName(), info, n);
+---
+>               rValue, lValue.getQualifiedName(), info, lValue);
+1129c1143
+<             rhsValue, n.getQualifiedName(), info, n);
+---
+>             rValue, lValue.getQualifiedName(), info, lValue);
+1131c1145
+<         return getDeclaredTypeInAnnotation(t, n, info);
+---
+>         return getDeclaredTypeInAnnotation(t, lValue, info);
+1291c1305
+<       JSType valueType = getDeclaredGetPropType(t, info, n, rhsValue);
+---
+>       JSType valueType = getDeclaredPropType(t, info, n, rhsValue);
+1450c1464
+<         JSType jsType = getDeclaredGetPropType(t, info, member, value);
+---
+>         JSType jsType = getDeclaredPropType(t, info, member, value);

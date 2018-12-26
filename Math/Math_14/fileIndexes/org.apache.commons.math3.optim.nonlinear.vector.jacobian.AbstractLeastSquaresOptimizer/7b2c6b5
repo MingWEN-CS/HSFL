@@ -1,0 +1,296 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optim.nonlinear.vector.jacobian;
+
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.TooManyEvaluationsException;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.QRDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.OptimizationData;
+import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.optim.nonlinear.vector.JacobianMultivariateVectorOptimizer;
+import org.apache.commons.math3.optim.nonlinear.vector.MultivariateVectorOptimizer;
+import org.apache.commons.math3.optim.nonlinear.vector.NonCorrelatedWeight;
+import org.apache.commons.math3.optim.nonlinear.vector.Weight;
+import org.apache.commons.math3.util.FastMath;
+
+
+
+
+
+
+
+
+public abstract class AbstractLeastSquaresOptimizer
+    extends JacobianMultivariateVectorOptimizer {
+    
+
+
+    @Deprecated
+    private RealMatrix weightMatrixSqrt;
+    
+    private double[] weightSquareRoot;
+    
+    private double cost;
+
+    
+
+
+    protected AbstractLeastSquaresOptimizer(ConvergenceChecker<PointVectorValuePair> checker) {
+        super(checker);
+    }
+
+    
+
+
+
+
+
+
+
+    protected RealMatrix computeWeightedJacobian(double[] params) {
+
+        final double[][] jacobian = computeJacobian(params);
+
+        if (weightSquareRoot != null) {
+            for (int i = 0; i < jacobian.length; ++i) {
+                final double wi = weightSquareRoot[i];
+                final double[] row = jacobian[i];
+                for (int j = 0; j < row.length; ++j) {
+                    row[j] *= wi;
+                }
+            }
+            return MatrixUtils.createRealMatrix(jacobian);
+        } else {
+            
+            return weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(jacobian));
+        }
+
+    }
+
+    
+
+
+
+
+
+
+    protected double computeCost(double[] residuals) {
+        final ArrayRealVector r = new ArrayRealVector(residuals);
+        final double[] weight = getNonCorrelatedWeight();
+        double sum = 0;
+        for (int i = 0; i < r.getDimension(); ++i) {
+            final double ri = r.getEntry(i);
+            sum += ri * weight[i] * ri;
+        }
+        return FastMath.sqrt(sum);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public double getRMS() {
+        return FastMath.sqrt(getChiSquare() / getTargetSize());
+    }
+
+    
+
+
+
+
+
+    public double getChiSquare() {
+        return cost * cost;
+    }
+
+    
+
+
+
+
+
+    @Deprecated
+    public RealMatrix getWeightSquareRoot() {
+        return weightMatrixSqrt.copy();
+    }
+
+    
+
+
+
+
+    protected void setCost(double cost) {
+        this.cost = cost;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double[][] computeCovariances(double[] params,
+                                         double threshold) {
+        
+        final RealMatrix j = computeWeightedJacobian(params);
+
+        
+        final RealMatrix jTj = j.transpose().multiply(j);
+
+        
+        final DecompositionSolver solver
+            = new QRDecomposition(jTj, threshold).getSolver();
+        return solver.getInverse().getData();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double[] computeSigma(double[] params,
+                                 double covarianceSingularityThreshold) {
+        final int nC = params.length;
+        final double[] sig = new double[nC];
+        final double[][] cov = computeCovariances(params, covarianceSingularityThreshold);
+        for (int i = 0; i < nC; ++i) {
+            sig[i] = FastMath.sqrt(cov[i][i]);
+        }
+        return sig;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public PointVectorValuePair optimize(OptimizationData... optData)
+        throws TooManyEvaluationsException {
+        
+        parseOptimizationData(optData);
+        
+        return super.optimize(optData);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected double[] computeResiduals(double[] objectiveValue) {
+        final double[] target = getTarget();
+        if (objectiveValue.length != target.length) {
+            throw new DimensionMismatchException(target.length,
+                                                 objectiveValue.length);
+        }
+
+        final double[] residuals = new double[target.length];
+        for (int i = 0; i < target.length; i++) {
+            residuals[i] = target[i] - objectiveValue[i];
+        }
+
+        return residuals;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private void parseOptimizationData(OptimizationData... optData) {
+        
+        
+        for (OptimizationData data : optData) {
+            if (data instanceof Weight) {
+                
+                weightSquareRoot = null;
+                final RealMatrix w = ((Weight) data).getWeight();
+                final EigenDecomposition dec = new EigenDecomposition(w);
+                weightMatrixSqrt = dec.getSquareRoot();
+            } else if (data instanceof NonCorrelatedWeight) {
+                weightSquareRoot = ((NonCorrelatedWeight) data).getWeight();
+                for (int i = 0; i < weightSquareRoot.length; ++i) {
+                    weightSquareRoot[i] = FastMath.sqrt(weightSquareRoot[i]);
+                }
+                weightMatrixSqrt = null;
+            }
+        }
+    }
+
+}

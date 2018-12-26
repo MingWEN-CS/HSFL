@@ -1,0 +1,37 @@
+4d3
+< import org.apache.commons.math3.exception.NotStrictlyPositiveException;
+12d10
+< import org.apache.commons.math3.stat.correlation.Covariance;
+146c144
+< 
+---
+>     
+154,155d151
+<         final double kernel = getKernel(vals);
+< 
+158c154
+<             FastMath.exp(kernel);
+---
+>             getExponentTerm(vals);
+201,207c197,205
+<     private double getKernel(final double[] values) {
+<         double k = 0;
+<         for (int col = 0; col < values.length; col++) {
+<             for (int v = 0; v < values.length; v++) {
+<                 k += covarianceMatrixInverse.getEntry(v, col)
+<                     * FastMath.pow(values[v] - means[v], 2);
+<             }
+---
+>     private double getExponentTerm(final double[] values) {
+>         final double[] centered = new double[values.length];
+>         for (int i = 0; i < centered.length; i++) {
+>             centered[i] = values[i] - getMeans()[i];
+>         }
+>         final double[] preMultiplied = covarianceMatrixInverse.preMultiply(centered);
+>         double sum = 0;
+>         for (int i = 0; i < preMultiplied.length; i++) {
+>             sum += preMultiplied[i] * centered[i];
+209c207
+<         return -0.5 * k;
+---
+>         return FastMath.exp(-0.5 * sum);

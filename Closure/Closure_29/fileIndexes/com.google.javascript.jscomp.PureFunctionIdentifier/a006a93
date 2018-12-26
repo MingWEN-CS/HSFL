@@ -1,0 +1,752 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.DefinitionsRemover.Definition;
+import com.google.javascript.jscomp.NodeTraversal.Callback;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.jscomp.graph.DiGraph;
+import com.google.javascript.jscomp.graph.FixedPointGraphTraversal;
+import com.google.javascript.jscomp.graph.FixedPointGraphTraversal.EdgeCallback;
+import com.google.javascript.jscomp.graph.LinkedDirectedGraph;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class PureFunctionIdentifier implements CompilerPass {
+  static final DiagnosticType INVALID_NO_SIDE_EFFECT_ANNOTATION =
+      DiagnosticType.error(
+          "JSC_INVALID_NO_SIDE_EFFECT_ANNOTATION",
+          "@nosideeffects may only appear in externs files.");
+
+  private final AbstractCompiler compiler;
+  private final DefinitionProvider definitionProvider;
+
+  
+  private final Map<Node, FunctionInformation> functionSideEffectMap;
+
+  
+  private final List<Node> allFunctionCalls;
+
+  
+  
+  private Node externs;
+  private Node root;
+
+  public PureFunctionIdentifier(AbstractCompiler compiler,
+                                DefinitionProvider definitionProvider) {
+    this.compiler = compiler;
+    this.definitionProvider = definitionProvider;
+    this.functionSideEffectMap = Maps.newHashMap();
+    this.allFunctionCalls = Lists.newArrayList();
+    this.externs = null;
+    this.root = null;
+  }
+
+  @Override
+  public void process(Node externsAst, Node srcAst) {
+    if (externs != null || root != null) {
+      throw new IllegalStateException(
+          "It is illegal to call PureFunctionIdentifier.process " +
+          "twice the same instance.  Please use a new " +
+          "PureFunctionIdentifier instance each time.");
+    }
+
+    externs = externsAst;
+    root = srcAst;
+
+    NodeTraversal.traverse(compiler, externs, new FunctionAnalyzer(true));
+    NodeTraversal.traverse(compiler, root, new FunctionAnalyzer(false));
+
+    propagateSideEffects();
+
+    markPureFunctionCalls();
+  }
+
+  
+
+
+
+
+  String getDebugReport() {
+    Preconditions.checkNotNull(externs);
+    Preconditions.checkNotNull(root);
+
+    StringBuilder sb = new StringBuilder();
+
+    FunctionNames functionNames = new FunctionNames(compiler);
+    functionNames.process(null, externs);
+    functionNames.process(null, root);
+
+    sb.append("Pure functions:\n");
+    for (Map.Entry<Node, FunctionInformation> entry :
+             functionSideEffectMap.entrySet()) {
+      Node function = entry.getKey();
+      FunctionInformation functionInfo = entry.getValue();
+
+      boolean isPure =
+          functionInfo.mayBePure() && !functionInfo.mayHaveSideEffects();
+      if (isPure) {
+        sb.append("  " + functionNames.getFunctionName(function) + "\n");
+      }
+    }
+    sb.append("\n");
+
+    for (Map.Entry<Node, FunctionInformation> entry :
+             functionSideEffectMap.entrySet()) {
+      Node function = entry.getKey();
+      FunctionInformation functionInfo = entry.getValue();
+
+      Set<String> depFunctionNames = Sets.newHashSet();
+      for (Node callSite : functionInfo.getCallsInFunctionBody()) {
+        Collection<Definition> defs =
+            getCallableDefinitions(definitionProvider,
+                                   callSite.getFirstChild());
+
+        if (defs == null) {
+          depFunctionNames.add("<null def list>");
+          continue;
+        }
+
+        for (Definition def : defs) {
+          depFunctionNames.add(
+              functionNames.getFunctionName(def.getRValue()));
+        }
+      }
+
+      sb.append(functionNames.getFunctionName(function) + " " +
+                functionInfo.toString() +
+                " Calls: " + depFunctionNames + "\n");
+    }
+
+    return sb.toString();
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  private static Collection<Definition> getCallableDefinitions(
+      DefinitionProvider definitionProvider, Node name) {
+    if (NodeUtil.isGetProp(name) || NodeUtil.isName(name)) {
+      List<Definition> result = Lists.newArrayList();
+
+      Collection<Definition> decls =
+          definitionProvider.getDefinitionsReferencedAt(name);
+      if (decls == null) {
+        return null;
+      }
+
+      for (Definition current : decls) {
+        Node rValue = current.getRValue();
+        if ((rValue != null) && NodeUtil.isFunction(rValue)) {
+          result.add(current);
+        } else {
+          return null;
+        }
+      }
+
+      return result;
+    } else if (name.getType() == Token.OR || name.getType() == Token.HOOK) {
+      Node firstVal;
+      if (name.getType() == Token.HOOK) {
+        firstVal = name.getFirstChild().getNext();
+      } else {
+        firstVal = name.getFirstChild();
+      }
+
+      Collection<Definition> defs1 = getCallableDefinitions(definitionProvider,
+                                                            firstVal);
+      Collection<Definition> defs2 = getCallableDefinitions(definitionProvider,
+                                                            firstVal.getNext());
+      if (defs1 != null && defs2 != null) {
+        defs1.addAll(defs2);
+        return defs1;
+      } else {
+        return null;
+      }
+    } else if (NodeUtil.isFunctionExpression(name)) {
+      
+      
+      
+
+      
+      
+      
+      
+      
+      return Lists.newArrayList(
+          (Definition)
+              new DefinitionsRemover.FunctionExpressionDefinition(name, false));
+    } else {
+      return null;
+    }
+  }
+
+  
+
+
+
+
+
+  private void propagateSideEffects() {
+    
+    DiGraph<FunctionInformation, Node> sideEffectGraph =
+        new LinkedDirectedGraph<FunctionInformation, Node>();
+
+    
+    for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+      sideEffectGraph.createNode(functionInfo);
+    }
+
+    
+    for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+      if (!functionInfo.mayHaveSideEffects()) {
+        continue;
+      }
+
+      for (Node callSite : functionInfo.getCallsInFunctionBody()) {
+        Node callee = callSite.getFirstChild();
+        Collection<Definition> defs =
+            getCallableDefinitions(definitionProvider, callee);
+        if (defs == null) {
+          
+          
+          
+          
+          
+          
+          functionInfo.setTaintsUnknown();
+          break;
+        }
+
+        for (Definition def : defs) {
+          Node defValue = def.getRValue();
+          FunctionInformation dep = functionSideEffectMap.get(defValue);
+          Preconditions.checkNotNull(dep);
+          sideEffectGraph.connect(dep, callSite, functionInfo);
+        }
+      }
+    }
+
+    
+    FixedPointGraphTraversal.newTraversal(new SideEffectPropagationCallback())
+        .computeFixedPoint(sideEffectGraph);
+
+    
+    for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+      if (functionInfo.mayBePure()) {
+        functionInfo.setIsPure();
+      }
+    }
+  }
+
+  
+
+
+  private void markPureFunctionCalls() {
+    for (Node callNode : allFunctionCalls) {
+      Node name = callNode.getFirstChild();
+      Collection<Definition> defs =
+          getCallableDefinitions(definitionProvider, name);
+      boolean hasSideEffects = true;
+      if (defs != null) {
+        hasSideEffects = false;
+        for (Definition def : defs) {
+          FunctionInformation functionInfo =
+              functionSideEffectMap.get(def.getRValue());
+          Preconditions.checkNotNull(functionInfo);
+
+          if ((NodeUtil.isCall(callNode)
+                  && functionInfo.mayHaveSideEffects())
+               || (NodeUtil.isNew(callNode)
+                      && (functionInfo.mutatesGlobalState()
+                          || functionInfo.functionThrows()))) {
+            hasSideEffects = true;
+            break;
+          }
+        }
+      }
+
+      
+      if (NodeUtil.isCall(callNode)) {
+        Preconditions.checkState(compiler != null);
+        if (!NodeUtil.functionCallHasSideEffects(callNode, compiler)) {
+          hasSideEffects = false;
+        }
+      } else if (NodeUtil.isNew(callNode)) {
+        
+        if (!NodeUtil.constructorCallHasSideEffects(callNode)) {
+          hasSideEffects = false;
+        }
+      }
+
+      if (!hasSideEffects) {
+        callNode.setIsNoSideEffectsCall();
+      }
+    }
+  }
+
+  
+
+
+
+
+  private class FunctionAnalyzer implements Callback {
+    private final boolean inExterns;
+
+    FunctionAnalyzer(boolean inExterns) {
+      this.inExterns = inExterns;
+    }
+
+    @Override
+    public boolean shouldTraverse(NodeTraversal traversal,
+                                  Node node,
+                                  Node parent) {
+
+      
+      
+      
+      
+      if (NodeUtil.isFunction(node)) {
+        Node gramp = parent.getParent();
+        visitFunction(traversal, node, parent, gramp);
+      }
+
+      return true;
+    }
+
+    @Override
+    public void visit(NodeTraversal traversal, Node node, Node parent) {
+
+      if (inExterns) {
+        return;
+      }
+
+      if (!NodeUtil.nodeTypeMayHaveSideEffects(node)) {
+        return;
+      }
+
+      if (NodeUtil.isCall(node) || NodeUtil.isNew(node)) {
+        allFunctionCalls.add(node);
+      }
+
+      Node enclosingFunction = traversal.getEnclosingFunction();
+      if (enclosingFunction != null) {
+        FunctionInformation sideEffectInfo =
+            functionSideEffectMap.get(enclosingFunction);
+        Preconditions.checkNotNull(sideEffectInfo);
+
+        if (NodeUtil.isAssignmentOp(node)) {
+          visitAssignmentOrUnaryOperatorLhs(
+              sideEffectInfo, traversal.getScope(), node.getFirstChild());
+        } else {
+          switch(node.getType()) {
+            case Token.CALL:
+            case Token.NEW:
+              visitCall(sideEffectInfo, node);
+              break;
+            case Token.DELPROP:
+            case Token.DEC:
+            case Token.INC:
+              visitAssignmentOrUnaryOperatorLhs(
+                  sideEffectInfo, traversal.getScope(), node.getFirstChild());
+              break;
+            case Token.NAME:
+
+              
+              
+              
+              Preconditions.checkArgument(
+                  NodeUtil.isVarDeclaration(node));
+              break;
+            case Token.THROW:
+              visitThrow(sideEffectInfo);
+              break;
+            default:
+              throw new IllegalArgumentException(
+                  "Unhandled side effect node type " +
+                  Token.name(node.getType()));
+          }
+        }
+      }
+    }
+
+    
+
+
+
+
+
+
+    private void visitAssignmentOrUnaryOperatorLhs(
+        FunctionInformation sideEffectInfo, Scope scope, Node lhs) {
+      if (NodeUtil.isName(lhs)) {
+        Var var = scope.getVar(lhs.getString());
+        if (var == null || var.scope != scope) {
+          sideEffectInfo.setTaintsGlobalState();
+        }
+      } else if (NodeUtil.isGetProp(lhs)) {
+        if (NodeUtil.isThis(lhs.getFirstChild())) {
+          sideEffectInfo.setTaintsThis();
+        } else {
+          sideEffectInfo.setTaintsUnknown();
+        }
+      } else {
+        sideEffectInfo.setTaintsUnknown();
+      }
+    }
+
+    
+
+
+    private void visitCall(FunctionInformation sideEffectInfo, Node node) {
+      
+      if (NodeUtil.isCall(node)
+          && !NodeUtil.functionCallHasSideEffects(node, compiler)) {
+        return;
+      }
+
+      
+      if (NodeUtil.isNew(node)
+          && !NodeUtil.constructorCallHasSideEffects(node)) {
+        return;
+      }
+
+      sideEffectInfo.appendCall(node);
+    }
+
+    
+
+
+    private void visitFunction(NodeTraversal traversal,
+                               Node node,
+                               Node parent,
+                               Node gramp) {
+      Preconditions.checkArgument(!functionSideEffectMap.containsKey(node));
+
+      FunctionInformation sideEffectInfo = new FunctionInformation(inExterns);
+      functionSideEffectMap.put(node, sideEffectInfo);
+
+      if (hasNoSideEffectsAnnotation(node, parent, gramp)) {
+        if (inExterns) {
+          sideEffectInfo.setIsPure();
+        } else {
+          traversal.report(node, INVALID_NO_SIDE_EFFECT_ANNOTATION);
+        }
+      } else if (inExterns) {
+        sideEffectInfo.setTaintsGlobalState();
+      }
+    }
+
+    
+
+
+    private void visitThrow(FunctionInformation sideEffectInfo) {
+      sideEffectInfo.setFunctionThrows();
+    }
+
+    
+
+
+
+    private boolean hasNoSideEffectsAnnotation(Node node,
+                                               Node parent,
+                                               Node gramp) {
+      {
+        JSDocInfo docInfo = node.getJSDocInfo();
+        if (docInfo != null && docInfo.isNoSideEffects()) {
+          return true;
+        }
+      }
+
+      if (NodeUtil.isName(parent)) {
+        JSDocInfo docInfo = gramp.getJSDocInfo();
+        return gramp.hasOneChild() &&
+            docInfo != null &&
+            docInfo.isNoSideEffects();
+      } else if (NodeUtil.isAssign(parent)) {
+        JSDocInfo docInfo = parent.getJSDocInfo();
+        return docInfo != null && docInfo.isNoSideEffects();
+      } else {
+        return false;
+      }
+    }
+  }
+
+  
+
+
+  private static class SideEffectPropagationCallback
+      implements EdgeCallback<FunctionInformation, Node> {
+    public boolean traverseEdge(FunctionInformation callee,
+                                Node callSite,
+                                FunctionInformation caller) {
+      Preconditions.checkArgument(callSite.getType() == Token.CALL ||
+                                  callSite.getType() == Token.NEW);
+
+      boolean changed = false;
+      if (!caller.mutatesGlobalState() && callee.mutatesGlobalState()) {
+        caller.setTaintsGlobalState();
+        changed = true;
+      }
+
+      if (!caller.functionThrows() && callee.functionThrows()) {
+        caller.setFunctionThrows();
+        changed = true;
+      }
+
+      if (callee.mutatesThis()) {
+        
+        
+        if (callSite.getType() != Token.NEW) {
+          Node objectNode = getCallThisObject(callSite);
+          if (objectNode != null && NodeUtil.isThis(objectNode)) {
+            if (!caller.mutatesThis()) {
+              caller.setTaintsThis();
+              changed = true;
+            }
+          } else if (!caller.mutatesGlobalState()) {
+            caller.setTaintsGlobalState();
+            changed = true;
+          }
+        }
+      }
+
+      return changed;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+  private static Node getCallThisObject(Node callSite) {
+    Node foo = callSite.getFirstChild();
+    if (!NodeUtil.isGetProp(foo)) {
+
+      
+      return null;
+    }
+
+    Node object = null;
+
+    String propString = foo.getLastChild().getString();
+    if (propString.equals("call") || propString.equals("apply")) {
+      return foo.getNext();
+    } else {
+      return foo.getFirstChild();
+    }
+  }
+
+  
+
+
+
+  private static class FunctionInformation {
+    private final boolean extern;
+    private final List<Node> callsInFunctionBody = Lists.newArrayList();
+    private boolean pureFunction = false;
+    private boolean functionThrows = false;
+    private boolean taintsGlobalState = false;
+    private boolean taintsThis = false;
+    private boolean taintsUnknown = false;
+
+    FunctionInformation(boolean extern) {
+      this.extern = extern;
+      checkInvariant();
+    }
+
+    
+
+
+    boolean isExtern() {
+      return extern;
+    }
+
+    
+
+
+    boolean mayBePure() {
+      return !(functionThrows ||
+               taintsGlobalState ||
+               taintsThis ||
+               taintsUnknown);
+    }
+
+    
+
+
+    boolean mayHaveSideEffects() {
+      return !pureFunction;
+    }
+
+    
+
+
+    void setIsPure() {
+      pureFunction = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setTaintsGlobalState() {
+      taintsGlobalState = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setTaintsThis() {
+      taintsThis = true;
+      checkInvariant();
+    }
+
+    
+
+
+    void setFunctionThrows() {
+      functionThrows = true;
+      checkInvariant();
+    }
+
+    
+
+
+
+    void setTaintsUnknown() {
+      taintsUnknown = true;
+      checkInvariant();
+    }
+
+    
+
+
+    boolean mutatesGlobalState() {
+      return taintsGlobalState || taintsUnknown;
+    }
+
+    
+
+
+    boolean mutatesThis() {
+      return taintsThis;
+    }
+
+    
+
+
+    boolean functionThrows() {
+      return functionThrows;
+    }
+
+    
+
+
+
+    private void checkInvariant() {
+      boolean invariant = mayBePure() || mayHaveSideEffects();
+      if (!invariant) {
+        throw new IllegalStateException("Invariant failed.  " + toString());
+      }
+    }
+
+    
+
+
+    void appendCall(Node callNode) {
+      callsInFunctionBody.add(callNode);
+    }
+
+    
+
+
+    List<Node> getCallsInFunctionBody() {
+      return callsInFunctionBody;
+    }
+
+    @Override
+    public String toString() {
+      List<String> status = Lists.newArrayList();
+      if (extern) {
+        status.add("extern");
+      }
+
+      if (pureFunction) {
+        status.add("pure");
+      }
+
+      if (taintsThis) {
+        status.add("this");
+      }
+
+      if (taintsGlobalState) {
+        status.add("global");
+      }
+
+      if (functionThrows) {
+        status.add("throw");
+      }
+
+      if (taintsUnknown) {
+        status.add("complex");
+      }
+
+      return "Side effects: " + status.toString();
+    }
+  }
+}

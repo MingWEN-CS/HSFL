@@ -1,0 +1,141 @@
+80a81,84
+> 
+>         
+>         checkAdditionCompatible(m);
+> 
+83,93d86
+<         if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+<             throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+<                                                                       " addition compatible",
+<                                                                       new Object[] {
+<                                                                           getRowDimension(),
+<                                                                           getColumnDimension(),
+<                                                                           m.getRowDimension(),
+<                                                                           m.getColumnDimension()
+<                                                                       });
+<         }
+< 
+106a100,103
+> 
+>         
+>         checkSubtractionCompatible(m);
+> 
+109,119d105
+<         if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+<             throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+<                                                                       " subtraction compatible",
+<                                                                       new Object[] {
+<                                                                           getRowDimension(),
+<                                                                           getColumnDimension(),
+<                                                                           m.getRowDimension(),
+<                                                                           m.getColumnDimension()
+<                                                                       });
+<         }
+< 
+166,175c152,154
+<         if (getColumnDimension() != m.getRowDimension()) {
+<             throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+<                                                                       " multiplication compatible",
+<                                                                       new Object[] {
+<                                                                           getRowDimension(),
+<                                                                           getColumnDimension(),
+<                                                                           m.getRowDimension(),
+<                                                                           m.getColumnDimension()
+<                                                                       });
+<         }
+---
+> 
+>         
+>         checkMultiplicationCompatible(m);
+179c158
+<         final int nSum = getColumnDimension();
+---
+>         final int nSum  = getColumnDimension();
+202c181,194
+<     public abstract double[][] getData();
+---
+>     public double[][] getData() {
+> 
+>         final double[][] data = new double[getRowDimension()][getColumnDimension()];
+> 
+>         for (int i = 0; i < data.length; ++i) {
+>             final double[] dataI = data[i];
+>             for (int j = 0; j < dataI.length; ++j) {
+>                 dataI[j] = getEntry(i, j);
+>             }
+>         }
+> 
+>         return data;
+> 
+>     }
+770c762,764
+<         res.append("RealMatrixImpl{");
+---
+>         String fullClassName = getClass().getName();
+>         String shortClassName = fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
+>         res.append(shortClassName).append("{");
+847c841
+<     private void checkRowIndex(final int row) {
+---
+>     protected void checkRowIndex(final int row) {
+859c853
+<     private void checkColumnIndex(final int column)
+---
+>     protected void checkColumnIndex(final int column)
+863a858,913
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     protected void checkAdditionCompatible(final RealMatrix m) {
+>         if ((getRowDimension()    != m.getRowDimension()) ||
+>             (getColumnDimension() != m.getColumnDimension())) {
+>             throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+>                                                                       " addition compatible",
+>                                                                       new Object[] {
+>                                                                           getRowDimension(),
+>                                                                           getColumnDimension(),
+>                                                                           m.getRowDimension(),
+>                                                                           m.getColumnDimension()
+>                                                                       });
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     protected void checkSubtractionCompatible(final RealMatrix m) {
+>         if ((getRowDimension()    != m.getRowDimension()) ||
+>             (getColumnDimension() != m.getColumnDimension())) {
+>             throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+>                                                                       " subtraction compatible",
+>                                                                       new Object[] {
+>                                                                           getRowDimension(),
+>                                                                           getColumnDimension(),
+>                                                                           m.getRowDimension(),
+>                                                                           m.getColumnDimension()
+>                                                                       });
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     protected void checkMultiplicationCompatible(final RealMatrix m) {
+>         if (getColumnDimension() != m.getRowDimension()) {
+>             throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+>                                                                       " multiplication compatible",
+>                                                                       new Object[] {
+>                                                                           getRowDimension(),
+>                                                                           getColumnDimension(),
+>                                                                           m.getRowDimension(),
+>                                                                           m.getColumnDimension()
+>                                                                       });

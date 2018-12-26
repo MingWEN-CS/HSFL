@@ -1,0 +1,85 @@
+20a21
+> import com.google.javascript.rhino.JSDocInfo;
+83,86c84,85
+<       for (AliasedNode entry : traversal.getAliasUsages()) {
+<         entry.getAliasReference().getParent().replaceChild(
+<             entry.getAliasReference(),
+<             entry.getAliasDefinition().cloneTree());
+---
+>       for (AliasUsage aliasUsage : traversal.getAliasUsages()) {
+>         aliasUsage.applyAlias();
+118c117,121
+<   private class AliasedNode {
+---
+>   private interface AliasUsage {
+>     public void applyAlias();
+>   }
+> 
+>   private class AliasedNode implements AliasUsage {
+128,129c131,144
+<     public Node getAliasReference() {
+<       return aliasReference;
+---
+>     public void applyAlias() {
+>       aliasReference.getParent().replaceChild(
+>           aliasReference, aliasDefinition.cloneTree());
+>     }
+>   }
+> 
+>   private class AliasedTypeNode implements AliasUsage {
+>     private final Node aliasReference;
+> 
+>     private final String correctedType;
+> 
+>     AliasedTypeNode(Node aliasReference, String correctedType) {
+>       this.aliasReference = aliasReference;
+>       this.correctedType = correctedType;
+132,133c147,148
+<     public Node getAliasDefinition() {
+<       return aliasDefinition;
+---
+>     public void applyAlias() {
+>       aliasReference.setString(correctedType);
+136a152
+> 
+143c159
+<     private List<AliasedNode> aliasUsages = Lists.newArrayList();
+---
+>     private List<AliasUsage> aliasUsages = Lists.newArrayList();
+154c170
+<     private List<AliasedNode> getAliasUsages() {
+---
+>     private List<AliasUsage> getAliasUsages() {
+224a241
+>             
+264a282,311
+> 
+>         JSDocInfo info = n.getJSDocInfo();
+>         if (info != null) {
+>           for (Node node : info.getTypeNodes()) {
+>             fixTypeNode(node);
+>           }
+>         }
+> 
+>         
+>       }
+>     }
+> 
+>     private void fixTypeNode(Node typeNode) {
+>       if (typeNode.getType() == Token.STRING) {
+>         String name = typeNode.getString();
+>         int endIndex = name.indexOf('.');
+>         if (endIndex == -1) {
+>           endIndex = name.length();
+>         }
+>         String baseName = name.substring(0, endIndex);
+>         Node aliasedNode = aliases.get(baseName);
+>         if (aliasedNode != null) {
+>           aliasUsages.add(new AliasedTypeNode(typeNode,
+>               aliasedNode.getQualifiedName() + name.substring(endIndex)));
+>         }
+>       }
+> 
+>       for (Node child = typeNode.getFirstChild(); child != null;
+>            child = child.getNext()) {
+>         fixTypeNode(child);

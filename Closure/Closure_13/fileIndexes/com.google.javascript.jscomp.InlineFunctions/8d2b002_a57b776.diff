@@ -1,0 +1,62 @@
+57c57
+< class InlineFunctions implements CompilerPass {
+---
+> class InlineFunctions implements SpecializationAwareCompilerPass {
+74a75,76
+>   private SpecializeModule.SpecializationState specializationState;
+> 
+99a102,106
+>   public void enableSpecialization(SpecializeModule.SpecializationState
+>       specializationState) {
+>     this.specializationState = specializationState;
+>   }
+> 
+312a320,327
+>   private Node getContainingFunction(NodeTraversal t) {
+>     return (t.inGlobalScope()) ? null : t.getScopeRoot();
+>   }
+> 
+>   
+> 
+> 
+> 
+330a346,351
+>     
+>     if (specializationState != null &&
+>         !specializationState.canFixupFunction(fn.getFunctionNode())) {
+>       return false;
+>     }
+> 
+450a472,482
+> 
+>       if (specializationState != null) {
+>         
+>         
+>         Node containingFunction = getContainingFunction(t);
+>         if (containingFunction != null && !specializationState.canFixupFunction(
+>             containingFunction)) {
+>             return false;
+>         }
+>       }
+> 
+528c560
+<   private static class Inline implements CallVisitorCallback {
+---
+>   private class Inline implements CallVisitorCallback {
+544a577,586
+>           if (specializationState != null) {
+>             Node containingFunction = getContainingFunction(t);
+> 
+>             if (containingFunction != null) {
+>               
+>               
+>               specializationState.reportSpecializedFunction(containingFunction);
+>             }
+>           }
+> 
+749a792,796
+> 
+>         if (specializationState != null) {
+>           specializationState.reportRemovedFunction(fn.getFunctionNode());
+>         }
+> 

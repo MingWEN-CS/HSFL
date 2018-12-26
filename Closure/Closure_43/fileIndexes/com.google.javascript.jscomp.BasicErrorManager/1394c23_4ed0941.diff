@@ -1,0 +1,73 @@
+19d18
+< import com.google.common.base.Pair;
+41,42c40,41
+<   private final SortedSet<Pair<JSError, CheckLevel>> messages =
+<     Sets.newTreeSet(new LeveledJSErrorComparator());
+---
+>   private final SortedSet<ErrorWithLevel> messages =
+>       Sets.newTreeSet(new LeveledJSErrorComparator());
+48c47
+<     if (messages.add(Pair.of(error, level))) {
+---
+>     if (messages.add(new ErrorWithLevel(error, level))) {
+58,59c57,58
+<     for (Pair<JSError, CheckLevel> message : messages) {
+<       println(message.second, message.first);
+---
+>     for (ErrorWithLevel message : messages) {
+>       println(message.level, message.error);
+101,103c100,102
+<     for (Pair<JSError, CheckLevel> p : messages) {
+<       if (p.second == level) {
+<         errors.add(p.first);
+---
+>     for (ErrorWithLevel p : messages) {
+>       if (p.level == level) {
+>         errors.add(p.error);
+119c118
+<       implements Comparator<Pair<JSError, CheckLevel>> {
+---
+>       implements Comparator<ErrorWithLevel> {
+123,124c122
+<     public int compare(Pair<JSError, CheckLevel> p1,
+<         Pair<JSError, CheckLevel> p2) {
+---
+>     public int compare(ErrorWithLevel p1, ErrorWithLevel p2) {
+135,136c133,134
+<       if (p1.second != p2.second) {
+<         return p2.second.compareTo(p1.second);
+---
+>       if (p1.level != p2.level) {
+>         return p2.level.compareTo(p1.level);
+140,141c138,139
+<       String source1 = p1.first.sourceName;
+<       String source2 = p2.first.sourceName;
+---
+>       String source1 = p1.error.sourceName;
+>       String source2 = p2.error.sourceName;
+153,154c151,152
+<       int lineno1 = p1.first.lineNumber;
+<       int lineno2 = p2.first.lineNumber;
+---
+>       int lineno1 = p1.error.lineNumber;
+>       int lineno2 = p2.error.lineNumber;
+163,164c161,162
+<       int charno1 = p1.first.getCharno();
+<       int charno2 = p2.first.getCharno();
+---
+>       int charno1 = p1.error.getCharno();
+>       int charno2 = p2.error.getCharno();
+173c171,181
+<       return p1.first.description.compareTo(p2.first.description);
+---
+>       return p1.error.description.compareTo(p2.error.description);
+>     }
+>   }
+> 
+>   static class ErrorWithLevel {
+>     final JSError error;
+>     final CheckLevel level;
+> 
+>     ErrorWithLevel(JSError error, CheckLevel level) {
+>       this.error = error;
+>       this.level = level;

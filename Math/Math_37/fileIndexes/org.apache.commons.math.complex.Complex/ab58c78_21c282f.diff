@@ -1,0 +1,450 @@
+25d24
+< import org.apache.commons.math.MathRuntimeException;
+26a26
+> import org.apache.commons.math.exception.NotPositiveException;
+49d48
+< public class Complex implements FieldElement<Complex>, Serializable  {
+50a50
+> public class Complex implements FieldElement<Complex>, Serializable  {
+53d52
+< 
+58d56
+< 
+61d58
+< 
+64d60
+< 
+73d68
+< 
+76d70
+< 
+79d72
+< 
+87a81,89
+>     public Complex(double real) {
+>         this(real, 0.0);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+90d91
+<         super();
+96c97
+<         (Double.isInfinite(real) || Double.isInfinite(imaginary));
+---
+>             (Double.isInfinite(real) || Double.isInfinite(imaginary));
+107,108d107
+< 
+< 
+113d111
+< 
+117d114
+< 
+150,153c147,152
+<     public Complex add(Complex rhs)
+<         throws NullArgumentException {
+<         MathUtils.checkNotNull(rhs);
+<         if (isNaN || rhs.isNaN) {
+---
+> 
+> 
+>     @Override
+>     public Complex add(Complex addend) throws NullArgumentException {
+>         MathUtils.checkNotNull(addend);
+>         if (isNaN || addend.isNaN) {
+156,157c155,157
+<         return createComplex(real + rhs.getReal(),
+<             imaginary + rhs.getImaginary());
+---
+> 
+>         return createComplex(real + addend.getReal(),
+>                              imaginary + addend.getImaginary());
+167a168,183
+>     public Complex add(double addend) {
+>         if (isNaN || Double.isNaN(addend)) {
+>             return NaN;
+>         }
+> 
+>         return createComplex(real + addend, imaginary);
+>     }
+> 
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+177a194
+> 
+216c233,241
+<     public Complex divide(Complex rhs)
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     @Override
+>     public Complex divide(Complex divisor)
+218,219c243,244
+<         MathUtils.checkNotNull(rhs);
+<         if (isNaN || rhs.isNaN) {
+---
+>         MathUtils.checkNotNull(divisor);
+>         if (isNaN || divisor.isNaN) {
+223,224c248,249
+<         double c = rhs.getReal();
+<         double d = rhs.getImaginary();
+---
+>         final double c = divisor.getReal();
+>         final double d = divisor.getImaginary();
+229c254
+<         if (rhs.isInfinite() && !isInfinite()) {
+---
+>         if (divisor.isInfinite() && !isInfinite()) {
+253a279,298
+>     public Complex divide(double divisor) {
+>         if (isNaN || Double.isNaN(divisor)) {
+>             return NaN;
+>         }
+>         if (divisor == 0.0) {
+>             return NaN;
+>         }
+>         if (Double.isInfinite(divisor) && !isInfinite()) {
+>             return ZERO;
+>         }
+> 
+>         return createComplex(real / divisor,
+>                              imaginary  / divisor);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+270,271c315,316
+<             Complex rhs = (Complex)other;
+<             if (rhs.isNaN) {
+---
+>             Complex c = (Complex)other;
+>             if (c.isNaN) {
+274c319
+<                 return (real == rhs.real) && (imaginary == rhs.imaginary);
+---
+>                 return (real == c.real) && (imaginary == c.imaginary);
+362,365c407,408
+< 
+< 
+< 
+<     public Complex multiply(Complex rhs)
+---
+>     @Override
+>     public Complex multiply(Complex factor)
+367,368c410,411
+<         MathUtils.checkNotNull(rhs);
+<         if (isNaN || rhs.isNaN) {
+---
+>         MathUtils.checkNotNull(factor);
+>         if (isNaN || factor.isNaN) {
+371,372c414,417
+<         if (Double.isInfinite(real) || Double.isInfinite(imaginary) ||
+<             Double.isInfinite(rhs.real)|| Double.isInfinite(rhs.imaginary)) {
+---
+>         if (Double.isInfinite(real) ||
+>             Double.isInfinite(imaginary) ||
+>             Double.isInfinite(factor.real) ||
+>             Double.isInfinite(factor.imaginary)) {
+376,377c421,422
+<         return createComplex(real * rhs.real - imaginary * rhs.imaginary,
+<                 real * rhs.imaginary + imaginary * rhs.real);
+---
+>         return createComplex(real * factor.real - imaginary * factor.imaginary,
+>                              real * factor.imaginary + imaginary * factor.real);
+387,407c432,433
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public Complex multiply(double rhs) {
+<         if (isNaN || Double.isNaN(rhs)) {
+---
+>     public Complex multiply(double factor) {
+>         if (isNaN || Double.isNaN(factor)) {
+410,411c436,438
+<         if (Double.isInfinite(real) || Double.isInfinite(imaginary) ||
+<             Double.isInfinite(rhs)) {
+---
+>         if (Double.isInfinite(real) ||
+>             Double.isInfinite(imaginary) ||
+>             Double.isInfinite(factor)) {
+415c442
+<         return createComplex(real * rhs, imaginary * rhs);
+---
+>         return createComplex(real * factor, imaginary * factor);
+425d451
+< 
+452c478,479
+<     public Complex subtract(Complex rhs)
+---
+>     @Override
+>     public Complex subtract(Complex subtrahend)
+454,455c481,482
+<         MathUtils.checkNotNull(rhs);
+<         if (isNaN || rhs.isNaN) {
+---
+>         MathUtils.checkNotNull(subtrahend);
+>         if (isNaN || subtrahend.isNaN) {
+459,460c486,487
+<         return createComplex(real - rhs.getReal(),
+<             imaginary - rhs.getImaginary());
+---
+>         return createComplex(real - subtrahend.getReal(),
+>                              imaginary - subtrahend.getImaginary());
+470a498,514
+>     public Complex subtract(double subtrahend) {
+>         if (isNaN || Double.isNaN(subtrahend)) {
+>             return NaN;
+>         }
+>         return createComplex(real - subtrahend, imaginary);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+482,483c526,527
+<         return this.add(this.sqrt1z().multiply(Complex.I)).log()
+<               .multiply(Complex.I.negate());
+---
+>         return this.add(this.sqrt1z().multiply(I)).log()
+>             .multiply(I.negate());
+499a544,545
+> 
+> 
+505,506c551,552
+<         return sqrt1z().add(this.multiply(Complex.I)).log()
+<               .multiply(Complex.I.negate());
+---
+>         return sqrt1z().add(this.multiply(I)).log()
+>             .multiply(I.negate());
+522a569,570
+> 
+> 
+528,529c576,577
+<         return this.add(Complex.I).divide(Complex.I.subtract(this)).log()
+<             .multiply(Complex.I.divide(createComplex(2.0, 0.0)));
+---
+>         return this.add(I).divide(I.subtract(this)).log()
+>             .multiply(I.divide(createComplex(2.0, 0.0)));
+557a606,611
+> 
+> 
+> 
+> 
+> 
+> 
+564c618
+<             -FastMath.sin(real) * MathUtils.sinh(imaginary));
+---
+>                              -FastMath.sin(real) * MathUtils.sinh(imaginary));
+591a646,651
+> 
+> 
+> 
+> 
+> 
+> 
+598c658
+<             MathUtils.sinh(real) * FastMath.sin(imaginary));
+---
+>                              MathUtils.sinh(real) * FastMath.sin(imaginary));
+626a687,692
+> 
+> 
+> 
+> 
+> 
+> 
+633c699,700
+<         return createComplex(expReal *  FastMath.cos(imaginary), expReal * FastMath.sin(imaginary));
+---
+>         return createComplex(expReal *  FastMath.cos(imaginary),
+>                              expReal * FastMath.sin(imaginary));
+664a732,737
+> 
+> 
+> 
+> 
+> 
+> 
+671c744
+<             FastMath.atan2(imaginary, real));
+---
+>                              FastMath.atan2(imaginary, real));
+690a764,766
+> 
+> 
+> 
+703a780,796
+>      public Complex pow(double x) {
+>         return this.log().multiply(x).exp();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+729c822
+<             FastMath.cos(real) * MathUtils.sinh(imaginary));
+---
+>                              FastMath.cos(real) * MathUtils.sinh(imaginary));
+756a850,855
+> 
+> 
+> 
+> 
+> 
+> 
+798a898
+> 
+813c913
+<                 MathUtils.indicator(imaginary) * t);
+---
+>                                  MathUtils.indicator(imaginary) * t);
+834d933
+< 
+864a964,969
+> 
+> 
+> 
+> 
+> 
+> 
+874c979,980
+<         return createComplex(FastMath.sin(real2) / d, MathUtils.sinh(imaginary2) / d);
+---
+>         return createComplex(FastMath.sin(real2) / d,
+>                              MathUtils.sinh(imaginary2) / d);
+902a1009,1014
+> 
+> 
+> 
+> 
+> 
+> 
+912c1024,1025
+<         return createComplex(MathUtils.sinh(real2) / d, FastMath.sin(imaginary2) / d);
+---
+>         return createComplex(MathUtils.sinh(real2) / d,
+>                              FastMath.sin(imaginary2) / d);
+930a1044,1046
+> 
+> 
+> 
+953c1069,1073
+<     public List<Complex> nthRoot(int n) throws IllegalArgumentException {
+---
+> 
+> 
+> 
+> 
+>     public List<Complex> nthRoot(int n) {
+956,958c1076,1077
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.CANNOT_COMPUTE_NTH_ROOT_FOR_NEGATIVE_N,
+<                     n);
+---
+>             throw new NotPositiveException(LocalizedFormats.CANNOT_COMPUTE_NTH_ROOT_FOR_NEGATIVE_N,
+>                                            n);
+961c1080
+<         List<Complex> result = new ArrayList<Complex>();
+---
+>         final List<Complex> result = new ArrayList<Complex>();
+967d1085
+< 
+977c1095
+<         final double nthPhi = getArgument()/n;
+---
+>         final double nthPhi = getArgument() / n;
+982c1100
+<             final double realPart      = nthRootOfAbs *  FastMath.cos(innerPart);
+---
+>             final double realPart = nthRootOfAbs *  FastMath.cos(innerPart);
+999c1117,1119
+<     protected Complex createComplex(double realPart, double imaginaryPart) {
+---
+> 
+>     protected Complex createComplex(double realPart,
+>                                     double imaginaryPart) {
+1008a1129,1159
+> 
+>     public static Complex valueOf(double realPart,
+>                                   double imaginaryPart) {
+>         if (Double.isNaN(realPart) ||
+>             Double.isNaN(imaginaryPart)) {
+>             return NaN;
+>         }
+>         return new Complex(realPart, imaginaryPart);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public static Complex valueOf(double realPart) {
+>         if (Double.isNaN(realPart)) {
+>             return NaN;
+>         }
+>         return new Complex(realPart);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1013a1165
+>     @Override

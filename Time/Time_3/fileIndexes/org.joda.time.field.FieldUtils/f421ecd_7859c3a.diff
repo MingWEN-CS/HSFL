@@ -1,0 +1,210 @@
+15a16
+> package org.joda.time.field;
+16a18,20
+> import org.joda.time.DateTimeField;
+> import org.joda.time.DateTimeFieldType;
+> import org.joda.time.IllegalFieldValueException;
+25a30
+> public class FieldUtils {
+26a32
+>     
+28a35,40
+>     private FieldUtils() {
+>         super();
+>     }
+>     
+>     
+>     
+35a48,55
+>     public static int safeNegate(int value) {
+>         if (value == Integer.MIN_VALUE) {
+>             throw new ArithmeticException("Integer.MIN_VALUE cannot be negated");
+>         }
+>         return -value;
+>     }
+>     
+>     
+42a63,73
+>     public static int safeAdd(int val1, int val2) {
+>         int sum = val1 + val2;
+>         
+>         if ((val1 ^ sum) < 0 && (val1 ^ val2) >= 0) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " + " + val2);
+>         }
+>         return sum;
+>     }
+>     
+>     
+49a81,91
+>     public static long safeAdd(long val1, long val2) {
+>         long sum = val1 + val2;
+>         
+>         if ((val1 ^ sum) < 0 && (val1 ^ val2) >= 0) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " + " + val2);
+>         }
+>         return sum;
+>     }
+>     
+>     
+54,66d95
+< package org.joda.time.field;
+< 
+< import org.joda.time.DateTimeField;
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< public class FieldUtils {
+68d96
+<     
+71,72c99,106
+<     private FieldUtils() {
+<         super();
+---
+>     public static long safeSubtract(long val1, long val2) {
+>         long diff = val1 - val2;
+>         
+>         if ((val1 ^ diff) < 0 && (val1 ^ val2) < 0) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " - " + val2);
+>         }
+>         return diff;
+76d109
+<     
+83,84c116,119
+<     public static int safeAdd(int val1, int val2) {
+<         long total = ((long) val1) + ((long) val2);
+---
+> 
+> 
+>     public static int safeMultiply(int val1, int val2) {
+>         long total = (long) val1 * (long) val2;
+86c121,122
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+---
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " * " + val2);
+90c126
+<     
+---
+> 
+98,101c134,143
+<     public static long safeAdd(long val1, long val2) {
+<         long total = val1 + val2;
+<         if (val1 > 0 && val2 > 0 && total < 0) {
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+---
+> 
+> 
+>     public static long safeMultiply(long val1, int scalar) {
+>         switch (scalar) {
+>         case -1:
+>             return -val1;
+>         case 0:
+>             return 0L;
+>         case 1:
+>             return val1;
+103,104c145,148
+<         if (val1 < 0 && val2 < 0 && total > 0) {
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+---
+>         long total = val1 * scalar;
+>         if (total / scalar != val1) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " * " + scalar);
+108,113d151
+<     
+<     
+< 
+< 
+< 
+< 
+115,125d152
+< 
+<     public static long safeSubtract(long val1, long val2) {
+<         if (val2 == Long.MIN_VALUE) {
+<             if (val1 <= 0L) {
+<                 return (val1 - val2);
+<             }
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" - " + val2);
+<         }
+<         return safeAdd(val1, -val2);
+<     }
+<     
+132a160
+> 
+134,135c162,166
+<         if (val1 == 0  || val2 == 0) {
+<             return 0L;
+---
+>         if (val2 == 1) {
+>             return val1;
+>         }
+>         if (val2 == 0) {
+>             return 0;
+139c170,171
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" * " + val2);
+---
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " * " + val2);
+149a182
+> 
+163a197
+> 
+167a202
+> 
+180,189c215,235
+<             throw new IllegalArgumentException(
+<                 "Value "
+<                     + value
+<                     + " for "
+<                     + field.getName()
+<                     + " must be in the range ["
+<                     + lowerBound
+<                     + ','
+<                     + upperBound
+<                     + ']');
+---
+>             throw new IllegalFieldValueException
+>                 (field.getType(), new Integer(value),
+>                  new Integer(lowerBound), new Integer(upperBound));
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void verifyValueBounds(DateTimeFieldType fieldType, 
+>                                          int value, int lowerBound, int upperBound) {
+>         if ((value < lowerBound) || (value > upperBound)) {
+>             throw new IllegalFieldValueException
+>                 (fieldType, new Integer(value),
+>                  new Integer(lowerBound), new Integer(upperBound));
+204,213c250,252
+<             throw new IllegalArgumentException(
+<                 "Value "
+<                     + value
+<                     + " for "
+<                     + fieldName
+<                     + " must be in the range ["
+<                     + lowerBound
+<                     + ','
+<                     + upperBound
+<                     + ']');
+---
+>             throw new IllegalFieldValueException
+>                 (fieldName, new Integer(value),
+>                  new Integer(lowerBound), new Integer(upperBound));

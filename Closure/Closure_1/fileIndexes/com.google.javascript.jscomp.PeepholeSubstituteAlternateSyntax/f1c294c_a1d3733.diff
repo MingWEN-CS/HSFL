@@ -1,0 +1,73 @@
+710c710
+<     
+---
+> 
+723c723
+<         boolean constructorHasArguments = constructorNameNode.getNext() != null;
+---
+>         boolean constructorHasArgs = constructorNameNode.getNext() != null;
+725,727c725,734
+<         if (!constructorHasArguments) {
+<           if ("Array".equals(className)) {
+<             
+---
+>         if ("Object".equals(className) && !constructorHasArgs) {
+>           
+>           newLiteralNode = new Node(Token.OBJECTLIT);
+>         } else if ("Array".equals(className)) {
+>           
+>           Node arg0 = constructorNameNode.getNext();
+>           FoldArrayAction action = isSafeToFoldArrayConstructor(arg0);
+> 
+>           if (action == FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS ||
+>               action == FoldArrayAction.SAFE_TO_FOLD_WITHOUT_ARGS) {
+729,731c736,739
+<           } else if ("Object".equals(className)) {
+<             
+<             newLiteralNode = new Node(Token.OBJECTLIT);
+---
+>             n.removeChildren();
+>             if (action == FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS) {
+>               newLiteralNode.addChildrenToFront(arg0);
+>             }
+733a742
+> 
+742a752,789
+> 
+>   private static enum FoldArrayAction {
+>     NOT_SAFE_TO_FOLD, SAFE_TO_FOLD_WITH_ARGS, SAFE_TO_FOLD_WITHOUT_ARGS}
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   private FoldArrayAction isSafeToFoldArrayConstructor(Node arg) {
+>     FoldArrayAction action = FoldArrayAction.NOT_SAFE_TO_FOLD;
+> 
+>     if (arg == null) {
+>       action = FoldArrayAction.SAFE_TO_FOLD_WITHOUT_ARGS;
+>     } else if (arg.getNext() != null) {
+>       action = FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS;
+>     } else {
+>       switch (arg.getType()) {
+>         case (Token.STRING):
+>           
+>           action = FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS;
+>           break;
+>         case (Token.NUMBER):
+>           
+>           if (arg.getDouble() == 0) {
+>             action = FoldArrayAction.SAFE_TO_FOLD_WITHOUT_ARGS;
+>           }
+>           break;
+>         case (Token.ARRAYLIT):
+>           
+>           action = FoldArrayAction.SAFE_TO_FOLD_WITH_ARGS;
+>           break;
+>         default:
+>       }
+>     }
+>     return action;
+>   }

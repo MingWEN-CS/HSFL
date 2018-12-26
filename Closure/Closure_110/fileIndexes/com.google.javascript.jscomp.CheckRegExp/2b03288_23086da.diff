@@ -1,0 +1,27 @@
+17a18
+> import com.google.common.collect.ImmutableSet;
+22a24,25
+> import java.util.Set;
+> 
+39a43,51
+>   private static final Set<String> REGEXP_PROPERTY_BLACKLIST = ImmutableSet.of(
+>       "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+>       "$_", "$input",
+>       
+>       
+>       
+>       "input", "lastMatch", "lastParen", "leftContext", "rightContext",
+>       "global", "ignoreCase", "lastIndex", "multiline", "source");
+> 
+64,65c76,83
+<                || (parentType == Token.CALL && first)
+<                || (parentType == Token.INSTANCEOF && !first))) {
+---
+>             || (parentType == Token.CALL && first)
+>             || (parentType == Token.INSTANCEOF && !first)
+>             || parentType == Token.EQ || parentType == Token.NE
+>             || parentType == Token.SHEQ || parentType == Token.SHNE
+>             || parentType == Token.CASE
+>             || (parentType == Token.GETPROP && first
+>             && !REGEXP_PROPERTY_BLACKLIST.contains(
+>             parent.getLastChild().getString())))) {

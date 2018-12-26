@@ -1,0 +1,127 @@
+21a22
+> import com.google.common.collect.ImmutableSet;
+36a38,39
+> import javax.annotation.Nullable;
+> 
+336c339,343
+<     return checkForStateChangeHelper(n, true);
+---
+>     return mayEffectMutableState(n, null);
+>   }
+> 
+>   static boolean mayEffectMutableState(Node n, AbstractCompiler compiler) {
+>     return checkForStateChangeHelper(n, true, compiler);
+343c350,354
+<     return checkForStateChangeHelper(n, false);
+---
+>     return mayHaveSideEffects(n, null);
+>   }
+> 
+>   static boolean mayHaveSideEffects(Node n, AbstractCompiler compiler) {
+>     return checkForStateChangeHelper(n, false, compiler);
+353c364
+<       Node n, boolean checkForNewObjects) {
+---
+>       Node n, boolean checkForNewObjects, AbstractCompiler compiler) {
+405,408c416,418
+<         {
+<           if (checkForNewObjects) {
+<             return true;
+<           }
+---
+>         if (checkForNewObjects) {
+>           return true;
+>         }
+409a420
+>         if (!constructorCallHasSideEffects(n)) {
+412,428c423
+<           if (n.isNoSideEffectsCall()) {
+<             break;
+<           }
+< 
+<           
+<           Node constructor = n.getFirstChild();
+<           if (Token.NAME == constructor.getType()) {
+<             String className = constructor.getString();
+<             if (CONSTRUCTORS_WITHOUT_SIDE_EFFECTS.contains(className)) {
+<               
+<               
+<               break;
+<             }
+<           } else {
+<             
+<             
+<           }
+---
+>           break;
+435c430
+<         if (n.isNoSideEffectsCall()) {
+---
+>         if (!functionCallHasSideEffects(n, compiler)) {
+452c447
+<                   n.getFirstChild(), checkForNewObjects) ||
+---
+>                   n.getFirstChild(), checkForNewObjects, compiler) ||
+454c449
+<                   n.getLastChild(), checkForNewObjects)) {
+---
+>                   n.getLastChild(), checkForNewObjects, compiler)) {
+472c467
+<       if (checkForStateChangeHelper(c, checkForNewObjects)) {
+---
+>       if (checkForStateChangeHelper(c, checkForNewObjects, compiler)) {
+502a498,502
+>   private static final Set<String> REGEXP_METHODS =
+>       ImmutableSet.of("test", "exec");
+>   private static final Set<String> STRING_REGEXP_METHODS =
+>       ImmutableSet.of("match", "replace", "search", "split");
+> 
+508c508,521
+<   static boolean functionCallHasSideEffects(Node callNode) {
+---
+>   static boolean functionCallHasSideEffects(
+>       Node callNode) {
+>     return functionCallHasSideEffects(callNode, null);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   static boolean functionCallHasSideEffects(
+>       Node callNode, @Nullable AbstractCompiler compiler) {
+525c538,545
+<     }
+---
+>     } else if (nameNode.getType() == Token.GETPROP) {
+>       
+>       if (nameNode.getFirstChild().getType() == Token.NAME) {
+>         String namespaceName = nameNode.getFirstChild().getString();
+>         if (namespaceName.equals("Math")) {
+>           return false;
+>         }
+>       }
+527,532c547,559
+<     
+<     if (nameNode.getType() == Token.GETPROP &&
+<         nameNode.getFirstChild().getType() == Token.NAME) {
+<       String namespaceName = nameNode.getFirstChild().getString();
+<       if (namespaceName.equals("Math")) {
+<         return false;
+---
+>       if (compiler != null && !compiler.hasRegExpGlobalReferences()) {
+>         if (nameNode.getFirstChild().getType() == Token.REGEXP
+>             && REGEXP_METHODS.contains(nameNode.getLastChild().getString())) {
+>           return false;
+>         } else if (nameNode.getFirstChild().getType() == Token.STRING
+>             && STRING_REGEXP_METHODS.contains(
+>                 nameNode.getLastChild().getString())) {
+>           Node param = nameNode.getNext();
+>           if (param != null &&
+>               (param.getType() == Token.STRING
+>                   || param.getType() == Token.REGEXP))
+>           return false;
+>         }

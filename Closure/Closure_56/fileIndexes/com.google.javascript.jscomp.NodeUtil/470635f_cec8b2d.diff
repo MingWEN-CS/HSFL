@@ -1,0 +1,123 @@
+532a533,537
+>           Node assignTarget = n.getFirstChild();
+>           if (isName(assignTarget)) {
+>             return true;
+>           }
+> 
+544,550c549,574
+<           Node current = n.getFirstChild();
+<           for (;
+<                current.getType() == Token.GETPROP ||
+<                current.getType() == Token.GETELEM;
+<                current = current.getFirstChild()) { }
+< 
+<           return !isLiteralValue(current, true);
+---
+>           if (isGet(assignTarget)) {
+>             
+>             
+>             
+>             
+>             Node current = assignTarget.getFirstChild();
+>             if (evaluatesToLocalValue(current)) {
+>               return false;
+>             }
+> 
+>             
+>             
+>             
+>             
+>             
+>             while (isGet(current)) {
+>               current = current.getFirstChild();
+>             }
+> 
+>             return !isLiteralValue(current, true);
+>           } else {
+>             
+>             
+>             
+>             return !isLiteralValue(assignTarget, true);
+>           }
+639a664,668
+>       if (callNode.isOnlyModifiesThisCall()
+>           && evaluatesToLocalValue(nameNode.getFirstChild())) {
+>         return false;
+>       }
+> 
+2214a2244,2318
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static boolean evaluatesToLocalValue(Node value) {
+>     return evaluatesToLocalValue(value, Predicates.<Node>alwaysFalse());
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   static boolean evaluatesToLocalValue(Node value, Predicate<Node> locals) {
+>     switch (value.getType()) {
+>       case Token.ASSIGN:
+>         
+>         
+>         
+>         return NodeUtil.isImmutableValue(value.getLastChild())
+>             || (locals.apply(value)
+>                 && evaluatesToLocalValue(value.getLastChild(), locals));
+>       case Token.COMMA:
+>         return evaluatesToLocalValue(value.getLastChild(), locals);
+>       case Token.AND:
+>       case Token.OR:
+>         return evaluatesToLocalValue(value.getFirstChild(), locals)
+>            && evaluatesToLocalValue(value.getLastChild(), locals);
+>       case Token.HOOK:
+>         return evaluatesToLocalValue(value.getFirstChild().getNext(), locals)
+>            && evaluatesToLocalValue(value.getLastChild(), locals);
+>       case Token.INC:
+>       case Token.DEC:
+>         if (value.getBooleanProp(Node.INCRDECR_PROP)) {
+>           return evaluatesToLocalValue(value.getFirstChild(), locals);
+>         } else {
+>           return true;
+>         }
+>       case Token.THIS:
+>         return locals.apply(value);
+>       case Token.NAME:
+>         return isImmutableValue(value) || locals.apply(value);
+>       case Token.GETELEM:
+>       case Token.GETPROP:
+>         
+>         return locals.apply(value);
+>       case Token.CALL:
+>         return callHasLocalResult(value) || locals.apply(value);
+>       case Token.NEW:
+>         return true;
+>       case Token.FUNCTION:
+>       case Token.REGEXP:
+>       case Token.ARRAYLIT:
+>       case Token.OBJECTLIT:
+>         
+>         return true;
+>       case Token.IN:
+>         
+>         return true;
+>       default:
+>         
+>         
+>         
+>         if (isAssignmentOp(value)
+>             || isSimpleOperator(value)
+>             || isImmutableValue(value)) {
+>           return true;
+>         }
+> 
+>         throw new IllegalStateException(
+>             "Unexpected expression node" + value +
+>             "\n parent:" + value.getParent());
+>     }

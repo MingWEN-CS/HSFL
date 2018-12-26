@@ -1,0 +1,58 @@
+95,96d94
+<   private static final String LEGACY_TYPEDEF = "goog.typedef";
+< 
+256,260d253
+<     declareNativeValueType(s, LEGACY_TYPEDEF, NO_TYPE);
+< 
+<     
+<     
+<     
+326,330d318
+< 
+<         if (valueNode != null &&
+<             LEGACY_TYPEDEF.equals(valueNode.getQualifiedName())) {
+<           registry.identifyNonNullableName(nameNode.getQualifiedName());
+<         }
+1577,1581d1564
+<         case Token.ASSIGN:
+<           
+<           checkForOldStyleTypedef(t, n);
+<           break;
+< 
+1585d1567
+<             checkForOldStyleTypedef(t, n);
+1633,1666d1614
+<       }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     
+<     private void checkForOldStyleTypedef(NodeTraversal t, Node candidate) {
+<       
+<       String typedef = codingConvention.identifyTypeDefAssign(candidate);
+<       if (typedef != null) {
+<         
+<         
+<         
+<         typeRegistry.declareType(typedef, getNativeType(UNKNOWN_TYPE));
+< 
+<         JSDocInfo info = candidate.getJSDocInfo();
+<         JSType realType = null;
+<         if (info != null && info.getType() != null) {
+<           realType = info.getType().evaluate(scope, typeRegistry);
+<         }
+< 
+<         if (realType == null) {
+<           compiler.report(
+<               JSError.make(
+<                   t.getSourceName(), candidate, MALFORMED_TYPEDEF, typedef));
+<         }
+< 
+<         typeRegistry.overwriteDeclaredType(typedef, realType);
+< 
+<         
+<         

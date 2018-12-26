@@ -1,0 +1,680 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.chrono;
+
+import java.io.Serializable;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeFieldType;
+import org.joda.time.DateTimeZone;
+import org.joda.time.DateTimeField;
+import org.joda.time.DurationField;
+import org.joda.time.DurationFieldType;
+import org.joda.time.ReadablePartial;
+import org.joda.time.field.UnsupportedDateTimeField;
+import org.joda.time.field.UnsupportedDurationField;
+
+
+
+
+
+
+
+
+
+
+
+public abstract class BaseChronology
+        extends Chronology
+        implements Serializable {
+
+    
+    private static final long serialVersionUID = -7310865996721419676L;
+
+    
+
+
+    protected BaseChronology() {
+        super();
+    }
+
+    
+
+
+
+
+
+    public abstract DateTimeZone getZone();
+
+    
+
+
+
+
+
+
+    public abstract Chronology withUTC();
+    
+    
+
+
+
+
+
+
+    public abstract Chronology withZone(DateTimeZone zone);
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+                                  int millisOfDay)
+        throws IllegalArgumentException
+    {
+        long instant = year().set(0, year);
+        instant = monthOfYear().set(instant, monthOfYear);
+        instant = dayOfMonth().set(instant, dayOfMonth);
+        return millisOfDay().set(instant, millisOfDay);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+                                  int hourOfDay, int minuteOfHour,
+                                  int secondOfMinute, int millisOfSecond)
+        throws IllegalArgumentException
+    {
+        long instant = year().set(0, year);
+        instant = monthOfYear().set(instant, monthOfYear);
+        instant = dayOfMonth().set(instant, dayOfMonth);
+        instant = hourOfDay().set(instant, hourOfDay);
+        instant = minuteOfHour().set(instant, minuteOfHour);
+        instant = secondOfMinute().set(instant, secondOfMinute);
+        return millisOfSecond().set(instant, millisOfSecond);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public long getDateTimeMillis(long instant,
+                                  int hourOfDay, int minuteOfHour,
+                                  int secondOfMinute, int millisOfSecond)
+        throws IllegalArgumentException
+    {
+        instant = hourOfDay().set(instant, hourOfDay);
+        instant = minuteOfHour().set(instant, minuteOfHour);
+        instant = secondOfMinute().set(instant, secondOfMinute);
+        return millisOfSecond().set(instant, millisOfSecond);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void validate(ReadablePartial partial, int[] values) {
+        
+        
+        int size = partial.size();
+        for (int i = 0; i < size; i++) {
+            int value = values[i];
+            DateTimeField field = partial.getField(i);
+            if (value < field.getMinimumValue()) {
+                throw new IllegalArgumentException("Value " + value +
+                        " for " + field.getName() + " is less than minimum");
+            }
+            if (value > field.getMaximumValue()) {
+                throw new IllegalArgumentException("Value " + value +
+                        " for " + field.getName() + " is greater than maximum");
+            }
+        }
+        
+        for (int i = 0; i < size; i++) {
+            int value = values[i];
+            DateTimeField field = partial.getField(i);
+            if (value < field.getMinimumValue(partial, values)) {
+                throw new IllegalArgumentException("Value " + value +
+                        " for " + field.getName() + " is less than minimum");
+            }
+            if (value > field.getMaximumValue(partial, values)) {
+                throw new IllegalArgumentException("Value " + value +
+                        " for " + field.getName() + " is greater than maximum");
+            }
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public DateTimeField getField(DateTimeFieldType type) {
+        if (type == DateTimeFieldType.millisOfSecond()) {
+            return millisOfSecond();
+        } else if (type == DateTimeFieldType.millisOfDay()) {
+            return millisOfDay();
+        } else if (type == DateTimeFieldType.secondOfMinute()) {
+            return secondOfMinute();
+        } else if (type == DateTimeFieldType.secondOfDay()) {
+            return secondOfDay();
+        } else if (type == DateTimeFieldType.minuteOfHour()) {
+            return minuteOfHour();
+        } else if (type == DateTimeFieldType.minuteOfDay()) {
+            return minuteOfDay();
+        } else if (type == DateTimeFieldType.hourOfDay()) {
+            return hourOfDay();
+        } else if (type == DateTimeFieldType.hourOfHalfday()) {
+            return hourOfHalfday();
+        } else if (type == DateTimeFieldType.clockhourOfDay()) {
+            return clockhourOfDay();
+        } else if (type == DateTimeFieldType.halfdayOfDay()) {
+            return halfdayOfDay();
+        } else if (type == DateTimeFieldType.clockhourOfHalfday()) {
+            return clockhourOfHalfday();
+        } else if (type == DateTimeFieldType.dayOfWeek()) {
+            return dayOfWeek();
+        } else if (type == DateTimeFieldType.dayOfMonth()) {
+            return dayOfMonth();
+        } else if (type == DateTimeFieldType.dayOfYear()) {
+            return dayOfYear();
+        } else if (type == DateTimeFieldType.weekOfWeekyear()) {
+            return weekOfWeekyear();
+        } else if (type == DateTimeFieldType.weekyear()) {
+            return weekyear();
+        } else if (type == DateTimeFieldType.monthOfYear()) {
+            return monthOfYear();
+        } else if (type == DateTimeFieldType.year()) {
+            return year();
+        } else if (type == DateTimeFieldType.yearOfEra()) {
+            return yearOfEra();
+        } else if (type == DateTimeFieldType.yearOfCentury()) {
+            return yearOfCentury();
+        } else if (type == DateTimeFieldType.centuryOfEra()) {
+            return centuryOfEra();
+        } else if (type == DateTimeFieldType.era()) {
+            return era();
+        } else {
+            throw new IllegalArgumentException("Unrecognised field: " + type);
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public DurationField getField(DurationFieldType type) {
+        if (type == DurationFieldType.millis()) {
+            return millis();
+        } else if (type == DurationFieldType.seconds()) {
+            return seconds();
+        } else if (type == DurationFieldType.minutes()) {
+            return minutes();
+        } else if (type == DurationFieldType.hours()) {
+            return hours();
+        } else if (type == DurationFieldType.halfdays()) {
+            return halfdays();
+        } else if (type == DurationFieldType.days()) {
+            return days();
+        } else if (type == DurationFieldType.weeks()) {
+            return weeks();
+        } else if (type == DurationFieldType.weekyears()) {
+            return weekyears();
+        } else if (type == DurationFieldType.months()) {
+            return months();
+        } else if (type == DurationFieldType.years()) {
+            return years();
+        } else if (type == DurationFieldType.centuries()) {
+            return centuries();
+        } else if (type == DurationFieldType.eras()) {
+            return eras();
+        } else {
+            throw new IllegalArgumentException("Unrecognised field: " + type);
+        }
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField millis() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.millis());
+    }
+
+    
+
+
+
+
+    public DateTimeField millisOfSecond() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.millisOfSecond(), millis());
+    }
+
+    
+
+
+
+
+    public DateTimeField millisOfDay() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.millisOfDay(), millis());
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField seconds() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.seconds());
+    }
+
+    
+
+
+
+
+    public DateTimeField secondOfMinute() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.secondOfMinute(), seconds());
+    }
+
+    
+
+
+
+
+    public DateTimeField secondOfDay() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.secondOfDay(), seconds());
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField minutes() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.minutes());
+    }
+
+    
+
+
+
+
+    public DateTimeField minuteOfHour() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.minuteOfHour(), minutes());
+    }
+
+    
+
+
+
+
+    public DateTimeField minuteOfDay() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.minuteOfDay(), minutes());
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField hours() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.hours());
+    }
+
+    
+
+
+
+
+    public DateTimeField hourOfDay() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.hourOfDay(), hours());
+    }
+
+    
+
+
+
+
+    public DateTimeField clockhourOfDay() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.clockhourOfDay(), hours());
+    }
+
+    
+
+
+
+
+    public DurationField halfdays() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.halfdays());
+    }
+
+    
+
+
+
+
+    public DateTimeField hourOfHalfday() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.hourOfHalfday(), hours());
+    }
+
+    
+
+
+
+
+    public DateTimeField clockhourOfHalfday() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.clockhourOfHalfday(), hours());
+    }
+
+    
+
+
+
+
+    public DateTimeField halfdayOfDay() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.halfdayOfDay(), halfdays());
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField days() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.days());
+    }
+
+    
+
+
+
+
+
+
+
+
+    public DateTimeField dayOfWeek() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.dayOfWeek(), days());
+    }
+
+    
+
+
+
+
+    public DateTimeField dayOfMonth() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.dayOfMonth(), days());
+    }
+
+    
+
+
+
+
+    public DateTimeField dayOfYear() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.dayOfYear(), days());
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField weeks() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.weeks());
+    }
+
+    
+
+
+
+
+    public DateTimeField weekOfWeekyear() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.weekOfWeekyear(), weeks());
+    }
+
+    
+
+
+
+
+    public DurationField weekyears() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.weekyears());
+    }
+
+    
+
+
+
+
+    public DateTimeField weekyear() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.weekyear(), weekyears());
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField months() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.months());
+    }
+
+    
+
+
+
+
+    public DateTimeField monthOfYear() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.monthOfYear(), months());
+    }
+
+    
+    
+    
+
+
+
+
+    public DurationField years() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.years());
+    }
+
+    
+
+
+
+
+    public DateTimeField year() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.year(), years());
+    }
+
+    
+
+
+
+
+    public DateTimeField yearOfEra() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.yearOfEra(), years());
+    }
+
+    
+
+
+
+
+    public DateTimeField yearOfCentury() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.yearOfCentury(), years());
+    }
+
+    
+
+
+
+
+    public DurationField centuries() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.centuries());
+    }
+
+    
+
+
+
+
+    public DateTimeField centuryOfEra() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.centuryOfEra(), centuries());
+    }
+
+    
+
+
+
+
+    public DurationField eras() {
+        return UnsupportedDurationField.getInstance(DurationFieldType.eras());
+    }
+
+    
+
+
+
+
+    public DateTimeField era() {
+        return UnsupportedDateTimeField.getInstance(DateTimeFieldType.era(), eras());
+    }
+
+    
+
+
+
+
+    public abstract String toString();
+
+}

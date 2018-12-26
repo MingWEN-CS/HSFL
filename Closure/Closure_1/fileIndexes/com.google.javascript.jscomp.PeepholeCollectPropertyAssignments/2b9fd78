@@ -1,0 +1,253 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+
+public class PeepholeCollectPropertyAssignments
+    extends AbstractPeepholeOptimization {
+
+  @Override
+  Node optimizeSubtree(Node subtree) {
+    if (subtree.getType() != Token.SCRIPT
+        && subtree.getType() != Token.BLOCK) {
+      return subtree;
+    }
+
+    boolean codeChanged = false;
+
+    
+    for (Node child = subtree.getFirstChild();
+         child != null; child = child.getNext()) {
+      if (child.getType() != Token.VAR) {
+        continue;
+      }
+      if (!isPropertyAssignmentToVar(child.getNext())) {
+        
+        continue;
+      }
+
+      Preconditions.checkState(child.hasOneChild());
+      Node var = child.getFirstChild();
+      Node varValue = var.getFirstChild();
+      if (varValue == null) {  
+        continue;
+      }
+
+      Node propertyCandidate;
+      while ((propertyCandidate = child.getNext()) != null) {
+        
+        
+        if (!collectProperty(propertyCandidate, var)) {
+          break;
+        }
+        codeChanged = true;
+      }
+    }
+
+    if (codeChanged) {
+      reportCodeChange();
+    }
+    return subtree;
+  }
+
+  private boolean isPropertyAssignmentToVar(Node propertyCandidate) {
+    if (propertyCandidate == null) { return false; }
+    
+    if (!NodeUtil.isExprAssign(propertyCandidate)) {
+      return false;
+    }
+
+    Node expr = propertyCandidate.getFirstChild();
+
+    
+    Node lhs = expr.getFirstChild();
+    if (lhs.getType() != Token.GETELEM && lhs.getType() != Token.GETPROP) {
+      return false;
+    }
+
+    
+    Node obj = lhs.getFirstChild();
+    if (obj.getType() != Token.NAME) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean collectProperty(Node propertyCandidate, Node var) {
+    if (!isPropertyAssignmentToVar(propertyCandidate)) {
+      return false;
+    }
+
+    String varName = var.getString();
+
+    Node lhs = propertyCandidate.getFirstChild().getFirstChild();
+    
+    if (!varName.equals(lhs.getFirstChild().getString())) {
+      return false;
+    }
+
+    Node rhs = lhs.getNext();
+    
+    if (NodeUtil.mayHaveSideEffects(rhs)
+        || NodeUtil.canBeSideEffected(rhs)) {
+      return false;
+    }
+    
+    if (mightContainForwardReference(rhs, varName)) {
+      return false;
+    }
+
+    
+    
+    Node varValue = var.getFirstChild();
+    switch (varValue.getType()) {
+      case Token.ARRAYLIT:
+        if (!collectArrayProperty(varValue, propertyCandidate)) {
+          return false;
+        }
+        break;
+      case Token.OBJECTLIT:
+        if (!collectObjectProperty(varValue, propertyCandidate)) {
+          return false;
+        }
+        break;
+      default: return false;
+    }
+    return true;
+  }
+
+
+  private boolean collectArrayProperty(
+      Node arrayLiteral, Node propertyCandidate) {
+    Node assignment = propertyCandidate.getFirstChild();
+    final int sizeOfArrayAtStart = arrayLiteral.getChildCount();
+    int maxIndexAssigned = sizeOfArrayAtStart - 1;
+
+    Node lhs = assignment.getFirstChild();
+    Node rhs = lhs.getNext();
+    if (lhs.getType() != Token.GETELEM) {
+      return false;
+    }
+    Node obj = lhs.getFirstChild();
+    Node property = obj.getNext();
+    
+    if (property.getType() != Token.NUMBER) {
+      return false;
+    }
+    
+    double dindex = property.getDouble();
+    if (!(dindex >= 0)  
+        || Double.isInfinite(dindex) || dindex > 0x7fffffffL) {
+      return false;
+    }
+    int index = (int) dindex;
+    if (dindex != index) {
+      return false;
+    }
+    
+    
+    if (maxIndexAssigned + 4 < index) {
+      return false;
+    }
+    if (index > maxIndexAssigned) {
+      while (maxIndexAssigned < index - 1) {
+        
+        
+        
+        Node emptyNode = new Node(Token.EMPTY)
+                         .copyInformationFrom(arrayLiteral);
+        arrayLiteral.addChildToBack(emptyNode);
+        ++maxIndexAssigned;
+      }
+      arrayLiteral.addChildToBack(rhs.detachFromParent());
+    } else {
+      
+      Node currentValue = arrayLiteral.getChildAtIndex(index);
+      if (currentValue.getType() != Token.EMPTY) {
+        
+        return false;
+      }
+      arrayLiteral.replaceChild(currentValue, rhs.detachFromParent());
+    }
+
+    propertyCandidate.detachFromParent();
+    return true;
+  }
+
+  private boolean collectObjectProperty(
+      Node objectLiteral, Node propertyCandidate) {
+    Node assignment = propertyCandidate.getFirstChild();
+    Node lhs = assignment.getFirstChild(), rhs = lhs.getNext();
+    Node obj = lhs.getFirstChild();
+    Node property = obj.getNext();
+
+    
+    if (lhs.getType() == Token.GETELEM
+        && (property.getType() != Token.STRING
+            && property.getType() != Token.NUMBER)) {
+      return false;
+    }
+
+    String propertyName;
+    if (property.getType() == Token.NUMBER) {
+      propertyName = NodeUtil.getStringValue(property);
+    } else {
+      propertyName = property.getString();
+    }
+
+    Node newProperty = Node.newString(propertyName)
+        .copyInformationFrom(property);
+    
+    if (lhs.getType() == Token.GETELEM) {
+      newProperty.setQuotedString();
+    }
+    Node newValue = rhs.detachFromParent();
+    newProperty.addChildToBack(newValue);
+    objectLiteral.addChildToBack(newProperty);
+
+    propertyCandidate.detachFromParent();
+    return true;
+  }
+
+
+  private static boolean mightContainForwardReference(
+      Node node, String varName) {
+    if (node.getType() == Token.NAME) {
+      return varName.equals(node.getString());
+    }
+    for (Node child = node.getFirstChild(); child != null;
+         child = child.getNext()) {
+      if (mightContainForwardReference(child, varName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+}

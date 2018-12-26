@@ -1,0 +1,61 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+
+
+
+
+interface CodeChangeHandler {
+
+  
+  
+
+  
+  void reportCodeChange();
+
+  
+
+
+
+  static final class RecentChange implements CodeChangeHandler {
+    private boolean hasChanged = false;
+
+    @Override
+    public void reportCodeChange() {
+      hasChanged = true;
+    }
+
+    boolean hasCodeChanged() {
+      return hasChanged;
+    }
+
+    void reset() {
+      hasChanged = false;
+    }
+  }
+
+  
+
+
+  static final class ForbiddenChange implements CodeChangeHandler {
+    @Override
+    public void reportCodeChange() {
+      throw new IllegalStateException("Code changes forbidden");
+    }
+  }
+}

@@ -1,0 +1,82 @@
+56,66c56
+< 
+< 
+< public class TokenStream
+< {
+<     
+< 
+< 
+< 
+< 
+<     private final static int EOF_CHAR = -1;
+< 
+---
+> public class TokenStream {
+68c58
+<         return Token.EOF != stringToKeyword(s);
+---
+>         return Token.ERROR != stringToKeyword(s);
+262c252
+<         if (id == 0) { return Token.EOF; }
+---
+>         if (id == 0) { return Token.ERROR; }
+278,281c268,271
+<                         && 0 <= Kit.xDigitToInt(s.charAt(i + 2), 0)
+<                         && 0 <= Kit.xDigitToInt(s.charAt(i + 3), 0)
+<                         && 0 <= Kit.xDigitToInt(s.charAt(i + 4), 0)
+<                         && 0 <= Kit.xDigitToInt(s.charAt(i + 5), 0)) {
+---
+>                         && 0 <= xDigitToInt(s.charAt(i + 2), 0)
+>                         && 0 <= xDigitToInt(s.charAt(i + 3), 0)
+>                         && 0 <= xDigitToInt(s.charAt(i + 4), 0)
+>                         && 0 <= xDigitToInt(s.charAt(i + 5), 0)) {
+293,305d282
+<     private static boolean isAlpha(int c) {
+<         
+<         if (c <= 'Z') {
+<             return 'A' <= c;
+<         } else {
+<             return 'a' <= c && c <= 'z';
+<         }
+<     }
+< 
+<     static boolean isDigit(int c) {
+<         return '0' <= c && c <= '9';
+<     }
+< 
+311,319c288,305
+< 
+< 
+< 
+<     static boolean isJSSpace(int c) {
+<         if (c <= 127) {
+<             return c == 0x20 || c == 0x9 || c == 0xC || c == 0xB;
+<         } else {
+<             return c == 0xA0
+<                 || Character.getType((char)c) == Character.SPACE_SEPARATOR;
+---
+>     private static int xDigitToInt(int c, int accumulator) {
+>         check: {
+>             
+>             if (c <= '9') {
+>                 c -= '0';
+>                 if (0 <= c) { break check; }
+>             } else if (c <= 'F') {
+>                 if ('A' <= c) {
+>                     c -= ('A' - 10);
+>                     break check;
+>                 }
+>             } else if (c <= 'f') {
+>                 if ('a' <= c) {
+>                     c -= ('a' - 10);
+>                     break check;
+>                 }
+>             }
+>             return -1;
+321,324c307
+<     }
+< 
+<     private static boolean isJSFormatChar(int c) {
+<         return c > 127 && Character.getType((char)c) == Character.FORMAT;
+---
+>         return (accumulator << 4) | c;

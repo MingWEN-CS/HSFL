@@ -1,0 +1,62 @@
+31c31
+<   private NodeTraversal currentTraversal;
+---
+>   private AbstractCompiler compiler;
+52,53c52,54
+<     JSError error = currentTraversal.makeError(n, diagnostic, n.toString());
+<     currentTraversal.getCompiler().report(error);
+---
+>     JSError error =
+>         JSError.make(NodeUtil.getSourceName(n), n, diagnostic, n.toString());
+>     compiler.report(error);
+61,62c62,63
+<     Preconditions.checkNotNull(currentTraversal);
+<     currentTraversal.getCompiler().reportCodeChange();
+---
+>     Preconditions.checkNotNull(compiler);
+>     compiler.reportCodeChange();
+73,74c74,75
+<     Preconditions.checkNotNull(currentTraversal);
+<     return currentTraversal.getCompiler().areNodesEqualForInlining(n1, n2);
+---
+>     Preconditions.checkNotNull(compiler);
+>     return compiler.areNodesEqualForInlining(n1, n2);
+82,83c83
+<     Preconditions.checkNotNull(currentTraversal);
+<     Preconditions.checkNotNull(currentTraversal.getCompiler());
+---
+>     Preconditions.checkNotNull(compiler);
+85c85
+<     return currentTraversal.getCompiler().getLifeCycleStage().isNormalized();
+---
+>     return compiler.getLifeCycleStage().isNormalized();
+91,92c91,92
+<   void beginTraversal(NodeTraversal traversal) {
+<     currentTraversal = traversal;
+---
+>   void beginTraversal(AbstractCompiler compiler) {
+>     this.compiler = compiler;
+98,99c98,99
+<   void endTraversal(NodeTraversal traversal) {
+<     currentTraversal = null;
+---
+>   void endTraversal(AbstractCompiler compiler) {
+>     this.compiler = null;
+110c110
+<     return NodeUtil.mayEffectMutableState(n, currentTraversal.getCompiler());
+---
+>     return NodeUtil.mayEffectMutableState(n, compiler);
+117c117
+<     return NodeUtil.mayHaveSideEffects(n, currentTraversal.getCompiler());
+---
+>     return NodeUtil.mayHaveSideEffects(n, compiler);
+126,127c126,127
+<     return currentTraversal != null
+<         && currentTraversal.getCompiler().acceptEcmaScript5();
+---
+>     return compiler != null
+>         && compiler.acceptEcmaScript5();
+135c135
+<     return currentTraversal.getCompiler().getCodingConvention();
+---
+>     return compiler.getCodingConvention();

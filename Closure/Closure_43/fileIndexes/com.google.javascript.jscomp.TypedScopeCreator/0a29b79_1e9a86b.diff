@@ -1,0 +1,108 @@
+23d22
+< import static com.google.javascript.rhino.jstype.JSTypeNative.BOOLEAN_TYPE;
+24a24
+> import static com.google.javascript.rhino.jstype.JSTypeNative.BOOLEAN_TYPE;
+29d28
+< import static com.google.javascript.rhino.jstype.JSTypeNative.OBJECT_TYPE;
+33a33
+> import static com.google.javascript.rhino.jstype.JSTypeNative.OBJECT_TYPE;
+39a40
+> import static com.google.javascript.rhino.jstype.JSTypeNative.U2U_CONSTRUCTOR_TYPE;
+42d42
+< import static com.google.javascript.rhino.jstype.JSTypeNative.U2U_CONSTRUCTOR_TYPE;
+46d45
+< import javax.annotation.Nullable;
+55a55
+> import com.google.javascript.rhino.ErrorReporter;
+66a67
+> import java.util.Iterator;
+69a71,72
+> import javax.annotation.Nullable;
+> 
+99a103
+>   private final ErrorReporter typeParsingErrorReporter;
+104a109,132
+>   
+> 
+> 
+> 
+>   private class DeferredSetType {
+>     final Node node;
+>     final JSType type;
+> 
+>     DeferredSetType(Node node, JSType type) {
+>       Preconditions.checkNotNull(node);
+>       Preconditions.checkNotNull(type);
+>       this.node = node;
+>       this.type = type;
+> 
+>       
+>       
+>       node.setJSType(type);
+>     }
+> 
+>     void resolve(Scope scope) {
+>       node.setJSType(type.resolve(typeParsingErrorReporter, scope));
+>     }
+>   }
+> 
+114a143
+>     this.typeParsingErrorReporter = typeRegistry.getErrorReporter();
+132a162
+>       scopeBuilder.resolveTypes();
+153c183,185
+<       (new LocalScopeBuilder(newScope)).build();
+---
+>       LocalScopeBuilder scopeBuilder = new LocalScopeBuilder(newScope);
+>       scopeBuilder.build();
+>       scopeBuilder.resolveTypes();
+155d186
+<     typeRegistry.resolveTypesInScope(newScope);
+274a306,308
+>     private final List<DeferredSetType> deferredSetTypes =
+>         Lists.newArrayList();
+> 
+283a318,338
+>     void setDeferredType(Node node, JSType type) {
+>       deferredSetTypes.add(new DeferredSetType(node, type));
+>     }
+> 
+>     void resolveTypes() {
+>       
+>       for (DeferredSetType deferred : deferredSetTypes) {
+>         deferred.resolve(scope);
+>       }
+> 
+>       
+>       Iterator<Var> vars = scope.getVars();
+>       while (vars.hasNext()) {
+>         vars.next().resolveType(typeParsingErrorReporter);
+>       }
+> 
+>       
+>       
+>       typeRegistry.resolveTypesInScope(scope);
+>     }
+> 
+428,430c483,487
+<             lvalue.setJSType(
+<                 getEnumType(lvalue.getQualifiedName(), n, rvalue,
+<                     info.getEnumParameterType().evaluate(scope, typeRegistry)));
+---
+>             JSType type = getEnumType(lvalue.getQualifiedName(), n, rvalue,
+>                 info.getEnumParameterType().evaluate(scope, typeRegistry));
+>             if (type != null) {
+>               setDeferredType(lvalue, type);
+>             }
+579c636
+<         rValue.setJSType(functionType);
+---
+>         setDeferredType(rValue, functionType);
+723c780
+<           n.setJSType(type);
+---
+>           setDeferredType(n, type);
+887c944
+<               objectLiteralCast.objectNode.setJSType(type);
+---
+>               setDeferredType(objectLiteralCast.objectNode, type);

@@ -1,0 +1,164 @@
+77c77
+<         this(32);
+---
+>         this(CAPACITY);
+220,221c220,222
+<     public void clear() {
+<         size = 0;
+---
+> 
+>     public boolean isEmpty() {
+>         return size == 0;
+231,232c232,235
+<     public boolean isEmpty() {
+<         return size == 0;
+---
+> 
+> 
+>     public void clear() {
+>         size = 0;
+459a463,465
+>         if (startIndex < 0 || startIndex > chars.length) {
+>             throw new StringIndexOutOfBoundsException("startIndex must be valid");
+>         }
+595a602,623
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder appendWithSeparators(Iterator it, String separator) {
+>         if (it != null) {
+>             separator = (separator == null ? "" : separator);
+>             append(it.next());
+>             while (it.hasNext()) {
+>                 append(separator);
+>                 append(it.next());
+>             }
+>         }
+>         return this;
+>     }
+> 
+>     
+613a642
+>     
+623,625c652,655
+<     public StrBuilder appendFixedLengthPadLeft(Object obj, int length, char padChar) {
+<         if (length > 0) {
+<             ensureCapacity(size + length);
+---
+> 
+>     public StrBuilder appendFixedWidthPadLeft(Object obj, int width, char padChar) {
+>         if (width > 0) {
+>             ensureCapacity(size + width);
+628,629c658,659
+<             if (strLen >= length) {
+<                 str.getChars(strLen - length, strLen, buf, size);
+---
+>             if (strLen >= width) {
+>                 str.getChars(strLen - width, strLen, buf, size);
+631c661
+<                 int padLen = length - strLen;
+---
+>                 int padLen = width - strLen;
+637c667
+<             size += length;
+---
+>             size += width;
+652,654c682,699
+<     public StrBuilder appendFixedLengthPadRight(Object obj, int length, char padChar) {
+<         if (length > 0) {
+<             ensureCapacity(size + length);
+---
+>     public StrBuilder appendFixedWidthPadLeft(int value, int width, char padChar) {
+>         return appendFixedWidthPadLeft(String.valueOf(value), width, padChar);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder appendFixedWidthPadRight(Object obj, int width, char padChar) {
+>         if (width > 0) {
+>             ensureCapacity(size + width);
+657,658c702,703
+<             if (strLen >= length) {
+<                 str.getChars(strLen - length, strLen, buf, size);
+---
+>             if (strLen >= width) {
+>                 str.getChars(0, strLen, buf, size);
+660c705
+<                 int padLen = length - strLen;
+---
+>                 int padLen = width - strLen;
+666c711
+<             size += length;
+---
+>             size += width;
+671a717,730
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public StrBuilder appendFixedWidthPadRight(int value, int width, char padChar) {
+>         return appendFixedWidthPadRight(String.valueOf(value), width, padChar);
+>     }
+> 
+>     
+1402a1462,1490
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1413a1502,1511
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public StringBuffer toStringBuffer() {
+>         return new StringBuffer(size).append(buf, 0, size);

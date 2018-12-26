@@ -1,0 +1,30 @@
+223c223
+<         return resolve(baseInstant, chrono);
+---
+>         return chrono.set(this, baseInstant);
+241c241
+<         long resolved = resolve(instantMillis, chrono);
+---
+>         long resolved = chrono.set(this, instantMillis);
+260,261c260,261
+<         Chronology chrono = baseInstant.getChronology();
+<         long resolved = resolve(baseInstant.getMillis(), chrono);
+---
+>         Chronology chrono = DateTimeUtils.getInstantChronology(baseInstant);
+>         long resolved = chrono.set(this, baseInstant.getMillis());
+263,277d262
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected long resolve(long baseInstant, Chronology chrono) {
+<         long millis = baseInstant;
+<         for (int i = 0, isize = size(); i < isize; i++) {
+<             millis = getField(i, chrono).set(millis, getValue(i));
+<         }
+<         return millis;

@@ -1,0 +1,49 @@
+2702c2702
+<         if (str == null || str.length() == 0 || searchChars == null || searchChars.length() == 0) {
+---
+>         if (StringUtils.isEmpty(str) || StringUtils.isEmpty(searchChars)) {
+2705,2718c2705,2714
+<         char[] chars = str.toCharArray();
+<         int len = chars.length;
+<         boolean modified = false;
+<         for (int i = 0, isize = searchChars.length(); i < isize; i++) {
+<             char searchChar = searchChars.charAt(i);
+<             if (replaceChars == null || i >= replaceChars.length()) {
+<                 
+<                 int pos = 0;
+<                 for (int j = 0; j < len; j++) {
+<                     if (chars[j] != searchChar) {
+<                         chars[pos++] = chars[j];
+<                     } else {
+<                         modified = true;
+<                     }
+---
+>         if (replaceChars == null) {
+>             replaceChars = "";
+>         }
+>         StringBuffer buffer = new StringBuffer(str.length());
+>         for (int i = 0; i < str.length(); i++) {
+>             char ch = str.charAt(i);
+>             int index = searchChars.indexOf(ch);
+>             if (index >= 0) {
+>                 if (index < replaceChars.length()) {
+>                     buffer.append(replaceChars.charAt(index));
+2720d2715
+<                 len = pos;
+2722,2728c2717
+<                 
+<                 for (int j = 0; j < len; j++) {
+<                     if (chars[j] == searchChar) {
+<                         chars[j] = replaceChars.charAt(i);
+<                         modified = true;
+<                     }
+<                 }
+---
+>                 buffer.append(ch);
+2731,2734c2720
+<         if (modified == false) {
+<             return str;
+<         }
+<         return new String(chars, 0, len);
+---
+>         return buffer.toString();

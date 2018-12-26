@@ -1,0 +1,156 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeZone;
+import org.joda.time.chrono.BuddhistChronology;
+import org.joda.time.chrono.GJChronology;
+import org.joda.time.chrono.GregorianChronology;
+import org.joda.time.chrono.JulianChronology;
+import org.joda.time.chrono.ISOChronology;
+
+
+
+
+
+
+
+
+final class CalendarConverter extends AbstractConverter implements InstantConverter {
+    
+    
+
+
+    static final CalendarConverter INSTANCE = new CalendarConverter();
+    
+    
+
+
+    protected CalendarConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+    public long getInstantMillis(Object object) {
+        return ((Calendar) object).getTime().getTime();
+    }
+    
+    
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object) {
+        Calendar cal = (Calendar) object;
+        DateTimeZone zone = null;
+        try {
+            zone = DateTimeZone.getInstance(cal.getTimeZone());
+            
+        } catch (IllegalArgumentException ex) {
+            zone = DateTimeZone.getDefault();
+        }
+        return getChronology(cal, zone);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object, DateTimeZone zone) {
+        if (object.getClass().getName().endsWith(".BuddhistCalendar")) {
+            return BuddhistChronology.getInstance(zone);
+        } else if (object instanceof GregorianCalendar) {
+            GregorianCalendar gc = (GregorianCalendar) object;
+            long cutover = gc.getGregorianChange().getTime();
+            if (cutover == Long.MIN_VALUE) {
+                return GregorianChronology.getInstance(zone);
+            } else if (cutover == Long.MAX_VALUE) {
+                return JulianChronology.getInstance(zone);
+            } else {
+                return GJChronology.getInstance(zone, cutover, 4);
+            }
+        } else {
+            return ISOChronology.getInstance(zone);
+        }
+    }
+    
+    
+    
+
+
+
+
+    public Class getSupportedType() {
+        return Calendar.class;
+    }
+    
+}

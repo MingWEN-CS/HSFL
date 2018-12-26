@@ -1,0 +1,61 @@
+1731c1731,1732
+<   public static Node newQualifiedNameNode(String name, int lineno, int charno) {
+---
+>   public static Node newQualifiedNameNode(
+>       CodingConvention convention, String name, int lineno, int charno) {
+1734c1735
+<       return Node.newString(Token.NAME, name, lineno, charno);
+---
+>       return newName(convention, name, lineno, charno);
+1736,1737c1737,1738
+<     Node node = Node.newString(Token.NAME, name.substring(0, endPos),
+<                                lineno, charno);
+---
+>     Node node = newName(
+>         convention, name.substring(0, endPos), lineno, charno);
+1745,1747c1746,1750
+<       node = new Node(Token.GETPROP, node,
+<                       Node.newString(Token.STRING, part, lineno, charno),
+<                       lineno, charno);
+---
+>       Node propNode = Node.newString(Token.STRING, part, lineno, charno);
+>       if (convention.isConstantKey(part)) {
+>         propNode.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>       }
+>       node = new Node(Token.GETPROP, node, propNode, lineno, charno);
+1766c1769,1770
+<   static Node newQualifiedNameNode(String name, Node basisNode,
+---
+>   static Node newQualifiedNameNode(
+>       CodingConvention convention, String name, Node basisNode,
+1768c1772
+<     Node node = newQualifiedNameNode(name, -1, -1);
+---
+>     Node node = newQualifiedNameNode(convention, name, -1, -1);
+1800a1805,1813
+>   private static Node newName(
+>       CodingConvention convention, String name, int lineno, int charno) {
+>     Node nameNode = Node.newString(Token.NAME, name, lineno, charno);
+>     if (convention.isConstant(name)) {
+>       nameNode.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>     }
+>     return nameNode;
+>   }
+> 
+1811c1824,1825
+<   static Node newName(String name, Node basisNode) {
+---
+>   static Node newName(
+>       CodingConvention convention, String name, Node basisNode) {
+1812a1827,1829
+>     if (convention.isConstantKey(name)) {
+>       nameNode.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>     }
+1830,1831c1847,1850
+<   static Node newName(String name, Node basisNode, String originalName) {
+<     Node nameNode = newName(name, basisNode);
+---
+>   static Node newName(
+>       CodingConvention convention, String name,
+>       Node basisNode, String originalName) {
+>     Node nameNode = newName(convention, name, basisNode);

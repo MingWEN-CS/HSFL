@@ -1,0 +1,90 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class NoResolvedType extends NoType {
+  private static final long serialVersionUID = 1L;
+
+  NoResolvedType(JSTypeRegistry registry) {
+    super(registry);
+  }
+
+  @Override
+  public boolean isNoResolvedType() {
+    return true;
+  }
+
+  @Override
+  public boolean isNoType() {
+    return false;
+  }
+
+  @Override
+  public JSType getPropertyType(String propertyName) {
+    return getNativeType(JSTypeNative.CHECKED_UNKNOWN_TYPE);
+  }
+
+  @Override
+  public boolean isSubtype(JSType that) {
+    if (JSType.isSubtype(this, that)) {
+      return true;
+    } else {
+      return !that.isNoType();
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "NoResolvedType";
+  }
+}

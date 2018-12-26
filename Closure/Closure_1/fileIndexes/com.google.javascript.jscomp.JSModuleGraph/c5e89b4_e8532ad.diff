@@ -1,0 +1,46 @@
+19a20
+> import com.google.common.base.Throwables;
+42a44,47
+> import org.json.JSONArray;
+> import org.json.JSONException;
+> import org.json.JSONObject;
+> 
+130a136,173
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   JSONArray toJson() {
+>     JSONArray modules = new JSONArray();
+>     for (JSModule module : getAllModules()) {
+>       JSONObject node = new JSONObject();
+>       try {
+>         node.put("name", module.getName());
+>         JSONArray deps = new JSONArray();
+>         node.put("dependencies", deps);
+>         for (JSModule m : module.getDependencies()) {
+>           deps.put(m.getName());
+>         }
+>         JSONArray transitiveDeps = new JSONArray();
+>         node.put("transitive-dependencies", transitiveDeps);
+>         for (JSModule m : getTransitiveDepsDeepestFirst(module)) {
+>           transitiveDeps.put(m.getName());
+>         }
+>         JSONArray inputs = new JSONArray();
+>         node.put("inputs", inputs);
+>         for (CompilerInput input : module.getInputs()) {
+>           inputs.put(input.getSourceFile().getOriginalPath());
+>         }
+>         modules.put(node);
+>       } catch(JSONException e) {
+>         Throwables.propagate(e);
+>       }
+>     }
+>     return modules;

@@ -1,0 +1,143 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.field;
+
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeFieldType;
+import org.joda.time.DurationField;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class DecoratedDateTimeField extends BaseDateTimeField {
+
+    
+    private static final long serialVersionUID = 203115783733757597L;
+
+    
+    private final DateTimeField iField;
+
+    
+
+
+
+
+
+    protected DecoratedDateTimeField(DateTimeField field, DateTimeFieldType type) {
+        super(type);
+        if (field == null) {
+            throw new IllegalArgumentException("The field must not be null");
+        }
+        if (!field.isSupported()) {
+            throw new IllegalArgumentException("The field must be supported");
+        }
+        iField = field;
+    }
+
+    
+
+
+
+
+    public final DateTimeField getWrappedField() {
+        return iField;
+    }
+
+    public boolean isLenient() {
+        return iField.isLenient();
+    }
+
+    public int get(long instant) {
+        return iField.get(instant);
+    }
+
+    public long set(long instant, int value) {
+        return iField.set(instant, value);
+    }
+
+    public DurationField getDurationField() {
+        return iField.getDurationField();
+    }
+
+    public DurationField getRangeDurationField() {
+        return iField.getRangeDurationField();
+    }
+
+    public int getMinimumValue() {
+        return iField.getMinimumValue();
+    }
+
+    public int getMaximumValue() {
+        return iField.getMaximumValue();
+    }
+
+    public long roundFloor(long instant) {
+        return iField.roundFloor(instant);
+    }
+
+}

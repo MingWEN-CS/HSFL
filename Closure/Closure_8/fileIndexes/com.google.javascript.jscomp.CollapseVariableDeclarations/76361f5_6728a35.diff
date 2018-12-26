@@ -1,0 +1,109 @@
+22a23
+> import com.google.javascript.rhino.JSDocInfo;
+72c73,78
+<     final Node firstVarNode;
+---
+>     final Node startNode;
+> 
+>     
+> 
+> 
+>     final Node endNode;
+77,78c83,85
+<     Collapse(Node firstVarNode, Node parent) {
+<       this.firstVarNode = firstVarNode;
+---
+>     Collapse(Node startNode, Node endNode, Node parent) {
+>       this.startNode = startNode;
+>       this.endNode = endNode;
+116a124,125
+> 
+> 
+118a128,130
+>     
+>     
+> 
+121c133
+<       if (n.getType() != Token.VAR) return;
+---
+>       if (n.getType() != Token.VAR && !canBeRedeclared(n, t.getScope())) return;
+131a144,145
+>       boolean hasVar = n.getType() == Token.VAR;
+> 
+136c150,157
+<       while (n != null && n.getType() == Token.VAR) {
+---
+> 
+>       while (n != null &&
+>           (n.getType() == Token.VAR || canBeRedeclared(n, t.getScope()))) {
+> 
+>         if (NodeUtil.isVar(n)) {
+>           hasVar = true;
+>         }
+> 
+143c164
+<       if (hasNodesToCollapse) {
+---
+>       if (hasNodesToCollapse && hasVar) {
+145c166
+<         collapses.add(new Collapse(varNode, parent));
+---
+>         collapses.add(new Collapse(varNode, n, parent));
+146a168,176
+>     }
+>   }
+> 
+>   private boolean canBeRedeclared(Node n, Scope s) {
+>     if (!NodeUtil.isExprAssign(n)) {
+>       return false;
+>     }
+>     Node assign = n.getFirstChild();
+>     Node lhs = assign.getFirstChild();
+147a178,179
+>     if (!NodeUtil.isName(lhs)) {
+>       return false;
+148a181,182
+> 
+>     return s.isDeclared(lhs.getString(), false);
+153,156d186
+<       Node first = collapse.firstVarNode;
+<       while (first.getNext() != null &&
+<           first.getNext().getType() == Token.VAR) {
+<         Node next = collapse.parent.removeChildAfter(first);
+158,159c188,218
+<         
+<         first.addChildrenToBack(next.removeChildren());
+---
+>       Node var = new Node(Token.VAR);
+>       var.copyInformationFrom(collapse.startNode);
+>       collapse.parent.addChildBefore(var, collapse.startNode);
+> 
+>       boolean redeclaration = false;
+>       for (Node n = collapse.startNode; n != collapse.endNode;) {
+>         Node next = n.getNext();
+> 
+>         Preconditions.checkState(var.getNext() == n);
+>         collapse.parent.removeChildAfter(var);
+> 
+>         if (NodeUtil.isVar(n)) {
+>           while(n.hasChildren()) {
+>             var.addChildToBack(n.removeFirstChild());
+>           }
+>         } else {
+>           Node assign = n.getFirstChild();
+>           Node lhs = assign.getFirstChild();
+>           Preconditions.checkState(NodeUtil.isName(lhs));
+>           Node rhs = assign.getLastChild();
+>           lhs.addChildToBack(rhs.detachFromParent());
+>           var.addChildToBack(lhs.detachFromParent());
+>           redeclaration = true;
+>         }
+>         n = next;
+>       }
+> 
+>       if (redeclaration) {
+>         JSDocInfo info = new JSDocInfo();
+>         info.addSuppression("duplicate");
+>         var.setJSDocInfo(info);
+163d221
+< 

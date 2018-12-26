@@ -1,0 +1,132 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Predicate;
+import com.google.debugging.sourcemap.FilePosition;
+import com.google.debugging.sourcemap.SourceMapFormat;
+import com.google.debugging.sourcemap.SourceMapGenerator;
+import com.google.debugging.sourcemap.SourceMapGeneratorFactory;
+import com.google.javascript.rhino.Node;
+
+import java.io.IOException;
+
+
+
+
+
+
+
+
+
+
+public class SourceMap {
+
+  public static enum Format {
+     LEGACY {
+       @Override SourceMap getInstance() {
+         return new SourceMap(
+           SourceMapGeneratorFactory.getInstance(SourceMapFormat.V1));
+       }
+     },
+     DEFAULT {
+       @Override SourceMap getInstance() {
+         return new SourceMap(
+           SourceMapGeneratorFactory.getInstance(SourceMapFormat.DEFAULT));
+       }
+     },
+     EXPERIMENTIAL {
+       @Override SourceMap getInstance() {
+         return new SourceMap(
+           SourceMapGeneratorFactory.getInstance(SourceMapFormat.V2));
+       }
+     };
+     abstract SourceMap getInstance();
+  }
+
+  
+
+
+  public static enum DetailLevel implements Predicate<Node> {
+    
+    
+    ALL {
+      @Override public boolean apply(Node node) {
+        return true;
+      }
+    },
+    
+    
+    SYMBOLS {
+      @Override public boolean apply(Node node) {
+        return NodeUtil.isCall(node)
+            || NodeUtil.isNew(node)
+            || NodeUtil.isFunction(node)
+            || NodeUtil.isName(node)
+            || NodeUtil.isGet(node)
+            || NodeUtil.isObjectLitKey(node, node.getParent())
+            || (NodeUtil.isString(node) && NodeUtil.isGet(node.getParent()));
+      }
+    };
+  }
+
+  final SourceMapGenerator generator;
+
+  private SourceMap(SourceMapGenerator generator) {
+    this.generator = generator;
+  }
+
+  public void addMapping(
+      Node node,
+      FilePosition outputStartPosition,
+      FilePosition outputEndPosition) {
+    String sourceFile = (String) node.getProp(Node.SOURCENAME_PROP);
+    
+    
+    
+    if (sourceFile == null || node.getLineno() < 0) {
+      return;
+    }
+
+    String originalName = (String) node.getProp(Node.ORIGINALNAME_PROP);
+
+    generator.addMapping(
+        sourceFile, originalName,
+        new FilePosition(node.getLineno(), node.getCharno()),
+        outputStartPosition, outputEndPosition);
+  }
+
+  public void appendTo(Appendable out, String name) throws IOException {
+    generator.appendTo(out, name);
+  }
+
+  public void reset() {
+    generator.reset();
+  }
+
+  public void setStartingPosition(int offsetLine, int offsetIndex) {
+    generator.setStartingPosition(offsetLine, offsetIndex);
+  }
+
+  public void setWrapperPrefix(String prefix) {
+    generator.setWrapperPrefix(prefix);
+  }
+
+  public void validate(boolean validate) {
+    generator.validate(validate);
+  }
+}

@@ -1,0 +1,109 @@
+20a21
+> import com.google.common.base.Predicates;
+28a30
+> import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+79a82,111
+>   private static final Predicate<Node> SIDE_EFFECT_PREDICATE =
+>     new Predicate<Node>() {
+>       @Override
+>       public boolean apply(Node n) {
+>         
+>         
+>         if (n == null) {
+>           return false;
+>         }
+> 
+>         
+>         
+>         
+>         if (NodeUtil.isCall(n) && NodeUtil.functionCallHasSideEffects(n)) {
+>           return true;
+>         }
+> 
+>         if (NodeUtil.isNew(n) && NodeUtil.constructorCallHasSideEffects(n)) {
+>           return true;
+>         }
+> 
+>         for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+>           if (!ControlFlowGraph.isEnteringNewCfgNode(c) && apply(c)) {
+>             return true;
+>           }
+>         }
+>         return false;
+>       }
+>   };
+> 
+231a264,294
+> 
+>       
+>       
+>       
+>       if (checkRightOf(def, defCfgNode, SIDE_EFFECT_PREDICATE)) {
+>         return false;
+>       }
+> 
+>       
+>       
+>       
+>       if (checkLeftOf(use, useCfgNode, SIDE_EFFECT_PREDICATE)) {
+>         return false;
+>       }
+> 
+>       
+>       
+>       
+>       CheckPathsBetweenNodes<Node, ControlFlowGraph.Branch>
+>         pathCheck = new CheckPathsBetweenNodes<Node, ControlFlowGraph.Branch>(
+>                cfg,
+>                cfg.getDirectedGraphNode(defCfgNode),
+>                cfg.getDirectedGraphNode(useCfgNode),
+>                SIDE_EFFECT_PREDICATE,
+>                Predicates.
+>                    <DiGraphEdge<Node, ControlFlowGraph.Branch>>alwaysTrue(),
+>                false);
+>       if (pathCheck.somePathsSatisfyPredicate()) {
+>         return false;
+>       }
+> 
+364a428,468
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private static boolean checkRightOf(
+>       Node n, Node expressionRoot, Predicate<Node> predicate) {
+>     for (Node p = n; p != expressionRoot; p = p.getParent()) {
+>       for (Node cur = p.getNext(); cur != null; cur = cur.getNext()) {
+>         if (predicate.apply(cur)) {
+>           return true;
+>         }
+>       }
+>     }
+>     return false;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private static boolean checkLeftOf(
+>       Node n, Node expressionRoot, Predicate<Node> predicate) {
+>     for (Node p = n.getParent(); p != expressionRoot; p = p.getParent()) {
+>       for (Node cur = p.getParent().getFirstChild(); cur != p;
+>           cur = cur.getNext()) {
+>         if (predicate.apply(cur)) {
+>           return true;
+>         }
+>       }
+>     }
+>     return false;

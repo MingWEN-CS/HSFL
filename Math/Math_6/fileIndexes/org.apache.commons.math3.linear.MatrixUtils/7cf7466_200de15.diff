@@ -1,0 +1,320 @@
+24d23
+< import java.math.BigDecimal;
+29a29,32
+> import org.apache.commons.math.exception.OutOfRangeException;
+> import org.apache.commons.math.exception.ZeroException;
+> import org.apache.commons.math.exception.NumberIsTooSmallException;
+> import org.apache.commons.math.exception.NullArgumentException;
+105a109
+> 
+106a111,114
+>         if (data == null ||
+>             data[0] == null) {
+>             throw new NullArgumentException();
+>         }
+128a137
+> 
+129a139,142
+>         if (data == null ||
+>             data[0] == null) {
+>             throw new NullArgumentException();
+>         }
+182,201d194
+< 
+<     @Deprecated
+<     public static BigMatrix createBigIdentityMatrix(int dimension) {
+<         final BigDecimal[][] d = new BigDecimal[dimension][dimension];
+<         for (int row = 0; row < dimension; row++) {
+<             final BigDecimal[] dRow = d[row];
+<             Arrays.fill(dRow, BigMatrixImpl.ZERO);
+<             dRow[row] = BigMatrixImpl.ONE;
+<         }
+<         return new BigMatrixImpl(d, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+237,306d229
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createBigMatrix(double[][] data) {
+<         return new BigMatrixImpl(data);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createBigMatrix(BigDecimal[][] data) {
+<         return new BigMatrixImpl(data);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createBigMatrix(BigDecimal[][] data, boolean copyArray) {
+<         return new BigMatrixImpl(data, copyArray);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createBigMatrix(String[][] data) {
+<         return new BigMatrixImpl(data);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+307a231,233
+>         if (data == null) {
+>             throw new NullArgumentException();
+>         }
+320a247,249
+>         if (data == null) {
+>             throw new NullArgumentException();
+>         }
+333a263,265
+>         if (rowData == null) {
+>             throw new NullArgumentException();
+>         }
+353a286,288
+>         if (rowData == null) {
+>             throw new NullArgumentException();
+>         }
+356c291
+<             throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.AT_LEAST_ONE_COLUMN);
+---
+>             throw new ZeroException(LocalizedFormats.AT_LEAST_ONE_COLUMN);
+374,431d308
+< 
+<     @Deprecated
+<     public static BigMatrix createRowBigMatrix(double[] rowData) {
+<         final int nCols = rowData.length;
+<         final BigDecimal[][] data = new BigDecimal[1][nCols];
+<         for (int i = 0; i < nCols; ++i) {
+<             data[0][i] = new BigDecimal(rowData[i]);
+<         }
+<         return new BigMatrixImpl(data, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createRowBigMatrix(BigDecimal[] rowData) {
+<         final int nCols = rowData.length;
+<         final BigDecimal[][] data = new BigDecimal[1][nCols];
+<         System.arraycopy(rowData, 0, data[0], 0, nCols);
+<         return new BigMatrixImpl(data, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createRowBigMatrix(String[] rowData) {
+<         final int nCols = rowData.length;
+<         final BigDecimal[][] data = new BigDecimal[1][nCols];
+<         for (int i = 0; i < nCols; ++i) {
+<             data[0][i] = new BigDecimal(rowData[i]);
+<         }
+<         return new BigMatrixImpl(data, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+432a310,312
+>         if (columnData == null) {
+>             throw new NullArgumentException();
+>         }
+452a333,335
+>         if (columnData == null) {
+>             throw new NullArgumentException();
+>         }
+473,501c356,359
+< 
+<     @Deprecated
+<     public static BigMatrix createColumnBigMatrix(double[] columnData) {
+<         final int nRows = columnData.length;
+<         final BigDecimal[][] data = new BigDecimal[nRows][1];
+<         for (int row = 0; row < nRows; row++) {
+<             data[row][0] = new BigDecimal(columnData[row]);
+<         }
+<         return new BigMatrixImpl(data, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createColumnBigMatrix(BigDecimal[] columnData) {
+<         final int nRows = columnData.length;
+<         final BigDecimal[][] data = new BigDecimal[nRows][1];
+<         for (int row = 0; row < nRows; row++) {
+<             data[row][0] = columnData[row];
+<         }
+<         return new BigMatrixImpl(data, false);
+---
+>     public static void checkMatrixIndex(final AnyMatrix m,
+>                                         final int row, final int column) {
+>         checkRowIndex(m, row);
+>         checkColumnIndex(m, column);
+511,529d368
+< 
+< 
+< 
+<     @Deprecated
+<     public static BigMatrix createColumnBigMatrix(String[] columnData) {
+<         int nRows = columnData.length;
+<         final BigDecimal[][] data = new BigDecimal[nRows][1];
+<         for (int row = 0; row < nRows; row++) {
+<             data[row][0] = new BigDecimal(columnData[row]);
+<         }
+<         return new BigMatrixImpl(data, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+531,533c370,373
+<         if (row < 0 || row >= m.getRowDimension()) {
+<             throw new MatrixIndexException(LocalizedFormats.ROW_INDEX_OUT_OF_RANGE,
+<                                            row, 0, m.getRowDimension() - 1);
+---
+>         if (row < 0 ||
+>             row >= m.getRowDimension()) {
+>             throw new OutOfRangeException(LocalizedFormats.ROW_INDEX,
+>                                           row, 0, m.getRowDimension() - 1);
+543,544c383,384
+<     public static void checkColumnIndex(final AnyMatrix m, final int column)
+<         throws MatrixIndexException {
+---
+> 
+>     public static void checkColumnIndex(final AnyMatrix m, final int column) {
+546c386
+<             throw new MatrixIndexException(LocalizedFormats.COLUMN_INDEX_OUT_OF_RANGE,
+---
+>             throw new OutOfRangeException(LocalizedFormats.COLUMN_INDEX,
+561a402,403
+> 
+> 
+567,569c409,411
+<         if (startRow > endRow) {
+<             throw new MatrixIndexException(LocalizedFormats.INITIAL_ROW_AFTER_FINAL_ROW,
+<                                            startRow, endRow);
+---
+>         if (endRow < startRow) {
+>             throw new NumberIsTooSmallException(LocalizedFormats.INITIAL_ROW_AFTER_FINAL_ROW,
+>                                                 endRow, startRow, false);
+574,576c416,418
+<         if (startColumn > endColumn) {
+<             throw new MatrixIndexException(LocalizedFormats.INITIAL_COLUMN_AFTER_FINAL_COLUMN,
+<                                            startColumn, endColumn);
+---
+>         if (endColumn < startColumn) {
+>             throw new NumberIsTooSmallException(LocalizedFormats.INITIAL_COLUMN_AFTER_FINAL_COLUMN,
+>                                                 endColumn, startColumn, false);
+590a433,436
+> 
+> 
+> 
+> 
+592,598c438,450
+<                                            final int[] selectedRows, final int[] selectedColumns)
+<         throws MatrixIndexException {
+<         if (selectedRows.length * selectedColumns.length == 0) {
+<             if (selectedRows.length == 0) {
+<                 throw new MatrixIndexException(LocalizedFormats.EMPTY_SELECTED_ROW_INDEX_ARRAY);
+<             }
+<             throw new MatrixIndexException(LocalizedFormats.EMPTY_SELECTED_COLUMN_INDEX_ARRAY);
+---
+>                                            final int[] selectedRows,
+>                                            final int[] selectedColumns) {
+>         if (selectedRows == null) {
+>             throw new NullArgumentException();
+>         }
+>         if (selectedColumns == null) {
+>             throw new NullArgumentException();
+>         }
+>         if (selectedRows.length == 0) {
+>             throw new ZeroException(LocalizedFormats.EMPTY_SELECTED_ROW_INDEX_ARRAY);
+>         }
+>         if (selectedColumns.length == 0) {
+>             throw new ZeroException(LocalizedFormats.EMPTY_SELECTED_COLUMN_INDEX_ARRAY);

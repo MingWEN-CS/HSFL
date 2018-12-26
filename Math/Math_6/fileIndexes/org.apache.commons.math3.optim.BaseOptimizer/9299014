@@ -1,0 +1,224 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optim;
+
+import org.apache.commons.math3.util.Incrementor;
+import org.apache.commons.math3.exception.TooManyEvaluationsException;
+import org.apache.commons.math3.exception.TooManyIterationsException;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class BaseOptimizer<PAIR> {
+    
+    protected final Incrementor evaluations;
+    
+    protected final Incrementor iterations;
+    
+    private ConvergenceChecker<PAIR> checker;
+
+    
+
+
+    protected BaseOptimizer(ConvergenceChecker<PAIR> checker) {
+        this.checker = checker;
+
+        evaluations = new Incrementor(0, new MaxEvalCallback());
+        iterations = new Incrementor(0, new MaxIterCallback());
+    }
+
+    
+
+
+
+
+    public int getMaxEvaluations() {
+        return evaluations.getMaximalCount();
+    }
+
+    
+
+
+
+
+
+
+
+    public int getEvaluations() {
+        return evaluations.getCount();
+    }
+
+    
+
+
+
+
+    public int getMaxIterations() {
+        return iterations.getMaximalCount();
+    }
+
+    
+
+
+
+
+
+
+
+    public int getIterations() {
+        return iterations.getCount();
+    }
+
+    
+
+
+
+
+    public ConvergenceChecker<PAIR> getConvergenceChecker() {
+        return checker;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public PAIR optimize(OptimizationData... optData)
+        throws TooManyEvaluationsException,
+               TooManyIterationsException {
+        
+        parseOptimizationData(optData);
+        
+        evaluations.resetCount();
+        iterations.resetCount();
+        
+        return doOptimize();
+    }
+
+    
+
+
+
+
+
+    protected abstract PAIR doOptimize();
+
+    
+
+
+
+
+
+    protected void incrementEvaluationCount()
+        throws TooManyEvaluationsException {
+        evaluations.incrementCount();
+    }
+
+    
+
+
+
+
+
+    protected void incrementIterationCount()
+        throws TooManyIterationsException {
+        iterations.incrementCount();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private void parseOptimizationData(OptimizationData... optData) {
+        
+        
+        for (OptimizationData data : optData) {
+            if (data instanceof MaxEval) {
+                evaluations.setMaximalCount(((MaxEval) data).getMaxEval());
+                continue;
+            }
+            if (data instanceof MaxIter) {
+                iterations.setMaximalCount(((MaxIter) data).getMaxIter());
+                continue;
+            }
+        }
+    }
+
+    
+
+
+
+    private static class MaxEvalCallback
+        implements  Incrementor.MaxCountExceededCallback {
+        
+
+
+
+        public void trigger(int max) {
+            throw new TooManyEvaluationsException(max);
+        }
+    }
+
+    
+
+
+
+    private static class MaxIterCallback
+        implements Incrementor.MaxCountExceededCallback {
+        
+
+
+
+        public void trigger(int max) {
+            throw new TooManyIterationsException(max);
+        }
+    }
+}

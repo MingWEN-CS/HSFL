@@ -1,0 +1,202 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optim.nonlinear.vector;
+
+import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.TooManyEvaluationsException;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.optim.BaseMultivariateOptimizer;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.OptimizationData;
+import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.optim.nonlinear.vector.jacobian.GaussNewtonOptimizer;
+
+
+
+
+
+
+
+public abstract class MultivariateVectorOptimizer
+    extends BaseMultivariateOptimizer<PointVectorValuePair> {
+    
+    private double[] target;
+    
+
+
+    @Deprecated
+    private RealMatrix weightMatrix;
+    
+    private double[] weight;
+    
+    private MultivariateVectorFunction model;
+
+    
+
+
+    protected MultivariateVectorOptimizer(ConvergenceChecker<PointVectorValuePair> checker) {
+        super(checker);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected double[] computeObjectiveValue(double[] params) {
+        super.incrementEvaluationCount();
+        return model.value(params);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public PointVectorValuePair optimize(OptimizationData... optData)
+        throws TooManyEvaluationsException,
+               DimensionMismatchException {
+        
+        parseOptimizationData(optData);
+        
+        checkParameters();
+        
+        return super.optimize(optData);
+    }
+
+    
+
+
+
+
+
+    @Deprecated
+    public RealMatrix getWeight() {
+        return weightMatrix.copy();
+    }
+
+    
+
+
+
+
+
+    public double[] getNonCorrelatedWeight() {
+        return weight.clone();
+    }
+    
+
+
+
+
+
+    public double[] getTarget() {
+        return target.clone();
+    }
+
+    
+
+
+
+
+    public int getTargetSize() {
+        return target.length;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private void parseOptimizationData(OptimizationData... optData) {
+        
+        
+        for (OptimizationData data : optData) {
+            if (data instanceof ModelFunction) {
+                model = ((ModelFunction) data).getModelFunction();
+                continue;
+            }
+            if (data instanceof Target) {
+                target = ((Target) data).getTarget();
+                continue;
+            }
+            if (data instanceof NonCorrelatedWeight) {
+                weight = ((NonCorrelatedWeight) data).getWeight();
+                continue;
+            }
+            
+            if (data instanceof Weight) {
+                weightMatrix = ((Weight) data).getWeight();
+                weight = new double[weightMatrix.getColumnDimension()];
+                for (int i = 0; i < weight.length; ++i) {
+                    
+                    weight[i] = weightMatrix.getEntry(i, i);
+                }
+                continue;
+            }
+        }
+    }
+
+    
+
+
+
+
+
+    private void checkParameters() {
+        if (target.length != weight.length) {
+            throw new DimensionMismatchException(target.length, weight.length);
+        }
+    }
+}

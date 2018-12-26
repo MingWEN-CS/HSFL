@@ -1,0 +1,79 @@
+1023,1030d1022
+<     
+<     boolean superInterfacesHasProperty = false;
+<     if (ctorType.isInterface()) {
+<       for (ObjectType interfaceType : ctorType.getExtendedInterfaces()) {
+<         superInterfacesHasProperty =
+<           superInterfacesHasProperty || interfaceType.hasProperty(propertyName);
+<       }
+<     }
+1035,1036c1027
+<       for (JSType implementedInterface :
+<           ctorType.getAllImplementedInterfaces()) {
+---
+>       for (JSType implementedInterface : ctorType.getImplementedInterfaces()) {
+1058,1059c1049
+<     if (!declaredOverride && !superClassHasProperty
+<         && !superInterfacesHasProperty) {
+---
+>     if (!declaredOverride && !superClassHasProperty) {
+1089,1105d1078
+<     } else if (superInterfacesHasProperty) {
+<       
+<       for (ObjectType interfaceType : ctorType.getExtendedInterfaces()) {
+<         if (interfaceType.hasProperty(propertyName)) {
+<           JSType superPropertyType =
+<             interfaceType.getPropertyType(propertyName);
+<           if (!propertyType.canAssignTo(superPropertyType)) {
+<             topInstanceType = interfaceType.getConstructor().
+<                 getTopMostDefiningType(propertyName);
+<             compiler.report(
+<                 t.makeError(n, HIDDEN_SUPERCLASS_PROPERTY_MISMATCH,
+<                     propertyName, topInstanceType.toString(),
+<                     superPropertyType.toString(),
+<                     propertyType.toString()));
+<           }
+<         }
+<       }
+1422a1396,1397
+>     JSDocInfo info = n.getJSDocInfo();
+> 
+1425c1400
+<     if (functionType.isConstructor()) {
+---
+>     if (functionType.isInterface() || functionType.isConstructor()) {
+1430c1405,1406
+<           (baseConstructor.isInterface() && functionType.isConstructor())) {
+---
+>           (baseConstructor.isConstructor() && functionType.isInterface() ||
+>            baseConstructor.isInterface() && functionType.isConstructor())) {
+1432a1409,1415
+>       }
+> 
+>       if (functionType.isInterface()) {
+>         if (functionType.hasImplementedInterfaces()) {
+>           compiler.report(t.makeError(n,
+>               CONFLICTING_IMPLEMENTED_TYPE, functionPrivateName));
+>         }
+1434d1416
+<         
+1452,1453d1433
+<         
+<         validator.expectAllInterfaceProperties(t, n, functionType);
+1455,1467c1435,1436
+<     } else if (functionType.isInterface()) {
+<       
+<       for (ObjectType extInterface : functionType.getExtendedInterfaces()) {
+<         if (extInterface.getConstructor() != null
+<             && !extInterface.getConstructor().isInterface()) {
+<           compiler.report(
+<               t.makeError(n, CONFLICTING_EXTENDED_TYPE, functionPrivateName));
+<         }
+<       }
+<       
+<       if (functionType.hasImplementedInterfaces()) {
+<         compiler.report(t.makeError(n,
+<             CONFLICTING_IMPLEMENTED_TYPE, functionPrivateName));
+---
+>       if (functionType.isConstructor()) {
+>         validator.expectAllInterfaceProperties(t, n, functionType);

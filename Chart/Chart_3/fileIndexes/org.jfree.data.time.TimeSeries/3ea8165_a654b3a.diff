@@ -1,0 +1,447 @@
+84a85,89
+> 
+> 
+> 
+> 
+> 
+92a98
+> import java.util.Iterator;
+144a151,164
+>     private double minY;
+> 
+>     
+> 
+> 
+> 
+> 
+>     private double maxY;
+> 
+>     
+> 
+> 
+> 
+> 
+171a192,193
+>         this.minY = Double.NaN;
+>         this.maxY = Double.NaN;
+240a263
+>         
+318a342,371
+> 
+>     public double getMinY() {
+>         return this.minY;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getMaxY() {
+>         return this.maxY;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+331a385,386
+> 
+> 
+333c388,389
+<         return (TimeSeriesDataItem) this.data.get(index);
+---
+>         TimeSeriesDataItem item = (TimeSeriesDataItem) this.data.get(index);
+>         return (TimeSeriesDataItem) item.clone();
+345a402,403
+> 
+> 
+348a407,446
+>             return getDataItem(index);
+>         }
+>         else {
+>             return null;
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     TimeSeriesDataItem getRawDataItem(int index) {
+>         return (TimeSeriesDataItem) this.data.get(index);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     TimeSeriesDataItem getRawDataItem(RegularTimePeriod period) {
+>         int index = getIndex(period);
+>         if (index >= 0) {
+364c462
+<         return getDataItem(index).getPeriod();
+---
+>         return getRawDataItem(index).getPeriod();
+436c534
+<         return getDataItem(index).getValue();
+---
+>         return getRawDataItem(index).getValue();
+479a578
+>         item = (TimeSeriesDataItem) item.clone();
+526a626
+>             updateBoundsForAddedItem(item);
+529c629,630
+<                 this.data.remove(0);
+---
+>                 TimeSeriesDataItem d = (TimeSeriesDataItem) this.data.remove(0);
+>                 updateBoundsForRemovedItem(d);
+605,610c706
+<         if (index >= 0) {
+<             TimeSeriesDataItem pair = (TimeSeriesDataItem) this.data.get(index);
+<             pair.setValue(value);
+<             fireSeriesChanged();
+<         }
+<         else {
+---
+>         if (index < 0) {
+614c710
+< 
+---
+>         update(index, value);
+624c720,728
+<         TimeSeriesDataItem item = getDataItem(index);
+---
+>         TimeSeriesDataItem item = (TimeSeriesDataItem) this.data.get(index);
+>         boolean iterate = false;
+>         Number oldYN = item.getValue();
+>         if (oldYN != null) {
+>             double oldY = oldYN.doubleValue();
+>             if (!Double.isNaN(oldY)) {
+>                 iterate = oldY <= this.minY || oldY >= this.maxY;
+>             }
+>         }
+625a730,737
+>         if (iterate) {
+>             findBoundsByIteration();
+>         }
+>         else if (value != null) {
+>             double yy = value.doubleValue();
+>             this.minY = minIgnoreNaN(this.minY, yy);
+>             this.maxY = maxIgnoreNaN(this.maxY, yy);
+>         }
+641c753
+<             TimeSeriesDataItem item = series.getDataItem(i);
+---
+>             TimeSeriesDataItem item = series.getRawDataItem(i);
+662d773
+< 
+679d789
+< 
+681a792,793
+>         return addOrUpdate(new TimeSeriesDataItem(period, value));
+>     }
+683c795,808
+<         if (period == null) {
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public TimeSeriesDataItem addOrUpdate(TimeSeriesDataItem item) {
+> 
+>         if (item == null) {
+685a811,821
+>         Class periodClass = item.getPeriod().getClass();
+>         if (this.timePeriodClass == null) {
+>             this.timePeriodClass = periodClass;
+>         }
+>         else if (!this.timePeriodClass.equals(periodClass)) {
+>             String msg = "You are trying to add data where the time "
+>                     + "period class is " + periodClass.getName()
+>                     + ", but the TimeSeries is expecting an instance of "
+>                     + this.timePeriodClass.getName() + ".";
+>             throw new SeriesException(msg);
+>         }
+687,689c823
+< 
+<         TimeSeriesDataItem key = new TimeSeriesDataItem(period, value);
+<         int index = Collections.binarySearch(this.data, key);
+---
+>         int index = Collections.binarySearch(this.data, item);
+694,698c828,844
+<             existing.setValue(value);
+<             removeAgedItems(false);  
+<                                      
+<                                      
+<             fireSeriesChanged();
+---
+>             
+>             
+>             boolean iterate = false;
+>             Number oldYN = existing.getValue();
+>             double oldY = oldYN != null ? oldYN.doubleValue() : Double.NaN;
+>             if (!Double.isNaN(oldY)) {
+>                 iterate = oldY <= this.minY || oldY >= this.maxY;
+>             }
+>             existing.setValue(item.getValue());
+>             if (iterate) {
+>                 findBoundsByIteration();
+>             }
+>             else if (item.getValue() != null) {
+>                 double yy = item.getValue().doubleValue();
+>                 this.minY = minIgnoreNaN(this.minY, yy);
+>                 this.maxY = minIgnoreNaN(this.maxY, yy);
+>             }
+701,702c847,849
+<             this.data.add(-index - 1, new TimeSeriesDataItem(period, value));
+<             this.timePeriodClass = period.getClass();
+---
+>             item = (TimeSeriesDataItem) item.clone();
+>             this.data.add(-index - 1, item);
+>             updateBoundsForAddedItem(item);
+706,709c853,854
+<                 this.data.remove(0);
+<                 if (this.data.isEmpty()) {
+<                     this.timePeriodClass = null;
+<                 }
+---
+>                 TimeSeriesDataItem d = (TimeSeriesDataItem) this.data.remove(0);
+>                 updateBoundsForRemovedItem(d);
+711,715d855
+< 
+<             removeAgedItems(false);  
+<                                      
+<                                      
+<             fireSeriesChanged();
+716a857,860
+>         removeAgedItems(false);  
+>                                  
+>                                  
+>         fireSeriesChanged();
+740,741c884,888
+<             if (removed && notify) {
+<                 fireSeriesChanged();
+---
+>             if (removed) {
+>                 findBoundsByIteration();
+>                 if (notify) {
+>                     fireSeriesChanged();
+>                 }
+789,790c936,940
+<         if (removed && notify) {
+<             fireSeriesChanged();
+---
+>         if (removed) {
+>             findBoundsByIteration();
+>             if (notify) {
+>                 fireSeriesChanged();
+>             }
+801a952,953
+>             this.minY = Double.NaN;
+>             this.maxY = Double.NaN;
+817c969,971
+<             this.data.remove(index);
+---
+>             TimeSeriesDataItem item = (TimeSeriesDataItem) this.data.remove(
+>                     index);
+>             updateBoundsForRemovedItem(item);
+831a986,998
+>         delete(start, end, true);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void delete(int start, int end, boolean notify) {
+837a1005
+>         findBoundsByIteration();
+841c1009,1011
+<         fireSeriesChanged();
+---
+>         if (notify) {
+>             fireSeriesChanged();
+>         }
+878c1048
+<         throws CloneNotSupportedException {
+---
+>             throws CloneNotSupportedException {
+966,967c1136,1137
+<     public boolean equals(Object object) {
+<         if (object == this) {
+---
+>     public boolean equals(Object obj) {
+>         if (obj == this) {
+970c1140
+<         if (!(object instanceof TimeSeries)) {
+---
+>         if (!(obj instanceof TimeSeries)) {
+973c1143
+<         TimeSeries that = (TimeSeries) object;
+---
+>         TimeSeries that = (TimeSeries) obj;
+996,999c1166,1167
+<         for (int i = 0; i < count; i++) {
+<             if (!getDataItem(i).equals(that.getDataItem(i))) {
+<                 return false;
+<             }
+---
+>         if (!ObjectUtilities.equal(this.data, that.data)) {
+>             return false;
+1001c1169
+<         return super.equals(object);
+---
+>         return super.equals(obj);
+1020c1188
+<             TimeSeriesDataItem item = getDataItem(0);
+---
+>             TimeSeriesDataItem item = getRawDataItem(0);
+1024c1192
+<             TimeSeriesDataItem item = getDataItem(count - 1);
+---
+>             TimeSeriesDataItem item = getRawDataItem(count - 1);
+1028c1196
+<             TimeSeriesDataItem item = getDataItem(count / 2);
+---
+>             TimeSeriesDataItem item = getRawDataItem(count / 2);
+1035a1204,1300
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private void updateBoundsForAddedItem(TimeSeriesDataItem item) {
+>         Number yN = item.getValue();
+>         if (item.getValue() != null) {
+>             double y = yN.doubleValue();
+>             this.minY = minIgnoreNaN(this.minY, y);
+>             this.maxY = maxIgnoreNaN(this.maxY, y);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private void updateBoundsForRemovedItem(TimeSeriesDataItem item) {
+>         Number yN = item.getValue();
+>         if (yN != null) {
+>             double y = yN.doubleValue();
+>             if (!Double.isNaN(y)) {
+>                 if (y <= this.minY || y >= this.maxY) {
+>                     findBoundsByIteration();
+>                 }
+>             }
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private void findBoundsByIteration() {
+>         this.minY = Double.NaN;
+>         this.maxY = Double.NaN;
+>         Iterator iterator = this.data.iterator();
+>         while (iterator.hasNext()) {
+>             TimeSeriesDataItem item = (TimeSeriesDataItem) iterator.next();
+>             updateBoundsForAddedItem(item);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private double minIgnoreNaN(double a, double b) {
+>         if (Double.isNaN(a)) {
+>             return b;
+>         }
+>         else {
+>             if (Double.isNaN(b)) {
+>                 return a;
+>             }
+>             else {
+>                 return Math.min(a, b);
+>             }
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private double maxIgnoreNaN(double a, double b) {
+>         if (Double.isNaN(a)) {
+>             return b;
+>         }
+>         else {
+>             if (Double.isNaN(b)) {
+>                 return a;
+>             }
+>             else {
+>                 return Math.max(a, b);
+>             }
+>         }
+>     }

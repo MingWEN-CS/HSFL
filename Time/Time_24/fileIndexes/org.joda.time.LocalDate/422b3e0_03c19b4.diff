@@ -1,0 +1,12 @@
+98a99
+>         
+440c441,447
+<         return isSupported(type.getDurationType());
+---
+>         DurationFieldType durType = type.getDurationType();
+>         if (DATE_DURATION_TYPES.contains(durType) ||
+>                 durType.getField(getChronology()).getUnitMillis() >=
+>                     getChronology().days().getUnitMillis()) {
+>             return type.getField(getChronology()).isSupported();
+>         }
+>         return false;

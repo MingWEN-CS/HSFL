@@ -1,0 +1,38 @@
+27a28
+> import com.google.javascript.rhino.InputId;
+31d31
+< import com.google.javascript.rhino.jstype.SimpleSourceFile;
+493a494
+>     private final InputId inputId;
+498c499
+<       this(nameNode, basicBlock, t.getScope(), t.getInput());
+---
+>       this(nameNode, basicBlock, t.getScope(), t.getInput().getInputId());
+506c507
+<           basicBlock, t.getScope(), t.getInput());
+---
+>           basicBlock, t.getScope(), t.getInput().getInputId());
+514d514
+< 
+516c516
+<     static Reference createRefForTest(String sourceName) {
+---
+>     static Reference createRefForTest(CompilerInput input) {
+518c518
+<           new SimpleSourceFile(sourceName, false));
+---
+>           input.getInputId());
+522c522
+<         BasicBlock basicBlock, Scope scope, StaticSourceFile sourceFile) {
+---
+>         BasicBlock basicBlock, Scope scope, InputId inputId) {
+526c526,527
+<       this.sourceFile = sourceFile;
+---
+>       this.inputId = inputId;
+>       this.sourceFile = nameNode.getStaticSourceFile();
+536a538,541
+>     }
+> 
+>     public InputId getInputId() {
+>       return inputId;

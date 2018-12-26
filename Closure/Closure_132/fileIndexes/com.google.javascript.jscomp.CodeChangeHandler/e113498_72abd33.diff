@@ -1,0 +1,57 @@
+18a19
+> import com.google.javascript.rhino.Node;
+23d23
+< interface CodeChangeHandler {
+25,31d24
+<   
+<   
+< 
+<   
+<   void reportChange();
+< 
+<   
+33a27,28
+> class CodeChangeHandler {
+>   private boolean hasChanged = false;
+35,36c30,33
+<   static final class RecentChange implements CodeChangeHandler {
+<     private boolean hasChanged = false;
+---
+>   
+>   public void reportChange() {
+>     hasChanged = true;
+>   }
+38,49c35,37
+<     @Override
+<     public void reportChange() {
+<       hasChanged = true;
+<     }
+< 
+<     boolean hasCodeChanged() {
+<       return hasChanged;
+<     }
+< 
+<     void reset() {
+<       hasChanged = false;
+<     }
+---
+>   
+>   public void reportChangedFun(Node n) {
+>     hasChanged = true;
+52a41,43
+>   public void reportDeletedFun(Node n) {
+>     hasChanged = true;
+>   }
+53a45,47
+>   void reset() {
+>     hasChanged = false;
+>   }
+55,59c49,50
+<   static final class ForbiddenChange implements CodeChangeHandler {
+<     @Override
+<     public void reportChange() {
+<       throw new IllegalStateException("Code changes forbidden");
+<     }
+---
+>   boolean hasCodeChanged() {
+>     return hasChanged;

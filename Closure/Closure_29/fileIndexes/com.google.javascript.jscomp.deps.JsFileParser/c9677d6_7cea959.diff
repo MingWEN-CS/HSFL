@@ -1,0 +1,41 @@
+126,131c126,128
+<     googMatcher.reset(line);
+<     while (googMatcher.find()) {
+<       hasProvidesOrRequires = true;
+< 
+<       
+<       boolean isRequire = googMatcher.group(1).charAt(0) == 'r';
+---
+>     
+>     if (line.indexOf("provide") != -1 ||
+>         line.indexOf("require") != -1) {
+133c130,132
+<       String arg = parseJsString(googMatcher.group(2));
+---
+>       googMatcher.reset(line);
+>       while (googMatcher.find()) {
+>         hasProvidesOrRequires = true;
+135,136d133
+<       
+<       if (isRequire) {
+137a135
+>         boolean isRequire = googMatcher.group(1).charAt(0) == 'r';
+138a137,138
+>         String arg = parseJsString(googMatcher.group(2));
+> 
+140,141c140,148
+<         if (!"goog".equals(arg)) {
+<           requires.add(arg);
+---
+>         if (isRequire) {
+>           
+>           
+>           
+>           if (!"goog".equals(arg)) {
+>             requires.add(arg);
+>           }
+>         } else {
+>           provides.add(arg);
+143,144d149
+<       } else {
+<         provides.add(arg);

@@ -1,0 +1,34 @@
+59c59
+<       DiagnosticType.error(
+---
+>       DiagnosticType.warning(
+61c61
+<       "The template type must be an object type");
+---
+>       "The template type must be an object type.\nActual: {0}");
+64c64
+<       DiagnosticType.error(
+---
+>       DiagnosticType.warning(
+867c867
+<         JSType iArgumentType = null;
+---
+>         ObjectType iArgumentType = null;
+870,871c870,874
+<           iArgumentType = getJSType(iArgument).restrictByNotNullOrUndefined();
+<           if (!(iArgumentType instanceof ObjectType)) {
+---
+>           iArgumentType = getJSType(iArgument)
+>               .restrictByNotNullOrUndefined()
+>               .collapseUnion()
+>               .toObjectType();
+>           if (iArgumentType == null) {
+874c877,878
+<                     TEMPLATE_TYPE_NOT_OBJECT_TYPE));
+---
+>                     TEMPLATE_TYPE_NOT_OBJECT_TYPE,
+>                     getJSType(iArgument).toString()));
+909c913
+<                             jArgumentFnType, (ObjectType) iArgumentType));
+---
+>                             jArgumentFnType, iArgumentType));

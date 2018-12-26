@@ -1,0 +1,84 @@
+20a21,22
+> import java.util.HashMap;
+> import java.util.HashSet;
+22a25,26
+> import java.util.Map;
+> import java.util.Set;
+28a33
+> import org.joda.time.MutableDateTime;
+29a35
+> import org.joda.time.MutableDateTime.Property;
+1604a1611
+>         private static Map cParseCache = new HashMap();
+1681,1689c1688,1725
+<             int limit = text.length();
+<             int i = position;
+<             for (; i<limit; i++) {
+<                 char c = text.charAt(i);
+<                 if (c < 'A') {
+<                     break;
+<                 }
+<                 if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || Character.isLetter(c)) {
+<                     continue;
+---
+>             Locale locale = bucket.getLocale();
+>             
+>             
+>             Set validValues = null;
+>             int maxLength = 0;
+>             synchronized (cParseCache) {
+>                 Map innerMap = (Map) cParseCache.get(locale);
+>                 if (innerMap == null) {
+>                     innerMap = new HashMap();
+>                     cParseCache.put(locale, innerMap);
+>                 }
+>                 Object[] array = (Object[]) innerMap.get(iFieldType);
+>                 if (array == null) {
+>                     validValues = new HashSet(32);
+>                     MutableDateTime dt = new MutableDateTime(0L, DateTimeZone.UTC);
+>                     Property property = dt.property(iFieldType);
+>                     int min = property.getMinimumValueOverall();
+>                     int max = property.getMaximumValueOverall();
+>                     if (max - min > 32) {  
+>                         return ~position;
+>                     }
+>                     maxLength = property.getMaximumTextLength(locale);
+>                     for (int i = min; i <= max; i++) {
+>                         property.set(i);
+>                         validValues.add(property.getAsShortText(locale));
+>                         validValues.add(property.getAsText(locale));
+>                     }
+>                     if ("en".equals(locale.getLanguage()) && iFieldType == DateTimeFieldType.era()) {
+>                         
+>                         validValues.add("BCE");
+>                         validValues.add("CE");
+>                         maxLength = 3;
+>                     }
+>                     array = new Object[] {validValues, new Integer(maxLength)};
+>                     innerMap.put(iFieldType, array);
+>                 } else {
+>                     validValues = (Set) array[0];
+>                     maxLength = ((Integer) array[1]).intValue();
+1691d1726
+<                 break;
+1693,1695c1728,1735
+< 
+<             if (i == position) {
+<                 return ~position;
+---
+>             
+>             int limit = Math.min(text.length(), position + maxLength);
+>             for (int i = limit; i > position; i--) {
+>                 String match = text.substring(position, i);
+>                 if (validValues.contains(match)) {
+>                     bucket.saveField(iFieldType, match, locale);
+>                     return i;
+>                 }
+1697,1701c1737
+< 
+<             Locale locale = bucket.getLocale();
+<             bucket.saveField(iFieldType, text.substring(position, i), locale);
+< 
+<             return i;
+---
+>             return ~position;

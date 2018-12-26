@@ -1,0 +1,530 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat.regression;
+import java.io.Serializable;
+
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.DistributionFactory;
+import org.apache.commons.math.distribution.TDistribution;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class SimpleRegression implements Serializable {
+
+    
+    static final long serialVersionUID = -3004689053607543335L;
+
+    
+    private double sumX = 0d;
+
+    
+    private double sumXX = 0d;
+
+    
+    private double sumY = 0d;
+
+    
+    private double sumYY = 0d;
+
+    
+    private double sumXY = 0d;
+
+    
+    private long n = 0;
+
+    
+    private double xbar = 0;
+
+    
+    private double ybar = 0;
+
+    
+
+    
+
+
+    public SimpleRegression() {
+        super();
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void addData(double x, double y) {
+        if (n == 0) {
+            xbar = x;
+            ybar = y;
+        } else {
+            double dx = x - xbar;
+            double dy = y - ybar;
+            sumXX += dx * dx * (double) n / (double) (n + 1.0);
+            sumYY += dy * dy * (double) n / (double) (n + 1.0);
+            sumXY += dx * dy * (double) n / (double) (n + 1.0);
+            xbar += dx / (double) (n + 1.0);
+            ybar += dy / (double) (n + 1.0);
+        }
+        sumX += x;
+        sumY += y;
+        n++;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void addData(double[][] data) {
+        for (int i = 0; i < data.length; i++) {
+            addData(data[i][0], data[i][1]);
+        }
+    }
+
+    
+
+
+    public void clear() {
+        sumX = 0d;
+        sumXX = 0d;
+        sumY = 0d;
+        sumYY = 0d;
+        sumXY = 0d;
+        n = 0;
+    }
+
+    
+
+
+
+
+    public long getN() {
+        return n;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double predict(double x) {
+        double b1 = getSlope();
+        return getIntercept(b1) + b1 * x;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getIntercept() {
+        return getIntercept(getSlope());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getSlope() {
+        if (n < 2) {
+            return Double.NaN; 
+        }
+        if (Math.abs(sumXX) < 10 * Double.MIN_VALUE) {
+            return Double.NaN; 
+        }
+        return sumXY / sumXX;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getSumSquaredErrors() {
+        return getSumSquaredErrors(getSlope());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public double getTotalSumSquares() {
+        if (n < 2) {
+            return Double.NaN;
+        }
+        return sumYY;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getRegressionSumSquares() {
+        return getRegressionSumSquares(getSlope());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public double getMeanSquareError() {
+        if (n < 3) {
+            return Double.NaN;
+        }
+        return getSumSquaredErrors() / (double) (n - 2);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getR() {
+        double b1 = getSlope();
+        double result = Math.sqrt(getRSquare(b1));
+        if (b1 < 0) {
+            result = -result;
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getRSquare() {
+        return getRSquare(getSlope());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public double getInterceptStdErr() {
+        return Math.sqrt(
+            getMeanSquareError() * ((1d / (double) n) + (xbar * xbar) / sumXX));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public double getSlopeStdErr() {
+        return Math.sqrt(getMeanSquareError() / sumXX);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getSlopeConfidenceInterval() throws MathException {
+        return getSlopeConfidenceInterval(0.05d);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getSlopeConfidenceInterval(double alpha)
+        throws MathException {
+        if (alpha >= 1 || alpha <= 0) {
+            throw new IllegalArgumentException();
+        }
+        return getSlopeStdErr() *
+            getTDistribution().inverseCumulativeProbability(1d - alpha / 2d);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double getSignificance() throws MathException {
+        return (
+            1.0 - getTDistribution().cumulativeProbability(
+                    Math.abs(getSlope()) / getSlopeStdErr()));
+    }
+
+    
+
+    
+
+
+
+
+
+
+
+    private double getIntercept(double slope) {
+        return (sumY - slope * sumX) / ((double) n);
+    }
+
+    
+
+
+
+
+
+
+
+
+    private double getSumSquaredErrors(double b1) {
+        return sumYY - sumXY * sumXY / sumXX;
+    }
+
+    
+
+
+
+
+
+
+
+    private double getRSquare(double b1) {
+        double ssto = getTotalSumSquares();
+        return (ssto - getSumSquaredErrors(b1)) / ssto;
+    }
+
+    
+
+
+
+
+
+    private double getRegressionSumSquares(double slope) {
+        return slope * slope * sumXX;
+    }
+
+    
+
+
+
+
+
+    private TDistribution getTDistribution() {
+        return DistributionFactory.newInstance().createTDistribution(n - 2);
+    }
+}

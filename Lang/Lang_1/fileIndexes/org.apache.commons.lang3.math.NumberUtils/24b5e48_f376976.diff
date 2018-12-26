@@ -1,0 +1,86 @@
+558a559,563
+>         }
+>         
+>         
+>         if (expPos > -1 && expPos < str.length() - 1) {
+>             exp = str.substring(expPos + 1, str.length());
+559a565,567
+>             exp = null;
+>         }
+>         if (dec == null && exp == null) {
+561,567c569,571
+<             
+<             if (expPos > -1 && expPos < str.length() - 1) {
+<                 exp = str.substring(expPos + 1, str.length());
+<             } else {
+<                 exp = null;
+<             }
+<             if (dec == null && exp == null) {
+---
+>             try {
+>                 return createInteger(str);
+>             } catch (final NumberFormatException nfe) { 
+569,581c573,576
+<                 try {
+<                     return createInteger(str);
+<                 } catch (final NumberFormatException nfe) { 
+<                     
+<                 }
+<                 try {
+<                     return createLong(str);
+<                 } catch (final NumberFormatException nfe) { 
+<                     
+<                 }
+<                 return createBigInteger(str);
+< 
+<             } else {
+---
+>             }
+>             try {
+>                 return createLong(str);
+>             } catch (final NumberFormatException nfe) { 
+583,601c578,579
+<                 final boolean allZeros = isAllZeros(mant) && isAllZeros(exp);
+<                 try {
+<                     final Float f = createFloat(str);
+<                     if (!(f.isInfinite() || (f.floatValue() == 0.0F && !allZeros))) {
+<                         return f;
+<                     }
+<                 } catch (final NumberFormatException nfe) { 
+<                     
+<                 }
+<                 try {
+<                     final Double d = createDouble(str);
+<                     if (!(d.isInfinite() || (d.doubleValue() == 0.0D && !allZeros))) {
+<                         return d;
+<                     }
+<                 } catch (final NumberFormatException nfe) { 
+<                     
+<                 }
+< 
+<                 return createBigDecimal(str);
+---
+>             }
+>             return createBigInteger(str);
+602a581,587
+>         }
+>         
+>         final boolean allZeros = isAllZeros(mant) && isAllZeros(exp);
+>         try {
+>             final Float f = createFloat(str);
+>             if (!(f.isInfinite() || (f.floatValue() == 0.0F && !allZeros))) {
+>                 return f;
+603a589,590
+>         } catch (final NumberFormatException nfe) { 
+>             
+604a592,601
+>         try {
+>             final Double d = createDouble(str);
+>             if (!(d.isInfinite() || (d.doubleValue() == 0.0D && !allZeros))) {
+>                 return d;
+>             }
+>         } catch (final NumberFormatException nfe) { 
+>             
+>         }
+> 
+>         return createBigDecimal(str);

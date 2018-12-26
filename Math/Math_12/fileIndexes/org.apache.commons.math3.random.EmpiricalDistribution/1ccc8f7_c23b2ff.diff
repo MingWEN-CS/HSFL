@@ -1,0 +1,155 @@
+32d31
+< import org.apache.commons.math3.distribution.NormalDistribution;
+33a33
+> import org.apache.commons.math3.distribution.NormalDistribution;
+138c138,142
+<     private final RandomDataGenerator randomData;
+---
+>     private final RandomDataGenerator randomDataGen;
+>     
+> 
+> 
+>     private final boolean useRandomDataImpl;
+144c148
+<         this(DEFAULT_BIN_COUNT, new RandomDataGenerator());
+---
+>         this(DEFAULT_BIN_COUNT);
+153c157
+<         this(binCount, new RandomDataGenerator());
+---
+>         this(binCount, (RandomGenerator) null);
+164,165c168,170
+<     public EmpiricalDistribution(int binCount, RandomGenerator generator) {
+<         super(generator);
+---
+> 
+>     @Deprecated
+>     public EmpiricalDistribution(int binCount, RandomDataImpl randomData) {
+167,168c172,177
+<         this.randomData = new RandomDataGenerator(generator);
+<         this.binStats = new ArrayList<SummaryStatistics>();
+---
+>         this.randomData = randomData == null ?
+>             new RandomDataImpl() :
+>             randomData;
+>         binStats = new ArrayList<SummaryStatistics>();
+>         useRandomDataImpl = true;
+>         randomDataGen = null;
+170d178
+< 
+178,179c186,189
+<     public EmpiricalDistribution(RandomGenerator generator) {
+<         this(DEFAULT_BIN_COUNT, generator);
+---
+> 
+>     @Deprecated
+>     public EmpiricalDistribution(RandomDataImpl randomData) {
+>         this(DEFAULT_BIN_COUNT, randomData);
+189,190d198
+< 
+<     @SuppressWarnings("deprecation")  
+193c201,203
+<         this.randomData = randomData;
+---
+>         this.randomDataGen = randomData == null ?
+>             new RandomDataGenerator() :
+>             randomData;
+194a205
+>         useRandomDataImpl = false; 
+196d206
+< 
+203d212
+< 
+208c217,240
+<      
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public EmpiricalDistribution(int binCount, RandomGenerator generator) {
+>         this(binCount, new RandomDataGenerator(generator));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public EmpiricalDistribution(RandomGenerator generator) {
+>         this(DEFAULT_BIN_COUNT, generator);
+>     }
+> 
+>     
+468,483c500,534
+<         
+<         final double x = randomData.nextUniform(0,1);
+< 
+<         
+<         for (int i = 0; i < binCount; i++) {
+<            if (x <= upperBounds[i]) {
+<                SummaryStatistics stats = binStats.get(i);
+<                if (stats.getN() > 0) {
+<                    if (stats.getStandardDeviation() > 0) {  
+<                        return randomData.nextGaussian(stats.getMean(),
+<                                                       stats.getStandardDeviation());
+<                    } else {
+<                        return stats.getMean(); 
+<                    }
+<                }
+<            }
+---
+>         if (useRandomDataImpl) {
+>             
+>             
+>             final double x = randomData.nextUniform(0,1);
+>             
+>             for (int i = 0; i < binCount; i++) {
+>                 if (x <= upperBounds[i]) {
+>                     SummaryStatistics stats = binStats.get(i);
+>                     if (stats.getN() > 0) {
+>                         if (stats.getStandardDeviation() > 0) {  
+>                             return randomData.nextGaussian(stats.getMean(),
+>                                                            stats.getStandardDeviation());
+>                         } else {
+>                             return stats.getMean(); 
+>                         }
+>                     }
+>                 }
+>             }
+>         } else {
+>             
+>             final double x = randomDataGen.nextUniform(0, 1);
+>             
+>             for (int i = 0; i < binCount; i++) {
+>                 if (x <= upperBounds[i]) {
+>                     SummaryStatistics stats = binStats.get(i);
+>                     if (stats.getN() > 0) {
+>                         if (stats.getStandardDeviation() > 0) {  
+>                             return randomDataGen.nextGaussian(stats.getMean(),
+>                                                               stats.getStandardDeviation());
+>                         } else {
+>                             return stats.getMean(); 
+>                         }
+>                     }
+>                 }
+>             }
+576c627,632
+<         randomData.reSeed(seed);
+---
+>         if (useRandomDataImpl) {
+>             
+>             randomData.reSeed(seed);
+>         } else {
+>             randomDataGen.reSeed(seed);
+>         }
+766c822
+<         randomData.reSeed(seed);
+---
+>         reSeed(seed);

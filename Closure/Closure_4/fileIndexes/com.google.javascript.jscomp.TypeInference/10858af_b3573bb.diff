@@ -1,0 +1,76 @@
+36a37
+> import com.google.javascript.jscomp.CodingConvention.AssertionFunctionSpec;
+54a56
+> import java.util.Map;
+76d77
+< 
+82a84
+>   private final Map<String, AssertionFunctionSpec> assertionFunctionsMap;
+98c100,101
+<                 Scope functionScope) {
+---
+>                 Scope functionScope,
+>                 Map<String, AssertionFunctionSpec> assertionFunctionsMap) {
+100c103
+<          ImmutableSet.<Var>of());
+---
+>          assertionFunctionsMap, ImmutableSet.<Var>of());
+105a109
+> 
+109c113,115
+<                 Scope functionScope, Collection<Var> unflowableVars) {
+---
+>                 Scope functionScope,
+>                 Map<String, AssertionFunctionSpec> assertionFunctionsMap,
+>                 Collection<Var> unflowableVars) {
+115a122
+>     this.assertionFunctionsMap = assertionFunctionsMap;
+782a790,837
+>       }
+>     }
+> 
+>     scope = tightenTypesAfterAssertions(scope, n);
+>     return scope;
+>   }
+> 
+>   private FlowScope tightenTypesAfterAssertions(FlowScope scope,
+>       Node callNode) {
+>     Node left = callNode.getFirstChild();
+>     Node firstParam = left.getNext();
+>     AssertionFunctionSpec assertionFunctionSpec =
+>         assertionFunctionsMap.get(left.getQualifiedName());
+>     if (assertionFunctionSpec == null || firstParam == null) {
+>       return scope;
+>     }
+>     Node assertedNode = assertionFunctionSpec.getAssertedParam(firstParam);
+>     if (assertedNode == null) {
+>       return scope;
+>     }
+>     JSTypeNative assertedType = assertionFunctionSpec.getAssertedType();
+>     
+>     if (assertedType == null) {
+>       switch (assertedNode.getType()) {
+>         case Token.NAME:
+>           JSType type = getJSType(assertedNode);
+>           JSType narrowed = type.restrictByNotNullOrUndefined();
+>           if (type != narrowed) {
+>             scope = scope.createChildFlowScope();
+>             redeclare(scope, assertedNode.getString(), narrowed);
+>           }
+>           break;
+>         case Token.AND:
+>         case Token.OR:
+>           BooleanOutcomePair conditionOutcomes =
+>               traverseWithinShortCircuitingBinOp(assertedNode, scope);
+>           scope = reverseInterpreter.getPreciserScopeKnowingConditionOutcome(
+>               assertedNode, conditionOutcomes.getOutcomeFlowScope(
+>                   assertedNode.getType(), true), true);
+>           break;
+>       }
+>     } else if (assertedNode.getType() == Token.NAME) {
+>       
+>       JSType type = getJSType(assertedNode);
+>       JSType narrowed = type.getGreatestSubtype(getNativeType(assertedType));
+>       if (type != narrowed) {
+>         scope = scope.createChildFlowScope();
+>         redeclare(scope, assertedNode.getString(), narrowed);

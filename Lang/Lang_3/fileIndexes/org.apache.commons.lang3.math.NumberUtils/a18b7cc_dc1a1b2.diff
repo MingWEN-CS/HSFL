@@ -1,0 +1,25 @@
+451,455c451,464
+<         }  
+<         if (str.startsWith("0x") || str.startsWith("-0x") || str.startsWith("0X") || str.startsWith("-0X")) {
+<             int hexDigits = str.length() - 2; 
+<             if (str.startsWith("-")) { 
+<                 hexDigits--;
+---
+>         }
+>         
+>         final String[] hex_prefixes = {"0x", "0X", "-0x", "-0X", "#", "-#"};
+>         int pfxLen = 0;
+>         for(String pfx : hex_prefixes) {
+>             if (str.startsWith(pfx)) {
+>                 pfxLen += pfx.length();
+>                 break;
+>             }
+>         }
+>         if (pfxLen > 0) {
+>             int hexDigits = str.length() - pfxLen;
+>             if (hexDigits > 16) { 
+>                 return createBigInteger(str);
+461c470
+<         }   
+---
+>         }

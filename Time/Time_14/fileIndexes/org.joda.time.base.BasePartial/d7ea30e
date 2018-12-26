@@ -1,0 +1,298 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.base;
+
+import java.io.Serializable;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.ReadablePartial;
+import org.joda.time.convert.ConverterManager;
+import org.joda.time.convert.PartialConverter;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class BasePartial
+        extends AbstractPartial
+        implements ReadablePartial, Serializable {
+
+    
+    private static final long serialVersionUID = 2353678632973660L;
+
+    
+    private Chronology iChronology;
+    
+    private int[] iValues;
+
+    
+    
+
+
+
+
+
+
+
+    protected BasePartial() {
+        this(DateTimeUtils.currentTimeMillis(), null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected BasePartial(Chronology chronology) {
+        this(DateTimeUtils.currentTimeMillis(), chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected BasePartial(long instant) {
+        this(instant, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected BasePartial(long instant, Chronology chronology) {
+        super();
+        chronology = DateTimeUtils.getChronology(chronology);
+        iChronology = chronology.withUTC();
+        iValues = chronology.get(this, instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected BasePartial(Object instant, Chronology chronology) {
+        super();
+        PartialConverter converter = ConverterManager.getInstance().getPartialConverter(instant);
+        chronology = converter.getChronology(instant, chronology);
+        chronology = DateTimeUtils.getChronology(chronology);
+        iChronology = chronology.withUTC();
+        iValues = converter.getPartialValues(this, instant, chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    protected BasePartial(int[] values, Chronology chronology) {
+        super();
+        chronology = DateTimeUtils.getChronology(chronology);
+        iChronology = chronology.withUTC();
+        chronology.validate(this, values);
+        iValues = values;
+    }
+
+    
+
+
+
+
+
+
+
+
+    protected BasePartial(BasePartial base, int[] values) {
+        super();
+        iChronology = base.iChronology;
+        iValues = values;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected BasePartial(BasePartial base, Chronology chrono) {
+        super();
+        iChronology = chrono.withUTC();
+        iValues = base.iValues;
+    }
+
+    
+    
+
+
+
+
+
+
+    public int getValue(int index) {
+        return iValues[index];
+    }
+
+    
+
+
+
+
+
+
+
+    public int[] getValues() {
+        return (int[]) iValues.clone();
+    }
+
+    
+
+
+
+
+
+
+
+    public Chronology getChronology() {
+        return iChronology;
+    }
+
+    
+    
+
+
+
+
+
+
+    protected void setValue(int index, int value) {
+        DateTimeField field = getField(index);
+        iValues = field.set(this, index, iValues, value);
+    }
+
+    
+
+
+
+
+    protected void setValues(int[] values) {
+        getChronology().validate(this, values);
+        iValues = values;
+    }
+
+    
+    
+
+
+
+
+
+    public DateTime toDateTime() {
+        return toDateTime((DateTimeZone) null);
+    }
+
+}

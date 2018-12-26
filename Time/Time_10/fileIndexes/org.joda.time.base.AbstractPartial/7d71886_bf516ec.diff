@@ -1,0 +1,79 @@
+58a59
+> import org.joda.time.DateTimeFieldType;
+111a113,138
+>     public DateTimeFieldType getFieldType(int index) {
+>         return getField(index, getChronology()).getType();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFieldType[] getFieldTypes() {
+>         DateTimeFieldType[] result = new DateTimeFieldType[size()];
+>         for (int i = 0; i < result.length; i++) {
+>             result[i] = getFieldType(i);
+>         }
+>         return result;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+124c151
+<         DateTimeField[] result = new DateTimeField[getFieldSize()];
+---
+>         DateTimeField[] result = new DateTimeField[size()];
+140c167
+<         int[] result = new int[getFieldSize()];
+---
+>         int[] result = new int[size()];
+157,159c184,186
+<     public int get(DateTimeField field) {
+<         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+<             if (getField(i) == field) {
+---
+>     public int get(DateTimeFieldType type) {
+>         for (int i = 0, isize = size(); i < isize; i++) {
+>             if (getFieldType(i) == type) {
+163c190
+<         throw new IllegalArgumentException("Field '" + field + "' is not supported");
+---
+>         throw new IllegalArgumentException("Field '" + type + "' is not supported");
+172,174c199,201
+<     public boolean isSupported(DateTimeField field) {
+<         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+<             if (getField(i) == field) {
+---
+>     public boolean isSupported(DateTimeFieldType type) {
+>         for (int i = 0, isize = size(); i < isize; i++) {
+>             if (getFieldType(i) == type) {
+247c274
+<         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+---
+>         for (int i = 0, isize = size(); i < isize; i++) {
+266c293
+<         if (getFieldSize() != other.getFieldSize()) {
+---
+>         if (size() != other.size()) {
+269,270c296,297
+<         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+<             if (getValue(i) != other.getValue(i) || getField(i) != other.getField(i)) {
+---
+>         for (int i = 0, isize = size(); i < isize; i++) {
+>             if (getValue(i) != other.getValue(i) || getFieldType(i) != other.getFieldType(i)) {
+285c312
+<         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+---
+>         for (int i = 0, isize = size(); i < isize; i++) {
+287c314
+<             total = 23 * total + getField(i).hashCode();
+---
+>             total = 23 * total + getFieldType(i).hashCode();

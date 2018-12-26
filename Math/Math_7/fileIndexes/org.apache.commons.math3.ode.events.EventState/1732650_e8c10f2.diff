@@ -1,0 +1,46 @@
+146a147,157
+>     public void reinitializeBegin(final StepInterpolator interpolator)
+>         throws EventException {
+>         try {
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+147a159,167
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+148a169,181
+>             final double ignoreZone = interpolator.isForward() ? getConvergence() : -getConvergence();
+>             t0 = interpolator.getPreviousTime() + ignoreZone;
+>             interpolator.setInterpolatedTime(t0);
+>             g0 = handler.g(t0, interpolator.getInterpolatedState());
+>             if (g0 == 0) {
+>                 
+>                 
+>                 final double tStart = interpolator.getPreviousTime();
+>                 interpolator.setInterpolatedTime(tStart);
+>                 g0Positive = handler.g(tStart, interpolator.getInterpolatedState()) <= 0;
+>             } else {
+>                 g0Positive = g0 >= 0;
+>             }
+150,154c183,185
+<     public void reinitializeBegin(final double tStart, final double[] yStart)
+<         throws EventException {
+<         t0 = tStart;
+<         g0 = handler.g(tStart, yStart);
+<         g0Positive = g0 >= 0;
+---
+>         } catch (DerivativeException de) {
+>             throw new EventException(de);
+>         }

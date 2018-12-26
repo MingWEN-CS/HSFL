@@ -1,0 +1,164 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.optimization.univariate;
+
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.util.Incrementor;
+import org.apache.commons.math.exception.MaxCountExceededException;
+import org.apache.commons.math.exception.TooManyEvaluationsException;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.optimization.GoalType;
+import org.apache.commons.math.optimization.ConvergenceChecker;
+
+
+
+
+
+
+
+
+public abstract class AbstractUnivariateRealOptimizer
+    implements UnivariateRealOptimizer {
+    
+    private ConvergenceChecker<UnivariateRealPointValuePair> checker;
+    
+    private final Incrementor evaluations = new Incrementor();
+    
+    private GoalType goal;
+    
+    private double searchMin;
+    
+    private double searchMax;
+    
+    private double searchStart;
+    
+    private UnivariateRealFunction function;
+
+    
+    public void setMaxEvaluations(int maxEvaluations) {
+        evaluations.setMaximalCount(maxEvaluations);
+    }
+
+    
+    public int getMaxEvaluations() {
+        return evaluations.getMaximalCount();
+    }
+
+    
+    public int getEvaluations() {
+        return evaluations.getCount();
+    }
+
+    
+
+
+    public GoalType getGoalType() {
+        return goal;
+    }
+    
+
+
+    public double getMin() {
+        return searchMin;
+    }
+    
+
+
+    public double getMax() {
+        return searchMax;
+    }
+    
+
+
+    public double getStartValue() {
+        return searchStart;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected double computeObjectiveValue(double point)
+        throws FunctionEvaluationException {
+        try {
+            evaluations.incrementCount();
+        } catch (MaxCountExceededException e) {
+            throw new TooManyEvaluationsException(e.getMax());
+        }
+        return function.value(point);
+    }
+
+    
+    public UnivariateRealPointValuePair optimize(UnivariateRealFunction f,
+                                                 GoalType goalType,
+                                                 double min, double max,
+                                                 double startValue)
+        throws FunctionEvaluationException {
+        
+        searchMin = min;
+        searchMax = max;
+        searchStart = startValue;
+        goal = goalType;
+        function = f;
+        evaluations.resetCount();
+
+        
+        return doOptimize();
+    }
+
+    
+    public UnivariateRealPointValuePair optimize(UnivariateRealFunction f,
+                                                 GoalType goal,
+                                                 double min, double max)
+        throws FunctionEvaluationException {
+        return optimize(f, goal, min, max, min + 0.5 * (max - min));
+    }
+
+    
+
+
+    public void setConvergenceChecker(ConvergenceChecker<UnivariateRealPointValuePair> checker) {
+        this.checker = checker;
+    }
+
+    
+
+
+    public ConvergenceChecker<UnivariateRealPointValuePair> getConvergenceChecker() {
+        return checker;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected abstract UnivariateRealPointValuePair doOptimize()
+        throws FunctionEvaluationException;
+}

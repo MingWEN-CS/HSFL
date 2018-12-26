@@ -1,0 +1,96 @@
+50c50
+< public abstract class AbstractIntegrator implements ExpandableFirstOrderIntegrator {
+---
+> public abstract class AbstractIntegrator implements FirstOrderIntegrator {
+80c80
+<     private transient ExpandableFirstOrderDifferentialEquations equations;
+---
+>     private transient ExpandableStatefulODE equations;
+191,192c191
+< 
+<     protected void setEquations(final ExpandableFirstOrderDifferentialEquations equations) {
+---
+>     protected void setEquations(final ExpandableStatefulODE equations) {
+197,198c196,197
+<     public double integrate(FirstOrderDifferentialEquations equations,
+<                             double t0, double[] y0, double t, double[] y)
+---
+>     public double integrate(final FirstOrderDifferentialEquations equations,
+>                             final double t0, final double[] y0, final double t, final double[] y)
+200c199,218
+<         return integrate(new ExpandableFirstOrderDifferentialEquations(equations), t0, y0, t, y);
+---
+> 
+>         if (y0.length != equations.getDimension()) {
+>             throw new DimensionMismatchException(y0.length, equations.getDimension());
+>         }
+>         if (y.length != equations.getDimension()) {
+>             throw new DimensionMismatchException(y.length, equations.getDimension());
+>         }
+> 
+>         
+>         final ExpandableStatefulODE expandable = new ExpandableStatefulODE(equations);
+>         expandable.setTime(t0);
+>         expandable.setPrimaryState(y0);
+> 
+>         
+>         integrate(expandable, t);
+> 
+>         
+>         System.arraycopy(expandable.getPrimaryState(), 0, y, 0, y.length);
+>         return expandable.getTime();
+> 
+208a227,246
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public abstract void integrate(ExpandableStatefulODE equations, double t)
+>         throws MathIllegalStateException, MathIllegalArgumentException;
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+341a380,381
+>     protected void sanityChecks(final ExpandableStatefulODE equations, final double t)
+>         throws NumberIsTooSmallException {
+343,360c383,386
+< 
+< 
+< 
+< 
+<     protected void sanityChecks(final ExpandableFirstOrderDifferentialEquations ode,
+<                                 final double t0, final double[] y0,
+<                                 final double t, final double[] y)
+<         throws DimensionMismatchException, NumberIsTooSmallException {
+< 
+<         if (ode.getMainSetDimension() != y0.length) {
+<             throw new DimensionMismatchException(ode.getDimension(), y0.length);
+<         }
+< 
+<         if (ode.getMainSetDimension() != y.length) {
+<             throw new DimensionMismatchException(ode.getDimension(), y.length);
+<         }
+< 
+<         if (FastMath.abs(t - t0) <= 1.0e-12 * FastMath.max(FastMath.abs(t0), FastMath.abs(t))) {
+---
+>         final double threshold = 1000 * FastMath.ulp(FastMath.max(FastMath.abs(equations.getTime()),
+>                                                                   FastMath.abs(t)));
+>         final double dt = FastMath.abs(equations.getTime() - t);
+>         if (dt <= threshold) {
+362,364c388
+<                                                 FastMath.abs(t - t0),
+<                                                 1.0e-12 * FastMath.max(FastMath.abs(t0), FastMath.abs(t)),
+<                                                 false);
+---
+>                                                 dt, threshold, false);

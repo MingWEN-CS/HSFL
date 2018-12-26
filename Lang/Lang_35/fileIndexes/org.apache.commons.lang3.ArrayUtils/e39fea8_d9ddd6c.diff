@@ -1,0 +1,2669 @@
+86a87
+> 
+90c91
+<     public static final boolean[] EMPTY_BOOLEAN_ARRAY = new boolean[0];
+---
+>     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+94c95
+<     public static final Boolean[] EMPTY_BOOLEAN_OBJECT_ARRAY = new Boolean[0];
+---
+>     public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
+98c99
+<     public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+---
+>     public static final String[] EMPTY_STRING_ARRAY = new String[0];
+102c103
+<     public static final Byte[] EMPTY_BYTE_OBJECT_ARRAY = new Byte[0];
+---
+>     public static final long[] EMPTY_LONG_ARRAY = new long[0];
+106c107
+<     public static final char[] EMPTY_CHAR_ARRAY = new char[0];
+---
+>     public static final Long[] EMPTY_LONG_OBJECT_ARRAY = new Long[0];
+110c111
+<     public static final Character[] EMPTY_CHARACTER_OBJECT_ARRAY = new Character[0];
+---
+>     public static final int[] EMPTY_INT_ARRAY = new int[0];
+114c115
+<     public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
+---
+>     public static final Integer[] EMPTY_INTEGER_OBJECT_ARRAY = new Integer[0];
+118c119
+<     public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
+---
+>     public static final short[] EMPTY_SHORT_ARRAY = new short[0];
+122c123
+<     public static final Double[] EMPTY_DOUBLE_OBJECT_ARRAY = new Double[0];
+---
+>     public static final Short[] EMPTY_SHORT_OBJECT_ARRAY = new Short[0];
+126c127
+<     public static final float[] EMPTY_FLOAT_ARRAY = new float[0];
+---
+>     public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+130c131
+<     public static final Float[] EMPTY_FLOAT_OBJECT_ARRAY = new Float[0];
+---
+>     public static final Byte[] EMPTY_BYTE_OBJECT_ARRAY = new Byte[0];
+134c135
+<     public static final int[] EMPTY_INT_ARRAY = new int[0];
+---
+>     public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
+138c139
+<     public static final Integer[] EMPTY_INTEGER_OBJECT_ARRAY = new Integer[0];
+---
+>     public static final Double[] EMPTY_DOUBLE_OBJECT_ARRAY = new Double[0];
+142c143
+<     public static final long[] EMPTY_LONG_ARRAY = new long[0];
+---
+>     public static final float[] EMPTY_FLOAT_ARRAY = new float[0];
+146,147c147
+<     public static final Long[] EMPTY_LONG_OBJECT_ARRAY = new Long[0];
+< 
+---
+>     public static final Float[] EMPTY_FLOAT_OBJECT_ARRAY = new Float[0];
+151c151
+<     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+---
+>     public static final boolean[] EMPTY_BOOLEAN_ARRAY = new boolean[0];
+155c155
+<     public static final short[] EMPTY_SHORT_ARRAY = new short[0];
+---
+>     public static final Boolean[] EMPTY_BOOLEAN_OBJECT_ARRAY = new Boolean[0];
+159c159
+<     public static final Short[] EMPTY_SHORT_OBJECT_ARRAY = new Short[0];
+---
+>     public static final char[] EMPTY_CHAR_ARRAY = new char[0];
+163c163
+<     public static final String[] EMPTY_STRING_ARRAY = new String[0];
+---
+>     public static final Character[] EMPTY_CHARACTER_OBJECT_ARRAY = new Character[0];
+171a172,177
+>     public ArrayUtils() {
+>     }
+>     
+>     
+>     
+>     
+181a188,190
+>     public static String toString(final Object array) {
+>         return toString(array, "{}");
+>     }
+182a192
+>     
+193c203,204
+<     public static Object[] add(final Object[] array, final int index, final Object element) {
+---
+>     
+>     public static String toString(final Object array, final String stringIfNull) {
+195,210c206
+<             if (index != 0) {
+<                 throw new IndexOutOfBoundsException("Index: " + index + ", Length: 0");
+<             }
+<             Object joinedArray = Array.newInstance(element != null ? element.getClass() : Object.class, 1);
+<             Array.set(joinedArray, 0, element);
+<             return (Object[]) joinedArray;
+<         }
+<         int length = array.length;
+<         if (index > length || index < 0) {
+<             throw new IndexOutOfBoundsException("Index: " + index + ", Length: " + length);
+<         }
+<         Object result = Array.newInstance(array.getClass().getComponentType(), length + 1);
+<         System.arraycopy(array, 0, result, 0, index);
+<         Array.set(result, index, element);
+<         if (index < length) {
+<             System.arraycopy(array, index, result, index + 1, length - index);
+---
+>             return stringIfNull;
+212c208
+<         return (Object[]) result;
+---
+>         return new ToStringBuilder(array, ToStringStyle.SIMPLE_STYLE).append(array).toString();
+222a219,221
+>     public static int hashCode(final Object array) {
+>         return new HashCodeBuilder().append(array).toHashCode();
+>     }
+223a223
+>     
+233,251c233,234
+< 
+< 
+< 
+< 
+< 
+<     public static Object[] add(Object[] array, Object element) {
+<         Object joinedArray;
+<         int elementPos;
+<         if (array != null) {
+<             joinedArray = Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+<             System.arraycopy(array, 0, joinedArray, 0, array.length);
+<             elementPos = array.length;
+<         } else {
+<             
+<             joinedArray = Array.newInstance(element != null ? element.getClass() : Object.class, 1);
+<             elementPos = 0;
+<         }
+<         Array.set(joinedArray, elementPos, element);
+<         return (Object[]) joinedArray;
+---
+>     public static boolean isEquals(final Object array1, final Object array2) {
+>         return new EqualsBuilder().append(array1, array2).isEquals();
+254a238,239
+>     
+>     
+263,271d247
+<     public static boolean[] clone(final boolean[] array) {
+<         if (array == null) {
+<             return null;
+<         }
+<         return (boolean[]) array.clone();
+<     }
+< 
+<     
+< 
+279,284d254
+<     public static byte[] clone(final byte[] array) {
+<         if (array == null) {
+<             return null;
+<         }
+<         return (byte[]) array.clone();
+<     }
+286d255
+<     
+295c264
+<     public static char[] clone(final char[] array) {
+---
+>     public static Map toMap(final Object[] array) {
+299c268,288
+<         return (char[]) array.clone();
+---
+>         final Map map = new HashMap((int) (array.length * 1.5));
+>         for (int i = 0; i < array.length; i++) {
+>             Object object = array[i];
+>             if (object instanceof Map.Entry) {
+>                 Map.Entry entry = (Map.Entry) object;
+>                 map.put(entry.getKey(), entry.getValue());
+>             } else if (object instanceof Object[]) {
+>                 Object[] entry = (Object[]) object;
+>                 if (entry.length < 2) {
+>                     throw new IllegalArgumentException("Array element " + i + ", '"
+>                         + object
+>                         + "', has a length less than 2");
+>                 }
+>                 map.put(entry[0], entry[1]);
+>             } else {
+>                 throw new IllegalArgumentException("Array element " + i + ", '"
+>                         + object
+>                         + "', is neither of type Map.Entry nor an Array");
+>             }
+>         }
+>         return map;
+302a292,293
+>     
+>     
+311c302,305
+<     public static double[] clone(final double[] array) {
+---
+> 
+> 
+> 
+>     public static Object[] clone(final Object[] array) {
+315c309
+<         return (double[]) array.clone();
+---
+>         return (Object[]) array.clone();
+327c321
+<     public static float[] clone(final float[] array) {
+---
+>     public static long[] clone(final long[] array) {
+331c325
+<         return (float[]) array.clone();
+---
+>         return (long[]) array.clone();
+359c353
+<     public static long[] clone(final long[] array) {
+---
+>     public static short[] clone(final short[] array) {
+363c357
+<         return (long[]) array.clone();
+---
+>         return (short[]) array.clone();
+367,370d360
+<     
+<     
+< 
+< 
+379,380c369
+< 
+<     public static Object[] clone(final Object[] array) {
+---
+>     public static char[] clone(final char[] array) {
+384c373
+<         return (Object[]) array.clone();
+---
+>         return (char[]) array.clone();
+396c385
+<     public static short[] clone(final short[] array) {
+---
+>     public static byte[] clone(final byte[] array) {
+400c389
+<         return (short[]) array.clone();
+---
+>         return (byte[]) array.clone();
+412,413c401,405
+<     public static boolean contains(final boolean[] array, final boolean valueToFind) {
+<         return (indexOf(array, valueToFind) != -1);
+---
+>     public static double[] clone(final double[] array) {
+>         if (array == null) {
+>             return null;
+>         }
+>         return (double[]) array.clone();
+425,426c417,421
+<     public static boolean contains(final byte[] array, final byte valueToFind) {
+<         return (indexOf(array, valueToFind) != -1);
+---
+>     public static float[] clone(final float[] array) {
+>         if (array == null) {
+>             return null;
+>         }
+>         return (float[]) array.clone();
+438,439c433,437
+<     public static boolean contains(final double[] array, final double valueToFind) {
+<         return (indexOf(array, valueToFind) != -1);
+---
+>     public static boolean[] clone(final boolean[] array) {
+>         if (array == null) {
+>             return null;
+>         }
+>         return (boolean[]) array.clone();
+442a441,442
+>     
+>     
+455,463d454
+<     public static boolean contains(final double[] array, final double valueToFind, final double tolerance) {
+<         return (indexOf(array, valueToFind, 0, tolerance) != -1);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+468,470d458
+<     public static boolean contains(final float[] array, final float valueToFind) {
+<         return (indexOf(array, valueToFind) != -1);
+<     }
+472d459
+<     
+481,482c468,485
+<     public static boolean contains(final int[] array, final int valueToFind) {
+<         return (indexOf(array, valueToFind) != -1);
+---
+>     public static Object[] subarray(Object[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+>         }
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+>         }
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+>         }
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         Class type = array.getClass().getComponentType();
+>         if (newSize <= 0) {
+>             return (Object[]) Array.newInstance(type, 0);
+>         }
+>         Object[] subarray = (Object[]) Array.newInstance(type, newSize);
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+494,496d496
+<     public static boolean contains(final long[] array, final long valueToFind) {
+<         return (indexOf(array, valueToFind) != -1);
+<     }
+498d497
+<     
+507,508c506,523
+<     public static boolean contains(final Object[] array, final Object objectToFind) {
+<         return (indexOf(array, objectToFind) != -1);
+---
+>     public static long[] subarray(long[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+>         }
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+>         }
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+>         }
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_LONG_ARRAY;
+>         }
+> 
+>         long[] subarray = new long[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+520,522d534
+<     public static boolean contains(final short[] array, final short valueToFind) {
+<         return (indexOf(array, valueToFind) != -1);
+<     }
+524d535
+<     
+532,541d542
+<     public static int hashCode(final Object array) {
+<         return new HashCodeBuilder().append(array).toHashCode();
+<     }
+< 
+<     
+<     
+<     
+< 
+< 
+< 
+542a544,557
+>     public static int[] subarray(int[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+>         }
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+>         }
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+>         }
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_INT_ARRAY;
+>         }
+543a559,562
+>         int[] subarray = new int[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+>     }
+544a564
+>     
+548,550d567
+<     public static int indexOf(final boolean[] array, final boolean valueToFind) {
+<         return indexOf(array, valueToFind, 0);
+<     }
+552d568
+<     
+566,568c582,584
+<     public static int indexOf(final boolean[] array, final boolean valueToFind, int startIndex) {
+<         if (ArrayUtils.isEmpty(array)) {
+<             return -1;
+---
+>     public static short[] subarray(short[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+570,571c586,587
+<         if (startIndex < 0) {
+<             startIndex = 0;
+---
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+573,576c589,590
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (valueToFind == array[i]) {
+<                 return i;
+<             }
+---
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+578c592,599
+<         return -1;
+---
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_SHORT_ARRAY;
+>         }
+> 
+>         short[] subarray = new short[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+582,586d602
+<     
+<     
+< 
+< 
+< 
+593,599d608
+<     public static int indexOf(final byte[] array, final byte valueToFind) {
+<         return indexOf(array, valueToFind, 0);
+<     }
+< 
+<     
+< 
+< 
+611c620
+<     public static int indexOf(final byte[] array, final byte valueToFind, int startIndex) {
+---
+>     public static char[] subarray(char[] array, int startIndexInclusive, int endIndexExclusive) {
+613c622
+<             return -1;
+---
+>             return null;
+615,616c624,625
+<         if (startIndex < 0) {
+<             startIndex = 0;
+---
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+618,621c627,628
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (valueToFind == array[i]) {
+<                 return i;
+<             }
+---
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+623c630,637
+<         return -1;
+---
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_CHAR_ARRAY;
+>         }
+> 
+>         char[] subarray = new char[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+627,628d640
+<     
+<     
+638,640d649
+<     public static int indexOf(final double[] array, final double valueToFind) {
+<         return indexOf(array, valueToFind, 0);
+<     }
+642d650
+<     
+649a658,671
+>     public static byte[] subarray(byte[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+>         }
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+>         }
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+>         }
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_BYTE_ARRAY;
+>         }
+650a673,676
+>         byte[] subarray = new byte[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+>     }
+651a678
+>     
+655,657d681
+<     public static int indexOf(final double[] array, final double valueToFind, final double tolerance) {
+<         return indexOf(array, valueToFind, 0, tolerance);
+<     }
+659d682
+<     
+673,675c696,698
+<     public static int indexOf(final double[] array, final double valueToFind, int startIndex) {
+<         if (ArrayUtils.isEmpty(array)) {
+<             return -1;
+---
+>     public static double[] subarray(double[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+677,678c700,701
+<         if (startIndex < 0) {
+<             startIndex = 0;
+---
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+680,683c703,704
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (valueToFind == array[i]) {
+<                 return i;
+<             }
+---
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+685c706,713
+<         return -1;
+---
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_DOUBLE_ARRAY;
+>         }
+> 
+>         double[] subarray = new double[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+705,707c733,736
+<     public static int indexOf(final double[] array, final double valueToFind, int startIndex, double tolerance) {
+<         if (ArrayUtils.isEmpty(array)) {
+<             return -1;
+---
+> 
+>     public static float[] subarray(float[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+709,710c738,739
+<         if (startIndex < 0) {
+<             startIndex = 0;
+---
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+712,717c741,742
+<         double min = valueToFind - tolerance;
+<         double max = valueToFind + tolerance;
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (array[i] >= min && array[i] <= max) {
+<                 return i;
+<             }
+---
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+719c744,751
+<         return -1;
+---
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_FLOAT_ARRAY;
+>         }
+> 
+>         float[] subarray = new float[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+723,726d754
+<     
+<     
+< 
+< 
+734,741d761
+<     public static int indexOf(final float[] array, final float valueToFind) {
+<         return indexOf(array, valueToFind, 0);
+<     }
+< 
+<     
+< 
+< 
+< 
+752,754c772,774
+<     public static int indexOf(final float[] array, final float valueToFind, int startIndex) {
+<         if (ArrayUtils.isEmpty(array)) {
+<             return -1;
+---
+>     public static boolean[] subarray(boolean[] array, int startIndexInclusive, int endIndexExclusive) {
+>         if (array == null) {
+>             return null;
+756,757c776,777
+<         if (startIndex < 0) {
+<             startIndex = 0;
+---
+>         if (startIndexInclusive < 0) {
+>             startIndexInclusive = 0;
+759,762c779,780
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (valueToFind == array[i]) {
+<                 return i;
+<             }
+---
+>         if (endIndexExclusive > array.length) {
+>             endIndexExclusive = array.length;
+764c782,789
+<         return -1;
+---
+>         int newSize = endIndexExclusive - startIndexInclusive;
+>         if (newSize <= 0) {
+>             return EMPTY_BOOLEAN_ARRAY;
+>         }
+> 
+>         boolean[] subarray = new boolean[newSize];
+>         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+>         return subarray;
+779,780c804,811
+<     public static int indexOf(final int[] array, final int valueToFind) {
+<         return indexOf(array, valueToFind, 0);
+---
+>     
+>     public static boolean isSameLength(final Object[] array1, final Object[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+>         }
+>         return true;
+792,807c823,827
+< 
+< 
+< 
+< 
+< 
+<     public static int indexOf(final int[] array, final int valueToFind, int startIndex) {
+<         if (array == null) {
+<             return -1;
+<         }
+<         if (startIndex < 0) {
+<             startIndex = 0;
+<         }
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (valueToFind == array[i]) {
+<                 return i;
+<             }
+---
+>     public static boolean isSameLength(final long[] array1, final long[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+809c829
+<         return -1;
+---
+>         return true;
+813,814d832
+<     
+<     
+823,825c841,847
+< 
+<     public static int indexOf(final long[] array, final long valueToFind) {
+<         return indexOf(array, valueToFind, 0);
+---
+>     public static boolean isSameLength(final int[] array1, final int[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+>         }
+>         return true;
+837,852c859,863
+< 
+< 
+< 
+< 
+< 
+<     public static int indexOf(final long[] array, final long valueToFind, int startIndex) {
+<         if (array == null) {
+<             return -1;
+<         }
+<         if (startIndex < 0) {
+<             startIndex = 0;
+<         }
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (valueToFind == array[i]) {
+<                 return i;
+<             }
+---
+>     public static boolean isSameLength(final short[] array1, final short[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+854c865
+<         return -1;
+---
+>         return true;
+858,862d868
+<     
+<     
+<     
+<     
+<     
+871,873c877,883
+< 
+<     public static int indexOf(final Object[] array, final Object objectToFind) {
+<         return indexOf(array, objectToFind, 0);
+---
+>     public static boolean isSameLength(final char[] array1, final char[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+>         }
+>         return true;
+885,908c895,899
+< 
+< 
+< 
+< 
+< 
+<     public static int indexOf(final Object[] array, final Object objectToFind, int startIndex) {
+<         if (array == null) {
+<             return -1;
+<         }
+<         if (startIndex < 0) {
+<             startIndex = 0;
+<         }
+<         if (objectToFind == null) {
+<             for (int i = startIndex; i < array.length; i++) {
+<                 if (array[i] == null) {
+<                     return i;
+<                 }
+<             }
+<         } else {
+<             for (int i = startIndex; i < array.length; i++) {
+<                 if (objectToFind.equals(array[i])) {
+<                     return i;
+<                 }
+<             }
+---
+>     public static boolean isSameLength(final byte[] array1, final byte[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+910c901
+<         return -1;
+---
+>         return true;
+914,916d904
+<     
+<     
+< 
+925,926c913,919
+<     public static int indexOf(final short[] array, final short valueToFind) {
+<         return indexOf(array, valueToFind, 0);
+---
+>     public static boolean isSameLength(final double[] array1, final double[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+>         }
+>         return true;
+938,953c931,935
+< 
+< 
+< 
+< 
+< 
+<     public static int indexOf(final short[] array, final short valueToFind, int startIndex) {
+<         if (array == null) {
+<             return -1;
+<         }
+<         if (startIndex < 0) {
+<             startIndex = 0;
+<         }
+<         for (int i = startIndex; i < array.length; i++) {
+<             if (valueToFind == array[i]) {
+<                 return i;
+<             }
+---
+>     public static boolean isSameLength(final float[] array1, final float[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+955c937
+<         return -1;
+---
+>         return true;
+965,967c947,953
+<     public static boolean isEmpty(final boolean[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+> 
+> 
+>     public static boolean isSameLength(final boolean[] array1, final boolean[] array2) {
+>         if ((array1 == null && array2 != null && array2.length > 0) ||
+>             (array2 == null && array1 != null && array1.length > 0) ||
+>             (array1 != null && array2 != null && array1.length != array2.length)) {
+>                 return false;
+969c955
+<         return false;
+---
+>         return true;
+979,981c965,969
+<     public static boolean isEmpty(final byte[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+> 
+>     
+>     public static boolean isSameType(final Object array1, final Object array2) {
+>         if (array1 == null || array2 == null) {
+>             throw new IllegalArgumentException("The Array must not be null");
+983c971
+<         return false;
+---
+>         return array1.getClass().getName().equals(array2.getClass().getName());
+986a975,976
+>     
+>     
+993,995c983,997
+<     public static boolean isEmpty(final char[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+> 
+> 
+>     public static void reverse(final Object[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         Object tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+997d998
+<         return false;
+1007,1009c1008,1020
+<     public static boolean isEmpty(final double[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+>     public static void reverse(final long[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         long tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+1011d1021
+<         return false;
+1021,1023c1031,1043
+<     public static boolean isEmpty(final float[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+>     public static void reverse(final int[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         int tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+1025d1044
+<         return false;
+1035,1037c1054,1066
+<     public static boolean isEmpty(final int[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+>     public static void reverse(final short[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         short tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+1039d1067
+<         return false;
+1049,1051c1077,1089
+<     public static boolean isEmpty(final long[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+>     public static void reverse(final char[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         char tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+1053d1090
+<         return false;
+1057d1093
+<     
+1064,1066c1100,1112
+<     public static boolean isEmpty(final Object[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+>     public static void reverse(final byte[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         byte tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+1068d1113
+<         return false;
+1078,1080c1123,1135
+<     public static boolean isEmpty(final short[] array) {
+<         if (array == null || array.length == 0) {
+<             return true;
+---
+>     public static void reverse(final double[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         double tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+1082d1136
+<         return false;
+1091a1146,1160
+>     public static void reverse(final float[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         float tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+>         }
+>     }
+1093,1101c1162
+< 
+< 
+<     public static boolean isEquals(final Object array1, final Object array2) {
+<         return new EqualsBuilder().append(array1, array2).isEquals();
+<     }
+< 
+<     
+< 
+< 
+---
+>     
+1108,1112c1169,1181
+<     public static boolean isSameLength(final boolean[] array1, final boolean[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+---
+>     public static void reverse(final boolean[] array) {
+>         if (array == null) {
+>             return;
+>         }
+>         int i = 0;
+>         int j = array.length - 1;
+>         boolean tmp;
+>         while (j > i) {
+>             tmp = array[j];
+>             array[j] = array[i];
+>             array[i] = tmp;
+>             j--;
+>             i++;
+1114d1182
+<         return true;
+1117a1186,1190
+>     
+>     
+>     
+>     
+>     
+1126,1132c1199,1201
+<     public static boolean isSameLength(final byte[] array1, final byte[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+<         }
+<         return true;
+---
+> 
+>     public static int indexOf(final Object[] array, final Object objectToFind) {
+>         return indexOf(array, objectToFind, 0);
+1144,1156d1212
+<     public static boolean isSameLength(final char[] array1, final char[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+<         }
+<         return true;
+<     }
+< 
+<     
+< 
+< 
+< 
+1162,1166c1218,1220
+<     public static boolean isSameLength(final double[] array1, final double[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+---
+>     public static int indexOf(final Object[] array, final Object objectToFind, int startIndex) {
+>         if (array == null) {
+>             return -1;
+1168c1222,1238
+<         return true;
+---
+>         if (startIndex < 0) {
+>             startIndex = 0;
+>         }
+>         if (objectToFind == null) {
+>             for (int i = startIndex; i < array.length; i++) {
+>                 if (array[i] == null) {
+>                     return i;
+>                 }
+>             }
+>         } else {
+>             for (int i = startIndex; i < array.length; i++) {
+>                 if (objectToFind.equals(array[i])) {
+>                     return i;
+>                 }
+>             }
+>         }
+>         return -1;
+1180,1186c1250,1252
+<     public static boolean isSameLength(final float[] array1, final float[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+<         }
+<         return true;
+---
+> 
+>     public static int lastIndexOf(final Object[] array, final Object objectToFind) {
+>         return lastIndexOf(array, objectToFind, Integer.MAX_VALUE);
+1198,1202c1264,1271
+<     public static boolean isSameLength(final int[] array1, final int[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+---
+> 
+> 
+> 
+> 
+> 
+>     public static int lastIndexOf(final Object[] array, final Object objectToFind, int startIndex) {
+>         if (array == null) {
+>             return -1;
+1204c1273,1291
+<         return true;
+---
+>         if (startIndex < 0) {
+>             return -1;
+>         } else if (startIndex >= array.length) {
+>             startIndex = array.length - 1;
+>         }
+>         if (objectToFind == null) {
+>             for (int i = startIndex; i >= 0; i--) {
+>                 if (array[i] == null) {
+>                     return i;
+>                 }
+>             }
+>         } else {
+>             for (int i = startIndex; i >= 0; i--) {
+>                 if (objectToFind.equals(array[i])) {
+>                     return i;
+>                 }
+>             }
+>         }
+>         return -1;
+1216,1222c1303,1304
+<     public static boolean isSameLength(final long[] array1, final long[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+<         }
+<         return true;
+---
+>     public static boolean contains(final Object[] array, final Object objectToFind) {
+>         return (indexOf(array, objectToFind) != -1);
+1237,1244c1319,1320
+<     
+<     public static boolean isSameLength(final Object[] array1, final Object[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+<         }
+<         return true;
+---
+>     public static int indexOf(final long[] array, final long valueToFind) {
+>         return indexOf(array, valueToFind, 0);
+1256,1260c1332,1339
+<     public static boolean isSameLength(final short[] array1, final short[] array2) {
+<         if ((array1 == null && array2 != null && array2.length > 0) ||
+<             (array2 == null && array1 != null && array1.length > 0) ||
+<             (array1 != null && array2 != null && array1.length != array2.length)) {
+<                 return false;
+---
+> 
+> 
+> 
+> 
+> 
+>     public static int indexOf(final long[] array, final long valueToFind, int startIndex) {
+>         if (array == null) {
+>             return -1;
+1262c1341,1349
+<         return true;
+---
+>         if (startIndex < 0) {
+>             startIndex = 0;
+>         }
+>         for (int i = startIndex; i < array.length; i++) {
+>             if (valueToFind == array[i]) {
+>                 return i;
+>             }
+>         }
+>         return -1;
+1273,1278c1360,1363
+<     
+<     public static boolean isSameType(final Object array1, final Object array2) {
+<         if (array1 == null || array2 == null) {
+<             throw new IllegalArgumentException("The Array must not be null");
+<         }
+<         return array1.getClass().getName().equals(array2.getClass().getName());
+---
+> 
+> 
+>     public static int lastIndexOf(final long[] array, final long valueToFind) {
+>         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+1294a1380,1399
+>     public static int lastIndexOf(final long[] array, final long valueToFind, int startIndex) {
+>         if (array == null) {
+>             return -1;
+>         }
+>         if (startIndex < 0) {
+>             return -1;
+>         } else if (startIndex >= array.length) {
+>             startIndex = array.length - 1;
+>         }
+>         for (int i = startIndex; i >= 0; i--) {
+>             if (valueToFind == array[i]) {
+>                 return i;
+>             }
+>         }
+>         return -1;
+>     }
+> 
+>     
+> 
+> 
+1301,1312c1406,1407
+<     public static Object[] join(Object[] array1, Object[] array2) {
+<         if (array1 == null) {
+<             return array2;
+<         } else if (array2 == null) {
+<             return array1;
+<         } else {
+<             Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length
+<                 + array2.length);
+<             System.arraycopy(array1, 0, joinedArray, 0, array1.length);
+<             System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+<             return joinedArray;
+<         }
+---
+>     public static boolean contains(final long[] array, final long valueToFind) {
+>         return (indexOf(array, valueToFind) != -1);
+1315a1411,1412
+>     
+>     
+1325,1326c1422,1423
+<     public static int lastIndexOf(final boolean[] array, final boolean valueToFind) {
+<         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+---
+>     public static int indexOf(final int[] array, final int valueToFind) {
+>         return indexOf(array, valueToFind, 0);
+1343,1344c1440,1441
+<     public static int lastIndexOf(final boolean[] array, final boolean valueToFind, int startIndex) {
+<         if (ArrayUtils.isEmpty(array)) {
+---
+>     public static int indexOf(final int[] array, final int valueToFind, int startIndex) {
+>         if (array == null) {
+1348,1350c1445
+<             return -1;
+<         } else if (startIndex >= array.length) {
+<             startIndex = array.length - 1;
+---
+>             startIndex = 0;
+1352c1447
+<         for (int i = startIndex; i >= 0; i--) {
+---
+>         for (int i = startIndex; i < array.length; i++) {
+1370c1465
+<     public static int lastIndexOf(final byte[] array, final byte valueToFind) {
+---
+>     public static int lastIndexOf(final int[] array, final int valueToFind) {
+1388c1483
+<     public static int lastIndexOf(final byte[] array, final byte valueToFind, int startIndex) {
+---
+>     public static int lastIndexOf(final int[] array, final int valueToFind, int startIndex) {
+1414,1416c1509,1510
+< 
+<     public static int lastIndexOf(final double[] array, final double valueToFind) {
+<         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+---
+>     public static boolean contains(final int[] array, final int valueToFind) {
+>         return (indexOf(array, valueToFind) != -1);
+1419a1514,1515
+>     
+>     
+1429,1433c1525,1526
+< 
+< 
+< 
+<     public static int lastIndexOf(final double[] array, final double valueToFind, final double tolerance) {
+<         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE, tolerance);
+---
+>     public static int indexOf(final short[] array, final short valueToFind) {
+>         return indexOf(array, valueToFind, 0);
+1450,1452c1543,1545
+<     public static int lastIndexOf(final double[] array, final double valueToFind, int startIndex) {
+<         if (ArrayUtils.isEmpty(array)) {
+<             return -1;
+---
+>     public static int indexOf(final short[] array, final short valueToFind, int startIndex) {
+>         if (array == null) {
+>             return -1;
+1455,1457c1548
+<             return -1;
+<         } else if (startIndex >= array.length) {
+<             startIndex = array.length - 1;
+---
+>             startIndex = 0;
+1459c1550
+<         for (int i = startIndex; i >= 0; i--) {
+---
+>         for (int i = startIndex; i < array.length; i++) {
+1476a1568,1572
+>     public static int lastIndexOf(final short[] array, final short valueToFind) {
+>         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+>     }
+> 
+>     
+1484,1485c1580,1587
+<     public static int lastIndexOf(final double[] array, final double valueToFind, int startIndex, double tolerance) {
+<         if (ArrayUtils.isEmpty(array)) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int lastIndexOf(final short[] array, final short valueToFind, int startIndex) {
+>         if (array == null) {
+1493,1494d1594
+<         double min = valueToFind - tolerance;
+<         double max = valueToFind + tolerance;
+1496c1596
+<             if (array[i] >= min && array[i] <= max) {
+---
+>             if (valueToFind == array[i]) {
+1511a1612,1614
+>     public static boolean contains(final short[] array, final short valueToFind) {
+>         return (indexOf(array, valueToFind) != -1);
+>     }
+1513,1514c1616,1629
+<     public static int lastIndexOf(final float[] array, final float valueToFind) {
+<         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+---
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int indexOf(final byte[] array, final byte valueToFind) {
+>         return indexOf(array, valueToFind, 0);
+1531,1532c1646,1647
+<     public static int lastIndexOf(final float[] array, final float valueToFind, int startIndex) {
+<         if (ArrayUtils.isEmpty(array)) {
+---
+>     public static int indexOf(final byte[] array, final byte valueToFind, int startIndex) {
+>         if (array == null) {
+1536,1538c1651
+<             return -1;
+<         } else if (startIndex >= array.length) {
+<             startIndex = array.length - 1;
+---
+>             startIndex = 0;
+1540c1653
+<         for (int i = startIndex; i >= 0; i--) {
+---
+>         for (int i = startIndex; i < array.length; i++) {
+1558c1671
+<     public static int lastIndexOf(final int[] array, final int valueToFind) {
+---
+>     public static int lastIndexOf(final byte[] array, final byte valueToFind) {
+1576c1689
+<     public static int lastIndexOf(final int[] array, final int valueToFind, int startIndex) {
+---
+>     public static int lastIndexOf(final byte[] array, final byte valueToFind, int startIndex) {
+1601a1715,1729
+>     public static boolean contains(final byte[] array, final byte valueToFind) {
+>         return (indexOf(array, valueToFind) != -1);
+>     }
+> 
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1603,1604c1731,1732
+<     public static int lastIndexOf(final long[] array, final long valueToFind) {
+<         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+---
+>     public static int indexOf(final double[] array, final double valueToFind) {
+>         return indexOf(array, valueToFind, 0);
+1619a1748,1750
+>     public static int indexOf(final double[] array, final double valueToFind, final double tolerance) {
+>         return indexOf(array, valueToFind, 0, tolerance);
+>     }
+1621,1622c1752,1767
+<     public static int lastIndexOf(final long[] array, final long valueToFind, int startIndex) {
+<         if (array == null) {
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int indexOf(final double[] array, final double valueToFind, int startIndex) {
+>         if (ArrayUtils.isEmpty(array)) {
+1626,1628c1771
+<             return -1;
+<         } else if (startIndex >= array.length) {
+<             startIndex = array.length - 1;
+---
+>             startIndex = 0;
+1630c1773
+<         for (int i = startIndex; i >= 0; i--) {
+---
+>         for (int i = startIndex; i < array.length; i++) {
+1648,1658d1790
+<     public static int lastIndexOf(final Object[] array, final Object objectToFind) {
+<         return lastIndexOf(array, objectToFind, Integer.MAX_VALUE);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+1666,1667c1798,1799
+<     public static int lastIndexOf(final Object[] array, final Object objectToFind, int startIndex) {
+<         if (array == null) {
+---
+>     public static int indexOf(final double[] array, final double valueToFind, int startIndex, double tolerance) {
+>         if (ArrayUtils.isEmpty(array)) {
+1671,1673c1803
+<             return -1;
+<         } else if (startIndex >= array.length) {
+<             startIndex = array.length - 1;
+---
+>             startIndex = 0;
+1675,1685c1805,1809
+<         if (objectToFind == null) {
+<             for (int i = startIndex; i >= 0; i--) {
+<                 if (array[i] == null) {
+<                     return i;
+<                 }
+<             }
+<         } else {
+<             for (int i = startIndex; i >= 0; i--) {
+<                 if (objectToFind.equals(array[i])) {
+<                     return i;
+<                 }
+---
+>         double min = valueToFind - tolerance;
+>         double max = valueToFind + tolerance;
+>         for (int i = startIndex; i < array.length; i++) {
+>             if (array[i] >= min && array[i] <= max) {
+>                 return i;
+1701c1825
+<     public static int lastIndexOf(final short[] array, final short valueToFind) {
+---
+>     public static int lastIndexOf(final double[] array, final double valueToFind) {
+1717a1842,1844
+>     public static int lastIndexOf(final double[] array, final double valueToFind, final double tolerance) {
+>         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE, tolerance);
+>     }
+1719,1720c1846,1861
+<     public static int lastIndexOf(final short[] array, final short valueToFind, int startIndex) {
+<         if (array == null) {
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int lastIndexOf(final double[] array, final double valueToFind, int startIndex) {
+>         if (ArrayUtils.isEmpty(array)) {
+1743,1757d1883
+<     public static void reverse(final boolean[] array) {
+<         if (array == null) {
+<             return;
+<         }
+<         int i = 0;
+<         int j = array.length - 1;
+<         boolean tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+<         }
+<     }
+1759d1884
+<     
+1766,1768c1891,1896
+<     public static void reverse(final byte[] array) {
+<         if (array == null) {
+<             return;
+---
+> 
+> 
+> 
+>     public static int lastIndexOf(final double[] array, final double valueToFind, int startIndex, double tolerance) {
+>         if (ArrayUtils.isEmpty(array)) {
+>             return -1;
+1770,1778c1898,1908
+<         int i = 0;
+<         int j = array.length - 1;
+<         byte tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+---
+>         if (startIndex < 0) {
+>             return -1;
+>         } else if (startIndex >= array.length) {
+>             startIndex = array.length - 1;
+>         }
+>         double min = valueToFind - tolerance;
+>         double max = valueToFind + tolerance;
+>         for (int i = startIndex; i >= 0; i--) {
+>             if (array[i] >= min && array[i] <= max) {
+>                 return i;
+>             }
+1779a1910
+>         return -1;
+1789,1802c1920,1923
+<     public static void reverse(final char[] array) {
+<         if (array == null) {
+<             return;
+<         }
+<         int i = 0;
+<         int j = array.length - 1;
+<         char tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+<         }
+---
+> 
+> 
+>     public static boolean contains(final double[] array, final double valueToFind) {
+>         return (indexOf(array, valueToFind) != -1);
+1812,1825c1933,1940
+<     public static void reverse(final double[] array) {
+<         if (array == null) {
+<             return;
+<         }
+<         int i = 0;
+<         int j = array.length - 1;
+<         double tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+<         }
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean contains(final double[] array, final double valueToFind, final double tolerance) {
+>         return (indexOf(array, valueToFind, 0, tolerance) != -1);
+1828a1944,1945
+>     
+>     
+1835,1848c1952,1956
+<     public static void reverse(final float[] array) {
+<         if (array == null) {
+<             return;
+<         }
+<         int i = 0;
+<         int j = array.length - 1;
+<         float tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+<         }
+---
+> 
+> 
+> 
+>     public static int indexOf(final float[] array, final float valueToFind) {
+>         return indexOf(array, valueToFind, 0);
+1858,1872d1965
+<     public static void reverse(final int[] array) {
+<         if (array == null) {
+<             return;
+<         }
+<         int i = 0;
+<         int j = array.length - 1;
+<         int tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+<         }
+<     }
+1874d1966
+<     
+1881,1883c1973,1975
+<     public static void reverse(final long[] array) {
+<         if (array == null) {
+<             return;
+---
+>     public static int indexOf(final float[] array, final float valueToFind, int startIndex) {
+>         if (ArrayUtils.isEmpty(array)) {
+>             return -1;
+1885,1893c1977,1983
+<         int i = 0;
+<         int j = array.length - 1;
+<         long tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+---
+>         if (startIndex < 0) {
+>             startIndex = 0;
+>         }
+>         for (int i = startIndex; i < array.length; i++) {
+>             if (valueToFind == array[i]) {
+>                 return i;
+>             }
+1894a1985
+>         return -1;
+1898,1899d1988
+<     
+<     
+1908,1921c1997,1999
+<     public static void reverse(final Object[] array) {
+<         if (array == null) {
+<             return;
+<         }
+<         int i = 0;
+<         int j = array.length - 1;
+<         Object tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+<         }
+---
+> 
+>     public static int lastIndexOf(final float[] array, final float valueToFind) {
+>         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+1931,1933c2009,2018
+<     public static void reverse(final short[] array) {
+<         if (array == null) {
+<             return;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int lastIndexOf(final float[] array, final float valueToFind, int startIndex) {
+>         if (ArrayUtils.isEmpty(array)) {
+>             return -1;
+1935,1943c2020,2028
+<         int i = 0;
+<         int j = array.length - 1;
+<         short tmp;
+<         while (j > i) {
+<             tmp = array[j];
+<             array[j] = array[i];
+<             array[i] = tmp;
+<             j--;
+<             i++;
+---
+>         if (startIndex < 0) {
+>             return -1;
+>         } else if (startIndex >= array.length) {
+>             startIndex = array.length - 1;
+>         }
+>         for (int i = startIndex; i >= 0; i--) {
+>             if (valueToFind == array[i]) {
+>                 return i;
+>             }
+1944a2030
+>         return -1;
+1955a2042,2044
+>     public static boolean contains(final float[] array, final float valueToFind) {
+>         return (indexOf(array, valueToFind) != -1);
+>     }
+1956a2046,2048
+>     
+>     
+>     
+1965,1978d2056
+<     public static boolean[] subarray(boolean[] array, int startIndexInclusive, int endIndexExclusive) {
+<         if (array == null) {
+<             return null;
+<         }
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+<         }
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+<         }
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+<             return EMPTY_BOOLEAN_ARRAY;
+<         }
+1980,1982c2058,2059
+<         boolean[] subarray = new boolean[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>     public static int indexOf(final boolean[] array, final boolean valueToFind) {
+>         return indexOf(array, valueToFind, 0);
+1999,2008c2076,2078
+< 
+< 
+< 
+< 
+<     public static byte[] subarray(byte[] array, int startIndexInclusive, int endIndexExclusive) {
+<         if (array == null) {
+<             return null;
+<         }
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+---
+>     public static int indexOf(final boolean[] array, final boolean valueToFind, int startIndex) {
+>         if (ArrayUtils.isEmpty(array)) {
+>             return -1;
+2010,2011c2080,2081
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+---
+>         if (startIndex < 0) {
+>             startIndex = 0;
+2013,2015c2083,2086
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+<             return EMPTY_BYTE_ARRAY;
+---
+>         for (int i = startIndex; i < array.length; i++) {
+>             if (valueToFind == array[i]) {
+>                 return i;
+>             }
+2017,2020c2088
+< 
+<         byte[] subarray = new byte[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>         return -1;
+2032a2101,2103
+>     public static int lastIndexOf(final boolean[] array, final boolean valueToFind) {
+>         return lastIndexOf(array, valueToFind, Integer.MAX_VALUE);
+>     }
+2033a2105
+>     
+2041,2046c2113,2121
+<     public static char[] subarray(char[] array, int startIndexInclusive, int endIndexExclusive) {
+<         if (array == null) {
+<             return null;
+<         }
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int lastIndexOf(final boolean[] array, final boolean valueToFind, int startIndex) {
+>         if (ArrayUtils.isEmpty(array)) {
+>             return -1;
+2048,2049c2123,2126
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+---
+>         if (startIndex < 0) {
+>             return -1;
+>         } else if (startIndex >= array.length) {
+>             startIndex = array.length - 1;
+2051,2053c2128,2131
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+<             return EMPTY_CHAR_ARRAY;
+---
+>         for (int i = startIndex; i >= 0; i--) {
+>             if (valueToFind == array[i]) {
+>                 return i;
+>             }
+2055,2058c2133
+< 
+<         char[] subarray = new char[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>         return -1;
+2069a2145,2147
+>     public static boolean contains(final boolean[] array, final boolean valueToFind) {
+>         return (indexOf(array, valueToFind) != -1);
+>     }
+2070a2149,2154
+>     
+>     
+>     
+>     
+>     
+>     
+2079c2163
+<     public static double[] subarray(double[] array, int startIndexInclusive, int endIndexExclusive) {
+---
+>     public static long[] toPrimitive(final Long[] array) {
+2081a2166,2167
+>         } else if (array.length == 0) {
+>             return EMPTY_LONG_ARRAY;
+2083,2091c2169,2171
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+<         }
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+<         }
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+<             return EMPTY_DOUBLE_ARRAY;
+---
+>         final long[] result = new long[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             result[i] = array[i].longValue();
+2093,2096c2173
+< 
+<         double[] subarray = new double[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>         return result;
+2098c2175
+< 
+---
+>     
+2107a2185,2199
+>     public static long[] toPrimitive(final Long[] array, final long valueForNull) {
+>         if (array == null) {
+>             return null;
+>         } else if (array.length == 0) {
+>             return EMPTY_LONG_ARRAY;
+>         }
+>         final long[] result = new long[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             Long b = array[i];
+>             result[i] = (b == null ? valueForNull : b.longValue());
+>         }
+>         return result;
+>     }
+>     
+>     
+2115,2117c2207
+< 
+< 
+<     public static float[] subarray(float[] array, int startIndexInclusive, int endIndexExclusive) {
+---
+>     public static Long[] toObject(final long[] array) {
+2119a2210,2211
+>         } else if (array.length == 0) {
+>             return EMPTY_LONG_OBJECT_ARRAY;
+2121,2122c2213,2215
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+---
+>         final Long[] result = new Long[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             result[i] = new Long(array[i]);
+2124,2134c2217
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+<         }
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+<             return EMPTY_FLOAT_ARRAY;
+<         }
+< 
+<         float[] subarray = new float[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>         return result;
+2137a2221,2222
+>     
+>     
+2146,2155c2231
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static int[] subarray(int[] array, int startIndexInclusive, int endIndexExclusive) {
+---
+>     public static int[] toPrimitive(final Integer[] array) {
+2158,2166c2234
+<         }
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+<         }
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+<         }
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+---
+>         } else if (array.length == 0) {
+2169,2172c2237,2241
+< 
+<         int[] subarray = new int[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>         final int[] result = new int[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             result[i] = array[i].intValue();
+>         }
+>         return result;
+2183a2253,2265
+>     public static int[] toPrimitive(final Integer[] array, final int valueForNull) {
+>         if (array == null) {
+>             return null;
+>         } else if (array.length == 0) {
+>             return EMPTY_INT_ARRAY;
+>         }
+>         final int[] result = new int[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             Integer b = array[i];
+>             result[i] = (b == null ? valueForNull : b.intValue());
+>         }
+>         return result;
+>     }
+2184a2267
+>     
+2192,2193c2275
+< 
+<     public static long[] subarray(long[] array, int startIndexInclusive, int endIndexExclusive) {
+---
+>     public static Integer[] toObject(final int[] array) {
+2195a2278,2279
+>         } else if (array.length == 0) {
+>             return EMPTY_INTEGER_OBJECT_ARRAY;
+2197,2205c2281,2283
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+<         }
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+<         }
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+<             return EMPTY_LONG_ARRAY;
+---
+>         final Integer[] result = new Integer[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             result[i] = new Integer(array[i]);
+2207,2210c2285
+< 
+<         long[] subarray = new long[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>         return result;
+2212c2287
+< 
+---
+>     
+2224,2241c2299
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static Object[] subarray(Object[] array, int startIndexInclusive, int endIndexExclusive) {
+---
+>     public static short[] toPrimitive(final Short[] array) {
+2243a2302,2303
+>         } else if (array.length == 0) {
+>             return EMPTY_SHORT_ARRAY;
+2245,2254c2305,2307
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+<         }
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+<         }
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         Class type = array.getClass().getComponentType();
+<         if (newSize <= 0) {
+<             return (Object[]) Array.newInstance(type, 0);
+---
+>         final short[] result = new short[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             result[i] = array[i].shortValue();
+2256,2258c2309
+<         Object[] subarray = (Object[]) Array.newInstance(type, newSize);
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+---
+>         return result;
+2269a2321,2333
+>     public static short[] toPrimitive(final Short[] array, final short valueForNull) {
+>         if (array == null) {
+>             return null;
+>         } else if (array.length == 0) {
+>             return EMPTY_SHORT_ARRAY;
+>         }
+>         final short[] result = new short[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             Short b = array[i];
+>             result[i] = (b == null ? valueForNull : b.shortValue());
+>         }
+>         return result;
+>     }
+2270a2335
+>     
+2278,2279c2343
+< 
+<     public static short[] subarray(short[] array, int startIndexInclusive, int endIndexExclusive) {
+---
+>     public static Short[] toObject(final short[] array) {
+2281a2346,2347
+>         } else if (array.length == 0) {
+>             return EMPTY_SHORT_OBJECT_ARRAY;
+2283,2291c2349,2351
+<         if (startIndexInclusive < 0) {
+<             startIndexInclusive = 0;
+<         }
+<         if (endIndexExclusive > array.length) {
+<             endIndexExclusive = array.length;
+<         }
+<         int newSize = endIndexExclusive - startIndexInclusive;
+<         if (newSize <= 0) {
+<             return EMPTY_SHORT_ARRAY;
+---
+>         final Short[] result = new Short[array.length];
+>         for (int i = 0; i < array.length; i++) {
+>             result[i] = new Short(array[i]);
+2293,2297c2353,2354
+< 
+<         short[] subarray = new short[newSize];
+<         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
+<         return subarray;
+<     }
+---
+>         return result;
+>     }    
+2310,2326c2367
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static Map toMap(final Object[] array) {
+---
+>     public static byte[] toPrimitive(final Byte[] array) {
+2328a2370,2371
+>         } else if (array.length == 0) {
+>             return EMPTY_BYTE_ARRAY;
+2330c2373
+<         final Map map = new HashMap((int) (array.length * 1.5));
+---
+>         final byte[] result = new byte[array.length];
+2332,2348c2375
+<             Object object = array[i];
+<             if (object instanceof Map.Entry) {
+<                 Map.Entry entry = (Map.Entry) object;
+<                 map.put(entry.getKey(), entry.getValue());
+<             } else if (object instanceof Object[]) {
+<                 Object[] entry = (Object[]) object;
+<                 if (entry.length < 2) {
+<                     throw new IllegalArgumentException("Array element " + i + ", '"
+<                         + object
+<                         + "', has a length less than 2");
+<                 }
+<                 map.put(entry[0], entry[1]);
+<             } else {
+<                 throw new IllegalArgumentException("Array element " + i + ", '"
+<                         + object
+<                         + "', is neither of type Map.Entry nor an Array");
+<             }
+---
+>             result[i] = array[i].byteValue();
+2350c2377
+<         return map;
+---
+>         return result;
+2361c2388,2389
+<     public static Boolean[] toObject(final boolean[] array) {
+---
+> 
+>     public static byte[] toPrimitive(final Byte[] array, final byte valueForNull) {
+2365c2393
+<             return EMPTY_BOOLEAN_OBJECT_ARRAY;
+---
+>             return EMPTY_BYTE_ARRAY;
+2367c2395
+<         final Boolean[] result = new Boolean[array.length];
+---
+>         final byte[] result = new byte[array.length];
+2369c2397,2398
+<             result[i] = (array[i] ? Boolean.TRUE : Boolean.FALSE);
+---
+>             Byte b = array[i];
+>             result[i] = (b == null ? valueForNull : b.byteValue());
+2394c2423,2425
+< 
+---
+>     
+>     
+>     
+2403c2434,2435
+<     public static Double[] toObject(final double[] array) {
+---
+> 
+>     public static double[] toPrimitive(final Double[] array) {
+2407c2439
+<             return EMPTY_DOUBLE_OBJECT_ARRAY;
+---
+>             return EMPTY_DOUBLE_ARRAY;
+2409c2441
+<         final Double[] result = new Double[array.length];
+---
+>         final double[] result = new double[array.length];
+2411c2443
+<             result[i] = new Double(array[i]);
+---
+>             result[i] = array[i].doubleValue();
+2424c2456,2457
+<     public static Float[] toObject(final float[] array) {
+---
+> 
+>     public static double[] toPrimitive(final Double[] array, final double valueForNull) {
+2428c2461
+<             return EMPTY_FLOAT_OBJECT_ARRAY;
+---
+>             return EMPTY_DOUBLE_ARRAY;
+2430c2463
+<         final Float[] result = new Float[array.length];
+---
+>         final double[] result = new double[array.length];
+2432c2465,2466
+<             result[i] = new Float(array[i]);
+---
+>             Double b = array[i];
+>             result[i] = (b == null ? valueForNull : b.doubleValue());
+2445c2479
+<     public static Integer[] toObject(final int[] array) {
+---
+>     public static Double[] toObject(final double[] array) {
+2449c2483
+<             return EMPTY_INTEGER_OBJECT_ARRAY;
+---
+>             return EMPTY_DOUBLE_OBJECT_ARRAY;
+2451c2485
+<         final Integer[] result = new Integer[array.length];
+---
+>         final Double[] result = new Double[array.length];
+2453c2487
+<             result[i] = new Integer(array[i]);
+---
+>             result[i] = new Double(array[i]);
+2456a2491,2492
+> 
+>     
+2466c2502,2503
+<     public static Long[] toObject(final long[] array) {
+---
+> 
+>     public static float[] toPrimitive(final Float[] array) {
+2470c2507
+<             return EMPTY_LONG_OBJECT_ARRAY;
+---
+>             return EMPTY_FLOAT_ARRAY;
+2472c2509
+<         final Long[] result = new Long[array.length];
+---
+>         final float[] result = new float[array.length];
+2474c2511
+<             result[i] = new Long(array[i]);
+---
+>             result[i] = array[i].floatValue();
+2487c2524,2525
+<     public static Short[] toObject(final short[] array) {
+---
+> 
+>     public static float[] toPrimitive(final Float[] array, final float valueForNull) {
+2491c2529
+<             return EMPTY_SHORT_OBJECT_ARRAY;
+---
+>             return EMPTY_FLOAT_ARRAY;
+2493c2531
+<         final Short[] result = new Short[array.length];
+---
+>         final float[] result = new float[array.length];
+2495c2533,2534
+<             result[i] = new Short(array[i]);
+---
+>             Float b = array[i];
+>             result[i] = (b == null ? valueForNull : b.floatValue());
+2498c2537
+<     }    
+---
+>     }
+2501,2503d2539
+<     
+<     
+< 
+2511c2547
+<     public static boolean[] toPrimitive(final Boolean[] array) {
+---
+>     public static Float[] toObject(final float[] array) {
+2515c2551
+<             return EMPTY_BOOLEAN_ARRAY;
+---
+>             return EMPTY_FLOAT_OBJECT_ARRAY;
+2517c2553
+<         final boolean[] result = new boolean[array.length];
+---
+>         final Float[] result = new Float[array.length];
+2519c2555
+<             result[i] = array[i].booleanValue();
+---
+>             result[i] = new Float(array[i]);
+2524a2561,2562
+>     
+>     
+2533c2571
+<     public static boolean[] toPrimitive(final Boolean[] array, final boolean valueForNull) {
+---
+>     public static boolean[] toPrimitive(final Boolean[] array) {
+2541,2542c2579
+<             Boolean b = array[i];
+<             result[i] = (b == null ? valueForNull : b.booleanValue());
+---
+>             result[i] = array[i].booleanValue();
+2548,2549d2584
+<     
+<     
+2558c2593
+<     public static byte[] toPrimitive(final Byte[] array) {
+---
+>     public static boolean[] toPrimitive(final Boolean[] array, final boolean valueForNull) {
+2562c2597
+<             return EMPTY_BYTE_ARRAY;
+---
+>             return EMPTY_BOOLEAN_ARRAY;
+2564c2599
+<         final byte[] result = new byte[array.length];
+---
+>         final boolean[] result = new boolean[array.length];
+2566c2601,2602
+<             result[i] = array[i].byteValue();
+---
+>             Boolean b = array[i];
+>             result[i] = (b == null ? valueForNull : b.booleanValue());
+2579,2580c2615
+< 
+<     public static byte[] toPrimitive(final Byte[] array, final byte valueForNull) {
+---
+>     public static Boolean[] toObject(final boolean[] array) {
+2584c2619
+<             return EMPTY_BYTE_ARRAY;
+---
+>             return EMPTY_BOOLEAN_OBJECT_ARRAY;
+2586c2621
+<         final byte[] result = new byte[array.length];
+---
+>         final Boolean[] result = new Boolean[array.length];
+2588,2589c2623
+<             Byte b = array[i];
+<             result[i] = (b == null ? valueForNull : b.byteValue());
+---
+>             result[i] = (array[i] ? Boolean.TRUE : Boolean.FALSE);
+2593,2594c2627
+<     
+<     
+---
+> 
+2603,2613c2636,2638
+< 
+< 
+<     public static double[] toPrimitive(final Double[] array) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_DOUBLE_ARRAY;
+<         }
+<         final double[] result = new double[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             result[i] = array[i].doubleValue();
+---
+>     public static boolean isEmpty(final Object[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+2615c2640
+<         return result;
+---
+>         return false;
+2625,2636c2650,2652
+< 
+< 
+<     public static double[] toPrimitive(final Double[] array, final double valueForNull) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_DOUBLE_ARRAY;
+<         }
+<         final double[] result = new double[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             Double b = array[i];
+<             result[i] = (b == null ? valueForNull : b.doubleValue());
+---
+>     public static boolean isEmpty(final long[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+2638c2654
+<         return result;
+---
+>         return false;
+2642,2645d2657
+<     
+<     
+< 
+< 
+2652,2660c2664,2666
+<     public static float[] toPrimitive(final Float[] array) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_FLOAT_ARRAY;
+<         }
+<         final float[] result = new float[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             result[i] = array[i].floatValue();
+---
+>     public static boolean isEmpty(final int[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+2662c2668
+<         return result;
+---
+>         return false;
+2671a2678,2683
+>     public static boolean isEmpty(final short[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+>         }
+>         return false;
+>     }
+2672a2685
+>     
+2674,2683c2687,2694
+<     public static float[] toPrimitive(final Float[] array, final float valueForNull) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_FLOAT_ARRAY;
+<         }
+<         final float[] result = new float[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             Float b = array[i];
+<             result[i] = (b == null ? valueForNull : b.floatValue());
+---
+> 
+> 
+> 
+> 
+> 
+>     public static boolean isEmpty(final char[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+2685c2696
+<         return result;
+---
+>         return false;
+2689,2690d2699
+<     
+<     
+2696a2706,2717
+>     public static boolean isEmpty(final byte[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+>         }
+>         return false;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+2699,2707c2720,2722
+<     public static int[] toPrimitive(final Integer[] array) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_INT_ARRAY;
+<         }
+<         final int[] result = new int[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             result[i] = array[i].intValue();
+---
+>     public static boolean isEmpty(final double[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+2709c2724
+<         return result;
+---
+>         return false;
+2718a2734,2739
+>     public static boolean isEmpty(final float[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+>         }
+>         return false;
+>     }
+2719a2741
+>     
+2721,2730c2743,2750
+<     public static int[] toPrimitive(final Integer[] array, final int valueForNull) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_INT_ARRAY;
+<         }
+<         final int[] result = new int[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             Integer b = array[i];
+<             result[i] = (b == null ? valueForNull : b.intValue());
+---
+> 
+> 
+> 
+> 
+> 
+>     public static boolean isEmpty(final boolean[] array) {
+>         if (array == null || array.length == 0) {
+>             return true;
+2732c2752
+<         return result;
+---
+>         return false;
+2736,2740d2755
+<     
+<     
+<     
+<     
+<     
+2749,2762d2763
+<     public static long[] toPrimitive(final Long[] array) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_LONG_ARRAY;
+<         }
+<         final long[] result = new long[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             result[i] = array[i].longValue();
+<         }
+<         return result;
+<     }
+<     
+<     
+2771,2780c2772,2785
+<     public static long[] toPrimitive(final Long[] array, final long valueForNull) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_LONG_ARRAY;
+<         }
+<         final long[] result = new long[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             Long b = array[i];
+<             result[i] = (b == null ? valueForNull : b.longValue());
+---
+> 
+> 
+> 
+>     public static Object[] join(Object[] array1, Object[] array2) {
+>         if (array1 == null) {
+>             return array2;
+>         } else if (array2 == null) {
+>             return array1;
+>         } else {
+>             Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length
+>                 + array2.length);
+>             System.arraycopy(array1, 0, joinedArray, 0, array1.length);
+>             System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+>             return joinedArray;
+2782d2786
+<         return result;
+2784,2786c2788
+<     
+<     
+<     
+---
+> 
+2796,2807d2797
+<     public static short[] toPrimitive(final Short[] array) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_SHORT_ARRAY;
+<         }
+<         final short[] result = new short[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             result[i] = array[i].shortValue();
+<         }
+<         return result;
+<     }
+2809d2798
+<     
+2818,2827c2807,2822
+<     public static short[] toPrimitive(final Short[] array, final short valueForNull) {
+<         if (array == null) {
+<             return null;
+<         } else if (array.length == 0) {
+<             return EMPTY_SHORT_ARRAY;
+<         }
+<         final short[] result = new short[array.length];
+<         for (int i = 0; i < array.length; i++) {
+<             Short b = array[i];
+<             result[i] = (b == null ? valueForNull : b.shortValue());
+---
+> 
+> 
+> 
+> 
+> 
+>     public static Object[] add(Object[] array, Object element) {
+>         Object joinedArray;
+>         int elementPos;
+>         if (array != null) {
+>             joinedArray = Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+>             System.arraycopy(array, 0, joinedArray, 0, array.length);
+>             elementPos = array.length;
+>         } else {
+>             
+>             joinedArray = Array.newInstance(element != null ? element.getClass() : Object.class, 1);
+>             elementPos = 0;
+2829c2824,2825
+<         return result;
+---
+>         Array.set(joinedArray, elementPos, element);
+>         return (Object[]) joinedArray;
+2831,2833c2827
+<     
+<     
+<     
+---
+> 
+2845,2847d2838
+<     public static String toString(final Object array) {
+<         return toString(array, "{}");
+<     }
+2849d2839
+<     
+2860,2868d2849
+<     
+<     public static String toString(final Object array, final String stringIfNull) {
+<         if (array == null) {
+<             return stringIfNull;
+<         }
+<         return new ToStringBuilder(array, ToStringStyle.SIMPLE_STYLE).append(array).toString();
+<     }
+< 
+<     
+2875c2856,2875
+<     public ArrayUtils() {
+---
+>     public static Object[] add(final Object[] array, final int index, final Object element) {
+>         if (array == null) {
+>             if (index != 0) {
+>                 throw new IndexOutOfBoundsException("Index: " + index + ", Length: 0");
+>             }
+>             Object joinedArray = Array.newInstance(element != null ? element.getClass() : Object.class, 1);
+>             Array.set(joinedArray, 0, element);
+>             return (Object[]) joinedArray;
+>         }
+>         int length = array.length;
+>         if (index > length || index < 0) {
+>             throw new IndexOutOfBoundsException("Index: " + index + ", Length: " + length);
+>         }
+>         Object result = Array.newInstance(array.getClass().getComponentType(), length + 1);
+>         System.arraycopy(array, 0, result, 0, index);
+>         Array.set(result, index, element);
+>         if (index < length) {
+>             System.arraycopy(array, index, result, index + 1, length - index);
+>         }
+>         return (Object[]) result;

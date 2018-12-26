@@ -1,0 +1,28 @@
+1096c1096,1097
+<         private final TimeZone mTimeZone;
+---
+>         private final Locale mLocale;
+>         private final int mStyle;
+1108,1109c1109,1111
+<             mTimeZone = timeZone;
+< 
+---
+>             mLocale = locale;
+>             mStyle = style;
+>             
+1118a1121,1123
+>             
+>             
+>             
+1127,1128c1132,1135
+<             if (mTimeZone.useDaylightTime() && calendar.get(Calendar.DST_OFFSET) != 0) {
+<                 buffer.append(mDaylight);
+---
+>             TimeZone zone = calendar.getTimeZone();
+>             if (zone.useDaylightTime()
+>                     && calendar.get(Calendar.DST_OFFSET) != 0) {
+>                 buffer.append(getTimeZoneDisplay(zone, true, mStyle, mLocale));
+1130c1137
+<                 buffer.append(mStandard);
+---
+>                 buffer.append(getTimeZoneDisplay(zone, false, mStyle, mLocale));

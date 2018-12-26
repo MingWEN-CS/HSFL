@@ -1,0 +1,75 @@
+19a20,22
+> import java.io.IOException;
+> import java.io.ObjectInputStream;
+> import java.io.ObjectOutputStream;
+24a28
+> import org.apache.commons.math.linear.MatrixUtils;
+72c76
+<     protected RealMatrix tableau;
+---
+>     protected transient RealMatrix tableau;
+490a495,558
+>     
+>     @Override
+>     public boolean equals(Object other) {
+> 
+>       if (this == other) { 
+>         return true;
+>       }
+> 
+>       if (other == null) {
+>         return false;
+>       }
+> 
+>       try {
+> 
+>           SimplexTableau rhs = (SimplexTableau) other;
+>           return (restrictToNonNegative  == rhs.restrictToNonNegative) &&
+>                  (numDecisionVariables   == rhs.numDecisionVariables) &&
+>                  (numSlackVariables      == rhs.numSlackVariables) &&
+>                  (numArtificialVariables == rhs.numArtificialVariables) &&
+>                  (epsilon                == rhs.epsilon) &&
+>                  f.equals(rhs.f) &&
+>                  constraints.equals(rhs.constraints) &&
+>                  tableau.equals(rhs.tableau);
+> 
+>       } catch (ClassCastException ex) {
+>           
+>           return false;
+>       }
+> 
+>     }
+>     
+>     
+>     @Override
+>     public int hashCode() {
+>         return Boolean.valueOf(restrictToNonNegative).hashCode() ^
+>                numDecisionVariables ^
+>                numSlackVariables ^
+>                numArtificialVariables ^
+>                Double.valueOf(epsilon).hashCode() ^
+>                f.hashCode() ^
+>                constraints.hashCode() ^
+>                tableau.hashCode();
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private void writeObject(ObjectOutputStream oos)
+>         throws IOException {
+>         oos.defaultWriteObject();
+>         MatrixUtils.serializeRealMatrix(tableau, oos);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private void readObject(ObjectInputStream ois)
+>       throws ClassNotFoundException, IOException {
+>         ois.defaultReadObject();
+>         MatrixUtils.deserializeRealMatrix(this, "tableau", ois);
+>     }

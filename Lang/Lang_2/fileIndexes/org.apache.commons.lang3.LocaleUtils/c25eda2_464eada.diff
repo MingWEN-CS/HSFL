@@ -1,0 +1,52 @@
+22d21
+< import java.util.HashMap;
+26d24
+< import java.util.Map;
+27a26,27
+> import java.util.concurrent.ConcurrentHashMap;
+> import java.util.concurrent.ConcurrentMap;
+43,44c43,44
+<     
+<     private static List<Locale> cAvailableLocaleList; 
+---
+>     private static final ConcurrentMap<String, List<Locale>> cLanguagesByCountry = 
+>         new ConcurrentHashMap<String, List<Locale>>();
+47,56c47,48
+<     
+<     private static Set<Locale> cAvailableLocaleSet;   
+< 
+<     
+<     private static final Map<String, List<Locale>> cLanguagesByCountry = 
+<         Collections.synchronizedMap(new HashMap<String, List<Locale>>());
+< 
+<     
+<     private static final Map<String, List<Locale>> cCountriesByLanguage = 
+<         Collections.synchronizedMap(new HashMap<String, List<Locale>>());
+---
+>     private static final ConcurrentMap<String, List<Locale>> cCountriesByLanguage = 
+>         new ConcurrentHashMap<String, List<Locale>>();
+198,213c190
+<         if(cAvailableLocaleList == null) { 
+<             initAvailableLocaleList(); 
+<         }
+<         return cAvailableLocaleList;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private static synchronized void initAvailableLocaleList() {
+<         if(cAvailableLocaleList == null) {
+<             List<Locale> list = Arrays.asList(Locale.getAvailableLocales());
+<             cAvailableLocaleList = Collections.unmodifiableList(list);
+<         }
+---
+>         return SyncAvoid.AVAILABLE_LOCALE_LIST;
+227,241c204
+<         if(cAvailableLocaleSet == null) { 
+<             initAvailableLocaleSet(); 
+<         }
+<         return cAvailableLocaleSet;
+<     }

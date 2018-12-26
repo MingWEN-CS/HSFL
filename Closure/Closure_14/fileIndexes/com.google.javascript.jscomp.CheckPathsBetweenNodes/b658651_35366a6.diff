@@ -1,0 +1,107 @@
+34a35
+> 
+37,39c38,40
+<   private Predicate<N> nodePredicate;
+<   private Predicate<DiGraphEdge<N, E>> edgePredicate;
+<   private boolean result;
+---
+>   private final Predicate<N> nodePredicate;
+>   private final Predicate<DiGraphEdge<N, E>> edgePredicate;
+>   private final boolean inclusive;
+62a64,67
+>   
+>   private final DiGraph<N, E> graph;
+>   private final DiGraphNode<N, E> start;
+>   private final DiGraphNode<N, E> end;
+78a84
+> 
+81c87,90
+<       Predicate<DiGraphEdge<N, E>> edgePredicate) {
+---
+>       Predicate<DiGraphEdge<N, E>> edgePredicate, boolean inclusive) {
+>     this.graph = graph;
+>     this.start = a;
+>     this.end = b;
+83a93,96
+>     this.inclusive = inclusive;
+>   }
+>   
+>   
+85,89d97
+<     graph.pushNodeAnnotations();
+<     graph.pushEdgeAnnotations();
+< 
+<     discoverBackEdges(a);
+<     result = checkAllPathsWithoutBackEdges(a, b);
+91,92c99,102
+<     graph.popNodeAnnotations();
+<     graph.popEdgeAnnotations();
+---
+>   CheckPathsBetweenNodes(DiGraph<N, E> graph, DiGraphNode<N, E> a,
+>       DiGraphNode<N, E> b, Predicate<N> nodePredicate,
+>       Predicate<DiGraphEdge<N, E>> edgePredicate) {
+>     this(graph, a, b, nodePredicate, edgePredicate, true);
+93a104
+>   
+99a111,113
+>     setUp();
+>     boolean result = checkAllPathsWithoutBackEdges(start, end);
+>     tearDown();
+101a116,117
+>   
+>   
+102a119,138
+> 
+> 
+>   public boolean somePathsSatisfyPredicate() {
+>     setUp();
+>     boolean result = checkSomePathsWithoutBackEdges(start, end);
+>     tearDown();
+>     return result;
+>   }
+> 
+>   private void setUp() {
+>     graph.pushNodeAnnotations();
+>     graph.pushEdgeAnnotations();
+>     discoverBackEdges(this.start);
+>   }
+>   
+>   private void tearDown() {
+>     graph.popNodeAnnotations();
+>     graph.popEdgeAnnotations();
+>   }
+>   
+129c165,166
+<     if (nodePredicate.apply(a.getValue())) {
+---
+>     if (nodePredicate.apply(a.getValue()) &&
+>         (inclusive || (a != start && a != end))) {
+147a185,212
+>   }
+>   
+>   
+> 
+> 
+> 
+>   private boolean checkSomePathsWithoutBackEdges(DiGraphNode<N, E> a,
+>       DiGraphNode<N, E> b) {
+>     if (nodePredicate.apply(a.getValue()) &&
+>         (inclusive || (a != start && a != end))) {
+>       return true;
+>     }
+>     if (a == b) {
+>       return false;
+>     }
+>     for (DiGraphEdge<N, E> e : a.getOutEdges()) {
+>       if (ignoreEdge(e)) {
+>         continue;
+>       }
+>       if (e.getAnnotation() == BACK_EDGE) {
+>         continue;
+>       }
+>       DiGraphNode<N, E> next = e.getDestination();
+>       if (checkSomePathsWithoutBackEdges(next, b)) {
+>         return true;
+>       }
+>     }
+>     return false;

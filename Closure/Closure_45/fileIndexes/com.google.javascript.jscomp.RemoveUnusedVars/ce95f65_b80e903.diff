@@ -1,0 +1,43 @@
+20a21
+> import com.google.javascript.jscomp.Scope.Var;
+65c66,71
+<   private final Set<Scope.Var> warnedVars_ = Sets.newHashSet();
+---
+>   private final Set<Var> warnedVars_ = Sets.newHashSet();
+> 
+>   
+> 
+> 
+>   private final Set<Var> referenced = Sets.newHashSet();
+87a94
+>       referenced.clear();
+142c149
+<           Scope.Var var = scope.getVar(n.getString());
+---
+>           Var var = scope.getVar(n.getString());
+189,190c196,197
+<       Scope.Var var = fnScope.getVar(lastArg.getString());
+<       if (!var.referenced) {
+---
+>       Var var = fnScope.getVar(lastArg.getString());
+>       if (!referenced.contains(var)) {
+203,204c210,211
+<   private void markReferencedVar(Scope.Var var) {
+<     if (var.referenced) {
+---
+>   private void markReferencedVar(Var var) {
+>     if (referenced.contains(var)) {
+208c215
+<     var.referenced = true;
+---
+>     referenced.add(var);
+227,228c234,235
+<     for (Iterator<Scope.Var> it = scope.getVars(); it.hasNext(); ) {
+<       Scope.Var var = it.next();
+---
+>     for (Iterator<Var> it = scope.getVars(); it.hasNext(); ) {
+>       Var var = it.next();
+230c237
+<       if (!var.referenced &&
+---
+>       if (!referenced.contains(var) &&

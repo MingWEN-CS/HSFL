@@ -1,0 +1,70 @@
+77a78,80
+>     private final List<String> columnLabels = new ArrayList<String>();
+> 
+>     
+115a119,139
+>         initializeColumnLabels();
+>     }
+> 
+>     protected void initializeColumnLabels() {
+>       if (getNumObjectiveFunctions() == 2) {
+>         columnLabels.add("W");
+>       }
+>       columnLabels.add("Z");
+>       for (int i = 0; i < getOriginalNumDecisionVariables(); i++) {
+>         columnLabels.add("x" + i);
+>       }
+>       if (!restrictToNonNegative) {
+>         columnLabels.add("x-");
+>       }
+>       for (int i = 0; i < getNumSlackVariables(); i++) {
+>         columnLabels.add("s" + i);
+>       }
+>       for (int i = 0; i < getNumArtificialVariables(); i++) {
+>         columnLabels.add("a" + i);
+>       }
+>       columnLabels.add("RHS");
+303a328,331
+>         for (int i = columnsToDrop.size() - 1; i >= 0; i--) {
+>           columnLabels.remove((int) columnsToDrop.get(i));
+>         }
+> 
+335,336c363,364
+<       double[] coefficients = new double[getOriginalNumDecisionVariables()];
+<       Integer negativeVarBasicRow = getBasicRow(getNegativeDecisionVariableOffset());
+---
+>       int negativeVarColumn = columnLabels.indexOf("x-");
+>       Integer negativeVarBasicRow = negativeVarColumn > 0 ? getBasicRow(negativeVarColumn) : null;
+337a366
+> 
+338a368
+>       double[] coefficients = new double[getOriginalNumDecisionVariables()];
+340c370,375
+<           Integer basicRow = getBasicRow(getNumObjectiveFunctions() + i);
+---
+>           int colIndex = columnLabels.indexOf("x" + i);
+>           if (colIndex < 0) {
+>             coefficients[i] = 0;
+>             continue;
+>           }
+>           Integer basicRow = getBasicRow(colIndex);
+352c387
+<         return new RealPointValuePair(coefficients, f.getValue(coefficients));
+---
+>       return new RealPointValuePair(coefficients, f.getValue(coefficients));
+450,458d484
+<     protected final int getNegativeDecisionVariableOffset() {
+<       return getNumObjectiveFunctions() + getOriginalNumDecisionVariables();
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+474c500
+<         return restrictToNonNegative ? numDecisionVariables : numDecisionVariables - 1;
+---
+>         return f.getCoefficients().getDimension();
+564a591
+> 

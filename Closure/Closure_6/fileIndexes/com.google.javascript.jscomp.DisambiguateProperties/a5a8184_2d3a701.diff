@@ -1,0 +1,79 @@
+303,306c303,305
+<     if (type instanceof ObjectType &&
+<         ((ObjectType) type).getImplicitPrototype() != null) {
+<       typeSystem.addInvalidatingType(
+<           ((ObjectType) type).getImplicitPrototype());
+---
+>     ObjectType objType = ObjectType.cast(type);
+>     if (objType != null && objType.getImplicitPrototype() != null) {
+>       typeSystem.addInvalidatingType(objType.getImplicitPrototype());
+672,675c671,677
+<       return (type == null) || invalidatingTypes.contains(type)
+<           || (type instanceof ObjectType &&
+<               !((ObjectType) type).hasReferenceName())
+<           || (type.isNamedType() && type.isUnknownType());
+---
+>       if (type == null || invalidatingTypes.contains(type) ||
+>           (type.isNamedType() && type.isUnknownType())) {
+>         return true;
+>       }
+> 
+>       ObjectType objType = ObjectType.cast(type);
+>       return objType != null && !objType.hasReferenceName();
+695,696c697,700
+<         if (skipType instanceof ObjectType) {
+<           skipType = ((ObjectType) skipType).getImplicitPrototype();
+---
+> 
+>         ObjectType objSkipType = skipType.toObjectType();
+>         if (objSkipType != null) {
+>           skipType = objSkipType.getImplicitPrototype();
+715,723d718
+<       } else if (type instanceof ObjectType
+<           && ((ObjectType) type).getConstructor() != null
+<           && ((ObjectType) type).getConstructor().isInterface()) {
+<         List<JSType> list = Lists.newArrayList();
+<         for (FunctionType impl
+<             : registry.getDirectImplementors((ObjectType) type)) {
+<           list.add(impl.getInstanceType());
+<         }
+<         return list;
+725c720,732
+<         return null;
+---
+>         ObjectType objType = type.toObjectType();
+>         if (objType != null &&
+>             objType.getConstructor() != null &&
+>             objType.getConstructor().isInterface()) {
+>           List<JSType> list = Lists.newArrayList();
+>           for (FunctionType impl
+>                    : registry.getDirectImplementors(objType)) {
+>             list.add(impl.getInstanceType());
+>           }
+>           return list;
+>         } else {
+>           return null;
+>         }
+742c749
+<       ObjectType objType = (ObjectType) type;
+---
+>       ObjectType objType = ObjectType.cast(type);
+767c774,775
+<       if (type instanceof ObjectType) {
+---
+>       ObjectType objType = ObjectType.cast(type);
+>       if (objType != null) {
+769,772c777,780
+<         if (type instanceof FunctionType) {
+<           constructor = (FunctionType) type;
+<         } else if (type instanceof FunctionPrototypeType) {
+<           constructor = ((FunctionPrototypeType) type).getOwnerFunction();
+---
+>         if (objType instanceof FunctionType) {
+>           constructor = (FunctionType) objType;
+>         } else if (objType instanceof FunctionPrototypeType) {
+>           constructor = ((FunctionPrototypeType) objType).getOwnerFunction();
+774c782
+<           constructor = ((ObjectType) type).getConstructor();
+---
+>           constructor = objType.getConstructor();

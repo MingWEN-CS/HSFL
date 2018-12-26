@@ -1,0 +1,17 @@
+705c705
+<       String memberName = NodeUtil.getStringValue(name);
+---
+>       String memberName = NodeUtil.getObjectLitKeyName(name);
+707,708c707,713
+<         objectType.defineInferredProperty(memberName, getJSType(value), false,
+<             name);
+---
+>         JSType rawValueType =  name.getFirstChild().getJSType();
+>         JSType valueType = NodeUtil.getObjectLitKeyTypeFromValueType(
+>             name, rawValueType);
+>         if (valueType == null) {
+>           valueType = getNativeType(UNKNOWN_TYPE);
+>         }
+>         objectType.defineInferredProperty(memberName, valueType, false, name);
+711d715
+<         return scope;

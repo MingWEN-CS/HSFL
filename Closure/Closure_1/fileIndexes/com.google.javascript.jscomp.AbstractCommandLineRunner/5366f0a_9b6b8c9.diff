@@ -1,0 +1,75 @@
+307c307
+<   protected static class FlagUsageException extends Exception {
+---
+>   public static class FlagUsageException extends Exception {
+310c310
+<     FlagUsageException(String message) {
+---
+>     public FlagUsageException(String message) {
+323c323,326
+<   private List<JSSourceFile> createInputs(List<String> files,
+---
+> 
+> 
+> 
+>   protected List<JSSourceFile> createInputs(List<String> files,
+414,416c417
+<       if (!TokenStream.isJSIdentifier(name)) {
+<         throw new FlagUsageException("Invalid module name: '" + name + "'");
+<       }
+---
+>       checkModuleName(name);
+418,419c419,420
+<         throw new FlagUsageException("Duplicate module name: " + name);
+<       }
+---
+>               throw new FlagUsageException("Duplicate module name: " + name);
+>           }
+479a481,492
+>   protected void checkModuleName(String name)
+>       throws FlagUsageException {
+>     if (!TokenStream.isJSIdentifier(name)) {
+>       throw new FlagUsageException("Invalid module name: '" + name + "'");
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+691,692c704,705
+<           writeOutput(writer, compiler, compiler.toSource(m), moduleWrappers.get(
+<               m.getName()), "%s");
+---
+>           writeOutput(writer, compiler, compiler.toSource(m),
+>               moduleWrappers.get(m.getName()), "%s");
+824a838
+> 
+867c881,894
+<     return streamToOutputWriter(new FileOutputStream(fileName));
+---
+> 
+>     return streamToOutputWriter(filenameToOutputStream(fileName));
+>   }
+> 
+>   
+> 
+> 
+> 
+>   protected OutputStream filenameToOutputStream(String fileName)
+>       throws IOException {
+>     if (fileName == null){
+>       return null;
+>     }
+>     return new FileOutputStream(fileName);
+991,992c1018,1019
+<         FileOutputStream file =
+<             new FileOutputStream(functionInformationMapOutputPath);
+---
+>         OutputStream file =
+>             filenameToOutputStream(functionInformationMapOutputPath);
+1530c1557
+<     
+---
+> 

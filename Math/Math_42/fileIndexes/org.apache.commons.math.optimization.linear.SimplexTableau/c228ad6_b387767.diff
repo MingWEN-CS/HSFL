@@ -1,0 +1,71 @@
+272a273,290
+>         return getBasicRow(col, true);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private Integer getBasicRowForSolution(final int col) {
+>         return getBasicRow(col, false);
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+>     private Integer getBasicRow(final int col, boolean ignoreObjectiveRows) {
+274c292,293
+<         for (int i = getNumObjectiveFunctions(); i < getHeight(); i++) {
+---
+>         int start = ignoreObjectiveRows ? getNumObjectiveFunctions() : 0;
+>         for (int i = start; i < getHeight(); i++) {
+321,338c340,356
+<         double[] coefficients = new double[getOriginalNumDecisionVariables()];
+<         Integer basicRow =
+<             getBasicRow(getNumObjectiveFunctions() + getOriginalNumDecisionVariables());
+<         double mostNegative = basicRow == null ? 0 : getEntry(basicRow, getRhsOffset());
+<         Set<Integer> basicRows = new HashSet<Integer>();
+<         for (int i = 0; i < coefficients.length; i++) {
+<             basicRow = getBasicRow(getNumObjectiveFunctions() + i);
+<             if (basicRows.contains(basicRow)) {
+<                 
+<                 
+<                 coefficients[i] = 0;
+<             } else {
+<                 basicRows.add(basicRow);
+<                 coefficients[i] =
+<                     (basicRow == null ? 0 : getEntry(basicRow, getRhsOffset())) -
+<                     (restrictToNonNegative ? 0 : mostNegative);
+<             }
+<         }
+---
+>       double[] coefficients = new double[getOriginalNumDecisionVariables()];
+>       Integer negativeVarBasicRow = getBasicRowForSolution(getNegativeDecisionVariableOffset());
+>       double mostNegative = negativeVarBasicRow == null ? 0 : getEntry(negativeVarBasicRow, getRhsOffset());
+>       Set<Integer> basicRows = new HashSet<Integer>();
+>       for (int i = 0; i < coefficients.length; i++) {
+>           Integer basicRow = getBasicRowForSolution(getNumObjectiveFunctions() + i);
+>           if (basicRows.contains(basicRow)) {
+>               
+>               
+>               coefficients[i] = 0;
+>           } else {
+>               basicRows.add(basicRow);
+>               coefficients[i] =
+>                   (basicRow == null ? 0 : getEntry(basicRow, getRhsOffset())) -
+>                   (restrictToNonNegative ? 0 : mostNegative);
+>           }
+>       }
+431a450,458
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+>     protected final int getNegativeDecisionVariableOffset() {
+>       return getNumObjectiveFunctions() + getOriginalNumDecisionVariables();

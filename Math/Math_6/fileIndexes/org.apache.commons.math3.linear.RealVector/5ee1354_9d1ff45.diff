@@ -1,0 +1,388 @@
+110,117d109
+<     public abstract RealVector append(double[] a);
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+131d122
+< 
+140,150d130
+< 
+< 
+< 
+<     public abstract void setSubVector(int index, double[] v);
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+209,227d188
+<     public RealVector add(double[] v) {
+<         double[] result = v.clone();
+<         Iterator<Entry> it = sparseIterator();
+<         Entry e;
+<         while (it.hasNext() && (e = it.next()) != null) {
+<             result[e.getIndex()] += e.getValue();
+<         }
+<         return new ArrayRealVector(result, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+229,232d189
+<         if (v instanceof ArrayRealVector) {
+<             double[] values = ((ArrayRealVector)v).getDataRef();
+<             return add(values);
+<         }
+252,271d208
+<     public RealVector subtract(double[] v) {
+<         double[] result = v.clone();
+<         Iterator<Entry> it = sparseIterator();
+<         Entry e;
+<         while (it.hasNext() && (e = it.next()) != null) {
+<             final int index = e.getIndex();
+<             result[index] = e.getValue() - result[index];
+<         }
+<         return new ArrayRealVector(result, false);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+273,276d209
+<         if (v instanceof ArrayRealVector) {
+<             double[] values = ((ArrayRealVector)v).getDataRef();
+<             return add(values);
+<         }
+282c215
+<             v.setEntry(index, e.getValue() - result.getEntry(index));
+---
+>             result.setEntry(index, e.getValue() - result.getEntry(index));
+327,339d259
+< 
+<     public double dotProduct(double[] v) {
+<         return dotProduct(new ArrayRealVector(v, false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+376,386d295
+<     public double cosine(double[] v) {
+<         return cosine(new ArrayRealVector(v, false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+398,410d306
+< 
+<     public RealVector ebeDivide(double[] v) {
+<         return ebeDivide(new ArrayRealVector(v, false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+422,434d317
+<     public RealVector ebeMultiply(double[] v) {
+<         return ebeMultiply(new ArrayRealVector(v, false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+462,479d344
+< 
+< 
+< 
+< 
+<     public double getDistance(double[] v) {
+<         return getDistance(new ArrayRealVector(v,false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+542,544d406
+< 
+< 
+< 
+570,594d431
+<     public double getL1Distance(double[] v) {
+<         checkVectorDimensions(v.length);
+<         double d = 0;
+<         Iterator<Entry> it = iterator();
+<         Entry e;
+<         while (it.hasNext() && (e = it.next()) != null) {
+<             d += FastMath.abs(e.getValue() - v[e.getIndex()]);
+<         }
+<         return d;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+612,636d448
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public double getLInfDistance(double[] v) {
+<         checkVectorDimensions(v.length);
+<         double d = 0;
+<         Iterator<Entry> it = iterator();
+<         Entry e;
+<         while (it.hasNext() && (e = it.next()) != null) {
+<             d = FastMath.max(FastMath.abs(e.getValue() - v[e.getIndex()]), d);
+<         }
+<         return d;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+796,805d607
+<     public RealMatrix outerProduct(double[] v) {
+<         return outerProduct(new ArrayRealVector(v, false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+815,826d616
+< 
+< 
+< 
+<     public RealVector projection(double[] v) {
+<         return projection(new ArrayRealVector(v, false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+988,1005d777
+< 
+<     public RealVector combine(double a, double b, double[] y) {
+<         return copy().combineToSelf(a, b, y);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+1022,1037d793
+<     public RealVector combineToSelf(double a, double b, double[] y) {
+<         return combineToSelf(a, b, new ArrayRealVector(y, false));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+1197a954,959
+>             public double[] getData() {
+>                 return v.getData();
+>             }
+> 
+>             
+>             @Override
+1275,1280d1036
+<             public RealVector add(double[] w) {
+<                 return v.add(w);
+<             }
+< 
+<             
+<             @Override
+1287,1292d1042
+<             public RealVector subtract(double[] w) {
+<                 return v.subtract(w);
+<             }
+< 
+<             
+<             @Override
+1347,1352d1096
+<             public RealVector ebeMultiply(double[] w) {
+<                 return v.ebeMultiply(w);
+<             }
+< 
+<             
+<             @Override
+1359,1373d1102
+<             public RealVector ebeDivide(double[] w) {
+<                 return v.ebeDivide(w);
+<             }
+< 
+<             
+<             @Override
+<             public double[] getData() {
+<                 
+<                 
+<                 
+<                 return v.getData();
+<             }
+< 
+<             
+<             @Override
+1380,1385d1108
+<             public double dotProduct(double[] w) {
+<                 return v.dotProduct(w);
+<             }
+< 
+<             
+<             @Override
+1392,1397d1114
+<             public double cosine(double[] w) {
+<                 return v.cosine(w);
+<             }
+< 
+<             
+<             @Override
+1422,1427d1138
+<             public double getDistance(double[] w) {
+<                 return v.getDistance(w);
+<             }
+< 
+<             
+<             @Override
+1434,1439d1144
+<             public double getL1Distance(double[] w) {
+<                 return v.getL1Distance(w);
+<             }
+< 
+<             
+<             @Override
+1446,1451d1150
+<             public double getLInfDistance(double[] w) {
+<                 return v.getLInfDistance(w);
+<             }
+< 
+<             
+<             @Override
+1470,1475d1168
+<             public RealVector projection(double[] w) {
+<                 return v.projection(w);
+<             }
+< 
+<             
+<             @Override
+1482,1487d1174
+<             public RealMatrix outerProduct(double[] w) {
+<                 return v.outerProduct(w);
+<             }
+< 
+<             
+<             @Override
+1518,1523d1204
+<             public RealVector append(double[] a) {
+<                 return v.append(a);
+<             }
+< 
+<             
+<             @Override
+1536,1541d1216
+<             public void setSubVector(int index, double[] w) {
+<                 throw new MathUnsupportedOperationException();
+<             }
+< 
+<             
+<             @Override
+1566,1571d1240
+<             public RealVector combine(double a, double b, double[] y) {
+<                 return v.combine(a, b, y);
+<             }
+< 
+<             
+<             @Override
+1574,1579d1242
+<             }
+< 
+<             
+<             @Override
+<             public RealVector combineToSelf(double a, double b, double[] y) {
+<                 throw new MathUnsupportedOperationException();

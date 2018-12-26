@@ -1,0 +1,189 @@
+40a41
+> 
+96a98,117
+> 
+>     
+> 
+> 
+>     private static Map reverseAbbreviationMap = new HashMap();
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+>     private static void addAbbreviation(String primitive, String abbreviation) {
+>         abbreviationMap.put(primitive, abbreviation);
+>         reverseAbbreviationMap.put(abbreviation, primitive);
+>     }
+>     
+>     
+> 
+> 
+98,105c119,126
+<         abbreviationMap.put( "int", "I" );
+<         abbreviationMap.put( "boolean", "Z" );
+<         abbreviationMap.put( "float", "F" );
+<         abbreviationMap.put( "long", "J" );
+<         abbreviationMap.put( "short", "S" );
+<         abbreviationMap.put( "byte", "B" );
+<         abbreviationMap.put( "double", "D" );
+<         abbreviationMap.put( "char", "C" );
+---
+>         addAbbreviation("int", "I");
+>         addAbbreviation("boolean", "Z");
+>         addAbbreviation("float", "F");
+>         addAbbreviation("long", "J");
+>         addAbbreviation("short", "S");
+>         addAbbreviation("byte", "B");
+>         addAbbreviation("double", "D");
+>         addAbbreviation("char", "C");
+608c629
+<             clazz = Class.forName(toProperClassName(className), initialize, classLoader);
+---
+>             clazz = Class.forName(toCanonicalName(className), initialize, classLoader);
+721c742
+<     private static String toProperClassName(String className) {
+---
+>     private static String toCanonicalName(String className) {
+762a784,922
+>     }
+> 
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String getShortCanonicalName(Object object, String valueIfNull) {
+>         if (object == null) {
+>             return valueIfNull;
+>         }
+>         return getShortCanonicalName(object.getClass().getName());
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String getShortCanonicalName(Class cls) {
+>         if (cls == null) {
+>             return StringUtils.EMPTY;
+>         }
+>         return getShortCanonicalName(cls.getName());
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String getShortCanonicalName(String canonicalName) {
+>         return ClassUtils.getShortClassName(getCanonicalName(canonicalName));
+>     }
+> 
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String getPackageCanonicalName(Object object, String valueIfNull) {
+>         if (object == null) {
+>             return valueIfNull;
+>         }
+>         return getPackageCanonicalName(object.getClass().getName());
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String getPackageCanonicalName(Class cls) {
+>         if (cls == null) {
+>             return StringUtils.EMPTY;
+>         }
+>         return getPackageCanonicalName(cls.getName());
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String getPackageCanonicalName(String canonicalName) {
+>         return ClassUtils.getPackageName(getCanonicalName(canonicalName));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String getCanonicalName(String className) {
+>         className = StringUtils.deleteWhitespace(className);
+>         if (className == null) {
+>             return null;
+>         } else {
+>             int dim = 0;
+>             while(className.startsWith("[")) {
+>                 dim++;
+>                 className = className.substring(1);
+>             }
+>             if(dim < 1) {
+>                 return className;
+>             } else {
+>                 if(className.startsWith("L")) {
+>                     className = className.substring(
+>                         1,
+>                         className.endsWith(";")
+>                             ? className.length() - 1
+>                             : className.length());
+>                 } else {
+>                     if(className.length() > 0) {
+>                         className = (String) reverseAbbreviationMap.get(
+>                             className.substring(0, 1));
+>                     }
+>                 }
+>                 StringBuffer canonicalClassNameBuffer = new StringBuffer(className);
+>                 for(int i = 0; i < dim; i++) {
+>                     canonicalClassNameBuffer.append("[]");
+>                 }
+>                 return canonicalClassNameBuffer.toString();
+>             }
+>         }

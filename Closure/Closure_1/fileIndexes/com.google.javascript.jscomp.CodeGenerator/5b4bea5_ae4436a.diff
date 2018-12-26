@@ -1,0 +1,76 @@
+305,308c305,306
+<         boolean stripBlock = n.isSyntheticBlock() ||
+<             n.getType() == Token.SCRIPT ||
+<             ((context != Context.PRESERVE_BLOCK) && (n.getChildCount() < 2));
+<         if (!stripBlock) {
+---
+>         boolean preserveBlock = context == Context.PRESERVE_BLOCK;
+>         if (preserveBlock) {
+329c327
+<         if (!stripBlock) {
+---
+>         if (preserveBlock) {
+348c346
+<           addNonEmptyExpression(
+---
+>           addNonEmptyStatement(
+357c355
+<           addNonEmptyExpression(
+---
+>           addNonEmptyStatement(
+365c363
+<         addNonEmptyExpression(first, Context.OTHER, false);
+---
+>         addNonEmptyStatement(first, Context.OTHER, false);
+377c375
+<         addNonEmptyExpression(
+---
+>         addNonEmptyStatement(
+420c418
+<         addNonEmptyExpression(
+---
+>         addNonEmptyStatement(
+477c475
+<           addNonEmptyExpression(
+---
+>           addNonEmptyStatement(
+480c478
+<           addNonEmptyExpression(
+---
+>           addNonEmptyStatement(
+483c481
+<           addNonEmptyExpression(first.getNext(), Context.OTHER, false);
+---
+>           addNonEmptyStatement(first.getNext(), Context.OTHER, false);
+636c634
+<         addNonEmptyExpression(
+---
+>         addNonEmptyStatement(
+667c665
+<   private void addNonEmptyExpression(
+---
+>   private void addNonEmptyStatement(
+677c675
+<     if (n.getType() == Token.BLOCK ) {
+---
+>     if (n.getType() == Token.BLOCK) {
+705a704,707
+> 
+>       if (count > 1) {
+>         context = Context.PRESERVE_BLOCK;
+>       }
+983c985,987
+<       if (c.getType() != Token.EMPTY) {
+---
+>       if (c.getType() == Token.BLOCK) {
+>         i += getNonEmptyChildCount(c, maxCount-i);
+>       } else if (c.getType() != Token.EMPTY) {
+993c997,1002
+<       if (c.getType() != Token.EMPTY) {
+---
+>       if (c.getType() == Token.BLOCK) {
+>         Node result = getFirstNonEmptyChild(c);
+>         if (result != null) {
+>           return result;
+>         }
+>       } else if (c.getType() != Token.EMPTY) {

@@ -1,0 +1,148 @@
+193a194,199
+> 
+>       case Token.ARRAYLIT:
+>         return arrayToString(n);
+> 
+>       case Token.OBJECTLIT:
+>         return "[object Object]";
+202a209,250
+> 
+> 
+> 
+>   static String getArrayElementStringValue(Node n) {
+>     return NodeUtil.isNullOrUndefined(n) ? "" : getStringValue(n);
+>   }
+> 
+>   static String arrayToString(Node literal) {
+>     Node first = literal.getFirstChild();
+>     int[] skipIndexes = (int[]) literal.getProp(Node.SKIP_INDEXES_PROP);
+>     StringBuilder result = new StringBuilder();
+>     int nextSlot = 0;
+>     int nextSkipSlot = 0;
+>     for (Node n = first; n != null; n = n.getNext()) {
+>       while (skipIndexes != null && nextSkipSlot < skipIndexes.length) {
+>         if (nextSlot == skipIndexes[nextSkipSlot]) {
+>           result.append(',');
+>           nextSlot++;
+>           nextSkipSlot++;
+>         } else {
+>           break;
+>         }
+>       }
+>       String childValue = getArrayElementStringValue(n);
+>       if (childValue == null) {
+>         return null;
+>       }
+>       if (n != first) {
+>         result.append(',');
+>       }
+>       result.append(childValue);
+> 
+>       nextSlot++;
+>     }
+>     return result.toString();
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+251,255c299
+<         String s = trimJsWhiteSpace(n.getString());
+<         
+<         if (s.length() == 0) {
+<           return 0.0;
+<         }
+---
+>         return getStringNumberValue(n.getString());
+257,266c301,305
+<         if (s.length() > 2
+<             && s.charAt(0) == '0'
+<             && (s.charAt(1) == 'x' || s.charAt(1) == 'X')) {
+<           
+<           try {
+<             return Double.valueOf(Integer.parseInt(s.substring(2), 16));
+<           } catch (NumberFormatException e) {
+<             return Double.NaN;
+<           }
+<         }
+---
+>       case Token.ARRAYLIT:
+>       case Token.OBJECTLIT:
+>         String value = getStringValue(n);
+>         return value != null ? getStringNumberValue(value) : null;
+>     }
+268,274c307,308
+<         if (s.length() > 3
+<             && (s.charAt(0) == '-' || s.charAt(0) == '+')
+<             && s.charAt(1) == '0'
+<             && (s.charAt(2) == 'x' || s.charAt(2) == 'X')) {
+<           
+<           return null;
+<         }
+---
+>     return null;
+>   }
+276,282c310,315
+<         
+<         
+<         if (s.equals("infinity")
+<             || s.equals("-infinity")
+<             || s.equals("+infinity")) {
+<           return null;
+<         }
+---
+>   static Double getStringNumberValue(String rawJsString) {
+>     String s = trimJsWhiteSpace(rawJsString);
+>     
+>     if (s.length() == 0) {
+>       return 0.0;
+>     }
+284,288c317,325
+<         try {
+<           return Double.parseDouble(s);
+<         } catch (NumberFormatException e) {
+<           return Double.NaN;
+<         }
+---
+>     if (s.length() > 2
+>         && s.charAt(0) == '0'
+>         && (s.charAt(1) == 'x' || s.charAt(1) == 'X')) {
+>       
+>       try {
+>         return Double.valueOf(Integer.parseInt(s.substring(2), 16));
+>       } catch (NumberFormatException e) {
+>         return Double.NaN;
+>       }
+291c328,348
+<     return null;
+---
+>     if (s.length() > 3
+>         && (s.charAt(0) == '-' || s.charAt(0) == '+')
+>         && s.charAt(1) == '0'
+>         && (s.charAt(2) == 'x' || s.charAt(2) == 'X')) {
+>       
+>       return null;
+>     }
+> 
+>     
+>     
+>     if (s.equals("infinity")
+>         || s.equals("-infinity")
+>         || s.equals("+infinity")) {
+>       return null;
+>     }
+> 
+>     try {
+>       return Double.parseDouble(s);
+>     } catch (NumberFormatException e) {
+>       return Double.NaN;
+>     }
+1225a1283,1286
+>   static boolean isNullOrUndefined(Node n) {
+>     return isNull(n) || isUndefined(n);
+>   }
+> 
+2435d2495
+<     

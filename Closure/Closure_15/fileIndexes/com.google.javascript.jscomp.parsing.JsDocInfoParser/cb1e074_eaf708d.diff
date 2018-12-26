@@ -1,0 +1,60 @@
+20a21
+> import com.google.common.collect.Lists;
+35a37
+> import java.util.List;
+178a181,182
+>     List<ExtendedTypeInfo> extendedTypes = Lists.newArrayList();
+> 
+411,414c415,417
+<                       if (!jsdocBuilder.recordBaseType(type)) {
+<                         parser.addTypeWarning(
+<                             "msg.jsdoc.incompat.type", lineno, charno);
+<                       }
+---
+>                       
+>                       extendedTypes.add(new ExtendedTypeInfo(
+>                           type, stream.getLineno(), stream.getCharno()));
+878c881
+< 
+---
+>           checkExtendedTypes(extendedTypes);
+885a889
+>           checkExtendedTypes(extendedTypes);
+910a915,935
+>   private void checkExtendedTypes(List<ExtendedTypeInfo> extendedTypes) {
+>     for (ExtendedTypeInfo typeInfo : extendedTypes) {
+>       
+>       if (jsdocBuilder.isInterfaceRecorded()) {
+>         if (!jsdocBuilder.recordExtendedInterface(typeInfo.type)) {
+>           parser.addParserWarning("msg.jsdoc.extends.duplicate",
+>               typeInfo.lineno, typeInfo.charno);
+>         }
+>       }
+> 
+>       
+>       
+>       
+>       if (!jsdocBuilder.recordBaseType(typeInfo.type) &&
+>           !jsdocBuilder.isInterfaceRecorded()) {
+>         parser.addTypeWarning("msg.jsdoc.incompat.type",
+>             typeInfo.lineno, typeInfo.charno);
+>       }
+>     }
+>   }
+> 
+1205a1231,1245
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private static class ExtendedTypeInfo {
+>     final JSTypeExpression type;
+>     final int lineno;
+>     final int charno;
+> 
+>     public ExtendedTypeInfo(JSTypeExpression type, int lineno, int charno) {
+>       this.type = type;
+>       this.lineno = lineno;
+>       this.charno = charno;

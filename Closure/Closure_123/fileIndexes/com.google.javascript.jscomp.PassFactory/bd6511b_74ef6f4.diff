@@ -1,0 +1,42 @@
+19,22d18
+< import com.google.common.base.Preconditions;
+< 
+< 
+< 
+35d30
+<   private boolean isCreated = false;
+64,95c59
+<   PassFactory makeOneTimePass() {
+<     if (isOneTimePass()) {
+<       return this;
+<     }
+< 
+<     final PassFactory self = this;
+<     return new PassFactory(name, true ) {
+<       @Override
+<       protected CompilerPass createInternal(AbstractCompiler compiler) {
+<         return self.createInternal(compiler);
+<       }
+<       @Override
+<       HotSwapCompilerPass getHotSwapPass(AbstractCompiler compiler) {
+<         return self.getHotSwapPass(compiler);
+<       }
+<     };
+<   }
+< 
+<   
+< 
+< 
+<   final CompilerPass create(AbstractCompiler compiler) {
+<     Preconditions.checkState(!isCreated || !isOneTimePass,
+<         "One-time passes cannot be run multiple times: %s", name);
+<     isCreated = true;
+<     return createInternal(compiler);
+<   }
+< 
+<   
+< 
+< 
+<   abstract protected CompilerPass createInternal(AbstractCompiler compiler);
+---
+>   abstract CompilerPass create(AbstractCompiler compiler);

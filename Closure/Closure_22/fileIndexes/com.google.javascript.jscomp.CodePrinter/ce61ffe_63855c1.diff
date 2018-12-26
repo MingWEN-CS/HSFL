@@ -1,0 +1,139 @@
+141c141,143
+<     void reportLineCut(int lineIndex, int charIndex) {
+---
+> 
+> 
+>     void reportLineCut(int lineIndex, int charIndex, boolean insertion) {
+144c146,147
+<           mapping.start = convertPosition(mapping.start, lineIndex, charIndex);
+---
+>           mapping.start = convertPosition(mapping.start, lineIndex, charIndex,
+>               insertion);
+147c150,151
+<             mapping.end = convertPosition(mapping.end, lineIndex, charIndex);
+---
+>             mapping.end = convertPosition(mapping.end, lineIndex, charIndex,
+>                 insertion);
+163a168,171
+> 
+> 
+> 
+> 
+165c173
+<                                      int characterPosition) {
+---
+>                                      int characterPosition, boolean insertion) {
+168,172c176,184
+<       if (originalLine == lineIndex && originalChar >= characterPosition) {
+<         
+<         
+<         return new FilePosition(
+<             originalLine + 1, originalChar - characterPosition);
+---
+>       if (insertion) {
+>         if (originalLine == lineIndex && originalChar >= characterPosition) {
+>           
+>           
+>           return new FilePosition(
+>               originalLine + 1, originalChar - characterPosition);
+>         } else {
+>           return position;
+>         }
+174c186,197
+<         return position;
+---
+>         if (originalLine == lineIndex) {
+>           return new FilePosition(
+>               originalLine - 1, originalChar + characterPosition);
+>         } else if (originalLine > lineIndex) {
+>             
+>             
+>             
+>             throw new IllegalStateException(
+>                 "Cannot undo line cut on a previous line.");
+>         } else {
+>           return position;
+>         }
+392a416
+>     private final boolean preferLineBreakAtEndOfFile;
+394a419,420
+>     private int prevCutPosition = 0;
+>     private int prevLineStartPosition = 0;
+405c431,432
+<     private CompactCodePrinter(boolean lineBreak, int lineLengthThreshold,
+---
+>     private CompactCodePrinter(boolean lineBreak,
+>         boolean preferLineBreakAtEndOfFile, int lineLengthThreshold,
+408a436
+>       this.preferLineBreakAtEndOfFile = preferLineBreakAtEndOfFile;
+425a454,455
+>         prevCutPosition = code.length();
+>         prevLineStartPosition = lineStartPosition;
+467c497,498
+<           reportLineCut(lineIndex, position - lineStartPosition);
+---
+>           prevCutPosition = position;
+>           reportLineCut(lineIndex, position - lineStartPosition, true);
+480a512,543
+> 
+>     @Override
+>     void endFile() {
+>       super.endFile();
+>       if (!preferLineBreakAtEndOfFile) {
+>         return;
+>       }
+>       if (lineLength > lineLengthThreshold / 2) {
+>         
+>         append(";");
+>         startNewLine();
+>       } else if (prevCutPosition > 0) {
+>         
+>         for (int i = prevCutPosition; i < code.length() - 1; i++) {
+>           code.setCharAt(i, code.charAt(i+1));
+>         }
+>         code.setLength(code.length() - 1);
+>         lineStartPosition = prevLineStartPosition;
+>         lineLength = code.length() - lineStartPosition;
+>         reportLineCut(lineIndex, prevCutPosition, false);
+>         lineIndex--;
+>         prevCutPosition = 0;
+>         prevLineStartPosition = 0;
+>         append(";");
+>         startNewLine();
+>       } else {
+>         
+>         
+>         
+>       }
+>     }
+> 
+486a550
+>     private boolean preferLineBreakAtEndOfFile = false;
+526a591,601
+> 
+> 
+>     Builder setPreferLineBreakAtEndOfFile(boolean lineBreakAtEnd) {
+>       this.preferLineBreakAtEndOfFile = lineBreakAtEnd;
+>       return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+595,596c670,672
+<       return toSource(root, outputFormat, lineBreak, lineLengthThreshold,
+<           sourceMap, sourceMapDetailLevel, outputCharset, tagAsStrict);
+---
+>       return toSource(root, outputFormat, lineBreak, preferLineBreakAtEndOfFile,
+>           lineLengthThreshold, sourceMap, sourceMapDetailLevel, outputCharset,
+>           tagAsStrict);
+610c686,687
+<                                  boolean lineBreak,  int lineLengthThreshold,
+---
+>                                  boolean lineBreak,  boolean preferEndOfFileBreak,
+>                                  int lineLengthThreshold,
+621c698
+<             lineBreak, lineLengthThreshold,
+---
+>             lineBreak, preferEndOfFileBreak, lineLengthThreshold,

@@ -1,0 +1,217 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+
+import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.format.DateTimeParser;
+
+
+
+
+
+
+
+
+
+
+
+
+
+public final class Instant extends AbstractInstant implements ReadableInstant {
+
+    
+    private final long iMillis;
+
+    
+    
+    
+
+
+
+    public Instant() {
+        super();
+        iMillis = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+    public Instant(long millis) {
+        super();
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+    public Instant(ReadableInstant instant) {
+        super();
+        if (instant == null) {
+            throw new IllegalArgumentException("The ReadableInstant must not be null");
+        }
+        iMillis = instant.getMillis();
+    }
+
+    
+
+
+
+
+
+    public Instant(Date date) {
+        super();
+        if (date == null) {
+            throw new IllegalArgumentException("The Date must not be null");
+        }
+        iMillis = date.getTime();
+    }
+
+    
+
+
+
+
+
+    public Instant(Calendar calendar) {
+        super();
+        if (calendar == null) {
+            throw new IllegalArgumentException("The Calendar must not be null");
+        }
+        iMillis = calendar.getTime().getTime();
+    }
+
+    
+
+
+
+
+
+
+    public Instant(String str) throws ParseException {
+        super();
+        if (str == null) {
+            throw new IllegalArgumentException("The String must not be null");
+        }
+        DateTimeParser p = ISODateTimeFormat.getInstanceUTC().dateTimeParser();
+        iMillis = p.parseMillis(str);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected ReadableInstant create(long millis, Chronology chrono) {
+        
+        if (millis == getMillis()) {
+            return this;
+        }
+        return new Instant(millis);
+    }
+    
+    
+    
+    
+
+
+
+
+    public final long getMillis() {
+        return iMillis;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public final Chronology getChronology() {
+        return null;
+    }
+
+    
+    
+    
+
+
+
+
+
+
+
+    public final String toString() {
+        return ISODateTimeFormat.getInstanceUTC().dateTime().print(this);
+    }
+
+}

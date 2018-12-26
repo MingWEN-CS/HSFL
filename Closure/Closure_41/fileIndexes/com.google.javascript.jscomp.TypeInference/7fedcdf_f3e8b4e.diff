@@ -1,0 +1,46 @@
+173c173,180
+<               condition = createSwitchCaseConditionExpression(source);
+---
+>               condition = source;
+> 
+>               
+>               
+>               if (conditionFlowScope == null) {
+>                 conditionFlowScope = traverse(
+>                     condition.getFirstChild(), output.createChildFlowScope());
+>               }
+225,253d231
+<   
+< 
+< 
+< 
+<   private Node createSwitchCaseConditionExpression(Node caseNode) {
+<     Node switchNode = findSwitchFromCase(caseNode);
+<     Node switchExpressionNode = switchNode.getFirstChild();
+<     Node caseExpressionNode = caseNode.getFirstChild();
+<     return new Node(Token.SHEQ, switchExpressionNode.cloneTree(),
+<         caseExpressionNode.cloneTree());
+<   }
+< 
+<   
+< 
+< 
+<   private Node findSwitchFromCase(Node caseNode) {
+<     for (DiGraphNode<Node, Branch> gn :
+<         getCfg().getDirectedPredNodes(caseNode)) {
+<       Node n = gn.getValue();
+<       switch (n.getType()) {
+<         case Token.SWITCH:
+<           return n;
+<         case Token.CASE:
+<           return findSwitchFromCase(n);
+<       }
+<     }
+<     throw new IllegalArgumentException("ill-formed case node");
+<   }
+< 
+398a377,380
+>         break;
+> 
+>       case Token.SWITCH:
+>         scope = traverse(n.getFirstChild(), scope);

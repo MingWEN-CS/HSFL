@@ -1,0 +1,70 @@
+56a57
+> import org.joda.time.DateTime;
+207,228c208
+<     public long[] getIntervalMillis(Object object) {
+<         return parseInterval(null, object);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     public void setInto(ReadWritableInterval writableInterval, Object object) {
+<         parseInterval(writableInterval, object);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     private long[] parseInterval(ReadWritableInterval writableInterval, Object object) {
+---
+>     public void setInto(ReadWritableInterval writableInterval, Object object, Chronology chrono) {
+247,248c227,229
+<         long startInstant, endInstant;
+<         Period period;
+---
+>         long startInstant = 0, endInstant = 0;
+>         Period period = null;
+>         Chronology parsedChrono = null;
+253d233
+<             startInstant = 0;
+256,257c236,238
+<             startInstant = dateTimeParser.parseMillis(leftStr);
+<             period = null;
+---
+>             DateTime start = dateTimeParser.parseDateTime(leftStr);
+>             startInstant = start.getMillis();
+>             parsedChrono = start.getChronology();
+267c248,249
+<             endInstant = ISOChronology.getInstance().add(startInstant, period, 1); 
+---
+>             chrono = (chrono != null ? chrono : parsedChrono);
+>             endInstant = chrono.add(startInstant, period, 1);
+269c251,254
+<             endInstant = dateTimeParser.parseMillis(rightStr);
+---
+>             DateTime end = dateTimeParser.parseDateTime(rightStr);
+>             endInstant = end.getMillis();
+>             parsedChrono = (parsedChrono != null ? parsedChrono : end.getChronology());
+>             chrono = (chrono != null ? chrono : parsedChrono);
+271c256
+<                 startInstant = ISOChronology.getInstance().add(endInstant, period, -1); 
+---
+>                 startInstant = chrono.add(endInstant, period, -1);
+275,281c260,261
+<         
+<         if (writableInterval == null) {
+<             return new long[] {startInstant, endInstant};
+<         } else {
+<             writableInterval.setInterval(startInstant, endInstant);
+<             return null;
+<         }
+---
+>         writableInterval.setInterval(startInstant, endInstant);
+>         writableInterval.setChronology(chrono);

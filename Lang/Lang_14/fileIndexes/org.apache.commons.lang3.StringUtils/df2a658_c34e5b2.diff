@@ -1,0 +1,130 @@
+633c633
+<             if (java6NormalizeMethod != null) {
+---
+>             if (InitStripAccents.java6NormalizeMethod != null) {
+635c635
+<             } else if (sunDecomposeMethod != null) {
+---
+>             } else if (InitStripAccents.sunDecomposeMethod != null) {
+640,641c640,641
+<                         +" Java6, but got: "+java6Exception
+<                         +"; or a Sun JVM: "+sunException);
+---
+>                         +" Java6, but got: "+InitStripAccents.java6Exception
+>                         +"; or a Sun JVM: "+InitStripAccents.sunException);
+672,673c672,673
+<         if (java6NormalizeMethod == null || java6NormalizerFormNFD == null) {
+<             throw new IllegalStateException("java.text.Normalizer is not available", java6Exception);
+---
+>         if (InitStripAccents.java6NormalizeMethod == null || InitStripAccents.java6NormalizerFormNFD == null) {
+>             throw new IllegalStateException("java.text.Normalizer is not available", InitStripAccents.java6Exception);
+676,677c676,677
+<         result = (String) java6NormalizeMethod.invoke(null, new Object[] {text, java6NormalizerFormNFD});
+<         result = java6Pattern.matcher(result).replaceAll("");
+---
+>         result = (String) InitStripAccents.java6NormalizeMethod.invoke(null, new Object[] {text, InitStripAccents.java6NormalizerFormNFD});
+>         result = InitStripAccents.java6Pattern.matcher(result).replaceAll("");
+696,697c696,697
+<         if (sunDecomposeMethod == null) {
+<             throw new IllegalStateException("sun.text.Normalizer is not available", sunException);
+---
+>         if (InitStripAccents.sunDecomposeMethod == null) {
+>             throw new IllegalStateException("sun.text.Normalizer is not available", InitStripAccents.sunException);
+700,701c700,701
+<         result = (String) sunDecomposeMethod.invoke(null, new Object[] {text, Boolean.FALSE, Integer.valueOf(0)});
+<         result = sunPattern.matcher(result).replaceAll("");
+---
+>         result = (String) InitStripAccents.sunDecomposeMethod.invoke(null, new Object[] {text, Boolean.FALSE, Integer.valueOf(0)});
+>         result = InitStripAccents.sunPattern.matcher(result).replaceAll("");
+706,715c706
+<     private static final Throwable sunException;
+<     private static final Method  sunDecomposeMethod;
+<     private static final Pattern sunPattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+<     
+<     private static final Throwable java6Exception;
+<     private static final Method  java6NormalizeMethod;
+<     private static final Object  java6NormalizerFormNFD;
+<     private static final Pattern java6Pattern = sunPattern;
+< 
+<     static {
+---
+>     private static class InitStripAccents {
+717,732c708,717
+<         Object _java6NormalizerFormNFD = null;
+<         Method _java6NormalizeMethod = null;
+<         Method _sunDecomposeMethod = null;
+<         Throwable _java6Exception = null;
+<         Throwable _sunException = null;
+<         try {
+<             
+<             
+<             Class<?> normalizerFormClass = Thread.currentThread().getContextClassLoader()
+<                 .loadClass("java.text.Normalizer$Form");
+<             _java6NormalizerFormNFD = normalizerFormClass.getField("NFD").get(null);
+<             Class<?> normalizerClass = Thread.currentThread().getContextClassLoader()
+<                 .loadClass("java.text.Normalizer");
+<             _java6NormalizeMethod = normalizerClass.getMethod("normalize",
+<                     new Class[] {CharSequence.class, normalizerFormClass});
+<         } catch (Exception e1) {
+---
+>         private static final Throwable sunException;
+>         private static final Method  sunDecomposeMethod;
+>         private static final Pattern sunPattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+>         
+>         private static final Throwable java6Exception;
+>         private static final Method  java6NormalizeMethod;
+>         private static final Object  java6NormalizerFormNFD;
+>         private static final Pattern java6Pattern = sunPattern;
+>     
+>         static {
+734c719,723
+<             _java6Exception = e1;
+---
+>             Object _java6NormalizerFormNFD = null;
+>             Method _java6NormalizeMethod = null;
+>             Method _sunDecomposeMethod = null;
+>             Throwable _java6Exception = null;
+>             Throwable _sunException = null;
+736a726,729
+>                 
+>                 Class<?> normalizerFormClass = Thread.currentThread().getContextClassLoader()
+>                     .loadClass("java.text.Normalizer$Form");
+>                 _java6NormalizerFormNFD = normalizerFormClass.getField("NFD").get(null);
+738,742c731,745
+<                     .loadClass("sun.text.Normalizer");
+<                 _sunDecomposeMethod = normalizerClass.getMethod("decompose",
+<                         new Class[] {String.class, Boolean.TYPE, Integer.TYPE});
+<             } catch (Exception e2) {
+<                 _sunException = e2;
+---
+>                     .loadClass("java.text.Normalizer");
+>                 _java6NormalizeMethod = normalizerClass.getMethod("normalize",
+>                         new Class[] {CharSequence.class, normalizerFormClass});
+>             } catch (Exception e1) {
+>                 
+>                 _java6Exception = e1;
+>                 try {
+>                     
+>                     Class<?> normalizerClass = Thread.currentThread().getContextClassLoader()
+>                         .loadClass("sun.text.Normalizer");
+>                     _sunDecomposeMethod = normalizerClass.getMethod("decompose",
+>                             new Class[] {String.class, Boolean.TYPE, Integer.TYPE});
+>                 } catch (Exception e2) {
+>                     _sunException = e2;
+>                 }
+743a747,753
+>     
+>             
+>             java6Exception = _java6Exception;
+>             java6NormalizerFormNFD = _java6NormalizerFormNFD;
+>             java6NormalizeMethod = _java6NormalizeMethod;
+>             sunException = _sunException;
+>             sunDecomposeMethod = _sunDecomposeMethod;
+745,751d754
+< 
+<         
+<         java6Exception = _java6Exception;
+<         java6NormalizerFormNFD = _java6NormalizerFormNFD;
+<         java6NormalizeMethod = _java6NormalizeMethod;
+<         sunException = _sunException;
+<         sunDecomposeMethod = _sunDecomposeMethod;

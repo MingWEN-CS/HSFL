@@ -1,0 +1,97 @@
+159c159,161
+<           "{1} cannot extend this type; {0}s can only extend {0}s");
+---
+>           "{0} cannot extend this type; " +
+>           "a constructor can only extend objects " +
+>           "and an interface can only extend interfaces");
+672,673d673
+<         validator.expectObject(t, n, getJSType(n.getLastChild()),
+<                                "'in' requires an object");
+675c675,679
+<         validator.expectString(t, left, getJSType(left), "left side of 'in'");
+---
+>         right = n.getLastChild();
+>         leftType = getJSType(left);
+>         rightType = getJSType(right);
+>         validator.expectObject(t, n, rightType, "'in' requires an object");
+>         validator.expectString(t, left, leftType, "left side of 'in'");
+681a686
+>         leftType = getJSType(left);
+682a688
+> 
+684c690
+<             t, left, getJSType(left), "deterministic instanceof yields false");
+---
+>             t, left, leftType, "deterministic instanceof yields false");
+1306a1313,1319
+>     if (n.getJSType() != null && parent.isAssign()) {
+>       return;
+>     }
+> 
+>     
+>     
+>     
+1313,1318c1326,1329
+<     if (childType.isDict()) {
+<       report(t, property, TypeValidator.ILLEGAL_PROPERTY_ACCESS, "'.'", "dict");
+<     } else if (n.getJSType() != null && parent.isAssign()) {
+<       
+<       
+<       
+---
+>     
+>     if (!validator.expectNotNullOrUndefined(t, n, childType,
+>             "No properties on this expression", getNativeType(OBJECT_TYPE))) {
+>       ensureTyped(t, n);
+1320,1322d1330
+<     } else if (validator.expectNotNullOrUndefined(t, n, childType,
+<         "No properties on this expression", getNativeType(OBJECT_TYPE))) {
+<       checkPropertyAccess(childType, property.getString(), t, n);
+1323a1332,1333
+> 
+>     checkPropertyAccess(childType, property.getString(), t, n);
+1417,1418c1427,1429
+<     validator.expectIndexMatch(
+<         t, n, getJSType(n.getFirstChild()), getJSType(n.getLastChild()));
+---
+>     Node left = n.getFirstChild();
+>     Node right = n.getLastChild();
+>     validator.expectIndexMatch(t, n, getJSType(left), getJSType(right));
+1528,1530c1539,1541
+<       if (baseConstructor != getNativeType(OBJECT_FUNCTION_TYPE) &&
+<           baseConstructor != null &&
+<           baseConstructor.isInterface() && functionType.isConstructor()) {
+---
+>       if (baseConstructor != null &&
+>           baseConstructor != getNativeType(OBJECT_FUNCTION_TYPE) &&
+>           (baseConstructor.isInterface() && functionType.isConstructor())) {
+1532,1533c1543
+<             t.makeError(n, CONFLICTING_EXTENDED_TYPE,
+<                         "constructor", functionPrivateName));
+---
+>             t.makeError(n, CONFLICTING_EXTENDED_TYPE, functionPrivateName));
+1535,1545d1544
+<         if (baseConstructor != getNativeType(OBJECT_FUNCTION_TYPE) &&
+<             baseConstructor != null) {
+<           if (functionType.makesStructs() && !baseConstructor.makesStructs()) {
+<             compiler.report(t.makeError(n, CONFLICTING_EXTENDED_TYPE,
+<                                         "struct", functionPrivateName));
+<           } else if (functionType.makesDicts() &&
+<                      !baseConstructor.makesDicts()) {
+<             compiler.report(t.makeError(n, CONFLICTING_EXTENDED_TYPE,
+<                                         "dict", functionPrivateName));
+<           }
+<         }
+1573,1574c1572
+<               t.makeError(n, CONFLICTING_EXTENDED_TYPE,
+<                           "interface", functionPrivateName));
+---
+>               t.makeError(n, CONFLICTING_EXTENDED_TYPE, functionPrivateName));
+1921c1919,1923
+<     return (total == 0) ? 0.0 : (100.0 * typedCount) / total;
+---
+>     if (total == 0) {
+>       return 0.0;
+>     } else {
+>       return (100.0 * typedCount) / total;
+>     }

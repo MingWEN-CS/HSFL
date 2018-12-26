@@ -1,0 +1,264 @@
+3526a3527,3789
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String replaceEach(String text, String[] repl, String[] with) {
+>         return replaceEach(text, repl, with, false, 0);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String replaceEachRepeatedly(String text, String[] repl, String[] with) {
+> 
+>         
+>         
+>         int timeToLive = repl == null ? 0 : repl.length;
+>         return replaceEach(text, repl, with, true, timeToLive);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String replaceEach(String text, String[] repl, String[] with,
+>             boolean repeat, int timeToLive) {
+> 
+>         
+>         
+>         
+>         if (text == null || text.length() == 0 || 
+>             repl == null || repl.length == 0 || 
+>             with == null || with.length == 0) 
+>         {
+>             return text;
+>         }
+> 
+>         
+>         if (timeToLive < 0) {
+>             throw new IllegalStateException("TimeToLive of " + timeToLive + " is less than 0: " + text);
+>         }
+> 
+>         int replLength = repl.length;
+>         int withLength = with.length;
+> 
+>         
+>         if (replLength != withLength) {
+>             throw new IllegalArgumentException("Search and Replace array lengths don't match: " + replLength + " vs " + withLength);
+>         }
+> 
+>         
+>         boolean[] noMoreMatchesForReplIndex = new boolean[replLength];
+> 
+>         
+>         int textIndex = -1;
+>         int replaceIndex = -1;
+>         int tempIndex = -1;
+> 
+>         
+>         
+>         for (int i = 0; i < replLength; i++) {
+>             if (noMoreMatchesForReplIndex[i] || repl[i] == null || repl[i].length() == 0 || with[i] == null) {
+>                 continue;
+>             }
+>             tempIndex = text.indexOf(repl[i]);
+>             
+>             
+>             if (tempIndex == -1) {
+>                 noMoreMatchesForReplIndex[i] = true;
+>             } else {
+>                 if (textIndex == -1 || tempIndex < textIndex) {
+>                     textIndex = tempIndex;
+>                     replaceIndex = i;
+>                 }
+>             }
+>         }
+>         
+> 
+>         
+>         if (textIndex == -1) {
+>             return text;
+>         }
+> 
+>         int start = 0;
+> 
+>         
+>         int increase = 0;
+> 
+>         
+>         for (int i=0; i<repl.length; i++) {
+>             int greater = with[i].length() - repl[i].length();
+>             if(greater > 0) {
+>                 increase += 3 * greater; 
+>             }
+>         }
+>         
+>         increase = Math.min(increase, text.length() / 5); 
+>     
+>         StringBuffer buf = new StringBuffer(text.length() + increase);
+> 
+>         while (textIndex != -1) {
+> 
+>             for (int i = start; i < textIndex; i++) {
+>                 buf.append(text.charAt(i));
+>             }
+>             buf.append(with[replaceIndex]);
+> 
+>             start = textIndex + repl[replaceIndex].length();
+> 
+>             textIndex = -1;
+>             replaceIndex = -1;
+>             tempIndex = -1;
+>             
+>             
+>             for (int i = 0; i < replLength; i++) {
+>                 if (noMoreMatchesForReplIndex[i] || repl[i] == null || repl[i].length() == 0 || with[i] == null) {
+>                     continue;
+>                 }
+>                 tempIndex = text.indexOf(repl[i], start);
+>                 
+>                 
+>                 if (tempIndex == -1) {
+>                     noMoreMatchesForReplIndex[i] = true;
+>                 } else {
+>                     if (textIndex == -1 || tempIndex < textIndex) {
+>                         textIndex = tempIndex;
+>                         replaceIndex = i;
+>                     }
+>                 }
+>             }
+>             
+> 
+>         }
+>         int textLength = text.length();
+>         for (int i = start; i < textLength; i++) {
+>             buf.append(text.charAt(i));
+>         }
+>         String result = buf.toString();
+>         if (!repeat) {
+>             return result;
+>         }
+> 
+>         return replaceEach(result, repl, with, repeat, timeToLive - 1);
+>     }
+> 
+>     

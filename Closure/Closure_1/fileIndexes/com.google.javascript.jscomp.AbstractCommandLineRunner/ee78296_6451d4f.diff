@@ -1,0 +1,58 @@
+222c222,237
+<       options.jsOutputFile = config.jsOutputFile;
+---
+>       if (config.skipNormalOutputs) {
+>         throw new FlagUsageException("skip_normal_outputs and js_output_file"
+>             + " cannot be used together.");
+>       } else {
+>         options.jsOutputFile = config.jsOutputFile;
+>       }
+>     }
+> 
+>     if (config.skipNormalOutputs && config.printAst) {
+>       throw new FlagUsageException("skip_normal_outputs and print_ast cannot"
+>           + " be used together.");
+>     }
+> 
+>     if (config.skipNormalOutputs && config.printTree) {
+>       throw new FlagUsageException("skip_normal_outputs and print_tree cannot"
+>           + " be used together.");
+612c627
+<     Result result;
+---
+>     Result result = null;
+627c642,646
+<       result = compiler.compileModules(externs, modules, options);
+---
+>       if (config.skipNormalOutputs) {
+>         compiler.initModules(externs, modules, options);
+>       } else {
+>         result = compiler.compileModules(externs, modules, options);
+>       }
+630c649,653
+<       result = compiler.compile(externs, inputs, options);
+---
+>       if (config.skipNormalOutputs) {
+>         compiler.init(externs, inputs, options);
+>       } else {
+>         result = compiler.compile(externs, inputs, options);
+>       }
+686c709,713
+<     if (result.success) {
+---
+>     if (config.skipNormalOutputs) {
+>       
+>       outputManifest();
+>       return 0;
+>     } else if (result.success) {
+1621a1649,1658
+>       return this;
+>     }
+> 
+>     
+> 
+> 
+>     private boolean skipNormalOutputs = false;
+> 
+>     CommandLineConfig setSkipNormalOutputs(boolean skipNormalOutputs) {
+>       this.skipNormalOutputs = skipNormalOutputs;

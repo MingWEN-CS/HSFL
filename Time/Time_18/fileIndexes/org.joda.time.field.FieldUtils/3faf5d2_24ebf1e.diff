@@ -1,0 +1,56 @@
+64,66c64,68
+<         long total = ((long) val1) + ((long) val2);
+<         if (total < Integer.MIN_VALUE || total > Integer.MAX_VALUE) {
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+---
+>         int sum = val1 + val2;
+>         
+>         if ((val1 ^ sum) < 0 && (val1 ^ val2) >= 0) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " + " + val2);
+68c70
+<         return (int) total;
+---
+>         return sum;
+80,82c82,86
+<         long total = val1 + val2;
+<         if (val1 > 0 && val2 > 0 && total < 0) {
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+---
+>         long sum = val1 + val2;
+>         
+>         if ((val1 ^ sum) < 0 && (val1 ^ val2) >= 0) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " + " + val2);
+84,87c88
+<         if (val1 < 0 && val2 < 0 && total > 0) {
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" + " + val2);
+<         }
+<         return total;
+---
+>         return sum;
+99,103c100,104
+<         if (val2 == Long.MIN_VALUE) {
+<             if (val1 <= 0L) {
+<                 return (val1 - val2);
+<             }
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" - " + val2);
+---
+>         long diff = val1 - val2;
+>         
+>         if ((val1 ^ diff) < 0 && (val1 ^ val2) < 0) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " - " + val2);
+105c106
+<         return safeAdd(val1, -val2);
+---
+>         return diff;
+117c118
+<         if (val1 == 0  || val2 == 0) {
+---
+>         if (val1 == 0 || val2 == 0) {
+122c123,124
+<             throw new ArithmeticException("The calculation caused an overflow: " + val1 +" * " + val2);
+---
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " * " + val2);

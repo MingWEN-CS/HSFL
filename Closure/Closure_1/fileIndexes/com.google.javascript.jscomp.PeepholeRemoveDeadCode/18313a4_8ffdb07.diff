@@ -1,0 +1,210 @@
+43a44
+>       case Token.SCRIPT:
+45c46
+<         return tryFoldBlock(subtree);
+---
+>         return tryOptimizeBlock(subtree);
+72c73
+<     if (!NodeUtil.mayHaveSideEffects(left)) {
+---
+>     if (!mayHaveSideEffects(left)) {
+102c103
+<   Node tryFoldBlock(Node n) {
+---
+>   Node tryOptimizeBlock(Node n) {
+108c109
+<       if (!NodeUtil.mayHaveSideEffects(c)) {
+---
+>       if (!mayHaveSideEffects(c)) {
+110a112,113
+>       } else {
+>         tryOptimizeConditionalAfterAssign(c);
+128a132,254
+>   
+> 
+> 
+> 
+>   private void tryOptimizeConditionalAfterAssign(Node n) {
+>     Node next = n.getNext();
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+> 
+>     if (isSimpleAssignment(n) && isConditionalStatement(next)) {
+>       Node lhsAssign = getSimpleAssignmentName(n);
+> 
+>       Node condition = getConditionalStatementCondition(next);
+>       if (NodeUtil.isName(lhsAssign) && NodeUtil.isName(condition)
+>           && lhsAssign.getString().equals(condition.getString())) {
+>         Node rhsAssign = getSimpleAssignmentValue(n);
+>         TernaryValue value = NodeUtil.getExpressionBooleanValue(rhsAssign);
+>         if (value != TernaryValue.UNKNOWN) {
+>           int replacementConditionNodeType =
+>             (value.toBoolean(true)) ? Token.TRUE : Token.FALSE;
+>           condition.getParent().replaceChild(condition,
+>               new Node(replacementConditionNodeType));
+>           reportCodeChange();
+>         }
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private boolean isSimpleAssignment(Node n) {
+>     
+>     
+>     if (NodeUtil.isExprAssign(n)
+>         && NodeUtil.isName(n.getFirstChild().getFirstChild())) {
+>       return true;
+>     } else if (n.getType() == Token.VAR && n.hasOneChild() &&
+>         n.getFirstChild().getFirstChild() != null) {
+>       return true;
+>     }
+> 
+>     return false;
+>   }
+> 
+>   
+> 
+> 
+>   private Node getSimpleAssignmentName(Node n) {
+>     Preconditions.checkState(isSimpleAssignment(n));
+>     if (NodeUtil.isExprAssign(n)) {
+>       return n.getFirstChild().getFirstChild();
+>     } else {
+>       
+>       return n.getFirstChild();
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private Node getSimpleAssignmentValue(Node n) {
+>     Preconditions.checkState(isSimpleAssignment(n));
+>     return n.getFirstChild().getLastChild();
+>   }
+> 
+>   
+> 
+> 
+>   private boolean isConditionalStatement(Node n) {
+>     
+>     
+>     return n != null && (n.getType() == Token.IF || isExprConditional(n));
+>   }
+> 
+>   
+> 
+> 
+>   private boolean isExprConditional(Node n) {
+>     if (n.getType() == Token.EXPR_RESULT) {
+>       switch (n.getFirstChild().getType()) {
+>         case Token.HOOK:
+>         case Token.AND:
+>         case Token.OR:
+>           return true;
+>       }
+>     }
+>     return false;
+>   }
+> 
+>   
+> 
+> 
+>   private Node getConditionalStatementCondition(Node n) {
+>     if (n.getType() == Token.IF) {
+>       return NodeUtil.getConditionExpression(n);
+>     } else {
+>       Preconditions.checkState(isExprConditional(n));
+>       return n.getFirstChild().getFirstChild();
+>     }
+>   }
+> 
+>   
+143c269
+<       if (elseBody != null && !NodeUtil.mayHaveSideEffects(elseBody)) {
+---
+>       if (elseBody != null && !mayHaveSideEffects(elseBody)) {
+151c277
+<       if (!NodeUtil.mayHaveSideEffects(thenBody) && elseBody != null) {
+---
+>       if (!mayHaveSideEffects(thenBody) && elseBody != null) {
+165,166c291,292
+<       if (!NodeUtil.mayHaveSideEffects(thenBody) && elseBody == null) {
+<         if (NodeUtil.mayHaveSideEffects(cond)) {
+---
+>       if (!mayHaveSideEffects(thenBody) && elseBody == null) {
+>         if (mayHaveSideEffects(cond)) {
+184c310
+<         if (!NodeUtil.mayHaveSideEffects(thenBody)) {
+---
+>         if (!mayHaveSideEffects(thenBody)) {
+208c334
+<         } else if (!NodeUtil.mayHaveSideEffects(elseBody)) {
+---
+>         } else if (!mayHaveSideEffects(elseBody)) {
+229c355,356
+<     if (!NodeUtil.isLiteralValue(cond, true)) {
+---
+>     TernaryValue condValue = NodeUtil.getExpressionBooleanValue(cond);
+>     if (condValue == TernaryValue.UNKNOWN) {
+233,235c360,392
+<     TernaryValue condValue = NodeUtil.getBooleanValue(cond);
+<     if (condValue == TernaryValue.UNKNOWN) {
+<       return n;  
+---
+>     
+>     if (mayHaveSideEffects(cond)) {
+>       if (n.getType() == Token.HOOK) {
+>         
+>         Node replacement = new Node(Token.BLOCK).copyInformationFrom(n);
+>         n.detachChildren();
+>         replacement.addChildToFront(
+>             new Node(Token.EXPR_RESULT, cond).copyInformationFrom(cond));
+>         Node branchToKeep = condValue.toBoolean(true) ? thenBody : elseBody;
+>         replacement.addChildToBack(
+>             NodeUtil.newExpr(branchToKeep)
+>                 .copyInformationFrom(branchToKeep));
+>         
+>         
+>         parent.getParent().replaceChild(parent, replacement);
+>         reportCodeChange();
+>         return replacement;
+>       }
+> 
+>       Preconditions.checkState(n.getType() == Token.IF);
+>       boolean newConditionValue = condValue == TernaryValue.TRUE;
+>       
+>       if (!newConditionValue && elseBody == null) {
+>         elseBody = new Node(Token.BLOCK).copyInformationFrom(n);
+>         n.addChildToBack(elseBody);
+>       }
+>       Node newCond = new Node(newConditionValue ? Token.TRUE : Token.FALSE);
+>       n.replaceChild(cond, newCond);
+>       Node branchToKeep = newConditionValue ? thenBody : elseBody;
+>       branchToKeep.addChildToFront(
+>           new Node(Token.EXPR_RESULT, cond).copyInformationFrom(cond));
+>       reportCodeChange();
+>       cond = newCond;

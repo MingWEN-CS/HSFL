@@ -1,0 +1,196 @@
+22a23
+> import org.apache.commons.math.stat.descriptive.summary.Sum;
+80c81
+<     
+---
+> 
+106c107
+<     
+---
+> 
+119c120
+<     
+---
+> 
+132c133
+<         this.isBiasCorrected = isBiasCorrected;      
+---
+>         this.isBiasCorrected = isBiasCorrected;
+134c135
+<    
+---
+> 
+143,144c144,145
+<     }           
+<     
+---
+>     }
+> 
+185c186
+<     
+---
+> 
+195c196
+<     
+---
+> 
+256a258
+> 
+257a260,317
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double evaluate(final double[] values, final double[] weights,
+>                            final int begin, final int length) {
+> 
+>         double var = Double.NaN;
+> 
+>         if (test(values, weights,begin, length)) {
+>             clear();
+>             if (length == 1) {
+>                 var = 0.0;
+>             } else if (length > 1) {
+>                 Mean mean = new Mean();
+>                 double m = mean.evaluate(values, weights, begin, length);
+>                 var = evaluate(values, weights, m, begin, length);
+>             }
+>         }
+>         return var;
+>     }
+> 
+284c344
+<     public double evaluate(final double[] values, final double mean, 
+---
+>     public double evaluate(final double[] values, final double mean,
+286c346
+<         
+---
+> 
+301c361
+<                 double len = length;            
+---
+>                 double len = length;
+310a371
+> 
+311a373,446
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double evaluate(final double[] values, final double[] weights,
+>                            final double mean, final int begin, final int length) {
+> 
+>         double var = Double.NaN;
+> 
+>         if (test(values, weights, begin, length)) {
+>             if (length == 1) {
+>                 var = 0.0;
+>             } else if (length > 1) {
+>                 double accum = 0.0;
+>                 double dev = 0.0;
+>                 for (int i = begin; i < begin + length; i++) {
+>                     dev = values[i] - mean;
+>                     accum += weights[i] * (dev * dev);
+>                 }
+> 
+>                 double sumWts = 0;
+>                 for (int i = 0; i < weights.length; i++) {
+>                     sumWts += weights[i];
+>                 }
+>                 
+>                 if (isBiasCorrected) {
+>                     var = accum / (sumWts - 1);
+>                 } else {
+>                     var = accum / sumWts;
+>                 }
+>             }
+>         }
+>         return var;
+>     }
+> 
+354c489
+<     
+---
+> 
+364,365c499,500
+<     
+<     
+---
+> 
+> 

@@ -1,0 +1,343 @@
+83a84,86
+> 
+> 
+> 
+541c544
+<         public long next(long millis, int standardOffset, int saveMillis) {
+---
+>         public long next(long instant, int standardOffset, int saveMillis) {
+552c555
+<             millis += offset;
+---
+>             instant += offset;
+555,556c558,561
+<             long next = chrono.monthOfYear().set(millis, iMonthOfYear);
+<             next = chrono.millisOfDay().set(next, iMillisOfDay);
+---
+>             long next = chrono.monthOfYear().set(instant, iMonthOfYear);
+>             
+>             next = chrono.millisOfDay().set(next, 0);
+>             next = chrono.millisOfDay().add(next, iMillisOfDay);
+560c565
+<                 if (next <= millis) {
+---
+>                 if (next <= instant) {
+566c571
+<                 if (next <= millis) {
+---
+>                 if (next <= instant) {
+581c586
+<         public long previous(long millis, int standardOffset, int saveMillis) {
+---
+>         public long previous(long instant, int standardOffset, int saveMillis) {
+592c597
+<             millis += offset;
+---
+>             instant += offset;
+595,596c600,603
+<             long prev = chrono.monthOfYear().set(millis, iMonthOfYear);
+<             prev = chrono.millisOfDay().set(prev, iMillisOfDay);
+---
+>             long prev = chrono.monthOfYear().set(instant, iMonthOfYear);
+>             
+>             prev = chrono.millisOfDay().set(prev, 0);
+>             prev = chrono.millisOfDay().add(prev, iMillisOfDay);
+600c607
+<                 if (prev >= millis) {
+---
+>                 if (prev >= instant) {
+606c613
+<                 if (prev >= millis) {
+---
+>                 if (prev >= instant) {
+695c702
+<         private long setDayOfMonth(Chronology chrono, long millis) {
+---
+>         private long setDayOfMonth(Chronology chrono, long instant) {
+697c704
+<                 millis = chrono.dayOfMonth().set(millis, iDayOfMonth);
+---
+>                 instant = chrono.dayOfMonth().set(instant, iDayOfMonth);
+699,701c706,708
+<                 millis = chrono.dayOfMonth().set(millis, 1);
+<                 millis = chrono.monthOfYear().add(millis, 1);
+<                 millis = chrono.dayOfMonth().add(millis, iDayOfMonth);
+---
+>                 instant = chrono.dayOfMonth().set(instant, 1);
+>                 instant = chrono.monthOfYear().add(instant, 1);
+>                 instant = chrono.dayOfMonth().add(instant, iDayOfMonth);
+703c710
+<             return millis;
+---
+>             return instant;
+706,707c713,714
+<         private long setDayOfWeek(Chronology chrono, long millis) {
+<             int dayOfWeek = chrono.dayOfWeek().get(millis);
+---
+>         private long setDayOfWeek(Chronology chrono, long instant) {
+>             int dayOfWeek = chrono.dayOfWeek().get(instant);
+719c726
+<                 millis = chrono.dayOfWeek().add(millis, daysToAdd);
+---
+>                 instant = chrono.dayOfWeek().add(instant, daysToAdd);
+721c728
+<             return millis;
+---
+>             return instant;
+750,751c757,758
+<         public long next(long millis, int standardOffset, int saveMillis) {
+<             return iOfYear.next(millis, standardOffset, saveMillis);
+---
+>         public long next(long instant, int standardOffset, int saveMillis) {
+>             return iOfYear.next(instant, standardOffset, saveMillis);
+757,758c764,765
+<         public long previous(long millis, int standardOffset, int saveMillis) {
+<             return iOfYear.previous(millis, standardOffset, saveMillis);
+---
+>         public long previous(long instant, int standardOffset, int saveMillis) {
+>             return iOfYear.previous(instant, standardOffset, saveMillis);
+824c831
+<         public long next(final long millis, int standardOffset, int saveMillis) {
+---
+>         public long next(final long instant, int standardOffset, int saveMillis) {
+828c835
+<             long testMillis = millis;
+---
+>             long testInstant = instant;
+831c838
+<             if (millis == Long.MIN_VALUE) {
+---
+>             if (instant == Long.MIN_VALUE) {
+834c841
+<                 year = chrono.year().get(millis + wallOffset);
+---
+>                 year = chrono.year().get(instant + wallOffset);
+839c846
+<                 testMillis = chrono.year().set(0, iFromYear) - wallOffset;
+---
+>                 testInstant = chrono.year().set(0, iFromYear) - wallOffset;
+842c849
+<                 testMillis -= 1;
+---
+>                 testInstant -= 1;
+845c852
+<             long next = iRecurrence.next(testMillis, standardOffset, saveMillis);
+---
+>             long next = iRecurrence.next(testInstant, standardOffset, saveMillis);
+847c854
+<             if (next > millis) {
+---
+>             if (next > instant) {
+851c858
+<                     next = millis;
+---
+>                     next = instant;
+1065c1072
+<         public Transition nextTransition(final long millis, final int saveMillis) {
+---
+>         public Transition nextTransition(final long instant, final int saveMillis) {
+1075,1076c1082,1083
+<                 long next = rule.next(millis, iStandardOffset, saveMillis);
+<                 if (next <= millis) {
+---
+>                 long next = rule.next(instant, iStandardOffset, saveMillis);
+>                 if (next <= instant) {
+1164,1165c1171,1172
+<         public String getNameKey(long millis) {
+<             return findMatchingRecurrence(millis).getNameKey();
+---
+>         public String getNameKey(long instant) {
+>             return findMatchingRecurrence(instant).getNameKey();
+1168,1169c1175,1176
+<         public int getOffset(long millis) {
+<             return iStandardOffset + findMatchingRecurrence(millis).getSaveMillis();
+---
+>         public int getOffset(long instant) {
+>             return iStandardOffset + findMatchingRecurrence(instant).getSaveMillis();
+1172c1179
+<         public int getStandardOffset(long millis) {
+---
+>         public int getStandardOffset(long instant) {
+1176c1183,1187
+<         public long nextTransition(long millis) {
+---
+>         public boolean isFixed() {
+>             return false;
+>         }
+> 
+>         public long nextTransition(long instant) {
+1181,1184c1192,1208
+<             long start = startRecurrence.next
+<                 (millis, standardOffset, endRecurrence.getSaveMillis());
+<             long end = endRecurrence.next
+<                 (millis, standardOffset, startRecurrence.getSaveMillis());
+---
+>             long start, end;
+> 
+>             try {
+>                 start = startRecurrence.next
+>                     (instant, standardOffset, endRecurrence.getSaveMillis());
+>             } catch (IllegalArgumentException e) {
+>                 
+>                 start = instant;
+>             }
+> 
+>             try {
+>                 end = endRecurrence.next
+>                     (instant, standardOffset, startRecurrence.getSaveMillis());
+>             } catch (IllegalArgumentException e) {
+>                 
+>                 end = instant;
+>             }
+1189c1213
+<         public long previousTransition(long millis) {
+---
+>         public long previousTransition(long instant) {
+1192c1216
+<             millis++;
+---
+>             instant++;
+1198,1201c1222,1238
+<             long start = startRecurrence.previous
+<                 (millis, standardOffset, endRecurrence.getSaveMillis());
+<             long end = endRecurrence.previous
+<                 (millis, standardOffset, startRecurrence.getSaveMillis());
+---
+>             long start, end;
+> 
+>             try {
+>                 start = startRecurrence.previous
+>                     (instant, standardOffset, endRecurrence.getSaveMillis());
+>             } catch (IllegalArgumentException e) {
+>                 
+>                 start = instant;
+>             }
+> 
+>             try {
+>                 end = endRecurrence.previous
+>                     (instant, standardOffset, startRecurrence.getSaveMillis());
+>             } catch (IllegalArgumentException e) {
+>                 
+>                 end = instant;
+>             }
+1227c1264
+<         private Recurrence findMatchingRecurrence(long millis) {
+---
+>         private Recurrence findMatchingRecurrence(long instant) {
+1232,1235c1269,1285
+<             long start = startRecurrence.next
+<                 (millis, standardOffset, endRecurrence.getSaveMillis());
+<             long end = endRecurrence.next
+<                 (millis, standardOffset, startRecurrence.getSaveMillis());
+---
+>             long start, end;
+> 
+>             try {
+>                 start = startRecurrence.next
+>                     (instant, standardOffset, endRecurrence.getSaveMillis());
+>             } catch (IllegalArgumentException e) {
+>                 
+>                 start = instant;
+>             }
+> 
+>             try {
+>                 end = endRecurrence.next
+>                     (instant, standardOffset, startRecurrence.getSaveMillis());
+>             } catch (IllegalArgumentException e) {
+>                 
+>                 end = instant;
+>             }
+1339c1389
+<         public String getNameKey(long millis) {
+---
+>         public String getNameKey(long instant) {
+1341c1391
+<             int i = Arrays.binarySearch(transitions, millis);
+---
+>             int i = Arrays.binarySearch(transitions, instant);
+1355c1405
+<             return iTailZone.getNameKey(millis);
+---
+>             return iTailZone.getNameKey(instant);
+1358c1408
+<         public int getOffset(long millis) {
+---
+>         public int getOffset(long instant) {
+1360c1410
+<             int i = Arrays.binarySearch(transitions, millis);
+---
+>             int i = Arrays.binarySearch(transitions, instant);
+1374c1424
+<             return iTailZone.getOffset(millis);
+---
+>             return iTailZone.getOffset(instant);
+1377c1427
+<         public int getStandardOffset(long millis) {
+---
+>         public int getStandardOffset(long instant) {
+1379c1429
+<             int i = Arrays.binarySearch(transitions, millis);
+---
+>             int i = Arrays.binarySearch(transitions, instant);
+1393c1443,1447
+<             return iTailZone.getStandardOffset(millis);
+---
+>             return iTailZone.getStandardOffset(instant);
+>         }
+> 
+>         public boolean isFixed() {
+>             return false;
+1396c1450
+<         public long nextTransition(long millis) {
+---
+>         public long nextTransition(long instant) {
+1398c1452
+<             int i = Arrays.binarySearch(transitions, millis);
+---
+>             int i = Arrays.binarySearch(transitions, instant);
+1404c1458
+<                 return millis;
+---
+>                 return instant;
+1407,1408c1461,1462
+<             if (millis < end) {
+<                 millis = end;
+---
+>             if (instant < end) {
+>                 instant = end;
+1410c1464
+<             return iTailZone.nextTransition(millis);
+---
+>             return iTailZone.nextTransition(instant);
+1413c1467
+<         public long previousTransition(long millis) {
+---
+>         public long previousTransition(long instant) {
+1415c1469
+<             int i = Arrays.binarySearch(transitions, millis);
+---
+>             int i = Arrays.binarySearch(transitions, instant);
+1417,1418c1471,1472
+<                 if (millis > Long.MIN_VALUE) {
+<                     return millis - 1;
+---
+>                 if (instant > Long.MIN_VALUE) {
+>                     return instant - 1;
+1420c1474
+<                 return millis;
+---
+>                 return instant;
+1430c1484
+<                 return millis;
+---
+>                 return instant;
+1433,1434c1487,1488
+<                 long prev = iTailZone.previousTransition(millis);
+<                 if (prev < millis) {
+---
+>                 long prev = iTailZone.previousTransition(instant);
+>                 if (prev < instant) {
+1442c1496
+<             return millis;
+---
+>             return instant;

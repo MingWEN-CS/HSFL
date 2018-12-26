@@ -1,0 +1,54 @@
+63a64
+> import org.joda.time.DateTimeFieldType;
+92,93c93
+<     private static final ISOChronology INSTANCE_UTC =
+<         new ISOChronology(GregorianChronology.getInstanceUTC());
+---
+>     private static final ISOChronology INSTANCE_UTC;
+98c98
+<     private static final ISOChronology[] cFastCache = new ISOChronology[FAST_CACHE_SIZE];
+---
+>     private static final ISOChronology[] cFastCache;
+102a103,104
+>         cFastCache = new ISOChronology[FAST_CACHE_SIZE];
+>         INSTANCE_UTC = new ISOChronology(GregorianChronology.getInstanceUTC());
+137c139
+<         if (chrono != null && chrono.getDateTimeZone() == zone) {
+---
+>         if (chrono != null && chrono.getZone() == zone) {
+178c180
+<     public Chronology withDateTimeZone(DateTimeZone zone) {
+---
+>     public Chronology withZone(DateTimeZone zone) {
+182c184
+<         if (zone == getDateTimeZone()) {
+---
+>         if (zone == getZone()) {
+197c199
+<         DateTimeZone zone = getDateTimeZone();
+---
+>         DateTimeZone zone = getZone();
+205c207
+<         if (getBase().getDateTimeZone() == DateTimeZone.UTC) {
+---
+>         if (getBase().getZone() == DateTimeZone.UTC) {
+207,210c209,214
+<             fields.centuryOfEra = new DividedDateTimeField
+<                 (ISOYearOfEraDateTimeField.INSTANCE, "centuryOfEra", "centuries", 100);
+<             fields.yearOfCentury = new RemainderDateTimeField
+<                 ((DividedDateTimeField)fields.centuryOfEra, "yearOfCentury");
+---
+>             fields.centuryOfEra = new DividedDateTimeField(
+>                 ISOYearOfEraDateTimeField.INSTANCE, DateTimeFieldType.centuryOfEra(), 100);
+>             fields.yearOfCentury = new RemainderDateTimeField(
+>                 (DividedDateTimeField) fields.centuryOfEra, DateTimeFieldType.yearOfCentury());
+>             fields.weekyearOfCentury = new RemainderDateTimeField(
+>                 (DividedDateTimeField) fields.centuryOfEra, DateTimeFieldType.weekyearOfCentury());
+221c225
+<         return new Stub(getDateTimeZone());
+---
+>         return new Stub(getZone());
+225c229
+<         static final long serialVersionUID = -6212696554273812441L;
+---
+>         private static final long serialVersionUID = -6212696554273812441L;

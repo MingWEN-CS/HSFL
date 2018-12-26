@@ -1,0 +1,955 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.util;
+
+import java.math.BigInteger;
+import org.apache.commons.math.exception.MathArithmeticException;
+import org.apache.commons.math.exception.NotPositiveException;
+import org.apache.commons.math.exception.NumberIsTooLargeException;
+import org.apache.commons.math.exception.util.Localizable;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+
+
+
+
+
+
+
+public final class ArithmeticUtils {
+
+    
+    static final long[] FACTORIALS = new long[] {
+                       1l,                  1l,                   2l,
+                       6l,                 24l,                 120l,
+                     720l,               5040l,               40320l,
+                  362880l,            3628800l,            39916800l,
+               479001600l,         6227020800l,         87178291200l,
+           1307674368000l,     20922789888000l,     355687428096000l,
+        6402373705728000l, 121645100408832000l, 2432902008176640000l };
+
+    
+    private ArithmeticUtils() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static int addAndCheck(int x, int y) {
+        long s = (long)x + (long)y;
+        if (s < Integer.MIN_VALUE || s > Integer.MAX_VALUE) {
+            throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_ADDITION, x, y);
+        }
+        return (int)s;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static long addAndCheck(long a, long b) {
+        return ArithmeticUtils.addAndCheck(a, b, LocalizedFormats.OVERFLOW_IN_ADDITION);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static long binomialCoefficient(final int n, final int k) {
+        ArithmeticUtils.checkBinomial(n, k);
+        if ((n == k) || (k == 0)) {
+            return 1;
+        }
+        if ((k == 1) || (k == n - 1)) {
+            return n;
+        }
+        
+        if (k > n / 2) {
+            return binomialCoefficient(n, n - k);
+        }
+
+        
+        
+        
+        
+        
+        long result = 1;
+        if (n <= 61) {
+            
+            int i = n - k + 1;
+            for (int j = 1; j <= k; j++) {
+                result = result * i / j;
+                i++;
+            }
+        } else if (n <= 66) {
+            
+            
+            int i = n - k + 1;
+            for (int j = 1; j <= k; j++) {
+                
+                
+                
+                
+                
+                
+                final long d = gcd(i, j);
+                result = (result / (j / d)) * (i / d);
+                i++;
+            }
+        } else {
+            
+            
+            
+            int i = n - k + 1;
+            for (int j = 1; j <= k; j++) {
+                final long d = gcd(i, j);
+                result = mulAndCheck(result / (j / d), i / d);
+                i++;
+            }
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double binomialCoefficientDouble(final int n, final int k) {
+        ArithmeticUtils.checkBinomial(n, k);
+        if ((n == k) || (k == 0)) {
+            return 1d;
+        }
+        if ((k == 1) || (k == n - 1)) {
+            return n;
+        }
+        if (k > n/2) {
+            return binomialCoefficientDouble(n, n - k);
+        }
+        if (n < 67) {
+            return binomialCoefficient(n,k);
+        }
+
+        double result = 1d;
+        for (int i = 1; i <= k; i++) {
+             result *= (double)(n - k + i) / (double)i;
+        }
+
+        return FastMath.floor(result + 0.5);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double binomialCoefficientLog(final int n, final int k) {
+        ArithmeticUtils.checkBinomial(n, k);
+        if ((n == k) || (k == 0)) {
+            return 0;
+        }
+        if ((k == 1) || (k == n - 1)) {
+            return FastMath.log(n);
+        }
+
+        
+
+
+
+        if (n < 67) {
+            return FastMath.log(binomialCoefficient(n,k));
+        }
+
+        
+
+
+
+        if (n < 1030) {
+            return FastMath.log(binomialCoefficientDouble(n, k));
+        }
+
+        if (k > n / 2) {
+            return binomialCoefficientLog(n, n - k);
+        }
+
+        
+
+
+        double logSum = 0;
+
+        
+        for (int i = n - k + 1; i <= n; i++) {
+            logSum += FastMath.log(i);
+        }
+
+        
+        for (int i = 2; i <= k; i++) {
+            logSum -= FastMath.log(i);
+        }
+
+        return logSum;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static long factorial(final int n) {
+        if (n < 0) {
+            throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+                                           n);
+        }
+        if (n > 20) {
+            throw new MathArithmeticException();
+        }
+        return FACTORIALS[n];
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double factorialDouble(final int n) {
+        if (n < 0) {
+            throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+                                           n);
+        }
+        if (n < 21) {
+            return factorial(n);
+        }
+        return FastMath.floor(FastMath.exp(ArithmeticUtils.factorialLog(n)) + 0.5);
+    }
+
+    
+
+
+
+
+
+
+    public static double factorialLog(final int n) {
+        if (n < 0) {
+            throw new NotPositiveException(LocalizedFormats.FACTORIAL_NEGATIVE_PARAMETER,
+                                           n);
+        }
+        if (n < 21) {
+            return FastMath.log(factorial(n));
+        }
+        double logSum = 0;
+        for (int i = 2; i <= n; i++) {
+            logSum += FastMath.log(i);
+        }
+        return logSum;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static int gcd(final int p, final int q) {
+        int u = p;
+        int v = q;
+        if ((u == 0) || (v == 0)) {
+            if ((u == Integer.MIN_VALUE) || (v == Integer.MIN_VALUE)) {
+                throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_32_BITS,
+                                                  p, q);
+            }
+            return FastMath.abs(u) + FastMath.abs(v);
+        }
+        
+        
+        
+        
+        
+        if (u > 0) {
+            u = -u;
+        } 
+        if (v > 0) {
+            v = -v;
+        } 
+        
+        int k = 0;
+        while ((u & 1) == 0 && (v & 1) == 0 && k < 31) { 
+                                                            
+            u /= 2;
+            v /= 2;
+            k++; 
+        }
+        if (k == 31) {
+            throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_32_BITS,
+                                              p, q);
+        }
+        
+        
+        int t = ((u & 1) == 1) ? v : -(u / 2);
+        
+        
+        do {
+            
+            
+            while ((t & 1) == 0) { 
+                t /= 2; 
+            }
+            
+            if (t > 0) {
+                u = -t;
+            } else {
+                v = t;
+            }
+            
+            t = (v - u) / 2;
+            
+            
+        } while (t != 0);
+        return -u * (1 << k); 
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static long gcd(final long p, final long q) {
+        long u = p;
+        long v = q;
+        if ((u == 0) || (v == 0)) {
+            if ((u == Long.MIN_VALUE) || (v == Long.MIN_VALUE)){
+                throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_64_BITS,
+                                                  p, q);
+            }
+            return FastMath.abs(u) + FastMath.abs(v);
+        }
+        
+        
+        
+        
+        
+        if (u > 0) {
+            u = -u;
+        } 
+        if (v > 0) {
+            v = -v;
+        } 
+        
+        int k = 0;
+        while ((u & 1) == 0 && (v & 1) == 0 && k < 63) { 
+                                                            
+            u /= 2;
+            v /= 2;
+            k++; 
+        }
+        if (k == 63) {
+            throw new MathArithmeticException(LocalizedFormats.GCD_OVERFLOW_64_BITS,
+                                              p, q);
+        }
+        
+        
+        long t = ((u & 1) == 1) ? v : -(u / 2);
+        
+        
+        do {
+            
+            
+            while ((t & 1) == 0) { 
+                t /= 2; 
+            }
+            
+            if (t > 0) {
+                u = -t;
+            } else {
+                v = t;
+            }
+            
+            t = (v - u) / 2;
+            
+            
+        } while (t != 0);
+        return -u * (1L << k); 
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static int lcm(int a, int b) {
+        if (a == 0 || b == 0){
+            return 0;
+        }
+        int lcm = FastMath.abs(ArithmeticUtils.mulAndCheck(a / gcd(a, b), b));
+        if (lcm == Integer.MIN_VALUE) {
+            throw new MathArithmeticException(LocalizedFormats.LCM_OVERFLOW_32_BITS,
+                                              a, b);
+        }
+        return lcm;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static long lcm(long a, long b) {
+        if (a == 0 || b == 0){
+            return 0;
+        }
+        long lcm = FastMath.abs(ArithmeticUtils.mulAndCheck(a / gcd(a, b), b));
+        if (lcm == Long.MIN_VALUE){
+            throw new MathArithmeticException(LocalizedFormats.LCM_OVERFLOW_64_BITS,
+                                              a, b);
+        }
+        return lcm;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static int mulAndCheck(int x, int y) {
+        long m = ((long)x) * ((long)y);
+        if (m < Integer.MIN_VALUE || m > Integer.MAX_VALUE) {
+            throw new MathArithmeticException();
+        }
+        return (int)m;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static long mulAndCheck(long a, long b) {
+        long ret;
+        if (a > b) {
+            
+            ret = mulAndCheck(b, a);
+        } else {
+            if (a < 0) {
+                if (b < 0) {
+                    
+                    if (a >= Long.MAX_VALUE / b) {
+                        ret = a * b;
+                    } else {
+                        throw new MathArithmeticException();
+                    }
+                } else if (b > 0) {
+                    
+                    if (Long.MIN_VALUE / b <= a) {
+                        ret = a * b;
+                    } else {
+                        throw new MathArithmeticException();
+
+                    }
+                } else {
+                    
+                    ret = 0;
+                }
+            } else if (a > 0) {
+                
+                
+
+                
+                if (a <= Long.MAX_VALUE / b) {
+                    ret = a * b;
+                } else {
+                    throw new MathArithmeticException();
+                }
+            } else {
+                
+                ret = 0;
+            }
+        }
+        return ret;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static int subAndCheck(int x, int y) {
+        long s = (long)x - (long)y;
+        if (s < Integer.MIN_VALUE || s > Integer.MAX_VALUE) {
+            throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_SUBTRACTION, x, y);
+        }
+        return (int)s;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static long subAndCheck(long a, long b) {
+        long ret;
+        if (b == Long.MIN_VALUE) {
+            if (a < 0) {
+                ret = a - b;
+            } else {
+                throw new MathArithmeticException(LocalizedFormats.OVERFLOW_IN_ADDITION, a, -b);
+            }
+        } else {
+            
+            ret = addAndCheck(a, -b, LocalizedFormats.OVERFLOW_IN_ADDITION);
+        }
+        return ret;
+    }
+
+    
+
+
+
+
+
+
+
+    public static int pow(final int k, int e) {
+        if (e < 0) {
+            throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+        }
+
+        int result = 1;
+        int k2p    = k;
+        while (e != 0) {
+            if ((e & 0x1) != 0) {
+                result *= k2p;
+            }
+            k2p *= k2p;
+            e = e >> 1;
+        }
+
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+    public static int pow(final int k, long e) {
+        if (e < 0) {
+            throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+        }
+
+        int result = 1;
+        int k2p    = k;
+        while (e != 0) {
+            if ((e & 0x1) != 0) {
+                result *= k2p;
+            }
+            k2p *= k2p;
+            e = e >> 1;
+        }
+
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+    public static long pow(final long k, int e) {
+        if (e < 0) {
+            throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+        }
+
+        long result = 1l;
+        long k2p    = k;
+        while (e != 0) {
+            if ((e & 0x1) != 0) {
+                result *= k2p;
+            }
+            k2p *= k2p;
+            e = e >> 1;
+        }
+
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+    public static long pow(final long k, long e) {
+        if (e < 0) {
+            throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+        }
+
+        long result = 1l;
+        long k2p    = k;
+        while (e != 0) {
+            if ((e & 0x1) != 0) {
+                result *= k2p;
+            }
+            k2p *= k2p;
+            e = e >> 1;
+        }
+
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+    public static BigInteger pow(final BigInteger k, int e) {
+        if (e < 0) {
+            throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+        }
+
+        return k.pow(e);
+    }
+
+    
+
+
+
+
+
+
+
+    public static BigInteger pow(final BigInteger k, long e) {
+        if (e < 0) {
+            throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+        }
+
+        BigInteger result = BigInteger.ONE;
+        BigInteger k2p    = k;
+        while (e != 0) {
+            if ((e & 0x1) != 0) {
+                result = result.multiply(k2p);
+            }
+            k2p = k2p.multiply(k2p);
+            e = e >> 1;
+        }
+
+        return result;
+
+    }
+
+    
+
+
+
+
+
+
+
+    public static BigInteger pow(final BigInteger k, BigInteger e) {
+        if (e.compareTo(BigInteger.ZERO) < 0) {
+            throw new NotPositiveException(LocalizedFormats.EXPONENT, e);
+        }
+
+        BigInteger result = BigInteger.ONE;
+        BigInteger k2p    = k;
+        while (!BigInteger.ZERO.equals(e)) {
+            if (e.testBit(0)) {
+                result = result.multiply(k2p);
+            }
+            k2p = k2p.multiply(k2p);
+            e = e.shiftRight(1);
+        }
+
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+     private static long addAndCheck(long a, long b, Localizable pattern) {
+        long ret;
+        if (a > b) {
+            
+            ret = addAndCheck(b, a, pattern);
+        } else {
+            
+
+            if (a < 0) {
+                if (b < 0) {
+                    
+                    if (Long.MIN_VALUE - b <= a) {
+                        ret = a + b;
+                    } else {
+                        throw new MathArithmeticException(pattern, a, b);
+                    }
+                } else {
+                    
+                    ret = a + b;
+                }
+            } else {
+                
+                
+
+                
+                if (a <= Long.MAX_VALUE - b) {
+                    ret = a + b;
+                } else {
+                    throw new MathArithmeticException(pattern, a, b);
+                }
+            }
+        }
+        return ret;
+    }
+
+    
+
+
+
+
+
+
+
+    private static void checkBinomial(final int n, final int k) {
+        if (n < k) {
+            throw new NumberIsTooLargeException(LocalizedFormats.BINOMIAL_INVALID_PARAMETERS_ORDER,
+                                                k, n, true);
+        }
+        if (n < 0) {
+            throw new NotPositiveException(LocalizedFormats.BINOMIAL_NEGATIVE_PARAMETER, n);
+        }
+    }
+
+    
+
+
+
+
+
+    public static boolean isPowerOfTwo(long n) {
+        return (n > 0) && ((n & (n - 1)) == 0);
+    }
+}

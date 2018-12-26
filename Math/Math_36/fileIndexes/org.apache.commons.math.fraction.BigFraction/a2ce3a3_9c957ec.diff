@@ -1,0 +1,258 @@
+22a23
+> import org.apache.commons.math.util.MathUtils;
+460c461
+<         return add(new BigFraction(bg, BigInteger.ONE));
+---
+>         return new BigFraction(numerator.add(denominator.multiply(bg)), denominator);
+472a474,476
+>     public BigFraction add(final int i) {
+>         return add(BigInteger.valueOf(i));
+>     }
+473a478
+>     
+475,478d479
+<     public BigFraction add(final BigFraction fraction) {
+<         if (ZERO.equals(fraction)) {
+<             return this;
+<         }
+480,481d480
+<         BigInteger num = null;
+<         BigInteger den = null;
+483,490d481
+<         if (denominator.equals(fraction.denominator)) {
+<             num = numerator.add(fraction.numerator);
+<             den = denominator;
+<         } else {
+<             num = (numerator.multiply(fraction.denominator)).add((fraction.numerator).multiply(denominator));
+<             den = denominator.multiply(fraction.denominator);
+<         }
+<         return new BigFraction(num, den);
+492d482
+<     }
+494d483
+<     
+498a488,490
+>     public BigFraction add(final long l) {
+>         return add(BigInteger.valueOf(l));
+>     }
+499a492
+>     
+504,506d496
+<     public BigFraction add(final int i) {
+<         return add(new BigFraction(i, 1));
+<     }
+508d497
+<     
+514a504,507
+>     public BigFraction add(final BigFraction fraction) {
+>         if (ZERO.equals(fraction)) {
+>             return this;
+>         }
+515a509,510
+>         BigInteger num = null;
+>         BigInteger den = null;
+516a512,519
+>         if (denominator.equals(fraction.denominator)) {
+>             num = numerator.add(fraction.numerator);
+>             den = denominator;
+>         } else {
+>             num = (numerator.multiply(fraction.denominator)).add((fraction.numerator).multiply(denominator));
+>             den = denominator.multiply(fraction.denominator);
+>         }
+>         return new BigFraction(num, den);
+518,519d520
+<     public BigFraction add(final long l) {
+<         return add(new BigFraction(l, 1L));
+605a607,608
+> 
+> 
+607c610,613
+<         return divide(new BigFraction(bg, BigInteger.ONE));
+---
+>         if (BigInteger.ZERO.equals(bg)) {
+>             throw MathRuntimeException.createArithmeticException("denominator must be different from 0");
+>         }
+>         return new BigFraction(numerator, denominator.multiply(bg));
+622,629c628,629
+< 
+< 
+<     public BigFraction divide(final BigFraction fraction) {
+<         if (BigInteger.ZERO.equals(fraction.numerator)) {
+<             throw MathRuntimeException.createArithmeticException("denominator must be different from 0");
+<         }
+< 
+<         return multiply(fraction.reciprocal());
+---
+>     public BigFraction divide(final int i) {
+>         return divide(BigInteger.valueOf(i));
+642,643c642,645
+<     public BigFraction divide(final int i) {
+<         return divide(new BigFraction(i, 1));
+---
+> 
+> 
+>     public BigFraction divide(final long l) {
+>         return divide(BigInteger.valueOf(l));
+656,657c658,667
+<     public BigFraction divide(final long l) {
+<         return divide(new BigFraction(l, 1L));
+---
+> 
+> 
+> 
+> 
+>     public BigFraction divide(final BigFraction fraction) {
+>         if (BigInteger.ZERO.equals(fraction.numerator)) {
+>             throw MathRuntimeException.createArithmeticException("denominator must be different from 0");
+>         }
+> 
+>         return multiply(fraction.reciprocal());
+851,860c861,862
+< 
+< 
+<     public BigFraction multiply(final BigFraction fraction) {
+<         BigFraction ret = ZERO;
+< 
+<         if (getNumeratorAsInt() != 0 && fraction.getNumeratorAsInt() != 0) {
+<             ret = new BigFraction(numerator.multiply(fraction.numerator), denominator.multiply(fraction.denominator));
+<         }
+< 
+<         return ret;
+---
+>     public BigFraction multiply(final int i) {
+>         return multiply(BigInteger.valueOf(i));
+873,874c875,876
+<     public BigFraction multiply(final int i) {
+<         return multiply(new BigFraction(i, 1));
+---
+>     public BigFraction multiply(final long l) {
+>         return multiply(BigInteger.valueOf(l));
+887,888c889,898
+<     public BigFraction multiply(final long l) {
+<         return multiply(new BigFraction(l, 1L));
+---
+> 
+> 
+>     public BigFraction multiply(final BigFraction fraction) {
+>         BigFraction ret = ZERO;
+> 
+>         if (getNumeratorAsInt() != 0 && fraction.getNumeratorAsInt() != 0) {
+>             ret = new BigFraction(numerator.multiply(fraction.numerator), denominator.multiply(fraction.denominator));
+>         }
+> 
+>         return ret;
+925,934d934
+<     public BigFraction pow(final BigInteger exponent) {
+<         BigFraction ret = this;
+<         if (!BigInteger.ONE.equals(exponent)) {
+<             ret = ONE;
+<             if (!BigInteger.ZERO.equals(exponent)) {
+<                 for (BigInteger bg = BigInteger.ONE; bg.compareTo(exponent) < 0; bg = bg.add(BigInteger.ONE)) {
+<                     ret = ret.multiply(this);
+<                 }
+<             }
+<         }
+936c936,940
+<         return ret;
+---
+>     public BigFraction pow(final int exponent) {
+>         if (exponent < 0) {
+>             return new BigFraction(denominator.pow(-exponent), numerator.pow(-exponent));
+>         }
+>         return new BigFraction(numerator.pow(exponent), denominator.pow(exponent));
+949,950c953,959
+<     public double pow(final BigFraction exponent) {
+<         return Math.pow(numerator.doubleValue(), exponent.doubleValue()) / Math.pow(denominator.doubleValue(), exponent.doubleValue());
+---
+>     public BigFraction pow(final long exponent) {
+>         if (exponent < 0) {
+>             return new BigFraction(MathUtils.pow(denominator, -exponent),
+>                                    MathUtils.pow(numerator,   -exponent));
+>         }
+>         return new BigFraction(MathUtils.pow(numerator,   exponent),
+>                                MathUtils.pow(denominator, exponent));
+952c961
+< 
+---
+>  
+963,965c972,979
+< 
+<     public BigFraction pow(final int exponent) {
+<         return pow(BigInteger.valueOf(exponent));
+---
+>     public BigFraction pow(final BigInteger exponent) {
+>         if (exponent.compareTo(BigInteger.ZERO) < 0) {
+>             final BigInteger eNeg = exponent.negate();
+>             return new BigFraction(MathUtils.pow(denominator, eNeg),
+>                                    MathUtils.pow(numerator,   eNeg));
+>         }
+>         return new BigFraction(MathUtils.pow(numerator,   exponent),
+>                                MathUtils.pow(denominator, exponent));
+978,979c992,994
+<     public BigFraction pow(final long exponent) {
+<         return pow(BigInteger.valueOf(exponent));
+---
+>     public double pow(final double exponent) {
+>         return Math.pow(numerator.doubleValue(),   exponent) /
+>                Math.pow(denominator.doubleValue(), exponent);
+1020c1035
+<         return subtract(new BigFraction(bg, BigInteger.valueOf(1)));
+---
+>         return new BigFraction(numerator.subtract(denominator.multiply(bg)), denominator);
+1032a1048,1050
+>     public BigFraction subtract(final int i) {
+>         return subtract(BigInteger.valueOf(i));
+>     }
+1033a1052
+>     
+1036,1039d1054
+<     public BigFraction subtract(final BigFraction fraction) {
+<         if (ZERO.equals(fraction)) {
+<             return this;
+<         }
+1041,1050d1055
+<         BigInteger num = null;
+<         BigInteger den = null;
+<         if (denominator.equals(fraction.denominator)) {
+<             num = numerator.subtract(fraction.numerator);
+<             den = denominator;
+<         } else {
+<             num = (numerator.multiply(fraction.denominator)).subtract((fraction.numerator).multiply(denominator));
+<             den = denominator.multiply(fraction.denominator);
+<         }
+<         return new BigFraction(num, den);
+1052d1056
+<     }
+1054d1057
+<     
+1059a1063,1065
+>     public BigFraction subtract(final long l) {
+>         return subtract(BigInteger.valueOf(l));
+>     }
+1060a1067
+>     
+1064,1066d1070
+<     public BigFraction subtract(final int i) {
+<         return subtract(new BigFraction(i, 1));
+<     }
+1068d1071
+<     
+1076a1080,1083
+>     public BigFraction subtract(final BigFraction fraction) {
+>         if (ZERO.equals(fraction)) {
+>             return this;
+>         }
+1077a1085,1094
+>         BigInteger num = null;
+>         BigInteger den = null;
+>         if (denominator.equals(fraction.denominator)) {
+>             num = numerator.subtract(fraction.numerator);
+>             den = denominator;
+>         } else {
+>             num = (numerator.multiply(fraction.denominator)).subtract((fraction.numerator).multiply(denominator));
+>             den = denominator.multiply(fraction.denominator);
+>         }
+>         return new BigFraction(num, den);
+1079,1080d1095
+<     public BigFraction subtract(final long l) {
+<         return subtract(new BigFraction(l, 1L));

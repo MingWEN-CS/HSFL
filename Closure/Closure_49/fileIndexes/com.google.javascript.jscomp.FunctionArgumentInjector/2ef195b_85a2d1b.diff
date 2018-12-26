@@ -1,0 +1,63 @@
+38a39,42
+>   
+>   
+>   static final String THIS_MARKER = "this";
+> 
+52c56
+<   static Node inject(Node node, Node parent,
+---
+>   static Node inject(AbstractCompiler compiler, Node node, Node parent,
+53a58,62
+>     return inject(compiler, node, parent, replacements, true);
+>   }
+> 
+>   static Node inject(AbstractCompiler compiler, Node node, Node parent,
+>       Map<String, Node> replacements, boolean replaceThis) {
+66a76,97
+>     } else if (replaceThis && node.getType() == Token.THIS) {
+>       Node replacementTemplate = replacements.get(THIS_MARKER);
+>       Preconditions.checkNotNull(replacementTemplate);
+>       if (replacementTemplate.getType() != Token.THIS) {
+>         
+>         
+>         Node replacement = replacementTemplate.cloneTree();
+>         parent.replaceChild(node, replacement);
+> 
+>         
+>         
+>         
+>         if (NodeUtil.mayHaveSideEffects(replacementTemplate, compiler)) {
+>           replacements.remove(THIS_MARKER);
+>         }
+> 
+>         return replacement;
+>       }
+>     } else if (node.getType() == Token.FUNCTION) {
+>       
+>       
+>       replaceThis = false;
+72c103
+<       c = inject(c, node, replacements);
+---
+>       c = inject(compiler, c, node, replacements, replaceThis);
+89,97c120,126
+<     if (callNode.getFirstChild().getType() != Token.NAME) {
+<       if (NodeUtil.isFunctionObjectCall(callNode)) {
+<         
+<         Preconditions.checkNotNull(cArg);
+<         Preconditions.checkState(cArg.getType() == Token.THIS);
+<         cArg = cArg.getNext();
+<       } else {
+<         Preconditions.checkState(!NodeUtil.isFunctionObjectApply(callNode));
+<       }
+---
+>     if (cArg != null && NodeUtil.isFunctionObjectCall(callNode)) {
+>       argMap.put(THIS_MARKER, cArg);
+>       cArg = cArg.getNext();
+>     } else {
+>       
+>       Preconditions.checkState(!NodeUtil.isFunctionObjectApply(callNode));
+>       argMap.put(THIS_MARKER, NodeUtil.newUndefinedNode(callNode));
+382a412,413
+>         } else if (n.getType() == Token.THIS) {
+>           parametersReferenced.add(THIS_MARKER);

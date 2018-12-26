@@ -1,0 +1,44 @@
+21a22,23
+> import org.apache.commons.math3.exception.MathUnsupportedOperationException;
+> import org.apache.commons.math3.exception.util.LocalizedFormats;
+83a86,88
+> 
+> 
+> 
+114,115d118
+< 
+< 
+119,120d121
+<         parseOptimizationData(optData);
+<         
+127,129c128
+<         if (simplex == null) {
+<             throw new NullArgumentException();
+<         }
+---
+>         checkParameters();
+189c188,192
+<     private void parseOptimizationData(OptimizationData... optData) {
+---
+>     @Override
+>     protected void parseOptimizationData(OptimizationData... optData) {
+>         
+>         super.parseOptimizationData(optData);
+> 
+198a202,217
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private void checkParameters() {
+>         if (simplex == null) {
+>             throw new NullArgumentException();
+>         }
+>         if (getLowerBound() != null ||
+>             getUpperBound() != null) {
+>             throw new MathUnsupportedOperationException(LocalizedFormats.CONSTRAINT);

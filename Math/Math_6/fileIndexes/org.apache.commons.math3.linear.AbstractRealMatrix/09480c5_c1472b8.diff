@@ -1,0 +1,219 @@
+20c20,23
+< import org.apache.commons.math.MathRuntimeException;
+---
+> import org.apache.commons.math.exception.NoDataException;
+> import org.apache.commons.math.exception.NotStrictlyPositiveException;
+> import org.apache.commons.math.exception.DimensionMismatchException;
+> import org.apache.commons.math.exception.MatrixDimensionMismatchException;
+56,64c59,64
+<     protected AbstractRealMatrix(final int rowDimension, final int columnDimension)
+<         throws IllegalArgumentException {
+<         if (rowDimension < 1 ) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.INSUFFICIENT_DIMENSION, rowDimension, 1);
+<         }
+<         if (columnDimension <= 0) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.INSUFFICIENT_DIMENSION, columnDimension, 1);
+---
+>     protected AbstractRealMatrix(final int rowDimension, final int columnDimension) {
+>         if (rowDimension < 1) {
+>             throw new NotStrictlyPositiveException(rowDimension);
+>         }
+>         if (columnDimension < 1) {
+>             throw new NotStrictlyPositiveException(columnDimension);
+92d91
+< 
+111d109
+< 
+127d124
+< 
+143d139
+< 
+168d163
+< 
+190d184
+< 
+228d221
+< 
+255d247
+< 
+275d266
+< 
+299d289
+< 
+313,316c303,304
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     destination.length, destination[0].length,
+<                     rowsCount, columnsCount);
+---
+>             throw new MatrixDimensionMismatchException(destination.length, destination[0].length,
+>                                                        rowsCount, columnsCount);
+344d331
+< 
+348,349c335
+<     public void copySubMatrix(int[] selectedRows, int[] selectedColumns, double[][] destination)
+<         throws MatrixIndexException, IllegalArgumentException {
+---
+>     public void copySubMatrix(int[] selectedRows, int[] selectedColumns, double[][] destination) {
+355,358c341,342
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     destination.length, destination[0].length,
+<                     selectedRows.length, selectedColumns.length);
+---
+>             throw new MatrixDimensionMismatchException(destination.length, destination[0].length,
+>                                                        selectedRows.length, selectedColumns.length);
+368d351
+< 
+377c360
+<             throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.AT_LEAST_ONE_ROW);
+---
+>             throw new NoDataException(LocalizedFormats.AT_LEAST_ONE_ROW);
+382c365
+<             throw MathRuntimeException.createIllegalArgumentException(LocalizedFormats.AT_LEAST_ONE_COLUMN);
+---
+>             throw new NoDataException(LocalizedFormats.AT_LEAST_ONE_COLUMN);
+387,389c370
+<                 throw MathRuntimeException.createIllegalArgumentException(
+<                         LocalizedFormats.DIFFERENT_ROWS_LENGTHS,
+<                         nCols, subMatrix[r].length);
+---
+>                 throw new DimensionMismatchException(nCols, subMatrix[r].length);
+405d385
+< 
+420d399
+< 
+424,426c403
+<     public void setRowMatrix(final int row, final RealMatrix matrix)
+<         throws MatrixIndexException, InvalidMatrixException {
+< 
+---
+>     public void setRowMatrix(final int row, final RealMatrix matrix) {
+431,433c408,410
+<             throw new InvalidMatrixException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     matrix.getRowDimension(), matrix.getColumnDimension(), 1, nCols);
+---
+>             throw new MatrixDimensionMismatchException(matrix.getRowDimension(),
+>                                                        matrix.getColumnDimension(),
+>                                                        1, nCols);
+438d414
+< 
+453d428
+< 
+457,459c432
+<     public void setColumnMatrix(final int column, final RealMatrix matrix)
+<         throws MatrixIndexException, InvalidMatrixException {
+< 
+---
+>     public void setColumnMatrix(final int column, final RealMatrix matrix) {
+464,466c437,439
+<             throw new InvalidMatrixException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     matrix.getRowDimension(), matrix.getColumnDimension(), nRows, 1);
+---
+>             throw new MatrixDimensionMismatchException(matrix.getRowDimension(),
+>                                                        matrix.getColumnDimension(),
+>                                                        nRows, 1);
+471d443
+< 
+481,483c453
+<     public void setRowVector(final int row, final RealVector vector)
+<         throws MatrixIndexException, InvalidMatrixException {
+< 
+---
+>     public void setRowVector(final int row, final RealVector vector) {
+487,489c457,458
+<             throw new InvalidMatrixException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     1, vector.getDimension(), 1, nCols);
+---
+>             throw new MatrixDimensionMismatchException(1, vector.getDimension(),
+>                                                        1, nCols);
+494d462
+< 
+504,506c472
+<     public void setColumnVector(final int column, final RealVector vector)
+<         throws MatrixIndexException, InvalidMatrixException {
+< 
+---
+>     public void setColumnVector(final int column, final RealVector vector) {
+510,512c476,477
+<             throw new InvalidMatrixException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     vector.getDimension(), 1, nRows, 1);
+---
+>             throw new MatrixDimensionMismatchException(vector.getDimension(), 1,
+>                                                        nRows, 1);
+517d481
+< 
+532d495
+< 
+536,538c499
+<     public void setRow(final int row, final double[] array)
+<         throws MatrixIndexException, InvalidMatrixException {
+< 
+---
+>     public void setRow(final int row, final double[] array) {
+542,544c503
+<             throw new InvalidMatrixException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     1, array.length, 1, nCols);
+---
+>             throw new MatrixDimensionMismatchException(1, array.length, 1, nCols);
+549d507
+< 
+564d521
+< 
+568,570c525
+<     public void setColumn(final int column, final double[] array)
+<         throws MatrixIndexException, InvalidMatrixException {
+< 
+---
+>     public void setColumn(final int column, final double[] array) {
+574,576c529
+<             throw new InvalidMatrixException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_2x2,
+<                     array.length, 1, nRows, 1);
+---
+>             throw new MatrixDimensionMismatchException(array.length, 1, nRows, 1);
+581d533
+< 
+617d568
+< 
+679,681c630
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.VECTOR_LENGTH_MISMATCH,
+<                     v.length, nCols);
+---
+>             throw new DimensionMismatchException(v.length, nCols);
+694d642
+< 
+706,708c654
+<                 throw MathRuntimeException.createIllegalArgumentException(
+<                         LocalizedFormats.VECTOR_LENGTH_MISMATCH,
+<                         v.getDimension(), nCols);
+---
+>                 throw new DimensionMismatchException(v.getDimension(), nCols);
+731,733c677
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     LocalizedFormats.VECTOR_LENGTH_MISMATCH,
+<                     v.length, nRows);
+---
+>             throw new DimensionMismatchException(v.length, nRows);
+746d689
+< 
+759,761c702
+<                 throw MathRuntimeException.createIllegalArgumentException(
+<                         LocalizedFormats.VECTOR_LENGTH_MISMATCH,
+<                         v.getDimension(), nRows);
+---
+>                 throw new DimensionMismatchException(v.getDimension(), nRows);
+774d714
+< 
+1014d953
+< 
+1069d1007
+< 

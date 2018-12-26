@@ -1,0 +1,54 @@
+158,162c158,159
+< 
+<     public DateTime toDateTime(DateTimeZone zone) {
+<         Chronology chrono = DateTimeUtils.getChronology(getChronology());
+<         chrono = chrono.withZone(zone);
+<         return new DateTime(getMillis(), chrono);
+---
+>     public DateTime toDateTimeISO() {
+>         return new DateTime(getMillis(), ISOChronology.getInstance());
+171,172c168,171
+<     public DateTime toDateTime(Chronology chronology) {
+<         return new DateTime(getMillis(), chronology);
+---
+>     public DateTime toDateTime(DateTimeZone zone) {
+>         Chronology chrono = DateTimeUtils.getChronology(getChronology());
+>         chrono = chrono.withZone(zone);
+>         return new DateTime(getMillis(), chrono);
+181,203c180,181
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public DateTime toTrustedISODateTime() {
+<         DateTimeZone zone = getZone();
+<         if (zone == null) {
+<             return new DateTime(this, (Chronology)null);
+<         }
+< 
+<         DateTimeZone trusted = DateTimeZone.getInstance(zone.getID());
+<         
+<         if (zone == trusted &&
+<             getClass() == DateTime.class &&
+<             getChronology().getClass() == ISOChronology.class) {
+<             return (DateTime) this;
+<         }
+<         
+<         return new DateTime(this, ISOChronology.getInstance(trusted));
+---
+>     public DateTime toDateTime(Chronology chronology) {
+>         return new DateTime(getMillis(), chronology);
+217a196,204
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public MutableDateTime toMutableDateTimeISO() {
+>         return new MutableDateTime(getMillis(), ISOChronology.getInstance());

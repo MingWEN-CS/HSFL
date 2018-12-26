@@ -1,0 +1,21 @@
+20a21
+> import com.google.javascript.jscomp.MakeDeclaredNamesUnique.ContextualRenamer;
+548c549
+<   private String tempNamePrefix = "JSCompiler_temp_";
+---
+>   private String tempNamePrefix = "JSCompiler_temp";
+562c563,564
+<     return tempNamePrefix + safeNameIdSupplier.get();
+---
+>     return tempNamePrefix + ContextualRenamer.UNIQUE_ID_SEPARATOR
+>         + safeNameIdSupplier.get();
+569,571c571,575
+<     String sName = tempNamePrefix + "const_" + safeNameIdSupplier.get();
+<     this.knownConstants.add(sName);
+<     return sName;
+---
+>     String name = tempNamePrefix + "_const"
+>         + ContextualRenamer.UNIQUE_ID_SEPARATOR
+>         + safeNameIdSupplier.get();
+>     this.knownConstants.add(name);
+>     return name;

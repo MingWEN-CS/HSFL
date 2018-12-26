@@ -1,0 +1,168 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.distribution;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.special.Erf;
+
+
+
+
+
+
+
+
+
+
+public class NormalDistributionImpl extends AbstractContinuousDistribution 
+		implements NormalDistribution, Serializable {
+    
+    
+	private double mean = 0;
+    
+    
+	private double standardDeviation = 1;
+	
+	
+
+
+
+
+	public NormalDistributionImpl(double mean, double sd){
+		super();
+		setMean(mean);
+		setStandardDeviation(sd);
+	}
+	
+
+
+
+	public NormalDistributionImpl(){
+		this(0.0, 1.0);
+	}	
+	
+
+
+	
+	public double getMean() {
+		return mean;
+	}
+	
+
+
+
+	public void setMean(double mean) {
+		this.mean = mean;
+	}
+
+	
+
+
+
+	public double getStandardDeviation() {
+		return standardDeviation;
+	}
+
+	
+
+
+
+	public void setStandardDeviation(double sd) {
+		if (sd <= 0.0) {
+			throw new IllegalArgumentException(
+                "Standard deviation must be positive.");
+		}		
+		standardDeviation = sd;
+	}
+
+	
+
+
+
+
+
+	public double cumulativeProbability(double x) throws MathException {
+        return 0.5 * (1.0 + Erf.erf((x - mean) /
+                (standardDeviation * Math.sqrt(2.0))));
+	}
+	
+	
+
+
+
+
+
+
+
+
+	protected double getDomainLowerBound(double p) {
+        double ret;
+
+        if (p < .5) {
+            ret = -Double.MAX_VALUE;
+        } else {
+            ret = getMean();
+        }
+        
+        return ret;
+    }
+
+	
+
+
+
+
+
+
+
+
+	protected double getDomainUpperBound(double p) {
+        double ret;
+
+        if (p < .5) {
+            ret = getMean();
+        } else {
+            ret = Double.MAX_VALUE;
+        }
+        
+        return ret;
+    }
+
+	
+
+
+
+
+
+
+
+	protected double getInitialDomain(double p) {
+        double ret;
+
+        if (p < .5) {
+            ret = getMean() - getStandardDeviation();
+        } else if (p > .5) {
+            ret = getMean() + getStandardDeviation();
+        } else {
+            ret = getMean();
+        }
+        
+        return ret;
+	}
+}

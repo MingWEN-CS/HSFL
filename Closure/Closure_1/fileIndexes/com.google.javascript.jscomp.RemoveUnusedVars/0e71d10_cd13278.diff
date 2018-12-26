@@ -1,0 +1,43 @@
+109c109
+<   private final Multimap<Var, Node> inheritsCalls =
+---
+>   private final Multimap<Var, Node> classDefiningCalls =
+232a233,234
+>         Var modifiedVar = null;
+> 
+237,240c239,240
+<           Var subclassVar = scope.getVar(subclassRelationship.subclassName);
+<           
+<           
+<           
+---
+>           modifiedVar = scope.getVar(subclassRelationship.subclassName);
+>         } else {
+242,247c242,244
+<           if (subclassVar != null && subclassVar.isGlobal()
+<               && !referenced.contains(subclassVar)) {
+<             
+<             inheritsCalls.put(subclassVar, parent);
+<             continuations.put(subclassVar, new Continuation(n, scope));
+<             return;
+---
+>           String className = codingConvention.getSingletonGetterClassName(n);
+>           if (className != null) {
+>             modifiedVar = scope.getVar(className);
+249a247,258
+> 
+>         
+>         
+>         
+>         
+>         if (modifiedVar != null && modifiedVar.isGlobal()
+>             && !referenced.contains(modifiedVar)) {
+>           
+>           classDefiningCalls.put(modifiedVar, parent);
+>           continuations.put(modifiedVar, new Continuation(n, scope));
+>           return;
+>         }
+792c801
+<       for (Node exprCallNode : inheritsCalls.get(var)) {
+---
+>       for (Node exprCallNode : classDefiningCalls.get(var)) {

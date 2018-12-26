@@ -1,0 +1,59 @@
+26a27
+> import com.google.javascript.rhino.TokenStream;
+84,85c85,86
+<       "getters are not supported in older versions of JS. " +
+<       "If you are targeting newer versions of JS, " +
+---
+>       "getters are not supported in older versions of JavaScript. " +
+>       "If you are targeting newer versions of JavaScript, " +
+89,90c90,91
+<       "setters are not supported in older versions of JS. " +
+<       "If you are targeting newer versions of JS, " +
+---
+>       "setters are not supported in older versions of JavaScript. " +
+>       "If you are targeting newer versions of JavaScript, " +
+243a245,249
+> 
+> 
+> 
+> 
+> 
+921,922c927,932
+<     
+< 
+---
+>     private boolean isAllowedProp(String identifier) {
+>       if (config.languageMode == LanguageMode.ECMASCRIPT3) {
+>         return !TokenStream.isKeyword(identifier);
+>       }
+>       return true;
+>     }
+924a935,937
+>       if (config.languageMode == LanguageMode.ECMASCRIPT3) {
+>         return TokenStream.isKeyword(identifier);
+>       }
+965c978,979
+<         Node key = transformAsString(el.getLeft());
+---
+>         AstNode rawKey = el.getLeft();
+>         Node key = transformAsString(rawKey);
+966a981,985
+>         if (rawKey instanceof Name && !isAllowedProp(key.getString())) {
+>           key.putBooleanProp(Node.QUOTED_PROP, true);
+>           errorReporter.warning(INVALID_ES3_PROP_NAME, sourceName,
+>               key.getLineno(), "", key.getCharno());
+>         }
+1011a1031,1039
+>       AstNode nodeProp = getNode.getProperty();
+>       Node rightChild = transformAsString(nodeProp);
+>       int nodeType = Token.GETPROP;
+>       if (nodeProp instanceof Name && !isAllowedProp(
+>           ((Name) nodeProp).getIdentifier())) {
+>         nodeType = Token.GETELEM;
+>         errorReporter.warning(INVALID_ES3_PROP_NAME, sourceName,
+>             rightChild.getLineno(), "", rightChild.getCharno());
+>       }
+1013c1041
+<           Token.GETPROP, leftChild, transformAsString(getNode.getProperty()));
+---
+>           nodeType, leftChild, rightChild);

@@ -1,0 +1,62 @@
+80a81,82
+> 
+> 
+124c126
+<     private double depthFactor = 0.2;
+---
+>     private double depthFactor = 0.12;
+203a206
+> 
+235a239,240
+>         drawBackground(g2, plotArea);
+> 
+243,244c248,263
+<             labelPercent = getLabelGap() + getMaximumLabelWidth() 
+<                            + getLabelLinkMargin();   
+---
+>             labelPercent = getLabelGap() + getMaximumLabelWidth();   
+>         }
+>         double gapHorizontal = plotArea.getWidth() * (gapPercent 
+>                 + labelPercent) * 2.0;
+>         double gapVertical = plotArea.getHeight() * gapPercent * 2.0;
+> 
+>         if (DEBUG_DRAW_INTERIOR) {
+>             double hGap = plotArea.getWidth() * getInteriorGap();
+>             double vGap = plotArea.getHeight() * getInteriorGap();
+>             double igx1 = plotArea.getX() + hGap;
+>             double igx2 = plotArea.getMaxX() - hGap;
+>             double igy1 = plotArea.getY() + vGap;
+>             double igy2 = plotArea.getMaxY() - vGap;
+>             g2.setPaint(Color.lightGray);
+>             g2.draw(new Rectangle2D.Double(igx1, igy1, igx2 - igx1, 
+>                     igy2 - igy1));
+246,248d264
+<         double gapHorizontal = plotArea.getWidth() 
+<                                * (gapPercent + labelPercent);
+<         double gapVertical = plotArea.getHeight() * gapPercent;
+264a281,295
+> 
+>         
+>         
+>         Rectangle2D linkAreaXX = new Rectangle2D.Double(linkX, linkY, linkW, 
+>                 linkH * (1 - this.depthFactor));
+>         state.setLinkArea(linkAreaXX);
+> 
+>         if (DEBUG_DRAW_LINK_AREA) {
+>             g2.setPaint(Color.blue);
+>             g2.draw(linkAreaXX);
+>             g2.setPaint(Color.yellow);
+>             g2.draw(new Ellipse2D.Double(linkAreaXX.getX(), linkAreaXX.getY(), 
+>                     linkAreaXX.getWidth(), linkAreaXX.getHeight()));
+>         }
+>         
+287d317
+<         int depth = (int) (pieArea.getHeight() * this.depthFactor);
+289a320
+>         int depth = (int) (pieArea.getHeight() * this.depthFactor);
+300d330
+<         drawBackground(g2, plotArea);
+595c625
+<     	
+---
+> 

@@ -1,0 +1,160 @@
+21,23d20
+< import com.google.javascript.rhino.jstype.JSType;
+< import com.google.javascript.rhino.jstype.FunctionType;
+< import com.google.javascript.rhino.jstype.ObjectType;
+25a23,54
+> import com.google.javascript.rhino.jstype.EnumType;
+> import com.google.javascript.rhino.jstype.FunctionType;
+> import com.google.javascript.rhino.jstype.JSType;
+> import com.google.javascript.rhino.jstype.ObjectType;
+> 
+> import javax.annotation.Nullable;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+57,58c86,91
+<       case Token.FUNCTION:
+<         
+---
+>       
+>       case Token.NAME:
+>         if (parent == null) {
+>           return;
+>         }
+> 
+60,62c93,97
+<         JSType fnType = n.getJSType();
+<         if (fnType == null) {
+<           break;
+---
+>         if (parent.getType() != Token.VAR &&
+>             !NodeUtil.isFunctionDeclaration(parent) &&
+>             !(parent.getType() == Token.ASSIGN &&
+>               n == parent.getFirstChild())) {
+>           return;
+76,77c111,112
+<             (parent.getType() == Token.ASSIGN ||
+<              parent.getType() == Token.NAME)) {
+---
+>             !(parent.getType() == Token.VAR &&
+>                 !parent.hasOneChild())) {
+78a114
+>         }
+80,86c116,119
+<           if (docInfo == null) {
+<             Node gramps = parent.getParent();
+<             if (gramps != null && gramps.getType() == Token.VAR &&
+<                 gramps.hasOneChild()) {
+<               docInfo = gramps.getJSDocInfo();
+<             }
+<           }
+---
+>         
+>         JSType varType = n.getJSType();
+>         if (varType == null && parent.getType() == Token.FUNCTION) {
+>           varType = parent.getJSType();
+89,94c122,125
+<         if (docInfo != null && fnType instanceof FunctionType) {
+<           FunctionType maybeCtorType = (FunctionType) fnType;
+<           maybeCtorType.setJSDocInfo(docInfo);
+<           if (maybeCtorType.isConstructor()) {
+<             maybeCtorType.getInstanceType().setJSDocInfo(docInfo);
+<           }
+---
+>         
+>         
+>         if (varType == null || docInfo == null) {
+>           return;
+95a127,135
+> 
+>         
+>         
+>         ObjectType objType = dereferenceToObject(varType);
+>         if (objType == null || objType.getJSDocInfo() != null) {
+>           return;
+>         }
+> 
+>         attachJSDocInfoToNominalTypeOrShape(objType, docInfo, n.getString());
+117,122c157,172
+<             JSType lhsType = n.getFirstChild().getJSType();
+<             if (lhsType != null &&
+<                 lhsType instanceof ObjectType) {
+<               ObjectType objectType = (ObjectType) lhsType;
+<               objectType.setPropertyJSDocInfo(
+<                   n.getLastChild().getString(), docInfo, inExterns);
+---
+>             ObjectType lhsType =
+>                 dereferenceToObject(n.getFirstChild().getJSType());
+>             if (lhsType != null) {
+>               
+>               String propName = n.getLastChild().getString();
+>               if (lhsType.hasOwnProperty(propName)) {
+>                 lhsType.setPropertyJSDocInfo(propName, docInfo, inExterns);
+>               }
+> 
+>               
+>               ObjectType propType =
+>                   dereferenceToObject(lhsType.getPropertyType(propName));
+>               if (propType != null) {
+>                 attachJSDocInfoToNominalTypeOrShape(
+>                     propType, docInfo, n.getQualifiedName());
+>               }
+126a177,211
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private ObjectType dereferenceToObject(JSType type) {
+>     type = type == null ? null : type.dereference();
+>     return (type instanceof ObjectType) ? (ObjectType) type : null;
+>   }
+> 
+>   
+> 
+> 
+>   private void attachJSDocInfoToNominalTypeOrShape(
+>       ObjectType objType, JSDocInfo docInfo, @Nullable String qName) {
+>     if (objType.isConstructor() ||
+>         objType.isEnumType() ||
+>         objType.isInterface()) {
+>       
+>       if (objType.hasReferenceName() &&
+>           objType.getReferenceName().equals(qName)) {
+>         objType.setJSDocInfo(docInfo);
+> 
+>         if (objType.isConstructor() || objType.isInterface()) {
+>           ((FunctionType) objType).getInstanceType().setJSDocInfo(
+>               docInfo);
+>         } else if (objType instanceof EnumType) {
+>           ((EnumType) objType).getElementsType().setJSDocInfo(docInfo);
+>         }
+>       }
+>     } else if (!objType.isNativeObjectType() &&
+>         objType.isFunctionType()) {
+>       
+>       objType.setJSDocInfo(docInfo);

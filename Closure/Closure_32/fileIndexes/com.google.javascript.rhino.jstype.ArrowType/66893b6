@@ -1,0 +1,243 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.JSTypeNative.UNKNOWN_TYPE;
+
+import com.google.javascript.rhino.ErrorReporter;
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+final class ArrowType extends JSType {
+  private static final long serialVersionUID = 1L;
+
+  final Node parameters;
+  JSType returnType;
+
+  
+  final boolean returnTypeInferred;
+
+  ArrowType(JSTypeRegistry registry, Node parameters,
+      JSType returnType) {
+    this(registry, parameters, returnType, false);
+  }
+
+  ArrowType(JSTypeRegistry registry, Node parameters,
+      JSType returnType, boolean returnTypeInferred) {
+    super(registry);
+
+    this.parameters = parameters == null ?
+        registry.createParametersWithVarArgs(getNativeType(UNKNOWN_TYPE)) :
+        parameters;
+    this.returnType = returnType == null ?
+        getNativeType(UNKNOWN_TYPE) : returnType;
+    this.returnTypeInferred = returnTypeInferred;
+  }
+
+  @Override
+  public boolean isSubtype(JSType other) {
+    if (!(other instanceof ArrowType)) {
+      return false;
+    }
+
+    ArrowType that = (ArrowType) other;
+
+    
+    if (!this.returnType.isSubtype(that.returnType)) {
+      return false;
+    }
+    
+    
+    
+    
+    Node thisParam = parameters.getFirstChild();
+    Node thatParam = that.parameters.getFirstChild();
+    while (thisParam != null && thatParam != null) {
+      JSType thisParamType = thisParam.getJSType();
+      if (thisParamType != null) {
+        JSType thatParamType = thatParam.getJSType();
+        if (thatParamType == null ||
+            !thatParamType.isSubtype(thisParamType)) {
+          return false;
+        }
+      }
+      boolean thisIsVarArgs = thisParam.isVarArgs();
+      boolean thatIsVarArgs = thatParam.isVarArgs();
+      
+      if (!thisIsVarArgs) {
+        thisParam = thisParam.getNext();
+      }
+      if (!thatIsVarArgs) {
+        thatParam = thatParam.getNext();
+      }
+      
+      if (thisIsVarArgs && thatIsVarArgs) {
+        thisParam = null;
+        thatParam = null;
+      }
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    return true;
+  }
+
+  
+
+
+
+  boolean hasEqualParameters(ArrowType that) {
+    Node thisParam = parameters.getFirstChild();
+    Node otherParam = that.parameters.getFirstChild();
+    while (thisParam != null && otherParam != null) {
+      JSType thisParamType = thisParam.getJSType();
+      JSType otherParamType = otherParam.getJSType();
+      if (thisParamType != null) {
+        
+        if (otherParamType != null &&
+            !thisParamType.isEquivalentTo(otherParamType)) {
+          return false;
+        }
+      } else {
+        if (otherParamType != null) {
+          return false;
+        }
+      }
+      thisParam = thisParam.getNext();
+      otherParam = otherParam.getNext();
+    }
+    
+    
+    return thisParam == otherParam;
+  }
+
+  @Override
+  public boolean isEquivalentTo(JSType object) {
+    
+    if (!(object instanceof ArrowType)) {
+      return false;
+    }
+    ArrowType that = (ArrowType) object;
+    if (!returnType.isEquivalentTo(that.returnType) ||
+        returnTypeInferred != that.returnTypeInferred) {
+      return false;
+    }
+    return hasEqualParameters(that);
+  }
+
+  @Override
+  public int hashCode() {
+    int hashCode = 0;
+    if (returnType != null) {
+      hashCode += returnType.hashCode();
+    }
+    if (returnTypeInferred) {
+      hashCode += 1;
+    }
+    if (parameters != null) {
+      Node param = parameters.getFirstChild();
+      while (param != null) {
+        JSType paramType = param.getJSType();
+        if (paramType != null) {
+          hashCode += paramType.hashCode();
+        }
+        param = param.getNext();
+      }
+    }
+    return hashCode;
+  }
+
+  @Override
+  public JSType getLeastSupertype(JSType that) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public JSType getGreatestSubtype(JSType that) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public BooleanLiteralSet getPossibleToBooleanOutcomes() {
+    return BooleanLiteralSet.TRUE;
+  }
+
+  @Override
+  JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+    returnType = safeResolve(returnType, t, scope);
+    if (parameters != null) {
+      for (Node paramNode = parameters.getFirstChild();
+           paramNode != null; paramNode = paramNode.getNext()) {
+        paramNode.setJSType(paramNode.getJSType().resolve(t, scope));
+      }
+    }
+    return this;
+  }
+}

@@ -1,0 +1,122 @@
+18d17
+< import java.io.CharArrayReader;
+60a60,67
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1921a1929,1951
+> 
+>     public StrTokenizer asTokenizer() {
+>         return new StrTokenizer(buffer);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1923c1953
+<         return new CharArrayReader(buffer, 0, size);
+---
+>         return new StrBuilderReader();
+1941a1972,1973
+> 
+> 
+2030a2063,2141
+>         }
+>     }
+> 
+>     
+>     
+> 
+> 
+>     class StrBuilderReader extends Reader {
+>         
+>         private int pos;
+>         
+>         private int mark;
+> 
+>         StrBuilderReader() {
+>             super();
+>         }
+> 
+>         
+>         public void close() {
+>             
+>         }
+> 
+>         
+>         public int read() {
+>             if (ready() == false) {
+>                 return -1;
+>             }
+>             return charAt(pos++);
+>         }
+> 
+>         
+>         public int read(char b[], int off, int len) {
+>             if (off < 0 || len < 0 || off > b.length ||
+>                     (off + len) > b.length || (off + len) < 0) {
+>                 throw new IndexOutOfBoundsException();
+>             }
+>             if (len == 0) {
+>                 return 0;
+>             }
+>             if (pos >= size()) {
+>                 return -1;
+>             }
+>             if (pos + len > size()) {
+>                 len = size() - pos;
+>             }
+>             getChars(pos, pos + len, b, off);
+>             pos += len;
+>             return len;
+>         }
+> 
+>         public long skip(long n) {
+>             if (pos + n > size()) {
+>                 n = size() - pos;
+>             }
+>             if (n < 0) {
+>                 return 0;
+>             }
+>             pos += n;
+>             return n;
+>         }
+> 
+>         
+>         public boolean ready() {
+>             return pos < size();
+>         }
+> 
+>         
+>         public boolean markSupported() {
+>             return true;
+>         }
+> 
+>         
+>         public void mark(int readAheadLimit) {
+>             mark = pos;
+>         }
+> 
+>         
+>         public void reset() {
+>             pos = mark;

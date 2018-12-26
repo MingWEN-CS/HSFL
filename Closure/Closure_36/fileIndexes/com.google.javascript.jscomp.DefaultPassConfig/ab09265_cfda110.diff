@@ -1,0 +1,23 @@
+614a615,618
+>     if (options.foldConstants) {
+>       passes.add(latePeepholeOptimizations);
+>     }
+> 
+910c914,926
+<             new PeepholeSubstituteAlternateSyntax(),
+---
+>             new PeepholeSubstituteAlternateSyntax(true),
+>             new PeepholeRemoveDeadCode(),
+>             new PeepholeFoldConstants());
+>     }
+>   };
+> 
+>   
+>   private final PassFactory latePeepholeOptimizations =
+>       new PassFactory("peepholeOptimizations", false) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new PeepholeOptimizationsPass(compiler,
+>             new StatementFusion(),
+911a928
+>             new PeepholeSubstituteAlternateSyntax(false),

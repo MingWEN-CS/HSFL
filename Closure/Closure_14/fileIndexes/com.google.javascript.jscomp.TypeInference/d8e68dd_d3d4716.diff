@@ -1,0 +1,23 @@
+80a81,85
+>   static final DiagnosticType FUNCTION_LITERAL_UNREAD_THIS =
+>     DiagnosticType.warning(
+>         "JSC_FUNCTION_LITERAL_UNREAD_THIS",
+>         "Function literal argument does not refer to bound this argument");
+> 
+886d890
+<         boolean foundTemplateTypeArgument = false;
+888d891
+<           foundTemplateTypeArgument = true;
+918c921,923
+<                 if (foundTemplateTypeArgument) {
+---
+>                 if (iArgumentType != null &&
+>                     
+>                     !iArgumentType.isNoType()) {
+927a933,938
+>                   }
+>                   
+>                   if (!NodeUtil.referencesThis(
+>                           NodeUtil.getFunctionBody(jArgument))) {
+>                     compiler.report(JSError.make(NodeUtil.getSourceName(n), n,
+>                         FUNCTION_LITERAL_UNREAD_THIS));

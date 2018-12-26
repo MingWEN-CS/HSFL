@@ -1,0 +1,17 @@
+315,318c315,325
+<   FunctionTypeBuilder inferReturnType(@Nullable JSDocInfo info) {
+<     if (info != null && info.hasReturnType()) {
+<       returnType = info.getReturnType().evaluate(scope, typeRegistry);
+<       returnTypeInferred = false;
+---
+> 
+> 
+>   FunctionTypeBuilder inferReturnType(
+>       @Nullable JSDocInfo info, boolean fromInlineDoc) {
+>     if (info != null) {
+>       JSTypeExpression returnTypeExpr =
+>           fromInlineDoc ? info.getType() : info.getReturnType();
+>       if (returnTypeExpr != null) {
+>         returnType = returnTypeExpr.evaluate(scope, typeRegistry);
+>         returnTypeInferred = false;
+>       }

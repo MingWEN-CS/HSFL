@@ -1,0 +1,126 @@
+88,92c88,90
+< 
+< 
+<     public static String getShortClassName(Class cls) {
+<         if (cls == null) {
+<             throw new IllegalArgumentException("The class must not be null");
+---
+>     public static String getShortClassName(Object object, String valueIfNull) {
+>         if (object == null) {
+>             return valueIfNull;
+94c92
+<         return getShortClassName(cls.getName());
+---
+>         return getShortClassName(object.getClass().getName());
+105,108c103,105
+< 
+<     public static String getShortClassName(Object object) {
+<         if (object == null) {
+<             throw new IllegalArgumentException("The object must not be null");
+---
+>     public static String getShortClassName(Class cls) {
+>         if (cls == null) {
+>             throw new IllegalArgumentException("The class must not be null");
+110c107
+<         return getShortClassName(object.getClass().getName());
+---
+>         return getShortClassName(cls.getName());
+147,150c144,146
+< 
+<     public static String getPackageName(Class cls) {
+<         if (cls == null) {
+<             throw new IllegalArgumentException("The class must not be null");
+---
+>     public static String getPackageName(Object object, String valueIfNull) {
+>         if (object == null) {
+>             return valueIfNull;
+152c148
+<         return getPackageName(cls.getName());
+---
+>         return getPackageName(object.getClass().getName());
+163,165c159,161
+<     public static String getPackageName(Object object) {
+<         if (object == null) {
+<             throw new IllegalArgumentException("The object must not be null");
+---
+>     public static String getPackageName(Class cls) {
+>         if (cls == null) {
+>             throw new IllegalArgumentException("The class must not be null");
+167c163
+<         return getPackageName(object.getClass().getName());
+---
+>         return getPackageName(cls.getName());
+223a220
+> 
+229,238c226,237
+<         Class[] interfaces = cls.getInterfaces();
+<         for (int i = 0; i < interfaces.length; i++) {
+<             if (list.contains(interfaces[i]) == false) {
+<                 list.add(interfaces[i]);
+<             }
+<             List superInterfaces = getAllInterfaces(interfaces[i]);
+<             for (Iterator it = superInterfaces.iterator(); it.hasNext();) {
+<                 Class intface = (Class) it.next();
+<                 if (list.contains(intface) == false) {
+<                     list.add(intface);
+---
+>         while (cls != null) {
+>             Class[] interfaces = cls.getInterfaces();
+>             for (int i = 0; i < interfaces.length; i++) {
+>                 if (list.contains(interfaces[i]) == false) {
+>                     list.add(interfaces[i]);
+>                 }
+>                 List superInterfaces = getAllInterfaces(interfaces[i]);
+>                 for (Iterator it = superInterfaces.iterator(); it.hasNext();) {
+>                     Class intface = (Class) it.next();
+>                     if (list.contains(intface) == false) {
+>                         list.add(intface);
+>                     }
+240a240
+>             cls = cls.getSuperclass();
+299c299,300
+< 
+---
+>     
+>     
+335c336,338
+<     public static List getAssignableFrom(List classes, Class superclass) {
+---
+> 
+> 
+>     public static List convertClassesToClassNames(List classes) {
+337c340
+<             throw new IllegalArgumentException("The classes must not be null");
+---
+>             throw new IllegalArgumentException("The classes list must not be null");
+339,344c342,343
+<         if (superclass == null) {
+<             throw new IllegalArgumentException("The superclass must not be null");
+<         }
+<         List subs = new ArrayList();
+<         Iterator it = classes.iterator();
+<         while (it.hasNext()) {
+---
+>         List classNames = new ArrayList(classes.size());
+>         for (Iterator it = classes.iterator(); it.hasNext();) {
+347,350c346,348
+<                 throw new IllegalArgumentException("The class list must not contain nulls");
+<             }
+<             if (isAssignable(cls, superclass)) {
+<                 subs.add(cls);
+---
+>                 classNames.add(null);
+>             } else {
+>                 classNames.add(cls.getName());
+353c351
+<         return subs;
+---
+>         return classNames;
+355d352
+< 
+356a354,358
+>     
+>     
+>     
+> 
+> 

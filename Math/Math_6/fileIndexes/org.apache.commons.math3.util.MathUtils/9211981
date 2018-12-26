@@ -1,0 +1,360 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.util;
+
+
+
+
+
+
+public class MathUtils {
+
+    
+
+
+
+
+
+
+
+    public static double sign( double x ) {
+        if ( x >= 0.0 ) {
+            return 1.0 ;
+        } else {
+            return -1.0 ;
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    public static float sign( float x ) {
+        if ( x >= 0.0F ) {
+            return 1.0F ;
+        } else {
+            return -1.0F ;
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    public static byte sign( byte x ) {
+        if ( x >= (byte)0 ) {
+            return (byte)1 ;
+        } else {
+            return (byte)(-1) ;
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    public static short sign( short x ) {
+        if ( x >= (short)0 ) {
+            return (short)1 ;
+        } else {
+            return (short)(-1) ;
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    public static int sign( int x ) {
+        if ( x >= 0 ) {
+            return 1 ;
+        } else {
+            return -1 ;
+        }
+    }
+ 
+    
+
+
+
+
+
+
+
+    public static long sign( long x ) {
+        if ( x >= 0L ) {
+            return 1L ;
+        } else {
+            return -1L ;
+        }
+    }
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static long binomialCoefficient(int n, int k) {     
+        if (n < k) {
+            throw new IllegalArgumentException
+                ("must have n >= k for binomial coefficient (n,k)");
+        }
+        if (n <= 0)  {
+            throw new IllegalArgumentException
+                ("must have n > 0 for binomial coefficient (n,k)");
+        }
+        if ((n == k) || (k == 0)) {
+            return 1;
+        }
+        if ((k == 1) || (k == n - 1)) {
+            return n;
+        }
+
+        long result = Math.round(binomialCoefficientDouble(n, k));
+        if (result == Long.MAX_VALUE) {
+            throw new ArithmeticException
+                ("result too large to represent in a long integer");
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double binomialCoefficientDouble(int n, int k) {
+        return Math.floor(Math.exp(binomialCoefficientLog(n, k)) + .5);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double binomialCoefficientLog(int n, int k) {
+        if (n < k) {
+            throw new IllegalArgumentException
+                ("must have n >= k for binomial coefficient (n,k)");
+        }
+        if (n <= 0)  {
+            throw new IllegalArgumentException
+                ("must have n > 0 for binomial coefficient (n,k)");
+        }
+        if ((n == k) || (k == 0)) {
+            return 0;
+        }
+        if ((k == 1) || (k == n - 1)) {
+            return Math.log((double) n);
+        }
+        double logSum = 0;
+
+        
+        for (int i = k + 1; i <= n; i++) {
+            logSum += Math.log((double) i);
+        }
+
+        
+        for (int i = 2; i <= n - k; i++) {
+            logSum -= Math.log((double) i);
+        }
+
+        return logSum;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static long factorial(int n) {
+        long result = Math.round(factorialDouble(n));
+        if (result == Long.MAX_VALUE) {
+            throw new ArithmeticException
+                ("result too large to represent in a long integer");
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double factorialDouble(int n) {
+        if (n <= 0)  {
+            throw new IllegalArgumentException
+                ("must have n > 0 for n!");
+        }
+        return Math.floor(Math.exp(factorialLog(n)) + 0.5);
+    }
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double factorialLog(int n) {
+        if (n <= 0)  {
+            throw new IllegalArgumentException
+                ("must have n > 0 for n!");
+        }
+        double logSum = 0;
+        for (int i = 2; i <= n; i++) {
+            logSum += Math.log((double) i);
+        }
+        return logSum;
+    }
+}

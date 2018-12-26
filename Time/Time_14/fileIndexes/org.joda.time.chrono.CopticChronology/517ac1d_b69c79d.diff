@@ -1,0 +1,136 @@
+26d25
+< import org.joda.time.DateTimeFieldType;
+28,31d26
+< import org.joda.time.DurationField;
+< import org.joda.time.DurationFieldType;
+< import org.joda.time.field.FieldUtils;
+< import org.joda.time.field.PreciseDurationField;
+57c52
+< public final class CopticChronology extends BaseGJChronology {
+---
+> public final class CopticChronology extends CommonFixedMonthChronology {
+71,76d65
+<     private static final long MILLIS_PER_YEAR =
+<         (long) (365.25 * DateTimeConstants.MILLIS_PER_DAY);
+< 
+<     private static final long MILLIS_PER_MONTH =
+<         (long) (365.25 * DateTimeConstants.MILLIS_PER_DAY / 12);
+< 
+89c78
+<     private static final DurationField cMonthsField;
+---
+>     private static final Map cCache = new HashMap();
+93,96d81
+< 
+<     
+<     private static final Map cCache = new HashMap();
+< 
+98,99c83
+<         cMonthsField =  new PreciseDurationField
+<             (DurationFieldType.months(), 30L * DateTimeConstants.MILLIS_PER_DAY);
+---
+>         
+103a88
+>     
+178d162
+< 
+233,314d216
+<     long setYear(long instant, int year) {
+<         
+<         int thisYear = getYear(instant);
+<         int dayOfYear = getDayOfYear(instant, thisYear);
+<         int millisOfDay = getMillisOfDay(instant);
+< 
+<         if (dayOfYear > 365) {
+<             
+<             if (!isLeapYear(year)) {
+<                 
+<                 dayOfYear--;
+<             }
+<         }
+< 
+<         instant = getYearMonthDayMillis(year, 1, dayOfYear);
+<         instant += millisOfDay;
+<         return instant;
+<     }
+< 
+<     
+<     long getYearDifference(long minuendInstant, long subtrahendInstant) {
+<         
+<         int minuendYear = getYear(minuendInstant);
+<         int subtrahendYear = getYear(subtrahendInstant);
+< 
+<         
+<         long minuendRem = minuendInstant - getYearMillis(minuendYear);
+<         long subtrahendRem = subtrahendInstant - getYearMillis(subtrahendYear);
+< 
+<         int difference = minuendYear - subtrahendYear;
+<         if (minuendRem < subtrahendRem) {
+<             difference--;
+<         }
+<         return difference;
+<     }
+< 
+<     
+<     long getDateMidnightMillis(int year, int monthOfYear, int dayOfMonth) {
+<         FieldUtils.verifyValueBounds(DateTimeFieldType.year(), year, getMinYear(), getMaxYear());
+<         FieldUtils.verifyValueBounds(DateTimeFieldType.monthOfYear(), monthOfYear, 1, 13);
+<         FieldUtils.verifyValueBounds(DateTimeFieldType.dayOfMonth(), dayOfMonth, 1, getDaysInYearMonth(year, monthOfYear));
+<         return getYearMonthDayMillis(year, monthOfYear, dayOfMonth);
+<     }
+< 
+<     
+<     long getTotalMillisByYearMonth(int year, int month) {
+<         return (month * 30L * DateTimeConstants.MILLIS_PER_DAY);
+<     }
+< 
+<     
+<     int getDayOfMonth(long millis) {
+<         
+<         return (getDayOfYear(millis) - 1) % 30 + 1;
+<     }
+< 
+<     
+<     boolean isLeapYear(int year) {
+<         return (year & 3) == 3;
+<     }
+< 
+<     
+<     int getDaysInYearMonth(int year, int month) {
+<         return (month != 13) ? 30 : (isLeapYear(year) ? 6 : 5);
+<     }
+< 
+<     
+<     int getDaysInMonthMax() {
+<         return 30;
+<     }
+< 
+<     
+<     int getDaysInMonthMax(int month) {
+<         return (month != 13 ? 30 : 6);
+<     }
+< 
+<     
+<     int getMonthOfYear(long millis, int year) {
+<         return ((int) ((millis - getYearMillis(year))
+<                        / (30L * DateTimeConstants.MILLIS_PER_DAY))) + 1;
+<     }
+<     
+<     
+360,369d261
+<     long getAverageMillisPerYear() {
+<         return MILLIS_PER_YEAR;
+<     }
+< 
+<     
+<     long getAverageMillisPerMonth() {
+<         return MILLIS_PER_MONTH;
+<     }
+< 
+<     
+384,385c276,277
+<             fields.months = cMonthsField;
+<             fields.monthOfYear = new CopticMonthOfYearDateTimeField(this, cMonthsField);
+---
+>             fields.months = MONTH_DURATION_FIELD;
+>             fields.monthOfYear = new BasicFixedMonthOfYearDateTimeField(this, MONTH_DURATION_FIELD);

@@ -1,0 +1,253 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.jscomp.ControlFlowGraph.Branch;
+import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+import com.google.javascript.jscomp.graph.GraphReachability;
+import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+
+
+
+
+
+
+
+
+
+
+
+class UnreachableCodeElimination extends AbstractPostOrderCallback
+    implements CompilerPass, ScopedCallback  {
+  private static final Logger logger =
+    Logger.getLogger(UnreachableCodeElimination.class.getName());
+
+  private final AbstractCompiler compiler;
+  private final boolean removeNoOpStatements;
+
+  Deque<ControlFlowGraph<Node>> cfgStack =
+      new LinkedList<ControlFlowGraph<Node>>();
+
+  ControlFlowGraph<Node> curCfg = null;
+
+  UnreachableCodeElimination(AbstractCompiler compiler,
+      boolean removeNoOpStatements) {
+    this.compiler = compiler;
+    this.removeNoOpStatements = removeNoOpStatements;
+  }
+
+  @Override
+  public void enterScope(NodeTraversal t) {
+    Scope scope = t.getScope();
+
+    
+    ControlFlowAnalysis cfa = new ControlFlowAnalysis(compiler, false, false);
+    cfa.process(null, scope.getRootNode());
+    cfgStack.push(curCfg);
+    curCfg = cfa.getCfg();
+
+    new GraphReachability<Node, ControlFlowGraph.Branch>(curCfg)
+        .compute(curCfg.getEntry().getValue());
+  }
+
+  @Override
+  public void exitScope(NodeTraversal t) {
+    curCfg = cfgStack.pop();
+  }
+
+  @Override
+  public void process(Node externs, Node root) {
+    NodeTraversal.traverse(compiler, root, this);
+  }
+
+  @Override
+  public void visit(NodeTraversal t, Node n, Node parent) {
+    if (parent == null) {
+      return;
+    }
+    if (n.isFunction() || n.isScript()) {
+      return;
+    }
+
+    DiGraphNode<Node, Branch> gNode = curCfg.getDirectedGraphNode(n);
+    if (gNode == null) { 
+      return;
+    }
+    if (gNode.getAnnotation() != GraphReachability.REACHABLE ||
+        (removeNoOpStatements && !NodeUtil.mayHaveSideEffects(n))) {
+      removeDeadExprStatementSafely(n);
+      return;
+    }
+
+    tryRemoveUnconditionalBranching(n);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  @SuppressWarnings("fallthrough")
+  private Node tryRemoveUnconditionalBranching(Node n) {
+    
+
+
+
+
+
+
+
+
+
+    
+    if (n == null) {
+       return n;
+    }
+
+    DiGraphNode<Node, Branch> gNode = curCfg.getDirectedGraphNode(n);
+
+    if (gNode == null) {
+      return n;
+    }
+
+    switch (n.getType()) {
+      case Token.RETURN:
+        if (n.hasChildren()) {
+          break;
+        }
+      case Token.BREAK:
+      case Token.CONTINUE:
+
+        
+        
+        
+        List<DiGraphEdge<Node,Branch>> outEdges = gNode.getOutEdges();
+        if (outEdges.size() == 1 &&
+            
+            (n.getNext() == null || n.getNext().isFunction())) {
+
+          Preconditions.checkState(outEdges.get(0).getValue() == Branch.UNCOND);
+          Node fallThrough = computeFollowing(n);
+          Node nextCfgNode = outEdges.get(0).getDestination().getValue();
+          if (nextCfgNode == fallThrough) {
+            removeDeadExprStatementSafely(n);
+            return fallThrough;
+          }
+        }
+    }
+    return n;
+  }
+
+  private Node computeFollowing(Node n) {
+    Node next = ControlFlowAnalysis.computeFollowNode(n);
+    while (next != null && next.isBlock()) {
+      if (next.hasChildren()) {
+        next = next.getFirstChild();
+      } else {
+        next = computeFollowing(next);
+      }
+    }
+    return next;
+  }
+
+  private void removeDeadExprStatementSafely(Node n) {
+    Node parent = n.getParent();
+    if (n.isEmpty() ||
+        (n.isBlock() && !n.hasChildren())) {
+      
+      return;
+    }
+
+    
+    
+    
+    if (NodeUtil.isForIn(parent)) {
+      return;
+    }
+
+    switch (n.getType()) {
+      
+      
+      
+      case Token.DO:
+        return;
+
+      case Token.BLOCK:
+        
+        
+        if (parent.isTry()) {
+          if (NodeUtil.isTryCatchNodeContainer(n)) {
+            return;
+          }
+        }
+        break;
+
+      case Token.CATCH:
+        Node tryNode = parent.getParent();
+        NodeUtil.maybeAddFinally(tryNode);
+        break;
+    }
+
+
+    if (n.isVar() && !n.getFirstChild().hasChildren()) {
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      return;
+    }
+
+    NodeUtil.redeclareVarsInsideBranch(n);
+    compiler.reportCodeChange();
+    if (logger.isLoggable(Level.FINE)) {
+      logger.fine("Removing " + n.toString());
+    }
+
+    NodeUtil.removeChild(n.getParent(), n);
+  }
+}

@@ -1,0 +1,188 @@
+19a20,21
+> import com.google.common.collect.ArrayListMultimap;
+> import com.google.common.collect.Multimap;
+45d46
+< 
+52,54d52
+<   
+<   private int numRemoved = 0;
+< 
+63a62,66
+>   
+> 
+> 
+>   private final Multimap<Var, Assign> assigns = ArrayListMultimap.create();
+> 
+78,80d80
+<     numRemoved = 0;
+<     referenced.clear();
+< 
+82,85d81
+< 
+<     if (numRemoved > 0) {
+<       compiler.reportCodeChange();
+<     }
+95a92
+>       interpretAssigns(scope);
+126a124,125
+>           
+>           
+128,129c127,135
+<           if (var != null) {
+<             markReferencedVar(var);
+---
+>           if (var != null && !referenced.contains(var)) {
+>             Assign maybeAssign = Assign.maybeCreateAssign(n);
+>             if (maybeAssign == null) {
+>               markReferencedVar(var);
+>             } else {
+>               
+>               
+>               assigns.put(var, maybeAssign);
+>             }
+179a186
+>     interpretAssigns(fnScope);
+204c211
+<         numRemoved++;
+---
+>         finishRemove(var);
+214,217c221,257
+<   private void markReferencedVar(Var var) {
+<     if (referenced.contains(var)) {
+<       
+<       return;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void interpretAssigns(Scope scope) {
+>     for (Iterator<Var> it = scope.getVars(); it.hasNext(); ) {
+>       Var var = it.next();
+>       if (!referenced.contains(var)) {
+>         boolean assignedToUnknownValue = false;
+>         boolean hasPropertyAssign = false;
+> 
+>         if (var.getParentNode().getType() == Token.VAR) {
+>           Node value = var.getInitialValue();
+>           assignedToUnknownValue = value != null &&
+>               !NodeUtil.isLiteralValue(value);
+>         } else {
+>           
+>           assignedToUnknownValue = true;
+>         }
+> 
+>         for (Assign assign : assigns.get(var)) {
+>           if (assign.isPropertyAssign) {
+>             hasPropertyAssign = true;
+>           } else if (!NodeUtil.isLiteralValue(
+>               assign.assignNode.getLastChild())) {
+>             assignedToUnknownValue = true;
+>           }
+>         }
+> 
+>         if (assignedToUnknownValue && hasPropertyAssign) {
+>           markReferencedVar(var);
+>         }
+>       }
+218a259,276
+>   }
+> 
+> 
+>   
+> 
+> 
+> 
+>   private void finishRemove(Var var) {
+>     for (Assign assign : assigns.get(var)) {
+>       assign.remove();
+>     }
+>     compiler.reportCodeChange();
+>   }
+> 
+>   
+> 
+> 
+>   private void markReferencedVar(Var var) {
+262c320
+<             compiler.reportCodeChange();
+---
+>             finishRemove(var);
+278c336
+<             numRemoved++;
+---
+>             finishRemove(var);
+285c343
+<           numRemoved++;
+---
+>           finishRemove(var);
+288c346,404
+<           numRemoved++;
+---
+>           finishRemove(var);
+>         }
+>       }
+>     }
+>   }
+> 
+>   private static class Assign {
+> 
+>     final Node assignNode;
+> 
+>     
+>     
+>     final boolean isPropertyAssign;
+> 
+>     Assign(Node assignNode, boolean isPropertyAssign) {
+>       Preconditions.checkState(NodeUtil.isAssignmentOp(assignNode));
+>       this.assignNode = assignNode;
+>       this.isPropertyAssign = isPropertyAssign;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     static Assign maybeCreateAssign(Node name) {
+>       Preconditions.checkState(name.getType() == Token.NAME);
+> 
+>       
+>       boolean isPropAssign = false;
+>       Node previous = name;
+>       Node current = name.getParent();
+>       while (previous == current.getFirstChild() &&
+>           NodeUtil.isGet(current)) {
+>         previous = current;
+>         current = current.getParent();
+>         isPropAssign = true;
+>       }
+> 
+>       if (previous == current.getFirstChild() &&
+>           NodeUtil.isAssignmentOp(current)) {
+>         return new Assign(current, isPropAssign);
+>       }
+>       return null;
+>     }
+> 
+>     
+> 
+> 
+>     void remove() {
+>       Node replacement = assignNode.getLastChild().detachFromParent();
+> 
+>       
+>       for (Node current = assignNode.getFirstChild();
+>            current.getType() != Token.NAME;
+>            current = current.getFirstChild()) {
+>         if (current.getType() == Token.GETELEM) {
+>           replacement = new Node(Token.COMMA,
+>               current.getLastChild().detachFromParent(), replacement);
+>           replacement.copyInformationFrom(current);
+290a407,409
+> 
+>       assignNode.getParent().replaceChild(
+>           assignNode, replacement);

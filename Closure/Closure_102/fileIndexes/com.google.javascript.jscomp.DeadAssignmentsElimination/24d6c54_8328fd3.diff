@@ -1,0 +1,32 @@
+150a151
+>     Node parent = n.getParent();
+152,153c153,154
+<     
+<     if (NodeUtil.isAssignmentOp(n)) {
+---
+>     if (NodeUtil.isAssignmentOp(n) ||
+>         n.getType() == Token.INC || n.getType() == Token.DEC) {
+202c203,216
+<         n.getParent().replaceChild(n, op);
+---
+>         parent.replaceChild(n, op);
+>       } else if (n.getType() == Token.INC || n.getType() == Token.DEC) {        
+>         if (NodeUtil.isExpressionNode(parent)) {
+>           parent.replaceChild(n, new Node(Token.VOID, Node.newNumber(0)));
+>         } else if(n.getType() == Token.COMMA && n != parent.getLastChild()) {
+>           parent.removeChild(n);
+>         } else if (parent.getType() == Token.FOR && !NodeUtil.isForIn(parent) &&
+>             NodeUtil.getConditionExpression(parent) != n) {
+>           parent.replaceChild(n, new Node(Token.EMPTY));
+>         } else {
+>           
+>           
+>           return;
+>         }
+205,208c219
+<         
+<         
+<         
+<         Preconditions.checkState(false, "Unknow statement");
+---
+>         Preconditions.checkState(false, "Unknown statement");

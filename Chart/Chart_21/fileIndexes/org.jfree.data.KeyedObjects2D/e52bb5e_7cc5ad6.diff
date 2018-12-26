@@ -1,0 +1,149 @@
+109a110,111
+> 
+> 
+207d208
+<     public Object getObject(Comparable rowKey, Comparable columnKey) {
+209c210,220
+<         Object result = null;
+---
+> 
+> 
+> 
+> 
+>     public Object getObject(Comparable rowKey, Comparable columnKey) {
+>         if (rowKey == null) {
+>             throw new IllegalArgumentException("Null 'rowKey' argument.");
+>         }
+>         if (columnKey == null) {
+>             throw new IllegalArgumentException("Null 'columnKey' argument.");
+>         }
+211,213c222,237
+<         if (row >= 0) {
+<             KeyedObjects rowData = (KeyedObjects) this.rows.get(row);
+<             result = rowData.getObject(columnKey);
+---
+>         if (row < 0) {
+>             throw new UnknownKeyException("Row key (" + rowKey 
+>                     + ") not recognised.");
+>         }
+>         int column = this.columnKeys.indexOf(columnKey);
+>         if (column < 0) {
+>             throw new UnknownKeyException("Column key (" + columnKey 
+>                     + ") not recognised.");
+>         }
+>         KeyedObjects rowData = (KeyedObjects) this.rows.get(row);
+>         int index = rowData.getIndex(columnKey);
+>         if (index >= 0) {
+>             return rowData.getObject(index);
+>         }
+>         else {
+>             return null;
+215,216d238
+<         return result;
+< 
+226,228c248,249
+<     public void addObject(Object object, 
+<                           Comparable rowKey, 
+<                           Comparable columnKey) {
+---
+>     public void addObject(Object object, Comparable rowKey, 
+>             Comparable columnKey) {
+239,241c260,261
+<     public void setObject(Object object, 
+<                           Comparable rowKey, 
+<                           Comparable columnKey) {
+---
+>     public void setObject(Object object, Comparable rowKey, 
+>             Comparable columnKey) {
+242a263,268
+>         if (rowKey == null) {
+>             throw new IllegalArgumentException("Null 'rowKey' argument.");
+>         }
+>         if (columnKey == null) {
+>             throw new IllegalArgumentException("Null 'columnKey' argument.");
+>         }
+266a293,296
+> 
+> 
+> 
+> 
+270a301,341
+>         boolean allNull = true;
+>         int rowIndex = getRowIndex(rowKey);
+>         KeyedObjects row = (KeyedObjects) this.rows.get(rowIndex);
+> 
+>         for (int item = 0, itemCount = row.getItemCount(); item < itemCount; 
+>              item++) {
+>             if (row.getObject(item) != null) {
+>                 allNull = false;
+>                 break;
+>             }
+>         }
+>         
+>         if (allNull) {
+>             this.rowKeys.remove(rowIndex);
+>             this.rows.remove(rowIndex);
+>         }
+>         
+>         
+>         allNull = true;
+>         
+>         for (int item = 0, itemCount = this.rows.size(); item < itemCount; 
+>              item++) {
+>             row = (KeyedObjects) this.rows.get(item);
+>             int columnIndex = row.getIndex(columnKey);
+>             if (columnIndex >= 0 && row.getObject(columnIndex) != null) {
+>                 allNull = false;
+>                 break;
+>             }
+>         }
+>         
+>         if (allNull) {
+>             for (int item = 0, itemCount = this.rows.size(); item < itemCount; 
+>                  item++) {
+>                 row = (KeyedObjects) this.rows.get(item);
+>                 int columnIndex = row.getIndex(columnKey);
+>                 if (columnIndex >= 0) {
+>                     row.removeValue(columnIndex);
+>                 }
+>             }
+>             this.columnKeys.remove(columnKey);
+>         }
+277a349,350
+> 
+> 
+287a361,364
+> 
+> 
+> 
+> 
+289c366,371
+<         removeRow(getRowIndex(rowKey));
+---
+>         int index = getRowIndex(rowKey);
+>         if (index < 0) {
+>             throw new UnknownKeyException("Row key (" + rowKey 
+>                     + ") not recognised.");
+>         }
+>         removeRow(index);
+296a379,380
+> 
+> 
+306a391,394
+> 
+> 
+> 
+> 
+307a396,400
+>         int index = getColumnIndex(columnKey);
+>         if (index < 0) {
+>             throw new UnknownKeyException("Column key (" + columnKey 
+>                     + ") not recognised.");
+>         }
+311c404,407
+<             rowData.removeValue(columnKey);
+---
+>             int i = rowData.getIndex(columnKey);
+>             if (i >= 0) {
+>                 rowData.removeValue(i);
+>             }

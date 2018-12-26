@@ -1,0 +1,35 @@
+21a22
+> import com.google.javascript.jscomp.CompilerOptions.LanguageMode;
+52a54
+>   private final LanguageMode languageMode;
+58a61
+>     languageMode = LanguageMode.ECMASCRIPT5;
+81a85
+>     this.languageMode = options.getLanguageOut();
+478,479c482,491
+<         add(".");
+<         addIdentifier(last.getString());
+---
+>         if (this.languageMode == LanguageMode.ECMASCRIPT3
+>             && TokenStream.isKeyword(last.getString())) {
+>           
+>           add("[");
+>           add(last);
+>           add("]");
+>         } else {
+>           add(".");
+>           addIdentifier(last.getString());
+>         }
+686,688c698,701
+<             if (!c.isQuotedString() &&
+<                 !TokenStream.isKeyword(key) &&
+<                 TokenStream.isJSIdentifier(key) &&
+---
+>             if (!c.isQuotedString()
+>                 && !(languageMode == LanguageMode.ECMASCRIPT3
+>                     && TokenStream.isKeyword(key))
+>                 && TokenStream.isJSIdentifier(key)
+691c704
+<                 NodeUtil.isLatin(key)) {
+---
+>                 && NodeUtil.isLatin(key)) {

@@ -1,0 +1,122 @@
+22a23
+> import org.apache.commons.math.FunctionEvaluationException;
+25c26
+< import org.apache.commons.math.optimization.ScalarConvergenceChecker;
+---
+> import org.apache.commons.math.analysis.MultivariateRealFunction;
+27,28d27
+< import org.apache.commons.math.optimization.ObjectiveException;
+< import org.apache.commons.math.optimization.ScalarObjectiveFunction;
+30,31c29,31
+< import org.apache.commons.math.optimization.ScalarOptimizer;
+< import org.apache.commons.math.optimization.ScalarPointValuePair;
+---
+> import org.apache.commons.math.optimization.RealConvergenceChecker;
+> import org.apache.commons.math.optimization.MultivariateRealOptimizer;
+> import org.apache.commons.math.optimization.RealPointValuePair;
+85c85
+< public abstract class DirectSearchOptimizer implements ScalarOptimizer {
+---
+> public abstract class DirectSearchOptimizer implements MultivariateRealOptimizer {
+91c91
+<     protected ScalarPointValuePair[] simplex;
+---
+>     protected RealPointValuePair[] simplex;
+94c94
+<     private ScalarObjectiveFunction f;
+---
+>     private MultivariateRealFunction f;
+97c97
+<     private ScalarConvergenceChecker checker;
+---
+>     private RealConvergenceChecker checker;
+235c235
+<     public void setConvergenceChecker(ScalarConvergenceChecker checker) {
+---
+>     public void setConvergenceChecker(RealConvergenceChecker checker) {
+240c240
+<     public ScalarConvergenceChecker getConvergenceChecker() {
+---
+>     public RealConvergenceChecker getConvergenceChecker() {
+245c245,246
+<     public ScalarPointValuePair optimize(final ScalarObjectiveFunction f, final GoalType goalType,
+---
+>     public RealPointValuePair optimize(final MultivariateRealFunction f,
+>                                          final GoalType goalType,
+247c248,249
+<         throws ObjectiveException, OptimizationException, IllegalArgumentException {
+---
+>         throws FunctionEvaluationException, OptimizationException,
+>         IllegalArgumentException {
+258,265c260,269
+<         final Comparator<ScalarPointValuePair> comparator = new Comparator<ScalarPointValuePair>() {
+<             public int compare(final ScalarPointValuePair o1, final ScalarPointValuePair o2) {
+<                 final double v1 = o1.getValue();
+<                 final double v2 = o2.getValue();
+<                 return (goalType == GoalType.MINIMIZE) ?
+<                         Double.compare(v1, v2) : Double.compare(v2, v1);
+<             }
+<         };
+---
+>         final Comparator<RealPointValuePair> comparator =
+>             new Comparator<RealPointValuePair>() {
+>                 public int compare(final RealPointValuePair o1,
+>                                    final RealPointValuePair o2) {
+>                     final double v1 = o1.getValue();
+>                     final double v2 = o2.getValue();
+>                     return (goalType == GoalType.MINIMIZE) ?
+>                             Double.compare(v1, v2) : Double.compare(v2, v1);
+>                 }
+>             };
+273c277
+<         ScalarPointValuePair[] previous = new ScalarPointValuePair[simplex.length];
+---
+>         RealPointValuePair[] previous = new RealPointValuePair[simplex.length];
+313,314c317,318
+<     protected abstract void iterateSimplex(final Comparator<ScalarPointValuePair> comparator)
+<         throws ObjectiveException, OptimizationException, IllegalArgumentException;
+---
+>     protected abstract void iterateSimplex(final Comparator<RealPointValuePair> comparator)
+>         throws FunctionEvaluationException, OptimizationException, IllegalArgumentException;
+325c329
+<         throws ObjectiveException, IllegalArgumentException {
+---
+>         throws FunctionEvaluationException, IllegalArgumentException {
+327c331
+<         return f.objective(x);
+---
+>         return f.value(x);
+346,347c350,351
+<         simplex = new ScalarPointValuePair[n + 1];
+<         simplex[0] = new ScalarPointValuePair(startPoint, Double.NaN);
+---
+>         simplex = new RealPointValuePair[n + 1];
+>         simplex[0] = new RealPointValuePair(startPoint, Double.NaN);
+356c360
+<             simplex[i + 1] = new ScalarPointValuePair(vertexI, Double.NaN);
+---
+>             simplex[i + 1] = new RealPointValuePair(vertexI, Double.NaN);
+365,366c369,370
+<     protected void evaluateSimplex(final Comparator<ScalarPointValuePair> comparator)
+<         throws ObjectiveException {
+---
+>     protected void evaluateSimplex(final Comparator<RealPointValuePair> comparator)
+>         throws FunctionEvaluationException {
+370c374
+<             final ScalarPointValuePair vertex = simplex[i];
+---
+>             final RealPointValuePair vertex = simplex[i];
+373c377
+<                 simplex[i] = new ScalarPointValuePair(point, evaluate(point), false);
+---
+>                 simplex[i] = new RealPointValuePair(point, evaluate(point), false);
+386,387c390,391
+<     protected void replaceWorstPoint(ScalarPointValuePair pointValuePair,
+<                                      final Comparator<ScalarPointValuePair> comparator) {
+---
+>     protected void replaceWorstPoint(RealPointValuePair pointValuePair,
+>                                      final Comparator<RealPointValuePair> comparator) {
+391c395
+<                 ScalarPointValuePair tmp = simplex[i];
+---
+>                 RealPointValuePair tmp = simplex[i];

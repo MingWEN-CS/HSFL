@@ -1,0 +1,55 @@
+20c20,21
+< import org.apache.commons.math.MathException;
+---
+> import org.apache.commons.math.ConvergenceException;
+> import org.apache.commons.math.FunctionEvaluationException;
+30c31
+< public class BrentSolver extends UnivariateRealSolverImpl implements Serializable {
+---
+> public class BrentSolver extends UnivariateRealSolverImpl {
+38a40
+> 
+51a54,59
+> 
+> 
+> 
+> 
+> 
+> 
+53c61
+<         throws MathException {
+---
+>         throws ConvergenceException, FunctionEvaluationException {
+66c74,84
+<     public double solve(double min, double max) throws MathException {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double solve(double min, double max) throws ConvergenceException, 
+>         FunctionEvaluationException {
+>         
+67a86,87
+>         verifyBracketing(min, max, f);
+>         
+73,77c93,97
+<         double y0 = f.value(x0);
+<         double y1 = f.value(x1);
+<         if ((y0 > 0) == (y1 > 0)) {
+<             throw new MathException("Interval doesn't bracket a zero.");
+<         }
+---
+>         double y0;
+>         double y1;
+>         y0 = f.value(x0);
+>         y1 = f.value(x1);
+>    
+164c184
+<         throw new MathException("Maximum number of iterations exceeded.");
+---
+>         throw new ConvergenceException("Maximum number of iterations exceeded.");

@@ -1,0 +1,141 @@
+23d22
+< import org.apache.commons.math.ode.events.CombinedEventsManager;
+209c208,209
+<     final double[] yTmp = new double[y0.length];
+---
+>     final double[] yTmp    = new double[y0.length];
+>     final double[] yDotTmp = new double[y0.length];
+213c213
+<     if (requiresDenseOutput() || (! eventsHandlersManager.isEmpty())) {
+---
+>     if (requiresDenseOutput() || (! eventsStates.isEmpty())) {
+229,230c229
+<     CombinedEventsManager manager = addEndTimeChecker(t0, t, eventsHandlersManager);
+<     boolean lastStep = false;
+---
+>     statesInitialized = false;
+233c232,233
+<     while (!lastStep) {
+---
+>     isLastStep = false;
+>     do {
+237,238c237,239
+<       double error = 0;
+<       for (boolean loop = true; loop;) {
+---
+>       
+>       double error = 10;
+>       while (error >= 1.0) {
+251c252
+<             } else {
+---
+>           } else {
+255c256
+<             }
+---
+>           }
+289,315c290
+<         if (error <= 1.0) {
+< 
+<           
+<           interpolator.storeTime(stepStart + stepSize);
+<           if (manager.evaluateStep(interpolator)) {
+<               final double dt = manager.getEventTime() - stepStart;
+<               if (FastMath.abs(dt) <= FastMath.ulp(stepStart)) {
+<                   
+<                   
+<                   
+<                   
+<                   
+<                   interpolator.storeTime(stepStart);
+<                   System.arraycopy(y, 0, yTmp, 0, y0.length);
+<                   hNew     = 0;
+<                   stepSize = 0;
+<                   loop     = false;
+<               } else {
+<                   
+<                   hNew = dt;
+<               }
+<           } else {
+<             
+<             loop = false;
+<           }
+< 
+<         } else {
+---
+>         if (error >= 1.0) {
+319c294
+<                        FastMath.max(minReduction, safety * FastMath.pow(error, exp)));
+---
+>                            FastMath.max(minReduction, safety * FastMath.pow(error, exp)));
+326c301
+<       final double nextStep = stepStart + stepSize;
+---
+>       interpolator.storeTime(stepStart + stepSize);
+328,329c303,304
+<       manager.stepAccepted(nextStep, y);
+<       lastStep = manager.stop();
+---
+>       System.arraycopy(yDotK[stages - 1], 0, yDotTmp, 0, y0.length);
+>       stepStart = acceptStep(interpolator, stepHandlers, y, yDotTmp, t);
+331,336c306
+<       
+<       interpolator.storeTime(nextStep);
+<       for (StepHandler handler : stepHandlers) {
+<           handler.handleStep(interpolator, lastStep);
+<       }
+<       stepStart = nextStep;
+---
+>       if (!isLastStep) {
+338,341c308,309
+<       if (fsal) {
+<         
+<         System.arraycopy(yDotK[stages - 1], 0, yDotK[0], 0, y0.length);
+<       }
+---
+>           
+>           interpolator.storeTime(stepStart);
+343,347c311,314
+<       if (manager.reset(stepStart, y) && ! lastStep) {
+<         
+<         
+<         computeDerivatives(stepStart, y, yDotK[0]);
+<       }
+---
+>           if (fsal) {
+>               
+>               System.arraycopy(yDotTmp, 0, yDotK[0], 0, y0.length);
+>           }
+349,353c316,328
+<       if (! lastStep) {
+<         
+<         
+<         
+<           stepSize = filterStep(stepSize, forward, true);
+---
+>           
+>           final double factor =
+>               FastMath.min(maxGrowth, FastMath.max(minReduction, safety * FastMath.pow(error, exp)));
+>           final double  scaledH    = stepSize * factor;
+>           final double  nextT      = stepStart + scaledH;
+>           final boolean nextIsLast = forward ? (nextT >= t) : (nextT <= t);
+>           hNew = filterStep(scaledH, forward, nextIsLast);
+> 
+>           final double  filteredNextT      = stepStart + hNew;
+>           final boolean filteredNextIsLast = forward ? (filteredNextT >= t) : (filteredNextT <= t);
+>           if (filteredNextIsLast) {
+>               hNew = t - stepStart;
+>           }
+355,362d329
+<         
+<         final double factor = FastMath.min(maxGrowth,
+<                                        FastMath.max(minReduction,
+<                                                 safety * FastMath.pow(error, exp)));
+<         final double  scaledH    = stepSize * factor;
+<         final double  nextT      = stepStart + scaledH;
+<         final boolean nextIsLast = forward ? (nextT >= t) : (nextT <= t);
+<         hNew = filterStep(scaledH, forward, nextIsLast);
+365c332
+<     }
+---
+>     } while (!isLastStep);

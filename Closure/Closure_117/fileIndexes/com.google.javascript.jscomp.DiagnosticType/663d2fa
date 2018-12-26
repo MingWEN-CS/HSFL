@@ -1,0 +1,119 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.jscomp.CheckLevel;
+
+import java.text.MessageFormat;
+
+
+
+
+
+
+public class DiagnosticType implements Comparable<DiagnosticType> {
+  
+
+
+
+  public final String key;
+
+  
+  public final MessageFormat format;
+
+  
+  public final CheckLevel defaultLevel;
+
+  
+  public CheckLevel level;
+
+  
+
+
+
+
+
+
+  public static DiagnosticType error(String name, String descriptionFormat) {
+    return make(name, CheckLevel.ERROR, descriptionFormat);
+  }
+
+  
+
+
+
+
+
+
+  public static DiagnosticType warning(String name, String descriptionFormat) {
+    return make(name, CheckLevel.WARNING, descriptionFormat);
+  }
+
+  
+
+
+
+
+
+
+  public static DiagnosticType disabled(String name,
+      String descriptionFormat) {
+    return make(name, CheckLevel.OFF, descriptionFormat);
+  }
+
+  
+
+
+
+
+
+
+
+  public static DiagnosticType make(String name, CheckLevel level,
+                                    String descriptionFormat) {
+    return
+        new DiagnosticType(name, level, new MessageFormat(descriptionFormat));
+  }
+
+  
+
+
+  private DiagnosticType(String key, CheckLevel level, MessageFormat format) {
+    this.key = key;
+    this.defaultLevel = level;
+    this.format = format;
+
+    this.level = this.defaultLevel;
+  }
+
+  
+
+
+
+  String format(Object ... arguments) {
+    return format.format(arguments);
+  }
+
+  @Override
+  public int compareTo(DiagnosticType diagnosticType) {
+    return key.compareTo(diagnosticType.key);
+  }
+
+  @Override
+  public String toString() {
+    return key + ": " + format.toPattern();
+  }
+}

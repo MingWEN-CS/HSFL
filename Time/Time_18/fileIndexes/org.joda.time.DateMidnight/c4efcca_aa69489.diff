@@ -1,0 +1,19 @@
+356,357c356,357
+<     public final DateMidnight withZoneRetainFields(DateTimeZone newDateTimeZone) {
+<         newDateTimeZone = (newDateTimeZone == null ? DateTimeZone.getDefault() : newDateTimeZone);
+---
+>     public final DateMidnight withZoneRetainFields(DateTimeZone newZone) {
+>         newZone = (newZone == null ? DateTimeZone.getDefault() : newZone);
+360c360
+<         if (newDateTimeZone == originalZone) {
+---
+>         if (newZone == originalZone) {
+364,368c364,365
+<         long originalMillis = getMillis();
+<         long newMillis = originalMillis + originalZone.getOffset(originalMillis);
+<         newMillis -= newDateTimeZone.getOffsetFromLocal(newMillis);
+< 
+<         return new DateMidnight(newMillis, getChronology().withZone(newDateTimeZone));
+---
+>         long millis = originalZone.getMillisKeepLocal(newZone, getMillis());
+>         return new DateMidnight(millis, getChronology().withZone(newZone));

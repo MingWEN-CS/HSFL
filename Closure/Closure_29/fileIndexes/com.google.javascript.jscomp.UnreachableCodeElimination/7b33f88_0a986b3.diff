@@ -1,0 +1,87 @@
+91d90
+<   @SuppressWarnings("fallthrough")
+122c121
+<       removeDeadExprStatementSafely(n, parent);
+---
+>       removeDeadExprStatementSafely(n);
+125a125,147
+>     tryRemoveUnconditionalBranching(n);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   @SuppressWarnings("fallthrough")
+>   private Node tryRemoveUnconditionalBranching(Node n) {
+134a157,180
+> 
+>     
+>     if (n == null) {
+>        return n;
+>     }
+> 
+>     DiGraphNode<Node, Branch> gNode = curCfg.getDirectedGraphNode(n);
+> 
+>     if (gNode == null) {
+>       return n;
+>     }
+> 
+>     
+>     
+>     
+>     
+>     if (n.getParent() == null) {
+>       List<DiGraphEdge<Node,Branch>> outEdges = gNode.getOutEdges();
+>       if (outEdges.size() == 1) {
+>         return tryRemoveUnconditionalBranching(
+>           outEdges.get(0).getDestination().getValue());
+>       }
+>     }
+> 
+135a182,189
+>       case Token.BLOCK:
+>         if (n.hasChildren()) {
+>           Node first = n.getFirstChild();
+>           return tryRemoveUnconditionalBranching(first);
+>         } else {
+>           return tryRemoveUnconditionalBranching(
+>             ControlFlowAnalysis.computeFollowNode(n));
+>         }
+152,154c206,211
+<           Node fallThrough = ControlFlowAnalysis.computeFollowNode(n);
+<           if (outEdges.get(0).getDestination().getValue() == fallThrough) {
+<             removeDeadExprStatementSafely(n, parent);
+---
+>           Node fallThrough = tryRemoveUnconditionalBranching(
+>             ControlFlowAnalysis.computeFollowNode(n));
+>           Node nextCfgNode = outEdges.get(0).getDestination().getValue();
+>           if (nextCfgNode == fallThrough) {
+>             removeDeadExprStatementSafely(n);
+>             return fallThrough;
+155a213
+> 
+157a216
+>     return n;
+160c219
+<   private void removeDeadExprStatementSafely(Node n, Node parent) {
+---
+>   private void removeDeadExprStatementSafely(Node n) {
+182c241
+<     NodeUtil.removeChild(parent, n);
+---
+>     NodeUtil.removeChild(n.getParent(), n);

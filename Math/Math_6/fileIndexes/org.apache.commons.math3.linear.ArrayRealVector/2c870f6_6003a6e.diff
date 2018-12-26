@@ -1,0 +1,57 @@
+1047a1048,1103
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public ArrayRealVector combine(double a, double b, ArrayRealVector y) {
+>         return (ArrayRealVector) copy().combineToSelf(a, b, y.data);
+>     }
+> 
+>     
+>     @Override
+>     public RealVector combineToSelf(double a, double b, double[] y) {
+>         checkVectorDimensions(y.length);
+>         for (int i = 0; i < this.data.length; i++) {
+>             data[i] = a * data[i] + b * y[i];
+>         }
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public ArrayRealVector combineToSelf(double a, double b, ArrayRealVector y) {
+>         combineToSelf(a, b, y.data);
+>         return this;
+>     }
+> 
+>     
+>     @Override
+>     public RealVector combineToSelf(double a, double b, RealVector y) {
+>         if (y instanceof ArrayRealVector) {
+>             return combineToSelf(a, b, ((ArrayRealVector) y).data);
+>         } else {
+>             checkVectorDimensions(y);
+>             for (int i = 0; i < this.data.length; i++) {
+>                 data[i] = a * data[i] + b * y.getEntry(i);
+>             }
+>             return this;
+>         }
+>     }

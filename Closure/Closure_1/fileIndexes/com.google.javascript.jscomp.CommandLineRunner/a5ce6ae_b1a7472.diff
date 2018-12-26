@@ -1,0 +1,90 @@
+25a26
+> import com.google.javascript.jscomp.AbstractCommandLineRunner.WarningGuardSpec;
+33a35
+> import org.kohsuke.args4j.spi.StringOptionHandler;
+38a41
+> import java.nio.charset.Charset;
+50c53,54
+< import java.nio.charset.Charset;
+---
+> 
+> 
+88c92,93
+< 
+---
+>   
+>   @SuppressWarnings("unchecked")
+89a95,97
+>     private static final WarningGuardSpec warningGuardSpec =
+>         new WarningGuardSpec();
+> 
+225a234
+>         handler = WarningGuardErrorOptionHandler.class,
+230a240
+>         handler = WarningGuardWarningOptionHandler.class,
+233c243
+<     private List<String> jscomp_warning =  Lists.newArrayList();
+---
+>     private List<String> jscomp_warning = Lists.newArrayList();
+235a246
+>         handler = WarningGuardOffOptionHandler.class,
+380a392,440
+> 
+>     
+>     
+>     public static class WarningGuardErrorOptionHandler
+>         extends StringOptionHandler {
+>       public WarningGuardErrorOptionHandler(
+>           CmdLineParser parser, OptionDef option,
+>           Setter<? super String> setter) {
+>         super(parser, option, new WarningGuardSetter(setter, CheckLevel.ERROR));
+>       }
+>     }
+> 
+>     public static class WarningGuardWarningOptionHandler
+>         extends StringOptionHandler {
+>       public WarningGuardWarningOptionHandler(
+>           CmdLineParser parser, OptionDef option,
+>           Setter<? super String> setter) {
+>         super(parser, option,
+>             new WarningGuardSetter(setter, CheckLevel.WARNING));
+>       }
+>     }
+> 
+>     public static class WarningGuardOffOptionHandler
+>         extends StringOptionHandler {
+>       public WarningGuardOffOptionHandler(
+>           CmdLineParser parser, OptionDef option,
+>           Setter<? super String> setter) {
+>         super(parser, option, new WarningGuardSetter(setter, CheckLevel.OFF));
+>       }
+>     }
+> 
+>     private static class WarningGuardSetter implements Setter {
+>       private final Setter proxy;
+>       private final CheckLevel level;
+> 
+>       private WarningGuardSetter(Setter proxy, CheckLevel level) {
+>         this.proxy = proxy;
+>         this.level = level;
+>       }
+> 
+>       @Override public boolean isMultiValued() { return proxy.isMultiValued(); }
+> 
+>       @Override public Class getType() { return proxy.getType(); }
+> 
+>       @Override public void addValue(Object value) throws CmdLineException {
+>         proxy.addValue((String) value);
+>         warningGuardSpec.add(level, (String) value);
+>       }
+>     }
+469a530
+>     Flags.warningGuardSpec.clear();
+484a546
+>     Flags.warningGuardSpec.clear();
+537,539c599
+<           .setJscompError(flags.jscomp_error)
+<           .setJscompWarning(flags.jscomp_warning)
+<           .setJscompOff(flags.jscomp_off)
+---
+>           .setWarningGuardSpec(Flags.warningGuardSpec)

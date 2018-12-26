@@ -1,0 +1,354 @@
+25d24
+< import com.google.javascript.jscomp.DefinitionsRemover.Definition;
+30a30
+> import java.util.Map;
+67,68c67
+< class RemoveUnusedVars
+<     implements CompilerPass, OptimizeCalls.CallGraphCompilerPass {
+---
+> class RemoveUnusedVars implements CompilerPass {
+109,112d107
+<   private boolean modifyCallSites;
+< 
+<   private CallSiteOptimizer callSiteOptimizer;
+< 
+116,117c111
+<       boolean preserveFunctionExpressionNames,
+<       boolean modifyCallSites) {
+---
+>       boolean preserveFunctionExpressionNames) {
+121d114
+<     this.modifyCallSites = modifyCallSites;
+129,144d121
+<     SimpleDefinitionFinder defFinder = null;
+<     if (modifyCallSites) {
+<       
+<       defFinder = new SimpleDefinitionFinder(compiler);
+<       defFinder.process(externs, root);
+<     }
+<     process(externs, root, defFinder);
+<   }
+< 
+<   @Override
+<   public void process(
+<       Node externs, Node root, SimpleDefinitionFinder defFinder) {
+<     if (modifyCallSites) {
+<       Preconditions.checkNotNull(defFinder);
+<       callSiteOptimizer = new CallSiteOptimizer(compiler, defFinder);
+<     }
+312d288
+< 
+315d290
+< 
+318,382d292
+<     Node argList = getFunctionArgList(function);
+<     boolean modifyCallers = modifyCallSites
+<         && callSiteOptimizer.canModifyCallers(function);
+<     if (!modifyCallers) {
+<       
+<       Node lastArg;
+<       while ((lastArg = argList.getLastChild()) != null) {
+<         Var var = fnScope.getVar(lastArg.getString());
+<         if (!referenced.contains(var)) {
+<           Preconditions.checkNotNull(var == null);
+<           argList.removeChild(lastArg);
+<           compiler.reportCodeChange();
+<         } else {
+<           break;
+<         }
+<       }
+<     } else {
+<       callSiteOptimizer.optimize(fnScope, referenced);
+<     }
+<   }
+< 
+< 
+<   
+< 
+< 
+<   private static Node getFunctionArgList(Node function) {
+<     return function.getFirstChild().getNext();
+<   }
+< 
+<   private static class CallSiteOptimizer {
+<     private final AbstractCompiler compiler;
+<     private final SimpleDefinitionFinder defFinder;
+< 
+<     CallSiteOptimizer(
+<         AbstractCompiler compiler,
+<         SimpleDefinitionFinder defFinder) {
+<       this.compiler = compiler;
+<       this.defFinder = defFinder;
+<     }
+< 
+<     public void optimize(Scope fnScope, Set<Var> referenced) {
+<       Node function = fnScope.getRootNode();
+<       Preconditions.checkState(function.getType() == Token.FUNCTION);
+<       Node argList = getFunctionArgList(function);
+< 
+<       
+<       
+<       boolean changeCallSignature = canChangeSignature(function);
+<       removeUnreferencedFunctionArgs(
+<           fnScope, function, referenced,
+<           argList.getFirstChild(), 0, changeCallSignature);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+384,414c294,302
+<     private boolean removeUnreferencedFunctionArgs(
+<         Scope scope, Node function, Set<Var> referenced,
+<         Node param, int paramIndex,
+<         boolean canChangeSignature) {
+<       if (param != null) {
+<         
+<         boolean hasFollowing = removeUnreferencedFunctionArgs(
+<             scope, function, referenced, param.getNext(), paramIndex+1,
+<             canChangeSignature);
+< 
+<         Var var = scope.getVar(param.getString());
+<         if (!referenced.contains(var)) {
+<           Preconditions.checkNotNull(var);
+< 
+<           
+<           
+<           boolean modifyAllCallSites = canChangeSignature || !hasFollowing;
+<           if (modifyAllCallSites) {
+<             modifyAllCallSites = canRemoveArgFromCallSites(
+<                 function, paramIndex);
+<           }
+< 
+<           tryRemoveArgFromCallSites(function, paramIndex, modifyAllCallSites);
+< 
+<           
+<           
+<           if (modifyAllCallSites || !hasFollowing) {
+<             getFunctionArgList(function).removeChild(param);
+<             compiler.reportCodeChange();
+<             return hasFollowing;
+<           }
+---
+>     Node argList = function.getFirstChild().getNext();
+>     Node lastArg;
+>     while ((lastArg = argList.getLastChild()) != null) {
+>       Var var = fnScope.getVar(lastArg.getString());
+>       if (!referenced.contains(var)) {
+>         if (var == null) {
+>           throw new IllegalStateException(
+>               "Function parameter not declared in scope: "
+>               + lastArg.getString());
+416c304,305
+<         return true;
+---
+>         argList.removeChild(lastArg);
+>         compiler.reportCodeChange();
+418,594c307
+<         
+<         
+<         tryRemoveAllFollowingArgs(function, paramIndex-1);
+<         return false;
+<       }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private boolean canRemoveArgFromCallSites(Node function, int argIndex) {
+<       Definition definition = getFunctionDefinition(function);
+< 
+<       
+<       for (UseSite site : defFinder.getUseSites(definition)) {
+<         if (isModifableCallSite(site)) {
+<           Node arg = NodeUtil.getArgumentForCallOrNew(
+<               site.node.getParent(), argIndex);
+<           
+<           
+<           if (arg != null && NodeUtil.mayHaveSideEffects(arg, compiler)) {
+<             return false;
+<           }
+<         } else {
+<           return false;
+<         }
+<       }
+< 
+<       return true;
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private void tryRemoveArgFromCallSites(
+<         Node function, int argIndex, boolean canModifyAllSites) {
+<       Definition definition = getFunctionDefinition(function);
+< 
+<       for (UseSite site : defFinder.getUseSites(definition)) {
+<         if (isModifableCallSite(site)) {
+<           Node arg = NodeUtil.getArgumentForCallOrNew(
+<               site.node.getParent(), argIndex);
+<           if (arg != null) {
+<             Node argParent = arg.getParent();
+<             
+<             
+<             if (canModifyAllSites
+<                 || (arg.getNext() == null
+<                     && !NodeUtil.mayHaveSideEffects(arg, compiler))) {
+<               
+<               argParent.removeChild(arg);
+<               compiler.reportCodeChange();
+<             } else {
+<               
+<               if (!NodeUtil.mayHaveSideEffects(arg, compiler)
+<                   && (arg.getType() != Token.NUMBER || arg.getDouble() != 0)) {
+<                 argParent.replaceChild(
+<                     arg, Node.newNumber(0).copyInformationFrom(arg));
+<                 compiler.reportCodeChange();
+<               }
+<             }
+<           }
+<         }
+<       }
+<     }
+< 
+<     
+< 
+< 
+<     private void tryRemoveAllFollowingArgs(Node function, final int argIndex) {
+<       Definition definition = getFunctionDefinition(function);
+<       for (UseSite site : defFinder.getUseSites(definition)) {
+<         if (!isModifableCallSite(site)) {
+<           continue;
+<         }
+< 
+<         Node arg = NodeUtil.getArgumentForCallOrNew(
+<             site.node.getParent(), argIndex);
+<         while (arg != null) {
+<           Node next = arg.getNext();
+<           if (next != null && !NodeUtil.mayHaveSideEffects(next)) {
+<             arg.getParent().removeChildAfter(arg);
+<             compiler.reportCodeChange();
+<           } else {
+<             arg = next;
+<           }
+<         }
+<       }
+<     }
+< 
+<     
+< 
+< 
+< 
+<     boolean canModifyCallers(Node function) {
+<       if (NodeUtil.isVarArgsFunction(function)) {
+<         return false;
+<       }
+< 
+<       DefinitionSite defSite = defFinder.getDefinitionForFunction(function);
+<       if (defSite == null) {
+<         return false;
+<       }
+< 
+<       Definition definition = defSite.definition;
+< 
+<       
+<       
+<       if (!SimpleDefinitionFinder.isSimpleFunctionDeclaration(function)) {
+<         return false;
+<       }
+< 
+<       
+<       
+<       if (SimpleDefinitionFinder.maybeExported(compiler, definition)) {
+<         return false;
+<       }
+< 
+<       Collection<UseSite> useSites = defFinder.getUseSites(definition);
+<       for (UseSite site : useSites) {
+<         
+<         
+<         Node nameNode = site.node;
+<         Collection<Definition> singleSiteDefinitions =
+<             defFinder.getDefinitionsReferencedAt(nameNode);
+<         if (singleSiteDefinitions.size() > 1) {
+<           return false;
+<         }
+<         Preconditions.checkState(!singleSiteDefinitions.isEmpty());
+<         Preconditions.checkState(singleSiteDefinitions.contains(definition));
+<       }
+< 
+<       return true;
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private static boolean isModifableCallSite(UseSite site) {
+<       return SimpleDefinitionFinder.isCallOrNewSite(site)
+<           && !NodeUtil.isFunctionObjectCallOrApply(site.node.getParent());
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private boolean canChangeSignature(Node function) {
+<       Definition definition = getFunctionDefinition(function);
+< 
+<       Preconditions.checkState(!definition.isExtern());
+< 
+<       Collection<UseSite> useSites = defFinder.getUseSites(definition);
+<       for (UseSite site : useSites) {
+<         
+<         if (!SimpleDefinitionFinder.isCallOrNewSite(site)) {
+<           return false;
+<         }
+< 
+<         
+<         if (NodeUtil.isFunctionObjectCallOrApply(site.node.getParent())) {
+<           return false;
+<         }
+< 
+<         
+< 
+<         
+<         
+<         Node nameNode = site.node;
+<         Collection<Definition> singleSiteDefinitions =
+<             defFinder.getDefinitionsReferencedAt(nameNode);
+<         Preconditions.checkState(singleSiteDefinitions.size() == 1);
+<         Preconditions.checkState(singleSiteDefinitions.contains(definition));
+---
+>         break;
+596,611d308
+< 
+<       return true;
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private Definition getFunctionDefinition(Node function) {
+<       DefinitionSite definitionSite = defFinder.getDefinitionForFunction(
+<           function);
+<       Preconditions.checkNotNull(definitionSite);
+<       Definition definition = definitionSite.definition;
+<       Preconditions.checkState(!definitionSite.inExterns);
+<       Preconditions.checkState(definition.getRValue() == function);
+<       return definition;
+614d310
+< 

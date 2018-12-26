@@ -1,0 +1,51 @@
+55a56
+> import org.apache.commons.math.MathException;
+57c58,59
+< import org.apache.commons.math.analysis.UnivariateFunction;
+---
+> import org.apache.commons.math.analysis.UnivariateRealFunction;
+> import org.apache.commons.math.analysis.UnivariateRealSolverFactory;
+104,105c106,109
+<         UnivariateFunction rootFindingFunction = new UnivariateFunction() {
+<             public double evaluate(double x) {
+---
+>         UnivariateRealFunction rootFindingFunction =
+>             new UnivariateRealFunction() {
+>                 
+>             public double value(double x) throws MathException {
+107a112,119
+> 
+>             public double firstDerivative(double x) throws MathException {
+>                 return 0;
+>             }
+> 
+>             public double secondDerivative(double x) throws MathException {
+>                 return 0;
+>             }
+110,119c122,136
+<         
+<         double[] bracket = RootFinding.bracket(rootFindingFunction,
+<             getInitialDomain(p), getDomainLowerBound(p),
+<             getDomainUpperBound(p));
+<         
+<         
+<         double root = RootFinding.bisection(rootFindingFunction, bracket[0],
+<             bracket[1]);
+<         
+<         return root;
+---
+>         try {
+>             
+>             double[] bracket = RootFinding.bracket(rootFindingFunction,
+>                 getInitialDomain(p), getDomainLowerBound(p),
+>                 getDomainUpperBound(p));
+>             
+>             
+>             double root = UnivariateRealSolverFactory.solve(
+>                 rootFindingFunction, bracket[0], bracket[1]);
+>         
+>             return root;
+>         } catch (MathException ex) {
+>             
+>             return Double.NaN;
+>         }

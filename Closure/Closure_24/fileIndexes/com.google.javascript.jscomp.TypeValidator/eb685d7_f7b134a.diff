@@ -1,0 +1,35 @@
+30c30
+< import com.google.common.base.Pair;
+---
+> import com.google.common.base.Objects;
+57d56
+< 
+679,680c678,680
+<   static class TypeMismatch extends Pair<JSType, JSType> {
+<     private static final long serialVersionUID = 1;
+---
+>   static class TypeMismatch {
+>     final JSType typeA;
+>     final JSType typeB;
+688c688,706
+<       super(a, b);
+---
+>       this.typeA = a;
+>       this.typeB = b;
+>     }
+> 
+>     @Override public boolean equals(Object object) {
+>       if (object instanceof TypeMismatch) {
+>         TypeMismatch that = (TypeMismatch) object;
+>         return (that.typeA.equals(this.typeA) && that.typeB.equals(this.typeB))
+>             || (that.typeB.equals(this.typeA) && that.typeA.equals(this.typeB));
+>       }
+>       return false;
+>     }
+> 
+>     @Override public int hashCode() {
+>       return Objects.hashCode(typeA, typeB);
+>     }
+> 
+>     @Override public String toString() {
+>       return "(" + typeA + ", " + typeB + ")";

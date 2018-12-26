@@ -1,0 +1,36 @@
+21,26d20
+< import com.google.javascript.jscomp.mozilla.rhino.CompilerEnvirons;
+< import com.google.javascript.jscomp.mozilla.rhino.Context;
+< import com.google.javascript.jscomp.mozilla.rhino.ErrorReporter;
+< import com.google.javascript.jscomp.mozilla.rhino.EvaluatorException;
+< import com.google.javascript.jscomp.mozilla.rhino.Parser;
+< import com.google.javascript.jscomp.mozilla.rhino.ast.AstRoot;
+28a23,28
+> import com.google.javascript.rhino.head.CompilerEnvirons;
+> import com.google.javascript.rhino.head.Context;
+> import com.google.javascript.rhino.head.ErrorReporter;
+> import com.google.javascript.rhino.head.EvaluatorException;
+> import com.google.javascript.rhino.head.Parser;
+> import com.google.javascript.rhino.head.ast.AstRoot;
+115a116
+> 
+120,124c121,125
+<     if (config.isIdeMode || config.languageMode != LanguageMode.ECMASCRIPT3) {
+<       
+<       compilerEnv.setReservedKeywordAsIdentifier(true);
+<       compilerEnv.setAllowKeywordAsObjectPropertyName(true);
+<     }
+---
+>     
+>     boolean acceptEs5 =
+>         config.isIdeMode || config.languageMode != LanguageMode.ECMASCRIPT3;
+>     compilerEnv.setReservedKeywordAsIdentifier(acceptEs5);
+>     compilerEnv.setAllowKeywordAsObjectPropertyName(acceptEs5);
+126,128c127
+<     if (config.isIdeMode) {
+<       compilerEnv.setAllowMemberExprAsFunctionName(true);
+<     }
+---
+>     compilerEnv.setAllowMemberExprAsFunctionName(config.isIdeMode);
+129a129
+>     compilerEnv.setRecoverFromErrors(config.isIdeMode);

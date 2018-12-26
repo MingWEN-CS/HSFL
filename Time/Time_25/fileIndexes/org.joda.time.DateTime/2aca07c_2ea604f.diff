@@ -1,0 +1,185 @@
+58a59
+> import org.joda.time.field.FieldUtils;
+342a344
+>     
+389a392,571
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withDate(int year, int monthOfYear, int dayOfMonth) {
+>         Chronology chrono = getChronology();
+>         long instant = getMillis();
+>         instant = chrono.year().set(instant, year);
+>         instant = chrono.monthOfYear().set(instant, monthOfYear);
+>         instant = chrono.dayOfMonth().set(instant, dayOfMonth);
+>         return withMillis(instant);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withTime(int hourOfDay, int minuteOfHour, int secondOfMinute, int millisOfSecond) {
+>         Chronology chrono = getChronology();
+>         long instant = getMillis();
+>         instant = chrono.hourOfDay().set(instant, hourOfDay);
+>         instant = chrono.minuteOfHour().set(instant, minuteOfHour);
+>         instant = chrono.secondOfMinute().set(instant, secondOfMinute);
+>         instant = chrono.millisOfSecond().set(instant, millisOfSecond);
+>         return withMillis(instant);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withFields(ReadablePartial partial) {
+>         if (partial == null) {
+>             return this;
+>         }
+>         return partial.resolveDateTime(this);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withDurationAdded(long durationToAdd) {
+>         return withDurationAdded(durationToAdd, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withDurationAdded(long durationToAdd, int scalar) {
+>         if (durationToAdd == 0 || scalar == 0) {
+>             return this;
+>         }
+>         long add = FieldUtils.safeMultiply(durationToAdd, scalar);
+>         long instant = FieldUtils.safeAdd(getMillis(), add);
+>         return withMillis(instant);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withDurationAdded(ReadableDuration durationToAdd) {
+>         if (durationToAdd == null) {
+>             return this;
+>         }
+>         return withDurationAdded(durationToAdd.getMillis(), 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withDurationAdded(ReadableDuration durationToAdd, int scalar) {
+>         if (durationToAdd == null || scalar == 0) {
+>             return this;
+>         }
+>         return withDurationAdded(durationToAdd.getMillis(), scalar);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withPeriodAdded(ReadablePeriod periodToAdd) {
+>         return withPeriodAdded(periodToAdd, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withPeriodAdded(ReadablePeriod periodToAdd, int scalar) {
+>         if (periodToAdd == null || scalar == 0) {
+>             return this;
+>         }
+>         long instant = periodToAdd.addTo(getMillis(), scalar, getChronology());
+>         return withMillis(instant);

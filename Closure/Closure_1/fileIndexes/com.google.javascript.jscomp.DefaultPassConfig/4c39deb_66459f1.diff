@@ -1,0 +1,90 @@
+825,826c825,826
+<   final PassFactory closurePrimitives =
+<       new PassFactory("processProvidesAndRequires", false) {
+---
+>   final HotSwapPassFactory closurePrimitives =
+>       new HotSwapPassFactory("processProvidesAndRequires", false) {
+828c828
+<     protected CompilerPass createInternal(AbstractCompiler compiler) {
+---
+>     protected HotSwapCompilerPass createInternal(AbstractCompiler compiler) {
+834c834
+<       return new CompilerPass() {
+---
+>       return new HotSwapCompilerPass() {
+839a840,843
+>         @Override
+>         public void hotSwapScript(Node scriptRoot, Scope globalScope) {
+>           pass.hotSwapScript(scriptRoot, globalScope);
+>         }
+952,953c956,957
+<   private final PassFactory checkVars =
+<       new PassFactory("checkVars", true) {
+---
+>   private final HotSwapPassFactory checkVars =
+>       new HotSwapPassFactory("checkVars", true) {
+955c959
+<     protected CompilerPass createInternal(AbstractCompiler compiler) {
+---
+>     protected HotSwapCompilerPass createInternal(AbstractCompiler compiler) {
+1017,1018c1021,1022
+<   final PassFactory inferTypes =
+<       new PassFactory("inferTypes", false) {
+---
+>   final HotSwapPassFactory inferTypes =
+>       new HotSwapPassFactory("inferTypes", false) {
+1020,1021c1024,1026
+<     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+<       return new CompilerPass() {
+---
+>     protected HotSwapCompilerPass createInternal(final AbstractCompiler
+>         compiler) {
+>       return new HotSwapCompilerPass() {
+1028a1034,1041
+>         @Override
+>         public void hotSwapScript(Node scriptRoot, Scope globalScope) {
+>           
+>           
+>           
+>           
+>           makeTypeInference(compiler).inferTypes(scriptRoot);
+>         }
+1050,1051c1063,1064
+<   private final PassFactory checkTypes =
+<       new PassFactory("checkTypes", false) {
+---
+>   private final HotSwapPassFactory checkTypes =
+>       new HotSwapPassFactory("checkTypes", false) {
+1053,1054c1066,1068
+<     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+<       return new CompilerPass() {
+---
+>     protected HotSwapCompilerPass createInternal(final AbstractCompiler
+>         compiler) {
+>       return new HotSwapCompilerPass() {
+1063a1078,1081
+>         @Override
+>         public void hotSwapScript(Node scriptRoot, Scope globalScope) {
+>           makeTypeCheck(compiler).check(scriptRoot, false);
+>         }
+2135a2154,2173
+> 
+>   
+> 
+> 
+>   abstract static class HotSwapPassFactory extends PassFactory {
+> 
+>     HotSwapPassFactory(String name, boolean isOneTimePass) {
+>       super(name, isOneTimePass);
+>     }
+> 
+>     @Override
+>     protected abstract HotSwapCompilerPass createInternal(AbstractCompiler
+>         compiler);
+> 
+>     @Override
+>     HotSwapCompilerPass getHotSwapPass(AbstractCompiler compiler) {
+>       return this.createInternal(compiler);
+>     }
+>   }
+> 

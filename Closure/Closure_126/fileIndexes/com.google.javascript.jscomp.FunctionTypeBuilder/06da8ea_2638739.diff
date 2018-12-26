@@ -1,0 +1,117 @@
+27d26
+< import com.google.common.collect.Iterables;
+78a78
+>   private List<ObjectType> extendedInterfaces = null;
+142,149c142,143
+<       } else if (
+<           objectType.isEmptyType() ||
+<           (objectType.isUnknownType() &&
+<            
+<            
+<            
+<            (objectType.getImplicitPrototype() == null ||
+<             objectType.getImplicitPrototype().isResolved()))) {
+---
+>         return false;
+>       } else if (objectType.isEmptyType()) {
+150a145,152
+>         return false;
+>       } else if (objectType.isUnknownType()) {
+>         if (hasMoreTagsToResolve(objectType)) {
+>           return true;
+>         } else {
+>           reportWarning(RESOLVED_TAG_EMPTY, "@extends", fnName);
+>           return false;
+>         }
+154d155
+<       return false;
+164,171c165,166
+<       } else if (
+<           objectType.isEmptyType() ||
+<           (objectType.isUnknownType() &&
+<            
+<            
+<            
+<            (objectType.getImplicitPrototype() == null ||
+<             objectType.getImplicitPrototype().isResolved()))) {
+---
+>         return false;
+>       } else if (objectType.isEmptyType()) {
+172a168,175
+>         return false;
+>       } else if (objectType.isUnknownType()) {
+>         if (hasMoreTagsToResolve(objectType)) {
+>           return true;
+>         } else {
+>           reportWarning(RESOLVED_TAG_EMPTY, "@implements", fnName);
+>           return false;
+>         }
+176d178
+<       return false;
+354c356
+<         if (isConstructor || isInterface) {
+---
+>         if (isConstructor) {
+376,384d377
+<         if (baseType != null) {
+<           JSType maybeFunctionType = baseType.getConstructor();
+<           if (maybeFunctionType instanceof FunctionType) {
+<             FunctionType functionType = baseType.getConstructor();
+<             Iterables.addAll(
+<                 implementedInterfaces,
+<                 functionType.getImplementedInterfaces());
+<           }
+<         }
+387a381,392
+> 
+>       
+>       if (isInterface) {
+>         extendedInterfaces = Lists.newArrayList();
+>         for (JSTypeExpression t : info.getExtendedInterfaces()) {
+>           JSType maybeInterfaceType = t.evaluate(scope, typeRegistry);
+>           if (maybeInterfaceType != null &&
+>               maybeInterfaceType.setValidator(new ExtendedTypeValidator())) {
+>             extendedInterfaces.add((ObjectType) maybeInterfaceType);
+>           }
+>         }
+>       }
+659a665,668
+>     if (extendedInterfaces != null) {
+>       fnType.setExtendedInterfaces(extendedInterfaces);
+>     }
+> 
+666c675
+<     if (baseType != null) {
+---
+>     if (!fnType.isInterface() && baseType != null) {
+755a765,794
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   private static boolean hasMoreTagsToResolve(ObjectType objectType) {
+>     Preconditions.checkArgument(objectType.isUnknownType());
+>     if (objectType.getImplicitPrototype() != null) {
+>       
+>       if (objectType.getImplicitPrototype().isResolved()) {
+>         return false;
+>       } else {
+>         return true;
+>       }
+>     } else {
+>       
+>       FunctionType ctor = objectType.getConstructor();
+>       if (ctor != null) {
+>         for (ObjectType interfaceType : ctor.getExtendedInterfaces()) {
+>           if (!interfaceType.isResolved()) {
+>             return true;
+>           }
+>         }
+>       }
+>       return false;
+>     }

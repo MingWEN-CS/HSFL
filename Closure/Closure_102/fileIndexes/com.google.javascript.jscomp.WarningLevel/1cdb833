@@ -1,0 +1,88 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.jscomp.CheckLevel;
+import com.google.javascript.jscomp.CompilerOptions;
+
+
+
+
+
+
+public enum WarningLevel {
+  QUIET,
+
+  DEFAULT,
+
+  VERBOSE;
+
+  public void setOptionsForWarningLevel(CompilerOptions options) {
+    switch (this) {
+      case QUIET:
+        
+        break;
+      case DEFAULT:
+        addDefaultWarnings(options);
+        break;
+      case VERBOSE:
+        addVerboseWarnings(options);
+        break;
+      default:
+        throw new RuntimeException("Unknown warning level.");
+    }
+  }
+
+  
+
+
+
+  private static void addDefaultWarnings(CompilerOptions options) {
+    options.checkSuspiciousCode = true;
+    
+    
+    options.checkUndefinedProperties = CheckLevel.OFF;
+    options.checkUnusedPropertiesEarly = false;
+    options.checkUnreachableCode = CheckLevel.WARNING;
+    options.checkControlStructures = true;
+  }
+
+  
+
+
+
+  private static void addVerboseWarnings(CompilerOptions options) {
+    addDefaultWarnings(options);
+
+    
+    options.checkSuspiciousCode = true;
+    options.checkGlobalThisLevel = CheckLevel.WARNING;
+    options.checkSymbols = true;
+
+    
+    
+    
+    
+    
+    options.checkTypes = true;
+    options.checkFunctions = CheckLevel.WARNING;
+
+    options.checkMethods = CheckLevel.WARNING;
+    options.checkGlobalNamesLevel = CheckLevel.WARNING;
+    options.aggressiveVarCheck = CheckLevel.WARNING;
+  }
+}

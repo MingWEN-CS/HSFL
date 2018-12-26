@@ -1,0 +1,306 @@
+920a921,933
+>     TernaryValue result = evaluateComparison(n.getType(), left, right);
+>     if (result == TernaryValue.UNKNOWN) {
+>       return n;
+>     }
+> 
+>     Node newNode = NodeUtil.booleanNode(result.toBoolean(true));
+>     n.getParent().replaceChild(n, newNode);
+>     reportCodeChange();
+> 
+>     return newNode;
+>   }
+> 
+>   static TernaryValue evaluateComparison(int op, Node left, Node right) {
+926,927c939,940
+<       if (n.getType() != Token.GT && n.getType() != Token.LT) {
+<         return n;
+---
+>       if (op != Token.GT && op != Token.LT) {
+>         return TernaryValue.UNKNOWN;
+931,933d943
+<     int op = n.getType();
+<     boolean result;
+< 
+941c951
+<           return n;
+---
+>           return TernaryValue.UNKNOWN;
+943c953
+<           return n;
+---
+>           return TernaryValue.UNKNOWN;
+945c955
+<           result = compareToUndefined(right, op);
+---
+>           return TernaryValue.forBoolean(compareToUndefined(right, op));
+947c957
+<         break;
+---
+> 
+950,951c960
+<           result = compareToNull(right, op);
+<           break;
+---
+>           return TernaryValue.forBoolean(compareToNull(right, op));
+957,958c966
+<           result = compareToUndefined(left, op);
+<           break;
+---
+>           return TernaryValue.forBoolean(compareToUndefined(left, op));
+963c971
+<           return n;
+---
+>           return TernaryValue.UNKNOWN;
+968,969c976
+<             result = lhType == rhType;
+<             break;
+---
+>             return TernaryValue.forBoolean(lhType == rhType);
+973,974c980
+<             result = lhType != rhType;
+<             break;
+---
+>             return TernaryValue.forBoolean(lhType != rhType);
+980,989c986
+<             Boolean compareResult = compareAsNumbers(op, left, right);
+<             if (compareResult != null) {
+<               result = compareResult;
+<             } else {
+<               return n;
+<             }
+<             break;
+< 
+<           default:
+<             return n;  
+---
+>             return compareAsNumbers(op, left, right);
+991c988
+<         break;
+---
+>         return TernaryValue.UNKNOWN;
+995c992
+<           return n;
+---
+>           return TernaryValue.UNKNOWN;
+1000,1001c997
+<             result = true;
+<             break;
+---
+>             return TernaryValue.TRUE;
+1005,1013c1001
+<             result = false;
+<             break;
+< 
+<           
+<           
+<           
+<           
+<           default:
+<             return n;
+---
+>             return TernaryValue.FALSE;
+1015c1003,1008
+<         break;
+---
+> 
+>         
+>         
+>         
+>         
+>         return TernaryValue.UNKNOWN;
+1019,1020c1012
+<           result = compareToUndefined(left, op);
+<           break;
+---
+>           return TernaryValue.forBoolean(compareToUndefined(left, op));
+1023,1024c1015
+<           result = compareToNull(left, op);
+<           break;
+---
+>           return TernaryValue.forBoolean(compareToNull(left, op));
+1027c1018
+<           return n;  
+---
+>           return TernaryValue.UNKNOWN;  
+1030d1020
+<         TernaryValue ternary = TernaryValue.UNKNOWN;
+1034,1035c1024
+<             ternary = areStringsEqual(left.getString(), right.getString());
+<             break;
+---
+>             return areStringsEqual(left.getString(), right.getString());
+1039,1041c1028
+<             ternary =
+<                 areStringsEqual(left.getString(), right.getString()).not();
+<             break;
+---
+>             return areStringsEqual(left.getString(), right.getString()).not();
+1044,1048c1031
+<         if (ternary == TernaryValue.UNKNOWN) {
+<           return n;
+<         }
+<         result = ternary.toBoolean(true);
+<         break;
+---
+>         return TernaryValue.UNKNOWN;
+1052,1053c1035
+<           result = compareToUndefined(left, op);
+<           break;
+---
+>           return TernaryValue.forBoolean(compareToUndefined(left, op));
+1056,1057c1038
+<           result = compareToNull(left, op);
+<           break;
+---
+>           return TernaryValue.forBoolean(compareToNull(left, op));
+1060c1041
+<           return n;  
+---
+>           return TernaryValue.UNKNOWN;  
+1062,1068c1043
+<         Boolean compareResult = compareAsNumbers(op, left, right);
+<         if (compareResult != null) {
+<           result = compareResult;
+<         } else {
+<           return null;
+<         }
+<         break;
+---
+>         return compareAsNumbers(op, left, right);
+1072,1073c1047
+<           result = compareToUndefined(left, op);
+<           break;
+---
+>           return TernaryValue.forBoolean(compareToUndefined(left, op));
+1079,1080c1053
+<             result = compareToUndefined(right, op);
+<             break;
+---
+>             return TernaryValue.forBoolean(compareToUndefined(right, op));
+1083,1084c1056
+<             result = compareToNull(left, op);
+<             break;
+---
+>             return TernaryValue.forBoolean(compareToNull(left, op));
+1089c1061
+<           return n;  
+---
+>           return TernaryValue.UNKNOWN;  
+1094c1066
+<           return n;  
+---
+>           return TernaryValue.UNKNOWN;  
+1102,1105c1074
+<             result = false;
+<             break;
+<           default:
+<             return n;  
+---
+>             return TernaryValue.FALSE;
+1107c1076,1077
+<         break;
+---
+> 
+>         return TernaryValue.UNKNOWN;  
+1112,1113c1082
+<             result = compareToUndefined(left, op);
+<             break;
+---
+>             return TernaryValue.forBoolean(compareToUndefined(left, op));
+1116,1117c1085
+<             result = compareToNull(left, op);
+<             break;
+---
+>             return TernaryValue.forBoolean(compareToNull(left, op));
+1121c1089
+<         return n;
+---
+>         return TernaryValue.UNKNOWN;
+1129,1130c1097
+<             result = compareToUndefined(left, op);
+<             break;
+---
+>             return TernaryValue.forBoolean(compareToUndefined(left, op));
+1133,1134c1100
+<             result = compareToNull(left, op);
+<             break;
+---
+>             return TernaryValue.forBoolean(compareToNull(left, op));
+1138c1104
+<         return n;
+---
+>         return TernaryValue.UNKNOWN;
+1142c1108
+<         return n;
+---
+>         return TernaryValue.UNKNOWN;
+1144,1149d1109
+< 
+<     Node newNode = NodeUtil.booleanNode(result);
+<     n.getParent().replaceChild(n, newNode);
+<     reportCodeChange();
+< 
+<     return newNode;
+1153c1113
+<   private TernaryValue areStringsEqual(String a, String b) {
+---
+>   private static TernaryValue areStringsEqual(String a, String b) {
+1167c1127
+<   private int getNormalizedNodeType(Node n) {
+---
+>   private static int getNormalizedNodeType(Node n) {
+1185c1145
+<   private Boolean compareAsNumbers(int op, Node left, Node right) {
+---
+>   private static TernaryValue compareAsNumbers(int op, Node left, Node right) {
+1188c1148
+<       return null;
+---
+>       return TernaryValue.UNKNOWN;
+1192c1152
+<       return null;
+---
+>       return TernaryValue.UNKNOWN;
+1198d1157
+<     Boolean result;
+1204,1205c1163
+<         result = lv == rv;
+<         break;
+---
+>         return TernaryValue.forBoolean(lv == rv);
+1210,1215c1168,1176
+<         result = lv != rv;
+<         break;
+<       case Token.LE: result = lv <= rv; break;
+<       case Token.LT: result = lv <  rv; break;
+<       case Token.GE: result = lv >= rv; break;
+<       case Token.GT: result = lv >  rv; break;
+---
+>         return TernaryValue.forBoolean(lv != rv);
+>       case Token.LE:
+>         return TernaryValue.forBoolean(lv <= rv);
+>       case Token.LT:
+>         return TernaryValue.forBoolean(lv <  rv);
+>       case Token.GE:
+>         return TernaryValue.forBoolean(lv >= rv);
+>       case Token.GT:
+>         return TernaryValue.forBoolean(lv >  rv);
+1217c1178
+<         return null;  
+---
+>         return TernaryValue.UNKNOWN;  
+1219d1179
+<     return result;
+1227c1187
+<   private boolean compareToUndefined(Node value, int op) {
+---
+>   private static boolean compareToUndefined(Node value, int op) {
+1252c1212
+<   private boolean isEqualityOp(int op) {
+---
+>   private static boolean isEqualityOp(int op) {
+1268c1228
+<   private boolean compareToNull(Node value, int op) {
+---
+>   private static boolean compareToNull(Node value, int op) {

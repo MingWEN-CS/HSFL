@@ -1,0 +1,60 @@
+61a62,67
+>   static final DiagnosticType SCOPE_MISMATCH =
+>       DiagnosticType.error(
+>           "JSC_SCOPE_MISMATCH",
+>           "Scope roots used with the symbol table do not match." +
+>           "\nExpected : {0}\nActual : {1}");
+> 
+94a101
+>     
+96c103,105
+<         n.getType() == Token.BLOCK || n.getType() == Token.FUNCTION);
+---
+>         (n.getType() == Token.BLOCK && n.getParent() == null) ||
+>         n.getType() == Token.FUNCTION,
+>         "May only create scopes for the global node and functions");
+210a220,230
+> 
+>         if (!checkNodesMatch(expectedScope.getRootNode(),
+>                 actualScope.getRootNode())) {
+>           compiler.report(
+>               JSError.make(
+>                   SCOPE_MISMATCH,
+>                   expectedScope.getRootNode().toStringTree(),
+>                   actualScope.getRootNode().toStringTree()));
+>           continue;
+>         }
+> 
+222c242,243
+<             if (actualVar == null) {
+---
+>             if (actualVar == null ||
+>                 expectedScope.getVar(var.getName()) != var) {
+225c246,250
+<             } else if (!isNodeAttached(actualVar.getNameNode())) {
+---
+>             } else if (
+>                 !checkNodesMatch(
+>                     var.getNameNode(),
+>                     actualVar.getNameNode()) ||
+>                 !isNodeAttached(actualVar.getNameNode())) {
+231a257,275
+>     }
+> 
+>     
+> 
+> 
+>     private boolean checkNodesMatch(Node nodeA, Node nodeB) {
+>       Node currentA = nodeA;
+>       Node currentB = nodeB;
+>       while (currentA != null && currentB != null) {
+>         if (currentA.getType() != currentB.getType() ||
+>             !currentA.isEquivalentTo(currentB)) {
+>           return false;
+>         }
+> 
+>         currentA = currentA.getParent();
+>         currentB = currentB.getParent();
+>       }
+> 
+>       return currentA == null && currentB == null;

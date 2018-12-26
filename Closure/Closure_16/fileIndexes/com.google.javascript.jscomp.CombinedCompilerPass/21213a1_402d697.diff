@@ -1,0 +1,28 @@
+18a19
+> import com.google.common.collect.Lists;
+22a24,25
+> import java.util.List;
+> 
+57a61,65
+>     this(compiler, Lists.<Callback>newArrayList(callbacks));
+>   }
+> 
+>   CombinedCompilerPass(
+>       AbstractCompiler compiler, List<Callback> callbacks) {
+59,61c67,78
+<     this.callbacks = new CallbackWrapper[callbacks.length];
+<     for (int i = 0; i < callbacks.length; i++) {
+<       this.callbacks[i] = new CallbackWrapper(callbacks[i]);
+---
+>     this.callbacks = new CallbackWrapper[callbacks.size()];
+>     for (int i = 0; i < callbacks.size(); i++) {
+>       this.callbacks[i] = new CallbackWrapper(callbacks.get(i));
+>     }
+>   }
+> 
+>   static void traverse(AbstractCompiler compiler, Node root,
+>       List<Callback> callbacks) {
+>     if (callbacks.size() == 1) {
+>       NodeTraversal.traverse(compiler, root, callbacks.get(0));
+>     } else {
+>       (new CombinedCompilerPass(compiler, callbacks)).process(null, root);

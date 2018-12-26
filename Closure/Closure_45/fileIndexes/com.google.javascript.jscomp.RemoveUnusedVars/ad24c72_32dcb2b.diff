@@ -1,0 +1,30 @@
+126c126
+<         if (NodeUtil.isFunctionExpression(n) || isExportedFunction(n, scope)) {
+---
+>         if (traverseFunctionWhenFirstSeen(n, scope)) {
+150a151,158
+>   private boolean traverseFunctionWhenFirstSeen(Node n, Scope scope) {
+>     return NodeUtil.isFunctionExpression(n) || isExportedFunction(n, scope);
+>   }
+> 
+>   
+> 
+> 
+> 
+155c163
+<     return (!removeGlobals && scope.isGlobal()) || 
+---
+>     return (!removeGlobals && scope.isGlobal()) ||
+221,223c229
+<     if (parent.getType() == Token.FUNCTION &&
+<         var.getInitialValue() != var.scope.getRootNode()) {
+<       
+---
+>     if (parent.getType() == Token.FUNCTION) {
+226,227c232,234
+< 
+<       traverseFunction(parent, var.scope);
+---
+>       if (!traverseFunctionWhenFirstSeen(parent, var.getScope())) {
+>         traverseFunction(parent, var.scope);
+>       }

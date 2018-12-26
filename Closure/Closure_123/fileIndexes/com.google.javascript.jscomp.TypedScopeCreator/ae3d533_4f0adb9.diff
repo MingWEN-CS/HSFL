@@ -1,0 +1,31 @@
+1945a1946,1951
+>       Node iifeArgumentNode = null;
+> 
+>       if (NodeUtil.isCallOrNewTarget(functionNode)) {
+>         iifeArgumentNode = functionNode.getNext();
+>       }
+> 
+1955a1962,1973
+>             boolean inferred = paramType == null || paramType == unknownType;
+> 
+>             if (iifeArgumentNode != null && inferred) {
+>               String argumentName = iifeArgumentNode.getQualifiedName();
+>               Var argumentVar =
+>                   argumentName == null || scope.getParent() == null
+>                   ? null : scope.getParent().getVar(argumentName);
+>               if (argumentVar != null && !argumentVar.isTypeInferred()) {
+>                 paramType = argumentVar.getType();
+>               }
+>             }
+> 
+1960,1962c1978,1979
+<             defineSlot(astParameter, functionNode, paramType,
+<                 
+<                 unknownType == paramType);
+---
+>             defineSlot(astParameter, functionNode, paramType, inferred);
+> 
+1964a1982,1984
+>             }
+>             if (iifeArgumentNode != null) {
+>               iifeArgumentNode = iifeArgumentNode.getNext();

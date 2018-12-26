@@ -1,0 +1,183 @@
+1a2,183
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math.optimization.linear;
+> 
+> import java.io.Serializable;
+> 
+> import org.apache.commons.math.linear.RealVector;
+> import org.apache.commons.math.linear.RealVectorImpl;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class LinearConstraint implements Serializable {
+> 
+>     
+>     private static final long serialVersionUID = -764632794033034092L;
+> 
+>     
+>     private final RealVector coefficients;
+> 
+>     
+>     private final Relationship relationship;
+> 
+>     
+>     private final double value;
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LinearConstraint(final double[] coefficients, final Relationship relationship,
+>                             final double value) {
+>         this(new RealVectorImpl(coefficients), relationship, value);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LinearConstraint(final RealVector coefficients, final Relationship relationship,
+>                             final double value) {
+>         this.coefficients = coefficients;
+>         this.relationship = relationship;
+>         this.value        = value;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LinearConstraint(final double[] lhsCoefficients, final double lhsConstant,
+>                             final Relationship relationship,
+>                             final double[] rhsCoefficients, final double rhsConstant) {
+>         double[] sub = new double[lhsCoefficients.length];
+>         for (int i = 0; i < sub.length; ++i) {
+>             sub[i] = lhsCoefficients[i] - rhsCoefficients[i];
+>         }
+>         this.coefficients = new RealVectorImpl(sub, false);
+>         this.relationship = relationship;
+>         this.value        = rhsConstant - lhsConstant;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LinearConstraint(final RealVector lhsCoefficients, final double lhsConstant,
+>                             final Relationship relationship,
+>                             final RealVector rhsCoefficients, final double rhsConstant) {
+>         this.coefficients = lhsCoefficients.subtract(rhsCoefficients);
+>         this.relationship = relationship;
+>         this.value        = rhsConstant - lhsConstant;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public RealVector getCoefficients() {
+>         return coefficients;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public Relationship getRelationship() {
+>         return relationship;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public double getValue() {
+>         return value;
+>     }
+> 
+> }

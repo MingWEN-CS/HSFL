@@ -1,0 +1,38 @@
+572a573,575
+>     boolean propCreationInConstructor = obj.isThis() &&
+>         getJSType(syntacticScope.getRootNode()).isConstructor();
+> 
+576d578
+<       
+578,580c580,601
+<         if (!(obj.isThis() &&
+<               getJSType(syntacticScope.getRootNode()).isConstructor())) {
+<           return;
+---
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         boolean staticPropCreation = false;
+>         Node maybeAssignStm = getprop.getParent().getParent();
+>         if (syntacticScope.isGlobal() &&
+>             NodeUtil.isPrototypePropertyDeclaration(maybeAssignStm)) {
+>           String propCreationFilename = maybeAssignStm.getSourceFileName();
+>           Node ctor = objectType.getOwnerFunction().getSource();
+>           if (ctor != null &&
+>               ctor.getSourceFileName().equals(propCreationFilename)) {
+>             staticPropCreation = true;
+>           }
+>         }
+>         if (!propCreationInConstructor && !staticPropCreation) {
+>           return; 
+607,608c628
+<         } else if (obj.isThis() &&
+<                    getJSType(syntacticScope.getRootNode()).isConstructor()) {
+---
+>         } else if (propCreationInConstructor) {

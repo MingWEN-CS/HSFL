@@ -1,0 +1,526 @@
+20a21
+> import java.util.Iterator;
+30c31
+< public class ArrayRealVector implements RealVector, Serializable {
+---
+> public class ArrayRealVector extends AbstractRealVector implements Serializable {
+169c170
+<         data = v.data.clone();
+---
+>         this(v, true);
+226c227
+<     public RealVector copy() {
+---
+>     public AbstractRealVector copy() {
+233c234
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+235c236
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+237,239c238,242
+<             double[] out = new double[data.length];
+<             for (int i = 0; i < data.length; i++) {
+<                 out[i] = data[i] + v.getEntry(i);
+---
+>             double[] out = data.clone();
+>             Iterator<Entry> it = v.sparseIterator();
+>             Entry e;
+>             while(it.hasNext() && (e = it.next()) != null) {
+>                 out[e.getIndex()] += e.getValue();
+249c252
+<         double[] out = new double[data.length];
+---
+>         double[] out = data.clone();
+251c254
+<             out[i] = data[i] + v[i];
+---
+>             out[i] += v[i];
+270c273
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+272c275
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+274,276c277,281
+<             double[] out = new double[data.length];
+<             for (int i = 0; i < data.length; i++) {
+<                 out[i] = data[i] - v.getEntry(i);
+---
+>             double[] out = data.clone();
+>             Iterator<Entry> it = v.sparseIterator();
+>             Entry e;
+>             while(it.hasNext() && (e = it.next()) != null) {
+>                 out[e.getIndex()] -= e.getValue();
+286c291
+<         double[] out = new double[data.length];
+---
+>         double[] out = data.clone();
+288c293
+<             out[i] = data[i] - v[i];
+---
+>             out[i] -= v[i];
+305,313d309
+<     public RealVector mapAdd(double d) {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = data[i] + d;
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+322,330d317
+<     public RealVector mapSubtract(double d) {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = data[i] - d;
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+339,347d325
+<     public RealVector mapMultiply(double d) {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = data[i] * d;
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+356,364d333
+<     public RealVector mapDivide(double d) {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = data[i] / d;
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+373,381d341
+<     public RealVector mapPow(double d) {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.pow(data[i], d);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+390,398d349
+<     public RealVector mapExp() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.exp(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+407,415d357
+<     public RealVector mapExpm1() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.expm1(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+424,432d365
+<     public RealVector mapLog() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.log(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+441,449d373
+<     public RealVector mapLog10() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.log10(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+458,466d381
+<     public RealVector mapLog1p() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.log1p(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+475,483d389
+<     public RealVector mapCosh() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.cosh(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+492,500d397
+<     public RealVector mapSinh() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.sinh(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+509,517d405
+<     public RealVector mapTanh() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.tanh(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+526,534d413
+<     public RealVector mapCos() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.cos(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+543,551d421
+<     public RealVector mapSin() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.sin(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+560,568d429
+<     public RealVector mapTan() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.tan(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+577,585d437
+<     public RealVector mapAcos() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.acos(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+594,602d445
+<     public RealVector mapAsin() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.asin(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+611,619d453
+<     public RealVector mapAtan() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.atan(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+628,636d461
+<     public RealVector mapInv() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = 1.0 / data[i];
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+645,653d469
+<     public RealVector mapAbs() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.abs(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+662,670d477
+<     public RealVector mapSqrt() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.sqrt(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+679,687d485
+<     public RealVector mapCbrt() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.cbrt(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+696,704d493
+<     public RealVector mapCeil() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.ceil(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+713,721d501
+<     public RealVector mapFloor() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.floor(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+730,738d509
+<     public RealVector mapRint() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.rint(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+747,755d517
+<     public RealVector mapSignum() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.signum(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+764,772d525
+<     public RealVector mapUlp() {
+<         double[] out = new double[data.length];
+<         for (int i = 0; i < data.length; i++) {
+<             out[i] = Math.ulp(data[i]);
+<         }
+<         return new ArrayRealVector(out);
+<     }
+< 
+<     
+783c536
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+785c538
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+787c540
+<             double[] out = new double[data.length];
+---
+>             double[] out = data.clone();
+789c542
+<                 out[i] = data[i] * v.getEntry(i);
+---
+>                 out[i] *= v.getEntry(i);
+791c544
+<             return new ArrayRealVector(out);
+---
+>             return new ArrayRealVector(out, false);
+799c552
+<         double[] out = new double[data.length];
+---
+>         double[] out = data.clone();
+801c554
+<             out[i] = data[i] * v[i];
+---
+>             out[i] *= v[i];
+803c556
+<         return new ArrayRealVector(out);
+---
+>         return new ArrayRealVector(out, false);
+820c573
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+822c575
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+824c577
+<             double[] out = new double[data.length];
+---
+>             double[] out = data.clone();
+826c579
+<                 out[i] = data[i] / v.getEntry(i);
+---
+>                 out[i] /= v.getEntry(i);
+828c581
+<             return new ArrayRealVector(out);
+---
+>             return new ArrayRealVector(out, false);
+836c589
+<         double[] out = new double[data.length];
+---
+>         double[] out = data.clone();
+838c591
+<                 out[i] = data[i] / v[i];
+---
+>                 out[i] /= v[i];
+840c593
+<         return new ArrayRealVector(out);
+---
+>         return new ArrayRealVector(out, false);
+871c624
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+873c626
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+876,877c629,632
+<             for (int i = 0; i < data.length; i++) {
+<                 dot += data[i] * v.getEntry(i);
+---
+>             Iterator<Entry> it = v.sparseIterator();
+>             Entry e;
+>             while(it.hasNext() && (e = it.next()) != null) {
+>                 dot += data[e.getIndex()] * e.getValue();
+935c690
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+937c692
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+981c736
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+983c738
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+1027c782
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+1029c784
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+1076c831
+<         return mapDivide(getNorm());
+---
+>         return mapDivide(norm);
+1085,1087c840
+<         for (int i = 0; i < data.length; i++) {
+<             data[i] /= norm;
+<         }
+---
+>         mapDivideToSelf(norm);
+1112c865
+<         try {
+---
+>         if(v instanceof ArrayRealVector) {
+1114c867
+<         } catch (ClassCastException cce) {
+---
+>         } else {
+1357c1110
+<       if (other == null) {
+---
+>       if (other == null || !(other instanceof RealVector)) {
+1361d1113
+<       try {
+1363,1377c1115,1122
+<           RealVector rhs = (RealVector) other;
+<           if (data.length != rhs.getDimension()) {
+<               return false;
+<           }
+< 
+<           if (rhs.isNaN()) {
+<               return this.isNaN();
+<           }
+< 
+<           for (int i = 0; i < data.length; ++i) {
+<               if (data[i] != rhs.getEntry(i)) {
+<                   return false;
+<               }
+<           }
+<           return true;
+---
+>       RealVector rhs = (RealVector) other;
+>       if (data.length != rhs.getDimension()) {
+>         return false;
+>       }
+> 
+>       if (rhs.isNaN()) {
+>         return this.isNaN();
+>       }
+1379,1380c1124,1125
+<       } catch (ClassCastException ex) {
+<           
+---
+>       for (int i = 0; i < data.length; ++i) {
+>         if (data[i] != rhs.getEntry(i)) {
+1381a1127
+>         }
+1383c1129
+< 
+---
+>       return true;
+1397,1410d1142
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private void checkIndex(final int index)
+<         throws MatrixIndexException {
+<         if (index < 0 || index >= getDimension()) {
+<             throw new MatrixIndexException(
+<                     "index {0} out of allowed range [{1}, {2}]",
+<                     index, 0, getDimension() - 1);
+<         }

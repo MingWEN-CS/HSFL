@@ -1,0 +1,27 @@
+61c61,67
+<         this(max, null);
+---
+>         this(max,
+>              new MaxCountExceededCallback() {
+>                  
+>                  public void trigger(int max) {
+>                      throw new MaxCountExceededException(max);
+>                  }
+>              });
+74,83c80,81
+<         maximalCount = max;
+<         if (cb != null) {
+<             maxCountCallback = cb;
+<         } else {
+<             maxCountCallback = new MaxCountExceededCallback() {
+<                 
+<                 public void trigger(int max) {
+<                     throw new MaxCountExceededException(max);
+<                 }
+<             };
+---
+>         if (cb == null){
+>             throw new NullPointerException();
+84a83,84
+>         maximalCount = max;
+>         maxCountCallback = cb;

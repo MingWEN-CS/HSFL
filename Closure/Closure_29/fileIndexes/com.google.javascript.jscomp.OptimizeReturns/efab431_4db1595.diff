@@ -1,0 +1,50 @@
+20a21
+> import com.google.common.collect.Lists;
+26a28
+> import java.util.List;
+59,63c61,64
+<     
+<     for (DefinitionSite defSite :
+<         definitions.getDefinitionSites().toArray(new DefinitionSite[0])) {
+<       if (definitions.getDefinitionSites().contains(defSite)) {
+<         optimizeResultsIfEligible(defSite, definitions);
+---
+>     List<Node> toOptimize = Lists.newArrayList();
+>     for (DefinitionSite defSite : definitions.getDefinitionSites()) {
+>       if (!defSite.inExterns && !callResultsMaybeUsed(definitions, defSite)) {
+>         toOptimize.add(defSite.definition.getRValue());
+66,82c67,69
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private void optimizeResultsIfEligible(
+<       DefinitionSite defSite, SimpleDefinitionFinder defFinder) {
+< 
+<     if (defSite.inExterns || callResultsMaybeUsed(defFinder, defSite)) {
+<       return;
+---
+>     
+>     for (Node node : toOptimize) {
+>       rewriteReturns(definitions, node);
+84,85d70
+< 
+<     rewriteReturns(defFinder, defSite.definition.getRValue());
+116c101
+<     
+---
+> 
+123,124c108,109
+<     }    
+<     
+---
+>     }
+> 

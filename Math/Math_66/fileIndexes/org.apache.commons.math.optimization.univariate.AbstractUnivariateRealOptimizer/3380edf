@@ -1,0 +1,158 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.optimization.univariate;
+
+import org.apache.commons.math.ConvergingAlgorithmImpl;
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.MaxEvaluationsExceededException;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.optimization.UnivariateRealOptimizer;
+
+
+
+
+
+
+
+
+public abstract class AbstractUnivariateRealOptimizer
+    extends ConvergingAlgorithmImpl implements UnivariateRealOptimizer {
+
+    
+    private static final long serialVersionUID = 4543031162377070699L;
+
+    
+    protected boolean resultComputed;
+
+    
+    protected double result;
+
+    
+    protected double functionValue;
+
+    
+    private int maxEvaluations;
+
+    
+    private int evaluations;
+
+    
+
+
+
+
+
+
+
+    protected AbstractUnivariateRealOptimizer(final int defaultMaximalIterationCount,
+                                              final double defaultAbsoluteAccuracy) {
+        super(defaultMaximalIterationCount, defaultAbsoluteAccuracy);
+        resultComputed = false;
+        setMaxEvaluations(Integer.MAX_VALUE);
+    }
+
+    
+
+
+    protected void checkResultComputed() throws IllegalStateException {
+        if (!resultComputed) {
+            throw MathRuntimeException.createIllegalStateException("no result available");
+        }
+    }
+
+    
+    public double getResult() {
+        checkResultComputed();
+        return result;
+    }
+
+    
+    public double getFunctionValue() {
+        checkResultComputed();
+        return functionValue;
+    }
+
+    
+
+
+
+
+
+    protected final void setResult(final double result, final int iterationCount) {
+        this.result         = result;
+        this.iterationCount = iterationCount;
+        this.resultComputed = true;
+    }
+
+    
+
+
+
+
+
+
+    protected final void setResult(final double x, final double fx,
+                                   final int iterationCount) {
+        this.result         = x;
+        this.functionValue  = fx;
+        this.iterationCount = iterationCount;
+        this.resultComputed = true;
+    }
+
+    
+
+
+    protected final void clearResult() {
+        this.resultComputed = false;
+    }
+
+    
+    public void setMaxEvaluations(int maxEvaluations) {
+        this.maxEvaluations = maxEvaluations;
+    }
+
+    
+    public int getMaxEvaluations() {
+        return maxEvaluations;
+    }
+
+    
+    public int getEvaluations() {
+        return evaluations;
+    }
+
+    
+
+
+
+
+
+
+
+    protected double computeObjectiveValue(final UnivariateRealFunction f,
+                                           final double point)
+        throws FunctionEvaluationException {
+        if (++evaluations > maxEvaluations) {
+            throw new FunctionEvaluationException(new MaxEvaluationsExceededException(maxEvaluations),
+                                                  point);
+        }
+        return f.value(point);
+    }
+
+}

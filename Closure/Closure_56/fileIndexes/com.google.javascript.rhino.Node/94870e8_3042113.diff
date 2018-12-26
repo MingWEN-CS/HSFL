@@ -1,0 +1,71 @@
+135c135
+<       NO_SIDE_EFFECTS_CALL = 41,  
+---
+>       SIDE_EFFECT_FLAGS  = 41,    
+223c223
+<         case NO_SIDE_EFFECTS_CALL: return "no_side_effects_call";
+---
+>         case SIDE_EFFECT_FLAGS: return "side_effect_flags";
+2065a2066,2078
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+> 
+>   final public static int FLAG_GLOBAL_STATE_UNMODIFIED = 1;
+>   final public static int FLAG_THIS_UNMODIFIED = 2;
+>   final public static int FLAG_ARGUMENTS_UNMODIFIED = 4;
+>   final public static int FLAG_NO_THROWS = 8;
+>   final public static int FLAG_LOCAL_RESULTS = 16;
+2066a2080
+>   final public static int SIDE_EFFECTS_FLAGS_MASK = 31;
+2067a2082,2087
+>   final public static int SIDE_EFFECTS_ALL = 0;
+>   final public static int NO_SIDE_EFFECTS =
+>     FLAG_GLOBAL_STATE_UNMODIFIED
+>     | FLAG_THIS_UNMODIFIED
+>     | FLAG_ARGUMENTS_UNMODIFIED
+>     | FLAG_NO_THROWS;
+2070c2090,2095
+<   public void setIsNoSideEffectsCall() {
+---
+>   
+> 
+> 
+> 
+> 
+>   public void setSideEffectFlags(int flags) {
+2076c2101,2108
+<     putBooleanProp(NO_SIDE_EFFECTS_CALL, true);
+---
+>     putIntProp(SIDE_EFFECT_FLAGS, flags);
+>   }
+> 
+>   
+> 
+> 
+>   public int getSideEffectFlags() {
+>     return getIntProp(SIDE_EFFECT_FLAGS);
+2084c2116,2132
+<     return getBooleanProp(NO_SIDE_EFFECTS_CALL);
+---
+>     return areBitFlagsSet(getSideEffectFlags(), NO_SIDE_EFFECTS);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   public boolean isLocalResultCall() {
+>     return areBitFlagsSet(getSideEffectFlags(), FLAG_LOCAL_RESULTS);
+>   }
+> 
+>   
+> 
+> 
+>   private boolean areBitFlagsSet(int value, int flags) {
+>     return (value & flags) == flags;

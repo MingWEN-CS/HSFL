@@ -1,0 +1,38 @@
+42a43
+> import com.google.javascript.rhino.Node;
+50,51c51,52
+<   private JSTypeRegistry registry;
+<   private final ImmutableMap.Builder<String, JSType> properties =
+---
+>   private final JSTypeRegistry registry;
+>   private final ImmutableMap.Builder<String, RecordProperty> properties =
+63c64,67
+<   public RecordTypeBuilder addProperty(String name, JSType type) {
+---
+> 
+> 
+>   public RecordTypeBuilder addProperty(String name, JSType type, Node
+>       propertyNode) {
+65c69
+<     properties.put(name, type);
+---
+>     properties.put(name, new RecordProperty(type, propertyNode));
+79a84,101
+>   }
+> 
+>   static class RecordProperty {
+>     private final JSType type;
+>     private final Node propertyNode;
+> 
+>     RecordProperty(JSType type, Node propertyNode) {
+>       this.type = type;
+>       this.propertyNode = propertyNode;
+>     }
+> 
+>     public JSType getType() {
+>       return type;
+>     }
+> 
+>     public Node getPropertyNode() {
+>       return propertyNode;
+>     }

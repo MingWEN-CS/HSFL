@@ -1,0 +1,107 @@
+230,242c230
+<         checkRowIndex(startRow);
+<         checkRowIndex(endRow);
+<         if (startRow > endRow) {
+<             throw new MatrixIndexException("initial row {0} after final row {1}",
+<                                            new Object[] { startRow, endRow });
+<         }
+< 
+<         checkColumnIndex(startColumn);
+<         checkColumnIndex(endColumn);
+<         if (startColumn > endColumn) {
+<             throw new MatrixIndexException("initial column {0} after final column {1}",
+<                                            new Object[] { startColumn, endColumn });
+<         }
+---
+>         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+260,265c248
+<         if (selectedRows.length * selectedColumns.length == 0) {
+<             if (selectedRows.length == 0) {
+<                 throw new MatrixIndexException("empty selected row index array", null);
+<             }
+<             throw new MatrixIndexException("empty selected column index array", null);
+<         }
+---
+>         checkSubMatrixIndex(selectedRows, selectedColumns);
+269,282c252,254
+<         try  {
+<             for (int i = 0; i < selectedRows.length; i++) {
+<                 for (int j = 0; j < selectedColumns.length; j++) {
+<                     subMatrix.setEntry(i, j, getEntry(selectedRows[i], selectedColumns[j]));
+<                 }
+<             }
+<         } catch (ArrayIndexOutOfBoundsException e) {
+<             
+<             
+<             for (final int row : selectedRows) {
+<                 checkRowIndex(row);
+<             }
+<             for (final int column : selectedColumns) {
+<                 checkColumnIndex(column);
+---
+>         for (int i = 0; i < selectedRows.length; i++) {
+>             for (int j = 0; j < selectedColumns.length; j++) {
+>                 subMatrix.setEntry(i, j, getEntry(selectedRows[i], selectedColumns[j]));
+528a501,508
+>     public abstract void addToEntry(int row, int column, double increment)
+>         throws MatrixIndexException;
+> 
+>     
+>     public abstract void multiplyEntry(int row, int column, double factor)
+>         throws MatrixIndexException;
+> 
+>     
+857a838,890
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void checkSubMatrixIndex(final int startRow, final int endRow,
+>                                        final int startColumn, final int endColumn) {
+>         checkRowIndex(startRow);
+>         checkRowIndex(endRow);
+>         if (startRow > endRow) {
+>             throw new MatrixIndexException("initial row {0} after final row {1}",
+>                                            new Object[] { startRow, endRow });
+>         }
+> 
+>         checkColumnIndex(startColumn);
+>         checkColumnIndex(endColumn);
+>         if (startColumn > endColumn) {
+>             throw new MatrixIndexException("initial column {0} after final column {1}",
+>                                            new Object[] { startColumn, endColumn });
+>         }
+> 
+>     
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected void checkSubMatrixIndex(final int[] selectedRows, final int[] selectedColumns) {
+>         if (selectedRows.length * selectedColumns.length == 0) {
+>             if (selectedRows.length == 0) {
+>                 throw new MatrixIndexException("empty selected row index array", null);
+>             }
+>             throw new MatrixIndexException("empty selected column index array", null);
+>         }
+> 
+>         for (final int row : selectedRows) {
+>             checkRowIndex(row);
+>         }
+>         for (final int column : selectedColumns) {
+>             checkColumnIndex(column);

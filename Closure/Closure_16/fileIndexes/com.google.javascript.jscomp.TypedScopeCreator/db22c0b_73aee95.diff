@@ -1,0 +1,73 @@
+574,575c574,575
+<         JSType valueType = getDeclaredPropType(
+<             t, info, keyNode, value);
+---
+>         JSType valueType = getDeclaredType(
+>             t.getSourceName(), info, keyNode, value);
+604,608d603
+<     private JSType getDeclaredTypeInAnnotation(
+<         NodeTraversal t, Node node, JSDocInfo info) {
+<       return getDeclaredTypeInAnnotation(t.getSourceName(), node, info);
+<     }
+< 
+705,712c700
+<       JSType type = null;
+< 
+<       if (value != null && value.getType() == Token.FUNCTION &&
+<           shouldUseFunctionLiteralType(
+<               (FunctionType) value.getJSType(), info, name)) {
+<         type = value.getJSType();
+<       }
+< 
+---
+>       JSType type = getDeclaredType(sourceName, info, name, value);
+714,734c702,706
+<         if (info == null) {
+<           
+<           CompilerInput input = compiler.getInput(sourceName);
+<           Preconditions.checkNotNull(input, sourceName);
+<           type = input.isExtern() ?
+<               getNativeType(UNKNOWN_TYPE) : null;
+<         } else if (info.hasEnumParameterType()) {
+<           if (value != null && value.getType() == Token.OBJECTLIT) {
+<             
+<             
+<             type = value.getJSType();
+<           } else {
+<             type = createEnumTypeFromNodes(
+<                 value, name.getString(), info, name);
+<           }
+<         } else if (info.isConstructor()) {
+<           type = createFunctionTypeFromNodes(
+<               value, name.getString(), info, name);
+<         } else {
+<           type = getDeclaredTypeInAnnotation(sourceName, name, info);
+<         }
+---
+>         
+>         CompilerInput input = compiler.getInput(sourceName);
+>         Preconditions.checkNotNull(input, sourceName);
+>         type = input.isExtern() ?
+>             getNativeType(UNKNOWN_TYPE) : null;
+736d707
+< 
+1151c1122
+<     private JSType getDeclaredPropType(NodeTraversal t, JSDocInfo info,
+---
+>     private JSType getDeclaredType(String sourceName, JSDocInfo info,
+1154c1125
+<         return getDeclaredTypeInAnnotation(t, lValue, info);
+---
+>         return getDeclaredTypeInAnnotation(sourceName, lValue, info);
+1171c1142
+<         return getDeclaredTypeInAnnotation(t, lValue, info);
+---
+>         return getDeclaredTypeInAnnotation(sourceName, lValue, info);
+1331c1302
+<       JSType valueType = getDeclaredPropType(t, info, n, rhsValue);
+---
+>       JSType valueType = getDeclaredType(t.getSourceName(), info, n, rhsValue);
+1490c1461
+<         JSType jsType = getDeclaredPropType(t, info, member, value);
+---
+>         JSType jsType = getDeclaredType(t.getSourceName(), info, member, value);

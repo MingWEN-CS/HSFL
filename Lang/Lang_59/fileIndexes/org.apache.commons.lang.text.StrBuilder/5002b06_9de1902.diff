@@ -1,0 +1,83 @@
+21a22
+> import java.util.List;
+1958a1960,1977
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1960c1979
+<         return new StrTokenizer(buffer);
+---
+>         return new StrBuilderTokenizer();
+2183a2203,2233
+>     class StrBuilderTokenizer extends StrTokenizer {
+> 
+>         
+>         StrBuilderTokenizer() {
+>             super();
+>         }
+> 
+>         
+>         protected List tokenize(char[] chars, int offset, int count) {
+>             if (chars == null) {
+>                 return super.tokenize(StrBuilder.this.buffer, 0, StrBuilder.this.size());
+>             } else {
+>                 return super.tokenize(chars, offset, count);
+>             }
+>         }
+> 
+>         
+>         public String getContent() {
+>             String str = super.getContent();
+>             if (str == null) {
+>                 return StrBuilder.this.toString();
+>             } else {
+>                 return str;
+>             }
+>         }
+>     }
+> 
+>     
+>     
+> 
+> 
+2205c2255
+<             return charAt(pos++);
+---
+>             return StrBuilder.this.charAt(pos++);
+2217c2267
+<             if (pos >= size()) {
+---
+>             if (pos >= StrBuilder.this.size()) {
+2221c2271
+<                 len = size() - pos;
+---
+>                 len = StrBuilder.this.size() - pos;
+2223c2273
+<             getChars(pos, pos + len, b, off);
+---
+>             StrBuilder.this.getChars(pos, pos + len, b, off);
+2230,2231c2280,2281
+<             if (pos + n > size()) {
+<                 n = size() - pos;
+---
+>             if (pos + n > StrBuilder.this.size()) {
+>                 n = StrBuilder.this.size() - pos;
+2242c2292
+<             return pos < size();
+---
+>             return pos < StrBuilder.this.size();

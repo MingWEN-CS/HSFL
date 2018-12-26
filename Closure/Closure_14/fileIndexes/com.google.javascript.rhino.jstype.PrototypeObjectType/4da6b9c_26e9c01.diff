@@ -1,0 +1,20 @@
+44a45
+> import com.google.javascript.rhino.ErrorReporter;
+422c423
+<     private final JSType type;
+---
+>     private JSType type;
+452a454,466
+>   }
+> 
+>   @Override
+>   JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+>     
+>     
+>     if (implicitPrototype != null && !implicitPrototype.isNativeObjectType()) {
+>       implicitPrototype = (ObjectType) implicitPrototype.resolve(t, scope);
+>     }
+>     for (Property prop : properties.values()) {
+>       prop.type = safeResolve(prop.type, t, scope);
+>     }
+>     return this;

@@ -1,0 +1,1190 @@
+55a56
+> import java.util.ArrayList;
+56a58
+> import java.util.List;
+181a184,185
+> 
+> 
+234a239,241
+>     
+>     
+>     
+253a261,265
+> 
+> 
+> 
+> 
+> 
+517a530,533
+>     
+>     
+>     
+> 
+548c564,568
+<             tmp = str.indexOf(searchStrs[i]);
+---
+>             String search = searchStrs[i];
+>             if (search == null) {
+>                 continue;
+>             }
+>             tmp = str.indexOf(search);
+580a601
+> 
+589c610,614
+<             tmp = str.lastIndexOf(searchStrs[i]);
+---
+>             String search = searchStrs[i];
+>             if (search == null) {
+>                 continue;
+>             }
+>             tmp = str.lastIndexOf(search);
+597a623,779
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>      public static int indexOfAnyBut(String str, char[] searchChars) {
+>          if (searchChars == null) {
+>              return -1;
+>          }
+>          return indexOfAnyBut(str, new String(searchChars));
+>      }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int indexOfAnyBut(String str, String searchChars) {
+>         if (str == null || searchChars == null) {
+>             return -1;
+>         }
+> 
+>         for (int i = 0; i < str.length(); i ++) {
+>            if (searchChars.indexOf(str.charAt(i)) < 0) {
+>                return i;
+>            }
+>         }
+> 
+>         return -1;
+>     }
+> 
+>     
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean containsOnly(String str, char[] valid) {
+>         
+>         if ( (valid == null) || (str == null) ) {
+>             return false;
+>         }
+>         if (str.length() == 0) {
+>             return true;
+>         }
+>         if (valid.length == 0) {
+>             return false;
+>         }
+>         return indexOfAnyBut(str, valid) == -1;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean containsOnly(String str, String validChars) {
+>         if (str == null || validChars == null) {
+>             return false;
+>         }
+>         return containsOnly(str, validChars.toCharArray());
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean containsNone(String str, char[] invalidChars) {
+>         if (str == null || invalidChars == null) {
+>             return true;
+>         }
+>         int strSize = str.length();
+>         int validSize = invalidChars.length;
+>         for (int i = 0; i < strSize; i++) {
+>             char ch = str.charAt(i);
+>             for (int j = 0; j < validSize; j++) {
+>                 if (invalidChars[j] == ch) {
+>                     return false;
+>                 }
+>             }
+>         }
+>         return true;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean containsNone(String str, String invalidChars) {
+>         if (str == null || invalidChars == null) {
+>             return true;
+>         }
+>         return containsNone(str, invalidChars.toCharArray());
+>     }
+>     
+>     
+662a845
+> 
+697a881,883
+>     
+>     
+>     
+817a1004,1006
+> 
+> 
+> 
+839,840c1028,1069
+<     public static String[] split(String str, String separators) {
+<         return split(str, separators, -1);
+---
+> 
+> 
+> 
+>     public static String[] split(String str, char separatorChar) {
+>         if (str == null) {
+>             return null;
+>         }
+>         char[] chars = str.toCharArray();
+>         List list = new ArrayList();
+>         int start = 0;
+>         for (int i = 0; i < chars.length; i++) {
+>             if (chars[i] == separatorChar) {
+>                 list.add(str.substring(start, i));
+>                 start = i + 1;
+>             }
+>         }
+>         list.add(str.substring(start));
+>         return (String[]) list.toArray(new String[list.size()]);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String[] split(String str, String separatorChars) {
+>         return split(str, separatorChars, -1);
+868c1097,1100
+<     public static String[] split(String str, String separator, int max) {
+---
+> 
+> 
+> 
+>     public static String[] split(String str, String separatorChars, int max) {
+870c1102
+<             return ArrayUtils.EMPTY_STRING_ARRAY;
+---
+>             return null;
+873c1105,1107
+<         if (separator == null) {
+---
+>         if (separatorChars == null) {
+>             
+>             
+878c1112
+<             tok = new StringTokenizer(str, separator);
+---
+>             tok = new StringTokenizer(str, separatorChars);
+932a1167,1195
+>     public static String join(Object[] array, char separator) {
+>         if (array == null) {
+>             return null;
+>         }
+>         int arraySize = array.length;
+>         int bufSize = (arraySize == 0 ? 0 : ((array[0] == null ? 16 : array[0].toString().length()) + 1) * arraySize);
+>         StringBuffer buf = new StringBuffer(bufSize);
+> 
+>         for (int i = 0; i < arraySize; i++) {
+>             if (i > 0) {
+>                 buf.append(separator);
+>             }
+>             if (array[i] != null) {
+>                 buf.append(array[i]);
+>             }
+>         }
+>         return buf.toString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+974,1005c1237,1238
+<     public static String join(Object[] array, char separator) {
+<         if (array == null) {
+<             return null;
+<         }
+<         int arraySize = array.length;
+<         int bufSize = (arraySize == 0 ? 0 : ((array[0] == null ? 16 : array[0].toString().length()) + 1) * arraySize);
+<         StringBuffer buf = new StringBuffer(bufSize);
+< 
+<         for (int i = 0; i < arraySize; i++) {
+<             if (i > 0) {
+<                 buf.append(separator);
+<             }
+<             if (array[i] != null) {
+<                 buf.append(array[i]);
+<             }
+<         }
+<         return buf.toString();
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static String join(Iterator iterator, String separator) {
+<         if (iterator == null) {
+---
+>     public static String join(Iterator iterator, char separator) {
+>         if (iterator == null) {
+1014c1247
+<             if ((separator != null) && iterator.hasNext()) {
+---
+>             if (iterator.hasNext()) {
+1017c1250
+<          }
+---
+>         }
+1031c1264,1265
+<     public static String join(Iterator iterator, char separator) {
+---
+> 
+>     public static String join(Iterator iterator, String separator) {
+1041c1275
+<             if (iterator.hasNext()) {
+---
+>             if ((separator != null) && iterator.hasNext()) {
+1044c1278
+<         }
+---
+>          }
+1048,1049d1281
+< 
+< 
+1072a1305
+> 
+1096a1330
+> 
+1124a1359
+> 
+1180,1269d1414
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static String center(String str, int size) {
+<         if (str == null) {
+<             return null;
+<         }
+<         if (size < 0) {
+<             size = 0;
+<         }
+<         int sz = str.length();
+<         int p = size - sz;
+<         if (p < 1) {
+<             return str;
+<         }
+<         str = leftPad(str, sz + p / 2, ' ');
+<         str = rightPad(str, size, ' ');
+<         return str;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static String center(String str, int size, String padStr) {
+<         if (str == null) {
+<             return null;
+<         }
+<         if (padStr == null || padStr.length() == 0) {
+<             throw new IllegalArgumentException("Pad String must not be null or empty");
+<         }
+<         if (size < 0) {
+<             size = 0;
+<         }
+<         int sz = str.length();
+<         int p = size - sz;
+<         if (p < 1) {
+<             return str;
+<         }
+<         str = leftPad(str, sz + p / 2, padStr);
+<         str = rightPad(str, size, padStr);
+<         return str;
+<     }
+< 
+<     
+<     
+1325c1470
+<         if (str == null || str.length() == 0) {
+---
+>         if (str == null || str.length() == 0 || separator == null) {
+1516,1517c1661,1662
+<     public static String slice(String str, String sep) {
+<         if (str == null || sep == null || str.length() == 0 || sep.length() == 0) {
+---
+>     public static String slice(String str, String separator) {
+>         if (str == null || separator == null || str.length() == 0 || separator.length() == 0) {
+1520c1665
+<         int idx = str.lastIndexOf(sep);
+---
+>         int idx = str.lastIndexOf(separator);
+1539c1684
+<     public static String sliceRemainder(String str, String sep) {
+---
+>     public static String sliceRemainder(String str, String separator) {
+1543c1688
+<         if (sep == null || sep.length() == 0) {
+---
+>         if (separator == null || separator.length() == 0) {
+1546,1547c1691,1692
+<         int idx = str.lastIndexOf(sep);
+<         if (idx == str.length() - sep.length()) {
+---
+>         int idx = str.lastIndexOf(separator);
+>         if (idx == str.length() - separator.length()) {
+1550c1695
+<             return str.substring(idx + sep.length());
+---
+>             return str.substring(idx + separator.length());
+1567c1712
+<     public static String sliceFirstRemainder(String str, String sep) {
+---
+>     public static String sliceFirstRemainder(String str, String separator) {
+1571c1716
+<         if (sep == null || sep.length() == 0) {
+---
+>         if (separator == null || separator.length() == 0) {
+1574c1719
+<         int idx = str.indexOf(sep);
+---
+>         int idx = str.indexOf(separator);
+1576c1721
+<             return str.substring(idx + sep.length());
+---
+>             return str.substring(idx + separator.length());
+1593,1594c1738,1739
+<     public static String sliceFirst(String str, String sep) {
+<         if (str == null || sep == null || str.length() == 0 || sep.length() == 0) {
+---
+>     public static String sliceFirst(String str, String separator) {
+>         if (str == null || separator == null || str.length() == 0 || separator.length() == 0) {
+1597c1742
+<         int idx = str.indexOf(sep);
+---
+>         int idx = str.indexOf(separator);
+1953,1956d2097
+<     public static String strip(String str) {
+<         return strip(str, null);
+<     }
+<     
+1967,1970d2107
+<     public static String strip(String str, String delim) {
+<         str = stripStart(str, delim);
+<         return stripEnd(str, delim);
+<     }
+1972d2108
+<     
+1979,1980c2115,2129
+<     public static String[] stripAll(String[] strs) {
+<         return stripAll(strs, null);
+---
+>     public static String center(String str, int size) {
+>         if (str == null) {
+>             return null;
+>         }
+>         if (size < 0) {
+>             size = 0;
+>         }
+>         int sz = str.length();
+>         int p = size - sz;
+>         if (p < 1) {
+>             return str;
+>         }
+>         str = leftPad(str, sz + p / 2, ' ');
+>         str = rightPad(str, size, ' ');
+>         return str;
+1982,1983d2130
+<  
+<     
+1984a2132
+>     
+1991,2001d2138
+<     public static String[] stripAll(String[] strs, String delimiter) {
+<         if ((strs == null) || (strs.length == 0)) {
+<             return strs;
+<         }
+<         int sz = strs.length;
+<         String[] newArr = new String[sz];
+<         for (int i = 0; i < sz; i++) {
+<             newArr[i] = strip(strs[i], delimiter);
+<         }
+<         return newArr;
+<     }   
+2003d2139
+<     
+2013,2029d2148
+<     public static String stripEnd(String str, String strip) {
+<         if (str == null) {
+<             return null;
+<         }
+<         int end = str.length();
+<  
+<         if (strip == null) {
+<             while ((end != 0) && Character.isWhitespace(str.charAt(end - 1))) {
+<                 end--;
+<             }
+<         } else {
+<             while ((end != 0) && (strip.indexOf(str.charAt(end - 1)) != -1)) {
+<                 end--;
+<             }
+<         }
+<         return str.substring(0, end);
+<     }
+2031d2149
+<     
+2041c2159
+<     public static String stripStart(String str, String strip) {
+---
+>     public static String center(String str, int size, String padStr) {
+2045,2047c2163,2168
+<  
+<         int start = 0;
+<  
+---
+>         if (padStr == null || padStr.length() == 0) {
+>             throw new IllegalArgumentException("Pad String must not be null or empty");
+>         }
+>         if (size < 0) {
+>             size = 0;
+>         }
+2049,2057c2170,2172
+<  
+<         if (strip == null) {
+<             while ((start != sz) && Character.isWhitespace(str.charAt(start))) {
+<                 start++;
+<             }
+<         } else {
+<             while ((start != sz) && (strip.indexOf(str.charAt(start)) != -1)) {
+<                 start++;
+<             }
+---
+>         int p = size - sz;
+>         if (p < 1) {
+>             return str;
+2059c2174,2176
+<         return str.substring(start);
+---
+>         str = leftPad(str, sz + p / 2, padStr);
+>         str = rightPad(str, size, padStr);
+>         return str;
+2072,2077d2188
+<     public static String upperCase(String str) {
+<         if (str == null) {
+<             return null;
+<         }
+<         return str.toUpperCase();
+<     }
+2079d2189
+<     
+2086,2091d2195
+<     public static String lowerCase(String str) {
+<         if (str == null) {
+<             return null;
+<         }
+<         return str.toLowerCase();
+<     }
+2093d2196
+<     
+2098a2202,2206
+>     public static String strip(String str) {
+>         return strip(str, null);
+>     }
+>     
+>     
+2102,2115d2209
+<     public static String uncapitalise(String str) {
+<         if (str == null) {
+<             return null;
+<         }
+<         else if (str.length() == 0) {
+<             return "";
+<         }
+<         else {
+<             return new StringBuffer(str.length())
+<                 .append(Character.toLowerCase(str.charAt(0)))
+<                 .append(str.substring(1))
+<                 .toString();
+<         }
+<     }
+2117d2210
+<     
+2126,2139d2218
+<     public static String capitalise(String str) {
+<         if (str == null) {
+<             return null;
+<         }
+<         else if (str.length() == 0) {
+<             return "";
+<         }
+<         else {
+<             return new StringBuffer(str.length())
+<                 .append(Character.toTitleCase(str.charAt(0)))
+<                 .append(str.substring(1))
+<                 .toString();
+<         }
+<     }
+2141d2219
+<     
+2152,2153c2230,2504
+<     public static String swapCase(String str) {
+<         if (str == null) {
+---
+> 
+>     public static String strip(String str, String stripChars) {
+>         str = stripStart(str, stripChars);
+>         return stripEnd(str, stripChars);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String stripStart(String str, String stripChars) {
+>         if (str == null) {
+>             return null;
+>         }
+>         int sz = str.length();
+>         if (sz == 0) {
+>             return str;
+>         }
+>  
+>         int start = 0;
+>         if (stripChars == null) {
+>             while ((start != sz) && Character.isWhitespace(str.charAt(start))) {
+>                 start++;
+>             }
+>         } else {
+>             while ((start != sz) && (stripChars.indexOf(str.charAt(start)) != -1)) {
+>                 start++;
+>             }
+>         }
+>         return str.substring(start);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String stripEnd(String str, String stripChars) {
+>         if (str == null) {
+>             return null;
+>         }
+>         int end = str.length();
+>         if (end == 0) {
+>             return str;
+>         }
+>  
+>         if (stripChars == null) {
+>             while ((end != 0) && Character.isWhitespace(str.charAt(end - 1))) {
+>                 end--;
+>             }
+>         } else {
+>             while ((end != 0) && (stripChars.indexOf(str.charAt(end - 1)) != -1)) {
+>                 end--;
+>             }
+>         }
+>         return str.substring(0, end);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String[] stripAll(String[] strs) {
+>         return stripAll(strs, null);
+>     }
+>  
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String[] stripAll(String[] strs, String stripChars) {
+>         if ((strs == null) || (strs.length == 0)) {
+>             return strs;
+>         }
+>         int sz = strs.length;
+>         String[] newArr = new String[sz];
+>         for (int i = 0; i < sz; i++) {
+>             newArr[i] = strip(strs[i], stripChars);
+>         }
+>         return newArr;
+>     }   
+> 
+>     
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String upperCase(String str) {
+>         if (str == null) {
+>             return null;
+>         }
+>         return str.toUpperCase();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String lowerCase(String str) {
+>         if (str == null) {
+>             return null;
+>         }
+>         return str.toLowerCase();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String capitalise(String str) {
+>         if (str == null) {
+>             return null;
+>         }
+>         if (str.length() == 0) {
+>             return "";
+>         }
+>         return new StringBuffer(str.length())
+>             .append(Character.toTitleCase(str.charAt(0)))
+>             .append(str.substring(1))
+>             .toString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String uncapitalise(String str) {
+>         if (str == null) {
+>             return null;
+>         }
+>         if (str.length() == 0) {
+>             return "";
+>         }
+>         return new StringBuffer(str.length())
+>             .append(Character.toLowerCase(str.charAt(0)))
+>             .append(str.substring(1))
+>             .toString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String swapCase(String str) {
+>         if (str == null) {
+2159c2510
+<         boolean whitespace = false;
+---
+>         boolean whitespace = true;
+2184d2534
+< 
+2195a2546,2549
+> 
+> 
+> 
+> 
+2202c2556
+<         boolean space = true;
+---
+>         boolean whitespace = true;
+2207,2208c2561,2562
+<                 space = true;
+<             } else if (space) {
+---
+>                 whitespace = true;
+>             } else if (whitespace) {
+2210c2564
+<                 space = false;
+---
+>                 whitespace = false;
+2228a2583,2586
+> 
+> 
+> 
+> 
+2265a2624,2629
+> 
+> 
+> 
+> 
+> 
+> 
+2278a2643,2654
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+2280c2656
+<         if (str == null) {
+---
+>         if (str == null || open == null || close == null) {
+2293a2670,2672
+>     
+>     
+>     
+2483,2494d2861
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean containsOnly(String str, String validChars) {
+<         if (str == null || validChars == null) {
+<             return false;
+<         }
+<         return containsOnly(str, validChars.toCharArray());
+<     }
+2497,2509d2863
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static boolean containsNone(String str, String invalidChars) {
+<         if (str == null || invalidChars == null) {
+<             return true;
+<         }
+<         return containsNone(str, invalidChars.toCharArray());
+<     }
+<     
+2517,2532d2870
+<     public static boolean containsNone(String str, char[] invalidChars) {
+<         if (str == null || invalidChars == null) {
+<             return true;
+<         }
+<         int strSize = str.length();
+<         int validSize = invalidChars.length;
+<         for (int i = 0; i < strSize; i++) {
+<             char ch = str.charAt(i);
+<             for (int j = 0; j < validSize; j++) {
+<                 if (invalidChars[j] == ch) {
+<                     return false;
+<                 }
+<             }
+<         }
+<         return true;
+<     }
+2534d2871
+<     
+2541,2552c2878,2879
+<     public static boolean containsOnly(String str, char[] valid) {
+<         
+<         if ( (valid == null) || (str == null) ) {
+<             return false;
+<         }
+<         if (str.length() == 0) {
+<             return true;
+<         }
+<         if (valid.length == 0) {
+<             return false;
+<         }
+<         return indexOfAnyBut(str, valid) == -1;
+---
+>     public static String defaultString(String str) {
+>         return (str == null ? "" : str);
+2563,2571d2889
+<      public static int indexOfAnyBut(String str, char[] searchChars) {
+<          if (searchChars == null) {
+<              return -1;
+<          }
+<          return indexOfAnyBut(str, new String(searchChars));
+<      }
+< 
+<     
+< 
+2578,2581d2895
+<     public static int indexOfAnyBut(String str, String searchChars) {
+<         if (str == null || searchChars == null) {
+<             return -1;
+<         }
+2583,2587d2896
+<         for (int i = 0; i < str.length(); i ++) {
+<            if (searchChars.indexOf(str.charAt(i)) < 0) {
+<                return i;
+<            }
+<         }
+2589c2898,2899
+<         return -1;
+---
+>     public static String defaultString(Object obj) {
+>         return (obj == null ? "" : obj.toString());
+2593,2595d2902
+<     
+<     
+<     
+2609,2610c2916,2918
+<     public static String defaultString(String str) {
+<         return (str == null ? "" : str);
+---
+> 
+>     public static String defaultString(String str, String defaultStr) {
+>         return (str == null ? defaultStr : str);
+2629,2630c2937,2939
+<     public static String defaultString(Object obj) {
+<         return (obj == null ? "" : obj.toString());
+---
+> 
+>     public static String defaultString(Object obj, String defaultStr) {
+>         return (obj == null ? defaultStr : obj.toString());
+2633a2943
+>     
+2634a2945
+>     
+2648,2649c2959,2963
+<     public static String defaultString(String str, String defaultStr) {
+<         return (str == null ? defaultStr : str);
+---
+>     public static String reverse(String str) {
+>         if (str == null) {
+>             return null;
+>         }
+>         return new StringBuffer(str).reverse().toString();
+2669,2671d2982
+<     public static String defaultString(Object obj, String defaultStr) {
+<         return (obj == null ? defaultStr : obj.toString());
+<     }
+2673,2674c2984,2993
+<     
+<     
+---
+>     public static String reverseDelimitedString(String str, char separatorChar) {
+>         if (str == null) {
+>             return null;
+>         }
+>         
+>         
+>         String[] strs = split(str, separatorChar);
+>         ArrayUtils.reverse(strs);
+>         return join(strs, separatorChar);
+>     }
+2690,2699d3008
+<     public static String reverse(String str) {
+<         if (str == null) {
+<             return null;
+<         }
+<         return new StringBuffer(str).reverse().toString();
+<     }
+< 
+<     
+< 
+< 
+2708c3017,3020
+<     public static String reverseDelimitedString(String str, String delimiter) {
+---
+>     public static String reverseDelimitedString(String str, String separatorChars) {
+>         if (str == null) {
+>             return null;
+>         }
+2711c3023
+<         String[] strs = split(str, delimiter);
+---
+>         String[] strs = split(str, separatorChars);
+2713c3025,3028
+<         return join(strs, delimiter);
+---
+>         if (separatorChars == null) {
+>             return join(strs, ' ');
+>         }
+>         return join(strs, separatorChars);
+2737a3053
+> 
+2742a3059
+> 

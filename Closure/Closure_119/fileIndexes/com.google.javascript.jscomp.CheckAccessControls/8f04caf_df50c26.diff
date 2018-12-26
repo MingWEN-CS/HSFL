@@ -1,0 +1,49 @@
+91a92,96
+>   static final DiagnosticType EXTEND_FINAL_CLASS =
+>       DiagnosticType.error(
+>           "JSC_EXTEND_FINAL_CLASS",
+>           "{0} is not allowed to extend final class {1}.");
+> 
+234a240,242
+>       case Token.FUNCTION:
+>         checkFinalClassOverrides(t, n, parent);
+>         break;
+361a370,386
+>   private void checkFinalClassOverrides(NodeTraversal t, Node fn, Node parent) {
+>     JSType type = fn.getJSType().toMaybeFunctionType();
+>     if (type != null && type.isConstructor()) {
+>       JSType finalParentClass = getFinalParentClass(getClassOfMethod(fn, parent));
+>       if (finalParentClass != null) {
+>         compiler.report(
+>             t.makeError(fn, EXTEND_FINAL_CLASS,
+>                 type.getDisplayName(), finalParentClass.getDisplayName()));
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+677a703,722
+>   }
+> 
+>   
+> 
+> 
+>   private JSType getFinalParentClass(JSType type) {
+>     if (type != null) {
+>       ObjectType iproto = ObjectType.cast(type).getImplicitPrototype();
+>       while (iproto != null && iproto.getConstructor() == null) {
+>         iproto = iproto.getImplicitPrototype();
+>       }
+>       if (iproto != null) {
+>         Node source = iproto.getConstructor().getSource();
+>         JSDocInfo jsDoc = source != null ? NodeUtil.getBestJSDocInfo(source) : null;
+>         if (jsDoc != null && jsDoc.isConstant()) {
+>           return iproto;
+>         }
+>       }
+>     }
+>     return null;

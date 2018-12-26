@@ -1,0 +1,25 @@
+444,447c444,453
+<         if (first.getType() == Token.NAME &&
+<             "eval".equals(first.getString()) &&
+<             !first.getBooleanProp(Node.DIRECT_EVAL)) {
+<           add("(0,eval)");
+---
+>         
+>         
+>         
+>         
+>         
+>         if (isIndirectEval(first)
+>             || n.getBooleanProp(Node.FREE_CALL) && NodeUtil.isGet(first)) {
+>           add("(0,");
+>           addExpr(first, NodeUtil.precedence(Token.COMMA));
+>           add(")");
+641a648,655
+>   }
+> 
+>   
+> 
+> 
+>   private boolean isIndirectEval(Node n) {
+>     return n.getType() == Token.NAME && "eval".equals(n.getString()) &&
+>         !n.getBooleanProp(Node.DIRECT_EVAL);

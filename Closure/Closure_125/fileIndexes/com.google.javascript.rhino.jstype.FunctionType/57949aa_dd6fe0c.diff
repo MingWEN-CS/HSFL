@@ -1,0 +1,35 @@
+192,193c192,193
+<   public FunctionType toMaybeFunctionType() {
+<     return this;
+---
+>   public boolean isFunctionType() {
+>     return true;
+566c566,569
+<       FunctionType other = that.toMaybeFunctionType();
+---
+>       FunctionType other = null;
+>       if (that instanceof FunctionType) {
+>         other = (FunctionType) that;
+>       }
+729,731c732,736
+<     FunctionType that =
+<         JSType.toMaybeFunctionType(otherType.toMaybeFunctionType());
+<     if (that == null) {
+---
+>     if (!(otherType instanceof FunctionType)) {
+>       return false;
+>     }
+>     FunctionType that = (FunctionType) otherType;
+>     if (!that.isFunctionType()) {
+834,835c839
+<       FunctionType other = that.toMaybeFunctionType();
+<       if (other.isInterface()) {
+---
+>       if (((FunctionType) that).isInterface()) {
+849a854
+>       FunctionType other = (FunctionType) that;
+1014,1015c1019
+<         subTypes.set(
+<             i, JSType.toMaybeFunctionType(subTypes.get(i).resolve(t, scope)));
+---
+>         subTypes.set(i, (FunctionType) subTypes.get(i).resolve(t, scope));

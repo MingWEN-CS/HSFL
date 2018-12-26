@@ -1,0 +1,469 @@
+102,138d101
+<     public static LocalDateTime nowDefaultZone() {
+<         return forInstant(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance());
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static LocalDateTime now(DateTimeZone zone) {
+<         return forInstant(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance(zone));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static LocalDateTime now(Chronology chronology) {
+<         return forInstant(DateTimeUtils.currentTimeMillis(), chronology);
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+203,206c166,167
+< 
+< 
+<     public static LocalDateTime forInstantDefaultZone(long instant) {
+<         return forInstant(instant, ISOChronology.getInstance());
+---
+>     public LocalDateTime() {
+>         this(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance());
+218,220c179,180
+< 
+<     public static LocalDateTime forInstant(long instant, DateTimeZone zone) {
+<         return forInstant(instant, ISOChronology.getInstance(zone));
+---
+>     public LocalDateTime(DateTimeZone zone) {
+>         this(DateTimeUtils.currentTimeMillis(), ISOChronology.getInstance(zone));
+232,236c192,193
+< 
+<     public static LocalDateTime forInstant(long instant, Chronology chronology) {
+<         chronology = DateTimeUtils.getChronology(chronology);
+<         long localMillis = chronology.getZone().getMillisKeepLocal(DateTimeZone.UTC, instant);
+<         return new LocalDateTime(localMillis, chronology.withUTC());
+---
+>     public LocalDateTime(Chronology chronology) {
+>         this(DateTimeUtils.currentTimeMillis(), chronology);
+247a205,212
+>     public LocalDateTime(long instant) {
+>         this(instant, ISOChronology.getInstance());
+>     }
+> 
+>     
+> 
+> 
+> 
+254,255c219,220
+<     public static LocalDateTime forInstant(Object instant) {
+<         return forInstant(instant, (Chronology) null);
+---
+>     public LocalDateTime(long instant, DateTimeZone zone) {
+>         this(instant, ISOChronology.getInstance(zone));
+267a233,248
+>     public LocalDateTime(long instant, Chronology chronology) {
+>         chronology = DateTimeUtils.getChronology(chronology);
+>         
+>         long localMillis = chronology.getZone().getMillisKeepLocal(DateTimeZone.UTC, instant);
+>         iLocalMillis = localMillis;
+>         iChronology = chronology.withUTC();
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+274,279c255,257
+<     public static LocalDateTime forInstant(Object instant, DateTimeZone zone) {
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+<         Chronology chrono = converter.getChronology(instant, zone);
+<         long millis = converter.getInstantMillis(instant, chrono);
+<         chrono = DateTimeUtils.getChronology(chrono);
+<         return forInstant(millis, chrono);
+---
+> 
+>     public LocalDateTime(Object instant) {
+>         this(instant, (Chronology) null);
+297c275,276
+<     public static LocalDateTime forInstant(Object instant, Chronology chronology) {
+---
+> 
+>     public LocalDateTime(Object instant, DateTimeZone zone) {
+299c278
+<         Chronology chrono = DateTimeUtils.getChronology(converter.getChronology(instant, chronology));
+---
+>         Chronology chronology = converter.getChronology(instant, zone);
+301c280,284
+<         return forInstant(millis, chrono);
+---
+>         chronology = DateTimeUtils.getChronology(chronology);
+>         
+>         long localMillis = chronology.getZone().getMillisKeepLocal(DateTimeZone.UTC, millis);
+>         iLocalMillis = localMillis;
+>         iChronology = chronology.withUTC();
+311,312c294,307
+<     LocalDateTime(long localMillis, Chronology chronology) {
+<         super();
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime(Object instant, Chronology chronology) {
+>         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+>         Chronology chrono = DateTimeUtils.getChronology(converter.getChronology(instant, chronology));
+>         long millis = converter.getInstantMillis(instant, chrono);
+>         
+>         long localMillis = chrono.getZone().getMillisKeepLocal(DateTimeZone.UTC, millis);
+314c309
+<         iChronology = chronology;
+---
+>         iChronology = chrono.withUTC();
+509a505,518
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean isSupported(DurationFieldType type) {
+>         if (type == null) {
+>             return false;
+>         }
+>         return type.getField(getChronology()).isSupported();
+>     }
+> 
+>     
+535c544
+<     public DateTime toDateTimeDefaultZone() {
+---
+>     public DateTime toDateTime() {
+557c566
+<     public LocalDate getDate() {
+---
+>     public LocalDate toLocalDate() {
+566c575
+<     public LocalTime getTime() {
+---
+>     public LocalTime toLocalTime() {
+601a611
+> 
+627a638
+> 
+702a714
+> 
+880a893
+>     
+1096a1110
+>     
+1196,1197c1210,1212
+<     public Property property(DateTimeFieldType type) {
+<         if (type == null) {
+---
+> 
+>     public Property property(DateTimeFieldType fieldType) {
+>         if (fieldType == null) {
+1200,1202c1215,1216
+<         DateTimeField field = type.getField(getChronology());
+<         if (field.isSupported() == false) {
+<             throw new IllegalArgumentException("Field '" + type + "' is not supported");
+---
+>         if (isSupported(fieldType) == false) {
+>             throw new IllegalArgumentException("Field '" + fieldType + "' is not supported");
+1204c1218
+<         return new Property(this, field);
+---
+>         return new Property(this, fieldType.getField(getChronology()));
+1257a1272,1277
+> 
+> 
+> 
+> 
+> 
+> 
+1353a1374,1615
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withEra(int era) {
+>         return withLocalMillis(getChronology().era().set(getLocalMillis(), era));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withCenturyOfEra(int centuryOfEra) {
+>         return withLocalMillis(getChronology().centuryOfEra().set(getLocalMillis(), centuryOfEra));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withYearOfEra(int yearOfEra) {
+>         return withLocalMillis(getChronology().yearOfEra().set(getLocalMillis(), yearOfEra));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withYearOfCentury(int yearOfCentury) {
+>         return withLocalMillis(getChronology().yearOfCentury().set(getLocalMillis(), yearOfCentury));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withYear(int year) {
+>         return withLocalMillis(getChronology().year().set(getLocalMillis(), year));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withWeekyear(int weekyear) {
+>         return withLocalMillis(getChronology().weekyear().set(getLocalMillis(), weekyear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withMonthOfYear(int monthOfYear) {
+>         return withLocalMillis(getChronology().monthOfYear().set(getLocalMillis(), monthOfYear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withWeekOfWeekyear(int weekOfWeekyear) {
+>         return withLocalMillis(getChronology().weekOfWeekyear().set(getLocalMillis(), weekOfWeekyear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withDayOfYear(int dayOfYear) {
+>         return withLocalMillis(getChronology().dayOfYear().set(getLocalMillis(), dayOfYear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withDayOfMonth(int dayOfMonth) {
+>         return withLocalMillis(getChronology().dayOfMonth().set(getLocalMillis(), dayOfMonth));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withDayOfWeek(int dayOfWeek) {
+>         return withLocalMillis(getChronology().dayOfWeek().set(getLocalMillis(), dayOfWeek));
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withHourOfDay(int hour) {
+>         return withLocalMillis(getChronology().hourOfDay().set(getLocalMillis(), hour));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withMinuteOfHour(int minute) {
+>         return withLocalMillis(getChronology().minuteOfHour().set(getLocalMillis(), minute));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withSecondOfMinute(int second) {
+>         return withLocalMillis(getChronology().secondOfMinute().set(getLocalMillis(), second));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime withMillisOfSecond(int millis) {
+>         return withLocalMillis(getChronology().millisOfSecond().set(getLocalMillis(), millis));
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+1741c2003
+<         public LocalDateTime withRoundedFloor() {
+---
+>         public LocalDateTime roundFloor() {
+1755c2017
+<         public LocalDateTime withRoundedCeiling() {
+---
+>         public LocalDateTime roundCeiling() {
+1765c2027
+<         public LocalDateTime withRoundedHalfFloor() {
+---
+>         public LocalDateTime roundHalfFloor() {
+1775c2037
+<         public LocalDateTime withRoundedHalfCeiling() {
+---
+>         public LocalDateTime roundHalfCeiling() {
+1786c2048
+<         public LocalDateTime withRoundedHalfEven() {
+---
+>         public LocalDateTime roundHalfEven() {

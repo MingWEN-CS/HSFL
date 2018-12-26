@@ -1,0 +1,110 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.genetics;
+
+
+
+
+
+
+
+
+
+
+public abstract class Chromosome implements Comparable<Chromosome>,Fitness {
+    
+    private static final double NO_FITNESS = Double.NEGATIVE_INFINITY;
+
+    
+    private double fitness = NO_FITNESS;
+
+    
+
+
+
+
+
+
+
+
+    public double getFitness() {
+        if (this.fitness == NO_FITNESS) {
+            
+            this.fitness = fitness();
+        }
+        return this.fitness;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public int compareTo(final Chromosome another) {
+        return ((Double)this.getFitness()).compareTo(another.getFitness());
+    }
+
+    
+
+
+
+
+
+
+    protected boolean isSame(final Chromosome another) {
+        return false;
+    }
+
+    
+
+
+
+
+
+
+
+
+    protected Chromosome findSameChromosome(final Population population) {
+        for (Chromosome anotherChr : population) {
+            if (this.isSame(anotherChr)) {
+                return anotherChr;
+            }
+        }
+        return null;
+    }
+
+    
+
+
+
+
+
+    public void searchForFitnessUpdate(final Population population) {
+        Chromosome sameChromosome = findSameChromosome(population);
+        if (sameChromosome != null) {
+            fitness = sameChromosome.getFitness();
+        }
+    }
+
+}

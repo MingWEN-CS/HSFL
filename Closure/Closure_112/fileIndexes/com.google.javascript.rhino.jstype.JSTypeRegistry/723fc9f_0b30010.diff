@@ -1,0 +1,105 @@
+83a84,95
+>   public static final String OBJECT_INDEX_TEMPLATE = "Object#Key";
+> 
+>   
+> 
+> 
+> 
+>   public static final String OBJECT_ELEMENT_TEMPLATE = "Object#Element";
+> 
+>   
+> 
+> 
+> 
+288c300,303
+<             null, null, true, true);
+---
+>             null,
+>             createTemplateTypeMap(ImmutableList.of(
+>                 OBJECT_INDEX_TEMPLATE, OBJECT_ELEMENT_TEMPLATE), null),
+>             true, true);
+325c340,343
+<           null, null, true, true);
+---
+>           null,
+>           createTemplateTypeMap(ImmutableList.of(
+>               OBJECT_ELEMENT_TEMPLATE), null),
+>           true, true);
+1464a1483,1502
+> 
+> 
+> 
+> 
+> 
+>   public TemplatizedType createTemplatizedType(
+>       ObjectType baseType, ImmutableList<JSType> templatizedTypes) {
+>     
+>     
+>     return new TemplatizedType(this, baseType, templatizedTypes);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1466,1467c1504,1506
+<       ObjectType objectType, JSType parameterType) {
+<     return new TemplatizedType(this, objectType, parameterType);
+---
+>       ObjectType baseType, JSType... templatizedTypes) {
+>     return createTemplatizedType(
+>         baseType, ImmutableList.copyOf(templatizedTypes));
+1584,1597c1623,1652
+<           if (typeList != null &&
+<               ("Array".equals(n.getString()) ||
+<                "Object".equals(n.getString()))) {
+<             JSType templateType =
+<                 createFromTypeNodesInternal(
+<                     typeList.getLastChild(), sourceName, scope);
+<             namedType = new TemplatizedType(
+<                 this, (ObjectType) namedType, templateType);
+<             if (typeList.hasMoreThanOneChild()) {
+<               JSType indexType =
+<                   createFromTypeNodesInternal(
+<                       typeList.getFirstChild(), sourceName, scope);
+<               namedType = new IndexedType(
+<                   this, (ObjectType) namedType, indexType);
+---
+>           int nAllowedTypes =
+>               namedType.getTemplateTypeMap().numUnfilledTemplateKeys();
+>           if (typeList != null && nAllowedTypes > 0) {
+>             
+>             ImmutableList.Builder<JSType> templateTypes =
+>                 ImmutableList.builder();
+> 
+>             
+>             if (n.getString().equals("Object") &&
+>                 typeList.getFirstChild() == typeList.getLastChild()) {
+>               templateTypes.add(getNativeType(UNKNOWN_TYPE));
+>             }
+> 
+>             int templateNodeIndex = 0;
+>             for (Node templateNode : typeList.getFirstChild().siblings()) {
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               if (++templateNodeIndex > nAllowedTypes) {
+>                 break;
+>               }
+>               templateTypes.add(createFromTypeNodesInternal(
+>                   templateNode, sourceName, scope));
+1598a1654,1656
+>             namedType = createTemplatizedType(
+>                 (ObjectType) namedType, templateTypes.build());
+>             Preconditions.checkNotNull(namedType);

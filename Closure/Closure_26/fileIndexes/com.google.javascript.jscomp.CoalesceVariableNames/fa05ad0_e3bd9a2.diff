@@ -1,0 +1,35 @@
+92,93c92
+<   @Override
+<   public void enterScope(NodeTraversal t) {
+---
+>   private static boolean shouldOptimizeScope(Scope scope) {
+98,99c97,98
+<     if (t.inGlobalScope()) {
+<       return;
+---
+>     if (scope.isGlobal()) {
+>       return false;
+100a100,110
+> 
+>     if (LiveVariablesAnalysis.MAX_VARIABLES_TO_ANALYZE <
+>         scope.getVarCount()) {
+>       return false;
+>     }
+> 
+>     return true;
+>   }
+> 
+>   @Override
+>   public void enterScope(NodeTraversal t) {
+102c112,114
+<     ControlFlowGraph<Node> cfg = t.getControlFlowGraph();
+---
+>     if (!shouldOptimizeScope(scope)) {
+>       return;
+>     }
+103a116
+>     ControlFlowGraph<Node> cfg = t.getControlFlowGraph();
+129c142
+<     if (t.inGlobalScope()) {
+---
+>     if (!shouldOptimizeScope(t.getScope())) {

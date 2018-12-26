@@ -1,0 +1,41 @@
+93c93
+<   private ImmutableList<String> classTypeParameterNames = ImmutableList.of();;
+---
+>   private ImmutableList<TemplateType> classTemplateTypeNames = ImmutableList.of();
+334a335,351
+>       
+>       ImmutableList<String> typeParameters = info.getClassTemplateTypeNames();
+>       if (!typeParameters.isEmpty()) {
+>         if (isConstructor || isInterface) {
+>           ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+>           for (String typeParameter : typeParameters) {
+>             builder.add(typeRegistry.createTemplateType(typeParameter));
+>           }
+>           classTemplateTypeNames = builder.build();
+>           typeRegistry.setTemplateTypeNames(classTemplateTypeNames);
+>         } else {
+>           reportWarning(CLASS_TEMPLATE_WITHOUT_CONSTRUCTOR,
+>               formatFnName());
+>         }
+>       }
+> 
+>       
+379,388d395
+< 
+<       ImmutableList<String> typeParameters = info.getClassTemplateTypeNames();
+<       if (!typeParameters.isEmpty()) {
+<         if (isConstructor || isInterface) {
+<           this.classTypeParameterNames = typeParameters;
+<         } else {
+<           reportWarning(CLASS_TEMPLATE_WITHOUT_CONSTRUCTOR,
+<               formatFnName());
+<         }
+<       }
+662c669
+<           fnName, contents.getSourceNode(), classTypeParameterNames);
+---
+>           fnName, contents.getSourceNode(), classTemplateTypeNames);
+714c721
+<         classTypeParameterNames);
+---
+>         classTemplateTypeNames);

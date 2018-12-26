@@ -1,0 +1,262 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.chrono;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeFieldType;
+import org.joda.time.DateTimeZone;
+import org.joda.time.IllegalFieldValueException;
+import org.joda.time.field.SkipDateTimeField;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public final class JulianChronology extends CommonGJChronology {
+
+    
+    private static final long serialVersionUID = -8731039522547897247L;
+
+    private static final long MILLIS_PER_YEAR =
+        (long) (365.25 * DateTimeConstants.MILLIS_PER_DAY);
+
+    private static final long MILLIS_PER_MONTH =
+        (long) (365.25 * DateTimeConstants.MILLIS_PER_DAY / 12);
+
+    
+    private static final JulianChronology INSTANCE_UTC;
+
+    
+    private static final Map cCache = new HashMap();
+
+    static {
+        INSTANCE_UTC = getInstance(DateTimeZone.UTC);
+    }
+
+    static int adjustYearForSet(int year) {
+        if (year <= 0) {
+            if (year == 0) {
+                throw new IllegalFieldValueException
+                    (DateTimeFieldType.year(), new Integer(year), null, null);
+            }
+            year++;
+        }
+        return year;
+    }
+
+    
+
+
+
+
+
+    public static JulianChronology getInstanceUTC() {
+        return INSTANCE_UTC;
+    }
+
+    
+
+
+
+
+    public static JulianChronology getInstance() {
+        return getInstance(DateTimeZone.getDefault(), 4);
+    }
+
+    
+
+
+
+
+
+    public static JulianChronology getInstance(DateTimeZone zone) {
+        return getInstance(zone, 4);
+    }
+
+    
+
+
+
+
+
+
+    public static JulianChronology getInstance(DateTimeZone zone, int minDaysInFirstWeek) {
+        if (zone == null) {
+            zone = DateTimeZone.getDefault();
+        }
+        JulianChronology chrono;
+        synchronized (cCache) {
+            JulianChronology[] chronos = (JulianChronology[]) cCache.get(zone);
+            if (chronos == null) {
+                chronos = new JulianChronology[7];
+                cCache.put(zone, chronos);
+            }
+            try {
+                chrono = chronos[minDaysInFirstWeek - 1];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new IllegalArgumentException
+                    ("Invalid min days in first week: " + minDaysInFirstWeek);
+            }
+            if (chrono == null) {
+                if (zone == DateTimeZone.UTC) {
+                    chrono = new JulianChronology(null, null, minDaysInFirstWeek);
+                } else {
+                    chrono = getInstance(DateTimeZone.UTC, minDaysInFirstWeek);
+                    chrono = new JulianChronology
+                        (ZonedChronology.getInstance(chrono, zone), null, minDaysInFirstWeek);
+                }
+                chronos[minDaysInFirstWeek - 1] = chrono;
+            }
+        }
+        return chrono;
+    }
+
+    
+    
+
+    
+
+
+    JulianChronology(Chronology base, Object param, int minDaysInFirstWeek) {
+        super(base, param, minDaysInFirstWeek);
+    }
+
+    
+
+
+    private Object readResolve() {
+        Chronology base = getBase();
+        return base == null ? getInstanceUTC() : getInstance(base.getZone());
+    }
+
+    
+    
+    
+
+
+
+
+    public Chronology withUTC() {
+        return INSTANCE_UTC;
+    }
+
+    
+
+
+
+
+
+    public Chronology withZone(DateTimeZone zone) {
+        if (zone == null) {
+            zone = DateTimeZone.getDefault();
+        }
+        if (zone == getZone()) {
+            return this;
+        }
+        return getInstance(zone);
+    }
+
+    long getDateMidnightMillis(int year, int monthOfYear, int dayOfMonth)
+        throws IllegalArgumentException
+    {
+        return super.getDateMidnightMillis(adjustYearForSet(year), monthOfYear, dayOfMonth);
+    }
+
+    boolean isLeapYear(int year) {
+        return (year & 3) == 0;
+    }
+
+    long calculateFirstDayOfYearMillis(int year) {
+        
+        
+        
+
+        int relativeYear = year - 1968;
+        int leapYears;
+        if (relativeYear <= 0) {
+            
+            
+            leapYears = (relativeYear + 3) >> 2;
+        } else {
+            leapYears = relativeYear >> 2;
+            
+            if (!isLeapYear(year)) {
+                leapYears++;
+            }
+        }
+        
+        long millis = (relativeYear * 365L + leapYears)
+            * (long)DateTimeConstants.MILLIS_PER_DAY;
+
+        
+
+        return millis - (366L + 352) * DateTimeConstants.MILLIS_PER_DAY;
+    }
+
+    int getMinYear() {
+        
+        return -292269054;
+    }
+
+    int getMaxYear() {
+        
+        return 292271022;
+    }
+
+    long getAverageMillisPerYear() {
+        return MILLIS_PER_YEAR;
+    }
+
+    long getAverageMillisPerMonth() {
+        return MILLIS_PER_MONTH;
+    }
+
+    long getApproxMillisAtEpoch() {
+        return 1969L * MILLIS_PER_YEAR + 352L * DateTimeConstants.MILLIS_PER_DAY;
+    }
+
+    protected void assemble(Fields fields) {
+        if (getBase() == null) {
+            super.assemble(fields);
+            
+            fields.year = new SkipDateTimeField(this, fields.year);
+            fields.weekyear = new SkipDateTimeField(this, fields.weekyear);
+        }
+    }
+
+}

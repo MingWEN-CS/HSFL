@@ -1,0 +1,59 @@
+17a18,19
+> import static com.google.javascript.jscomp.FunctionArgumentInjector.THIS_MARKER;
+> 
+29d30
+< import java.util.Set;
+30a32
+> import java.util.Set;
+179a182,188
+>   private String getUniqueThisName() {
+>     return "JSCompiler_inline_this_" + safeNameIdSupplier.get();
+>   }
+> 
+>   
+> 
+> 
+194c203
+<           fnTemplateRoot, null, argMap);
+---
+>           compiler, fnTemplateRoot, null, argMap);
+213,218c222,249
+<           Node newValue = entry.getValue().cloneTree();
+<           Node newNode = NodeUtil.newVarNode(name, newValue)
+<               .copyInformationFromForTree(newValue);
+<           newVars.add(0, newNode);
+<           
+<           newArgMap.remove(name);
+---
+>           if (name.equals(THIS_MARKER)) {
+>             boolean referencesThis = NodeUtil.referencesThis(fnTemplateRoot);
+>             
+>             
+>             
+> 
+>             Node value = entry.getValue();
+>             if (value.getType() != Token.THIS
+>                 && (referencesThis
+>                     || NodeUtil.mayHaveSideEffects(value, compiler))) {
+>               String newName = getUniqueThisName();
+>               Node newValue = entry.getValue().cloneTree();
+>               Node newNode = NodeUtil.newVarNode(newName, newValue)
+>                   .copyInformationFromForTree(newValue);
+>               newVars.add(0, newNode);
+>               
+>               newArgMap.put(THIS_MARKER,
+>                   Node.newString(Token.NAME, newName)
+>                       .copyInformationFromForTree(newValue));
+>             }
+>           } else {
+>             Node newValue = entry.getValue().cloneTree();
+>             Node newNode = NodeUtil.newVarNode(name, newValue)
+>                 .copyInformationFromForTree(newValue);
+>             newVars.add(0, newNode);
+>             
+>             newArgMap.remove(name);
+>           }
+224c255
+<           fnTemplateRoot, null, newArgMap);
+---
+>           compiler, fnTemplateRoot, null, newArgMap);

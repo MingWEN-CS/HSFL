@@ -1,0 +1,25 @@
+215a216,219
+>             Node obj = item.getNext();
+> 
+>             FlowScope informed = traverse(obj, output.createChildFlowScope());
+> 
+220,223c224,235
+<               FlowScope informed = output.createChildFlowScope();
+<               redeclare(informed, item.getString(),
+<                   getNativeType(STRING_TYPE));
+<               newScope = informed;
+---
+>               JSType iterKeyType = getNativeType(STRING_TYPE);
+>               ObjectType objType = getJSType(obj).dereference();
+>               JSType objIndexType = objType == null ?
+>                   null : objType.getIndexType();
+>               if (objIndexType != null && !objIndexType.isUnknownType()) {
+>                 JSType narrowedKeyType =
+>                     iterKeyType.getGreatestSubtype(objIndexType);
+>                 if (!narrowedKeyType.isEmptyType()) {
+>                   iterKeyType = narrowedKeyType;
+>                 }
+>               }
+>               redeclare(informed, item.getString(), iterKeyType);
+224a237
+>             newScope = informed;

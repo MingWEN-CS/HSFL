@@ -1,0 +1,210 @@
+59c59
+< import com.google.javascript.rhino.ScriptRuntime;
+---
+> import com.google.javascript.rhino.SimpleErrorReporter;
+83a84,99
+>   public static final String OBJECT_INDEX_TEMPLATE = "Object#Key";
+> 
+>   private TemplateType objectIndexTemplateKey;
+> 
+>   
+> 
+> 
+> 
+>   public static final String OBJECT_ELEMENT_TEMPLATE = "Object#Element";
+> 
+>   private TemplateType objectElementTemplateKey;
+> 
+>   
+> 
+> 
+> 
+211c227
+<         this, ImmutableList.<String>of(), ImmutableList.<JSType>of());
+---
+>         this, ImmutableList.<TemplateType>of(), ImmutableList.<JSType>of());
+221a238,254
+>   public TemplateType getObjectElementKey() {
+>     return this.objectElementTemplateKey;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   public TemplateType getObjectIndexKey() {
+>     Preconditions.checkNotNull(objectIndexTemplateKey);
+>     return objectIndexTemplateKey;
+>   }
+> 
+>   
+> 
+> 
+> 
+250a284,286
+>     objectIndexTemplateKey = new TemplateType(this, OBJECT_INDEX_TEMPLATE);
+>     objectElementTemplateKey = new TemplateType(this, OBJECT_ELEMENT_TEMPLATE);
+> 
+288c324,327
+<             null, null, true, true);
+---
+>             null,
+>             createTemplateTypeMap(ImmutableList.of(
+>                 objectIndexTemplateKey, objectElementTemplateKey), null),
+>             true, true);
+325c364,367
+<           null, null, true, true);
+---
+>           null,
+>           createTemplateTypeMap(ImmutableList.of(
+>               objectElementTemplateKey), null),
+>           true, true);
+922c964,978
+<     JSType type = getType(jsTypeName);
+---
+>     
+>     JSType type = null;
+>     JSType thisType = null;
+>     if (scope != null && scope.getTypeOfThis() != null) {
+>       thisType = scope.getTypeOfThis().toObjectType();
+>     }
+>     if (thisType != null) {
+>       type = thisType.getTemplateTypeMap().getTemplateTypeKeyByName(jsTypeName);
+>       if (type != null) {
+>         Preconditions.checkState(type.isTemplateType(), "expected:" + type);
+>         return type;
+>       }
+>     }
+> 
+>     type = getType(jsTypeName);
+1429c1485,1491
+<       Node parameters, JSType returnType, ImmutableList<String> templateKeys) {
+---
+>       Node parameters, JSType returnType, ImmutableList<String> templateKeyNames) {
+>     return createConstructorTypeInternal(name, source, parameters, returnType,
+>         createTemplateMapKeys(templateKeyNames));
+>   }
+> 
+>   private FunctionType createConstructorTypeInternal(String name, Node source,
+>       Node parameters, JSType returnType, ImmutableList<TemplateType> templateKeys) {
+1434a1497,1506
+>   ImmutableList<TemplateType> createTemplateMapKeys(ImmutableList<String> keys) {
+>     ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+>     if (keys != null) {
+>       for (String key : keys) {
+>         builder.add(new TemplateType(this, key));
+>       }
+>     }
+>     return builder.build();
+>   }
+> 
+1444a1517,1520
+>   public TemplateType createTemplateType(String name) {
+>     return new TemplateType(this, name);
+>   }
+> 
+1450c1526
+<       ImmutableList<String> templateKeys,
+---
+>       ImmutableList<TemplateType> templateKeys,
+1453c1529
+<         ImmutableList.<String>of() : templateKeys;
+---
+>         ImmutableList.<TemplateType>of() : templateKeys;
+1464a1541,1545
+> 
+> 
+> 
+> 
+> 
+1466,1467c1547,1564
+<       ObjectType objectType, JSType parameterType) {
+<     return new TemplatizedType(this, objectType, parameterType);
+---
+>       ObjectType baseType, ImmutableList<JSType> templatizedTypes) {
+>     
+>     
+>     return new TemplatizedType(this, baseType, templatizedTypes);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public TemplatizedType createTemplatizedType(
+>       ObjectType baseType, JSType... templatizedTypes) {
+>     return createTemplatizedType(
+>         baseType, ImmutableList.copyOf(templatizedTypes));
+1584,1597c1681,1710
+<           if (typeList != null &&
+<               ("Array".equals(n.getString()) ||
+<                "Object".equals(n.getString()))) {
+<             JSType templateType =
+<                 createFromTypeNodesInternal(
+<                     typeList.getLastChild(), sourceName, scope);
+<             namedType = new TemplatizedType(
+<                 this, (ObjectType) namedType, templateType);
+<             if (typeList.hasMoreThanOneChild()) {
+<               JSType indexType =
+<                   createFromTypeNodesInternal(
+<                       typeList.getFirstChild(), sourceName, scope);
+<               namedType = new IndexedType(
+<                   this, (ObjectType) namedType, indexType);
+---
+>           int nAllowedTypes =
+>               namedType.getTemplateTypeMap().numUnfilledTemplateKeys();
+>           if (typeList != null && nAllowedTypes > 0) {
+>             
+>             ImmutableList.Builder<JSType> templateTypes =
+>                 ImmutableList.builder();
+> 
+>             
+>             if (n.getString().equals("Object") &&
+>                 typeList.getFirstChild() == typeList.getLastChild()) {
+>               templateTypes.add(getNativeType(UNKNOWN_TYPE));
+>             }
+> 
+>             int templateNodeIndex = 0;
+>             for (Node templateNode : typeList.getFirstChild().siblings()) {
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               if (++templateNodeIndex > nAllowedTypes) {
+>                 break;
+>               }
+>               templateTypes.add(createFromTypeNodesInternal(
+>                   templateNode, sourceName, scope));
+1598a1712,1714
+>             namedType = createTemplatizedType(
+>                 (ObjectType) namedType, templateTypes.build());
+>             Preconditions.checkNotNull(namedType);
+1619c1735
+<                 ScriptRuntime.getMessage0(
+---
+>                 SimpleErrorReporter.getMessage0(
+1651c1767,1768
+<                       ScriptRuntime.getMessage0("msg.jsdoc.function.varargs"),
+---
+>                       SimpleErrorReporter.getMessage0(
+>                           "msg.jsdoc.function.varargs"),
+1739,1742c1856,1859
+<   public void setTemplateTypeNames(List<String> names) {
+<     Preconditions.checkNotNull(names);
+<     for (String name : names) {
+<       templateTypes.put(name, new TemplateType(this, name));
+---
+>   public void setTemplateTypeNames(List<TemplateType> keys) {
+>     Preconditions.checkNotNull(keys);
+>     for (TemplateType key : keys) {
+>       templateTypes.put(key.getReferenceName(), key);

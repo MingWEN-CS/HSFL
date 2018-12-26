@@ -1,0 +1,293 @@
+18a19
+> import com.google.common.annotations.VisibleForTesting;
+24c25
+< import com.google.javascript.jscomp.NodeTraversal.Callback;
+---
+> import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+34a36,37
+> import java.util.Collections;
+> import java.util.Iterator;
+340c343
+<   private class FunctionAnalyzer implements Callback {
+---
+>   private class FunctionAnalyzer implements ScopedCallback {
+386,387c389,391
+<           visitAssignmentOrUnaryOperatorLhs(
+<               sideEffectInfo, traversal.getScope(), node.getFirstChild());
+---
+>           visitAssignmentOrUnaryOperator(
+>               sideEffectInfo, traversal.getScope(),
+>               node, node.getFirstChild(), node.getLastChild());
+397,398c401,403
+<               visitAssignmentOrUnaryOperatorLhs(
+<                   sideEffectInfo, traversal.getScope(), node.getFirstChild());
+---
+>               visitAssignmentOrUnaryOperator(
+>                   sideEffectInfo, traversal.getScope(),
+>                   node, node.getFirstChild(), null);
+401d405
+< 
+406a411,419
+>               Node value = node.getFirstChild();
+>               
+>               
+>               
+>               if (value != null && !isKnownLocalValue(value)) {
+>                 Scope scope = traversal.getScope();
+>                 Var var = scope.getVar(node.getString());
+>                 sideEffectInfo.blacklistLocal(var);
+>               }
+419a433,479
+>     @Override
+>     public void enterScope(NodeTraversal t) {
+>       
+>     }
+> 
+>     @Override
+>     public void exitScope(NodeTraversal t) {
+>       if (t.inGlobalScope()) {
+>         return;
+>       }
+> 
+>       
+>       
+>       FunctionInformation sideEffectInfo =
+>         functionSideEffectMap.get(t.getScopeRoot());
+>       if (sideEffectInfo.mutatesGlobalState()){
+>         sideEffectInfo.resetLocalVars();
+>         return;
+>       }
+> 
+>       for (Iterator<Var> i = t.getScope().getVars(); i.hasNext();) {
+>         Var v = i.next();
+>         boolean localVar = false;
+>         
+>         if (v.getParentNode().getType() == Token.VAR) {
+>           
+>           sideEffectInfo.knownLocals.add(v.getName());
+>           localVar = true;
+>         }
+> 
+>         
+>         if (!localVar || sideEffectInfo.blacklisted.contains(v)) {
+>           if (sideEffectInfo.taintedLocals.contains(v)) {
+>             
+>             
+>             sideEffectInfo.setTaintsUnknown();
+>             sideEffectInfo.resetLocalVars();
+>             break;
+>           }
+>         }
+>       }
+> 
+>       sideEffectInfo.taintedLocals = null;
+>       sideEffectInfo.blacklisted = null;
+>     }
+> 
+> 
+427,428c487,492
+<     private void visitAssignmentOrUnaryOperatorLhs(
+<         FunctionInformation sideEffectInfo, Scope scope, Node lhs) {
+---
+> 
+> 
+> 
+>     private void visitAssignmentOrUnaryOperator(
+>         FunctionInformation sideEffectInfo,
+>         Scope scope, Node op, Node lhs, Node rhs) {
+432a497,509
+>         } else {
+>           
+>           
+>           
+> 
+>           
+>           
+>           Preconditions.checkState(
+>               NodeUtil.isAssignmentOp(op)
+>               || isIncDec(op) || op.getType() == Token.DELPROP);
+>           if (rhs != null && NodeUtil.isAssign(op) && !isKnownLocalValue(rhs)) {
+>             sideEffectInfo.blacklistLocal(var);
+>           }
+434c511
+<       } else if (NodeUtil.isGetProp(lhs)) {
+---
+>       } else if (NodeUtil.isGet(lhs)) {
+438c515,527
+<           sideEffectInfo.setTaintsUnknown();
+---
+>           Var var = null;
+>           Node objectNode = lhs.getFirstChild();
+>           if (NodeUtil.isName(objectNode)) {
+>             var = scope.getVar(objectNode.getString());
+>           }
+>           if (var == null || var.scope != scope) {
+>             sideEffectInfo.setTaintsUnknown();
+>           } else {
+>             
+>             
+>             
+>             sideEffectInfo.addTaintedLocalObject(var);
+>           }
+441c530,531
+<         sideEffectInfo.setTaintsUnknown();
+---
+>         
+>         throw new IllegalStateException("Unexpected lhs expression:" + lhs);
+521a612,686
+>   private static boolean isIncDec(Node n) {
+>     int type = n.getType();
+>     return (type == Token.INC || type == Token.DEC);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   @VisibleForTesting
+>   static boolean isKnownLocalValue(Node value) {
+>     
+>     
+>     switch (value.getType()) {
+>       case Token.ASSIGN:
+>       case Token.COMMA:
+>         return isKnownLocalValue(value.getLastChild());
+>       case Token.AND:
+>       case Token.OR:
+>         return isKnownLocalValue(value.getFirstChild()) &&
+>            isKnownLocalValue(value.getLastChild());
+>       case Token.HOOK:
+>         return isKnownLocalValue(value.getFirstChild().getNext()) &&
+>            isKnownLocalValue(value.getLastChild());
+>       case Token.INC:
+>       case Token.DEC:
+>         if (value.getBooleanProp(Node.INCRDECR_PROP)) {
+>           return isKnownLocalValue(value.getFirstChild());
+>         } else {
+>           return true;
+>         }
+>       case Token.THIS:
+>         
+>         return false;
+>       case Token.NAME:
+>         
+>         
+> 
+>         
+>         return NodeUtil.isImmutableValue(value);
+>       case Token.GETELEM:
+>       case Token.GETPROP:
+>         
+>         return false;
+>       case Token.CALL:
+>         
+>         
+>         return false;
+>       case Token.NEW:
+>         return true;
+>       case Token.FUNCTION:
+>       case Token.REGEXP:
+>       case Token.ARRAYLIT:
+>       case Token.OBJECTLIT:
+>         
+>         return true;
+>       case Token.IN:
+>         
+>         return true;
+>       default:
+>         
+>         
+>         
+>         if (NodeUtil.isAssignmentOp(value)
+>             || NodeUtil.isSimpleOperator(value)
+>             || NodeUtil.isImmutableValue(value)) {
+>           return true;
+>         }
+> 
+>         throw new IllegalStateException(
+>             "Unexpected expression node" + value +
+>             "\n parent:" + value.getParent());
+>     }
+>   }
+> 
+549c714,727
+<           if (objectNode != null && NodeUtil.isThis(objectNode)) {
+---
+>           if (objectNode != null && NodeUtil.isName(objectNode)
+>               && !isCallOrApply(callSite)) {
+>             
+>             
+>             
+>             
+>             String name = objectNode.getString();
+>             if (!caller.knownLocals.contains(name)) {
+>               if (!caller.mutatesGlobalState()) {
+>                 caller.setTaintsGlobalState();
+>                 changed = true;
+>               }
+>             }
+>           } else if (objectNode != null && NodeUtil.isThis(objectNode)) {
+553a732,737
+>           } else if (objectNode != null && isKnownLocalValue(objectNode)
+>               && !isCallOrApply(callSite)) {
+>             
+>             
+>             
+>             
+575,576c759,760
+<     Node foo = callSite.getFirstChild();
+<     if (!NodeUtil.isGetProp(foo)) {
+---
+>     Node callTarget = callSite.getFirstChild();
+>     if (!NodeUtil.isGet(callTarget)) {
+582,584c766
+<     Node object = null;
+< 
+<     String propString = foo.getLastChild().getString();
+---
+>     String propString = callTarget.getLastChild().getString();
+586c768
+<       return foo.getNext();
+---
+>       return callTarget.getNext();
+588c770,780
+<       return foo.getFirstChild();
+---
+>       return callTarget.getFirstChild();
+>     }
+>   }
+> 
+>   private static boolean isCallOrApply(Node callSite) {
+>     Node callTarget = callSite.getFirstChild();
+>     if (NodeUtil.isGet(callTarget)) {
+>       String propString = callTarget.getLastChild().getString();
+>       if (propString.equals("call") || propString.equals("apply")) {
+>         return true;
+>       }
+589a782
+>     return false;
+598a792,794
+>     private Set<Var> blacklisted = Sets.newHashSet();
+>     private Set<Var> taintedLocals = Sets.newHashSet();
+>     private Set<String> knownLocals = Sets.newHashSet();
+607a804,823
+>     }
+> 
+>     
+> 
+> 
+>     void addTaintedLocalObject(Var var) {
+>       taintedLocals.add(var);
+>     }
+> 
+>     void resetLocalVars() {
+>       blacklisted = null;
+>       taintedLocals = null;
+>       knownLocals = Collections.emptySet();
+>     }
+> 
+>     
+> 
+> 
+>     public void blacklistLocal(Var var) {
+>       blacklisted.add(var);

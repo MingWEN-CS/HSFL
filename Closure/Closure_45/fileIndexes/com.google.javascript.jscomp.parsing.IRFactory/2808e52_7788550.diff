@@ -1,0 +1,277 @@
+19,20d18
+< import static com.google.javascript.jscomp.mozilla.rhino.Token.CommentType.JSDOC;
+< 
+24a23
+> import com.google.javascript.jscomp.mozilla.rhino.Token.CommentType;
+81,203c80,224
+<   private final String sourceString;
+<   private final String sourceName;
+<   private final Config config;
+<   private final ErrorReporter errorReporter;
+<   private final TransformDispatcher transformDispatcher;
+< 
+<   
+<   private final Set<String> ALLOWED_DIRECTIVES = Sets.newHashSet("use strict");
+< 
+<   private static final Set<String> ES5_RESERVED_KEYWORDS =
+<       ImmutableSet.of(
+<           
+<           "class", "const", "enum", "export", "extends", "import", "super");
+<   private static final Set<String> ES5_STRICT_RESERVED_KEYWORDS =
+<       ImmutableSet.of(
+<           
+<           "class", "const", "enum", "export", "extends", "import", "super",
+<           "implements", "interface", "let", "package", "private", "protected",
+<           "public", "static", "yield");
+< 
+<   private final Set<String> reservedKeywords;
+< 
+<   
+<   
+<   Node rootNodeJsDocHolder = new Node(Token.SCRIPT);
+<   Node.FileLevelJsDocBuilder fileLevelJsDocBuilder =
+<       rootNodeJsDocHolder.getJsDocBuilderForNode();
+<   JSDocInfo fileOverviewInfo = null;
+< 
+<   
+<   
+<   private Node templateNode;
+< 
+<   
+< 
+<   private IRFactory(String sourceString,
+<                     String sourceName,
+<                     Config config,
+<                     ErrorReporter errorReporter) {
+<     this.sourceString = sourceString;
+<     this.sourceName = sourceName;
+<     this.config = config;
+<     this.errorReporter = errorReporter;
+<     this.transformDispatcher = new TransformDispatcher();
+<     
+<     this.templateNode = createTemplateNode();
+< 
+<     switch (config.languageMode) {
+<       case ECMASCRIPT3:
+<         
+<         reservedKeywords = null;
+<         break;
+<       case ECMASCRIPT5:
+<         reservedKeywords = ES5_RESERVED_KEYWORDS;
+<         break;
+<       case ECMASCRIPT5_STRICT:
+<         reservedKeywords = ES5_STRICT_RESERVED_KEYWORDS;
+<         break;
+<       default:
+<         throw new IllegalStateException("unknown language mode");
+<     }
+<   }
+< 
+<   
+<   
+<   
+<   private Node createTemplateNode() {
+<     
+<     Node templateNode = new Node(Token.SCRIPT);
+<     templateNode.putProp(Node.SOURCENAME_PROP, sourceName);
+<     return templateNode;
+<   }
+< 
+<   public static Node transformTree(AstRoot node,
+<                                    String sourceString,
+<                                    Config config,
+<                                    ErrorReporter errorReporter) {
+<     IRFactory irFactory = new IRFactory(sourceString, node.getSourceName(),
+<         config, errorReporter);
+<     Node irNode = irFactory.transform(node);
+< 
+<     if (node.getComments() != null) {
+<       for (Comment comment : node.getComments()) {
+<         if (comment.getCommentType() == JSDOC && !comment.isParsed()) {
+<           irFactory.handlePossibleFileOverviewJsDoc(comment);
+<         }
+<       }
+<     }
+< 
+<     irFactory.setFileOverviewJsDoc(irNode);
+< 
+<     return irNode;
+<   }
+< 
+<   private void setFileOverviewJsDoc(Node irNode) {
+<     
+<     
+<     
+<     irNode.setJSDocInfo(rootNodeJsDocHolder.getJSDocInfo());
+<     if (fileOverviewInfo != null) {
+<       if ((irNode.getJSDocInfo() != null) &&
+<           (irNode.getJSDocInfo().getLicense() != null)) {
+<         fileOverviewInfo.setLicense(irNode.getJSDocInfo().getLicense());
+<       }
+<       irNode.setJSDocInfo(fileOverviewInfo);
+<     }
+<   }
+< 
+<   private Node transformBlock(AstNode node) {
+<     Node irNode = transform(node);
+<     if (irNode.getType() != Token.BLOCK) {
+<       if (irNode.getType() == Token.EMPTY) {
+<         irNode.setType(Token.BLOCK);
+<         irNode.setWasEmptyNode(true);
+<       } else {
+<         Node newBlock = newNode(Token.BLOCK, irNode);
+<         newBlock.setLineno(irNode.getLineno());
+<         newBlock.setCharno(irNode.getCharno());
+<         irNode = newBlock;
+<       }
+<     }
+<     return irNode;
+<   }
+---
+>   static final String SUSPICIOUS_COMMENT_WARNING =
+>       "Non-JSDoc comment has annotations. " +
+>       "Did you mean to start it with '
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void handleBlockComment(Comment comment) {
+>     String value = comment.getValue();
+>     if (value.indexOf("
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+205d225
+<   

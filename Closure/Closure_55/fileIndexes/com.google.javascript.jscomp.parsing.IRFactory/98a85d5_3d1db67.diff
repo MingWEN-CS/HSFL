@@ -1,0 +1,36 @@
+254a255,275
+>   private Node transformNumberAsString(NumberLiteral literalNode) {
+>     JSDocInfo jsDocInfo = handleJsDoc(literalNode);
+>     Node irNode = newStringNode(getStringValue(literalNode.getNumber()));
+>     if (jsDocInfo != null) {
+>       irNode.setJSDocInfo(jsDocInfo);
+>     }
+>     setSourceInfo(irNode, literalNode);
+>     return irNode;
+>   }
+> 
+>   private static String getStringValue(double value) {
+>     long longValue = (long) value;
+> 
+>     
+>     if (longValue == value) {
+>       return Long.toString(longValue);
+>     } else {
+>       return Double.toString(value);
+>     }
+>   }
+> 
+342a364,366
+>       } else if (n instanceof NumberLiteral) {
+>         ret = transformNumberAsString((NumberLiteral)n);
+>         ret.putBooleanProp(Node.QUOTED_PROP, true);
+345,349c369
+<         Preconditions.checkState(ret.getType() == Token.NUMBER
+<             || ret.getType() == Token.STRING);
+<         if (ret.getType() == Token.STRING) {
+<           ret.putBooleanProp(Node.QUOTED_PROP, true);
+<         }
+---
+>         ret.putBooleanProp(Node.QUOTED_PROP, true);
+350a371
+>       Preconditions.checkState(ret.getType() == Token.STRING);

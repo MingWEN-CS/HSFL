@@ -1,0 +1,81 @@
+129c129
+<     Loop currentLoop = new LoopInternal();
+---
+>     Loop currentLoop = new Loop();
+135,136c135
+< 
+<           currentLoop = new LoopInternal();
+---
+>           currentLoop = new Loop();
+156c155
+<     passes.add(new PassFactoryDelegate(compiler, factory));
+---
+>     passes.add(new NamedPass(factory));
+165c164
+<     Loop loop = new LoopInternal();
+---
+>     Loop loop = new Loop();
+268c267
+<   private abstract class NamedPass implements CompilerPass {
+---
+>   class NamedPass implements CompilerPass {
+269a269
+>     private final PassFactory factory;
+271,272c271,273
+<     NamedPass(String name) {
+<       this.name = name;
+---
+>     NamedPass(PassFactory factory) {
+>       this.name = factory.getName();
+>       this.factory = factory;
+279c280,283
+<       processInternal(externs, root);
+---
+>       
+>       
+>       
+>       factory.create(compiler).process(externs, root);
+282,304d285
+< 
+<     abstract void processInternal(Node externs, Node root);
+<   }
+< 
+<   
+< 
+< 
+< 
+<   private class PassFactoryDelegate extends NamedPass {
+<     private final AbstractCompiler myCompiler;
+<     private final PassFactory factory;
+< 
+<     private PassFactoryDelegate(
+<         AbstractCompiler myCompiler, PassFactory factory) {
+<       super(factory.getName());
+<       this.myCompiler = myCompiler;
+<       this.factory = factory;
+<     }
+< 
+<     @Override
+<     void processInternal(Node externs, Node root) {
+<       factory.create(myCompiler).process(externs, root);
+<     }
+310,314d290
+<   static abstract class Loop implements CompilerPass {
+<     abstract void addLoopedPass(PassFactory factory);
+<   }
+< 
+<   
+318,320c294
+< 
+< 
+<   private class LoopInternal extends Loop {
+---
+>   class Loop implements CompilerPass {
+324d297
+<     @Override
+329,330c302,303
+<       myNames.add(factory.getName());
+<       myPasses.add(new PassFactoryDelegate(compiler, factory));
+---
+>       myNames.add(name);
+>       myPasses.add(new NamedPass(factory));

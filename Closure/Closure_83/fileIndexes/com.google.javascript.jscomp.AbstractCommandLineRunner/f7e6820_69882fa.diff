@@ -1,0 +1,94 @@
+32a33
+> import java.io.Closeable;
+35d35
+< import java.io.FileWriter;
+36a37
+> import java.io.OutputStream;
+93c94,95
+<   private static Charset inputCharset;
+---
+>   private Charset inputCharset;
+>   private String outputCharset;
+206c208
+<     options.outputCharset = getOutputCharset();
+---
+>     outputCharset = options.outputCharset = getOutputCharset();
+296c298
+<   private static List<JSSourceFile> createInputs(List<String> files,
+---
+>   private List<JSSourceFile> createInputs(List<String> files,
+340c342
+<   private static List<JSSourceFile> createExternInputs(List<String> files)
+---
+>   private List<JSSourceFile> createExternInputs(List<String> files)
+566c568,570
+<       out = toWriter(options.jsOutputFile, inputCharset.name());
+---
+>       out = fileNameToOutputWriter(options.jsOutputFile);
+>     } else if (out instanceof OutputStream) {
+>       out = streamToOutputWriter((OutputStream) out);
+581,582c585,586
+<     if (writeOutputToFile) {
+<       ((Writer)out).close();
+---
+>     if (out instanceof Closeable) {
+>       ((Closeable)out).close();
+647c651
+<           mapOut = toWriter(expandSourceMapPath(options, null));
+---
+>           mapOut = fileNameToOutputWriter(expandSourceMapPath(options, null));
+652c656
+<             mapOut = toWriter(expandSourceMapPath(options, m));
+---
+>             mapOut = fileNameToOutputWriter(expandSourceMapPath(options, m));
+655c659
+<           Writer writer = toWriter(
+---
+>           Writer writer = fileNameToOutputWriter(
+779c783
+<     return toWriter(exPath);
+---
+>     return fileNameToOutputWriter(exPath);
+831c835
+<   private Writer toWriter(String fileName) throws IOException {
+---
+>   private Writer fileNameToOutputWriter(String fileName) throws IOException {
+838,839c842
+<     
+<     return new BufferedWriter(new FileWriter(fileName));
+---
+>     return streamToOutputWriter(new FileOutputStream(fileName));
+845,846c848
+< 
+<   private Writer toWriter(String fileName, String charSet)
+---
+>   private Writer streamToOutputWriter(OutputStream stream)
+848,852c850,855
+<     if (fileName == null) {
+<       return null;
+<     }
+<     if (testMode) {
+<       return new StringWriter();
+---
+>     if (outputCharset == null) {
+>       return new BufferedWriter(
+>           new OutputStreamWriter(stream));
+>     } else {
+>       return new BufferedWriter(
+>           new OutputStreamWriter(stream, outputCharset));
+854,856d856
+<     
+<     return new BufferedWriter(
+<         new OutputStreamWriter(new FileOutputStream(fileName), charSet));
+872c872
+<     Writer out = toWriter(outName);
+---
+>     Writer out = fileNameToOutputWriter(outName);
+1061c1061
+<         Writer out = toWriter(expandManifest(module));
+---
+>         Writer out = fileNameToOutputWriter(expandManifest(module));
+1067c1067
+<       Writer out = toWriter(expandManifest(null));
+---
+>       Writer out = fileNameToOutputWriter(expandManifest(null));

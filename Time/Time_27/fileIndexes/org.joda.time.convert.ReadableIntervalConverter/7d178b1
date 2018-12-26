@@ -1,0 +1,120 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.DurationType;
+import org.joda.time.ReadableInterval;
+import org.joda.time.ReadWritableDuration;
+import org.joda.time.ReadWritableInterval;
+
+
+
+
+
+
+
+class ReadableIntervalConverter implements IntervalConverter, DurationConverter {
+
+    
+
+
+    static final ReadableIntervalConverter INSTANCE = new ReadableIntervalConverter();
+    
+    
+
+
+    protected ReadableIntervalConverter() {
+        super();
+    }
+
+    
+
+
+    public boolean isPrecise(Object object) {
+        return true;
+    }
+
+    public long getDurationMillis(Object object) {
+        return (((ReadableInterval) object)).getDurationMillis();
+    }
+
+    public void setInto(ReadWritableDuration duration, Object object) {
+        ReadableInterval interval = (ReadableInterval) object;
+        duration.setTotalMillis(interval.getStartMillis(), interval.getEndMillis());
+    }
+
+    
+
+
+
+
+
+
+    public DurationType getDurationType(Object object) {
+        return ((ReadableInterval) object).getDuration().getDurationType();
+    }
+
+    public void setInto(ReadWritableInterval writableInterval, Object object) {
+        ReadableInterval interval = (ReadableInterval) object;
+        writableInterval.setStartMillis(interval.getStartMillis());
+        writableInterval.setEndMillis(interval.getEndMillis());
+    }
+
+    
+
+
+    public Class getSupportedType() {
+        return ReadableInterval.class;
+    }
+}

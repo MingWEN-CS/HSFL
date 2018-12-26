@@ -1,0 +1,67 @@
+172c172,173
+<         throw new IllegalArgumentException("Node cannot be refined.");
+---
+>         throw new IllegalArgumentException("Node cannot be refined. \n" +
+>             node.toStringTree());
+486a488
+>       JSType result = topType;
+488,497c490,492
+<         if (value.equals("number")) {
+<           return getNativeType(NUMBER_TYPE);
+<         } else if (value.equals("boolean")) {
+<           return getNativeType(BOOLEAN_TYPE);
+<         } else if (value.equals("string")) {
+<           return getNativeType(STRING_TYPE);
+<         } else if (value.equals("undefined")) {
+<           return getNativeType(VOID_TYPE);
+<         } else if (value.equals("function")) {
+<           return getNativeType(U2U_CONSTRUCTOR_TYPE);
+---
+>         JSType typeByName = getNativeTypeForTypeOf(value);
+>         if (typeByName != null) {
+>           result = typeByName;
+500c495
+<       return topType;
+---
+>       return result;
+584,586c579,588
+<     return type == null ? null :
+<         type.visit(new RestrictByOneTypeOfResultVisitor(
+<             value, resultEqualsValue));
+---
+>     if (type == null) {
+>       if (resultEqualsValue) {
+>         JSType result = getNativeTypeForTypeOf(value);
+>         return result == null ? getNativeType(UNKNOWN_TYPE) : result;
+>       } else {
+>         return null;
+>       }
+>     }
+>     return type.visit(
+>         new RestrictByOneTypeOfResultVisitor(value, resultEqualsValue));
+590a593,617
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private JSType getNativeTypeForTypeOf(String value) {
+>     if (value.equals("number")) {
+>       return getNativeType(NUMBER_TYPE);
+>     } else if (value.equals("boolean")) {
+>       return getNativeType(BOOLEAN_TYPE);
+>     } else if (value.equals("string")) {
+>       return getNativeType(STRING_TYPE);
+>     } else if (value.equals("undefined")) {
+>       return getNativeType(VOID_TYPE);
+>     } else if (value.equals("function")) {
+>       return getNativeType(U2U_CONSTRUCTOR_TYPE);
+>     } else {
+>       return null;
+>     }

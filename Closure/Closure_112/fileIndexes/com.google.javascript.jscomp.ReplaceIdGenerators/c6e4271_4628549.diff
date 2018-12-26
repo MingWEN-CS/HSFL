@@ -1,0 +1,50 @@
+266c266
+<       Node id = n.getFirstChild().getNext();
+---
+>       Node arg = n.getFirstChild().getNext();
+268,270c268,281
+<       
+<       if (!id.isString()) {
+<         return;
+---
+>       if (arg.isString()) {
+>         String rename = getObfuscatedName(arg, callName, nameGenerator, arg.getString());
+>         parent.replaceChild(n, IR.string(rename));
+>         compiler.reportCodeChange();
+>       } else if (arg.isObjectLit()) {
+>         for (Node key : arg.children()) {
+>           String rename = getObfuscatedName(key, callName, nameGenerator, key.getString());
+>           key.setString(rename);
+>           
+>           key.putBooleanProp(Node.QUOTED_PROP, true);
+>         }
+>         arg.detachFromParent();
+>         parent.replaceChild(n, arg);
+>         compiler.reportCodeChange();
+271a283,284
+>       
+>     }
+273c286,287
+<       Map<String, String> idGeneratorMap = idGeneratorMaps.get(callName);
+---
+>     private String getObfuscatedName(Node id, String callName, NameSupplier nameGenerator,
+>         String name) {
+275,276c289
+< 
+<       String name = id.getString();
+---
+>       Map<String, String> idGeneratorMap = idGeneratorMaps.get(callName);
+289,290d301
+< 
+<       parent.replaceChild(n, IR.string(rename));
+292,293c303
+< 
+<       compiler.reportCodeChange();
+---
+>       return rename;
+296a307
+> 
+383c394
+<     Preconditions.checkState(n.isString());
+---
+>     Preconditions.checkState(n.isString() || n.isStringKey());

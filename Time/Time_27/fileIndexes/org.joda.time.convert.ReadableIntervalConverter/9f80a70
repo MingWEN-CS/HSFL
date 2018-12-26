@@ -1,0 +1,136 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.ReadWritablePeriod;
+import org.joda.time.ReadWritableInterval;
+import org.joda.time.ReadableInterval;
+
+
+
+
+
+
+
+class ReadableIntervalConverter extends AbstractConverter
+        implements IntervalConverter, DurationConverter, PeriodConverter {
+
+    
+
+
+    static final ReadableIntervalConverter INSTANCE = new ReadableIntervalConverter();
+
+    
+
+
+    protected ReadableIntervalConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+    public long getDurationMillis(Object object) {
+        return (((ReadableInterval) object)).getDurationMillis();
+    }
+
+    
+    
+
+
+
+
+
+    public void setInto(ReadWritablePeriod writablePeriod, Object object) {
+        ReadableInterval interval = (ReadableInterval) object;
+        writablePeriod.setPeriod(interval.getStartMillis(), interval.getEndMillis());
+    }
+
+    
+    
+
+
+
+
+
+
+    public long[] getIntervalMillis(Object object) {
+        ReadableInterval interval = (ReadableInterval) object;
+        return new long[] {interval.getStartMillis(), interval.getEndMillis()};
+    }
+
+    
+
+
+
+
+
+    public void setInto(ReadWritableInterval writableInterval, Object object) {
+        ReadableInterval interval = (ReadableInterval) object;
+        writableInterval.setStartMillis(interval.getStartMillis());
+        writableInterval.setEndMillis(interval.getEndMillis());
+    }
+
+    
+    
+
+
+    public Class getSupportedType() {
+        return ReadableInterval.class;
+    }
+
+}

@@ -1,0 +1,40 @@
+878,882c878,879
+<       if (p.isVarArgs()) {
+<         appendVarArgsString(b, p.getJSType());
+<       } else {
+<         b.append(p.getJSType().toString());
+<       }
+---
+>       appendArgString(b, p);
+> 
+886,890c883
+<         if (p.isVarArgs()) {
+<           appendVarArgsString(b, p.getJSType());
+<         } else {
+<           b.append(p.getJSType().toString());
+<         }
+---
+>         appendArgString(b, p);
+900a894,903
+>   private void appendArgString(StringBuilder b, Node p) {
+>     if (p.isVarArgs()) {
+>       appendVarArgsString(b, p.getJSType());
+>     } else if (p.isOptionalArg()) {
+>       appendOptionalArgString(b, p.getJSType());
+>     } else {
+>       b.append(p.getJSType().toString());
+>     }
+>   }
+> 
+908a912,922
+>   }
+> 
+>   
+>   private void appendOptionalArgString(
+>       StringBuilder builder, JSType paramType) {
+>     if (paramType.isUnionType()) {
+>       
+>       paramType = paramType.toMaybeUnionType().getRestrictedUnion(
+>           registry.getNativeType(JSTypeNative.VOID_TYPE));
+>     }
+>     builder.append(paramType).append("=");

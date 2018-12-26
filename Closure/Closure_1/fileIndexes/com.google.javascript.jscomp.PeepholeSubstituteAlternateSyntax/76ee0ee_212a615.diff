@@ -1,0 +1,148 @@
+63a64
+>         tryMinimizeCondition(node.getFirstChild());
+670d670
+<               n = newRoot; 
+672d671
+< 
+674,675c673,674
+< 
+<               return tryMinimizeCondition(n);
+---
+>               
+>               return newRoot;
+681,682c680,688
+<               if (leftParent.getType() != Token.NOT
+<                   || rightParent.getType() != Token.NOT) {
+---
+>               if (leftParent.getType() == Token.NOT
+>                   && rightParent.getType() == Token.NOT) {
+>                 Node left = leftParent.removeFirstChild();
+>                 Node right = rightParent.removeFirstChild();
+> 
+>                 int newOp = (first.getType() == Token.AND) ? Token.OR : Token.AND;
+>                 Node newRoot = new Node(newOp, left, right);
+>                 parent.replaceChild(n, newRoot);
+>                 reportCodeChange();
+684c690,691
+<                 break;
+---
+>                 
+>                 return newRoot;
+686,697d692
+<               Node left = leftParent.removeFirstChild();
+<               Node right = rightParent.removeFirstChild();
+< 
+<               int newOp = (first.getType() == Token.AND) ? Token.OR : Token.AND;
+<               Node newRoot = new Node(newOp, left, right);
+<               parent.replaceChild(n, newRoot);
+<               n = newRoot; 
+<               reportCodeChange();
+< 
+<               
+<               
+<               
+701c696,698
+<         break;
+---
+>         
+>         
+>         return n;
+704c701,704
+<       case Token.AND:
+---
+>       case Token.AND: {
+>         Node left = n.getFirstChild();
+>         Node right = n.getLastChild();
+> 
+706c706,785
+<         break;
+---
+>         
+>         left = tryMinimizeCondition(left);
+>         right = tryMinimizeCondition(right);
+> 
+>         
+>         
+>         
+>         
+>         
+>         
+>         TernaryValue rightVal = NodeUtil.getBooleanValue(right);
+>         if (NodeUtil.getBooleanValue(right) != TernaryValue.UNKNOWN) {
+>           int type = n.getType();
+>           Node replacement = null;
+>           boolean rval = rightVal.toBoolean(true);
+> 
+>           
+>           
+>           if (type == Token.OR && !rval ||
+>               type == Token.AND && rval) {
+>             replacement = left;
+>           } else if (!mayHaveSideEffects(left)) {
+>             replacement = right;
+>           }
+> 
+>           if (replacement != null) {
+>             n.detachChildren();
+>             parent.replaceChild(n, replacement);
+>             reportCodeChange();
+>             return replacement;
+>           }
+>         }
+>         return n;
+>       }
+> 
+>       case Token.HOOK: {
+>         Node condition = n.getFirstChild();
+>         Node trueNode = n.getFirstChild().getNext();
+>         Node falseNode = n.getLastChild();
+> 
+>         
+>         
+>         
+>         trueNode = tryMinimizeCondition(trueNode);
+>         falseNode = tryMinimizeCondition(falseNode);
+> 
+>         
+>         
+>         
+>         
+>         
+>         Node replacement = null;
+>         if (NodeUtil.getBooleanValue(trueNode) == TernaryValue.TRUE
+>             && NodeUtil.getBooleanValue(falseNode) == TernaryValue.FALSE) {
+>           
+>           condition.detachFromParent();
+>           replacement = condition;
+>         } else if (NodeUtil.getBooleanValue(trueNode) == TernaryValue.FALSE
+>             && NodeUtil.getBooleanValue(falseNode) == TernaryValue.TRUE) {
+>           
+>           condition.detachFromParent();
+>           replacement = new Node(Token.NOT, condition);
+>         } else if (NodeUtil.getBooleanValue(trueNode) == TernaryValue.TRUE) {
+>           
+>           n.detachChildren();
+>           replacement = new Node(Token.OR, condition, falseNode);
+>         } else if (NodeUtil.getBooleanValue(falseNode) == TernaryValue.FALSE) {
+>           
+>           n.detachChildren();
+>           replacement = new Node(Token.AND, condition, trueNode);
+>         }
+> 
+>         if (replacement != null) {
+>           parent.replaceChild(n, replacement);
+>           n = replacement;
+>           reportCodeChange();
+>         }
+> 
+>         return n;
+>       }
+719,726d797
+< 
+<     for (Node c = n.getFirstChild(); c != null; ) {
+<       Node next = c.getNext();  
+<       tryMinimizeCondition(c);
+<       c = next;
+<     }
+< 
+<     return n;

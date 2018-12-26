@@ -1,0 +1,91 @@
+837a838
+>     
+853,860d853
+<       
+<       if (info != null && info.hasType()) {
+<         visitAnnotatedAssignGetprop(t, assign,
+<             info.getType().evaluate(t.getScope(), typeRegistry), object,
+<             property, rvalue);
+<         return;
+<       }
+< 
+863a857,859
+>       
+>       
+>       
+870a867
+>             return;
+872,873d868
+<         } else {
+<           
+875d869
+<         return;
+878a873,882
+>       
+>       
+>       
+>       
+>       
+>       
+>       
+>       
+>       
+>       
+891,892d894
+<           } else {
+<             
+894d895
+<           return;
+898a900,901
+>       
+>       
+907a911
+>           return;
+909d912
+<         return;
+911c914,922
+<     } else if (lvalue.isName()) {
+---
+>     }
+> 
+>     
+>     
+>     
+>     
+>     
+>     JSType leftType = getJSType(lvalue);
+>     if (lvalue.isQualifiedName()) {
+914c925
+<       Var var = t.getScope().getVar(lvalue.getString());
+---
+>       Var var = t.getScope().getVar(lvalue.getQualifiedName());
+918a930,933
+> 
+>         if (var.getType() != null) {
+>           leftType = var.getType();
+>         }
+923d937
+<     JSType leftType = getJSType(lvalue);
+1037c1051
+<         superClass.getPrototype().hasProperty(propertyName);
+---
+>         superClass.getInstanceType().hasProperty(propertyName);
+1097c1111
+<           superClass.getPrototype().getPropertyType(propertyName);
+---
+>           superClass.getInstanceType().getPropertyType(propertyName);
+1192,1205d1205
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   private void visitAnnotatedAssignGetprop(NodeTraversal t,
+<       Node assign, JSType type, Node object, String property, Node rvalue) {
+<     
+<     validator.expectCanAssignToPropertyOf(t, assign, getJSType(rvalue), type,
+<         object, property);

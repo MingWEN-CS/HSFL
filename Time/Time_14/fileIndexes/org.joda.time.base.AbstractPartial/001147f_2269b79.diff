@@ -1,0 +1,32 @@
+61c61
+< import org.joda.time.DateTimeZone;
+---
+> import org.joda.time.DurationFieldType;
+229d228
+<     
+235a235,242
+>     protected int indexOf(DurationFieldType type) {
+>         for (int i = 0, isize = size(); i < isize; i++) {
+>             if (getFieldType(i).getDurationType() == type) {
+>                 return i;
+>             }
+>         }
+>         return -1;
+>     }
+236a244
+>     
+244,248c252,257
+<     public DateTime toDateTime(DateTimeZone zone) {
+<         Chronology chrono = getChronology().withZone(zone);
+<         long instantMillis = DateTimeUtils.currentTimeMillis();
+<         long resolved = chrono.set(this, instantMillis);
+<         return new DateTime(resolved, chrono);
+---
+>     protected int indexOfSupported(DurationFieldType type) {
+>         int index = indexOf(type);
+>         if (index == -1) {
+>             throw new IllegalArgumentException("Field '" + type + "' is not supported");
+>         }
+>         return index;
+250a260
+>     

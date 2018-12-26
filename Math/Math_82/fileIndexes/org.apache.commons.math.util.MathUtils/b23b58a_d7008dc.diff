@@ -1,0 +1,197 @@
+80a81,140
+>     public static long addAndCheck(long a, long b) {
+>         return addAndCheck(a, b, "overflow: add");
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static long addAndCheck(long a, long b, String msg) {
+>         long ret;
+>         if (a > b) {
+>             
+>             ret = addAndCheck(b, a, msg);
+>         } else {
+>             
+>             
+>             if (a < 0) {
+>                 if (b < 0) {
+>                     
+>                     if (Long.MIN_VALUE - b <= a) {
+>                         ret = a + b;
+>                     } else {
+>                         throw new ArithmeticException(msg);
+>                     }
+>                 } else {
+>                     
+>                     ret = a + b;
+>                 }
+>             } else {
+>                 
+>                 
+> 
+>                 
+>                 if (a <= Long.MAX_VALUE - b) {
+>                     ret = a + b;
+>                 } else {
+>                     throw new ArithmeticException(msg);
+>                 }
+>             }
+>         }
+>         return ret;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+120,127d179
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+129,139d180
+< 
+< 
+< 
+< 
+< 
+< 
+<  
+<     public static double log(double base, double x) {
+<     	return Math.log(x)/Math.log(base);
+<     }
+<     
+165c206
+< 
+---
+>     
+213c254
+< 
+---
+>     
+224c265
+< 
+---
+>     
+487a529,547
+> 
+> 
+> 
+> 
+>  
+>     public static double log(double base, double x) {
+>     	return Math.log(x)/Math.log(base);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+505a566,620
+>     public static long mulAndCheck(long a, long b) {
+>         long ret;
+>         String msg = "overflow: multiply";
+>         if (a > b) {
+>             
+>             ret = mulAndCheck(b, a);
+>         } else {
+>             if (a < 0) {
+>                 if (b < 0) {
+>                     
+>                     if (a >= Long.MAX_VALUE / b) {
+>                         ret = a * b;
+>                     } else {
+>                         throw new ArithmeticException(msg);
+>                     }
+>                 } else if (b > 0) {
+>                     
+>                     if (Long.MIN_VALUE / b <= a) {
+>                         ret = a * b;
+>                     } else {
+>                         throw new ArithmeticException(msg);
+>                         
+>                     }
+>                 } else {
+>                     
+>                     ret = 0;
+>                 }
+>             } else if (a > 0) {
+>                 
+>                 
+>                 
+>                 
+>                 if (a <= Long.MAX_VALUE / b) {
+>                     ret = a * b;
+>                 } else {
+>                     throw new ArithmeticException(msg);
+>                 }
+>             } else {
+>                 
+>                 ret = 0;
+>             }
+>         }
+>         return ret;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+825a941,966
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static long subAndCheck(long a, long b) {
+>         long ret;
+>         String msg = "overflow: subtract";
+>         if (b == Long.MIN_VALUE) {
+>             if (a < 0) {
+>                 ret = a - b;
+>             } else {
+>                 throw new ArithmeticException(msg);
+>             }
+>         } else {
+>             
+>             ret = addAndCheck(a, -b, msg);
+>         }
+>         return ret;

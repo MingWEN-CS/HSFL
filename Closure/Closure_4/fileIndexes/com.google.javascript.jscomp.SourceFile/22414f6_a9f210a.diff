@@ -1,0 +1,132 @@
+309c309
+<     return fromFile(new File(fileName), c);
+---
+>     return builder().withCharset(c).buildFromFile(fileName);
+313c313
+<     return fromFile(new File(fileName));
+---
+>     return builder().buildFromFile(fileName);
+317c317
+<     return new OnDisk(file, c);
+---
+>     return builder().withCharset(c).buildFromFile(file);
+321c321
+<     return new OnDisk(file);
+---
+>     return builder().buildFromFile(file);
+325c325
+<     return new Preloaded(fileName, code);
+---
+>     return builder().buildFromCode(fileName, code);
+330c330,331
+<     return new Preloaded(fileName, originalPath, code);
+---
+>     return builder().withOriginalPath(originalPath)
+>         .buildFromCode(fileName, code);
+335,336c336
+<     return fromCode(fileName,
+<         CharStreams.toString(new InputStreamReader(s, Charsets.UTF_8)));
+---
+>     return builder().buildFromInputStream(fileName, s);
+341,342c341,342
+<     return fromCode(fileName, originalPath,
+<         CharStreams.toString(new InputStreamReader(s, Charsets.UTF_8)));
+---
+>     return builder().withOriginalPath(originalPath)
+>         .buildFromInputStream(fileName, s);
+347c347
+<     return fromCode(fileName, CharStreams.toString(r));
+---
+>     return builder().buildFromReader(fileName, r);
+352c352,410
+<     return new Generated(fileName, generator);
+---
+>     return builder().buildFromGenerator(fileName, generator);
+>   }
+> 
+>   
+>   public static Builder builder() {
+>     return new Builder();
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   public static class Builder {
+>     private Charset charset = Charsets.UTF_8;
+>     private String originalPath = null;
+> 
+>     public Builder() {}
+> 
+>     
+>     public Builder withCharset(Charset charset) {
+>       this.charset = charset;
+>       return this;
+>     }
+> 
+>     
+>     public Builder withOriginalPath(String originalPath) {
+>       this.originalPath = originalPath;
+>       return this;
+>     }
+> 
+>     public SourceFile buildFromFile(String fileName) {
+>       return buildFromFile(new File(fileName));
+>     }
+> 
+>     public SourceFile buildFromFile(File file) {
+>       return new OnDisk(file, originalPath, charset);
+>     }
+> 
+>     public SourceFile buildFromCode(String fileName, String code) {
+>       return new Preloaded(fileName, originalPath, code);
+>     }
+> 
+>     public SourceFile buildFromInputStream(String fileName, InputStream s)
+>         throws IOException {
+>       return buildFromCode(fileName,
+>           CharStreams.toString(new InputStreamReader(s, charset)));
+>     }
+> 
+>     public SourceFile buildFromReader(String fileName, Reader r)
+>         throws IOException {
+>       return buildFromCode(fileName, CharStreams.toString(r));
+>     }
+> 
+>     public SourceFile buildFromGenerator(String fileName,
+>         Generator generator) {
+>       return new Generated(fileName, originalPath, generator);
+>     }
+365,368d422
+<     Preloaded(String fileName, String code) {
+<       this(fileName, fileName, code);
+<     }
+< 
+385c439
+<     Generated(String fileName, Generator generator) {
+---
+>     Generated(String fileName, String originalPath, Generator generator) {
+386a441
+>       super.setOriginalPath(originalPath);
+421c476
+<     protected String inputCharset = Charsets.UTF_8.name();
+---
+>     private String inputCharset = Charsets.UTF_8.name();
+423,424c478,481
+<     OnDisk(File file, Charset c) {
+<       this(file);
+---
+>     OnDisk(File file, String originalPath, Charset c) {
+>       super(file.getPath());
+>       this.file = file;
+>       super.setOriginalPath(originalPath);
+428,433d484
+<     }
+< 
+<     
+<     OnDisk(File file) {
+<       super(file.getPath());
+<       this.file = file;

@@ -1,0 +1,315 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.format;
+
+import java.util.Arrays;
+import java.util.Locale;
+
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeZone;
+
+
+
+
+
+
+
+
+
+public class DateTimeParserBucket {
+
+    final long iMillis;
+
+    
+    DateTimeZone iZone;
+    int iOffset;
+
+    SavedField[] iSavedFields = new SavedField[8];
+    int iSavedFieldsCount;
+    boolean iSavedFieldsShared;
+
+    private Object iSavedState;
+
+    
+
+
+    public DateTimeParserBucket(long instantLocal) {
+        iMillis = instantLocal;
+    }
+
+    
+
+
+
+    public DateTimeZone getDateTimeZone() {
+        return iZone;
+    }
+
+    
+
+
+
+
+
+    public void setDateTimeZone(DateTimeZone zone) {
+        iSavedState = null;
+        iZone = zone == DateTimeZone.UTC ? null : zone;
+        iOffset = 0;
+    }
+
+    
+
+
+
+    public int getOffset() {
+        return iOffset;
+    }
+
+    
+
+
+
+    public void setOffset(int offset) {
+        iSavedState = null;
+        iOffset = offset;
+        iZone = null;
+    }
+
+    
+
+
+    public void saveField(DateTimeField field, int value) {
+        saveField(new SavedField(field, value));
+    }
+
+    
+
+
+    public void saveField(DateTimeField field, String text, Locale locale) {
+        saveField(new SavedField(field, text, locale));
+    }
+
+    private void saveField(SavedField field) {
+        SavedField[] savedFields = iSavedFields;
+        int savedFieldsCount = iSavedFieldsCount;
+
+        if (savedFieldsCount == savedFields.length) {
+            SavedField[] newArray = new SavedField[savedFieldsCount * 2];
+            System.arraycopy(savedFields, 0, newArray, 0, savedFieldsCount);
+            iSavedFields = savedFields = newArray;
+            iSavedFieldsShared = false;
+        } else if (iSavedFieldsShared) {
+            iSavedFields = savedFields = (SavedField[])savedFields.clone();
+            iSavedFieldsShared = false;
+        }
+
+        iSavedState = null;
+        savedFields[savedFieldsCount] = field;
+        iSavedFieldsCount = savedFieldsCount + 1;
+    }
+
+    
+
+
+
+
+
+
+    public Object saveState() {
+        if (iSavedState == null) {
+            iSavedState = new SavedState();
+        }
+        return iSavedState;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public boolean undoChanges(Object savedState) {
+        if (savedState instanceof SavedState) {
+            if (((SavedState)savedState).revertState(this)) {
+                iSavedState = savedState;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+
+
+    public long computeMillis() {
+        SavedField[] savedFields = iSavedFields;
+        int count = iSavedFieldsCount;
+        Arrays.sort(savedFields, 0, count);
+
+        long millis = iMillis;
+        for (int i=0; i<count; i++) {
+            millis = savedFields[i].set(millis);
+        }
+
+        if (iZone == null) {
+            millis -= iOffset;
+        } else {
+            int offset = iZone.getOffsetFromLocal(millis);
+            millis -= offset;
+            if (offset != iZone.getOffset(millis)) {
+                throw new IllegalArgumentException
+                    ("Illegal instant due to time zone offset transition");
+            }
+        }
+
+        return millis;
+    }
+
+    private static class SavedField implements Comparable {
+        final DateTimeField iField;
+        final int iValue;
+        final String iText;
+        final Locale iLocale;
+
+        SavedField(DateTimeField field, int value) {
+            iField = field;
+            iValue = value;
+            iText = null;
+            iLocale = null;
+        }
+
+        SavedField(DateTimeField field, String text, Locale locale) {
+            iField = field;
+            iValue = 0;
+            iText = text;
+            iLocale = locale;
+        }
+
+        long set(long millis) {
+            if (iText == null) {
+                return iField.set(millis, iValue);
+            } else {
+                return iField.set(millis, iText, iLocale);
+            }
+        }
+
+        
+
+
+
+
+
+
+
+        public int compareTo(Object obj) {
+            DateTimeField other = ((SavedField)obj).iField;
+            int result = compareReverse
+                (iField.getRangeDurationField(), other.getRangeDurationField());
+            if (result != 0) {
+                return result;
+            }
+            return compareReverse
+                (iField.getDurationField(), other.getDurationField());
+        }
+
+        private int compareReverse(Comparable a, Comparable b) {
+            if (a == null) {
+                if (b == null) {
+                    return 0;
+                }
+                return -1;
+            }
+            if (b == null) {
+                return 1;
+            }
+            return -a.compareTo(b);
+        }
+    }
+
+    private class SavedState {
+        final DateTimeZone iZone;
+        final int iOffset;
+        final SavedField[] iSavedFields;
+        final int iSavedFieldsCount;
+
+        SavedState() {
+            this.iZone = DateTimeParserBucket.this.iZone;
+            this.iOffset = DateTimeParserBucket.this.iOffset;
+            this.iSavedFields = DateTimeParserBucket.this.iSavedFields;
+            this.iSavedFieldsCount = DateTimeParserBucket.this.iSavedFieldsCount;
+            DateTimeParserBucket.this.iSavedFieldsShared = true;
+        }
+
+        boolean revertState(DateTimeParserBucket enclosing) {
+            if (enclosing != DateTimeParserBucket.this) {
+                return false;
+            }
+            DateTimeParserBucket.this.iZone = this.iZone;
+            DateTimeParserBucket.this.iOffset = this.iOffset;
+            DateTimeParserBucket.this.iSavedFields = this.iSavedFields;
+            DateTimeParserBucket.this.iSavedFieldsCount = this.iSavedFieldsCount;
+            DateTimeParserBucket.this.iSavedFieldsShared = true;
+            return true;
+        }
+    }
+}

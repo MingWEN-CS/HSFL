@@ -1,0 +1,55 @@
+71,72d70
+<   
+<   private static final boolean ALLOW_ASSIGNMENT_SPLITTING = false;
+261,263d258
+<       if (ALLOW_ASSIGNMENT_SPLITTING) {
+<         splitAssignments(n);
+<       }
+339,385d333
+<   }
+< 
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   private void splitAssignments(Node n) {
+<     for (Node next, c = n.getFirstChild(); c != null; c = next) {
+<       next = c.getNext();
+<       if (NodeUtil.isExpressionNode(c)) {
+<         Node expression = c;
+<         while (isCompoundAssignment(expression.getFirstChild())) {
+<           Node assign = expression.getFirstChild();
+<           Node rhs = assign.getLastChild();
+<           Node nameNode = rhs.getFirstChild();
+< 
+<           
+<           if (NodeUtil.mayEffectMutableState(nameNode)) {
+<             break;
+<           }
+< 
+<           
+<           
+<           assign.removeChild(rhs);
+<           assign.addChildToBack(nameNode.cloneTree());
+< 
+<           Node newChild = NodeUtil.newExpr(rhs);
+<           n.addChildBefore(newChild, expression);
+<           expression = newChild;  
+<           compiler.reportCodeChange();
+<         }
+<       }
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   private static boolean isCompoundAssignment(Node n) {
+<     return (NodeUtil.isAssignmentOp(n)
+<         && NodeUtil.isAssignmentOp(n.getLastChild()));

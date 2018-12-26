@@ -1,0 +1,1786 @@
+1,257c1,16
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< package com.google.javascript.jscomp;
+< 
+< import com.google.common.base.Preconditions;
+< import com.google.common.collect.ImmutableList;
+< import com.google.common.collect.Maps;
+< import com.google.common.flags.DocLevel;
+< import com.google.common.flags.Flag;
+< import com.google.common.flags.FlagSpec;
+< import com.google.common.flags.Flags;
+< import com.google.javascript.rhino.Node;
+< import com.google.javascript.rhino.TokenStream;
+< import com.google.protobuf.CodedOutputStream;
+< 
+< import java.io.File;
+< import java.io.FileOutputStream;
+< import java.io.IOException;
+< import java.io.PrintStream;
+< import java.util.ArrayList;
+< import java.util.Collections;
+< import java.util.List;
+< import java.util.Map;
+< import java.util.logging.Level;
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< public abstract class AbstractCompilerRunner<A extends Compiler,
+<     B extends CompilerOptions> {
+< 
+<   @FlagSpec(help = "Prints out the parse tree and exits",
+<       docLevel = DocLevel.SECRET)
+<   public static final Flag<Boolean> FLAG_print_tree = Flag.value(false);
+< 
+<   @FlagSpec(help = "Prints a dot file describing the internal abstract syntax"
+<       + " tree and exits",
+<       docLevel = DocLevel.SECRET)
+<   public static final Flag<Boolean> FLAG_print_ast = Flag.value(false);
+< 
+<   @FlagSpec(help = "Turns on extra sanity checks.", altName = "dev_mode",
+<       docLevel = DocLevel.SECRET)
+<   public static final Flag<CompilerOptions.DevMode> FLAG_jscomp_dev_mode =
+<       Flag.value(CompilerOptions.DevMode.OFF);
+< 
+<   @FlagSpec(help = "The logging level (standard java.util.logging.Level"
+<       + " values) for Compiler progress. Does not control errors or"
+<       + " warnings for the JavaScript code under compilation.",
+<       docLevel = DocLevel.SECRET)
+<   public static final Flag<String> FLAG_logging_level =
+<       Flag.value(Level.WARNING.getName());
+< 
+<   @FlagSpec(help = "The file containing javascript externs. You may specify"
+<       + " multiple")
+<   public static final Flag<List<String>> FLAG_externs = Flag.stringCollector();
+< 
+<   @FlagSpec(help = "The javascript filename. You may specify multiple")
+<   public static final Flag<List<String>> FLAG_js = Flag.stringCollector();
+< 
+<   @FlagSpec(help = "Primary output filename. If not specified, output is " +
+<             "written to stdout.")
+<   static final Flag<String> FLAG_js_output_file = Flag.value("");
+< 
+<   @FlagSpec(help = "A javascript module specification. The format is "
+<       + "<name>:<num-js-files>[:[<dep>,...][:]]]. Module names must be "
+<       + "unique. Each dep is the name of a module that this module "
+<       + "depends on. Modules must be listed in dependency order, and js "
+<       + "source files must be listed in the corresponding order. Where "
+<       + "--module flags occur in relation to --js flags is unimportant.")
+<   public static final Flag<List<String>> FLAG_module = Flag.stringCollector();
+< 
+<   @FlagSpec(help = "File containing the serialized version of the variable "
+<       + "renaming map produced by a previous compilation.")
+<   public static final Flag<String> FLAG_variable_map_input_file =
+<       Flag.value("");
+< 
+<   @FlagSpec(help = "File containing the serialized version of the property "
+<       + "renaming map produced by a previous compilation.",
+<       docLevel = DocLevel.SECRET)
+<   public static final Flag<String> FLAG_property_map_input_file =
+<       Flag.value("");
+< 
+<   @FlagSpec(help = "File where the serialized version of the variable "
+<       + "renaming map produced should be saved.",
+<       docLevel = DocLevel.SECRET)
+<   public static final Flag<String> FLAG_variable_map_output_file =
+<       Flag.value("");
+< 
+<   @FlagSpec(help = "If true, variable renaming and property renaming map "
+<       + "files will be produced as {binary name}_vars_map.out and "
+<       + "{binary name}_props_map.out. Note that this flag cannot be used "
+<       + "in conjunction with either variable_map_output_file or "
+<       + "property_map_output_file.",
+<       docLevel = DocLevel.SECRET)
+<   public static final Flag<Boolean> FLAG_create_name_map_files =
+<       Flag.value(false);
+< 
+<   @FlagSpec(help = "File where the serialized version of the property "
+<       + "renaming map produced should be saved.")
+<   public static final Flag<String> FLAG_property_map_output_file =
+<       Flag.value("");
+< 
+<   @FlagSpec(help = "Check source validity but do not enforce Google style "
+<       + "rules and conventions, such as capitalized constant names or "
+<       + "opt_parameter.")
+<   public static final Flag<Boolean> FLAG_third_party = Flag.value(false);
+< 
+< 
+<   @FlagSpec(help = "Controls how detailed the compilation summary is. Values:"
+<       + " 0 (never print summary), 1 (print summary only if there are "
+<       + "errors or warnings), 2 (print summary if type checking is on, "
+<       + "see --check_types), 3 (always print summary). The default level "
+<       + "is 1.")
+<   public static final Flag<Integer> FLAG_summary_detail_level = Flag.value(1);
+< 
+<   @FlagSpec(help = "Interpolate output into this string at the place denoted"
+<       + " by the marker token %output%. See --output_wrapper_marker")
+<   public static final Flag<String> FLAG_output_wrapper = Flag.value("");
+< 
+<   @FlagSpec(help = "Use this token as output marker in the value of"
+<       + " --output_wrapper")
+<   public static final Flag<String> FLAG_output_wrapper_marker =
+<       Flag.value("%output%");
+< 
+<   @FlagSpec(help = "An output wrapper for a javascript module (optional). "
+<       + "The format is <name>:<wrapper>. The module name must correspond "
+<       + "with a module specified using --module. The wrapper must "
+<       + "contain %s as the code placeholder.")
+<   public static final Flag<List<String>> FLAG_module_wrapper =
+<       Flag.stringCollector();
+< 
+<   @FlagSpec(help = "Prefix for filenames of compiled js modules. "
+<       + "<module-name>.js will be appended to this prefix. Directories "
+<       + "will be created as needed. Use with --module.")
+<   public static final Flag<String> FLAG_module_output_path_prefix =
+<       Flag.value("./");
+< 
+<   @FlagSpec(help = "If specified, a source map file mapping the generated " +
+<             "source files back to the original source file will be " +
+<             "output to the specified path. If %module% is added, " +
+<             "a source map will be generated for each module, with the " +
+<             " module's name placed into the path at that spot.")
+<   public static final Flag<String> FLAG_create_source_map =
+<       Flag.value("");
+< 
+<   @FlagSpec(help = "Make the named class of warnings an error.")
+<   public static final Flag<List<String>> FLAG_jscomp_error =
+<       Flag.stringCollector();
+< 
+<   @FlagSpec(help = "Make the named class of warnings a normal warning.")
+<   public static final Flag<List<String>> FLAG_jscomp_warning =
+<       Flag.stringCollector();
+< 
+<   @FlagSpec(help = "Turn off the named class of warnings.")
+<   public static final Flag<List<String>> FLAG_jscomp_off =
+<       Flag.stringCollector();
+< 
+<   private PrintStream out;
+<   private final PrintStream err;
+<   private A compiler;
+< 
+<   public AbstractCompilerRunner(String[] args) {
+<     this(args, System.out, System.err);
+<   }
+< 
+<   public AbstractCompilerRunner(String[] args, PrintStream out,
+<       PrintStream err) {
+<     
+<     Flags.parse(args);
+< 
+<     this.out = out;
+<     this.err = err;
+<   }
+< 
+<   
+< 
+< 
+< 
+<   protected abstract A createCompiler();
+< 
+<   
+< 
+< 
+< 
+< 
+<   protected abstract B createOptions();
+< 
+<   final protected A getCompiler() {
+<     return compiler;
+<   }
+< 
+<   final protected void setRunOptions(B options) throws IOException {
+<     if (FLAG_js_output_file.get().length() > 0) {
+<       options.jsOutputFile = FLAG_js_output_file.get();
+<     }
+< 
+<     if (FLAG_create_source_map.get().length() > 0) {
+<       options.sourceMapOutputPath = FLAG_create_source_map.get();
+<     }
+< 
+<     if (!FLAG_variable_map_input_file.get().equals("")) {
+<       options.inputVariableMapSerialized =
+<           VariableMap.load(FLAG_variable_map_input_file.get()).toBytes();
+<     }
+< 
+<     if (!FLAG_property_map_input_file.get().equals("")) {
+<       options.inputPropertyMapSerialized =
+<           VariableMap.load(FLAG_property_map_input_file.get()).toBytes();
+<     }
+< 
+<     if (FLAG_third_party.get()) {
+<       options.setCodingConvention(new DefaultCodingConvention());
+---
+> <!DOCTYPE HTML PUBLIC "-
+> <!--NewPage-->
+> <HTML>
+> <HEAD>
+> <TITLE>
+> AbstractCompilerRunner (Compiler)
+> </TITLE>
+> 
+> 
+> <LINK REL ="stylesheet" TYPE="text/css" HREF="../../../../dev_javadoc.css" TITLE="Style">
+> 
+> <SCRIPT type="text/javascript">
+> function windowTitle()
+> {
+>     if (location.href.indexOf('is-external=true') == -1) {
+>         parent.document.title="AbstractCompilerRunner (Compiler)";
+259,790c18,909
+<   }
+< 
+<   
+< 
+< 
+< 
+<   final public void run() {
+<     int result;
+<     try {
+<       result = doRun();
+<     } catch (AbstractCompilerRunner.FlagUsageException e) {
+<       System.err.println(e.getMessage());
+<       result = -1;
+<     } catch (Throwable t) {
+<       t.printStackTrace();
+<       result = -2;
+<     }
+<     System.exit(result);
+<   }
+< 
+<   
+< 
+< 
+< 
+<   protected PrintStream getErrorPrintStream() {
+<     return err;
+<   }
+< 
+<   
+< 
+< 
+<   public static class FlagUsageException extends Exception {
+<     private static final long serialVersionUID = 1L;
+< 
+<     FlagUsageException(String message) {
+<       super(message);
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private static List<JSSourceFile> createInputs(List<String> files,
+<       boolean allowStdIn) throws FlagUsageException, IOException {
+<     List<JSSourceFile> inputs = new ArrayList<JSSourceFile>(files.size());
+<     boolean usingStdin = false;
+<     for (String filename : files) {
+<       if (!"-".equals(filename)) {
+<         inputs.add(JSSourceFile.fromFile(filename));
+<       } else {
+<         if (!allowStdIn) {
+<           throw new FlagUsageException("Can't specify stdin.");
+<         }
+<         if (usingStdin) {
+<           throw new FlagUsageException("Can't specify stdin twice.");
+<         }
+< 
+<         inputs.add(JSSourceFile.fromInputStream("stdin", System.in));
+<         usingStdin = true;
+<       }
+<     }
+<     return inputs;
+<   }
+< 
+<   
+< 
+< 
+<   private static List<JSSourceFile> createSourceInputs(List<String> files)
+<       throws FlagUsageException, IOException {
+<     if (files.isEmpty()) {
+<       files = Collections.singletonList("-");
+<     }
+<     try {
+<       return createInputs(files, true);
+<     } catch (FlagUsageException e) {
+<       throw new FlagUsageException("Bad --js flag. " + e.getMessage());
+<     }
+<   }
+< 
+<   
+< 
+< 
+<   private static List<JSSourceFile> createExternInputs(List<String> files)
+<       throws FlagUsageException, IOException {
+<     if (files.isEmpty()) {
+<       return ImmutableList.of(JSSourceFile.fromCode("/dev/null", ""));
+<     }
+<     try {
+<       return createInputs(files, false);
+<     } catch (FlagUsageException e) {
+<       throw new FlagUsageException("Bad --externs flag. " + e.getMessage());
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   static JSModule[] createJsModules(List<String> specs, List<String> jsFiles)
+<       throws FlagUsageException, IOException {
+<     Preconditions.checkState(specs != null);
+<     Preconditions.checkState(!specs.isEmpty());
+<     Preconditions.checkState(jsFiles != null);
+< 
+<     final int totalNumJsFiles = jsFiles.size();
+<     int nextJsFileIndex = 0;
+< 
+<     Map<String, JSModule> modulesByName = Maps.newLinkedHashMap();
+<     for (String spec : specs) {
+< 
+<       
+<       String[] parts = spec.split(":");
+<       if (parts.length < 2 || parts.length > 4) {
+<         throw new FlagUsageException("Expected 2-4 colon-delimited parts in "
+<             + "module spec: " + spec);
+<       }
+< 
+<       
+<       String name = parts[0];
+<       if (!TokenStream.isJSIdentifier(name)) {
+<         throw new FlagUsageException("Invalid module name: '" + name + "'");
+<       }
+<       if (modulesByName.containsKey(name)) {
+<         throw new FlagUsageException("Duplicate module name: " + name);
+<       }
+<       JSModule module = new JSModule(name);
+< 
+<       
+<       int numJsFiles = -1;
+<       try {
+<         numJsFiles = Integer.parseInt(parts[1]);
+<       } catch (NumberFormatException ignored) {
+<         numJsFiles = -1;
+<       }
+<       if (numJsFiles < 1) {
+<         throw new FlagUsageException("Invalid js file count '" + parts[1]
+<             + "' for module: " + name);
+<       }
+<       if (nextJsFileIndex + numJsFiles > totalNumJsFiles) {
+<         throw new FlagUsageException("Not enough js files specified. Expected "
+<             + (nextJsFileIndex + numJsFiles - totalNumJsFiles)
+<             + " more in module:" + name);
+<       }
+<       List<String> moduleJsFiles =
+<           jsFiles.subList(nextJsFileIndex, nextJsFileIndex + numJsFiles);
+<       for (JSSourceFile input : createInputs(moduleJsFiles, false)) {
+<         module.add(input);
+<       }
+<       nextJsFileIndex += numJsFiles;
+< 
+<       if (parts.length > 2) {
+<         
+<         String depList = parts[2];
+<         if (depList.length() > 0) {
+<           String[] deps = depList.split(",");
+<           for (String dep : deps) {
+<             JSModule other = modulesByName.get(dep);
+<             if (other == null) {
+<               throw new FlagUsageException("Module '" + name
+<                   + "' depends on unknown module '" + dep
+<                   + "'. Be sure to list modules in dependency order.");
+<             }
+<             module.addDependency(other);
+<           }
+<         }
+<       }
+< 
+<       modulesByName.put(name, module);
+<     }
+< 
+<     if (nextJsFileIndex < totalNumJsFiles) {
+<       throw new FlagUsageException("Too many js files specified. Expected "
+<           + nextJsFileIndex + " but found " + totalNumJsFiles);
+<     }
+< 
+<     return modulesByName.values().toArray(new JSModule[modulesByName.size()]);
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   static Map<String, String> parseModuleWrappers(List<String> specs,
+<       JSModule[] modules) throws FlagUsageException {
+<     Preconditions.checkState(specs != null);
+< 
+<     Map<String, String> wrappers =
+<         Maps.newHashMapWithExpectedSize(modules.length);
+< 
+<     
+<     for (JSModule m : modules) {
+<       wrappers.put(m.getName(), "");
+<     }
+< 
+<     for (String spec : specs) {
+< 
+<       
+<       int pos = spec.indexOf(':');
+<       if (pos == -1) {
+<         throw new FlagUsageException("Expected module wrapper to have "
+<             + "<name>:<wrapper> format: " + spec);
+<       }
+< 
+<       
+<       String name = spec.substring(0, pos);
+<       if (!wrappers.containsKey(name)) {
+<         throw new FlagUsageException("Unknown module: '" + name + "'");
+<       }
+<       String wrapper = spec.substring(pos + 1);
+<       if (!wrapper.contains("%s")) {
+<         throw new FlagUsageException("No %s placeholder in module wrapper: '"
+<             + wrapper + "'");
+<       }
+<       wrappers.put(name, wrapper);
+<     }
+<     return wrappers;
+<   }
+< 
+<   
+< 
+< 
+< 
+<   static void writeOutput(PrintStream out, Compiler compiler, String code,
+<       String wrapper, String codePlaceholder) {
+<     int pos = wrapper.indexOf(codePlaceholder);
+<     if (pos != -1) {
+<       String prefix = "";
+< 
+<       if (pos > 0) {
+<         prefix = wrapper.substring(0, pos);
+<         out.print(prefix);
+<       }
+< 
+<       out.print(code);
+< 
+<       int suffixStart = pos + codePlaceholder.length();
+<       if (suffixStart == wrapper.length()) {
+<         
+<         
+<         out.println();
+<       } else {
+<         out.println(wrapper.substring(suffixStart));
+<       }
+< 
+<       
+<       
+<       if (compiler != null && compiler.getSourceMap() != null) {
+<         compiler.getSourceMap().setWrapperPrefix(prefix);
+<       }
+< 
+<     } else {
+<       out.println(code);
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+<   private static void maybeCreateDirsForPath(String pathPrefix) {
+<     if (pathPrefix.length() > 0) {
+<       String dirName =
+<           pathPrefix.charAt(pathPrefix.length() - 1) == File.separatorChar
+<               ? pathPrefix.substring(0, pathPrefix.length() - 1) : new File(
+<                   pathPrefix).getParent();
+<       if (dirName != null) {
+<         new File(dirName).mkdirs();
+<       }
+<     }
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   protected int doRun() throws FlagUsageException, IOException {
+<     Compiler.setLoggingLevel(Level.parse(FLAG_logging_level.get()));
+< 
+<     List<JSSourceFile> externsList = createExterns();
+<     JSSourceFile[] externs = new JSSourceFile[externsList.size()];
+<     externsList.toArray(externs);
+< 
+<     compiler = createCompiler();
+<     B options = createOptions();
+< 
+<     JSModule[] modules = null;
+<     Result result;
+< 
+<     setRunOptions(options);
+< 
+<     if (!options.jsOutputFile.equals("")) {
+<       out = new PrintStream(options.jsOutputFile);
+<     }
+< 
+<     ((PrintStreamErrorManager) compiler.getErrorManager())
+<         .setSummaryDetailLevel(FLAG_summary_detail_level.get());
+< 
+<     List<String> jsFiles = FLAG_js.get();
+<     List<String> moduleSpecs = FLAG_module.get();
+<     if (!moduleSpecs.isEmpty()) {
+<       modules = createJsModules(moduleSpecs, jsFiles);
+<       result = compiler.compile(externs, modules, options);
+<     } else {
+<       List<JSSourceFile> inputList = createSourceInputs(jsFiles);
+<       JSSourceFile[] inputs = new JSSourceFile[inputList.size()];
+<       inputList.toArray(inputs);
+<       result = compiler.compile(externs, inputs, options);
+<     }
+< 
+<     if (FLAG_print_ast.get()) {
+<       if (compiler.getRoot() == null) {
+<         return 1;
+<       } else {
+<         ControlFlowGraph<Node> cfg = compiler.computeCFG();
+<         DotFormatter.appendDot(compiler.getRoot(), cfg, out);
+<         out.println();
+<         return 0;
+<       }
+<     }
+< 
+<     if (FLAG_print_tree.get()) {
+<       if (compiler.getRoot() == null) {
+<         out.println("Code contains errors; no tree was generated.");
+<         return 1;
+<       } else {
+<         compiler.getRoot().appendStringTree(out);
+<         out.println("");
+<         return 0;
+<       }
+<     }
+< 
+<     if (result.success) {
+<       if (modules == null) {
+<         writeOutput(out, compiler, compiler.toSource(), FLAG_output_wrapper
+<             .get(), FLAG_output_wrapper_marker.get());
+< 
+<         
+<         outputSourceMap(options, options.jsOutputFile);
+<       } else {
+<         String moduleFilePrefix = FLAG_module_output_path_prefix.get();
+<         maybeCreateDirsForPath(moduleFilePrefix);
+<         Map<String, String> moduleWrappers =
+<             parseModuleWrappers(FLAG_module_wrapper.get(), modules);
+< 
+<         
+<         
+<         
+<         PrintStream mapOut = null;
+< 
+<         if (!shouldGenerateMapPerModule(options)) {
+<           mapOut = openSourceMapStream(options, moduleFilePrefix, null);
+<         }
+< 
+<         for (JSModule m : modules) {
+<           if (shouldGenerateMapPerModule(options)) {
+<             mapOut =
+<                 openSourceMapStream(options, moduleFilePrefix, m.getName());
+<           }
+< 
+<           PrintStream ps =
+<               new PrintStream(new FileOutputStream(moduleFilePrefix
+<                   + m.getName() + ".js"));
+< 
+<           if (options.sourceMapOutputPath != null) {
+<             compiler.getSourceMap().reset();
+<           }
+< 
+<           writeOutput(ps, compiler, compiler.toSource(m), moduleWrappers.get(
+<               m.getName()), "%s");
+< 
+<           if (options.sourceMapOutputPath != null) {
+<             compiler.getSourceMap().appendTo(mapOut, m.getName());
+<           }
+< 
+<           ps.close();
+< 
+<           if (shouldGenerateMapPerModule(options) && mapOut != null) {
+<             mapOut.close();
+<             mapOut = null;
+<           }
+<         }
+< 
+<         if (mapOut != null) {
+<           mapOut.close();
+<         }
+<       }
+< 
+<       
+<       if (options.externExportsPath != null) {
+<         PrintStream eeOut =
+<             openExternExportsStream(options, options.jsOutputFile);
+<         eeOut.append(result.externExport);
+<         eeOut.close();
+<       }
+< 
+<       
+<       outputNameMaps(options);
+<     }
+< 
+<     
+<     return Math.min(result.errors.length, 0x7f);
+<   }
+< 
+<   protected List<JSSourceFile> createExterns() throws FlagUsageException,
+<       IOException {
+<     return createExternInputs(FLAG_externs.get());
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   private boolean shouldGenerateMapPerModule(B options) {
+<     return options.sourceMapOutputPath != null
+<         && options.sourceMapOutputPath.contains("%module%");
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private PrintStream openExternExportsStream(B options,
+<       String path) throws IOException {
+<     if (options.externExportsPath == null) {
+<       return null;
+<     }
+< 
+<     String exPath = options.externExportsPath;
+< 
+<     if (!exPath.contains(File.separator)) {
+<       File outputFile = new File(path);
+<       exPath = outputFile.getParent() + File.separatorChar + exPath;
+<     }
+< 
+<     return new PrintStream(new FileOutputStream(exPath));
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private PrintStream openSourceMapStream(B options, String path,
+<       String module) throws IOException {
+<     if (options.sourceMapOutputPath == null) {
+<       return null;
+<     }
+< 
+<     String sourceMapPath = options.sourceMapOutputPath;
+< 
+<     
+<     if (module != null) {
+<       sourceMapPath = sourceMapPath.replace("%module%", module);
+<     }
+< 
+<     String mapPath = null;
+< 
+<     if (sourceMapPath.contains(File.separator)) {
+<       mapPath = sourceMapPath;
+<     } else {
+<       File outputFile = new File(path);
+<       mapPath = outputFile.getParent() + File.separatorChar + sourceMapPath;
+<     }
+< 
+<     return new PrintStream(new FileOutputStream(mapPath));
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   private void outputSourceMap(B options, String path)
+<       throws IOException {
+<     if (options.sourceMapOutputPath == null) {
+<       return;
+<     }
+< 
+<     File outputFile = new File(path);
+<     PrintStream out = openSourceMapStream(options, path, null);
+<     compiler.getSourceMap().appendTo(out, outputFile.getName());
+<     out.close();
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+<   private static String getMapPath(String outputFile) {
+<     String basePath = "";
+< 
+<     if (outputFile.equals("")) {
+<       
+<       
+<       if (!FLAG_module_output_path_prefix.get().equals("")) {
+<         basePath = FLAG_module_output_path_prefix.get();
+<       } else {
+<         basePath = "jscompiler";
+<       }
+<     } else {
+---
+> }
+> </SCRIPT>
+> <NOSCRIPT>
+> </NOSCRIPT>
+> 
+> </HEAD>
+> 
+> <BODY BGCOLOR="white" onload="windowTitle();">
+> <HR>
+> 
+> 
+> <!-- ========= START OF TOP NAVBAR ======= -->
+> <A NAME="navbar_top"><!-- --></A>
+> <A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+> <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+> <TR>
+> <TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+> <A NAME="navbar_top_firstrow"><!-- --></A>
+> <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+>   <TR ALIGN="center" VALIGN="top">
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../index-all.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+>   </TR>
+> </TABLE>
+> </TD>
+> <TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+> </EM>
+> </TD>
+> </TR>
+> 
+> <TR>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/AbstractCompiler.html" title="class in com.google.javascript.jscomp"><B>PREV CLASS</B></A>&nbsp;
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.FlagUsageException.html" title="class in com.google.javascript.jscomp"><B>NEXT CLASS</B></A></FONT></TD>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+>   <A HREF="../../../../index.html?com/google/javascript/jscomp/AbstractCompilerRunner.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+> &nbsp;<A HREF="AbstractCompilerRunner.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+> &nbsp;<SCRIPT type="text/javascript">
+>   <!--
+>   if(window==top) {
+>     document.writeln('<A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>');
+>   }
+>   
+> </SCRIPT>
+> <NOSCRIPT>
+>   <A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>
+> </NOSCRIPT>
+> 
+> 
+> </FONT></TD>
+> </TR>
+> <TR>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+>   SUMMARY:&nbsp;<A HREF="#nested_class_summary">NESTED</A>&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+> DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+> </TR>
+> </TABLE>
+> <A NAME="skip-navbar_top"></A>
+> <!-- ========= END OF TOP NAVBAR ========= -->
+> 
+> <HR>
+> <!-- ======== START OF CLASS DATA ======== -->
+> <H2>
+> <FONT SIZE="-1">
+> com.google.javascript.jscomp</FONT>
+> <BR>
+> Class AbstractCompilerRunner&lt;A extends <A HREF="../../../../com/google/javascript/jscomp/Compiler.html" title="class in com.google.javascript.jscomp">Compiler</A>,B extends <A HREF="../../../../com/google/javascript/jscomp/CompilerOptions.html" title="class in com.google.javascript.jscomp">CompilerOptions</A>&gt;</H2>
+> <PRE>
+> <A HREF="http:
+>   <IMG SRC="../../../../resources/inherit.gif" ALT="extended by "><B>com.google.javascript.jscomp.AbstractCompilerRunner&lt;A,B&gt;</B>
+> </PRE>
+> <DL>
+> <DT><B>Direct Known Subclasses:</B> <DD><A HREF="../../../../com/google/javascript/jscomp/CompilerRunner.html" title="class in com.google.javascript.jscomp">CompilerRunner</A></DD>
+> </DL>
+> <HR>
+> <DL>
+> <DT><PRE>public abstract class <B>AbstractCompilerRunner&lt;A extends <A HREF="../../../../com/google/javascript/jscomp/Compiler.html" title="class in com.google.javascript.jscomp">Compiler</A>,B extends <A HREF="../../../../com/google/javascript/jscomp/CompilerOptions.html" title="class in com.google.javascript.jscomp">CompilerOptions</A>&gt;</B><DT>extends <A HREF="http:
+> </PRE>
+> 
+> <P>
+> AbstractCompilerRunner encapsulates the logic required to run the Compiler.
+>  This class is designed to be extended and used to create other Java classes
+>  that behave the same as running the Compiler. Example:
+> 
+>  <pre>
+>  class MyCompilerRunner extends
+>      AbstractCompilerRunner<MyCompiler, MyOptions> {
+>    MyCompilerRunner(String[] args) {
+>      super(args);
+>    }
+> 
+>    &#064;Override
+>    protected MyOptions createOptions() {
+>      MyOptions options = new MyOptions();
+>      CompilerFlagTranslator.setOptionsFromFlags(options);
+>      addMyCrazyCompilerPassThatOutputsAnExtraFile(options);
+>      return options;
+>    }
+> 
+>    &#064;Override
+>    protected MyCompiler createCompiler() {
+>      return new MyCompiler();
+>    }
+> 
+>    public static void main(String[] args) {
+>      (new MyCompilerRunner(args)).run();
+>    }
+>  }
+>  </pre>
+> <P>
+> 
+> <P>
+> <HR>
+> 
+> <P>
+> <!-- ======== NESTED CLASS SUMMARY ======== -->
+> 
+> <A NAME="nested_class_summary"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+> <B>Nested Class Summary</B></FONT></TH>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;class</CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.FlagUsageException.html" title="class in com.google.javascript.jscomp">AbstractCompilerRunner.FlagUsageException</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An exception thrown when command-line flags are used incorrectly.</TD>
+> </TR>
+> </TABLE>
+> &nbsp;<!-- =========== FIELD SUMMARY =========== -->
+> 
+> <A NAME="field_summary"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+> <B>Field Summary</B></FONT></TH>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_create_name_map_files">FLAG_create_name_map_files</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_create_source_map">FLAG_create_source_map</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_externs">FLAG_externs</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_js">FLAG_js</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;com.google.javascript.jscomp.CompilerOptions.DevMode&gt;</CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_jscomp_dev_mode">FLAG_jscomp_dev_mode</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_jscomp_error">FLAG_jscomp_error</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_jscomp_off">FLAG_jscomp_off</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_jscomp_warning">FLAG_jscomp_warning</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_logging_level">FLAG_logging_level</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_module">FLAG_module</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_module_output_path_prefix">FLAG_module_output_path_prefix</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_module_wrapper">FLAG_module_wrapper</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_output_wrapper">FLAG_output_wrapper</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_output_wrapper_marker">FLAG_output_wrapper_marker</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_print_ast">FLAG_print_ast</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_print_tree">FLAG_print_tree</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_property_map_input_file">FLAG_property_map_input_file</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_property_map_output_file">FLAG_property_map_output_file</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_summary_detail_level">FLAG_summary_detail_level</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_third_party">FLAG_third_party</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_variable_map_input_file">FLAG_variable_map_input_file</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>static&nbsp;com.google.common.flags.Flag&lt;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#FLAG_variable_map_output_file">FLAG_variable_map_output_file</A></B></CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> </TABLE>
+> &nbsp;
+> <!-- ======== CONSTRUCTOR SUMMARY ======== -->
+> 
+> <A NAME="constructor_summary"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+> <B>Constructor Summary</B></FONT></TH>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#AbstractCompilerRunner(java.lang.String[])">AbstractCompilerRunner</A></B>(<A HREF="http:
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#AbstractCompilerRunner(java.lang.String[], java.io.PrintStream, java.io.PrintStream)">AbstractCompilerRunner</A></B>(<A HREF="http:
+>                        <A HREF="http:
+>                        <A HREF="http:
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> </TABLE>
+> &nbsp;
+> <!-- ========== METHOD SUMMARY =========== -->
+> 
+> <A NAME="method_summary"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+> <B>Method Summary</B></FONT></TH>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>protected abstract &nbsp;<A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">A</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#createCompiler()">createCompiler</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the instance of the Compiler to use when <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#run()"><CODE>run()</CODE></A> is
+>  called.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>protected &nbsp;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#createExterns()">createExterns</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>protected abstract &nbsp;<A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">B</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#createOptions()">createOptions</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the instance of the Options to use when <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#run()"><CODE>run()</CODE></A> is called.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>protected &nbsp;int</CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#doRun()">doRun</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parses command-line arguments and runs the compiler.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>protected &nbsp;<A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">A</A></CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#getCompiler()">getCompiler</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>protected &nbsp;<A HREF="http:
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#getErrorPrintStream()">getErrorPrintStream</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the PrintStream for writing errors associated with this
+>  AbstractCompilerRunner.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>&nbsp;void</CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#run()">run</A></B>()</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Runs the Compiler and calls System.exit() with the exit status of the
+>  compiler.</TD>
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+> <CODE>protected &nbsp;void</CODE></FONT></TD>
+> <TD><CODE><B><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#setRunOptions(B)">setRunOptions</A></B>(<A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">B</A>&nbsp;options)</CODE>
+> 
+> <BR>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+> </TR>
+> </TABLE>
+> &nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+> <TH ALIGN="left"><B>Methods inherited from class java.lang.<A HREF="http:
+> </TR>
+> <TR BGCOLOR="white" CLASS="TableRowColor">
+> <TD><CODE><A HREF="http:
+> </TR>
+> </TABLE>
+> &nbsp;
+> <P>
+> 
+> <!-- ============ FIELD DETAIL =========== -->
+> 
+> <A NAME="field_detail"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+> <B>Field Detail</B></FONT></TH>
+> </TR>
+> </TABLE>
+> 
+> <A NAME="FLAG_print_tree"><!-- --></A><H3>
+> FLAG_print_tree</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_print_ast"><!-- --></A><H3>
+> FLAG_print_ast</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_jscomp_dev_mode"><!-- --></A><H3>
+> FLAG_jscomp_dev_mode</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;com.google.javascript.jscomp.CompilerOptions.DevMode&gt; <B>FLAG_jscomp_dev_mode</B></PRE>
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_logging_level"><!-- --></A><H3>
+> FLAG_logging_level</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_externs"><!-- --></A><H3>
+> FLAG_externs</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_js"><!-- --></A><H3>
+> FLAG_js</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_module"><!-- --></A><H3>
+> FLAG_module</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_variable_map_input_file"><!-- --></A><H3>
+> FLAG_variable_map_input_file</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_property_map_input_file"><!-- --></A><H3>
+> FLAG_property_map_input_file</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_variable_map_output_file"><!-- --></A><H3>
+> FLAG_variable_map_output_file</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_create_name_map_files"><!-- --></A><H3>
+> FLAG_create_name_map_files</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_property_map_output_file"><!-- --></A><H3>
+> FLAG_property_map_output_file</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_third_party"><!-- --></A><H3>
+> FLAG_third_party</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_summary_detail_level"><!-- --></A><H3>
+> FLAG_summary_detail_level</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_output_wrapper"><!-- --></A><H3>
+> FLAG_output_wrapper</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_output_wrapper_marker"><!-- --></A><H3>
+> FLAG_output_wrapper_marker</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_module_wrapper"><!-- --></A><H3>
+> FLAG_module_wrapper</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_module_output_path_prefix"><!-- --></A><H3>
+> FLAG_module_output_path_prefix</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_create_source_map"><!-- --></A><H3>
+> FLAG_create_source_map</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_jscomp_error"><!-- --></A><H3>
+> FLAG_jscomp_error</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_jscomp_warning"><!-- --></A><H3>
+> FLAG_jscomp_warning</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="FLAG_jscomp_off"><!-- --></A><H3>
+> FLAG_jscomp_off</H3>
+> <PRE>
+> public static final com.google.common.flags.Flag&lt;<A HREF="http:
+> <DL>
+> <DL>
+> </DL>
+> </DL>
+> 
+> <!-- ========= CONSTRUCTOR DETAIL ======== -->
+> 
+> <A NAME="constructor_detail"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+> <B>Constructor Detail</B></FONT></TH>
+> </TR>
+> </TABLE>
+> 
+> <A NAME="AbstractCompilerRunner(java.lang.String[])"><!-- --></A><H3>
+> AbstractCompilerRunner</H3>
+> <PRE>
+> public <B>AbstractCompilerRunner</B>(<A HREF="http:
+> <DL>
+> </DL>
+> <HR>
+> 
+> <A NAME="AbstractCompilerRunner(java.lang.String[], java.io.PrintStream, java.io.PrintStream)"><!-- --></A><H3>
+> AbstractCompilerRunner</H3>
+> <PRE>
+> public <B>AbstractCompilerRunner</B>(<A HREF="http:
+>                               <A HREF="http:
+>                               <A HREF="http:
+> <DL>
+> </DL>
+> 
+> <!-- ============ METHOD DETAIL ========== -->
+> 
+> <A NAME="method_detail"><!-- --></A>
+> <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+> <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+> <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+> <B>Method Detail</B></FONT></TH>
+> </TR>
+> </TABLE>
+> 
+> <A NAME="createCompiler()"><!-- --></A><H3>
+> createCompiler</H3>
+> <PRE>
+> protected abstract <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">A</A> <B>createCompiler</B>()</PRE>
+> <DL>
+> <DD>Returns the instance of the Compiler to use when <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#run()"><CODE>run()</CODE></A> is
+>  called.
+> <P>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="createOptions()"><!-- --></A><H3>
+> createOptions</H3>
+> <PRE>
+> protected abstract <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">B</A> <B>createOptions</B>()</PRE>
+> <DL>
+> <DD>Returns the instance of the Options to use when <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html#run()"><CODE>run()</CODE></A> is called.
+>  createCompiler() is called before createOptions(), so getCompiler()
+>  will not return null when createOptions() is called.
+> <P>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="getCompiler()"><!-- --></A><H3>
+> getCompiler</H3>
+> <PRE>
+> protected final <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">A</A> <B>getCompiler</B>()</PRE>
+> <DL>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="setRunOptions(com.google.javascript.jscomp.CompilerOptions)"><!-- --></A><A NAME="setRunOptions(B)"><!-- --></A><H3>
+> setRunOptions</H3>
+> <PRE>
+> protected final void <B>setRunOptions</B>(<A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.html" title="type parameter in AbstractCompilerRunner">B</A>&nbsp;options)
+>                             throws <A HREF="http:
+> <DL>
+> <DD><DL>
+> 
+> <DT><B>Throws:</B>
+> <DD><CODE><A HREF="http:
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="run()"><!-- --></A><H3>
+> run</H3>
+> <PRE>
+> public final void <B>run</B>()</PRE>
+> <DL>
+> <DD>Runs the Compiler and calls System.exit() with the exit status of the
+>  compiler.
+> <P>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="getErrorPrintStream()"><!-- --></A><H3>
+> getErrorPrintStream</H3>
+> <PRE>
+> protected <A HREF="http:
+> <DL>
+> <DD>Returns the PrintStream for writing errors associated with this
+>  AbstractCompilerRunner.
+> <P>
+> <DD><DL>
+> </DL>
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="doRun()"><!-- --></A><H3>
+> doRun</H3>
+> <PRE>
+> protected int <B>doRun</B>()
+>              throws <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.FlagUsageException.html" title="class in com.google.javascript.jscomp">AbstractCompilerRunner.FlagUsageException</A>,
+>                     <A HREF="http:
+> <DL>
+> <DD>Parses command-line arguments and runs the compiler.
+> <P>
+> <DD><DL>
+> 
+> <DT><B>Returns:</B><DD>system exit status
+> <DT><B>Throws:</B>
+> <DD><CODE><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.FlagUsageException.html" title="class in com.google.javascript.jscomp">AbstractCompilerRunner.FlagUsageException</A></CODE>
+> <DD><CODE><A HREF="http:
+> </DD>
+> </DL>
+> <HR>
+> 
+> <A NAME="createExterns()"><!-- --></A><H3>
+> createExterns</H3>
+> <PRE>
+> protected <A HREF="http:
+>                                     throws <A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.FlagUsageException.html" title="class in com.google.javascript.jscomp">AbstractCompilerRunner.FlagUsageException</A>,
+>                                            <A HREF="http:
+> <DL>
+> <DD><DL>
+> 
+> <DT><B>Throws:</B>
+> <DD><CODE><A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.FlagUsageException.html" title="class in com.google.javascript.jscomp">AbstractCompilerRunner.FlagUsageException</A></CODE>
+> <DD><CODE><A HREF="http:
+> </DD>
+> </DL>
+> <!-- ========= END OF CLASS DATA ========= -->
+> <HR>
+> 
+> 
+> <!-- ======= START OF BOTTOM NAVBAR ====== -->
+> <A NAME="navbar_bottom"><!-- --></A>
+> <A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+> <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+> <TR>
+> <TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+> <A NAME="navbar_bottom_firstrow"><!-- --></A>
+> <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+>   <TR ALIGN="center" VALIGN="top">
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../index-all.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+>   <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+>   </TR>
+> </TABLE>
+> </TD>
+> <TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+> </EM>
+> </TD>
+> </TR>
+> 
+> <TR>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/AbstractCompiler.html" title="class in com.google.javascript.jscomp"><B>PREV CLASS</B></A>&nbsp;
+> &nbsp;<A HREF="../../../../com/google/javascript/jscomp/AbstractCompilerRunner.FlagUsageException.html" title="class in com.google.javascript.jscomp"><B>NEXT CLASS</B></A></FONT></TD>
+> <TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+>   <A HREF="../../../../index.html?com/google/javascript/jscomp/AbstractCompilerRunner.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+> &nbsp;<A HREF="AbstractCompilerRunner.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+> &nbsp;<SCRIPT type="text/javascript">
+>   <!--
+>   if(window==top) {
+>     document.writeln('<A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>');
+>   }
+>   
+> </SCRIPT>
+> <NOSCRIPT>
+>   <A HREF="../../../../allclasses-noframe.html"><B>All Classes</B></A>
+> </NOSCRIPT>
+> 
+> 
+> </FONT></TD>
+> </TR>
+> <TR>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+>   SUMMARY:&nbsp;<A HREF="#nested_class_summary">NESTED</A>&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+> <TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+> DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+> </TR>
+> </TABLE>
+> <A NAME="skip-navbar_bottom"></A>
+> <!-- ======== END OF BOTTOM NAVBAR ======= -->
+> 
+> <HR>
+> 
+>         <div id="footer">
+>           <div id="footerlogo">
+>             <img src="http:
+>                  alt="Google colored balls">
+>           </div>
+> 
+>           <div id="copyright">
+>           <p>&copy; 2009 Google -
+>             <a href="http:
+>             <a href="http:
+>             <a href="http:
+>           </p>
+>           </div>
+>         </div>
+792,795d910
+<       File file = new File(outputFile);
+< 
+<       String outputFileName = file.getName();
+< 
+797,872c912,913
+<       if (outputFileName.endsWith(".js")) {
+<         outputFileName =
+<             outputFileName.substring(0, outputFileName.length() - 3);
+<       }
+< 
+<       basePath = file.getParent() + File.separatorChar + outputFileName;
+<     }
+< 
+<     return basePath;
+<   }
+< 
+<   
+< 
+< 
+< 
+<   private void outputNameMaps(B options) throws FlagUsageException,
+<       IOException {
+< 
+<     String propertyMapOutputPath = null;
+<     String variableMapOutputPath = null;
+<     String functionInformationMapOutputPath = null;
+< 
+<     
+<     if (FLAG_create_name_map_files.get()) {
+<       String basePath = getMapPath(options.jsOutputFile);
+< 
+<       propertyMapOutputPath = basePath + "_props_map.out";
+<       variableMapOutputPath = basePath + "_vars_map.out";
+<       functionInformationMapOutputPath = basePath + "_functions_map.out";
+<     }
+< 
+<     
+<     if (!FLAG_variable_map_output_file.get().equals("")) {
+<       if (variableMapOutputPath != null) {
+<         throw new FlagUsageException("The flags variable_map_output_file and "
+<             + "create_name_map_files cannot both be used simultaniously.");
+<       }
+< 
+<       variableMapOutputPath = FLAG_variable_map_output_file.get();
+<     }
+< 
+<     if (!FLAG_property_map_output_file.get().equals("")) {
+<       if (propertyMapOutputPath != null) {
+<         throw new FlagUsageException("The flags property_map_output_file and "
+<             + "create_name_map_files cannot both be used simultaniously.");
+<       }
+< 
+<       propertyMapOutputPath = FLAG_property_map_output_file.get();
+<     }
+< 
+<     
+<     if (variableMapOutputPath != null) {
+<       if (compiler.getVariableMap() != null) {
+<         compiler.getVariableMap().save(variableMapOutputPath);
+<       }
+<     }
+< 
+<     if (propertyMapOutputPath != null) {
+<       if (compiler.getPropertyMap() != null) {
+<         compiler.getPropertyMap().save(propertyMapOutputPath);
+<       }
+<     }
+< 
+<     if (functionInformationMapOutputPath != null) {
+<       if (compiler.getFunctionalInformationMap() != null) {
+<         FileOutputStream file =
+<             new FileOutputStream(functionInformationMapOutputPath);
+<         CodedOutputStream outputStream = CodedOutputStream.newInstance(file);
+<         compiler.getFunctionalInformationMap().writeTo(outputStream);
+<         outputStream.flush();
+<         file.flush();
+<         file.close();
+<       }
+<     }
+<   }
+< }
+---
+> </BODY>
+> </HTML>

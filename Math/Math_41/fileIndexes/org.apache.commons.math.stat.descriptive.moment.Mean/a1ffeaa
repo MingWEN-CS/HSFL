@@ -1,0 +1,137 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat.descriptive.moment;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.stat.descriptive.AbstractStorelessUnivariateStatistic;
+import org.apache.commons.math.stat.descriptive.summary.Sum;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Mean extends AbstractStorelessUnivariateStatistic 
+    implements Serializable {
+
+    
+    static final long serialVersionUID = -1296043746617791564L;    
+    
+    
+    protected FirstMoment moment;
+
+    
+
+
+
+
+
+    protected boolean incMoment;
+
+    
+    public Mean() {
+        incMoment = true;
+        moment = new FirstMoment();
+    }
+
+    
+
+
+
+
+    public Mean(final FirstMoment m1) {
+        this.moment = m1;
+        incMoment = false;
+    }
+
+    
+
+
+    public void increment(final double d) {
+        if (incMoment) {
+            moment.increment(d);
+        }
+    }
+
+    
+
+
+    public void clear() {
+        if (incMoment) {
+            moment.clear();
+        }
+    }
+
+    
+
+
+    public double getResult() {
+        return moment.m1;
+    }
+
+    
+
+
+    public long getN() {
+        return moment.getN();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values,final int begin, final int length) {
+        if (test(values, begin, length)) {
+            Sum sum = new Sum();
+            return sum.evaluate(values, begin, length) / ((double) length);
+        }
+        return Double.NaN;
+    }
+}

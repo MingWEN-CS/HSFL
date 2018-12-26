@@ -1,0 +1,51 @@
+564c564
+<         !isBreakTarget(cur, parent, label);
+---
+>         !isBreakTarget(cur, label);
+856,858c856,858
+<   private static boolean isBreakTarget(
+<       Node target, Node parent, String label) {
+<     return isBreakStructure(target, label != null) && matchLabel(parent, label);
+---
+>   public static boolean isBreakTarget(Node target, String label) {
+>     return isBreakStructure(target, label != null) &&
+>       matchLabel(target.getParent(), label);
+889c889
+<   private static boolean mayThrowException(Node n) {
+---
+>   public static boolean mayThrowException(Node n) {
+942a943,976
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   static Node getExceptionHandler(Node n) {
+>     for (Node cur = n;
+>         cur.getType() != Token.SCRIPT && cur.getType() != Token.FUNCTION;
+>         cur = cur.getParent()) {
+>       Node catchNode = getCatchHandlerForBlock(cur);
+>       if (catchNode != null) {
+>         return catchNode;
+>       }
+>     }
+>     return null;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static Node getCatchHandlerForBlock(Node block) {
+>     if (block.getType() == Token.BLOCK &&
+>         block.getParent().getType() == Token.TRY &&
+>         block.getParent().getFirstChild() == block) {
+>       for (Node s = block.getNext(); s != null; s = s.getNext()) {
+>         if (NodeUtil.hasCatchHandler(s)) {
+>           return s.getFirstChild();
+>         }
+>       }
+>     }
+>     return null;

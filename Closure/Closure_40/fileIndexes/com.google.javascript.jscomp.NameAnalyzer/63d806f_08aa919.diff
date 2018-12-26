@@ -1,0 +1,24 @@
+791,792c791,794
+<         recordReference(
+<             nameInfo.name, nameInfo.superclass, RefType.INHERITANCE);
+---
+>         if (nameInfo.superclass != null) {
+>           recordReference(
+>               nameInfo.name, nameInfo.superclass, RefType.INHERITANCE);
+>         }
+1256,1257c1258,1259
+<       SubclassRelationship classes =
+<           compiler.getCodingConvention().getClassesDefinedByCall(parent);
+---
+>       CodingConvention convention = compiler.getCodingConvention();
+>       SubclassRelationship classes = convention.getClassesDefinedByCall(parent);
+1262a1265,1273
+>         return nameInfo;
+>       }
+> 
+>       String singletonGetterClass =
+>           convention.getSingletonGetterClassName(parent);
+>       if (singletonGetterClass != null) {
+>         NameInformation nameInfo = new NameInformation();
+>         nameInfo.name = singletonGetterClass;
+>         nameInfo.onlyAffectsClassDef = true;

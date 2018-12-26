@@ -1,0 +1,101 @@
+1103,1104c1103,1104
+<             n.setType(Token.CALL);
+<             reportCodeChange();
+---
+>           n.setType(Token.CALL);
+>           reportCodeChange();
+1210,1216d1209
+<     
+<     
+<     
+<     if (!isASTNormalized()) {
+<       return n;
+<     }
+< 
+1234c1227,1228
+<         && !containsUnicodeEscape(pattern.getString())) {
+---
+>         && (isEcmaScript5OrGreater()
+>             || !containsUnicodeEscape(pattern.getString()))) {
+1237a1232,1233
+>       
+>       
+1295,1296c1291,1300
+<   private static boolean areSafeFlagsToFold(String flags) {
+<     return flags.indexOf('g') < 0;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private boolean areSafeFlagsToFold(String flags) {
+>     return isEcmaScript5OrGreater() || flags.indexOf('g') < 0;
+1306a1311
+>     boolean isEscaped = false, inCharset = false;
+1308,1310c1313,1329
+<       switch (s.charAt(i)) {
+<         case '\\':  
+<           ++i;
+---
+>       char ch = s.charAt(i);
+>       switch (ch) {
+>         case '\\':
+>           isEscaped = !isEscaped;
+>           continue;
+>         case '/':
+>           
+>           
+>           
+>           
+>           
+>           
+>           if (!isEscaped && !inCharset) {
+>             if (null == sb) { sb = new StringBuilder(s.length() + 16); }
+>             sb.append(s, pos, i).append('\\');
+>             pos = i;
+>           }
+1312c1331,1348
+<         case '/':  
+---
+>         case '[':
+>           if (!isEscaped) {
+>             inCharset = true;
+>           }
+>           break;
+>         case ']':
+>           if (!isEscaped) {
+>             inCharset = false;
+>           }
+>           break;
+>         case '\r': case '\n': case '\u2028': case '\u2029':
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+1314,1315c1350,1361
+<           sb.append(s, pos, i).append('\\');
+<           pos = i;
+---
+>           if (isEscaped) {
+>             sb.append(s, pos, i - 1);
+>           } else {
+>             sb.append(s, pos, i);
+>           }
+>           switch (ch) {
+>             case '\r': sb.append("\\r"); break;
+>             case '\n': sb.append("\\n"); break;
+>             case '\u2028': sb.append("\\u2028"); break;
+>             case '\u2029': sb.append("\\u2029"); break;
+>           }
+>           pos = i + 1;
+1317a1364
+>       isEscaped = false;
+1320d1366
+<     

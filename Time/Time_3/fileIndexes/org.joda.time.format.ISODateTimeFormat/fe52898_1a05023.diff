@@ -1,0 +1,168 @@
+18a19,20
+> import java.util.HashSet;
+> import java.util.Set;
+21d22
+< import org.joda.time.DateTimeZone;
+72d72
+<         lse, 
+214a215,224
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+216c226
+<         Collection fields,
+---
+>         Collection<DateTimeFieldType> fields,
+223c233,234
+<         int inputSize = fields.size();
+---
+>         Set<DateTimeFieldType> workingFields = new HashSet<DateTimeFieldType>(fields);
+>         int inputSize = workingFields.size();
+227,237c238,248
+<         if (fields.contains(DateTimeFieldType.monthOfYear())) {
+<             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.dayOfYear())) {
+<             reducedPrec = dateByOrdinal(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.weekOfWeekyear())) {
+<             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.dayOfMonth())) {
+<             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.dayOfWeek())) {
+<             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+<         } else if (fields.remove(DateTimeFieldType.year())) {
+---
+>         if (workingFields.contains(DateTimeFieldType.monthOfYear())) {
+>             reducedPrec = dateByMonth(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.dayOfYear())) {
+>             reducedPrec = dateByOrdinal(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.weekOfWeekyear())) {
+>             reducedPrec = dateByWeek(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.dayOfMonth())) {
+>             reducedPrec = dateByMonth(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.dayOfWeek())) {
+>             reducedPrec = dateByWeek(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.remove(DateTimeFieldType.year())) {
+240c251
+<         } else if (fields.remove(DateTimeFieldType.weekyear())) {
+---
+>         } else if (workingFields.remove(DateTimeFieldType.weekyear())) {
+244c255
+<         boolean datePresent = (fields.size() < inputSize);
+---
+>         boolean datePresent = (workingFields.size() < inputSize);
+247c258
+<         time(bld, fields, extended, strictISO, reducedPrec, datePresent);
+---
+>         time(bld, workingFields, extended, strictISO, reducedPrec, datePresent);
+252a264,271
+>         
+>         
+>         
+>         try {
+>             fields.retainAll(workingFields);
+>         } catch (UnsupportedOperationException ex) {
+>             
+>         }
+270c289
+<         Collection fields,
+---
+>         Collection<DateTimeFieldType> fields,
+338c357
+<         Collection fields,
+---
+>         Collection<DateTimeFieldType> fields,
+375c394
+<         Collection fields,
+---
+>         Collection<DateTimeFieldType> fields,
+445c464
+<         Collection fields,
+---
+>         Collection<DateTimeFieldType> fields,
+515c534
+<     private static void checkNotStrictISO(Collection fields, boolean strictISO) {
+---
+>     private static void checkNotStrictISO(Collection<DateTimeFieldType> fields, boolean strictISO) {
+576c595
+<             ldp = dateElementParser().withZone(DateTimeZone.UTC);
+---
+>             ldp = dateElementParser().withZoneUTC();
+660c679
+<                 .toFormatter().withZone(DateTimeZone.UTC);
+---
+>                 .toFormatter().withZoneUTC();
+822c841
+<                 .toFormatter().withZone(DateTimeZone.UTC);
+---
+>                 .toFormatter().withZoneUTC();
+849c868
+<                 .append(hourMinuteSecondMillis())
+---
+>                 .append(hourMinuteSecondFraction())
+1051,1052c1070,1071
+<                 .appendMonthOfYear(2)
+<                 .appendDayOfMonth(2)
+---
+>                 .appendFixedDecimal(DateTimeFieldType.monthOfYear(), 2)
+>                 .appendFixedDecimal(DateTimeFieldType.dayOfMonth(), 2)
+1069,1071c1088,1090
+<                 .appendHourOfDay(2)
+<                 .appendMinuteOfHour(2)
+<                 .appendSecondOfMinute(2)
+---
+>                 .appendFixedDecimal(DateTimeFieldType.hourOfDay(), 2)
+>                 .appendFixedDecimal(DateTimeFieldType.minuteOfHour(), 2)
+>                 .appendFixedDecimal(DateTimeFieldType.secondOfMinute(), 2)
+1073c1092
+<                 .appendMillisOfSecond(3)
+---
+>                 .appendFractionOfSecond(3, 9)
+1090,1092c1109,1111
+<                 .appendHourOfDay(2)
+<                 .appendMinuteOfHour(2)
+<                 .appendSecondOfMinute(2)
+---
+>                 .appendFixedDecimal(DateTimeFieldType.hourOfDay(), 2)
+>                 .appendFixedDecimal(DateTimeFieldType.minuteOfHour(), 2)
+>                 .appendFixedDecimal(DateTimeFieldType.secondOfMinute(), 2)
+1180c1199
+<                 .appendDayOfYear(3)
+---
+>                 .appendFixedDecimal(DateTimeFieldType.dayOfYear(), 3)
+1233,1234c1252,1253
+<                 .appendWeekOfWeekyear(2)
+<                 .appendDayOfWeek(1)
+---
+>                 .appendFixedDecimal(DateTimeFieldType.weekOfWeekyear(), 2)
+>                 .appendFixedDecimal(DateTimeFieldType.dayOfWeek(), 1)
+1407a1427
+> 
+1414c1434,1435
+<                 .append(millisElement())
+---
+>                 .appendLiteral('.')
+>                 .appendFractionOfSecond(3, 3)
+1426a1448
+> 
+1497a1520
+> 
+1515a1539
+> 
+1632,1641d1655
+<     }
+< 
+<     private static DateTimeFormatter millisElement() {
+<         if (lse == null) {
+<             lse = new DateTimeFormatterBuilder()
+<                 .appendLiteral('.')
+<                 .appendMillisOfSecond(3)
+<                 .toFormatter();
+<         }
+<         return lse;

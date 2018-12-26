@@ -1,0 +1,78 @@
+31,32d30
+< import com.google.common.collect.HashMultimap;
+< import com.google.common.collect.ImmutableSet;
+34,35d31
+< import com.google.common.collect.Multimap;
+< import com.google.common.collect.Sets;
+51d46
+< import java.util.Collection;
+55d49
+< import java.util.Set;
+88,99d81
+<   
+< 
+< 
+< 
+<   private final Multimap<Scope, Var> assignedOuterLocalVars =
+<       HashMultimap.create();
+< 
+<   
+< 
+< 
+<   private final Set<String> unflowableVarNames = Sets.newHashSet();
+< 
+104,117d85
+<     this(compiler, cfg, reverseInterpreter, functionScope,
+<          assertionFunctionsMap, ImmutableSet.<Var>of());
+<   }
+< 
+<   
+< 
+< 
+< 
+<   
+<   TypeInference(AbstractCompiler compiler, ControlFlowGraph<Node> cfg,
+<                 ReverseAbstractInterpreter reverseInterpreter,
+<                 Scope functionScope,
+<                 Map<String, AssertionFunctionSpec> assertionFunctionsMap,
+<                 Collection<Var> unflowableVars) {
+126,132d93
+<     for (Var unflowableVar : unflowableVars) {
+<       String name = unflowableVar.getName();
+<       if (functionScope.getVar(name) == unflowableVar) {
+<         this.unflowableVarNames.add(name);
+<       }
+<     }
+< 
+139c100
+<       if (this.unflowableVarNames.contains(var.getName())) {
+---
+>       if (isUnflowable(var)) {
+161,168d121
+<   
+< 
+< 
+< 
+<   Multimap<Scope, Var> getAssignedOuterLocalVars() {
+<     return assignedOuterLocalVars;
+<   }
+< 
+495,497d447
+<         if (var != null && var.isLocal() && var.getScope() != syntacticScope) {
+<           assignedOuterLocalVars.put(var.getScope(), var);
+<         }
+644,645c594,595
+<         boolean unflowable =
+<             isInferred && unflowableVarNames.contains(varName);
+---
+>         boolean unflowable = isInferred &&
+>             isUnflowable(syntacticScope.getVar(varName));
+1330c1280
+<     if (unflowableVarNames.contains(varName)) {
+---
+>     if (isUnflowable(syntacticScope.getVar(varName))) {
+1333a1284,1287
+>   }
+> 
+>   private static boolean isUnflowable(Var v) {
+>     return v != null && v.isLocal() && v.isMarkedEscaped();

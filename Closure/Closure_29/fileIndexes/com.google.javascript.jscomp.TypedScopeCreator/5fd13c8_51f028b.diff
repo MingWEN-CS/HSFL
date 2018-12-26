@@ -1,0 +1,18 @@
+71a72
+> import com.google.javascript.rhino.jstype.StaticSlot;
+1104,1105c1105,1116
+<             scopeToDeclareIn.declare(variableName + ".prototype", n,
+<                 fnType.getPrototype(), input,
+---
+>             StaticSlot<JSType> prototypeSlot = fnType.getSlot("prototype");
+> 
+>             
+>             
+>             
+>             Node prototypeNode = n;
+>             if (prototypeSlot.getDeclaration() != null) {
+>               prototypeNode = prototypeSlot.getDeclaration().getNode();
+>             }
+> 
+>             scopeToDeclareIn.declare(variableName + ".prototype",
+>                 prototypeNode, prototypeSlot.getType(), input,

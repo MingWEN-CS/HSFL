@@ -1,0 +1,180 @@
+136,139c136,138
+<         if (left.getType() == Token.NUMBER && right.getType() == Token.NUMBER) {
+<           return tryFoldArithmeticOp(subtree, left, right);
+<         } else {
+<           return tryFoldLeftChildOp(subtree, left, right);
+---
+>         Node result = tryFoldArithmeticOp(subtree, left, right);
+>         if (result != subtree) {
+>           return result;
+140a140
+>         return tryFoldLeftChildOp(subtree, left, right);
+501,507c501,505
+<     if (left.getType() == Token.NUMBER && right.getType() == Token.NUMBER) {
+<       Node result = performArithmeticOp(n.getType(), left, right);
+<       if (result != null) {
+<         n.getParent().replaceChild(n, result);
+<         reportCodeChange();
+<         return result;
+<       }
+---
+>     Node result = performArithmeticOp(n.getType(), left, right);
+>     if (result != null) {
+>       n.getParent().replaceChild(n, result);
+>       reportCodeChange();
+>       return result;
+516,517c514,521
+<     Preconditions.checkState(left.getType() == Token.NUMBER);
+<     Preconditions.checkState(right.getType() == Token.NUMBER);
+---
+>     
+>     
+>     if (opType == Token.ADD
+>         && (left.getType() != Token.NUMBER
+>             || right.getType() != Token.NUMBER)) {
+>       return null;
+>     }
+> 
+519,520c523,534
+<     double lval = left.getDouble();
+<     double rval = right.getDouble();
+---
+> 
+>     Double lValObj = NodeUtil.getNumberValue(left);
+>     if (lValObj == null) {
+>       return null;
+>     }
+>     Double rValObj = NodeUtil.getNumberValue(right);
+>     if (rValObj == null) {
+>       return null;
+>     }
+> 
+>     double lval = lValObj;
+>     double rval = rValObj;
+571a586,591
+>     } else if (Double.isNaN(result)) {
+>       return Node.newString(Token.NAME, "NaN");
+>     } else if (result == Double.POSITIVE_INFINITY) {
+>       return Node.newString(Token.NAME, "Infinity");
+>     } else if (result == Double.NEGATIVE_INFINITY) {
+>       return new Node(Token.NEG, Node.newString(Token.NAME, "Infinity"));
+752,756d771
+<         if (undefinedRight) {
+<           result = compareToUndefined(left, op);
+<           break;
+<         }
+<         
+763,769c778,781
+<         
+<       case Token.THIS:
+<         int tt = right.getType();
+<         if (tt != Token.THIS &&
+<             tt != Token.TRUE &&
+<             tt != Token.FALSE &&
+<             tt != Token.NULL) {
+---
+>         int rhType = right.getType();
+>         if (rhType != Token.TRUE &&
+>             rhType != Token.FALSE &&
+>             rhType != Token.NULL) {
+782a795,806
+>           case Token.GE:
+>           case Token.LE:
+>           case Token.GT:
+>           case Token.LT:
+>             Boolean compareResult = compareAsNumbers(op, left, right);
+>             if (compareResult != null) {
+>               result = compareResult;
+>             } else {
+>               return n;
+>             }
+>             break;
+> 
+787a812,835
+>       case Token.THIS:
+>         if (right.getType() != Token.THIS) {
+>           return n;
+>         }
+>         switch (op) {
+>           case Token.SHEQ:
+>           case Token.EQ:
+>             result = true;
+>             break;
+> 
+>           case Token.SHNE:
+>           case Token.NE:
+>             result = false;
+>             break;
+> 
+>           
+>           
+>           
+>           
+>           default:
+>             return n;
+>         }
+>         break;
+> 
+820,833c868,872
+<         double lv = left.getDouble();
+<         double rv = right.getDouble();
+< 
+<         switch (op) {
+<           case Token.SHEQ:
+<           case Token.EQ: result = lv == rv; break;
+<           case Token.SHNE:
+<           case Token.NE: result = lv != rv; break;
+<           case Token.LE: result = lv <= rv; break;
+<           case Token.LT: result = lv <  rv; break;
+<           case Token.GE: result = lv >= rv; break;
+<           case Token.GT: result = lv >  rv; break;
+<           default:
+<             return n;  
+---
+>         Boolean compareResult = compareAsNumbers(op, left, right);
+>         if (compareResult != null) {
+>           result = compareResult;
+>         } else {
+>           return null;
+881a921,961
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private Boolean compareAsNumbers(int op, Node left, Node right) {
+>     Double leftValue = NodeUtil.getNumberValue(left);
+>     if (leftValue == null) {
+>       return null;
+>     }
+>     Double rightValue = NodeUtil.getNumberValue(right);
+>     if (rightValue == null) {
+>       return null;
+>     }
+> 
+>     double lv = leftValue;
+>     double rv = rightValue;
+> 
+>     Boolean result;
+>     switch (op) {
+>       case Token.SHEQ:
+>       case Token.EQ:
+>         Preconditions.checkState(
+>             left.getType() == Token.NUMBER && right.getType() == Token.NUMBER);
+>         result = lv == rv;
+>         break;
+>       case Token.SHNE:
+>       case Token.NE:
+>         Preconditions.checkState(
+>             left.getType() == Token.NUMBER && right.getType() == Token.NUMBER);
+>         result = lv != rv;
+>         break;
+>       case Token.LE: result = lv <= rv; break;
+>       case Token.LT: result = lv <  rv; break;
+>       case Token.GE: result = lv >= rv; break;
+>       case Token.GT: result = lv >  rv; break;
+>       default:
+>         return null;  
+>     }
+>     return result;

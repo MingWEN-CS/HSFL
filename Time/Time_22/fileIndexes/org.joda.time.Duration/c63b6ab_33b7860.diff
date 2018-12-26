@@ -1,0 +1,81 @@
+57a58,61
+> import org.joda.time.convert.ConverterManager;
+> import org.joda.time.convert.DurationConverter;
+> import org.joda.time.field.FieldUtils;
+> 
+82a87,89
+>     private final long iMillis;
+> 
+>     
+88c95,96
+<         super(duration);
+---
+>         super();
+>         iMillis = duration;
+99c107,108
+<         super(startInstant, endInstant);
+---
+>         super();
+>         iMillis = FieldUtils.safeAdd(endInstant, -startInstant);
+109,110c118,126
+<     public Duration(ReadableInstant startInstant, ReadableInstant endInstant) {
+<         super(startInstant, endInstant);
+---
+>     public Duration(ReadableInstant start, ReadableInstant end) {
+>         super();
+>         if (start == end) {
+>             iMillis = 0L;
+>         } else {
+>             long startMillis = DateTimeUtils.getInstantMillis(start);
+>             long endMillis = DateTimeUtils.getInstantMillis(end);
+>             iMillis = FieldUtils.safeAdd(endMillis, -startMillis);
+>         }
+121c137,139
+<         super(duration);
+---
+>         super();
+>         DurationConverter converter = ConverterManager.getInstance().getDurationConverter(duration);
+>         iMillis = converter.getDurationMillis(duration);
+129a148,153
+>     public final long getMillis() {
+>         return iMillis;
+>     }
+> 
+>     
+>     
+131c155,159
+<     public Duration withMillis(long duration) {
+---
+> 
+> 
+> 
+> 
+>     public final Duration withMillis(long duration) {
+138a167,177
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final Duration withDurationAdded(long durationToAdd) {
+>         return withDurationAdded(durationToAdd, 1);
+>     }
+> 
+142c181,193
+<     protected final void setMillis(long duration) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final Duration withDurationAdded(long durationToAdd, int scalar) {
+>         if (durationToAdd == 0 || scalar == 0) {
+>             return this;
+>         }
+>         long add = FieldUtils.safeMultiply(durationToAdd, scalar);
+>         long duration = FieldUtils.safeAdd(getMillis(), add);
+>         return new Duration(duration);

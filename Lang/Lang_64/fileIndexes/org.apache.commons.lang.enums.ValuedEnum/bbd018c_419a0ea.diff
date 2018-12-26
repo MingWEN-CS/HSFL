@@ -1,0 +1,41 @@
+17a18,19
+> import java.lang.reflect.InvocationTargetException;
+> import java.lang.reflect.Method;
+175a178,181
+> 
+> 
+> 
+> 
+176a183,192
+>         if (other == this) {
+>             return 0;
+>         }
+>         if (other.getClass() != this.getClass()) {
+>             if (other.getClass().getName().equals(this.getClass().getName())) {
+>                 return iValue - getValueInOtherClassLoader(other);
+>             }
+>             throw new ClassCastException(
+>                     "Different enum class '" + ClassUtils.getShortClassName(other.getClass()) + "'");
+>         }
+177a194,214
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private int getValueInOtherClassLoader(Object other) {
+>         try {
+>             Method mth = other.getClass().getMethod("getValue", null);
+>             Integer value = (Integer) mth.invoke(other, null);
+>             return value.intValue();
+>         } catch (NoSuchMethodException e) {
+>             
+>         } catch (IllegalAccessException e) {
+>             
+>         } catch (InvocationTargetException e) {
+>             
+>         }
+>         throw new IllegalStateException("This should not happen");

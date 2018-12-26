@@ -1,0 +1,50 @@
+29d28
+< import org.apache.commons.math.ConvergenceException;
+32a32,33
+> import org.apache.commons.math.exception.DimensionMismatchException;
+> import org.apache.commons.math.exception.MathIllegalStateException;
+33a35
+> import org.apache.commons.math.exception.NumberIsTooSmallException;
+35d36
+< import org.apache.commons.math.ode.events.EventException;
+234c235
+<         throws IntegratorException {
+---
+>         throws MathIllegalStateException {
+236d236
+<         try {
+332,340d331
+<         } catch (EventException se) {
+<             final Throwable cause = se.getCause();
+<             if ((cause != null) && (cause instanceof MathUserException)) {
+<                 throw (MathUserException) cause;
+<             }
+<             throw new IntegratorException(se);
+<         } catch (ConvergenceException ce) {
+<             throw new IntegratorException(ce);
+<         }
+351a343
+> 
+355c347
+<         throws IntegratorException {
+---
+>         throws DimensionMismatchException, NumberIsTooSmallException {
+358,359c350
+<             throw new IntegratorException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y0.length);
+---
+>             throw new DimensionMismatchException(ode.getDimension(), y0.length);
+363,364c354
+<             throw new IntegratorException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y.length);
+---
+>             throw new DimensionMismatchException(ode.getDimension(), y.length);
+368,370c358,361
+<             throw new IntegratorException(
+<                     LocalizedFormats.TOO_SMALL_INTEGRATION_INTERVAL,
+<                     FastMath.abs(t - t0));
+---
+>             throw new NumberIsTooSmallException(LocalizedFormats.TOO_SMALL_INTEGRATION_INTERVAL,
+>                                                 FastMath.abs(t - t0),
+>                                                 1.0e-12 * FastMath.max(FastMath.abs(t0), FastMath.abs(t)),
+>                                                 false);

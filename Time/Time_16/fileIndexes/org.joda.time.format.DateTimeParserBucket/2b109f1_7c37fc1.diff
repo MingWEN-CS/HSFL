@@ -1,0 +1,86 @@
+26a27
+> import org.joda.time.DurationFieldType;
+66a68,69
+>     
+>     private int iDefaultYear;
+80a84,85
+> 
+>     @Deprecated
+82c87
+<         this(instantLocal, chrono, locale, null);
+---
+>         this(instantLocal, chrono, locale, null, 2000);
+94a100,101
+> 
+>     @Deprecated
+95a103,117
+>         this(instantLocal, chrono, locale, pivotYear, 2000);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeParserBucket(long instantLocal, Chronology chrono,
+>             Locale locale, Integer pivotYear, int defaultYear) {
+102a125
+>         iDefaultYear = defaultYear;
+171a195,198
+> 
+> 
+> 
+> 
+311a339,348
+>         if (count > 0) {
+>             
+>             DurationField months = DurationFieldType.months().getField(iChrono);
+>             DurationField days = DurationFieldType.days().getField(iChrono);
+>             DurationField first = savedFields[0].iField.getDurationField();
+>             if (compareReverse(first, months) >= 0 && compareReverse(first, days) <= 0) {
+>                 saveField(DateTimeFieldType.year(), iDefaultYear);
+>                 return computeMillis(resetFields, text);
+>             }
+>         }
+315c352
+<             for (int i=0; i<count; i++) {
+---
+>             for (int i = 0; i < count; i++) {
+317a355,359
+>             if (resetFields) {
+>                 for (int i = 0; i < count; i++) {
+>                     millis = savedFields[i].set(millis, i == (count - 1));
+>                 }
+>             }
+454,461c496,499
+<         
+<         private int compareReverse(DurationField a, DurationField b) {
+<             if (a == null || !a.isSupported()) {
+<                 if (b == null || !b.isSupported()) {
+<                     return 0;
+<                 }
+<                 return -1;
+<             }
+---
+>     }
+> 
+>     static int compareReverse(DurationField a, DurationField b) {
+>         if (a == null || !a.isSupported()) {
+463c501
+<                 return 1;
+---
+>                 return 0;
+465c503,506
+<             return -a.compareTo(b);
+---
+>             return -1;
+>         }
+>         if (b == null || !b.isSupported()) {
+>             return 1;
+466a508
+>         return -a.compareTo(b);

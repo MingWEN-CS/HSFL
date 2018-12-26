@@ -1,0 +1,147 @@
+17c17
+< package org.apache.commons.math.distribution;
+---
+> package org.apache.commons.math3.distribution;
+21,26c21,27
+< import org.apache.commons.math.exception.MathInternalError;
+< import org.apache.commons.math.exception.NotStrictlyPositiveException;
+< import org.apache.commons.math.exception.NumberIsTooSmallException;
+< import org.apache.commons.math.exception.OutOfRangeException;
+< import org.apache.commons.math.exception.util.LocalizedFormats;
+< import org.apache.commons.math.random.RandomDataImpl;
+---
+> import org.apache.commons.math3.exception.MathInternalError;
+> import org.apache.commons.math3.exception.NotStrictlyPositiveException;
+> import org.apache.commons.math3.exception.NumberIsTooLargeException;
+> import org.apache.commons.math3.exception.OutOfRangeException;
+> import org.apache.commons.math3.exception.util.LocalizedFormats;
+> import org.apache.commons.math3.random.RandomDataImpl;
+> import org.apache.commons.math3.util.FastMath;
+54c55
+<     public double cumulativeProbability(int x0, int x1) {
+---
+>     public double cumulativeProbability(int x0, int x1) throws NumberIsTooLargeException {
+56,58c57,58
+<             throw new NumberIsTooSmallException(
+<                     LocalizedFormats.LOWER_ENDPOINT_ABOVE_UPPER_ENDPOINT,
+<                     x1, x0, true);
+---
+>             throw new NumberIsTooLargeException(LocalizedFormats.LOWER_ENDPOINT_ABOVE_UPPER_ENDPOINT,
+>                     x0, x1, true);
+60c60
+<         return cumulativeProbability(x1) - cumulativeProbability(x0 - 1);
+---
+>         return cumulativeProbability(x1) - cumulativeProbability(x0);
+64,65c64,75
+<     public int inverseCumulativeProbability(final double p) {
+<         if (p < 0 || p > 1) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int inverseCumulativeProbability(final double p) throws OutOfRangeException {
+>         if (p < 0.0 || p > 1.0) {
+69,96c79,85
+<         
+<         
+<         int x0 = getDomainLowerBound(p);
+<         int x1 = getDomainUpperBound(p);
+<         double pm;
+<         while (x0 < x1) {
+<             int xm = x0 + (x1 - x0) / 2;
+<             pm = checkedCumulativeProbability(xm);
+<             if (pm > p) {
+<                 
+<                 if (xm == x1) {
+<                     
+<                     
+<                     --x1;
+<                 } else {
+<                     
+<                     x1 = xm;
+<                 }
+<             } else {
+<                 
+<                 if (xm == x0) {
+<                     
+<                     
+<                     ++x0;
+<                 } else {
+<                     
+<                     x0 = xm;
+<                 }
+---
+>         int lower = getSupportLowerBound();
+>         if (p == 0.0) {
+>             return lower;
+>         }
+>         if (lower == Integer.MIN_VALUE) {
+>             if (checkedCumulativeProbability(lower) >= p) {
+>                 return lower;
+97a87,94
+>         } else {
+>             lower -= 1; 
+>                         
+>         }
+> 
+>         int upper = getSupportUpperBound();
+>         if (p == 1.0) {
+>             return upper;
+101,104c98,113
+<         pm = checkedCumulativeProbability(x0);
+<         while (pm > p) {
+<             --x0;
+<             pm = checkedCumulativeProbability(x0);
+---
+>         
+>         final double mu = getNumericalMean();
+>         final double sigma = FastMath.sqrt(getNumericalVariance());
+>         final boolean chebyshevApplies = !(Double.isInfinite(mu) || Double.isNaN(mu) ||
+>                 Double.isInfinite(sigma) || Double.isNaN(sigma) || sigma == 0.0);
+>         if (chebyshevApplies) {
+>             double k = FastMath.sqrt((1.0 - p) / p);
+>             double tmp = mu - k * sigma;
+>             if (tmp > lower) {
+>                 lower = ((int) Math.ceil(tmp)) - 1;
+>             }
+>             k = 1.0 / k;
+>             tmp = mu + k * sigma;
+>             if (tmp < upper) {
+>                 upper = ((int) Math.ceil(tmp)) - 1;
+>             }
+107c116
+<         return x0;
+---
+>         return solveInverseCumulativeProbability(p, lower, upper);
+119,121d127
+<     protected abstract int getDomainLowerBound(double p);
+< 
+<     
+124a131,135
+>     protected int solveInverseCumulativeProbability(final double p, int lower, int upper) {
+>         while (lower + 1 < upper) {
+>             int xm = (lower + upper) / 2;
+>             if (xm < lower || xm > upper) {
+>                 
+128a140,141
+>                 xm = lower + (upper - lower) / 2;
+>             }
+130c143,151
+<     protected abstract int getDomainUpperBound(double p);
+---
+>             double pm = checkedCumulativeProbability(xm);
+>             if (pm >= p) {
+>                 upper = xm;
+>             } else {
+>                 lower = xm;
+>             }
+>         }
+>         return upper;
+>     }

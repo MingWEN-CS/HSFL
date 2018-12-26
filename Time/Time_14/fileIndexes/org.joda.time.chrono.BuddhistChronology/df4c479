@@ -1,0 +1,227 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.chrono;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeZone;
+import org.joda.time.field.DividedDateTimeField;
+import org.joda.time.field.OffsetDateTimeField;
+import org.joda.time.field.RemainderDateTimeField;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public final class BuddhistChronology extends AssembledChronology {
+    
+    
+    private static final long serialVersionUID = -3474595157769370126L;
+
+    
+
+
+
+    public static final int BE = DateTimeConstants.CE;
+
+    
+    private static final int BUDDHIST_OFFSET = 543;
+
+    
+    private static final Map cCache = new HashMap();
+
+    
+    private static final BuddhistChronology INSTANCE_UTC = getInstance(DateTimeZone.UTC);
+
+    
+
+
+
+
+
+
+    public static BuddhistChronology getInstanceUTC() {
+        return INSTANCE_UTC;
+    }
+
+    
+
+
+
+
+    public static BuddhistChronology getInstance() {
+        return getInstance(DateTimeZone.getDefault());
+    }
+
+    
+
+
+
+
+
+
+    public static synchronized BuddhistChronology getInstance(DateTimeZone zone) {
+        if (zone == null) {
+            zone = DateTimeZone.getDefault();
+        }
+        BuddhistChronology chrono = (BuddhistChronology) cCache.get(zone);
+        if (chrono == null) {
+            
+            chrono = new BuddhistChronology(GJChronology.getInstance(zone, null), null);
+            
+            DateTime lowerLimit = new DateTime(1, 1, 1, 0, 0, 0, 0, chrono);
+            chrono = new BuddhistChronology(LimitChronology.getInstance(chrono, lowerLimit, null), "");
+            cCache.put(zone, chrono);
+        }
+        return chrono;
+    }
+
+    
+    
+    
+    
+
+
+
+
+    private BuddhistChronology(Chronology base, Object param) {
+        super(base, param);
+    }
+
+    
+
+
+    private Object readResolve() {
+        return getInstance(getBase().getZone());
+    }
+
+    
+    
+    
+
+
+
+
+    public Chronology withUTC() {
+        return INSTANCE_UTC;
+    }
+
+    
+
+
+
+
+
+    public Chronology withZone(DateTimeZone zone) {
+        if (zone == null) {
+            zone = DateTimeZone.getDefault();
+        }
+        if (zone == getZone()) {
+            return this;
+        }
+        return getInstance(zone);
+    }
+
+    
+    
+    
+
+
+
+
+    public String toString() {
+        String str = "BuddhistChronology";
+        DateTimeZone zone = getZone();
+        if (zone != null) {
+            str = str + '[' + zone.getID() + ']';
+        }
+        return str;
+    }
+
+    protected void assemble(Fields fields) {
+        if (getParam() == null) {
+            DateTimeField field = fields.year;
+            fields.year = new OffsetDateTimeField(field, field.getName(), BUDDHIST_OFFSET);
+            fields.yearOfEra = fields.year;
+            
+            field = fields.weekyear;
+            fields.weekyear = new OffsetDateTimeField(field, field.getName(), BUDDHIST_OFFSET);
+            
+            field = new OffsetDateTimeField(fields.yearOfEra, "", 99);
+            fields.centuryOfEra = new DividedDateTimeField(field, "centuryOfEra", "centuries", 100);
+            
+            field = new RemainderDateTimeField
+                ((DividedDateTimeField)fields.centuryOfEra, "");
+            fields.yearOfCentury = new OffsetDateTimeField(field, "yearOfCentury", 1);
+            
+            fields.era = BuddhistEraDateTimeField.INSTANCE;
+        }
+    }
+   
+}

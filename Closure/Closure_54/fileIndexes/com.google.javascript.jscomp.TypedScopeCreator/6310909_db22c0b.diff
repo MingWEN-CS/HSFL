@@ -1,0 +1,90 @@
+569,572c569,573
+<       for (Node name = objLit.getFirstChild(); name != null;
+<            name = name.getNext()) {
+<         Node value = name.getFirstChild();
+<         String memberName = NodeUtil.getObjectLitKeyName(name);
+---
+>       for (Node keyNode = objLit.getFirstChild(); keyNode != null;
+>            keyNode = keyNode.getNext()) {
+>         Node value = keyNode.getFirstChild();
+>         String memberName = NodeUtil.getObjectLitKeyName(keyNode);
+>         JSDocInfo info = keyNode.getJSDocInfo();
+574c575
+<             t, name.getJSDocInfo(), name, value);
+---
+>             t, info, keyNode, value);
+576c577
+<             name, valueType);
+---
+>             keyNode, valueType);
+578d578
+<           name.setJSType(keyType);
+580a581,587
+>           String qualifiedName = getBestLValueName(keyNode);
+>           if (qualifiedName != null) {
+>             defineSlot(keyNode, objLit, qualifiedName, keyType, false);
+>           } else {
+>             setDeferredType(keyNode, keyType);
+>           }
+> 
+581a589
+>             
+584c592
+<                 memberName, keyType, isExtern, name);
+---
+>                 memberName, keyType, isExtern, keyNode);
+829c837,838
+<                 overriddenPropType = findOverriddenFunction(ownerType, propName);
+---
+>                 overriddenPropType =
+>                     findOverriddenFunction(ownerType, propName);
+991c1000
+<       boolean shouldDeclareOnGlobalThis = false;
+---
+>       
+998,1000d1006
+<         shouldDeclareOnGlobalThis = scope.isGlobal() &&
+<             (parent.getType() == Token.VAR ||
+<              parent.getType() == Token.FUNCTION);
+1007c1013,1028
+<       String variableName = n.getQualifiedName();
+---
+>       defineSlot(n, parent, n.getQualifiedName(), type, inferred);
+>     }
+> 
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     void defineSlot(Node n, Node parent, String variableName,
+>         JSType type, boolean inferred) {
+1009a1031,1035
+>       boolean shouldDeclareOnGlobalThis =
+>           n.getType() == Token.NAME && scope.isGlobal() &&
+>           (parent.getType() == Token.VAR ||
+>            parent.getType() == Token.FUNCTION);
+> 
+1735c1761,1774
+<     return lValue == null ? null : lValue.getQualifiedName();
+---
+>     if (lValue == null || lValue.getParent() == null) {
+>       return null;
+>     }
+>     if (NodeUtil.isObjectLitKey(lValue, lValue.getParent())) {
+>       Node owner = getBestLValue(lValue.getParent());
+>       if (owner != null) {
+>         String ownerName = getBestLValueName(owner);
+>         if (ownerName != null) {
+>           return ownerName + "." + NodeUtil.getObjectLitKeyName(lValue);
+>         }
+>       }
+>       return null;
+>     }
+>     return lValue.getQualifiedName();

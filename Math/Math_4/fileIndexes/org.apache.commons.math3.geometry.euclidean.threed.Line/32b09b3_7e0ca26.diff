@@ -1,0 +1,32 @@
+18a19
+> import org.apache.commons.math3.exception.MathArithmeticException;
+19a21
+> import org.apache.commons.math3.exception.MathInternalError;
+54c56
+<     public Line(final Vector3D p1, final Vector3D p2) {
+---
+>     public Line(final Vector3D p1, final Vector3D p2) throws MathIllegalArgumentException {
+73c75
+<     public void reset(final Vector3D p1, final Vector3D p2) {
+---
+>     public void reset(final Vector3D p1, final Vector3D p2) throws MathIllegalArgumentException {
+87c89,94
+<         return new Line(zero, zero.subtract(direction));
+---
+>         try {
+>             return new Line(zero, zero.subtract(direction));
+>         } catch (MathIllegalArgumentException miae) {
+>             
+>             throw new MathInternalError(miae);
+>         }
+145,146c152,158
+<         final double angle = Vector3D.angle(direction, line.direction);
+<         return ((angle < 1.0e-10) || (angle > (FastMath.PI - 1.0e-10))) && contains(line.zero);
+---
+>         try {
+>             final double angle = Vector3D.angle(direction, line.direction);
+>             return ((angle < 1.0e-10) || (angle > (FastMath.PI - 1.0e-10))) && contains(line.zero);
+>         } catch (MathArithmeticException mae) {
+>             
+>             throw new MathInternalError(mae);
+>         }

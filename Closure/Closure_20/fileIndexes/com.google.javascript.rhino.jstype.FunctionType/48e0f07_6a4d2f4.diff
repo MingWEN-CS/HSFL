@@ -1,0 +1,21 @@
+491,497c491,493
+<           return new FunctionType(
+<               registry, null, null,
+<               new ArrowType(
+<                   registry, call.parameters, newReturnType,
+<                   call.returnTypeInferred ||
+<                   other.call.returnTypeInferred),
+<               typeOfThis, null, false, false);
+---
+>           return cloneWithNewReturnType(
+>               newReturnType,
+>               call.returnTypeInferred || other.call.returnTypeInferred);
+516a513,520
+>   }
+> 
+>   FunctionType cloneWithNewReturnType(JSType newReturnType, boolean inferred) {
+>     return new FunctionType(
+>         registry, null, source,
+>         new ArrowType(
+>             registry, call.parameters, newReturnType, inferred),
+>         typeOfThis, null, false, false);

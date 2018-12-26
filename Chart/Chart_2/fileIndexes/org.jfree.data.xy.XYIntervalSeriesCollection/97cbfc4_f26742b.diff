@@ -1,0 +1,64 @@
+44a45,46
+> 
+> 
+50a53
+> import org.jfree.chart.util.PublicCloneable;
+61c64
+<         implements IntervalXYDataset, Serializable {
+---
+>         implements IntervalXYDataset, PublicCloneable, Serializable {
+287a291,344
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void removeSeries(int series) {
+>         if ((series < 0) || (series >= getSeriesCount())) {
+>             throw new IllegalArgumentException("Series index out of bounds.");
+>         }
+>         XYIntervalSeries ts = (XYIntervalSeries) this.data.get(series);
+>         ts.removeChangeListener(this);
+>         this.data.remove(series);
+>         fireDatasetChanged();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void removeSeries(XYIntervalSeries series) {
+>         if (series == null) {
+>             throw new IllegalArgumentException("Null 'series' argument.");
+>         }
+>         if (this.data.contains(series)) {
+>             series.removeChangeListener(this);
+>             this.data.remove(series);
+>             fireDatasetChanged();
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public void removeAllSeries() {
+>         
+>         
+>         for (int i = 0; i < this.data.size(); i++) {
+>           XYIntervalSeries series = (XYIntervalSeries) this.data.get(i);
+>           series.removeChangeListener(this);
+>         }
+>         this.data.clear();
+>         fireDatasetChanged();

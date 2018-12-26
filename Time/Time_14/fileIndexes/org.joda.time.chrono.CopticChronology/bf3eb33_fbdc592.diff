@@ -1,0 +1,119 @@
+204,208c204,209
+<     long getDateMidnightMillis(int year, int monthOfYear, int dayOfMonth)
+<         throws IllegalArgumentException
+<     {
+<         FieldUtils.verifyValueBounds(DateTimeFieldType.year(), year, getMinYear(), getMaxYear());
+<         FieldUtils.verifyValueBounds(DateTimeFieldType.monthOfYear(), monthOfYear, 1, 13);
+---
+>     
+>     long setYear(long instant, int year) {
+>         
+>         int thisYear = getYear(instant);
+>         int dayOfYear = getDayOfYear(instant, thisYear);
+>         int millisOfDay = getMillisOfDay(instant);
+210,211c211,217
+<         int dayLimit = (monthOfYear != 13) ? 30 : (isLeapYear(year) ? 6 : 5);
+<         FieldUtils.verifyValueBounds(DateTimeFieldType.dayOfMonth(), dayOfMonth, 1, dayLimit);
+---
+>         if (dayOfYear > 365) {
+>             
+>             if (!isLeapYear(year)) {
+>                 
+>                 dayOfYear--;
+>             }
+>         }
+213c219,222
+<         long instant = getYearMillis(year);
+---
+>         instant = getYearMonthDayMillis(year, 1, dayOfYear);
+>         instant += millisOfDay;
+>         return instant;
+>     }
+215,217c224,228
+<         if (monthOfYear > 1) {
+<             instant += (monthOfYear - 1) * 30L * DateTimeConstants.MILLIS_PER_DAY;
+<         }
+---
+>     
+>     long getYearDifference(long minuendInstant, long subtrahendInstant) {
+>         
+>         int minuendYear = getYear(minuendInstant);
+>         int subtrahendYear = getYear(subtrahendInstant);
+219,220c230,236
+<         if (dayOfMonth != 1) {
+<             instant += (dayOfMonth - 1) * (long)DateTimeConstants.MILLIS_PER_DAY;
+---
+>         
+>         long minuendRem = minuendInstant - getYearMillis(minuendYear);
+>         long subtrahendRem = subtrahendInstant - getYearMillis(subtrahendYear);
+> 
+>         int difference = minuendYear - subtrahendYear;
+>         if (minuendRem < subtrahendRem) {
+>             difference--;
+221a238,239
+>         return difference;
+>     }
+223c241,257
+<         return instant;
+---
+>     
+>     long getDateMidnightMillis(int year, int monthOfYear, int dayOfMonth) {
+>         FieldUtils.verifyValueBounds(DateTimeFieldType.year(), year, getMinYear(), getMaxYear());
+>         FieldUtils.verifyValueBounds(DateTimeFieldType.monthOfYear(), monthOfYear, 1, 13);
+>         FieldUtils.verifyValueBounds(DateTimeFieldType.dayOfMonth(), dayOfMonth, 1, getDaysInYearMonth(year, monthOfYear));
+>         return getYearMonthDayMillis(year, monthOfYear, dayOfMonth);
+>     }
+> 
+>     
+>     long getTotalMillisByYearMonth(int year, int month) {
+>         return (month * 30L * DateTimeConstants.MILLIS_PER_DAY);
+>     }
+> 
+>     
+>     int getDayOfMonth(long millis) {
+>         
+>         return (getDayOfYear(millis) - 1) % 30 + 1;
+225a260
+>     
+229a265,285
+>     
+>     int getDaysInYearMonth(int year, int month) {
+>         return (month != 13) ? 30 : (isLeapYear(year) ? 6 : 5);
+>     }
+> 
+>     
+>     int getDaysInMonthMax() {
+>         return 30;
+>     }
+> 
+>     
+>     int getDaysInMonthMax(int month) {
+>         return (month != 13 ? 30 : 6);
+>     }
+> 
+>     
+>     int getMonthOfYear(long millis, int year) {
+>         return ((int) ((millis - getYearMillis(year)) / 30)) + 1;
+>     }
+>     
+>     
+256a313
+>     
+261a319
+>     
+266a325
+>     
+270a330
+>     
+274a335
+>     
+278a340
+>     
+283c345
+<             fields.year = new CopticYearDateTimeField(this);
+---
+>             fields.year = new BasicYearDateTimeField(this);
+293c355
+<             fields.dayOfMonth = new CopticDayOfMonthDateTimeField(this, fields.days);
+---
+>             fields.dayOfMonth = new BasicDayOfMonthDateTimeField(this, fields.days);

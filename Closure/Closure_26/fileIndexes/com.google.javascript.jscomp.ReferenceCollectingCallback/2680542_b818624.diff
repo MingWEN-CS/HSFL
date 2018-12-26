@@ -1,0 +1,113 @@
+29a30,32
+> import com.google.javascript.rhino.jstype.SimpleSourceFile;
+> import com.google.javascript.rhino.jstype.StaticReference;
+> import com.google.javascript.rhino.jstype.StaticSourceFile;
+141,142c144
+<         addReference(t, v,
+<             new Reference(n, parent, t, blockStack.peek()));
+---
+>         addReference(t, v, new Reference(n, t, blockStack.peek()));
+463c465
+<   static final class Reference {
+---
+>   static final class Reference implements StaticReference {
+469,470d470
+<     private final Node parent;
+<     private final Node grandparent;
+473c473
+<     private final String sourceName;
+---
+>     private final StaticSourceFile sourceFile;
+475c475
+<     Reference(Node nameNode, Node parent, NodeTraversal t,
+---
+>     Reference(Node nameNode, NodeTraversal t,
+477,478c477
+<       this(nameNode, parent, parent.getParent(), basicBlock, t.getScope(),
+<            t.getSourceName());
+---
+>       this(nameNode, basicBlock, t.getScope(), t.getInput());
+485,486c484,485
+<       return new Reference(func.getFirstChild(), func, func.getParent(),
+<           basicBlock, t.getScope(), t.getSourceName());
+---
+>       return new Reference(func.getFirstChild(),
+>           basicBlock, t.getScope(), t.getInput());
+497,498c496,497
+<       return new Reference(new Node(Token.NAME), null, null, null, null,
+<           sourceName);
+---
+>       return new Reference(new Node(Token.NAME), null, null,
+>           new SimpleSourceFile(sourceName, false));
+501,502c500,501
+<     private Reference(Node nameNode, Node parent, Node grandparent,
+<         BasicBlock basicBlock, Scope scope, String sourceName) {
+---
+>     private Reference(Node nameNode,
+>         BasicBlock basicBlock, Scope scope, StaticSourceFile sourceFile) {
+504,505d502
+<       this.parent = parent;
+<       this.grandparent = grandparent;
+508c505,520
+<       this.sourceName = sourceName;
+---
+>       this.sourceFile = sourceFile;
+>     }
+> 
+>     @Override
+>     public Var getSymbol() {
+>       return scope.getVar(nameNode.getString());
+>     }
+> 
+>     @Override
+>     public Node getNode() {
+>       return nameNode;
+>     }
+> 
+>     @Override
+>     public StaticSourceFile getSourceFile() {
+>       return sourceFile;
+511a524,525
+>       Node parent = getParent();
+>       Node grandparent = parent.getParent();
+518c532
+<       return parent.getType() == Token.VAR;
+---
+>       return getParent().getType() == Token.VAR;
+522c536
+<       return NodeUtil.isHoistedFunctionDeclaration(parent);
+---
+>       return NodeUtil.isHoistedFunctionDeclaration(getParent());
+532c546,547
+<           (parent.getType() != Token.VAR || nameNode.getFirstChild() != null);
+---
+>           getParent().getType() != Token.VAR ||
+>           nameNode.getFirstChild() != null;
+539a555
+>       Node parent = getParent();
+541c557
+<           ? parent : NodeUtil.getAssignedValue(getNameNode());
+---
+>           ? parent : NodeUtil.getAssignedValue(nameNode);
+549,553c565
+<       return parent;
+<     }
+< 
+<     Node getNameNode() {
+<       return nameNode;
+---
+>       return getNode().getParent();
+557c569,570
+<       return grandparent;
+---
+>       Node parent = getParent();
+>       return parent == null ? null : parent.getParent();
+568a582
+>       Node parent = getParent();
+573a588
+>       Node parent = getParent();
+585,588d599
+<     }
+< 
+<     public String getSourceName() {
+<       return sourceName;

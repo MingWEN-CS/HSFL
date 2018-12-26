@@ -1,0 +1,77 @@
+58d57
+< 
+60a60,61
+> import org.apache.commons.lang.exception.NestableRuntimeException;
+> 
+954a956,1026
+>         }
+>         return buffer.toString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public static String unescape(String str) {
+>         int sz = str.length();
+>         StringBuffer buffer = new StringBuffer(sz);
+>         StringBuffer unicode = new StringBuffer(4);
+>         boolean hadSlash = false;
+>         boolean inUnicode = false;
+>         for (int i = 0; i < sz; i++) {
+>             char ch = str.charAt(i);
+>             if(inUnicode) {
+>                 
+>                 
+>                 if(unicode.length() == 4) {
+>                     
+>                     
+>                     try {
+>                         int value = Integer.parseInt(unicode.toString(), 16);
+>                         buffer.append( (char)value );
+>                         unicode.setLength(0);
+>                         unicode.setLength(4);
+>                         inUnicode = false;
+>                         hadSlash = false;
+>                     } catch(NumberFormatException nfe) {
+>                         throw new NestableRuntimeException("Unable to parse unicode value: "+unicode, nfe);
+>                     }
+>                 } else {
+>                     unicode.append(ch);
+>                     continue;
+>                 }
+>             }
+>             if(hadSlash) {
+>                 
+>                 hadSlash = false;
+>                 switch(ch) {
+>                     case '\\': buffer.append('\\'); break;
+>                     case '\'': buffer.append('\''); break;
+>                     case '\"': buffer.append('"'); break;
+>                     case 'r':  buffer.append('\r'); break;
+>                     case 'f':  buffer.append('\f'); break;
+>                     case 't':  buffer.append('\t'); break;
+>                     case 'n':  buffer.append('\n'); break;
+>                     case 'b':  buffer.append('\b'); break;
+>                     case 'u':  {
+>                         
+>                         inUnicode=true;
+>                         break;
+>                     }
+>                     default :
+>                         buffer.append(ch);
+>                         break;
+>                 }
+>                 continue;
+>             } else
+>             if(ch == '\\') {
+>                 hadSlash = true;
+>                 continue;
+>             } 
+>             buffer.append(ch);
+>         }
+>         if(hadSlash) {
+>             
+>             
+>             buffer.append('\\');

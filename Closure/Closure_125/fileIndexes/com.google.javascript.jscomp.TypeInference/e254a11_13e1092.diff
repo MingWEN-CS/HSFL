@@ -1,0 +1,61 @@
+789,790c789
+<         updateTypeOfParameters(n, fnType);
+<         updateTypeOfThisOnClosure(n, fnType);
+---
+>         backwardsInferenceFromCallSite(n, fnType);
+852a852,906
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void backwardsInferenceFromCallSite(Node n, FunctionType fnType) {
+>     updateTypeOfParameters(n, fnType);
+>     updateTypeOfThisOnClosure(n, fnType);
+>     updateBind(n, fnType);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private void updateBind(Node n, FunctionType fnType) {
+>     
+>     
+>     Node calledFn = n.getFirstChild();
+>     boolean looksLikeBind = calledFn.isGetProp()
+>         && calledFn.getLastChild().getString().equals("bind");
+>     if (!looksLikeBind) {
+>       return;
+>     }
+> 
+>     Node callTarget = calledFn.getFirstChild();
+>     FunctionType callTargetFn = getJSType(callTarget)
+>         .restrictByNotNullOrUndefined().toMaybeFunctionType();
+>     if (callTargetFn == null) {
+>       return;
+>     }
+> 
+>     n.setJSType(callTargetFn.getBindReturnType(n.getChildCount() - 1));

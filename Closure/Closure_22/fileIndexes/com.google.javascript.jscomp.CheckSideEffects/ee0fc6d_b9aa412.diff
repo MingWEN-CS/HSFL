@@ -1,0 +1,65 @@
+98,99c98,101
+<     int pt = parent.getType();
+<     if (pt == Token.COMMA) {
+---
+>     
+>     
+>     
+>     if (parent.getType() == Token.COMMA) {
+101,111c103,105
+<       if (gramps.isCall() &&
+<           parent == gramps.getFirstChild()) {
+<         
+<         
+<         
+<         
+<         if (n == parent.getFirstChild() &&
+<             parent.getChildCount() == 2 &&
+<             n.getNext().isName() &&
+<             "eval".equals(n.getNext().getString())) {
+<           return;
+---
+>       if (gramps.isCall() && parent == gramps.getFirstChild()) {
+>         if (n == parent.getFirstChild() && parent.getChildCount() == 2 && n.getNext().isName() && "eval".equals(n.getNext().getString())) {
+>       return;
+113c107
+<       }
+---
+>     }
+114a109,110
+>     
+>     
+120,121c116
+<           if (ancestorType != Token.EXPR_RESULT &&
+<               ancestorType != Token.BLOCK)
+---
+>           if (ancestorType != Token.EXPR_RESULT && ancestorType != Token.BLOCK)
+127,129c122,123
+<     } else if (pt != Token.EXPR_RESULT && pt != Token.BLOCK) {
+<       if (pt == Token.FOR && parent.getChildCount() == 4 &&
+<           (n == parent.getFirstChild() ||
+---
+>     } else if (parent.getType() != Token.EXPR_RESULT && parent.getType() != Token.BLOCK) {
+>       if (parent.getType() == Token.FOR && parent.getChildCount() == 4 && (n == parent.getFirstChild() ||
+131,132d124
+<         
+<         
+134c126
+<         return;  
+---
+>       return;
+137a130
+>     boolean isResultUsed = NodeUtil.isExpressionResultUsed(n);
+139,140c132,133
+<     if (isSimpleOp ||
+<         !NodeUtil.mayHaveSideEffects(n, t.getCompiler())) {
+---
+>     if (!isResultUsed &&
+>         (isSimpleOp || !NodeUtil.mayHaveSideEffects(n, t.getCompiler()))) {
+142,143d134
+<         
+<         
+146d136
+<         
+149d138
+< 

@@ -1,0 +1,132 @@
+44a45,50
+> 
+> 
+> 
+> 
+> 
+> 
+45a52,67
+> 
+>     
+>     private static final int STATE_UNSTARTED = 0;
+>     private static final int STATE_RUNNING   = 1;
+>     private static final int STATE_STOPPED   = 2;
+>     private static final int STATE_SUSPENDED = 3;
+> 
+>     
+>     private static final int STATE_UNSPLIT = 10;
+>     private static final int STATE_SPLIT   = 11;
+> 
+>     
+> 
+> 
+>     private int runningState = STATE_UNSTARTED;
+> 
+46a69,72
+> 
+> 
+>     private int splitState   = STATE_UNSPLIT;
+> 
+66a93,94
+> 
+> 
+67a96,101
+>         if(this.runningState == STATE_STOPPED) {
+>             throw new IllegalStateException("Stopwatch must be reset before being restarted. ");
+>         }
+>         if(this.runningState != STATE_UNSTARTED) {
+>             throw new IllegalStateException("Stopwatch already started. ");
+>         }
+69a104
+>         this.runningState = STATE_RUNNING;
+76a112,113
+> 
+> 
+77a115,117
+>         if(this.runningState != STATE_RUNNING && this.runningState != STATE_SUSPENDED) {
+>             throw new IllegalStateException("Stopwatch is not running. ");
+>         }
+78a119
+>         this.runningState = STATE_STOPPED;
+86a128,129
+>         this.runningState = STATE_UNSTARTED;
+>         this.splitState   = STATE_UNSPLIT;
+97a141,142
+> 
+> 
+98a144,146
+>         if(this.runningState != STATE_RUNNING) {
+>             throw new IllegalStateException("Stopwatch is not running. ");
+>         }
+99a148
+>         this.splitState = STATE_SPLIT;
+107a157,158
+> 
+> 
+108a160,162
+>         if(this.splitState != STATE_SPLIT) {
+>             throw new IllegalStateException("Stopwatch has not been split. ");
+>         }
+109a164
+>         this.splitState = STATE_UNSPLIT;
+117a173,174
+> 
+> 
+118a176,178
+>         if(this.runningState != STATE_RUNNING) {
+>             throw new IllegalStateException("Stopwatch must be running to suspend. ");
+>         }
+119a180
+>         this.runningState = STATE_SUSPENDED;
+127a189,190
+> 
+> 
+128a192,194
+>         if(this.runningState != STATE_SUSPENDED) {
+>             throw new IllegalStateException("Stopwatch must be suspended to resume. ");
+>         }
+130a197
+>         this.runningState = STATE_RUNNING;
+142,145c209,215
+<         if (stopTime == -1) {
+<             if (startTime == -1) {
+<                 return 0;
+<             }
+---
+>         if(this.runningState == STATE_STOPPED || this.runningState == STATE_SUSPENDED) {
+>             return (this.stopTime - this.startTime);
+>         } else
+>         if(this.runningState == STATE_UNSTARTED) {
+>             return 0;
+>         } else
+>         if(this.runningState == STATE_RUNNING) {
+147a218,233
+>         throw new RuntimeException("Illegal running state has occured. ");
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getSplitTime() {
+>         if(this.splitState != STATE_SPLIT) {
+>             throw new IllegalStateException("Stopwatch must be split to get the split time. ");
+>         }
+160a247,258
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public String toSplitString() {
+>         return DurationFormatUtils.formatISO(getSplitTime());

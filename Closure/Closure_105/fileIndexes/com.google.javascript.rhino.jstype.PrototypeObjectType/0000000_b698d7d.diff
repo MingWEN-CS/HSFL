@@ -1,0 +1,430 @@
+1a2,430
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.rhino.jstype;
+> 
+> import static com.google.common.base.Preconditions.checkState;
+> 
+> import com.google.common.collect.Maps;
+> import com.google.javascript.rhino.JSDocInfo;
+> 
+> import java.io.Serializable;
+> import java.util.Map;
+> import java.util.Set;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class PrototypeObjectType extends ObjectType {
+>   private static final long serialVersionUID = 1L;
+> 
+>   private final String className;
+>   private final Map<String, Property> properties;
+>   private ObjectType implicitPrototype;
+>   private final boolean nativeType;
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   PrototypeObjectType(JSTypeRegistry registry, String className,
+>       ObjectType implicitPrototype) {
+>     this(registry, className, implicitPrototype, false);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   PrototypeObjectType(JSTypeRegistry registry, String className,
+>       ObjectType implicitPrototype, boolean nativeType) {
+>     super(registry);
+>     this.properties = Maps.newHashMap();
+>     this.className = className;
+>     this.nativeType = nativeType;
+>     if (nativeType) {
+>       this.implicitPrototype = implicitPrototype;
+>     } else if (implicitPrototype == null) {
+>       this.implicitPrototype =
+>           registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+>     } else {
+>       this.implicitPrototype = implicitPrototype;
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   @Override
+>   public int getPropertiesCount() {
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype == null) {
+>       return this.properties.size();
+>     }
+>     int localCount = 0;
+>     for (String property : properties.keySet()) {
+>       if (!implicitPrototype.hasProperty(property)) {
+>         localCount++;
+>       }
+>     }
+>     return implicitPrototype.getPropertiesCount() + localCount;
+>   }
+> 
+>   @Override
+>   public boolean hasProperty(String propertyName) {
+>     if (properties.get(propertyName) != null) {
+>       return true;
+>     }
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype != null) {
+>       return implicitPrototype.hasProperty(propertyName);
+>     }
+>     return false;
+>   }
+> 
+>   @Override
+>   public boolean hasOwnProperty(String propertyName) {
+>     return properties.get(propertyName) != null;
+>   }
+> 
+>   @Override
+>   public Set<String> getOwnPropertyNames() {
+>     return properties.keySet();
+>   }
+> 
+>   @Override
+>   public boolean isPropertyTypeDeclared(String property) {
+>     Property p = properties.get(property);
+>     if (p == null) {
+>       ObjectType implicitPrototype = getImplicitPrototype();
+>       if (implicitPrototype != null) {
+>         return implicitPrototype.isPropertyTypeDeclared(property);
+>       }
+>       
+>       return false;
+>     }
+>     return !p.inferred;
+>   }
+> 
+>   @Override
+>   protected void collectPropertyNames(Set<String> props) {
+>     for (String prop : properties.keySet()) {
+>       props.add(prop);
+>     }
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype != null) {
+>       implicitPrototype.collectPropertyNames(props);
+>     }
+>   }
+> 
+>   @Override
+>   public boolean isPropertyTypeInferred(String property) {
+>     Property p = properties.get(property);
+>     if (p == null) {
+>       ObjectType implicitPrototype = getImplicitPrototype();
+>       if (implicitPrototype != null) {
+>         return implicitPrototype.isPropertyTypeInferred(property);
+>       }
+>       
+>       return false;
+>     }
+>     return p.inferred;
+>   }
+> 
+>   @Override
+>   public JSType getPropertyType(String propertyName) {
+>     Property p = properties.get(propertyName);
+>     if (p != null) {
+>       return p.type;
+>     }
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype != null) {
+>       return implicitPrototype.getPropertyType(propertyName);
+>     }
+>     return getNativeType(JSTypeNative.UNKNOWN_TYPE);
+>   }
+> 
+>   @Override
+>   public boolean isPropertyInExterns(String propertyName) {
+>     Property p = properties.get(propertyName);
+>     if (p != null) {
+>       return p.inExterns;
+>     }
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype != null) {
+>       return implicitPrototype.isPropertyInExterns(propertyName);
+>     }
+>     return false;
+>   }
+> 
+>   @Override
+>   boolean defineProperty(String name, JSType type, boolean inferred,
+>       boolean inExterns) {
+>     if (hasOwnDeclaredProperty(name)) {
+>       return false;
+>     }
+>     properties.put(name, new Property(type, inferred, inExterns));
+>     return true;
+>   }
+> 
+>   @Override
+>   public JSDocInfo getOwnPropertyJSDocInfo(String propertyName) {
+>     Property p = properties.get(propertyName);
+>     if (p != null) {
+>       return p.docInfo;
+>     }
+>     return null;
+>   }
+> 
+>   @Override
+>   public void setPropertyJSDocInfo(String propertyName, JSDocInfo info,
+>       boolean inExterns) {
+>     if (info != null) {
+>       if (!properties.containsKey(propertyName)) {
+>         
+>         
+>         
+>         defineInferredProperty(propertyName, getPropertyType(propertyName),
+>             inExterns);
+>       }
+> 
+>       
+>       
+>       Property property = properties.get(propertyName);
+>       if (property != null) {
+>         property.docInfo = info;
+>       }
+>     }
+>   }
+> 
+>   @Override
+>   public boolean matchesNumberContext() {
+>     return isNumberObjectType() || isDateType() || isBooleanObjectType() ||
+>         isStringObjectType() || hasOverridenNativeProperty("valueOf");
+>   }
+> 
+>   @Override
+>   public boolean matchesStringContext() {
+>     return isTheObjectType() || isStringObjectType() || isDateType() ||
+>         isRegexpType() || isArrayType() || isNumberObjectType() ||
+>         isBooleanObjectType() || hasOverridenNativeProperty("toString");
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private boolean hasOverridenNativeProperty(String propertyName) {
+>     if (isNative()) {
+>       return false;
+>     }
+> 
+>     JSType propertyType = getPropertyType(propertyName);
+>     ObjectType nativeType =
+>         this.isFunctionType() ?
+>         ((ObjectType) getNativeType(JSTypeNative.FUNCTION_PROTOTYPE)) :
+>         ((ObjectType) getNativeType(JSTypeNative.OBJECT_PROTOTYPE));
+>     JSType nativePropertyType = nativeType.getPropertyType(propertyName);
+>     return propertyType != nativePropertyType;
+>   }
+> 
+>   @Override
+>   public JSType unboxesTo() {
+>     if (isStringObjectType()) {
+>       return getNativeType(JSTypeNative.STRING_TYPE);
+>     } else if (isBooleanObjectType()) {
+>       return getNativeType(JSTypeNative.BOOLEAN_TYPE);
+>     } else if (isNumberObjectType()) {
+>       return getNativeType(JSTypeNative.NUMBER_TYPE);
+>     } else {
+>       return super.unboxesTo();
+>     }
+>   }
+> 
+>   @Override
+>   public boolean matchesObjectContext() {
+>     return true;
+>   }
+> 
+>   @Override
+>   public boolean canBeCalled() {
+>     return isRegexpType();
+>   }
+> 
+>   
+> 
+> 
+> 
+>   boolean isNative() {
+>     return nativeType;
+>   }
+> 
+>   @Override
+>   public String toString() {
+>     return getName();
+>   }
+> 
+>   @Override
+>   public FunctionType getConstructor() {
+>     return null;
+>   }
+> 
+>   @Override
+>   public ObjectType getImplicitPrototype() {
+>     return implicitPrototype;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   void setImplicitPrototype(ObjectType implicitPrototype) {
+>     checkState(!hasCachedValues());
+>     this.implicitPrototype = implicitPrototype;
+>   }
+> 
+>   @Override
+>   public String getName() {
+>     if (className != null) {
+>       return className;
+>     } else {
+>       return "{...}";
+>     }
+>   }
+> 
+>   @Override
+>   public boolean hasName() {
+>     return className != null;
+>   }
+> 
+>   @Override
+>   public boolean isSubtype(JSType that) {
+>     if (JSType.isSubtype(this, that)) {
+>       return true;
+>     }
+>     
+>     if (that instanceof RecordType) {
+>       return RecordType.isSubtype(this, (RecordType) that);
+>     }
+>     
+>     if (that instanceof ObjectType) {
+>       if (isUnknownType() || implicitPrototypeChainIsUnknown()) {
+>         
+>         
+>         
+>         return true;
+>       }
+>       return this.isImplicitPrototype((ObjectType) that);
+>     }
+>     return false;
+>   }
+> 
+>   private boolean implicitPrototypeChainIsUnknown() {
+>     ObjectType p = getImplicitPrototype();
+>     while (p != null) {
+>       if (p.isUnknownType()) {
+>         return true;
+>       }
+>       p = p.getImplicitPrototype();
+>     }
+>     return false;
+>   }
+> 
+>   private static final class Property implements Serializable {
+>     private static final long serialVersionUID = 1L;
+> 
+>     
+> 
+> 
+>     private final JSType type;
+> 
+>     
+> 
+> 
+>     private final boolean inferred;
+> 
+>     
+> 
+> 
+>     private final boolean inExterns;
+> 
+>     
+>     private JSDocInfo docInfo = null;
+> 
+>     private Property(JSType type, boolean inferred, boolean inExterns) {
+>       this.type = type;
+>       this.inferred = inferred;
+>       this.inExterns = inExterns;
+>     }
+>   }
+> 
+>   @Override
+>   public boolean hasCachedValues() {
+>     return super.hasCachedValues();
+>   }
+> 
+>   
+>   @Override
+>   public boolean isNativeObjectType() {
+>     return nativeType;
+>   }
+> }

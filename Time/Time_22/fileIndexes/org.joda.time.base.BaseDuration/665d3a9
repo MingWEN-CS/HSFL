@@ -1,0 +1,272 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.base;
+
+import java.io.Serializable;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.Interval;
+import org.joda.time.Period;
+import org.joda.time.PeriodType;
+import org.joda.time.ReadableDuration;
+import org.joda.time.ReadableInstant;
+import org.joda.time.convert.ConverterManager;
+import org.joda.time.convert.DurationConverter;
+import org.joda.time.field.FieldUtils;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class BaseDuration
+        extends AbstractDuration
+        implements ReadableDuration, Serializable {
+
+    
+    private static final long serialVersionUID = 2581698638990L;
+
+    
+    private long iMillis;
+
+    
+
+
+
+
+    protected BaseDuration(long duration) {
+        super();
+        iMillis = duration;
+    }
+
+    
+
+
+
+
+
+
+    protected BaseDuration(long startInstant, long endInstant) {
+        super();
+        iMillis = FieldUtils.safeAdd(endInstant, -startInstant);
+    }
+
+    
+
+
+
+
+
+
+    protected BaseDuration(ReadableInstant start, ReadableInstant end) {
+        super();
+        if (start == end) {
+            iMillis = 0L;
+        } else {
+            long startMillis = DateTimeUtils.getInstantMillis(start);
+            long endMillis = DateTimeUtils.getInstantMillis(end);
+            iMillis = FieldUtils.safeAdd(endMillis, -startMillis);
+        }
+    }
+
+    
+
+
+
+
+
+
+    protected BaseDuration(Object duration) {
+        super();
+        DurationConverter converter = ConverterManager.getInstance().getDurationConverter(duration);
+        iMillis = converter.getDurationMillis(duration);
+    }
+
+    
+    
+
+
+
+
+    public long getMillis() {
+        return iMillis;
+    }
+
+    
+    
+
+
+
+
+    protected void setMillis(long duration) {
+        iMillis = duration;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period toPeriod(PeriodType type) {
+        return new Period(getMillis(), type);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period toPeriod(Chronology chrono) {
+        return new Period(getMillis(), chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period toPeriod(PeriodType type, Chronology chrono) {
+        return new Period(getMillis(), type, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public Period toPeriodFrom(ReadableInstant startInstant) {
+        return new Period(startInstant, this);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public Period toPeriodFrom(ReadableInstant startInstant, PeriodType type) {
+        return new Period(startInstant, this, type);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public Period toPeriodTo(ReadableInstant endInstant) {
+        return new Period(this, endInstant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public Period toPeriodTo(ReadableInstant endInstant, PeriodType type) {
+        return new Period(this, endInstant, type);
+    }
+
+    
+
+
+
+
+
+    public Interval toIntervalFrom(ReadableInstant startInstant) {
+        return new Interval(startInstant, this);
+    }
+
+    
+
+
+
+
+
+    public Interval toIntervalTo(ReadableInstant endInstant) {
+        return new Interval(this, endInstant);
+    }
+
+}

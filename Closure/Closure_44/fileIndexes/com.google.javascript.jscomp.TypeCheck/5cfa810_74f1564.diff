@@ -1,0 +1,64 @@
+45a46,47
+> import java.util.Set;
+> import java.util.HashMap;
+220a223,228
+>   static final DiagnosticType INCOMPATIBLE_EXTENDED_PROPERTY_TYPE =
+>       DiagnosticType.warning(
+>           "JSC_INCOMPATIBLE_EXTENDED_PROPERTY_TYPE",
+>           "Interface {0} has a property {1} with incompatible types in " +
+>           "its super interfaces {2} and {3}");
+> 
+247a256
+>       INCOMPATIBLE_EXTENDED_PROPERTY_TYPE,
+1421a1431,1466
+> 
+> 
+> 
+> 
+> 
+>   private void checkInterfaceConflictProperties(NodeTraversal t, Node n,
+>       String functionName, HashMap<String, ObjectType> properties,
+>       HashMap<String, ObjectType> currentProperties,
+>       ObjectType interfaceType) {
+>     Set<String> currentPropertyNames = interfaceType.getPropertyNames();
+>     for (String name : currentPropertyNames) {
+>       ObjectType oType = properties.get(name);
+>       if (oType != null) {
+>         if (!interfaceType.getPropertyType(name).isEquivalentTo(
+>             oType.getPropertyType(name))) {
+>           compiler.report(
+>               t.makeError(n, INCOMPATIBLE_EXTENDED_PROPERTY_TYPE,
+>                   functionName, name, oType.toString(),
+>                   interfaceType.toString()));
+>         }
+>       }
+>       currentProperties.put(name, interfaceType);
+>     }
+>     for (ObjectType iType : interfaceType.getCtorExtendedInterfaces()) {
+>       checkInterfaceConflictProperties(t, n, functionName, properties,
+>           currentProperties, iType);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+1467a1513,1526
+>       }
+>       
+>       if (functionType.getExtendedInterfacesCount() > 1) {
+>         
+>         HashMap<String, ObjectType> properties
+>             = new HashMap<String, ObjectType>();
+>         HashMap<String, ObjectType> currentProperties
+>             = new HashMap<String, ObjectType>();
+>         for (ObjectType interfaceType : functionType.getExtendedInterfaces()) {
+>           currentProperties.clear();
+>           checkInterfaceConflictProperties(t, n, functionPrivateName,
+>               properties, currentProperties, interfaceType);
+>           properties.putAll(currentProperties);
+>         }

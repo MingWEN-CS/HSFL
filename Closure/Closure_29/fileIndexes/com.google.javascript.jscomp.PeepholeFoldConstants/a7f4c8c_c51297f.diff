@@ -1,0 +1,114 @@
+1209,1210d1208
+< 
+< 
+1222,1259c1220
+<       if (right.getType() != Token.NUMBER) {
+<         
+<         
+<         return n;
+<       }
+< 
+<       double index = right.getDouble();
+<       int intIndex = (int) index;
+<       if (intIndex != index) {
+<         error(INVALID_GETELEM_INDEX_ERROR, right);
+<         return n;
+<       }
+< 
+<       if (intIndex < 0) {
+<         error(INDEX_OUT_OF_BOUNDS_ERROR, right);
+<         return n;
+<       }
+< 
+<       Node elem = left.getFirstChild();
+<       for (int i = 0; elem != null && i < intIndex; i++) {
+<         elem = elem.getNext();
+<       }
+< 
+<       if (elem == null) {
+<         error(INDEX_OUT_OF_BOUNDS_ERROR, right);
+<         return n;
+<       }
+< 
+<       if (elem.getType() == Token.EMPTY) {
+<         elem = NodeUtil.newUndefinedNode(elem);
+<       } else {
+<         left.removeChild(elem);
+<       }
+< 
+<       
+<       n.getParent().replaceChild(n, elem);
+<       reportCodeChange();
+<       return elem;
+---
+>       return tryFoldArrayAccess(n, left, right);
+1303a1265,1326
+>   private boolean isAssignmentTarget(Node n) {
+>     Node parent = n.getParent();
+>     if ((NodeUtil.isAssignmentOp(parent) && parent.getFirstChild() == n)
+>         || parent.getType() == Token.INC
+>         || parent.getType() == Token.DEC) {
+>       
+>       
+>       
+>       return true;
+>     }
+>     return false;
+>   }
+> 
+>   private Node tryFoldArrayAccess(Node n, Node left, Node right) {
+>     Node parent = n.getParent();
+>     
+>     
+>     
+>     if (isAssignmentTarget(n)) {
+>       return n;
+>     }
+> 
+>     if (right.getType() != Token.NUMBER) {
+>       
+>       
+>       return n;
+>     }
+> 
+>     double index = right.getDouble();
+>     int intIndex = (int) index;
+>     if (intIndex != index) {
+>       error(INVALID_GETELEM_INDEX_ERROR, right);
+>       return n;
+>     }
+> 
+>     if (intIndex < 0) {
+>       error(INDEX_OUT_OF_BOUNDS_ERROR, right);
+>       return n;
+>     }
+> 
+>     Node elem = left.getFirstChild();
+>     for (int i = 0; elem != null && i < intIndex; i++) {
+>       elem = elem.getNext();
+>     }
+> 
+>     if (elem == null) {
+>       error(INDEX_OUT_OF_BOUNDS_ERROR, right);
+>       return n;
+>     }
+> 
+>     if (elem.getType() == Token.EMPTY) {
+>       elem = NodeUtil.newUndefinedNode(elem);
+>     } else {
+>       left.removeChild(elem);
+>     }
+> 
+>     
+>     n.getParent().replaceChild(n, elem);
+>     reportCodeChange();
+>     return elem;
+>   }
+> 
+1311,1314c1334
+<     Node parent = n.getParent();
+<     if ((NodeUtil.isAssignmentOp(parent) && parent.getFirstChild() == n)
+<         || parent.getType() == Token.INC
+<         || parent.getType() == Token.DEC) {
+---
+>     if (isAssignmentTarget(n)) {

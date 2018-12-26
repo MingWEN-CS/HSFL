@@ -1,0 +1,112 @@
+34a35
+> 
+36,37d36
+<     
+<     private static final long serialVersionUID = 6222990762865980424L;
+38a38,51
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static final int MAX_DENOMINATOR_DIGITS = 9;
+>     
+>     
+>     private static final long serialVersionUID = 5463066929751300926L;
+74a88,163
+>         this(value, epsilon, Integer.MAX_VALUE, maxIterations);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static int maxDenominator(int denominatorDigits)
+>         throws IllegalArgumentException
+>     {
+>         if (denominatorDigits > MAX_DENOMINATOR_DIGITS) {
+>             throw new IllegalArgumentException("too many digits requested");
+>         }
+>         return (int)Math.pow(10, denominatorDigits);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Fraction(double value, int denominatorDigits)
+>         throws FractionConversionException, IllegalArgumentException
+>     {
+>        this(value, 0, maxDenominator(denominatorDigits), 100);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private Fraction(double value, double epsilon, int maxDenominator, int maxIterations)
+>         throws FractionConversionException
+>     {
+104c193
+<             if (n < maxIterations && Math.abs(convergent - value) > epsilon) {
+---
+>             if (n < maxIterations && Math.abs(convergent - value) > epsilon && q2 < maxDenominator) {
+120,121c209,215
+<         this.numerator = p2;
+<         this.denominator = q2;
+---
+>         if (q2 < maxDenominator) {
+>             this.numerator = p2;
+>             this.denominator = q2;
+>         } else {
+>             this.numerator = p1;
+>             this.denominator = q1;
+>         }

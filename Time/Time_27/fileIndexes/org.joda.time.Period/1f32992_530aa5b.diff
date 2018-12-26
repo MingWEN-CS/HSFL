@@ -1,0 +1,244 @@
+79a80,82
+> public final class Period
+>         extends BasePeriod
+>         implements ReadablePeriod, Serializable {
+80a84,85
+>     
+>     private static final long serialVersionUID = 741052353876488155L;
+81a87
+>     
+88a95,105
+>     public Period(int hours, int minutes, int seconds, int millis) {
+>         super(0, 0, 0, 0, hours, minutes, seconds, millis, PeriodType.time());
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+90,92c107,114
+< public final class Period
+<         extends BasePeriod
+<         implements ReadablePeriod, Serializable {
+---
+> 
+> 
+> 
+> 
+>     public Period(int years, int months, int weeks, int days,
+>                   int hours, int minutes, int seconds, int millis) {
+>         super(years, months, weeks, days, hours, minutes, seconds, millis, PeriodType.standard());
+>     }
+95c117,133
+<     private static final long serialVersionUID = 741052353876488155L;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period(int years, int months, int weeks, int days,
+>                     int hours, int minutes, int seconds, int millis, PeriodType type) {
+>         super(years, months, weeks, days, hours, minutes, seconds, millis, type);
+>     }
+124c162
+<         super(duration, null);
+---
+>         super(duration, null, null);
+143d180
+< 
+145c182
+<         super(duration, type);
+---
+>         super(duration, type, null);
+157,158c194,203
+<     public Period(int hours, int minutes, int seconds, int millis) {
+<         super(0, 0, 0, 0, hours, minutes, seconds, millis, null);
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period(long duration, Chronology chronology) {
+>         super(duration, null, chronology);
+173,175c218,224
+<     public Period(int years, int months, int weeks, int days,
+<                     int hours, int minutes, int seconds, int millis) {
+<         super(years, months, weeks, days, hours, minutes, seconds, millis, null);
+---
+> 
+> 
+> 
+> 
+> 
+>     public Period(long duration, PeriodType type, Chronology chronology) {
+>         super(duration, type, chronology);
+184a234,236
+>     public Period(long startInstant, long endInstant) {
+>         super(startInstant, endInstant, null, null);
+>     }
+185a238
+>     
+192,194c245,246
+<     public Period(int years, int months, int weeks, int days,
+<                     int hours, int minutes, int seconds, int millis, PeriodType type) {
+<         super(years, months, weeks, days, hours, minutes, seconds, millis, type);
+---
+>     public Period(long startInstant, long endInstant, PeriodType type) {
+>         super(startInstant, endInstant, type, null);
+204,205c256,258
+<     public Period(long startInstant, long endInstant) {
+<         super(startInstant, endInstant, null);
+---
+> 
+>     public Period(long startInstant, long endInstant, Chronology chrono) {
+>         super(startInstant, endInstant, null, chrono);
+216,217c269,270
+<     public Period(long startInstant, long endInstant, PeriodType type) {
+<         super(startInstant, endInstant, type);
+---
+>     public Period(long startInstant, long endInstant, PeriodType type, Chronology chrono) {
+>         super(startInstant, endInstant, type, chrono);
+238d290
+< 
+252c304
+<         super(period, null);
+---
+>         super(period, null, null);
+265c317,344
+<         super(period, type);
+---
+>         super(period, type, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period(Object period, Chronology chrono) {
+>         super(period, null, chrono);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period(Object period, PeriodType type, Chronology chrono) {
+>         super(period, type, chrono);
+284a364,366
+>     public int getYears() {
+>         return getPeriodType().getYears(this);
+>     }
+285a368
+>     
+288,296c371,374
+<     public Period withPeriodType(PeriodType type) {
+<         if (type == null) {
+<             type = PeriodType.getAllType();
+<         }
+<         if (type.equals(getPeriodType())) {
+<             return this;
+<         }
+<         return new Period(getYears(), getMonths(), getWeeks(), getDays(),
+<                     getHours(), getMinutes(), getSeconds(), getMillis(), type);
+---
+> 
+> 
+>     public int getMonths() {
+>         return getPeriodType().getMonths(this);
+303a382,384
+>     public int getWeeks() {
+>         return getPeriodType().getWeeks(this);
+>     }
+304a386
+>     
+307,314c389,429
+<     public Period withPeriodTypeRetainDuration(PeriodType type) {
+<         if (type == null) {
+<             type = PeriodType.getAllType();
+<         }
+<         if (type.equals(getPeriodType())) {
+<             return this;
+<         }
+<         return new Period(toDurationMillis(), type);
+---
+> 
+> 
+>     public int getDays() {
+>         return getPeriodType().getDays(this);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+>     public int getHours() {
+>         return getPeriodType().getHours(this);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public int getMinutes() {
+>         return getPeriodType().getMinutes(this);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public int getSeconds() {
+>         return getPeriodType().getSeconds(this);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public int getMillis() {
+>         return getPeriodType().getMillis(this);
+317a433,434
+>     
+> 
+324,325c441,446
+<     public Period withFieldsNormalized() {
+<         return new Period(toDurationMillis(), getPeriodType());
+---
+>     public Period withPeriodType(PeriodType type) {
+>         type = DateTimeUtils.getPeriodType(type);
+>         if (type.equals(getPeriodType())) {
+>             return this;
+>         }
+>         return new Period(this, type);

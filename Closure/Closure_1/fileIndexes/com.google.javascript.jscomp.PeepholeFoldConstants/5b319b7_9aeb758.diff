@@ -1,0 +1,114 @@
+747,771c747
+<           boolean nullRight = (Token.NULL == right.getType());
+<           boolean equivalent = undefinedRight || nullRight;
+<           switch (op) {
+<             case Token.EQ:
+<               
+<               result = equivalent;
+<               break;
+<             case Token.NE:
+<               result = !equivalent;
+<               break;
+<             case Token.SHEQ:
+<               result = undefinedRight;
+<               break;
+<             case Token.SHNE:
+<               result = !undefinedRight;
+<               break;
+<             case Token.LT:
+<             case Token.GT:
+<             case Token.LE:
+<             case Token.GE:
+<               result = false;
+<               break;
+<             default:
+<               return n;
+<           }
+---
+>           result = compareToUndefined(right, op);
+777c753
+<           result = (op == Token.EQ);
+---
+>           result = compareToUndefined(left, op);
+784c760
+<           result = false;
+---
+>           result = compareToUndefined(left, op);
+814c790
+<           result = false;
+---
+>           result = compareToUndefined(left, op);
+838c814
+<           result = false;
+---
+>           result = compareToUndefined(left, op);
+865,889c841
+<             boolean nullRight = (Token.NULL == right.getType());
+<             boolean equivalent = undefinedRight || nullRight;
+<             switch (op) {
+<               case Token.EQ:
+<                 
+<                 result = equivalent;
+<                 break;
+<               case Token.NE:
+<                 result = !equivalent;
+<                 break;
+<               case Token.SHEQ:
+<                 result = undefinedRight;
+<                 break;
+<               case Token.SHNE:
+<                 result = !undefinedRight;
+<                 break;
+<               case Token.LT:
+<               case Token.GT:
+<               case Token.LE:
+<               case Token.GE:
+<                 result = false;
+<                 break;
+<               default:
+<                 return n;
+<             }
+---
+>             result = compareToUndefined(right, op);
+924a877,917
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private boolean compareToUndefined(Node value, int op) {
+>     boolean result;
+> 
+>     boolean valueUndefined = ((Token.NAME == value.getType()
+>         && value.getString().equals("undefined"))
+>         || (Token.VOID == value.getType()
+>             && NodeUtil.isLiteralValue(value.getFirstChild(), false)));
+>     boolean valueNull = (Token.NULL == value.getType());
+>     boolean equivalent = valueUndefined || valueNull;
+>     switch (op) {
+>       case Token.EQ:
+>         
+>         result = equivalent;
+>         break;
+>       case Token.NE:
+>         result = !equivalent;
+>         break;
+>       case Token.SHEQ:
+>         result = valueUndefined;
+>         break;
+>       case Token.SHNE:
+>         result = !valueUndefined;
+>         break;
+>       case Token.LT:
+>       case Token.GT:
+>       case Token.LE:
+>       case Token.GE:
+>         result = false;
+>         break;
+>       default:
+>         throw new IllegalStateException("unexpected.");
+>     }
+> 
+>     return result;

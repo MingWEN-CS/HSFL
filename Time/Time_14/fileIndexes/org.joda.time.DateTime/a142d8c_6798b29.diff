@@ -1,0 +1,22 @@
+60a61
+> import org.joda.time.property.DateTimeFieldProperty;
+321,323c322,323
+< 
+<     protected final ReadableInstant create(final long instant, final Chronology chrono) {
+<         return createDateTime(instant, chrono);
+---
+>     public ReadableInstant toCopy(long newMillis) {
+>         return newMillis == getMillis() ? this : new DateTime(newMillis, getChronology());
+337,338c337,338
+<     protected DateTime createDateTime(final long instant, final Chronology chrono) {
+<         if (chrono == null) {
+---
+>     public ReadableInstant toCopy(Chronology newChronology) {
+>         if (newChronology == null) {
+341,344c341
+<         if (instant == getMillis() && chrono == getChronology()) {
+<             return this;
+<         }
+<         return new DateTime(instant, chrono);
+---
+>         return newChronology == getChronology() ? this : new DateTime(getMillis(), newChronology);

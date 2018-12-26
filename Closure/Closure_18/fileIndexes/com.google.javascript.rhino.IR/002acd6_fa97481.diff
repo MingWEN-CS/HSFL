@@ -1,0 +1,56 @@
+103c103
+<     Node block = new Node(Token.BLOCK);
+---
+>     Node block = block();
+110a111,119
+>   public static Node block(List<Node> stmts) {
+>     Node paramList = block();
+>     for (Node stmt : stmts) {
+>       Preconditions.checkState(mayBeStatement(stmt));
+>       paramList.addChildToBack(stmt);
+>     }
+>     return paramList;
+>   }
+> 
+115c124
+<   public static Node script(Node ... stmts) {
+---
+>   public static Node script() {
+117a127,131
+>     return block;
+>   }
+> 
+>   public static Node script(Node ... stmts) {
+>     Node block = script();
+119c133
+<       Preconditions.checkState(mayBeStatement(stmt));
+---
+>       Preconditions.checkState(mayBeStatementNoReturn(stmt));
+124a139,147
+>   public static Node script(List<Node> stmts) {
+>     Node paramList = script();
+>     for (Node stmt : stmts) {
+>       Preconditions.checkState(mayBeStatementNoReturn(stmt));
+>       paramList.addChildToBack(stmt);
+>     }
+>     return paramList;
+>   }
+> 
+476c499
+<   private static boolean mayBeStatement(Node n) {
+---
+>   private static boolean mayBeStatementNoReturn(Node n) {
+494d516
+<       case Token.RETURN:
+505a528,538
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private static boolean mayBeStatement(Node n) {
+>     if (!mayBeStatementNoReturn(n)) {
+>       return n.isReturn();
+>     }
+>     return true;

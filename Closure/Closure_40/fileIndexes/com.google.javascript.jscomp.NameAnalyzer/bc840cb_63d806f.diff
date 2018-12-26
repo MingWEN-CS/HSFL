@@ -1,0 +1,60 @@
+31d30
+< import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+33d31
+< import com.google.javascript.jscomp.graph.FixedPointGraphTraversal.EdgeCallback;
+34a33,34
+> import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+> import com.google.javascript.jscomp.graph.FixedPointGraphTraversal.EdgeCallback;
+308,352c308,309
+<           if (parent.getFirstChild() ==
+<               parent.getLastChild()) {
+<             replaceWithRhs(containingNode, parent);
+<           } else {
+<             
+<             
+<             
+<             
+<             
+<             
+<             List<Node> earlyChildren = Lists.newArrayList();
+<             List<Node> lateChildren = Lists.newArrayList();
+<             boolean seen = false;
+<             for (Node child : parent.children()) {
+<               if (child == node) {
+<                 seen = true;
+<                 continue;
+<               }
+< 
+<               if (seen) {
+<                 lateChildren.add(child);
+<               } else {
+<                 earlyChildren.add(child);
+<               }
+<             }
+< 
+<             if (!earlyChildren.isEmpty() && !lateChildren.isEmpty()) {
+<               Node earlyDecls = new Node(Token.VAR);
+<               for (Node child : earlyChildren) {
+<                 parent.removeChild(child);
+<                 earlyDecls.addChildToBack(child);
+<               }
+<               containingNode.addChildBefore(earlyDecls, parent);
+<             }
+< 
+<             Node currDecl = new Node(Token.VAR);
+<             parent.removeChild(node);
+<             currDecl.addChildToBack(node);
+<             if (earlyChildren.isEmpty() || !lateChildren.isEmpty()) {
+<               containingNode.addChildBefore(currDecl, parent);
+<             } else {
+<               containingNode.addChildAfter(currDecl, parent);
+<             }
+<             replaceWithRhs(containingNode, currDecl);
+<           }
+---
+>           Preconditions.checkState(parent.hasOneChild());
+>           replaceWithRhs(containingNode, parent);
+1530c1487
+<       replacements.add(new Node(Token.EXPR_RESULT, subexpression));
+---
+>       replacements.add(NodeUtil.newExpr(subexpression));

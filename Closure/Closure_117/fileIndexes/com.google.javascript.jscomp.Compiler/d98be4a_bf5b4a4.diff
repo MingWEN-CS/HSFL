@@ -1,0 +1,115 @@
+1280,1281c1280
+<       
+<       boolean staleInputs = false;
+---
+>       hoistExterns(externsRoot);
+1283a1283
+>       boolean staleInputs = false;
+1318,1344c1318
+<       for (CompilerInput input : inputs) {
+<         Node n = input.getAstRoot(this);
+< 
+<         
+<         if (n == null) {
+<           continue;
+<         }
+< 
+<         if (n.getJSDocInfo() != null) {
+<           JSDocInfo info = n.getJSDocInfo();
+<           if (info.isExterns()) {
+<             
+<             
+<             
+<             externsRoot.addChildToBack(n);
+<             input.setIsExtern(true);
+< 
+<             input.getModule().remove(input);
+< 
+<             externs.add(input);
+<             staleInputs = true;
+<           } else if (info.isNoCompile()) {
+<             input.getModule().remove(input);
+<             staleInputs = true;
+<           }
+<         }
+<       }
+---
+>       hoistNoCompileFiles();
+1347,1348c1321
+<         fillEmptyModules(modules);
+<         rebuildInputsFromModules();
+---
+>         repartitionInputs();
+1385a1359,1430
+>   }
+> 
+>   
+> 
+> 
+>   private void hoistExterns(Node externsRoot) {
+>     boolean staleInputs = false;
+>     for (CompilerInput input : inputs) {
+>       if (options.dependencyOptions.needsManagement() &&
+>           options.closurePass) {
+>         
+>         
+>         if (!input.getProvides().isEmpty() || !input.getRequires().isEmpty()) {
+>           continue;
+>         }
+>       }
+> 
+>       Node n = input.getAstRoot(this);
+> 
+>       
+>       if (n == null) {
+>         continue;
+>       }
+> 
+>       JSDocInfo info = n.getJSDocInfo();
+>       if (info != null && info.isExterns()) {
+>         
+>         
+>         
+>         externsRoot.addChildToBack(n);
+>         input.setIsExtern(true);
+> 
+>         input.getModule().remove(input);
+> 
+>         externs.add(input);
+>         staleInputs = true;
+>       }
+>     }
+> 
+>     if (staleInputs) {
+>       repartitionInputs();
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private void hoistNoCompileFiles() {
+>     boolean staleInputs = false;
+>     for (CompilerInput input : inputs) {
+>       Node n = input.getAstRoot(this);
+> 
+>       
+>       if (n == null) {
+>         continue;
+>       }
+> 
+>       JSDocInfo info = n.getJSDocInfo();
+>       if (info != null && info.isNoCompile()) {
+>         input.getModule().remove(input);
+>         staleInputs = true;
+>       }
+>     }
+> 
+>     if (staleInputs) {
+>       repartitionInputs();
+>     }
+>   }
+> 
+>   private void repartitionInputs() {
+>     fillEmptyModules(modules);
+>     rebuildInputsFromModules();

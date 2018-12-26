@@ -1,0 +1,56 @@
+34a35,36
+> import com.google.javascript.jscomp.deps.SortedDependencies;
+> import com.google.javascript.jscomp.deps.SortedDependencies.CircularDependencyException;
+746a749,761
+>       if (options.processCommonJSModules) {
+>         
+>         modules = Lists.newArrayList(compiler.getDegenerateModuleGraph()
+>             .getAllModules());
+>         
+>         try {
+>           SortedDependencies<JSModule> sorter =
+>               new SortedDependencies<JSModule>(modules);
+>           modules = sorter.getDependenciesOf(modules, true);
+>         } catch (CircularDependencyException e) {
+>           throw Throwables.propagate(e);
+>         }
+>       }
+807a823
+>       outputModuleGraphJson();
+809a826
+>       outputModuleGraphJson();
+1423a1441,1461
+>   private void outputModuleGraphJson() throws IOException {
+>     if (config.outputModuleDependencies != null &&
+>         config.outputModuleDependencies != "") {
+>       Writer out = fileNameToOutputWriter2(config.outputModuleDependencies);
+>       printModuleGraphJsonTo(compiler.getDegenerateModuleGraph(), out);
+>       out.close();
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   @VisibleForTesting
+>   void printModuleGraphJsonTo(JSModuleGraph graph,
+>       Appendable out) throws IOException {
+>     out.append(compiler.getDegenerateModuleGraph().toJson().toString());
+>   }
+> 
+>   
+> 
+> 
+1942a1981,1992
+>       return this;
+>     }
+> 
+>     private String outputModuleDependencies = null;
+> 
+>     
+> 
+> 
+> 
+>     CommandLineConfig setOutputModuleDependencies(String
+>         outputModuleDependencies) {
+>       this.outputModuleDependencies = outputModuleDependencies;

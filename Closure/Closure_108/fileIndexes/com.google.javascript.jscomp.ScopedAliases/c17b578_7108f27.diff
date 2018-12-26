@@ -1,0 +1,80 @@
+19a20
+> import com.google.common.collect.HashMultiset;
+21a23
+> import com.google.common.collect.Multiset;
+112a115,116
+>   private Multiset<String> scopedAliasNames = HashMultiset.create();
+> 
+260c264
+<     private final Set<String> forbiddenLocals = Sets.newHashSet();
+---
+>     private final Set<String> forbiddenLocals = Sets.newHashSet("$jscomp");
+352,368c356,358
+<         if (parent.isVar() &&
+<             n.hasChildren() && n.getFirstChild().isQualifiedName()) {
+<           String name = n.getString();
+<           Var aliasVar = scope.getVar(name);
+<           aliases.put(name, aliasVar);
+< 
+<           String qualifiedName =
+<               aliasVar.getInitialValue().getQualifiedName();
+<           transformation.addAlias(name, qualifiedName);
+< 
+<           int rootIndex = qualifiedName.indexOf(".");
+<           if (rootIndex != -1) {
+<             String qNameRoot = qualifiedName.substring(0, rootIndex);
+<             if (!aliases.containsKey(qNameRoot)) {
+<               forbiddenLocals.add(qNameRoot);
+<             }
+<           }
+---
+>         boolean isVarAssign = parent.isVar() && n.hasChildren();
+>         if (isVarAssign && n.getFirstChild().isQualifiedName()) {
+>           recordAlias(v);
+374a365,392
+>         } else if (isVarAssign) {
+>           Node value = v.getInitialValue().detachFromParent();
+>           String name = n.getString();
+>           int nameCount = scopedAliasNames.count(name);
+>           scopedAliasNames.add(name);
+>           String globalName =
+>               "$jscomp.scope." + name + (nameCount == 0 ? "" : ("$" + nameCount));
+> 
+>           compiler.ensureLibraryInjected("base");
+> 
+>           
+>           
+>           Node newDecl = NodeUtil.newQualifiedNameNodeDeclaration(
+>               compiler.getCodingConvention(),
+>               globalName,
+>               value,
+>               v.getJSDocInfo())
+>               .useSourceInfoIfMissingFromForTree(n);
+>           NodeUtil.setDebugInformation(
+>               newDecl.getFirstChild().getFirstChild(), n, name);
+>           parent.getParent().addChildBefore(newDecl, parent);
+> 
+>           
+>           v.getNameNode().addChildToFront(
+>               NodeUtil.newQualifiedNameNode(
+>                   compiler.getCodingConvention(), globalName, n, name));
+> 
+>           recordAlias(v);
+377a396,412
+>         }
+>       }
+>     }
+> 
+>     private void recordAlias(Var aliasVar) {
+>       String name = aliasVar.getName();
+>       aliases.put(name, aliasVar);
+> 
+>       String qualifiedName =
+>         aliasVar.getInitialValue().getQualifiedName();
+>       transformation.addAlias(name, qualifiedName);
+> 
+>       int rootIndex = qualifiedName.indexOf(".");
+>       if (rootIndex != -1) {
+>         String qNameRoot = qualifiedName.substring(0, rootIndex);
+>         if (!aliases.containsKey(qNameRoot)) {
+>           forbiddenLocals.add(qNameRoot);

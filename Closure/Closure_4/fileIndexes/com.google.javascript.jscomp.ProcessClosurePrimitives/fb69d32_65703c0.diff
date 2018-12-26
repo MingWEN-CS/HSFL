@@ -1,0 +1,26 @@
+248,249c248,250
+<         if (module != provided.firstModule  &&
+<             !compiler.getModuleGraph().dependsOn(module,
+---
+>         if (moduleGraph != null &&
+>             module != provided.firstModule  &&
+>             !moduleGraph.dependsOn(module,
+723,729c724,733
+<       if (moduleGraph != null) {
+<         if (minimumModule == null) {
+<           minimumModule = newModule;
+<         } else {
+<           minimumModule = moduleGraph.getDeepestCommonDependencyInclusive(
+<               minimumModule, newModule);
+<         }
+---
+>       if (minimumModule == null) {
+>         minimumModule = newModule;
+>       } else if (moduleGraph != null) {
+>         minimumModule = moduleGraph.getDeepestCommonDependencyInclusive(
+>             minimumModule, newModule);
+>       } else {
+>         
+>         
+>         Preconditions.checkState(newModule == minimumModule,
+>                                  "Missing module graph");

@@ -1,0 +1,31 @@
+68c68
+<   private static class Definition {
+---
+>   static class Definition {
+417,418c417
+< 
+<   Node getDef(String name, Node useNode) {
+---
+>   Definition getDef(String name, Node useNode) {
+422,427c421
+<     Definition def = state.getIn().reachingDef.get(jsScope.getVar(name));
+<     if (def == null) {
+<       return null;
+<     } else {
+<       return def.node;
+<     }
+---
+>     return state.getIn().reachingDef.get(jsScope.getVar(name));
+430,434c424,429
+<   boolean dependsOnOuterScopeVars(String name, Node useNode) {
+<     Preconditions.checkArgument(getCfg().hasNode(useNode));
+<     GraphNode<Node, Branch> n = getCfg().getNode(useNode);
+<     FlowState<MustDef> state = n.getAnnotation();
+<     Definition def = state.getIn().reachingDef.get(jsScope.getVar(name));
+---
+>   Node getDefNode(String name, Node useNode) {
+>     Definition def = getDef(name, useNode);
+>     return def == null ? null : def.node;
+>   }
+> 
+>   boolean dependsOnOuterScopeVars(Definition def) {

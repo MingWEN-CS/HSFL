@@ -1,0 +1,1205 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino;
+
+import java.beans.*;
+import java.io.*;
+import java.util.Hashtable;
+import java.util.Locale;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Context
+{
+    
+
+
+
+
+
+    
+
+
+    public static final int VERSION_UNKNOWN =   -1;
+
+    
+
+
+    public static final int VERSION_DEFAULT =    0;
+
+    
+
+
+    public static final int VERSION_1_0 =      100;
+
+    
+
+
+    public static final int VERSION_1_1 =      110;
+
+    
+
+
+    public static final int VERSION_1_2 =      120;
+
+    
+
+
+    public static final int VERSION_1_3 =      130;
+
+    
+
+
+    public static final int VERSION_1_4 =      140;
+
+    
+
+
+    public static final int VERSION_1_5 =      150;
+
+    
+
+
+    public static final int VERSION_1_6 =      160;
+
+    
+
+
+
+
+
+
+    public static final int FEATURE_NON_ECMA_GET_YEAR = 1;
+
+    
+
+
+
+
+
+
+
+
+    public static final int FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME = 2;
+
+    
+
+
+
+
+
+
+
+    public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER = 3;
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static final int FEATURE_PARENT_PROTO_PROPRTIES = 5;
+
+    
+
+
+
+
+
+
+
+
+    public static final int FEATURE_E4X = 6;
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static final int FEATURE_DYNAMIC_SCOPE = 7;
+
+    
+
+
+
+
+
+
+
+
+
+    public static final int FEATURE_STRICT_VARS = 8;
+
+    
+
+
+
+
+
+
+
+
+
+    public static final int FEATURE_STRICT_EVAL = 9;
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static final int FEATURE_LOCATION_INFORMATION_IN_ERROR = 10;
+
+    
+
+
+
+
+
+
+
+
+    public static final int FEATURE_STRICT_MODE = 11;
+
+    
+
+
+
+    public static final int FEATURE_WARNING_AS_ERROR = 12;
+
+    public static final String languageVersionProperty = "language version";
+    public static final String errorReporterProperty   = "error reporter";
+
+    
+
+
+    public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
+
+    
+
+
+
+
+
+
+
+    public Context()
+    {
+        setLanguageVersion(VERSION_DEFAULT);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Context enter() {
+        return enter(null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static Context enter(Context cx) {
+
+        Context old = getCurrentContext();
+
+        if (cx == null) {
+            if (old != null) {
+                cx = old;
+            } else {
+                cx = new Context();
+                setThreadContext(cx);
+            }
+        } else {
+            if (cx.enterCount != 0) {
+                
+                
+                if (cx != old) {
+                    throw new RuntimeException
+                        ("Cannot enter Context active on another thread");
+                }
+            } else {
+                if (old != null) {
+                    cx = old;
+                } else {
+                    setThreadContext(cx);
+                }
+            }
+        }
+        ++cx.enterCount;
+        return cx;
+     }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public static void exit() {
+        boolean released = false;
+        Context cx = getCurrentContext();
+        if (cx == null) {
+            throw new RuntimeException
+                ("Calling Context.exit without previous Context.enter");
+        }
+        if (cx.enterCount < 1) Kit.codeBug();
+        --cx.enterCount;
+        if (cx.enterCount == 0) {
+            released = true;
+            setThreadContext(null);
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static Context getCurrentContext() {
+        return threadContexts.get();
+    }
+
+    private static void setThreadContext(Context cx) {
+        threadContexts.set(cx);
+    }
+
+    private static ThreadLocal<Context> threadContexts
+        = new ThreadLocal<Context>();
+
+    
+
+
+
+
+
+    public final boolean isSealed()
+    {
+        return sealed;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public final void seal(Object sealKey)
+    {
+        if (sealed) onSealedMutation();
+        sealed = true;
+        this.sealKey = sealKey;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public final void unseal(Object sealKey)
+    {
+        if (sealKey == null) throw new IllegalArgumentException();
+        if (this.sealKey != sealKey) throw new IllegalArgumentException();
+        if (!sealed) throw new IllegalStateException();
+        sealed = false;
+        this.sealKey = null;
+    }
+
+    static void onSealedMutation()
+    {
+        throw new IllegalStateException();
+    }
+
+    
+
+
+
+
+
+
+
+    public final int getLanguageVersion()
+    {
+       return version;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setLanguageVersion(int version)
+    {
+        if (sealed) onSealedMutation();
+        checkLanguageVersion(version);
+        Object listeners = propertyListeners;
+        if (listeners != null && version != this.version) {
+            firePropertyChangeImpl(listeners, languageVersionProperty,
+                               new Integer(this.version),
+                               new Integer(version));
+        }
+        this.version = version;
+    }
+
+    public static boolean isValidLanguageVersion(int version)
+    {
+        switch (version) {
+            case VERSION_DEFAULT:
+            case VERSION_1_0:
+            case VERSION_1_1:
+            case VERSION_1_2:
+            case VERSION_1_3:
+            case VERSION_1_4:
+            case VERSION_1_5:
+            case VERSION_1_6:
+                return true;
+        }
+        return false;
+    }
+
+    public static void checkLanguageVersion(int version)
+    {
+        if (isValidLanguageVersion(version)) {
+            return;
+        }
+        throw new IllegalArgumentException("Bad language version: "+version);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public final String getImplementationVersion()
+    {
+        
+        
+        
+        if (implementationVersion == null) {
+            implementationVersion
+                = ScriptRuntime.getMessage0("implementation.version");
+        }
+        return implementationVersion;
+    }
+
+    
+
+
+
+
+    public final ErrorReporter getErrorReporter()
+    {
+        return errorReporter;
+    }
+
+    
+
+
+
+
+
+    public final ErrorReporter setErrorReporter(ErrorReporter reporter)
+    {
+        if (sealed) onSealedMutation();
+        if (reporter == null) throw new IllegalArgumentException();
+        ErrorReporter old = getErrorReporter();
+        if (reporter == old) {
+            return old;
+        }
+        Object listeners = propertyListeners;
+        if (listeners != null) {
+            firePropertyChangeImpl(listeners, errorReporterProperty,
+                                   old, reporter);
+        }
+        this.errorReporter = reporter;
+        return old;
+    }
+
+    
+
+
+
+
+
+
+    public final Locale getLocale()
+    {
+        if (locale == null)
+            locale = Locale.getDefault();
+        return locale;
+    }
+
+    
+
+
+
+
+    public final Locale setLocale(Locale loc)
+    {
+        if (sealed) onSealedMutation();
+        Locale result = locale;
+        locale = loc;
+        return result;
+    }
+
+    
+
+
+
+
+
+
+    public final void addPropertyChangeListener(PropertyChangeListener l)
+    {
+        if (sealed) onSealedMutation();
+        propertyListeners = Kit.addListener(propertyListeners, l);
+    }
+
+    
+
+
+
+
+
+
+    public final void removePropertyChangeListener(PropertyChangeListener l)
+    {
+        if (sealed) onSealedMutation();
+        propertyListeners = Kit.removeListener(propertyListeners, l);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    final void firePropertyChange(String property, Object oldValue,
+                                  Object newValue)
+    {
+        Object listeners = propertyListeners;
+        if (listeners != null) {
+            firePropertyChangeImpl(listeners, property, oldValue, newValue);
+        }
+    }
+
+    private void firePropertyChangeImpl(Object listeners, String property,
+                                        Object oldValue, Object newValue)
+    {
+        for (int i = 0; ; ++i) {
+            Object l = Kit.getListener(listeners, i);
+            if (l == null)
+                break;
+            if (l instanceof PropertyChangeListener) {
+                PropertyChangeListener pcl = (PropertyChangeListener)l;
+                pcl.propertyChange(new PropertyChangeEvent(
+                    this, property, oldValue, newValue));
+            }
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static void reportWarning(String message, String sourceName,
+                                     int lineno, String lineSource,
+                                     int lineOffset)
+    {
+        Context cx = Context.getContext();
+        cx.getErrorReporter().warning(message, sourceName, lineno,
+                                      lineSource, lineOffset);
+    }
+
+    
+
+
+
+
+
+    public static void reportWarning(String message)
+    {
+        int[] linep = { 0 };
+        String filename = getSourcePositionFromStack(linep);
+        Context.reportWarning(message, filename, linep[0], null, 0);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static void reportError(String message, String sourceName,
+                                   int lineno, String lineSource,
+                                   int lineOffset)
+    {
+        Context cx = getCurrentContext();
+        if (cx != null) {
+            cx.getErrorReporter().error(message, sourceName, lineno,
+                                        lineSource, lineOffset);
+        } else {
+            throw new EvaluatorException(message, sourceName, lineno,
+                                         lineSource, lineOffset);
+        }
+    }
+
+    
+
+
+
+
+
+    public static void reportError(String message)
+    {
+        int[] linep = { 0 };
+        String filename = getSourcePositionFromStack(linep);
+        Context.reportError(message, filename, linep[0], null, 0);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public static EvaluatorException reportRuntimeError(String message,
+                                                        String sourceName,
+                                                        int lineno,
+                                                        String lineSource,
+                                                        int lineOffset)
+    {
+        Context cx = getCurrentContext();
+        if (cx != null) {
+            return cx.getErrorReporter().
+                            runtimeError(message, sourceName, lineno,
+                                         lineSource, lineOffset);
+        } else {
+            throw new EvaluatorException(message, sourceName, lineno,
+                                         lineSource, lineOffset);
+        }
+    }
+
+    static EvaluatorException reportRuntimeError0(String messageId)
+    {
+        String msg = ScriptRuntime.getMessage0(messageId);
+        return reportRuntimeError(msg);
+    }
+
+    static EvaluatorException reportRuntimeError1(String messageId,
+                                                  Object arg1)
+    {
+        String msg = ScriptRuntime.getMessage1(messageId, arg1);
+        return reportRuntimeError(msg);
+    }
+
+    static EvaluatorException reportRuntimeError2(String messageId,
+                                                  Object arg1, Object arg2)
+    {
+        String msg = ScriptRuntime.getMessage2(messageId, arg1, arg2);
+        return reportRuntimeError(msg);
+    }
+
+    static EvaluatorException reportRuntimeError3(String messageId,
+                                                  Object arg1, Object arg2,
+                                                  Object arg3)
+    {
+        String msg = ScriptRuntime.getMessage3(messageId, arg1, arg2, arg3);
+        return reportRuntimeError(msg);
+    }
+
+    static EvaluatorException reportRuntimeError4(String messageId,
+                                                  Object arg1, Object arg2,
+                                                  Object arg3, Object arg4)
+    {
+        String msg
+            = ScriptRuntime.getMessage4(messageId, arg1, arg2, arg3, arg4);
+        return reportRuntimeError(msg);
+    }
+
+    
+
+
+
+
+
+    public static EvaluatorException reportRuntimeError(String message)
+    {
+        int[] linep = { 0 };
+        String filename = getSourcePositionFromStack(linep);
+        return Context.reportRuntimeError(message, filename, linep[0], null, 0);
+    }
+
+    
+
+
+
+    public final boolean isGeneratingDebug()
+    {
+        return generatingDebug;
+    }
+
+    
+
+
+
+    public final boolean isGeneratingSource()
+    {
+        return generatingSource;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public final void setGeneratingSource(boolean generatingSource)
+    {
+        if (sealed) onSealedMutation();
+        this.generatingSource = generatingSource;
+    }
+
+    
+
+
+
+
+
+
+
+    public final int getOptimizationLevel()
+    {
+        return optimizationLevel;
+    }
+
+    public static boolean isValidOptimizationLevel(int optimizationLevel)
+    {
+        return -1 <= optimizationLevel && optimizationLevel <= 9;
+    }
+
+    public static void checkOptimizationLevel(int optimizationLevel)
+    {
+        if (isValidOptimizationLevel(optimizationLevel)) {
+            return;
+        }
+        throw new IllegalArgumentException(
+            "Optimization level outside [-1..9]: "+optimizationLevel);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public final Object getThreadLocal(Object key)
+    {
+        if (hashtable == null)
+            return null;
+        return hashtable.get(key);
+    }
+
+    
+
+
+
+
+
+    public final void putThreadLocal(Object key, Object value)
+    {
+        if (sealed) onSealedMutation();
+        if (hashtable == null)
+            hashtable = new Hashtable<Object, Object>();
+        hashtable.put(key, value);
+    }
+
+    
+
+
+
+
+    public final void removeThreadLocal(Object key)
+    {
+        if (sealed) onSealedMutation();
+        if (hashtable == null)
+            return;
+        hashtable.remove(key);
+    }
+
+    
+
+
+
+
+    @Deprecated
+    public final boolean hasCompileFunctionsWithDynamicScope()
+    {
+        return compileFunctionsWithDynamicScopeFlag;
+    }
+
+    
+
+
+
+
+    @Deprecated
+    public final void setCompileFunctionsWithDynamicScope(boolean flag)
+    {
+        if (sealed) onSealedMutation();
+        compileFunctionsWithDynamicScopeFlag = flag;
+    }
+
+    
+
+
+
+    public final Object getDebuggerContextData()
+    {
+        return debuggerData;
+    }
+    
+
+
+
+
+    protected boolean hasFeature(int featureIndex)
+    {
+        int version;
+        switch (featureIndex) {
+          case Context.FEATURE_NON_ECMA_GET_YEAR:
+           
+
+
+
+
+
+
+
+
+
+
+            version = getLanguageVersion();
+            return (version == Context.VERSION_1_0
+                    || version == Context.VERSION_1_1
+                    || version == Context.VERSION_1_2);
+
+          case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
+            return false;
+
+          case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
+            return false;
+
+          case Context.FEATURE_TO_STRING_AS_SOURCE:
+            version = getLanguageVersion();
+            return version == Context.VERSION_1_2;
+
+          case Context.FEATURE_PARENT_PROTO_PROPRTIES:
+            return true;
+
+          case Context.FEATURE_E4X:
+            version = getLanguageVersion();
+            return (version == Context.VERSION_DEFAULT
+                    || version >= Context.VERSION_1_6);
+
+          case Context.FEATURE_DYNAMIC_SCOPE:
+            return false;
+
+          case Context.FEATURE_STRICT_VARS:
+            return false;
+
+          case Context.FEATURE_STRICT_EVAL:
+            return false;
+
+          case FEATURE_STRICT_MODE:
+            
+            return false;
+
+          case FEATURE_WARNING_AS_ERROR:
+            
+            return false;
+        }
+        
+        throw new IllegalArgumentException(String.valueOf(featureIndex));
+    }
+
+    
+
+
+
+
+
+
+
+    public final int getInstructionObserverThreshold()
+    {
+        return instructionThreshold;
+    }
+
+    public final void setInstructionObserverThreshold(int threshold)
+    {
+        if (sealed) onSealedMutation();
+        if (threshold < 0) throw new IllegalArgumentException();
+        instructionThreshold = threshold;
+    }
+
+    
+
+    static Context getContext() {
+        Context cx = getCurrentContext();
+        if (cx == null) {
+            throw new RuntimeException(
+                "No Context associated with current Thread");
+        }
+        return cx;
+    }
+
+    final boolean isVersionECMA1()
+    {
+        return version == VERSION_DEFAULT || version >= VERSION_1_3;
+    }
+
+    static String getSourcePositionFromStack(int[] linep)
+    {
+        Context cx = getCurrentContext();
+        if (cx == null)
+            return null;
+        
+
+
+
+        CharArrayWriter writer = new CharArrayWriter();
+        RuntimeException re = new RuntimeException();
+        re.printStackTrace(new PrintWriter(writer));
+        String s = writer.toString();
+        int open = -1;
+        int close = -1;
+        int colon = -1;
+        for (int i=0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == ':')
+                colon = i;
+            else if (c == '(')
+                open = i;
+            else if (c == ')')
+                close = i;
+            else if (c == '\n' && open != -1 && close != -1 && colon != -1 &&
+                     open < colon && colon < close)
+            {
+                String fileStr = s.substring(open + 1, colon);
+                if (!fileStr.endsWith(".java")) {
+                    String lineStr = s.substring(colon + 1, close);
+                    try {
+                        linep[0] = Integer.parseInt(lineStr);
+                        if (linep[0] < 0) {
+                            linep[0] = 0;
+                        }
+                        return fileStr;
+                    }
+                    catch (NumberFormatException e) {
+                        
+                    }
+                }
+                open = close = colon = -1;
+            }
+        }
+
+        return null;
+    }
+
+    public final boolean isGeneratingDebugChanged()
+    {
+        return generatingDebugChanged;
+    }
+
+    
+
+
+
+
+
+    public void addActivationName(String name)
+    {
+        if (sealed) onSealedMutation();
+        if (activationNames == null)
+            activationNames = new Hashtable<Object, Object>(5);
+        activationNames.put(name, name);
+    }
+
+    
+
+
+
+
+
+
+
+    public final boolean isActivationNeeded(String name)
+    {
+        return activationNames != null && activationNames.containsKey(name);
+    }
+
+    
+
+
+
+
+
+    public void removeActivationName(String name)
+    {
+        if (sealed) onSealedMutation();
+        if (activationNames != null)
+            activationNames.remove(name);
+    }
+
+    private static String implementationVersion;
+
+    private boolean sealed;
+    private Object sealKey;
+
+    
+    
+    
+    ObjToIntMap iterating;
+
+    Object interpreterSecurityDomain;
+
+    int version;
+
+    private ErrorReporter errorReporter;
+    private Locale locale;
+    private boolean generatingDebug;
+    private boolean generatingDebugChanged;
+    private boolean generatingSource=true;
+    boolean compileFunctionsWithDynamicScopeFlag;
+    boolean useDynamicScope;
+    private Object debuggerData;
+    private int enterCount;
+    private int optimizationLevel;
+    private Object propertyListeners;
+    private Hashtable<Object, Object> hashtable;
+
+    
+
+
+
+    Hashtable<Object, Object> activationNames;
+
+    
+    Object lastInterpreterFrame;
+
+    
+    
+    ObjArray previousInterpreterInvocations;
+
+    
+    int instructionCount;
+    int instructionThreshold;
+
+    
+    int scratchIndex;
+
+    
+    long scratchUint32;
+}

@@ -1,0 +1,76 @@
+248c248
+<         if (oldName.indexOf("$$") != -1) {
+---
+>         if (oldName.indexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR) != -1) {
+258,259c258,268
+<             String newName = oldName.substring(0, oldName.lastIndexOf("$$"));
+< 
+---
+>             String newName = oldName.substring(
+>                 0, oldName.lastIndexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR));
+>             String suffix = oldName.substring(
+>                 oldName.lastIndexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR)
+>                     + ContextualRenamer.UNIQUE_ID_SEPARATOR.length(),
+>                 oldName.length());
+>             
+>             
+>             
+>             
+>             
+263c272,286
+<             if (var.scope.isDeclared(newName, false) ||
+---
+>             
+>             boolean recurseScopes = false;
+>             if (!suffix.matches("\\d+")) {
+>               
+>               recurseScopes = true;
+>             }
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             if (var.scope.isDeclared(newName, recurseScopes) ||
+302a326,327
+>     final static String UNIQUE_ID_SEPARATOR = "$$";
+> 
+353c378
+<       return name + "$$" + id;
+---
+>       return name + UNIQUE_ID_SEPARATOR + id;
+382c407
+<     private final String namePrefix;
+---
+>     private final String idPrefix;
+387c412
+<         String namePrefix,
+---
+>         String idPrefix,
+390c415,418
+<       this.namePrefix = namePrefix;
+---
+>       
+>       
+>       Preconditions.checkArgument(!idPrefix.isEmpty());
+>       this.idPrefix = idPrefix;
+405c433,442
+<       return namePrefix + name + "_" + uniqueIdSupplier.get();
+---
+> 
+>       if (name.indexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR) != -1) {
+>           name = name.substring(
+>               0, name.lastIndexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR));
+>       }
+> 
+>       
+>       
+>       return name + ContextualRenamer.UNIQUE_ID_SEPARATOR
+>           + idPrefix + uniqueIdSupplier.get();
+415c452
+<       return new InlineRenamer(uniqueIdSupplier, namePrefix, removeConstness);
+---
+>       return new InlineRenamer(uniqueIdSupplier, idPrefix, removeConstness);

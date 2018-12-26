@@ -1,0 +1,65 @@
+23a24
+> import com.google.common.collect.ImmutableSet;
+24a26
+> import com.google.common.collect.Sets;
+35a38
+> import java.io.PrintStream;
+1271a1275,1332
+>     }
+>   }
+> 
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   static class Tracker implements CompilerPass {
+>     private final AbstractCompiler compiler;
+>     private final PrintStream stream;
+>     private final Predicate<String> isInterestingSymbol;
+> 
+>     private Set<String> previousSymbolsInTree = ImmutableSet.of();
+> 
+>     
+> 
+> 
+> 
+> 
+>     Tracker(AbstractCompiler compiler, PrintStream stream,
+>         Predicate<String> isInterestingSymbol) {
+>       this.compiler = compiler;
+>       this.stream = stream;
+>       this.isInterestingSymbol = isInterestingSymbol;
+>     }
+> 
+>     @Override public void process(Node externs, Node root) {
+>       GlobalNamespace namespace = new GlobalNamespace(compiler, externs, root);
+> 
+>       Set<String> currentSymbols = Sets.newTreeSet();
+>       for (String name : namespace.getNameIndex().keySet()) {
+>         if (isInterestingSymbol.apply(name)) {
+>           currentSymbols.add(name);
+>         }
+>       }
+> 
+>       String passName = compiler.getLastPassName();
+>       if (passName == null) {
+>         passName = "[Unknown pass]";
+>       }
+> 
+>       for (String sym : currentSymbols) {
+>         if (!previousSymbolsInTree.contains(sym)) {
+>           stream.println(String.format("%s: Added by %s", sym, passName));
+>         }
+>       }
+> 
+>       for (String sym : previousSymbolsInTree) {
+>         if (!currentSymbols.contains(sym)) {
+>           stream.println(String.format("%s: Removed by %s", sym, passName));
+>         }
+>       }
+> 
+>       previousSymbolsInTree = currentSymbols;

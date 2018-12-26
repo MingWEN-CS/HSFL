@@ -1,0 +1,75 @@
+157a158,160
+>     if (callSiteOptimizer != null) {
+>       callSiteOptimizer.applyChanges();
+>     }
+348a352
+> 
+386a391,392
+>     private final List<Node> toRemove = Lists.newArrayList();
+>     private final List<Node> toReplaceWithZero = Lists.newArrayList();
+403c409
+<       removeUnreferencedFunctionArgs(
+---
+>       markUnreferencedFunctionArgs(
+410a417,430
+>     public void applyChanges() {
+>       for (Node n : toRemove) {
+>         n.getParent().removeChild(n);
+>         compiler.reportCodeChange();
+>       }
+>       for (Node n : toReplaceWithZero) {
+>         n.getParent().replaceChild(n, Node.newNumber(0).copyInformationFrom(n));
+>         compiler.reportCodeChange();
+>       }
+>     }
+> 
+>     
+> 
+> 
+421c441
+<     private boolean removeUnreferencedFunctionArgs(
+---
+>     private boolean markUnreferencedFunctionArgs(
+427c447
+<         boolean hasFollowing = removeUnreferencedFunctionArgs(
+---
+>         boolean hasFollowing = markUnreferencedFunctionArgs(
+448,449c468
+<             getFunctionArgList(function).removeChild(param);
+<             compiler.reportCodeChange();
+---
+>             toRemove.add(param);
+505,507c524
+<               
+<               argParent.removeChild(arg);
+<               compiler.reportCodeChange();
+---
+>               toRemove.add(arg);
+512,514c529
+<                 argParent.replaceChild(
+<                     arg, Node.newNumber(0).copyInformationFrom(arg));
+<                 compiler.reportCodeChange();
+---
+>                 toReplaceWithZero.add(arg);
+531c546
+<         Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex);
+---
+>         Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex + 1);
+533,538c548,549
+<           Node next = arg.getNext();
+<           if (next != null && !NodeUtil.mayHaveSideEffects(next)) {
+<             arg.getParent().removeChildAfter(arg);
+<             compiler.reportCodeChange();
+<           } else {
+<             arg = next;
+---
+>           if (!NodeUtil.mayHaveSideEffects(arg)) {
+>             toRemove.add(arg);
+539a551
+>           arg = arg.getNext();
+625,629d636
+< 
+<         
+<         if (parent == null) {
+<           continue;
+<         }

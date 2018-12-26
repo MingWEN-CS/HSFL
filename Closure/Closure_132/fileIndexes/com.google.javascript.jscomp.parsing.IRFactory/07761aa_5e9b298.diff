@@ -1,0 +1,53 @@
+21a22
+> import com.google.common.collect.ImmutableSet;
+66a68
+> import com.google.javascript.jscomp.parsing.Config.LanguageMode;
+87a90,102
+>   private static final Set<String> ES5_RESERVED_KEYWORDS =
+>       ImmutableSet.of(
+>           
+>           "class", "const", "enum", "export", "extends", "import", "super");
+>   private static final Set<String> ES5_STRICT_RESERVED_KEYWORDS =
+>       ImmutableSet.of(
+>           
+>           "class", "const", "enum", "export", "extends", "import", "super",
+>           "implements", "interface", "let", "package", "private", "protected",
+>           "public", "static", "yield");
+> 
+>   private final Set<String> reservedKeywords;
+> 
+111a127,141
+> 
+>     switch (config.languageMode) {
+>       case ECMASCRIPT3:
+>         
+>         reservedKeywords = null;
+>         break;
+>       case ECMASCRIPT5:
+>         reservedKeywords = ES5_RESERVED_KEYWORDS;
+>         break;
+>       case ECMASCRIPT5_STRICT:
+>         reservedKeywords = ES5_STRICT_RESERVED_KEYWORDS;
+>         break;
+>       default:
+>         throw new IllegalStateException("unknown language mode");
+>     }
+633a664,669
+>       if (isReservedKeyword(nameNode.getIdentifier())) {
+>         errorReporter.error(
+>           "identifier is a reserved word",
+>           sourceName,
+>           nameNode.getLineno(), "", 0);
+>       }
+636a673,679
+>     
+> 
+> 
+>     private boolean isReservedKeyword(String identifier) {
+>       return reservedKeywords != null && reservedKeywords.contains(identifier);
+>     }
+> 
+655c698
+<         if (!config.acceptES5) {
+---
+>         if (config.languageMode == LanguageMode.ECMASCRIPT3) {

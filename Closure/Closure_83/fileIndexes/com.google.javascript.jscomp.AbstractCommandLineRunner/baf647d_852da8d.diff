@@ -1,0 +1,57 @@
+966a967
+>     JSModuleGraph graph = compiler.getModuleGraph();
+969c970
+<       Iterable<JSModule> modules = compiler.getModuleGraph().getAllModules();
+---
+>       Iterable<JSModule> modules = graph.getAllModules();
+971c972,974
+<         printManifestTo(module.getInputs(), expandManifest(module));
+---
+>         PrintStream out = toPrintStream(expandManifest(module));
+>         printManifestTo(module.getInputs(), out);
+>         out.close();
+975c978,1009
+<       printManifestTo(compiler.getInputsInOrder(), expandManifest(null));
+---
+>       PrintStream out = toPrintStream(expandManifest(null));
+>       if (graph == null) {
+>         printManifestTo(compiler.getInputsInOrder(), out);
+>       } else {
+>         printModuleGraphManifestTo(graph, out);
+>       }
+>       out.close();
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   @VisibleForTesting
+>   void printModuleGraphManifestTo(
+>       JSModuleGraph graph, Appendable out) throws IOException {
+>     Joiner commas = Joiner.on(",");
+>     boolean requiresNewline = false;
+>     for (JSModule module : graph.getAllModulesInDependencyOrder()) {
+>       if (requiresNewline) {
+>         out.append("\n");
+>       }
+> 
+>       
+>       
+>       String dependencies = commas.join(module.getSortedDependencyNames());
+>       out.append(
+>           String.format("{%s%s}\n",
+>               module.getName(),
+>               dependencies.isEmpty() ? "" : ":" + dependencies));
+>       printManifestTo(module.getInputs(), out);
+>       requiresNewline = true;
+982c1016
+<   private void printManifestTo(Iterable<CompilerInput> inputs, String path)
+---
+>   private void printManifestTo(Iterable<CompilerInput> inputs, Appendable out)
+989d1022
+<     PrintStream out = toPrintStream(path);
+991c1024
+<     out.close();
+---
+>     out.append("\n");

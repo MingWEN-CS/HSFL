@@ -1,0 +1,30 @@
+337c337,338
+<                     parser.addWarning("msg.jsdoc.incompat.type", lineno, charno);
+---
+>                     parser.addWarning(
+>                         "msg.jsdoc.incompat.type", lineno, charno);
+586a588
+>                       
+1664c1666,1677
+<     Node typeName = newStringNode(stream.getString());
+---
+>     String typeName = stream.getString();
+>     while (match(JsDocToken.EOL) &&
+>         typeName.charAt(typeName.length() - 1) == '.') {
+>       skipEOLs();
+>       if (match(JsDocToken.STRING)) {
+>         next();
+>         typeName += stream.getString();
+>       }
+>     }
+> 
+>     Node typeNameNode = newStringNode(typeName);
+> 
+1670c1683
+<         typeName.addChildToFront(memberType);
+---
+>         typeNameNode.addChildToFront(memberType);
+1680c1693
+<     return typeName;
+---
+>     return typeNameNode;

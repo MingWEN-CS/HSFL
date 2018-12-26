@@ -1,0 +1,485 @@
+440,446c440
+<           
+<           
+<           if (parent.getType() != Token.ASSIGN &&
+<               parent.getType() != Token.NAME) {
+<             defineDeclaredFunction(n, parent);
+<           }
+< 
+---
+>           defineFunctionLiteral(n, parent);
+451,453d444
+<           defineNamedTypeAssign(n, parent);
+< 
+<           
+518c509
+<           processObjectLit(t, n);
+---
+>           defineObjectLiteral(t, n);
+526c517,519
+<     private void processObjectLit(NodeTraversal t, Node objectLit) {
+---
+>     private void defineObjectLiteral(NodeTraversal t, Node objectLit) {
+>       
+>       JSType type = null;
+536c529
+<           JSType type = lendsVar.getType();
+---
+>           type = lendsVar.getType();
+543a537
+>             type = null;
+550,551c544,548
+<       if (objectLit.getJSType() == null) {
+<         objectLit.setJSType(typeRegistry.createAnonymousObjectType());
+---
+>       info = getBestJSDocInfo(objectLit);
+>       Node lValue = getBestLValue(objectLit);
+>       String lValueName = getBestLValueName(lValue);
+>       if (info != null && info.hasEnumParameterType()) {
+>         type = createEnumTypeFromNodes(objectLit, lValueName, info, lValue);
+553a551,556
+>       if (type == null) {
+>         type = typeRegistry.createAnonymousObjectType();
+>       }
+> 
+>       setDeferredType(objectLit, type);
+> 
+610,641c613,614
+< 
+<           
+<           if (info.isConstructor() && typeRegistry.getType(fnName) != null) {
+<             return null;
+<           }
+< 
+<           FunctionTypeBuilder builder =
+<               new FunctionTypeBuilder(
+<                   fnName, compiler, node, sourceName, scope)
+<               .inferTemplateTypeName(info)
+<               .inferReturnType(info)
+<               .inferParameterTypes(info)
+<               .inferInheritance(info);
+< 
+<           
+<           boolean searchedForThisType = false;
+<           if (objNode != null) {
+<             if (objNode.getType() == Token.GETPROP &&
+<                 objNode.getLastChild().getString().equals("prototype")) {
+<               builder.inferThisType(info, objNode.getFirstChild());
+<               searchedForThisType = true;
+<             } else if (objNode.getType() == Token.THIS) {
+<               builder.inferThisType(info, objNode.getJSType());
+<               searchedForThisType = true;
+<             }
+<           }
+< 
+<           if (!searchedForThisType) {
+<             builder.inferThisType(info, (Node) null);
+<           }
+< 
+<           jsType = builder.buildAndRegister();
+---
+>           jsType = createFunctionTypeFromNodes(
+>               null, fnName, info, node);
+689c662
+<     void defineDeclaredFunction(Node n, Node parent) {
+---
+>     void defineFunctionLiteral(Node n, Node parent) {
+692,715d664
+<       JSDocInfo info = n.getJSDocInfo();
+<       int parentType = parent.getType();
+<       Preconditions.checkState(
+<           (scope.isLocal() || parentType != Token.ASSIGN) &&
+<           parentType != Token.NAME,
+<           "function defined as standalone function when it is being " +
+<           "assigned");
+<       String functionName = n.getFirstChild().getString();
+<       FunctionType functionType = getFunctionType(functionName, n, info,
+<           null);
+<       if (NodeUtil.isFunctionDeclaration(n)) {
+<         defineSlot(n.getFirstChild(), n, functionType);
+<       }
+<     }
+< 
+<     
+< 
+< 
+<     void defineNamedTypeAssign(Node n, Node parent) {
+<       assertDefinitionNode(n, Token.ASSIGN);
+<       JSDocInfo info = n.getJSDocInfo();
+< 
+<       
+<       
+717a667,672
+>       Node lValue = getBestLValue(n);
+>       JSDocInfo info = getBestJSDocInfo(n);
+>       String functionName = getBestLValueName(lValue);
+>       FunctionType functionType =
+>           createFunctionTypeFromNodes(n, functionName, info, lValue);
+> 
+718a674,675
+>       setDeferredType(n, functionType);
+> 
+722,735c679,680
+< 
+<       Node rvalue = n.getLastChild();
+<       Node lvalue = n.getFirstChild();
+<       info = (info != null) ? info : rvalue.getJSDocInfo();
+<       if (rvalue.getType() == Token.FUNCTION ||
+<           info != null && info.isConstructor()) {
+<         getFunctionType(lvalue.getQualifiedName(), rvalue, info,
+<             lvalue);
+<       } else if (info != null && info.hasEnumParameterType()) {
+<         JSType type = getEnumType(lvalue.getQualifiedName(), n, rvalue,
+<             info.getEnumParameterType().evaluate(scope, typeRegistry));
+<         if (type != null) {
+<           setDeferredType(lvalue, type);
+<         }
+---
+>       if (NodeUtil.isFunctionDeclaration(n)) {
+>         defineSlot(n.getFirstChild(), n, functionType);
+750a696,703
+>       
+>       JSType type = null;
+> 
+>       
+>       
+>       
+>       
+>       
+752,760c705,708
+<         
+<         String functionName = name.getString();
+<         FunctionType functionType =
+<             getFunctionType(functionName, value, info, null);
+<         if (functionType.isReturnTypeInferred() &&
+<             scope.isLocal()) {
+<           defineSlot(name, var, null);
+<         } else {
+<           defineSlot(name, var, functionType);
+---
+>         FunctionType valueType = (FunctionType) value.getJSType();
+>         if (info != null || scope.isGlobal() ||
+>             !valueType.isReturnTypeInferred()) {
+>           type = value.getJSType();
+762,764c710,712
+<       } else {
+<         
+<         JSType type = null;
+---
+>       }
+> 
+>       if (type == null) {
+772,773c720,727
+<           type = getEnumType(name.getString(), var, value,
+<               info.getEnumParameterType().evaluate(scope, typeRegistry));
+---
+>           if (value != null && value.getType() == Token.OBJECTLIT) {
+>             
+>             
+>             type = value.getJSType();
+>           } else {
+>             type = createEnumTypeFromNodes(
+>                 value, name.getString(), info, name);
+>           }
+775c729,730
+<           type = getFunctionType(name.getString(), value, info, name);
+---
+>           type = createFunctionTypeFromNodes(
+>               value, name.getString(), info, name);
+779,780d733
+< 
+<         defineSlot(name, var, type);
+781a735,736
+> 
+>       defineSlot(name, var, type);
+795,796c750,766
+<     private FunctionType getFunctionType(String name,
+<         Node rValue, JSDocInfo info, @Nullable Node lvalueNode) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private FunctionType createFunctionTypeFromNodes(
+>         @Nullable Node rValue,
+>         @Nullable String name,
+>         @Nullable JSDocInfo info,
+>         @Nullable Node lvalueNode) {
+> 
+803,806c773,780
+<           functionType = (FunctionType) var.getType();
+<           if (functionType != null &&
+<               (functionType.isConstructor() || functionType.isInterface())) {
+<             typeRegistry.declareType(name, functionType.getInstanceType());
+---
+>           FunctionType aliasedType  = (FunctionType) var.getType();
+>           if ((aliasedType.isConstructor() || aliasedType.isInterface()) &&
+>               !aliasedType.isNativeObjectType()) {
+>             functionType = aliasedType;
+> 
+>             if (name != null && scope.isGlobal()) {
+>               typeRegistry.declareType(name, functionType.getInstanceType());
+>             }
+809d782
+<         return functionType;
+812,823c785,803
+<       Node owner = null;
+<       if (lvalueNode != null) {
+<         owner = getPrototypePropertyOwner(lvalueNode);
+<       }
+< 
+<       Node errorRoot = rValue == null ? lvalueNode : rValue;
+<       boolean isFnLiteral =
+<           rValue != null && rValue.getType() == Token.FUNCTION;
+<       Node fnRoot = isFnLiteral ? rValue : null;
+<       Node parametersNode = isFnLiteral ?
+<           rValue.getFirstChild().getNext() : null;
+<       Node fnBlock = isFnLiteral ? parametersNode.getNext() : null;
+---
+>       if (functionType == null) {
+>         Node errorRoot = rValue == null ? lvalueNode : rValue;
+>         boolean isFnLiteral =
+>             rValue != null && rValue.getType() == Token.FUNCTION;
+>         Node fnRoot = isFnLiteral ? rValue : null;
+>         Node parametersNode = isFnLiteral ?
+>             rValue.getFirstChild().getNext() : null;
+>         Node fnBlock = isFnLiteral ? parametersNode.getNext() : null;
+> 
+>         if (info != null && info.hasType()) {
+>           JSType type = info.getType().evaluate(scope, typeRegistry);
+> 
+>           
+>           type = type.restrictByNotNullOrUndefined();
+>           if (type.isFunctionType()) {
+>             functionType = (FunctionType) type;
+>             functionType.setJSDocInfo(info);
+>           }
+>         }
+825,826c805,820
+<       if (functionType == null && info != null && info.hasType()) {
+<         JSType type = info.getType().evaluate(scope, typeRegistry);
+---
+>         if (functionType == null) {
+>           
+>           FunctionType overriddenPropType = null;
+>           if (lvalueNode != null &&
+>               lvalueNode.getType() == Token.GETPROP &&
+>               lvalueNode.isQualifiedName()) {
+>             Var var = scope.getVar(
+>                 lvalueNode.getFirstChild().getQualifiedName());
+>             if (var != null) {
+>               ObjectType ownerType = ObjectType.cast(var.getType());
+>               if (ownerType != null) {
+>                 String propName = lvalueNode.getLastChild().getString();
+>                 overriddenPropType = findOverriddenFunction(ownerType, propName);
+>               }
+>             }
+>           }
+828,834c822,829
+<         
+<         type = type.restrictByNotNullOrUndefined();
+<         if (type.isFunctionType()) {
+<           functionType = (FunctionType) type;
+<           functionType.setJSDocInfo(info);
+<         }
+<       }
+---
+>           FunctionTypeBuilder builder =
+>               new FunctionTypeBuilder(name, compiler, errorRoot, sourceName,
+>                   scope)
+>               .setSourceNode(fnRoot)
+>               .inferFromOverriddenFunction(overriddenPropType, parametersNode)
+>               .inferTemplateTypeName(info)
+>               .inferReturnType(info)
+>               .inferInheritance(info);
+836,847c831,842
+<       if (functionType == null) {
+<         
+<         FunctionType overriddenPropType = null;
+<         if (lvalueNode != null && lvalueNode.getType() == Token.GETPROP &&
+<             lvalueNode.isQualifiedName()) {
+<           Var var = scope.getVar(
+<               lvalueNode.getFirstChild().getQualifiedName());
+<           if (var != null) {
+<             ObjectType ownerType = ObjectType.cast(var.getType());
+<             if (ownerType != null) {
+<               String propName = lvalueNode.getLastChild().getString();
+<               overriddenPropType = findOverriddenFunction(ownerType, propName);
+---
+>           
+>           boolean searchedForThisType = false;
+>           if (lvalueNode != null &&
+>               lvalueNode.getType() == Token.GETPROP) {
+>             Node objNode = lvalueNode.getFirstChild();
+>             if (objNode.getType() == Token.GETPROP &&
+>                 objNode.getLastChild().getString().equals("prototype")) {
+>               builder.inferThisType(info, objNode.getFirstChild());
+>               searchedForThisType = true;
+>             } else if (objNode.getType() == Token.THIS) {
+>               builder.inferThisType(info, objNode.getJSType());
+>               searchedForThisType = true;
+850d844
+<         }
+852,864c846,848
+<         functionType =
+<             new FunctionTypeBuilder(name, compiler, errorRoot, sourceName,
+<                 scope)
+<             .setSourceNode(fnRoot)
+<             .inferFromOverriddenFunction(overriddenPropType, parametersNode)
+<             .inferTemplateTypeName(info)
+<             .inferReturnType(info)
+<             .inferInheritance(info)
+<             .inferThisType(info, owner)
+<             .inferParameterTypes(parametersNode, info)
+<             .inferReturnStatementsAsLastResort(fnBlock)
+<             .buildAndRegister();
+<       }
+---
+>           if (!searchedForThisType) {
+>             builder.inferThisType(info, (Node) null);
+>           }
+866,868c850,854
+<       
+<       if (rValue != null) {
+<         setDeferredType(rValue, functionType);
+---
+>           functionType = builder
+>               .inferParameterTypes(parametersNode, info)
+>               .inferReturnStatementsAsLastResort(fnBlock)
+>               .buildAndRegister();
+>         }
+913,914c899,907
+<     private EnumType getEnumType(String name, Node parent,
+<         Node value, JSType elementsType) {
+---
+> 
+> 
+> 
+> 
+>     private EnumType createEnumTypeFromNodes(Node rValue, String name,
+>         JSDocInfo info, Node lValueNode) {
+>       Preconditions.checkNotNull(info);
+>       Preconditions.checkState(info.hasEnumParameterType());
+> 
+915a909,915
+>       if (rValue != null && rValue.isQualifiedName()) {
+>         
+>         Var var = scope.getVar(rValue.getQualifiedName());
+>         if (var != null && var.getType() instanceof EnumType) {
+>           enumType = (EnumType) var.getType();
+>         }
+>       }
+917,921c917,920
+<       
+<       if (value != null) {
+<         if (value.getType() == Token.OBJECTLIT) {
+<           
+<           enumType = typeRegistry.createEnumType(name, elementsType);
+---
+>       if (enumType == null) {
+>         JSType elementsType =
+>             info.getEnumParameterType().evaluate(scope, typeRegistry);
+>         enumType = typeRegistry.createEnumType(name, elementsType);
+922a922
+>         if (rValue != null && rValue.getType() == Token.OBJECTLIT) {
+924c924
+<           Node key = value.getFirstChild();
+---
+>           Node key = rValue.getFirstChild();
+941,945d940
+<         } else if (value.isQualifiedName()) {
+<           Var var = scope.getVar(value.getQualifiedName());
+<           if (var != null && var.getType() instanceof EnumType) {
+<             enumType = (EnumType) var.getType();
+<           }
+949,954c944,945
+<       if (enumType == null) {
+<         compiler.report(JSError.make(sourceName, parent, ENUM_INITIALIZER));
+<       } else if (scope.isGlobal()) {
+<         if (name != null && !name.isEmpty()) {
+<           typeRegistry.declareType(name, enumType.getElementsType());
+<         }
+---
+>       if (name != null && scope.isGlobal()) {
+>         typeRegistry.declareType(name, enumType.getElementsType());
+1049a1041,1050
+>         if (type instanceof EnumType) {
+>           Node initialValue = newVar.getInitialValue();
+>           boolean isValidValue = initialValue != null &&
+>               (initialValue.getType() == Token.OBJECTLIT ||
+>                initialValue.isQualifiedName());
+>           if (!isValidValue) {
+>             compiler.report(JSError.make(sourceName, n, ENUM_INITIALIZER));
+>           }
+>         }
+> 
+1116,1119c1117
+<       } else if (info != null && info.hasEnumParameterType()) {
+<         return n.getJSType();
+<       } else if (rhsValue != null &&
+<           rhsValue.getType() == Token.FUNCTION) {
+---
+>       } else if (rhsValue != null && rhsValue.getType() == Token.FUNCTION) {
+1120a1119,1129
+>       } else if (info != null && info.hasEnumParameterType()) {
+>         if (rhsValue != null && rhsValue.getType() == Token.OBJECTLIT) {
+>           return rhsValue.getJSType();
+>         } else {
+>           return createEnumTypeFromNodes(
+>               rhsValue, n.getQualifiedName(), info, n);
+>         }
+>       } else if (info != null &&
+>                  (info.isConstructor() || info.isInterface())) {
+>         return createFunctionTypeFromNodes(
+>             rhsValue, n.getQualifiedName(), info, n);
+1670a1680,1722
+> 
+> 
+>   
+>   static JSDocInfo getBestJSDocInfo(Node n) {
+>     JSDocInfo info = n.getJSDocInfo();
+>     if (info == null) {
+>       Node parent = n.getParent();
+>       int parentType = parent.getType();
+>       if (parentType == Token.NAME) {
+>         info = parent.getJSDocInfo();
+>         if (info == null && parent.getParent().hasOneChild()) {
+>           info = parent.getParent().getJSDocInfo();
+>         }
+>       } else if (parentType == Token.ASSIGN) {
+>         info = parent.getJSDocInfo();
+>       } else if (NodeUtil.isObjectLitKey(parent, parent.getParent())) {
+>         info = parent.getJSDocInfo();
+>       }
+>     }
+>     return info;
+>   }
+> 
+>   
+>   private static Node getBestLValue(Node n) {
+>     Node parent = n.getParent();
+>     int parentType = parent.getType();
+>     boolean isFunctionDeclaration = NodeUtil.isFunctionDeclaration(n);
+>     if (isFunctionDeclaration) {
+>       return n.getFirstChild();
+>     } else if (parentType == Token.NAME) {
+>       return parent;
+>     } else if (parentType == Token.ASSIGN) {
+>       return parent.getFirstChild();
+>     } else if (NodeUtil.isObjectLitKey(parent, parent.getParent())) {
+>       return parent;
+>     }
+>     return null;
+>   }
+> 
+>   
+>   private static String getBestLValueName(@Nullable Node lValue) {
+>     return lValue == null ? null : lValue.getQualifiedName();
+>   }

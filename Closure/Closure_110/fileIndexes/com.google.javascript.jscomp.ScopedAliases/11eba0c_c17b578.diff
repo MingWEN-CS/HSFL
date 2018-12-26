@@ -1,0 +1,121 @@
+53a54,69
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+88a105,108
+>   static final DiagnosticType GOOG_SCOPE_ALIAS_CYCLE = DiagnosticType.error(
+>       "JSC_GOOG_SCOPE_ALIAS_CYCLE",
+>       "The aliases {0} has a cycle.");
+> 
+114,115c134,154
+<       for (AliasUsage aliasUsage : traversal.getAliasUsages()) {
+<         aliasUsage.applyAlias();
+---
+>       List<AliasUsage> aliasWorkQueue =
+>           Lists.newArrayList(traversal.getAliasUsages());
+>       while (!aliasWorkQueue.isEmpty()) {
+>         List<AliasUsage> newQueue = Lists.newArrayList();
+>         for (AliasUsage aliasUsage : aliasWorkQueue) {
+>           if (aliasUsage.referencesOtherAlias()) {
+>             newQueue.add(aliasUsage);
+>           } else {
+>             aliasUsage.applyAlias();
+>           }
+>         }
+> 
+>         
+>         if (newQueue.size() == aliasWorkQueue.size()) {
+>           Var cycleVar = newQueue.get(0).aliasVar;
+>           compiler.report(JSError.make(
+>               cycleVar.getNode(), GOOG_SCOPE_ALIAS_CYCLE, cycleVar.getName()));
+>           break;
+>         } else {
+>           aliasWorkQueue = newQueue;
+>         }
+147,149c186,193
+<   private interface AliasUsage {
+<     public void applyAlias();
+<   }
+---
+>   private abstract class AliasUsage {
+>     final Var aliasVar;
+>     final Node aliasReference;
+> 
+>     AliasUsage(Var aliasVar, Node aliasReference) {
+>       this.aliasVar = aliasVar;
+>       this.aliasReference = aliasReference;
+>     }
+151,152c195,201
+<   private class AliasedNode implements AliasUsage {
+<     private final Node aliasReference;
+---
+>     
+>     public boolean referencesOtherAlias() {
+>       Node aliasDefinition = aliasVar.getInitialValue();
+>       Node root = NodeUtil.getRootOfQualifiedName(aliasDefinition);
+>       Var otherAliasVar = aliasVar.getScope().getOwnSlot(root.getString());
+>       return otherAliasVar != null;
+>     }
+154c203,204
+<     private final Node aliasDefinition;
+---
+>     public abstract void applyAlias();
+>   }
+156,158c206,208
+<     AliasedNode(Node aliasReference, Node aliasDefinition) {
+<       this.aliasReference = aliasReference;
+<       this.aliasDefinition = aliasDefinition;
+---
+>   private class AliasedNode extends AliasUsage {
+>     AliasedNode(Var aliasVar, Node aliasReference) {
+>       super(aliasVar, aliasReference);
+162a213
+>       Node aliasDefinition = aliasVar.getInitialValue();
+168,177c219,221
+<   private class AliasedTypeNode implements AliasUsage {
+<     private final Node typeReference;
+<     private final Node aliasDefinition;
+<     private final String aliasName;
+< 
+<     AliasedTypeNode(Node typeReference, Node aliasDefinition,
+<         String aliasName) {
+<       this.typeReference = typeReference;
+<       this.aliasDefinition = aliasDefinition;
+<       this.aliasName = aliasName;
+---
+>   private class AliasedTypeNode extends AliasUsage {
+>     AliasedTypeNode(Var aliasVar, Node aliasReference) {
+>       super(aliasVar, aliasReference);
+182c226,228
+<       String typeName = typeReference.getString();
+---
+>       Node aliasDefinition = aliasVar.getInitialValue();
+>       String aliasName = aliasVar.getName();
+>       String typeName = aliasReference.getString();
+186c232
+<       typeReference.setString(typeName.replaceFirst(aliasName, aliasExpanded));
+---
+>       aliasReference.setString(typeName.replaceFirst(aliasName, aliasExpanded));
+447,448c493
+<           Node aliasedNode = aliasVar.getInitialValue();
+<           aliasUsages.add(new AliasedNode(n, aliasedNode));
+---
+>           aliasUsages.add(new AliasedNode(aliasVar, n));
+472,473c517
+<           Node aliasedNode = aliasVar.getInitialValue();
+<           aliasUsages.add(new AliasedTypeNode(typeNode, aliasedNode, baseName));
+---
+>           aliasUsages.add(new AliasedTypeNode(aliasVar, typeNode));

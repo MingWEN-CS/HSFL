@@ -1,0 +1,22 @@
+26a27
+> import com.google.javascript.jscomp.CodingConvention.SubclassRelationship;
+651,653c652,659
+<             type = n == parent.getFirstChild()
+<                    ? Ref.Type.CALL_GET
+<                    : Ref.Type.ALIASING_GET;
+---
+>             if (n == parent.getFirstChild()) {
+>               
+>               type = Ref.Type.CALL_GET;
+>             } else if (isClassDefiningCall(parent)) {
+>               type = Ref.Type.DIRECT_GET;
+>             } else {
+>               type = Ref.Type.ALIASING_GET;
+>             }
+685a692,697
+>     }
+> 
+>     private boolean isClassDefiningCall(Node callNode) {
+>       SubclassRelationship classes =
+>           compiler.getCodingConvention().getClassesDefinedByCall(callNode);
+>       return classes != null;

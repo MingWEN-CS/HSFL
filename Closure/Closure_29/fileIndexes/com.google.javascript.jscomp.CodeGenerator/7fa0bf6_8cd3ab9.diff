@@ -1,0 +1,31 @@
+206c206
+<         addArrayList(first, (int[]) n.getProp(Node.SKIP_INDEXES_PROP));
+---
+>         addArrayList(first);
+879,883c879,880
+< 
+< 
+<   void addArrayList(Node firstInList, int[] skipIndexes) {
+<     int nextSlot = 0;
+<     int nextSkipSlot = 0;
+---
+>   void addArrayList(Node firstInList) {
+>     boolean lastWasEmpty = false;
+885,893d881
+<       while (skipIndexes != null && nextSkipSlot < skipIndexes.length) {
+<         if (nextSlot == skipIndexes[nextSkipSlot]) {
+<           cc.listSeparator();
+<           nextSlot++;
+<           nextSkipSlot++;
+<         } else {
+<           break;
+<         }
+<       }
+898c886,890
+<       nextSlot++;
+---
+>       lastWasEmpty = n.getType() == Token.EMPTY;
+>     }
+> 
+>     if (lastWasEmpty) {
+>       cc.listSeparator();

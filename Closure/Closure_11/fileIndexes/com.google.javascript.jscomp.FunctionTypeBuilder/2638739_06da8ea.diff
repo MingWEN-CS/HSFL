@@ -1,0 +1,118 @@
+26a27
+> import com.google.common.collect.Iterables;
+78d78
+<   private List<ObjectType> extendedInterfaces = null;
+142,143c142,149
+<         return false;
+<       } else if (objectType.isEmptyType()) {
+---
+>       } else if (
+>           objectType.isEmptyType() ||
+>           (objectType.isUnknownType() &&
+>            
+>            
+>            
+>            (objectType.getImplicitPrototype() == null ||
+>             objectType.getImplicitPrototype().isResolved()))) {
+145,152d150
+<         return false;
+<       } else if (objectType.isUnknownType()) {
+<         if (hasMoreTagsToResolve(objectType)) {
+<           return true;
+<         } else {
+<           reportWarning(RESOLVED_TAG_EMPTY, "@extends", fnName);
+<           return false;
+<         }
+155a154
+>       return false;
+165,166c164,171
+<         return false;
+<       } else if (objectType.isEmptyType()) {
+---
+>       } else if (
+>           objectType.isEmptyType() ||
+>           (objectType.isUnknownType() &&
+>            
+>            
+>            
+>            (objectType.getImplicitPrototype() == null ||
+>             objectType.getImplicitPrototype().isResolved()))) {
+168,175d172
+<         return false;
+<       } else if (objectType.isUnknownType()) {
+<         if (hasMoreTagsToResolve(objectType)) {
+<           return true;
+<         } else {
+<           reportWarning(RESOLVED_TAG_EMPTY, "@implements", fnName);
+<           return false;
+<         }
+178a176
+>       return false;
+356c354
+<         if (isConstructor) {
+---
+>         if (isConstructor || isInterface) {
+378,389c376,382
+<       } else if (info.getImplementedInterfaceCount() > 0) {
+<         reportWarning(IMPLEMENTS_WITHOUT_CONSTRUCTOR, fnName);
+<       }
+< 
+<       
+<       if (isInterface) {
+<         extendedInterfaces = Lists.newArrayList();
+<         for (JSTypeExpression t : info.getExtendedInterfaces()) {
+<           JSType maybeInterfaceType = t.evaluate(scope, typeRegistry);
+<           if (maybeInterfaceType != null &&
+<               maybeInterfaceType.setValidator(new ExtendedTypeValidator())) {
+<             extendedInterfaces.add((ObjectType) maybeInterfaceType);
+---
+>         if (baseType != null) {
+>           JSType maybeFunctionType = baseType.getConstructor();
+>           if (maybeFunctionType instanceof FunctionType) {
+>             FunctionType functionType = baseType.getConstructor();
+>             Iterables.addAll(
+>                 implementedInterfaces,
+>                 functionType.getImplementedInterfaces());
+391a385,386
+>       } else if (info.getImplementedInterfaceCount() > 0) {
+>         reportWarning(IMPLEMENTS_WITHOUT_CONSTRUCTOR, fnName);
+665,668d659
+<     if (extendedInterfaces != null) {
+<       fnType.setExtendedInterfaces(extendedInterfaces);
+<     }
+< 
+675c666
+<     if (!fnType.isInterface() && baseType != null) {
+---
+>     if (baseType != null) {
+765,794d755
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+<   private static boolean hasMoreTagsToResolve(ObjectType objectType) {
+<     Preconditions.checkArgument(objectType.isUnknownType());
+<     if (objectType.getImplicitPrototype() != null) {
+<       
+<       if (objectType.getImplicitPrototype().isResolved()) {
+<         return false;
+<       } else {
+<         return true;
+<       }
+<     } else {
+<       
+<       FunctionType ctor = objectType.getConstructor();
+<       if (ctor != null) {
+<         for (ObjectType interfaceType : ctor.getExtendedInterfaces()) {
+<           if (!interfaceType.isResolved()) {
+<             return true;
+<           }
+<         }
+<       }
+<       return false;
+<     }

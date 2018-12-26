@@ -1,0 +1,327 @@
+56,60d55
+< import java.io.IOException;
+< import java.io.ObjectInputStream;
+< import java.io.Serializable;
+< import java.util.Arrays;
+< 
+69,99d63
+< import org.joda.time.chrono.ISOChronology;
+< import org.joda.time.convert.ConverterManager;
+< import org.joda.time.convert.InstantConverter;
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< public abstract class AbstractPartial implements ReadablePartial, Serializable {
+< 
+<     
+<     private static final long serialVersionUID = 2353678632973660L;
+< 
+<     
+<     protected Chronology iChronology;
+<     
+<     protected int[] iValues;
+<     
+<     protected transient DateTimeField[] iFields;
+< 
+<     
+<     
+<     
+107,109d70
+<     protected AbstractPartial() {
+<         this(DateTimeUtils.currentTimeMillis(), null);
+<     }
+111d71
+<     
+121,123c81
+<     protected AbstractPartial(Chronology chronology) {
+<         this(DateTimeUtils.currentTimeMillis(), chronology);
+<     }
+---
+> public abstract class AbstractPartial implements ReadablePartial {
+126,138d83
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPartial(long instant) {
+<         this(instant, null);
+<     }
+< 
+142,222c87
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPartial(long instant, Chronology chronology) {
+<         super();
+<         if (chronology == null) {
+<             chronology = ISOChronology.getInstance();
+<         }
+<         iChronology = chronology.withUTC();
+<         iFields = initFields(iChronology);
+<         iValues = initValues(instant, chronology);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPartial(Object instant) {
+<         super();
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+<         long millis = converter.getInstantMillis(instant);
+<         Chronology chronology = converter.getChronology(instant);
+<         if (chronology == null) {
+<             chronology = ISOChronology.getInstance();
+<         }
+<         iChronology = chronology.withUTC();
+<         iFields = initFields(iChronology);
+<         iValues = initValues(millis, chronology);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPartial(Object instant, Chronology chronology) {
+<         super();
+<         InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+<         long millis = converter.getInstantMillis(instant, chronology);
+<         chronology = converter.getChronology(instant, chronology);
+<         if (chronology == null) {
+<             chronology = ISOChronology.getInstance();
+<         }
+<         iChronology = chronology.withUTC();
+<         iFields = initFields(iChronology);
+<         iValues = initValues(millis, chronology);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPartial(int[] values, Chronology chronology) {
+---
+>     protected AbstractPartial() {
+224,296d88
+<         if (chronology == null) {
+<             chronology = ISOChronology.getInstance();
+<         }
+<         iChronology = chronology.withUTC();
+<         iFields = initFields(iChronology);
+<         iValues = values;
+<         chronology.validate(this);
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+<         in.defaultReadObject();
+<         iFields = initFields(iChronology);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected abstract DateTimeField[] initFields(Chronology chrono);
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected abstract int[] initValues(long instant, Chronology chrono);
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public int getFieldSize() {
+<         return iFields.length;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public DateTimeField getField(int index) {
+<         if (index < 0 || index >= iFields.length) {
+<             throw new IllegalArgumentException(Integer.toString(index));
+<         }
+<         return iFields[index];
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public int getValue(int index) {
+<         if (index < 0 || index >= iValues.length) {
+<             throw new IllegalArgumentException(Integer.toString(index));
+<         }
+<         return iValues[index];
+308c100,104
+<         return (DateTimeField[]) iFields.clone();
+---
+>         DateTimeField[] result = new DateTimeField[getFieldSize()];
+>         for (int i = 0; i < result.length; i++) {
+>             result[i] = getField(i);
+>         }
+>         return result;
+320,332c116,120
+<         return (int[]) iValues.clone();
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public Chronology getChronology() {
+<         return iChronology;
+---
+>         int[] result = new int[getFieldSize()];
+>         for (int i = 0; i < result.length; i++) {
+>             result[i] = getValue(i);
+>         }
+>         return result;
+346,348c134,136
+<         for (int i = 0; i < iFields.length; i++) {
+<             if (iFields[i] == field) {
+<                 return iValues[i];
+---
+>         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+>             if (getField(i) == field) {
+>                 return getValue(i);
+361,362c149,150
+<         for (int i = 0; i < iFields.length; i++) {
+<             if (iFields[i] == field) {
+---
+>         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+>             if (getField(i) == field) {
+383c171
+<         Chronology chrono = iChronology.withZone(zone);
+---
+>         Chronology chrono = getChronology().withZone(zone);
+400,408c188,190
+<         long resolved;
+<         Chronology chrono;
+<         if (baseInstant == null) {
+<             chrono = ISOChronology.getInstance();
+<             resolved = resolve(DateTimeUtils.currentTimeMillis(), chrono);
+<         } else {
+<             chrono = baseInstant.getChronology();
+<             resolved = resolve(baseInstant.getMillis(), chrono);
+<         }
+---
+>         Chronology chrono = DateTimeUtils.getInstantChronology(baseInstant);
+>         long instantMillis = DateTimeUtils.getInstantMillis(baseInstant);
+>         long resolved = resolve(instantMillis, chrono);
+441,442c223,224
+<         for (int i = 0; i < iFields.length; i++) {
+<             millis = iFields[i].set(millis, iValues[i]);
+---
+>         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+>             millis = getField(i).set(millis, getValue(i));
+456,465c238,239
+<         if (partial instanceof AbstractPartial) {
+<             AbstractPartial other = (AbstractPartial) partial;
+<             return Arrays.equals(iValues, other.iValues) &&
+<                    Arrays.equals(iFields, other.iFields) &&
+<                    iChronology == other.iChronology;
+<         } else if (partial instanceof ReadablePartial) {
+<             ReadablePartial other = (ReadablePartial) partial;
+<             return Arrays.equals(iValues, other.getValues()) &&
+<                    Arrays.equals(iFields, other.getFields()) &&
+<                    iChronology == other.getChronology();
+---
+>         if (partial instanceof ReadablePartial == false) {
+>             return false;
+467c241,250
+<         return false;
+---
+>         ReadablePartial other = (ReadablePartial) partial;
+>         if (getFieldSize() != other.getFieldSize()) {
+>             return false;
+>         }
+>         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+>             if (getValue(i) != other.getValue(i) || getField(i) != other.getField(i)) {
+>                 return false;
+>             }
+>         }
+>         return (getChronology() == other.getChronology());
+478,480c261,263
+<         for (int i = 0; i < iFields.length; i++) {
+<             total = 23 * total + iValues[i];
+<             total = 23 * total + iFields[i].hashCode();
+---
+>         for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+>             total = 23 * total + getValue(i);
+>             total = 23 * total + getField(i).hashCode();
+482c265
+<         total += iChronology.hashCode();
+---
+>         total += getChronology().hashCode();

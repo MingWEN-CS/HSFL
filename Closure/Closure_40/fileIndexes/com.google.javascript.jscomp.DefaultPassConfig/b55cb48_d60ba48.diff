@@ -1,0 +1,23 @@
+218a219,221
+>     if (options.computeFunctionSideEffects) {
+>       checks.add(checkRegExp);
+>     }
+813a817,834
+>     }
+>   };
+> 
+>   
+>   private final PassFactory checkRegExp =
+>       new PassFactory("checkRegExp", true) {
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       final CheckRegExp pass = new CheckRegExp(compiler);
+> 
+>       return new CompilerPass() {
+>         @Override
+>         public void process(Node externs, Node root) {
+>           pass.process(externs, root);
+>           compiler.setHasRegExpGlobalReferences(
+>               pass.isGlobalRegExpPropertiesUsed());
+>         }
+>       };

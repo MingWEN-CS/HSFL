@@ -1,0 +1,48 @@
+134,139d133
+<     
+<     
+<     if (NodeUtil.containsFunctionDeclaration(block)) {
+<       return false;
+<     }
+< 
+151a146,148
+> 
+> 
+> 
+154,155c151,154
+<       InliningMode mode, boolean referencesThis) {
+< 
+---
+>       InliningMode mode, boolean referencesThis, boolean containsFunctions) {
+>     
+>     
+>     
+161a161,170
+>     
+>     
+>     
+>     if (containsFunctions && !t.inGlobalScope()) {
+>       
+>       
+>       return CanInlineResult.NO;
+>     }
+> 
+>     
+570,571c579,582
+<     boolean fnContainsVars = NodeUtil.isNodeTypeReferenced(
+<         NodeUtil.getFunctionBody(fnNode), Token.VAR);
+---
+>     boolean fnContainsVars = NodeUtil.has(
+>         NodeUtil.getFunctionBody(fnNode),
+>         new NodeUtil.MatchDeclaration(),
+>         new NodeUtil.MatchShallowStatement());
+577,578c588
+<       callerContainsFunction = NodeUtil.containsFunctionDeclaration(
+<           fnCallerBody);
+---
+>       callerContainsFunction = NodeUtil.containsFunction(fnCallerBody);
+847c857,858
+<       int returnCount = NodeUtil.getNodeTypeReferenceCount(block, Token.RETURN);
+---
+>       int returnCount = NodeUtil.getNodeTypeReferenceCount(
+>           block, Token.RETURN, new NodeUtil.MatchShallowStatement());

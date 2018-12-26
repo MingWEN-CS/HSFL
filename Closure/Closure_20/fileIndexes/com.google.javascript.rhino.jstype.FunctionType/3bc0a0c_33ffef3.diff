@@ -1,0 +1,58 @@
+516c516,519
+<       if ("call".equals(name)) {
+---
+>       
+>       boolean isCall = "call".equals(name);
+>       boolean isBind = "bind".equals(name);
+>       if (isCall || isBind) {
+518,528c521,533
+<         Node params = getParametersNode();
+<         if (params == null) {
+<           
+<           
+<           defineDeclaredProperty(name,
+<               new FunctionBuilder(registry)
+<               .withReturnType(getReturnType())
+<               .build(),
+<               source);
+<         } else {
+<           params = params.cloneTree();
+---
+>         
+>         
+>         FunctionBuilder builder = new FunctionBuilder(registry)
+>             .withReturnType(
+>                 isCall ?
+>                 getReturnType() :
+>                 (new FunctionBuilder(registry)
+>                     .withReturnType(getReturnType()).build()));
+> 
+>         Node origParams = getParametersNode();
+>         if (origParams != null) {
+>           Node params = origParams.cloneTree();
+> 
+533c538,547
+<           thisTypeNode.setOptionalArg(true);
+---
+>           thisTypeNode.setOptionalArg(isCall);
+> 
+>           if (isBind) {
+>             
+>             
+>             for (Node current = thisTypeNode.getNext();
+>                  current != null; current = current.getNext()) {
+>               current.setOptionalArg(true);
+>             }
+>           }
+535,540c549
+<           defineDeclaredProperty(name,
+<               new FunctionBuilder(registry)
+<               .withParamsNode(params)
+<               .withReturnType(getReturnType())
+<               .build(),
+<               source);
+---
+>           builder.withParamsNode(params);
+541a551,552
+> 
+>         defineDeclaredProperty(name, builder.build(), source);

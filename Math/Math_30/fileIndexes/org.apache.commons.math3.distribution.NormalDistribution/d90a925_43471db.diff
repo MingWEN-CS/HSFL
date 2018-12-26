@@ -1,0 +1,109 @@
+20,21d19
+< import java.io.Serializable;
+< 
+35,36c33
+< public class NormalDistribution extends AbstractContinuousDistribution
+<         implements Serializable {
+---
+> public class NormalDistribution extends AbstractRealDistribution {
+77c74,75
+<     public NormalDistribution(double mean, double sd, double inverseCumAccuracy) {
+---
+>     public NormalDistribution(double mean, double sd, double inverseCumAccuracy)
+>         throws NotStrictlyPositiveException {
+91c89
+<     public NormalDistribution(){
+---
+>     public NormalDistribution() {
+113a112,122
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double probability(double x) {
+>         return 0.0;
+>     }
+> 
+>     
+150,155d158
+<     @Override
+<     protected double getSolverAbsoluteAccuracy() {
+<         return solverAbsoluteAccuracy;
+<     }
+< 
+<     
+174,179d176
+<     public double sample()  {
+<         return randomData.nextGaussian(mean, standardDeviation);
+<     }
+< 
+<     
+<     @Override
+222a220,225
+>     @Override
+>     protected double getSolverAbsoluteAccuracy() {
+>         return solverAbsoluteAccuracy;
+>     }
+> 
+>     
+226a230,232
+>     public double getNumericalMean() {
+>         return getMean();
+>     }
+227a234
+>     
+231,233c238,241
+<     @Override
+<     public double getSupportLowerBound() {
+<         return Double.NEGATIVE_INFINITY;
+---
+> 
+>     public double getNumericalVariance() {
+>         final double s = getStandardDeviation();
+>         return s * s;
+245,247c253,254
+<     @Override
+<     public double getSupportUpperBound() {
+<         return Double.POSITIVE_INFINITY;
+---
+>     public double getSupportLowerBound() {
+>         return Double.NEGATIVE_INFINITY;
+255,260d261
+<     @Override
+<     protected double calculateNumericalMean() {
+<         return getMean();
+<     }
+< 
+<     
+265,268c266,267
+<     @Override
+<     protected double calculateNumericalVariance() {
+<         final double s = getStandardDeviation();
+<         return s * s;
+---
+>     public double getSupportUpperBound() {
+>         return Double.POSITIVE_INFINITY;
+272d270
+<     @Override
+278d275
+<     @Override
+280a278,294
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean isSupportConnected() {
+>         return true;
+>     }
+> 
+>     
+>     @Override
+>     public double sample()  {
+>         return randomData.nextGaussian(mean, standardDeviation);

@@ -1,0 +1,39 @@
+1164,1167c1164,1191
+<         long before = convertUTCToLocal(instant - 3 * DateTimeConstants.MILLIS_PER_HOUR);
+<         long after = convertUTCToLocal(instant + 3 * DateTimeConstants.MILLIS_PER_HOUR);
+<         if (before == after) {
+<             return instant;
+---
+>         
+>         
+>         
+>         long instantBefore = instant - 3 * DateTimeConstants.MILLIS_PER_HOUR;
+>         long instantAfter = instant + 3 * DateTimeConstants.MILLIS_PER_HOUR;
+>         long offsetBefore = getOffset(instantBefore);
+>         long offsetAfter = getOffset(instantAfter);
+>         if (offsetBefore <= offsetAfter) {
+>             return instant;  
+>         }
+>         
+>         
+>         long diff = offsetBefore - offsetAfter;
+>         long transition = nextTransition(instantBefore);
+>         long overlapStart = transition - diff;
+>         long overlapEnd = transition + diff;
+>         if (instant < overlapStart || instant >= overlapEnd) {
+>           return instant;  
+>         }
+>         
+>         
+>         long afterStart = instant - overlapStart;
+>         if (afterStart >= diff) {
+>           
+>           return earlierOrLater ? instant : instant - diff;
+>         } else {
+>           
+>           return earlierOrLater ? instant + diff : instant;
+1169,1170d1192
+<         long local = convertUTCToLocal(instant);
+<         return convertLocalToUTC(local, false, earlierOrLater ? after : before);
+1171a1194
+> 

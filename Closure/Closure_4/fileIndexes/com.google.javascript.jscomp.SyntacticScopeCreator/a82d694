@@ -1,0 +1,251 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.jstype.JSType;
+
+
+
+
+
+
+
+
+
+class SyntacticScopeCreator implements ScopeCreator {
+  private final AbstractCompiler compiler;
+  private Scope scope;
+  private String sourceName;
+  private final RedeclarationHandler redeclarationHandler;
+
+  
+  
+  private static final String ARGUMENTS = "arguments";
+
+  public static final DiagnosticType VAR_MULTIPLY_DECLARED_ERROR =
+      DiagnosticType.error(
+          "JSC_VAR_MULTIPLY_DECLARED_ERROR",
+          "Variable {0} first declared in {1}");
+
+  public static final DiagnosticType VAR_ARGUMENTS_SHADOWED_ERROR =
+    DiagnosticType.error(
+        "JSC_VAR_ARGUMENTS_SHADOWED_ERROR",
+        "Shadowing \"arguments\" is not allowed");
+
+  
+
+
+  SyntacticScopeCreator(AbstractCompiler compiler) {
+    this.compiler = compiler;
+    this.redeclarationHandler = new DefaultRedeclarationHandler();
+  }
+
+  SyntacticScopeCreator(
+      AbstractCompiler compiler, RedeclarationHandler redeclarationHandler) {
+    this.compiler = compiler;
+    this.redeclarationHandler = redeclarationHandler;
+  }
+
+  public Scope createScope(Node n, Scope parent) {
+    sourceName = null;
+    if (parent == null) {
+      scope = new Scope(n, compiler);
+    } else {
+      scope = new Scope(parent, n);
+    }
+
+    scanRoot(n, parent);
+
+    sourceName = null;
+    Scope returnedScope = scope;
+    scope = null;
+    return returnedScope;
+  }
+
+  private void scanRoot(Node n, Scope parent) {
+    if (n.getType() == Token.FUNCTION) {
+      sourceName = (String) n.getProp(Node.SOURCENAME_PROP);
+
+      final Node fnNameNode = n.getFirstChild();
+      final Node args = fnNameNode.getNext();
+      final Node body = args.getNext();
+
+      
+      
+      String fnName = fnNameNode.getString();
+      if (!fnName.isEmpty() && NodeUtil.isFunctionExpression(n)) {
+        declareVar(fnName, fnNameNode, n, null, null, n);
+      }
+
+      
+      Preconditions.checkState(args.getType() == Token.LP);
+      for (Node a = args.getFirstChild(); a != null;
+           a = a.getNext()) {
+        Preconditions.checkState(a.getType() == Token.NAME);
+        declareVar(a.getString(), a, args, n, null, n);
+      }
+
+      
+      scanVars(body, n);
+    } else {
+      
+      Preconditions.checkState(scope.getParent() == null);
+      scanVars(n, null);
+    }
+  }
+
+  
+
+
+  private void scanVars(Node n, Node parent) {
+    switch (n.getType()) {
+      case Token.VAR:
+        
+        for (Node child = n.getFirstChild();
+             child != null;) {
+          Node next = child.getNext();
+          Preconditions.checkState(child.getType() == Token.NAME);
+
+          String name = child.getString();
+          declareVar(name, child, n, parent, null, n);
+          child = next;
+        }
+        return;
+
+      case Token.FUNCTION:
+        if (NodeUtil.isFunctionExpression(n)) {
+          return;
+        }
+
+        String fnName = n.getFirstChild().getString();
+        if (fnName.isEmpty()) {
+          
+          return;
+        }
+        declareVar(fnName, n.getFirstChild(), n, parent, null, n);
+        return;   
+
+      case Token.CATCH:
+        Preconditions.checkState(n.getChildCount() == 2);
+        Preconditions.checkState(n.getFirstChild().getType() == Token.NAME);
+        
+        
+
+        final Node var = n.getFirstChild();
+        final Node block = var.getNext();
+
+        declareVar(var.getString(), var, n, parent, null, n);
+        scanVars(block, n);
+        return;  
+
+      case Token.SCRIPT:
+        sourceName = (String) n.getProp(Node.SOURCENAME_PROP);
+        break;
+    }
+
+    
+    
+    if (NodeUtil.isControlStructure(n) || NodeUtil.isStatementBlock(n)) {
+      for (Node child = n.getFirstChild();
+           child != null;) {
+        Node next = child.getNext();
+        scanVars(child, n);
+        child = next;
+      }
+    }
+  }
+
+  
+
+
+  interface RedeclarationHandler {
+    void onRedeclaration(
+        Scope s, String name,
+        Node n, Node parent, Node gramps, Node nodeWithLineNumber);
+  }
+
+  
+
+
+  private class DefaultRedeclarationHandler implements RedeclarationHandler {
+    public void onRedeclaration(
+        Scope s, String name,
+        Node n, Node parent, Node gramps, Node nodeWithLineNumber) {
+      
+      if (scope.isGlobal()) {
+        Scope.Var origVar = scope.getVar(name);
+        Node origParent = origVar.getParentNode();
+        if (origParent.getType() == Token.CATCH &&
+            parent.getType() == Token.CATCH) {
+          
+          return;
+        }
+
+        boolean allowDupe = false;
+        JSDocInfo info = n.getJSDocInfo();
+        if (info == null) {
+          info = parent.getJSDocInfo();
+        }
+        allowDupe =
+            info != null && info.getSuppressions().contains("duplicate");
+
+        if (!allowDupe) {
+          compiler.report(
+              JSError.make(sourceName, nodeWithLineNumber,
+                           VAR_MULTIPLY_DECLARED_ERROR,
+                           name,
+                           (origVar.input != null
+                            ? origVar.input.getName()
+                            : "??")));
+        }
+      } else if (name.equals(ARGUMENTS) && !NodeUtil.isVarDeclaration(n)) {
+        
+        
+        compiler.report(
+            JSError.make(sourceName, nodeWithLineNumber,
+                VAR_ARGUMENTS_SHADOWED_ERROR));
+      }
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  private void declareVar(String name, Node n, Node parent,
+                          Node gramps, JSType declaredType,
+                          Node nodeWithLineNumber) {
+    if (scope.isDeclared(name, false)
+        || (scope.isLocal() && name.equals(ARGUMENTS))) {
+      redeclarationHandler.onRedeclaration(
+          scope, name, n, parent, gramps, nodeWithLineNumber);
+    } else {
+      scope.declare(name, n, declaredType, compiler.getInput(sourceName));
+    }
+  }
+}

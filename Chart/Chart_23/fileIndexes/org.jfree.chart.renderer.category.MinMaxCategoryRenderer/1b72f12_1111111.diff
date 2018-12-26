@@ -1,0 +1,54 @@
+61a62
+> 
+85d85
+< import org.jfree.chart.entity.CategoryItemEntity;
+88d87
+< import org.jfree.chart.labels.CategoryToolTipGenerator;
+90a90
+> import org.jfree.chart.util.PaintUtilities;
+223,224c223,229
+<     public void setGroupStroke(Stroke groupStroke) {
+<         this.groupStroke = groupStroke;
+---
+> 
+>     public void setGroupStroke(Stroke stroke) {
+>         if (stroke == null) {
+>             throw new IllegalArgumentException("Null 'stroke' argument.");
+>         }
+>         this.groupStroke = stroke;
+>         notifyListeners(new RendererChangeEvent(this));        
+413,426c418,420
+<             if (state.getInfo() != null) {
+<                 EntityCollection entities = state.getEntityCollection();
+<                 if (entities != null && shape != null) {
+<                     String tip = null;
+<                     CategoryToolTipGenerator tipster = getToolTipGenerator(row,
+<                             column);
+<                     if (tipster != null) {
+<                         tip = tipster.generateToolTip(dataset, row, column);
+<                     }
+<                     CategoryItemEntity entity = new CategoryItemEntity(
+<                             shape, tip, null, dataset, dataset.getRowKey(row), 
+<                             dataset.getColumnKey(column));
+<                     entities.add(entity);
+<                 }
+---
+>             EntityCollection entities = state.getEntityCollection();
+>             if (entities != null && shape != null) {
+>                 addItemEntity(entities, dataset, row, column, shape);
+429a424,434
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+482c487
+<                          final boolean outline) {
+---
+>             final boolean outline) {

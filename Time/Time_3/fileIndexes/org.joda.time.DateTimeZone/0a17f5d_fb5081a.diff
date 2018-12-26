@@ -1,0 +1,190 @@
+67a68,69
+> import org.joda.time.chrono.BaseChronology;
+> import org.joda.time.chrono.ISOChronology;
+70a73
+> import org.joda.time.format.FormatUtils;
+128a132
+>     
+129a134
+>     
+130a136
+>     
+132c138
+< 
+---
+>     
+134c140
+< 
+---
+>     
+147,157d152
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+< 
+161c156,157
+<             } catch (RuntimeException ignored) {
+---
+>             } catch (RuntimeException ex) {
+>                 
+166c162,163
+<         } catch (IllegalArgumentException ignored) {
+---
+>         } catch (IllegalArgumentException ex) {
+>             
+188a186
+> 
+227c225
+<             int offset = -(int) offsetFormatter().parseMillis(id);
+---
+>             int offset = parseOffset(id);
+231c229,230
+<                 id = offsetFormatter().print(0, UTC, offset);
+---
+>                 StringBuffer buf = new StringBuffer();
+>                 id = printOffset(offset);
+246a246
+> 
+262a263
+> 
+282c283
+<         String id = offsetFormatter().print(0, UTC, offset);
+---
+>         String id = printOffset(offset);
+325c326
+<                 int offset = -(int)offsetFormatter().parseMillis(convId);
+---
+>                 int offset = parseOffset(convId);
+329c330
+<                     convId = offsetFormatter().print(0, UTC, offset);
+---
+>                     convId = printOffset(offset);
+337a339,345
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+437,439c445,446
+<                     provider = (Provider)Class.forName(providerClass).newInstance();
+<                 }
+<                 catch (Exception ex) {
+---
+>                     provider = (Provider) Class.forName(providerClass).newInstance();
+>                 } catch (Exception ex) {
+444a452
+>             
+586a595,663
+>     private static int parseOffset(String str) {
+>         Chronology chrono;
+>         if (cDefault != null) {
+>             chrono = ISOChronology.getInstanceUTC();
+>         } else {
+>             
+>             
+>             chrono = new BaseChronology() {
+>                 public DateTimeZone getZone() {
+>                     return null;
+>                 }
+>                 public Chronology withUTC() {
+>                     return this;
+>                 }
+>                 public Chronology withZone(DateTimeZone zone) {
+>                     return this;
+>                 }
+>                 public String toString() {
+>                     return getClass().getName();
+>                 }
+>             };
+>         }
+> 
+>         return -(int) offsetFormatter().parseMillis(str, chrono);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String printOffset(int offset) {
+>         StringBuffer buf = new StringBuffer();
+>         if (offset >= 0) {
+>             buf.append('+');
+>         } else {
+>             buf.append('-');
+>             offset = -offset;
+>         }
+> 
+>         int hours = offset / DateTimeConstants.MILLIS_PER_HOUR;
+>         FormatUtils.appendPaddedInteger(buf, hours, 2);
+>         offset -= hours * (int) DateTimeConstants.MILLIS_PER_HOUR;
+> 
+>         int minutes = offset / DateTimeConstants.MILLIS_PER_MINUTE;
+>         buf.append(':');
+>         FormatUtils.appendPaddedInteger(buf, minutes, 2);
+>         offset -= minutes * DateTimeConstants.MILLIS_PER_MINUTE;
+>         if (offset == 0) {
+>             return buf.toString();
+>         }
+> 
+>         int seconds = offset / DateTimeConstants.MILLIS_PER_SECOND;
+>         buf.append(':');
+>         FormatUtils.appendPaddedInteger(buf, seconds, 2);
+>         offset -= seconds * DateTimeConstants.MILLIS_PER_SECOND;
+>         if (offset == 0) {
+>             return buf.toString();
+>         }
+> 
+>         buf.append('.');
+>         FormatUtils.appendPaddedInteger(buf, offset, 3);
+>         return buf.toString();
+>     }
+> 
+594c671
+<             cOffsetFormatter = new DateTimeFormatterBuilder((Chronology)null, null)
+---
+>             cOffsetFormatter = new DateTimeFormatterBuilder()
+663a741
+> 
+676c754
+<         return offsetFormatter().print(instant, this);
+---
+>         return printOffset(getOffset(instant));
+702a781
+> 
+715c794
+<         return offsetFormatter().print(instant, this);
+---
+>         return printOffset(getOffset(instant));
+845a925
+> 
+854a935
+> 
+862a944
+>         
+864c946
+< 
+---
+>         
+866a949,952
+>         
+> 
+> 
+> 
+879c965
+<         protected Object readResolve() throws ObjectStreamException {
+---
+>         private Object readResolve() throws ObjectStreamException {

@@ -1,0 +1,561 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+
+import org.joda.time.chrono.iso.ISOChronology;
+import org.joda.time.format.DateTimeParser;
+import org.joda.time.format.ISODateTimeFormat;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class DateTime extends AbstractDateTime implements ReadableDateTime {
+    
+    
+    private final long iMillis;
+    
+    private final Chronology iChronology;
+
+    
+    
+    
+
+
+
+
+    public DateTime() {
+        iChronology = ISOChronology.getInstance();
+        iMillis = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+
+    public DateTime(DateTimeZone zone) {
+        iChronology = ISOChronology.getInstance(zone);
+        iMillis = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+
+    public DateTime(Chronology chronology) {
+        iChronology = selectChronology(chronology);
+        iMillis = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+
+    public DateTime(long millis) {
+        iChronology = ISOChronology.getInstance();
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+
+    public DateTime(long millis, DateTimeZone zone) {
+        iChronology = ISOChronology.getInstance(zone);
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+
+    public DateTime(long millis, Chronology chronology) {
+        iChronology = selectChronology(chronology);
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+
+    public DateTime(ReadableInstant instant) {
+        iChronology = selectChronology(instant);
+        iMillis = instant.getMillis();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public DateTime(ReadableInstant instant, DateTimeZone zone) {
+        iChronology = selectChronology(instant, zone);
+        iMillis = instant.getMillis();
+    }
+
+    
+
+
+
+
+
+
+
+    public DateTime(ReadableInstant instant, Chronology chronology) {
+        iChronology = selectChronology(instant, chronology);
+        iMillis = instant.getMillis();
+    }
+
+    
+
+
+
+
+
+
+    public DateTime(Date date) {
+        iChronology = selectChronology(date);
+        iMillis = date.getTime();
+    }
+
+    
+
+
+
+
+
+
+
+    public DateTime(Date date, DateTimeZone zone) {
+        iChronology = selectChronology(date, zone);
+        iMillis = date.getTime();
+    }
+
+    
+
+
+
+
+
+
+    public DateTime(Date date, Chronology chronology) {
+        iChronology = selectChronology(date, chronology);
+        iMillis = date.getTime();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public DateTime(Calendar calendar) {
+        iChronology = selectChronology(calendar);
+        iMillis = calendar.getTime().getTime();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime(Calendar calendar, DateTimeZone zone) {
+        iChronology = selectChronology(calendar, zone);
+        iMillis = calendar.getTime().getTime();
+    }
+
+    
+
+
+
+
+
+
+    public DateTime(Calendar calendar, Chronology chronology) {
+        iChronology = selectChronology(calendar, chronology);
+        iMillis = calendar.getTime().getTime();
+    }
+
+    
+
+
+
+
+
+
+
+    public DateTime(String str) throws ParseException {
+        iChronology = selectChronology(str);
+        DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+        iMillis = p.parseMillis(str);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public DateTime(String str, DateTimeZone zone) throws ParseException {
+        iChronology = selectChronology(str, zone);
+        DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+        iMillis = p.parseMillis(str);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public DateTime(String str, Chronology chronology) throws ParseException {
+        iChronology = selectChronology(str, chronology);
+        DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+        iMillis = p.parseMillis(str);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected ReadableInstant create(long millis, Chronology chrono) {
+        if (chrono == null) {
+            throw new IllegalArgumentException("The Chronology must not be null");
+        }
+        if (millis == getMillis() && chrono == getChronology()) {
+            return this;
+        }
+        return new DateTime(millis, chrono);
+    }
+    
+    
+    
+    
+
+
+
+
+
+    public final long getMillis() {
+        return iMillis;
+    }
+
+    
+
+
+
+
+    public final Chronology getChronology() {
+        return iChronology;
+    }
+
+    
+    
+    
+
+
+
+
+
+
+    public final DateTimeFieldProperty dayOfWeek() {
+        return new DateTimeFieldProperty(this, getChronology().dayOfWeek());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty dayOfMonth() {
+        return new DateTimeFieldProperty(this, getChronology().dayOfMonth());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty dayOfYear() {
+        return new DateTimeFieldProperty(this, getChronology().dayOfYear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty weekOfWeekyear() {
+        return new DateTimeFieldProperty(this, getChronology().weekOfWeekyear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty weekyear() {
+        return new DateTimeFieldProperty(this, getChronology().weekyear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty monthOfYear() {
+        return new DateTimeFieldProperty(this, getChronology().monthOfYear());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty year() {
+        return new DateTimeFieldProperty(this, getChronology().year());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty yearOfEra() {
+        return new DateTimeFieldProperty(this, getChronology().yearOfEra());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty yearOfCentury() {
+        return new DateTimeFieldProperty(this, getChronology().yearOfCentury());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty centuryOfEra() {
+        return new DateTimeFieldProperty(this, getChronology().centuryOfEra());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty era() {
+        return new DateTimeFieldProperty(this, getChronology().era());
+    }
+
+    
+    
+    
+
+
+
+
+    public final DateTimeFieldProperty millisOfSecond() {
+        return new DateTimeFieldProperty(this, getChronology().millisOfSecond());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty millisOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().millisOfDay());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty secondOfMinute() {
+        return new DateTimeFieldProperty(this, getChronology().secondOfMinute());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty secondOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().secondOfDay());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty minuteOfHour() {
+        return new DateTimeFieldProperty(this, getChronology().minuteOfHour());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty minuteOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().minuteOfDay());
+    }
+
+    
+
+
+
+
+    public final DateTimeFieldProperty hourOfDay() {
+        return new DateTimeFieldProperty(this, getChronology().hourOfDay());
+    }
+
+    
+    
+    
+
+
+
+
+    public final String toString() {
+        return ISODateTimeFormat.getInstance(getChronology()).dateTime().print(this);
+    }
+
+}

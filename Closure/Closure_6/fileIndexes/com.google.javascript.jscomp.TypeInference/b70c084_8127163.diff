@@ -1,0 +1,41 @@
+123a124,129
+>     Node iifeArgumentNode = null;
+> 
+>     if (NodeUtil.isCallOrNewTarget(functionNode)) {
+>       iifeArgumentNode = functionNode.getNext();
+>     }
+> 
+131,134d136
+<           if (parameterTypeNode == null) {
+<             return;
+<           }
+< 
+138,142c140,152
+<               var.getType() == unknownType &&
+<               parameterTypeNode.getJSType() != null) {
+<             JSType newType = parameterTypeNode.getJSType();
+<             var.setType(newType);
+<             astParameter.setJSType(newType);
+---
+>               var.getType() == unknownType) {
+>             JSType newType = null;
+> 
+>             if (iifeArgumentNode != null) {
+>               newType = iifeArgumentNode.getJSType();
+>             } else if (parameterTypeNode != null) {
+>               newType = parameterTypeNode.getJSType();
+>             }
+> 
+>             if (newType != null) {
+>               var.setType(newType);
+>               astParameter.setJSType(newType);
+>             }
+145c155,160
+<           parameterTypeNode = parameterTypeNode.getNext();
+---
+>           if (parameterTypeNode != null) {
+>             parameterTypeNode = parameterTypeNode.getNext();
+>           }
+>           if (iifeArgumentNode != null) {
+>             iifeArgumentNode = iifeArgumentNode.getNext();
+>           }

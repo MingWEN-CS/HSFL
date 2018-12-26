@@ -1,0 +1,231 @@
+22a23,25
+> import java.util.List;
+> import java.util.SortedSet;
+> import java.util.TreeSet;
+23a27
+> import org.apache.commons.math.ConvergenceException;
+27c31
+< import org.apache.commons.math.ode.events.CombinedEventsManager;
+---
+> import org.apache.commons.math.ode.events.EventException;
+29a34
+> import org.apache.commons.math.ode.sampling.AbstractStepInterpolator;
+31a37
+> import org.apache.commons.math.util.MathUtils;
+50c56,65
+<     protected CombinedEventsManager eventsHandlersManager;
+---
+>     protected boolean isLastStep;
+> 
+>     
+>     protected boolean resetOccurred;
+> 
+>     
+>     protected Collection<EventState> eventsStates;
+> 
+>     
+>     protected boolean statesInitialized;
+72c87,88
+<         eventsHandlersManager = new CombinedEventsManager();
+---
+>         eventsStates = new ArrayList<EventState>();
+>         statesInitialized = false;
+104c120
+<     public void addEventHandler(final EventHandler function,
+---
+>     public void addEventHandler(final EventHandler handler,
+108,109c124
+<         eventsHandlersManager.addEventHandler(function, maxCheckInterval,
+<                                               convergence, maxIterationCount);
+---
+>         eventsStates.add(new EventState(handler, maxCheckInterval, convergence, maxIterationCount));
+114c129,133
+<         return eventsHandlersManager.getEventsHandlers();
+---
+>         final List<EventHandler> list = new ArrayList<EventHandler>();
+>         for (EventState state : eventsStates) {
+>             list.add(state.getEventHandler());
+>         }
+>         return Collections.unmodifiableCollection(list);
+119c138
+<         eventsHandlersManager.clearEventsHandlers();
+---
+>         eventsStates.clear();
+196,199d214
+<     protected void sanityChecks(final FirstOrderDifferentialEquations ode,
+<                                 final double t0, final double[] y0,
+<                                 final double t, final double[] y)
+<         throws IntegratorException {
+201,204d215
+<         if (ode.getDimension() != y0.length) {
+<             throw new IntegratorException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y0.length);
+<         }
+206,209c217,221
+<         if (ode.getDimension() != y.length) {
+<             throw new IntegratorException(
+<                     LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y.length);
+<         }
+---
+>     protected double acceptStep(final AbstractStepInterpolator interpolator,
+>                                 final Collection<StepHandler> handlers,
+>                                 final double[] y,
+>                                 final double[] yDot, final double tEnd)
+>         throws IntegratorException {
+211,215c223,234
+<         if (FastMath.abs(t - t0) <= 1.0e-12 * FastMath.max(FastMath.abs(t0), FastMath.abs(t))) {
+<             throw new IntegratorException(
+<                     LocalizedFormats.TOO_SMALL_INTEGRATION_INTERVAL,
+<                     FastMath.abs(t - t0));
+<         }
+---
+>         try {
+>             double previousT = interpolator.getGlobalPreviousTime();
+>             final double currentT = interpolator.getGlobalCurrentTime();
+>             resetOccurred = false;
+> 
+>             
+>             if (! statesInitialized) {
+>                 for (EventState state : eventsStates) {
+>                     state.reinitializeBegin(interpolator);
+>                 }
+>                 statesInitialized = true;
+>             }
+217c236,243
+<     }
+---
+>             
+>             SortedSet<EventState> occuringEvents = new TreeSet<EventState>();
+>             for (final EventState state : eventsStates) {
+>                 if (state.evaluateStep(interpolator)) {
+>                     
+>                     occuringEvents.add(state);
+>                 }
+>             }
+219c245,246
+<     
+---
+>             
+>             for (final EventState state : occuringEvents) {
+220a248,280
+>                 
+>                 final double eventT = state.getEventTime();
+>                 interpolator.setSoftBounds(previousT, eventT);
+> 
+>                 
+>                 interpolator.setInterpolatedTime(eventT);
+>                 final double[] eventY = interpolator.getInterpolatedState();
+>                 state.stepAccepted(eventT, eventY);
+>                 isLastStep = state.stop();
+> 
+>                 
+>                 for (final StepHandler handler : stepHandlers) {
+>                     handler.handleStep(interpolator, isLastStep);
+>                 }
+> 
+>                 if (isLastStep) {
+>                     
+>                     System.arraycopy(eventY, 0, y, 0, y.length);
+>                     return eventT;
+>                 }
+> 
+>                 if (state.reset(eventT, eventY)) {
+>                     
+>                     
+>                     System.arraycopy(eventY, 0, y, 0, y.length);
+>                     computeDerivatives(eventT, y, yDot);
+>                     resetOccurred = true;
+>                     return eventT;
+>                 }
+> 
+>                 
+>                 previousT = eventT;
+>                 interpolator.setSoftBounds(eventT, currentT);
+221a282
+>             }
+222a284,290
+>             interpolator.setInterpolatedTime(currentT);
+>             final double[] currentY = interpolator.getInterpolatedState();
+>             for (final EventState state : eventsStates) {
+>                 state.stepAccepted(currentT, currentY);
+>                 isLastStep = isLastStep || state.stop();
+>             }
+>             isLastStep = isLastStep || MathUtils.equals(currentT, tEnd, 1);
+223a292,295
+>             
+>             for (StepHandler handler : stepHandlers) {
+>                 handler.handleStep(interpolator, isLastStep);
+>             }
+224a297,306
+>             return currentT;
+>         } catch (EventException se) {
+>             final Throwable cause = se.getCause();
+>             if ((cause != null) && (cause instanceof MathUserException)) {
+>                 throw (MathUserException) cause;
+>             }
+>             throw new IntegratorException(se);
+>         } catch (ConvergenceException ce) {
+>             throw new IntegratorException(ce);
+>         }
+225a308
+>     }
+226a310
+>     
+229,244d312
+<     protected CombinedEventsManager addEndTimeChecker(final double startTime,
+<                                                       final double endTime,
+<                                                       final CombinedEventsManager manager) {
+<         CombinedEventsManager newManager = new CombinedEventsManager();
+<         for (final EventState state : manager.getEventsStates()) {
+<             newManager.addEventHandler(state.getEventHandler(),
+<                                        state.getMaxCheckInterval(),
+<                                        state.getConvergence(),
+<                                        state.getMaxIterationCount());
+<         }
+<         newManager.addEventHandler(new EndTimeChecker(endTime),
+<                                    Double.POSITIVE_INFINITY,
+<                                    FastMath.ulp(FastMath.max(FastMath.abs(startTime), FastMath.abs(endTime))),
+<                                    100);
+<         return newManager;
+<     }
+246,247d313
+<     
+<     private static class EndTimeChecker implements EventHandler {
+249,250d314
+<         
+<         private final double endTime;
+252d315
+<         
+255,257c318,321
+<         public EndTimeChecker(final double endTime) {
+<             this.endTime = endTime;
+<         }
+---
+>     protected void sanityChecks(final FirstOrderDifferentialEquations ode,
+>                                 final double t0, final double[] y0,
+>                                 final double t, final double[] y)
+>         throws IntegratorException {
+259,261c323,325
+<         
+<         public int eventOccurred(double t, double[] y, boolean increasing) {
+<             return STOP;
+---
+>         if (ode.getDimension() != y0.length) {
+>             throw new IntegratorException(
+>                     LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y0.length);
+264,266c328,330
+<         
+<         public double g(double t, double[] y) {
+<             return t - endTime;
+---
+>         if (ode.getDimension() != y.length) {
+>             throw new IntegratorException(
+>                     LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, ode.getDimension(), y.length);
+269,270c333,336
+<         
+<         public void resetState(double t, double[] y) {
+---
+>         if (FastMath.abs(t - t0) <= 1.0e-12 * FastMath.max(FastMath.abs(t0), FastMath.abs(t))) {
+>             throw new IntegratorException(
+>                     LocalizedFormats.TOO_SMALL_INTEGRATION_INTERVAL,
+>                     FastMath.abs(t - t0));

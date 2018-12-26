@@ -1,0 +1,104 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.ode;
+
+import java.util.Collection;
+
+import org.apache.commons.math.ode.events.CombinedEventsManager;
+import org.apache.commons.math.ode.events.EventHandler;
+import org.apache.commons.math.ode.sampling.DummyStepHandler;
+import org.apache.commons.math.ode.sampling.StepHandler;
+
+
+
+
+
+
+public abstract class AbstractIntegrator implements FirstOrderIntegrator {
+
+    
+    private final String name;
+
+    
+    protected StepHandler handler;
+
+    
+    protected double stepStart;
+
+    
+    protected double stepSize;
+
+    
+    protected CombinedEventsManager eventsHandlersManager;
+
+    
+
+
+    public AbstractIntegrator(final String name) {
+        this.name = name;
+        handler = DummyStepHandler.getInstance();
+        stepStart = Double.NaN;
+        stepSize  = Double.NaN;
+        eventsHandlersManager = new CombinedEventsManager();
+    }
+
+    
+    public String getName() {
+        return name;
+    }
+
+    
+    public void setStepHandler(final StepHandler handler) {
+        this.handler = handler;
+    }
+
+    
+    public StepHandler getStepHandler() {
+        return handler;
+    }
+
+    
+    public void addEventHandler(final EventHandler function,
+                                final double maxCheckInterval,
+                                final double convergence,
+                                final int maxIterationCount) {
+        eventsHandlersManager.addEventHandler(function, maxCheckInterval,
+                                              convergence, maxIterationCount);
+    }
+
+    
+    public Collection<EventHandler> getEventsHandlers() {
+        return eventsHandlersManager.getEventsHandlers();
+    }
+
+    
+    public void clearEventsHandlers() {
+        eventsHandlersManager.clearEventsHandlers();
+    }
+
+    
+    public double getCurrentStepStart() {
+        return stepStart;
+    }
+
+    
+    public double getCurrentSignedStepsize() {
+        return stepSize;
+    }
+
+}

@@ -1,0 +1,29 @@
+22a23
+> import com.google.common.collect.ImmutableList;
+34a36
+> import com.google.javascript.rhino.jstype.StaticSymbolTable;
+35a38
+> import java.util.Collections;
+55c58,59
+< public class Scope implements StaticScope<JSType> {
+---
+> public class Scope
+>     implements StaticScope<JSType>, StaticSymbolTable<Scope.Var, Scope.Var> {
+419a424
+>   @Override
+548a554,568
+>   }
+> 
+>   @Override
+>   public Iterable<Var> getReferences(Var var) {
+>     return ImmutableList.of(var);
+>   }
+> 
+>   @Override
+>   public StaticScope<JSType> getScope(Var var) {
+>     return var.scope;
+>   }
+> 
+>   @Override
+>   public Iterable<Var> getAllSymbols() {
+>     return Collections.unmodifiableCollection(vars.values());

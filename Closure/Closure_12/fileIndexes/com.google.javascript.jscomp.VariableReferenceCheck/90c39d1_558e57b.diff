@@ -1,0 +1,40 @@
+24c24
+< import com.google.javascript.jscomp.ReferenceCollectingCallback.ReferenceCollection;
+---
+> import com.google.javascript.jscomp.ReferenceCollectingCallback.ReferenceMap;
+31d30
+< import java.util.Map;
+42c41
+< class VariableReferenceCheck implements CompilerPass {
+---
+> class VariableReferenceCheck implements HotSwapCompilerPass {
+56,57c55,56
+<   private AbstractCompiler compiler;
+<   private CheckLevel checkLevel;
+---
+>   private final AbstractCompiler compiler;
+>   private final CheckLevel checkLevel;
+61c60
+<   private Set<BasicBlock> blocksWithDeclarations = Sets.newHashSet();
+---
+>   private final Set<BasicBlock> blocksWithDeclarations = Sets.newHashSet();
+75a75,81
+>   @Override
+>   public void hotSwapScript(Node scriptRoot) {
+>     ReferenceCollectingCallback callback = new ReferenceCollectingCallback(
+>         compiler, new ReferenceCheckingBehavior());
+>     callback.hotSwapScript(scriptRoot);
+>   }
+> 
+83,84c89,92
+<     public void afterExitScope(NodeTraversal t,
+<         Map<Var, ReferenceCollection> referenceMap) {
+---
+>     public void afterExitScope(NodeTraversal t, ReferenceMap referenceMap) {
+>       
+>       
+>       
+89c97
+<         checkVar(t, v, referenceMap.get(v).references);
+---
+>         checkVar(t, v, referenceMap.getReferences(v).references);

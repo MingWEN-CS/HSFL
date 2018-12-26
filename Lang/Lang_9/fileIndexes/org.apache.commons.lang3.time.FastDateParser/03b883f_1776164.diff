@@ -1,0 +1,55 @@
+24a25
+> import java.text.SimpleDateFormat;
+59a61,67
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+116a125,127
+> 
+>         String localeName = locale.toString();
+>         
+117a129,135
+>         if (localeName.equals("ja_JP_JP") || localeName.startsWith("th_TH")) {
+>             collector.add(new SimpleDateFormatStrategy());
+>             strategies= collector.toArray(new Strategy[collector.size()]);
+>             parsePattern= Pattern.compile("(.*+)");
+>             return;
+>         }
+> 
+797a816,847
+>     }
+> 
+> 
+>     
+> 
+> 
+>     private static class SimpleDateFormatStrategy implements Strategy {
+> 
+>         @Override
+>         public boolean isNumber() {
+>             return false;
+>         }
+> 
+>         @Override
+>         public void setCalendar(FastDateParser parser, Calendar cal, String value) {
+>             String pat = parser.pattern;
+>             Locale loc = parser.locale;
+>             SimpleDateFormat sdf = new SimpleDateFormat(pat, loc);
+>             try {
+>                 Date d = sdf.parse(value);
+>                 cal.setTime(d);
+>             } catch (ParseException e) {
+>                 throw new IllegalArgumentException(
+>                         "Unexpected error using pattern " + pat + " with locale " + loc.toString(), e);
+>             }
+>         }
+> 
+>         @Override
+>         public boolean addRegex(FastDateParser parser, StringBuilder regex) {
+>             return false;
+>         }
+>         

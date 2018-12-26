@@ -1,0 +1,95 @@
+23,24c23,26
+< import java.util.MissingResourceException;
+< import java.util.ResourceBundle;
+---
+> 
+> import org.apache.commons.math.util.DummyLocalizable;
+> import org.apache.commons.math.util.Localizable;
+> import org.apache.commons.math.util.LocalizedFormats;
+39c41
+<     private static final long serialVersionUID = -9004610152740737812L;
+---
+>     private static final long serialVersionUID = 7428019509644517071L;
+44c46
+<     private final String pattern;
+---
+>     private final Localizable pattern;
+56,57c58,59
+<         this.pattern   = null;
+<         this.arguments = new Object[0];
+---
+>         this.pattern   = LocalizedFormats.SIMPLE_MESSAGE;
+>         this.arguments = new Object[] { "" };
+66a69,70
+> 
+>     @Deprecated
+67a72,83
+>       this(new DummyLocalizable(pattern), arguments);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public MathException(Localizable pattern, Object ... arguments) {
+81,82c97,98
+<         this.pattern   = getMessage();
+<         this.arguments = new Object[0];
+---
+>         this.pattern   = LocalizedFormats.SIMPLE_MESSAGE;
+>         this.arguments = new Object[] { (rootCause == null) ? "" : rootCause.getMessage() };
+94a111,112
+> 
+>     @Deprecated
+96,98c114
+<       super(rootCause);
+<       this.pattern   = pattern;
+<       this.arguments = (arguments == null) ? new Object[0] : arguments.clone();
+---
+>         this(rootCause, new DummyLocalizable(pattern), arguments);
+108,115d123
+<     private static String translate(String s, Locale locale) {
+<         try {
+<             ResourceBundle bundle =
+<                     ResourceBundle.getBundle("org.apache.commons.math.MessagesResources", locale);
+<             if (bundle.getLocale().getLanguage().equals(locale.getLanguage())) {
+<                 
+<                 return bundle.getString(s);
+<             }
+117,119d124
+<         } catch (MissingResourceException mre) {
+<             
+<         }
+121,123d125
+<         
+<         
+<         return s;
+124a127,130
+>     public MathException(Throwable rootCause, Localizable pattern, Object ... arguments) {
+>       super(rootCause);
+>       this.pattern   = pattern;
+>       this.arguments = (arguments == null) ? new Object[0] : arguments.clone();
+131a138,139
+> 
+>     @Deprecated
+132a141,149
+>         return pattern.getSourceString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public Localizable getLocalizablePattern() {
+153c170,173
+<         return (pattern == null) ? "" : new MessageFormat(translate(pattern, locale), locale).format(arguments);
+---
+>         if (pattern != null) {
+>             return new MessageFormat(pattern.getLocalizedString(locale), locale).format(arguments);
+>         }
+>         return "";

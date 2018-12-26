@@ -1,0 +1,82 @@
+19d18
+< import javax.annotation.Nullable;
+20a20
+> import com.google.common.collect.Maps;
+26c26,38
+< import java.util.*;
+---
+> import java.util.ArrayList;
+> import java.util.Comparator;
+> import java.util.HashMap;
+> import java.util.HashSet;
+> import java.util.List;
+> import java.util.Map;
+> import java.util.Set;
+> import java.util.SortedMap;
+> import java.util.SortedSet;
+> import java.util.TreeMap;
+> import java.util.TreeSet;
+> 
+> import javax.annotation.Nullable;
+44d55
+< 
+46c57,61
+<   private final ArrayList<String> localTempNames = new ArrayList<String>();
+---
+>   
+> 
+> 
+> 
+>   private final Map<Node, String> pseudoNameMap;
+110,112d124
+<   private boolean generatePseudoNames;
+< 
+<   
+130c142,146
+<     this.generatePseudoNames = generatePseudoNames;
+---
+>     if (generatePseudoNames) {
+>       this.pseudoNameMap = Maps.newHashMap();
+>     } else {
+>       this.pseudoNameMap = null;
+>     }
+222a239,242
+>       if (pseudoNameMap != null) {
+>         recordPseudoName(n);
+>       }
+>       
+228c248
+<         localTempNames.add(tempName);
+---
+>         n.setString(tempName);
+314c334
+<       String newName = getNewLocalName(n, count);
+---
+>       String newName = getNewLocalName(n);
+335,336c355,356
+<       if (generatePseudoNames) {
+<         return getPseudoName(oldName);
+---
+>       if (pseudoNameMap != null) {
+>         return pseudoNameMap.get(n);
+344,345c364,365
+<   private String getNewLocalName(Node n, int index) {
+<     String oldTempName = localTempNames.get(index);
+---
+>   private String getNewLocalName(Node n) {
+>     String oldTempName = n.getString();
+348,349c368,369
+<       if (generatePseudoNames) {
+<         return getPseudoName(n.getString());
+---
+>       if (pseudoNameMap != null) {
+>         return pseudoNameMap.get(n);
+356,357c376
+<   private String getPseudoName(String s) {
+<     Preconditions.checkState(generatePseudoNames);
+---
+>   private void recordPseudoName(Node n) {
+360c379
+<     return '$' + s + "$$";
+---
+>     pseudoNameMap.put(n, '$' + n.getString() + "$$" );

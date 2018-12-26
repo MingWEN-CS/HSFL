@@ -1,0 +1,312 @@
+153a154
+> 
+160a162
+> import java.awt.FontMetrics;
+189a192
+> import org.jfree.chart.text.TextAnchor;
+201a205
+> import org.jfree.chart.util.UnitType;
+230c234
+<     public static final double DEFAULT_INTERIOR_GAP = 0.25;
+---
+>     public static final double DEFAULT_INTERIOR_GAP = 0.1;
+257c261,262
+<     public static final Paint DEFAULT_LABEL_SHADOW_PAINT = Color.lightGray;
+---
+>     public static final Paint DEFAULT_LABEL_SHADOW_PAINT = new Color(151, 151, 
+>             151, 128);
+328a334,336
+> 
+> 
+> 
+349a358,379
+> 
+> 
+> 
+> 
+>     private boolean simpleLabels = true;
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+>     private RectangleInsets labelPadding;
+>     
+>     
+> 
+> 
+> 
+> 
+>     private RectangleInsets simpleLabelOffset;
+>     
+>     
+439a470
+>         setBackgroundPaint(new Color(230, 230, 230));
+473a505,509
+>         this.simpleLabels = false;
+>         this.simpleLabelOffset = new RectangleInsets(UnitType.RELATIVE, 0.18, 
+>                 0.18, 0.18, 0.18);
+>         this.labelPadding = new RectangleInsets(2, 2, 2, 2);
+>         
+627d662
+<         
+633d667
+<         
+1665a1700,1704
+>     
+>     
+> 
+> 
+> 
+1666a1706,1788
+> 
+> 
+> 
+> 
+>     public RectangleInsets getLabelPadding() {
+>         return this.labelPadding;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setLabelPadding(RectangleInsets padding) {
+>         if (padding == null) {
+>             throw new IllegalArgumentException("Null 'padding' argument.");
+>         }
+>         this.labelPadding = padding;
+>         notifyListeners(new PlotChangeEvent(this));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean getSimpleLabels() {
+>         return this.simpleLabels;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setSimpleLabels(boolean simple) {
+>         this.simpleLabels = simple;
+>         notifyListeners(new PlotChangeEvent(this));
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public RectangleInsets getSimpleLabelOffset() {
+>         return this.simpleLabelOffset;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setSimpleLabelOffset(RectangleInsets offset) {
+>         if (offset == null) {
+>             throw new IllegalArgumentException("Null 'offset' argument.");
+>         }
+>         this.simpleLabelOffset = offset;
+>         notifyListeners(new PlotChangeEvent(this));        
+>     }
+>     
+1975c2097
+<         if (this.labelGenerator != null) {
+---
+>         if (this.labelGenerator != null && !this.simpleLabels) {
+2006,2007c2128,2133
+<         double hh = linkArea.getWidth() * this.labelLinkMargin;
+<         double vv = linkArea.getHeight() * this.labelLinkMargin;
+---
+>         double lm = 0.0;
+>         if (!this.simpleLabels) {
+>             lm = this.labelLinkMargin;
+>         }
+>         double hh = linkArea.getWidth() * lm;
+>         double vv = linkArea.getHeight() * lm;
+2030a2157
+>         
+2051,2052c2178,2184
+<             
+<             drawLabels(g2, keys, totalValue, plotArea, linkArea, state);
+---
+>             if (this.simpleLabels) {
+>                 drawSimpleLabels(g2, keys, totalValue, plotArea, linkArea, 
+>                         state);
+>             }
+>             else {
+>                 drawLabels(g2, keys, totalValue, plotArea, linkArea, state);
+>             }
+2162a2295,2388
+> 
+> 
+>     protected void drawSimpleLabels(Graphics2D g2, List keys, double totalValue, 
+>             Rectangle2D plotArea, Rectangle2D pieArea, PiePlotState state) {
+>         
+>         Composite originalComposite = g2.getComposite();
+>         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 
+>                 1.0f));
+> 
+>         RectangleInsets labelInsets = new RectangleInsets(UnitType.RELATIVE, 
+>                 0.18, 0.18, 0.18, 0.18);
+>         Rectangle2D labelsArea = labelInsets.createInsetRectangle(pieArea);
+>         double runningTotal = 0.0;
+>         Iterator iterator = keys.iterator();
+>         while (iterator.hasNext()) {
+>             Comparable key = (Comparable) iterator.next();
+>             boolean include = true;
+>             double v = 0.0;
+>             Number n = getDataset().getValue(key);
+>             if (n == null) {
+>                 include = !getIgnoreNullValues();
+>             }
+>             else {
+>                 v = n.doubleValue();
+>                 include = getIgnoreZeroValues() ? v > 0.0 : v >= 0.0;
+>             }
+> 
+>             if (include) {
+>                 runningTotal = runningTotal + v;
+>                 
+>                 
+>                 double mid = getStartAngle() + (getDirection().getFactor()
+>                         * ((runningTotal - v / 2.0) * 360) / totalValue);
+>                 
+>                 Arc2D arc = new Arc2D.Double(labelsArea, getStartAngle(), 
+>                         mid - getStartAngle(), Arc2D.OPEN);
+>                 int x = (int) arc.getEndPoint().getX();
+>                 int y = (int) arc.getEndPoint().getY();
+>                 
+>                 PieSectionLabelGenerator labelGenerator = getLabelGenerator();
+>                 if (labelGenerator == null) {
+>                     continue;
+>                 }
+>                 String label = labelGenerator.generateSectionLabel(
+>                         this.dataset, key);
+>                 if (label == null) {
+>                     continue;
+>                 }
+>                 g2.setFont(this.labelFont);
+>                 FontMetrics fm = g2.getFontMetrics();
+>                 Rectangle2D bounds = TextUtilities.getTextBounds(label, g2, fm);
+>                 Rectangle2D out = this.labelPadding.createOutsetRectangle(bounds);
+>                 Shape bg = ShapeUtilities.createTranslatedShape(out, 
+>                         x - bounds.getCenterX(), y - bounds.getCenterY());
+>                 if (this.labelShadowPaint != null) {
+>                     Shape shadow = ShapeUtilities.createTranslatedShape(bg, 
+>                             this.shadowXOffset, this.shadowYOffset);
+>                     g2.setPaint(this.labelShadowPaint);
+>                     g2.fill(shadow);
+>                 }
+>                 if (this.labelBackgroundPaint != null) {
+>                     g2.setPaint(this.labelBackgroundPaint);
+>                     g2.fill(bg);
+>                 }
+>                 if (this.labelOutlinePaint != null 
+>                         && this.labelOutlineStroke != null) {
+>                     g2.setPaint(this.labelOutlinePaint);
+>                     g2.setStroke(this.labelOutlineStroke);
+>                     g2.draw(bg);
+>                 }
+>                 
+>                 g2.setPaint(this.labelPaint);
+>                 g2.setFont(this.labelFont);
+>                 TextUtilities.drawAlignedString(getLabelGenerator()
+>                         .generateSectionLabel(getDataset(), key), g2, x, y, 
+>                         TextAnchor.CENTER);
+>                 
+>             }
+>         }
+>        
+>         g2.setComposite(originalComposite);
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+2168,2169c2394,2395
+<         g2.setComposite(
+<                 AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+---
+>         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 
+>                 1.0f));
+2175,2178c2401,2404
+<         double runningTotal1 = 0.0;
+<         Iterator iterator1 = keys.iterator();
+<         while (iterator1.hasNext()) {
+<             Comparable key = (Comparable) iterator1.next();
+---
+>         double runningTotal = 0.0;
+>         Iterator iterator = keys.iterator();
+>         while (iterator.hasNext()) {
+>             Comparable key = (Comparable) iterator.next();
+2191c2417
+<                 runningTotal1 = runningTotal1 + v;
+---
+>                 runningTotal = runningTotal + v;
+2195c2421
+<                     * ((runningTotal1 - v / 2.0) * 360) / totalValue);
+---
+>                         * ((runningTotal - v / 2.0) * 360) / totalValue);
+2206,2207c2432,2433
+<         float maxLabelWidth 
+<             = (float) (getMaximumLabelWidth() * plotArea.getWidth());
+---
+>         float maxLabelWidth = (float) (getMaximumLabelWidth() 
+>                 * plotArea.getWidth());
+2250a2477
+>                 labelBox.setInteriorGap(this.labelPadding);
+2302a2530
+>                 labelBox.setInteriorGap(this.labelPadding);
+2612a2841,2849
+>             return false;
+>         }
+>         if (this.simpleLabels != that.simpleLabels) {
+>             return false;
+>         }
+>         if (!this.simpleLabelOffset.equals(that.simpleLabelOffset)) {
+>             return false;
+>         }
+>         if (!this.labelPadding.equals(that.labelPadding)) {

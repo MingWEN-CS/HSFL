@@ -1,0 +1,201 @@
+20a21
+> import org.joda.time.field.FieldUtils;
+1173a1175,1372
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Weeks toStandardWeeks() {
+>         checkYearsAndMonths("Weeks");
+>         long millis = getMillis();  
+>         millis += ((long) getSeconds()) * DateTimeConstants.MILLIS_PER_SECOND;
+>         millis += ((long) getMinutes()) * DateTimeConstants.MILLIS_PER_MINUTE;
+>         millis += ((long) getHours()) * DateTimeConstants.MILLIS_PER_HOUR;
+>         millis += ((long) getDays()) * DateTimeConstants.MILLIS_PER_DAY;
+>         long weeks = ((long) getWeeks()) + millis / DateTimeConstants.MILLIS_PER_WEEK;
+>         return Weeks.weeks(FieldUtils.safeToInt(weeks));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Days toStandardDays() {
+>         checkYearsAndMonths("Days");
+>         long millis = getMillis();  
+>         millis += ((long) getSeconds()) * DateTimeConstants.MILLIS_PER_SECOND;
+>         millis += ((long) getMinutes()) * DateTimeConstants.MILLIS_PER_MINUTE;
+>         millis += ((long) getHours()) * DateTimeConstants.MILLIS_PER_HOUR;
+>         long days = millis / DateTimeConstants.MILLIS_PER_DAY;
+>         days = FieldUtils.safeAdd(days, getDays());
+>         days = FieldUtils.safeAdd(days, ((long) getWeeks()) * ((long) DateTimeConstants.DAYS_PER_WEEK));
+>         return Days.days(FieldUtils.safeToInt(days));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Hours toStandardHours() {
+>         checkYearsAndMonths("Hours");
+>         long millis = getMillis();  
+>         millis += ((long) getSeconds()) * DateTimeConstants.MILLIS_PER_SECOND;
+>         millis += ((long) getMinutes()) * DateTimeConstants.MILLIS_PER_MINUTE;
+>         long hours = millis / DateTimeConstants.MILLIS_PER_HOUR;
+>         hours = FieldUtils.safeAdd(hours, getHours());
+>         hours = FieldUtils.safeAdd(hours, ((long) getDays()) * ((long) DateTimeConstants.HOURS_PER_DAY));
+>         hours = FieldUtils.safeAdd(hours, ((long) getWeeks()) * ((long) DateTimeConstants.HOURS_PER_WEEK));
+>         return Hours.hours(FieldUtils.safeToInt(hours));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Minutes toStandardMinutes() {
+>         checkYearsAndMonths("Minutes");
+>         long millis = getMillis();  
+>         millis += ((long) getSeconds()) * DateTimeConstants.MILLIS_PER_SECOND;
+>         long minutes = millis / DateTimeConstants.MILLIS_PER_MINUTE;
+>         minutes = FieldUtils.safeAdd(minutes, getMinutes());
+>         minutes = FieldUtils.safeAdd(minutes, ((long) getHours()) * ((long) DateTimeConstants.MINUTES_PER_HOUR));
+>         minutes = FieldUtils.safeAdd(minutes, ((long) getDays()) * ((long) DateTimeConstants.MINUTES_PER_DAY));
+>         minutes = FieldUtils.safeAdd(minutes, ((long) getWeeks()) * ((long) DateTimeConstants.MINUTES_PER_WEEK));
+>         return Minutes.minutes(FieldUtils.safeToInt(minutes));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Seconds toStandardSeconds() {
+>         checkYearsAndMonths("Seconds");
+>         long seconds = getMillis() / DateTimeConstants.MILLIS_PER_SECOND;
+>         seconds = FieldUtils.safeAdd(seconds, getSeconds());
+>         seconds = FieldUtils.safeAdd(seconds, ((long) getMinutes()) * ((long) DateTimeConstants.SECONDS_PER_MINUTE));
+>         seconds = FieldUtils.safeAdd(seconds, ((long) getHours()) * ((long) DateTimeConstants.SECONDS_PER_HOUR));
+>         seconds = FieldUtils.safeAdd(seconds, ((long) getDays()) * ((long) DateTimeConstants.SECONDS_PER_DAY));
+>         seconds = FieldUtils.safeAdd(seconds, ((long) getWeeks()) * ((long) DateTimeConstants.SECONDS_PER_WEEK));
+>         return Seconds.seconds(FieldUtils.safeToInt(seconds));
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Duration toStandardDuration() {
+>         checkYearsAndMonths("Duration");
+>         long millis = getMillis();  
+>         millis += (((long) getSeconds()) * ((long) DateTimeConstants.MILLIS_PER_SECOND));
+>         millis += (((long) getMinutes()) * ((long) DateTimeConstants.MILLIS_PER_MINUTE));
+>         millis += (((long) getHours()) * ((long) DateTimeConstants.MILLIS_PER_HOUR));
+>         millis += (((long) getDays()) * ((long) DateTimeConstants.MILLIS_PER_DAY));
+>         millis += (((long) getWeeks()) * ((long) DateTimeConstants.MILLIS_PER_WEEK));
+>         return new Duration(millis);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private void checkYearsAndMonths(String destintionType) {
+>         if (getMonths() != 0) {
+>             throw new IllegalStateException("Cannot convert to " + destintionType + " as this period contains months and months vary in length");
+>         }
+>         if (getYears() != 0) {
+>             throw new IllegalStateException("Cannot convert to " + destintionType + " as this period contains years and years vary in length");
+>         }

@@ -1,0 +1,48 @@
+60a61,63
+>   
+>   final boolean returnTypeInferred;
+> 
+62a66,70
+>     this(registry, parameters, returnType, false);
+>   }
+> 
+>   ArrowType(JSTypeRegistry registry, Node parameters,
+>       JSType returnType, boolean returnTypeInferred) {
+69a78
+>     this.returnTypeInferred = returnTypeInferred;
+135,144c144,145
+<   @Override
+<   public boolean equals(Object object) {
+<     
+<     if (!(object instanceof ArrowType)) {
+<       return false;
+<     }
+<     ArrowType that = (ArrowType) object;
+<     if (!returnType.equals(that.returnType)) {
+<       return false;
+<     }
+---
+>   
+> 
+145a147,148
+> 
+>   boolean hasEqualParameters(ArrowType that) {
+170a174,187
+>   public boolean equals(Object object) {
+>     
+>     if (!(object instanceof ArrowType)) {
+>       return false;
+>     }
+>     ArrowType that = (ArrowType) object;
+>     if (!returnType.equals(that.returnType) ||
+>         returnTypeInferred != that.returnTypeInferred) {
+>       return false;
+>     }
+>     return hasEqualParameters(that);
+>   }
+> 
+>   @Override
+174a192,194
+>     }
+>     if (returnTypeInferred) {
+>       hashCode += 1;

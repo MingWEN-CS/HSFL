@@ -1,0 +1,27 @@
+240a241,245
+>   static final DiagnosticType ILLEGAL_OBJLIT_KEY =
+>       DiagnosticType.warning(
+>           "ILLEGAL_OBJLIT_KEY",
+>           "Illegal key, the object literal is a {0}");
+> 
+271a277
+>       ILLEGAL_OBJLIT_KEY,
+825a832
+>           JSType typ = getJSType(n);
+827c834
+<             visitObjLitKey(t, key, n);
+---
+>             visitObjLitKey(t, key, n, typ);
+1051c1058,1059
+<   private void visitObjLitKey(NodeTraversal t, Node key, Node objlit) {
+---
+>   private void visitObjLitKey(
+>       NodeTraversal t, Node key, Node objlit, JSType litType) {
+1056a1065,1071
+>     }
+> 
+>     
+>     if (litType.isStruct() && key.isQuotedString()) {
+>       report(t, key, ILLEGAL_OBJLIT_KEY, "struct");
+>     } else if (litType.isDict() && !key.isQuotedString()) {
+>       report(t, key, ILLEGAL_OBJLIT_KEY, "dict");

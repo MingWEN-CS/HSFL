@@ -1,0 +1,138 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import org.joda.time.Chronology;
+import org.joda.time.ChronologyType;
+import org.joda.time.DateTimeZone;
+import org.joda.time.chrono.BuddhistChronology;
+import org.joda.time.chrono.GJChronology;
+import org.joda.time.chrono.GregorianChronology;
+import org.joda.time.chrono.JulianChronology;
+
+
+
+
+
+
+
+
+
+final class CalendarConverter extends AbstractConverter
+        implements InstantConverter, PartialConverter {
+
+    
+
+
+    static final CalendarConverter INSTANCE = new CalendarConverter();
+
+    
+
+
+    protected CalendarConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object, Chronology chrono) {
+        if (chrono != null) {
+            return chrono;
+        }
+        Calendar cal = (Calendar) object;
+        DateTimeZone zone = null;
+        try {
+            zone = DateTimeZone.forTimeZone(cal.getTimeZone());
+            
+        } catch (IllegalArgumentException ex) {
+            zone = DateTimeZone.getDefault();
+        }
+        return getChronology(cal, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object, DateTimeZone zone) {
+        if (object.getClass().getName().endsWith(".BuddhistCalendar")) {
+            return BuddhistChronology.getInstance(zone);
+        } else if (object instanceof GregorianCalendar) {
+            GregorianCalendar gc = (GregorianCalendar) object;
+            long cutover = gc.getGregorianChange().getTime();
+            if (cutover == Long.MIN_VALUE) {
+                return GregorianChronology.getInstance(zone);
+            } else if (cutover == Long.MAX_VALUE) {
+                return JulianChronology.getInstance(zone);
+            } else {
+                return GJChronology.getInstance(zone, cutover, 4);
+            }
+        } else {
+            return ChronologyType.iso().getChronology(zone);
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, Chronology chrono) {
+        Calendar calendar = (Calendar) object;
+        long millisLocal = calendar.getTime().getTime() +
+            calendar.get(Calendar.ZONE_OFFSET) + calendar.get(Calendar.DST_OFFSET);
+        DateTimeZone tz = DateTimeZone.forTimeZone(calendar.getTimeZone());
+        return millisLocal - tz.getOffsetFromLocal(millisLocal);
+    }
+
+    
+    
+
+
+
+
+    public Class getSupportedType() {
+        return Calendar.class;
+    }
+
+}

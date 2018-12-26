@@ -1,0 +1,20 @@
+126,128c126
+<         if (NodeUtil.isFunctionExpression(n) ||
+<             compiler_.getCodingConvention().isExported(
+<                 n.getFirstChild().getString())) {
+---
+>         if (NodeUtil.isFunctionExpression(n) || isExportedFunction(n, scope)) {
+146a145,157
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private boolean isExportedFunction(Node n, Scope scope) {
+>     Preconditions.checkState(NodeUtil.isFunctionDeclaration(n));
+>     
+>     
+>     return (!removeGlobals && scope.isGlobal()) || 
+>         compiler_.getCodingConvention().isExported(
+>            n.getFirstChild().getString());

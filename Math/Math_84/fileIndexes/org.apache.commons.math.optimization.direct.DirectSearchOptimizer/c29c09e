@@ -1,0 +1,399 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.optimization.direct;
+
+import java.util.Arrays;
+import java.util.Comparator;
+
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.MaxIterationsExceededException;
+import org.apache.commons.math.optimization.ScalarConvergenceChecker;
+import org.apache.commons.math.optimization.GoalType;
+import org.apache.commons.math.optimization.ObjectiveException;
+import org.apache.commons.math.optimization.ScalarObjectiveFunction;
+import org.apache.commons.math.optimization.OptimizationException;
+import org.apache.commons.math.optimization.ScalarOptimizer;
+import org.apache.commons.math.optimization.ScalarPointValuePair;
+import org.apache.commons.math.optimization.SimpleScalarValueChecker;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class DirectSearchOptimizer implements ScalarOptimizer {
+
+    
+    private static final long serialVersionUID = 4299910390345933369L;
+
+    
+    protected ScalarPointValuePair[] simplex;
+
+    
+    private ScalarObjectiveFunction f;
+
+    
+    private ScalarConvergenceChecker checker;
+
+    
+    private int maxIterations;
+
+    
+    private int iterations;
+
+    
+    private int evaluations;
+
+    
+    private double[][] startConfiguration;
+
+    
+
+    protected DirectSearchOptimizer() {
+        setConvergenceChecker(new SimpleScalarValueChecker());
+        setMaxIterations(Integer.MAX_VALUE);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void setStartConfiguration(final double[] steps)
+        throws IllegalArgumentException {
+        
+        
+        final int n = steps.length;
+        startConfiguration = new double[n][n];
+        for (int i = 0; i < n; ++i) {
+            final double[] vertexI = startConfiguration[i];
+            for (int j = 0; j < i + 1; ++j) {
+                if (steps[j] == 0.0) {
+                    throw MathRuntimeException.createIllegalArgumentException(
+                            "equals vertices {0} and {1} in simplex configuration",
+                            j, j + 1);
+                }
+                System.arraycopy(steps, 0, vertexI, 0, j + 1);
+            }
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void setStartConfiguration(final double[][] referenceSimplex)
+        throws IllegalArgumentException {
+
+        
+        
+        final int n = referenceSimplex.length - 1;
+        if (n < 0) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                    "simplex must contain at least one point");
+        }
+        startConfiguration = new double[n][n];
+        final double[] ref0 = referenceSimplex[0];
+
+        
+        for (int i = 0; i < n + 1; ++i) {
+
+            final double[] refI = referenceSimplex[i];
+
+            
+            if (refI.length != n) {
+                throw MathRuntimeException.createIllegalArgumentException(
+                        "dimension mismatch {0} != {1}",
+                        refI.length, n);
+            }
+            for (int j = 0; j < i; ++j) {
+                final double[] refJ = referenceSimplex[j];
+                boolean allEquals = true;
+                for (int k = 0; k < n; ++k) {
+                    if (refI[k] != refJ[k]) {
+                        allEquals = false;
+                        break;
+                    }
+                }
+                if (allEquals) {
+                    throw MathRuntimeException.createIllegalArgumentException(
+                            "equals vertices {0} and {1} in simplex configuration",
+                            i, j);
+                }
+            }
+
+            
+            if (i > 0) {
+                final double[] confI = startConfiguration[i - 1];
+                for (int k = 0; k < n; ++k) {
+                    confI[k] = refI[k] - ref0[k];
+                }
+            }
+
+        }
+
+    }
+
+    
+    public void setMaxIterations(int maxIterations) {
+        this.maxIterations = maxIterations;
+    }
+
+    
+    public int getMaxIterations() {
+        return maxIterations;
+    }
+
+    
+    public int getIterations() {
+        return iterations;
+    }
+
+    
+    public int getEvaluations() {
+        return evaluations;
+    }
+
+    
+    public void setConvergenceChecker(ScalarConvergenceChecker checker) {
+        this.checker = checker;
+    }
+
+    
+    public ScalarConvergenceChecker getConvergenceChecker() {
+        return checker;
+    }
+
+    
+    public ScalarPointValuePair optimize(final ScalarObjectiveFunction f, final GoalType goalType,
+                                         final double[] startPoint)
+        throws ObjectiveException, OptimizationException, IllegalArgumentException {
+
+        if (startConfiguration == null) {
+            
+            
+            final double[] unit = new double[startPoint.length];
+            Arrays.fill(unit, 1.0);
+            setStartConfiguration(unit);
+        }
+
+        this.f = f;
+        final Comparator<ScalarPointValuePair> comparator = new Comparator<ScalarPointValuePair>() {
+            public int compare(final ScalarPointValuePair o1, final ScalarPointValuePair o2) {
+                final double v1 = o1.getValue();
+                final double v2 = o2.getValue();
+                return (goalType == GoalType.MINIMIZE) ?
+                        Double.compare(v1, v2) : Double.compare(v2, v1);
+            }
+        };
+
+        
+        iterations  = 0;
+        evaluations = 0;
+        buildSimplex(startPoint);
+        evaluateSimplex(comparator);
+
+        ScalarPointValuePair[] previous = new ScalarPointValuePair[simplex.length];
+        while (true) {
+
+            if (iterations > 0) {
+                boolean converged = true;
+                for (int i = 0; i < simplex.length; ++i) {
+                    converged &= checker.converged(iterations, previous[i], simplex[i]);
+                }
+                if (converged) {
+                    
+                    return simplex[0];
+                }
+            }
+
+            
+            System.arraycopy(simplex, 0, previous, 0, simplex.length);
+            iterateSimplex(comparator);
+
+        }
+
+    }
+
+    
+
+
+
+    protected void incrementIterationsCounter()
+        throws OptimizationException {
+        if (++iterations > maxIterations) {
+            throw new OptimizationException(new MaxIterationsExceededException(maxIterations));
+        }
+    }
+
+    
+
+
+
+
+
+
+    protected abstract void iterateSimplex(final Comparator<ScalarPointValuePair> comparator)
+        throws ObjectiveException, OptimizationException, IllegalArgumentException;
+
+    
+
+
+
+
+
+
+
+    protected double evaluate(final double[] x)
+        throws ObjectiveException, IllegalArgumentException {
+        evaluations++;
+        return f.objective(x);
+    }
+
+    
+
+
+
+
+    private void buildSimplex(final double[] startPoint)
+        throws IllegalArgumentException {
+
+        final int n = startPoint.length;
+        if (n != startConfiguration.length) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                    "dimension mismatch {0} != {1}",
+                    n, simplex.length);
+        }
+
+        
+        simplex = new ScalarPointValuePair[n + 1];
+        simplex[0] = new ScalarPointValuePair(startPoint, Double.NaN);
+
+        
+        for (int i = 0; i < n; ++i) {
+            final double[] confI   = startConfiguration[i];
+            final double[] vertexI = new double[n];
+            for (int k = 0; k < n; ++k) {
+                vertexI[k] = startPoint[k] + confI[k];
+            }
+            simplex[i + 1] = new ScalarPointValuePair(vertexI, Double.NaN);
+        }
+
+    }
+
+    
+
+
+
+    protected void evaluateSimplex(final Comparator<ScalarPointValuePair> comparator)
+        throws ObjectiveException {
+
+        
+        for (int i = 0; i < simplex.length; ++i) {
+            final ScalarPointValuePair vertex = simplex[i];
+            final double[] point = vertex.getPointRef();
+            if (Double.isNaN(vertex.getValue())) {
+                simplex[i] = new ScalarPointValuePair(point, evaluate(point), false);
+            }
+        }
+
+        
+        Arrays.sort(simplex, comparator);
+
+    }
+
+    
+
+
+
+    protected void replaceWorstPoint(ScalarPointValuePair pointValuePair,
+                                     final Comparator<ScalarPointValuePair> comparator) {
+        int n = simplex.length - 1;
+        for (int i = 0; i < n; ++i) {
+            if (comparator.compare(simplex[i], pointValuePair) > 0) {
+                ScalarPointValuePair tmp = simplex[i];
+                simplex[i]         = pointValuePair;
+                pointValuePair     = tmp;
+            }
+        }
+        simplex[n] = pointValuePair;
+    }
+
+}

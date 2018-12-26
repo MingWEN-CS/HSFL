@@ -1,0 +1,118 @@
+61d60
+< import org.joda.time.DurationField;
+135a135
+>         chrono = DateTimeUtils.getChronology(chrono);
+137c137
+<         setPeriodInternal(startInstant, endInstant, chrono); 
+---
+>         iValues = chrono.get(this, startInstant, endInstant);
+148c148
+<     protected BasePeriod(ReadableInstant startInstant, ReadableInstant  endInstant, PeriodType type) {
+---
+>     protected BasePeriod(ReadableInstant startInstant, ReadableInstant endInstant, PeriodType type) {
+155,157c155,158
+<             long start = DateTimeUtils.getInstantMillis(startInstant);
+<             long end = DateTimeUtils.getInstantMillis(endInstant);
+<             Chronology chrono = (startInstant != null ? startInstant.getChronology() : endInstant.getChronology());
+---
+>             long startMillis = DateTimeUtils.getInstantMillis(startInstant);
+>             long endMillis = DateTimeUtils.getInstantMillis(endInstant);
+>             Chronology chrono = DateTimeUtils.getIntervalChronology(startInstant, endInstant);
+>             chrono = DateTimeUtils.getChronology(chrono);
+159c160
+<             setPeriodInternal(start, end, chrono); 
+---
+>             iValues = chrono.get(this, startMillis, endMillis);
+178c179
+<         setPeriodInternal(startMillis, endMillis, chrono); 
+---
+>         iValues = chrono.get(this, startMillis, endMillis);
+195a197
+>         chrono = DateTimeUtils.getChronology(chrono);
+197c199
+<         setPeriodInternal(duration, chrono); 
+---
+>         iValues = chrono.get(this, duration);
+220c222
+<             setPeriodInternal(new MutablePeriod(period, type, chrono));
+---
+>             iValues = new MutablePeriod(period, type, chrono).getValues();
+306c308
+<         long endMillis = chrono.add(startMillis, this, 1);
+---
+>         long endMillis = chrono.add(this, startMillis, 1);
+340c342
+<             setPeriodInternal(0L, null);
+---
+>             setValues(new int[size()]);
+395,458d396
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(long startInstant, long endInstant, Chronology chrono) {
+<         setPeriodInternal(startInstant, endInstant, chrono);
+<     }
+< 
+<     
+< 
+< 
+<     private void setPeriodInternal(long startInstant, long endInstant, Chronology chrono) {
+<         int[] newValues = new int[size()];
+<         if (startInstant == endInstant) {
+<             iValues = newValues;
+<         } else {
+<             for (int i = 0, isize = size(); i < isize; i++) {
+<                 DurationField field = getFieldType(i).getField(chrono);
+<                 int value = field.getDifference(endInstant, startInstant);
+<                 startInstant = field.add(startInstant, value);
+<                 newValues[i] = value;
+<             }
+<             iValues = newValues;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(long duration, Chronology chrono) {
+<         setPeriodInternal(duration, chrono);
+<     }
+< 
+<     
+< 
+< 
+<     private void setPeriodInternal(long duration, Chronology chrono) {
+<         int[] newValues = new int[size()];
+<         if (duration == 0) {
+<             iValues = newValues;
+<         } else {
+<             long current = 0;
+<             for (int i = 0, isize = size(); i < isize; i++) {
+<                 DurationField field = getFieldType(i).getField(chrono);
+<                 if (field.isPrecise()) {
+<                     int value = field.getDifference(duration, current);
+<                     current = field.add(current, value);
+<                     newValues[i] = value;
+<                 }
+<             }
+<             iValues = newValues;
+<         }
+<     }
+< 
+<     
+592,594c530
+<         if (value != getValue(index)) {
+<             iValues[index] = value;
+<         }
+---
+>         iValues[index] = value;

@@ -1,0 +1,260 @@
+212c212
+<             throw new IllegalArgumentException("The datetime zone id must not be null");
+---
+>             return getDefault();
+222,225c222,228
+<             int offset = -(int)offsetFormatter().parseMillis(id);
+<             
+<             id = offsetFormatter().print(0, UTC, offset);
+<             return new FixedDateTimeZone(id, null, offset, offset);
+---
+>             int offset = -(int) offsetFormatter().parseMillis(id);
+>             if (offset == 0L) {
+>                 return DateTimeZone.UTC;
+>             } else {
+>                 id = offsetFormatter().print(0, UTC, offset);
+>                 return new FixedDateTimeZone(id, null, offset, offset);
+>             }
+244c247
+<             throw new IllegalArgumentException("The TimeZone must not be null");
+---
+>             return getDefault();
+251d253
+<         DateTimeZone dtz;
+252a255
+>         DateTimeZone dtz = null;
+254c257,260
+<         if (convId == null || (dtz = cProvider.getZone(convId)) == null) {
+---
+>         if (convId != null) {
+>             dtz = cProvider.getZone(convId);
+>         }
+>         if (dtz == null) {
+267,269c273,278
+<                 
+<                 convId = offsetFormatter().print(0, UTC, offset);
+<                 return new FixedDateTimeZone(convId, null, offset, offset);
+---
+>                 if (offset == 0L) {
+>                     return DateTimeZone.UTC;
+>                 } else {
+>                     convId = offsetFormatter().print(0, UTC, offset);
+>                     return new FixedDateTimeZone(convId, null, offset, offset);
+>                 }
+307a317,325
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+314a333,339
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+325a351,353
+> 
+> 
+> 
+344a373,424
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static Provider getDefaultProvider() {
+>         Provider provider = null;
+> 
+>         try {
+>             String providerClass =
+>                 System.getProperty("org.joda.time.DateTimeZone.Provider");
+>             if (providerClass != null) {
+>                 try {
+>                     provider = (Provider)Class.forName(providerClass).newInstance();
+>                 }
+>                 catch (Exception ex) {
+>                     Thread thread = Thread.currentThread();
+>                     thread.getThreadGroup().uncaughtException(thread, ex);
+>                 }
+>             }
+>         } catch (SecurityException ex) {
+>         }
+> 
+>         if (provider == null) {
+>             try {
+>                 provider = new ZoneInfoProvider("org/joda/time/tz/data");
+>             } catch (Exception ex) {
+>                 Thread thread = Thread.currentThread();
+>                 thread.getThreadGroup().uncaughtException(thread, ex);
+>             }
+>         }
+> 
+>         if (provider == null) {
+>             provider = new UTCProvider();
+>         }
+> 
+>         return provider;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+351a432,438
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+362a450,452
+> 
+> 
+> 
+369a460,497
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static NameProvider getDefaultNameProvider() {
+>         NameProvider nameProvider = null;
+>         try {
+>             String providerClass = System.getProperty("org.joda.time.DateTimeZone.NameProvider");
+>             if (providerClass != null) {
+>                 try {
+>                     nameProvider = (NameProvider) Class.forName(providerClass).newInstance();
+>                 } catch (Exception ex) {
+>                     Thread thread = Thread.currentThread();
+>                     thread.getThreadGroup().uncaughtException(thread, ex);
+>                 }
+>             }
+>         } catch (SecurityException ex) {
+>             
+>         }
+> 
+>         if (nameProvider == null) {
+>             nameProvider = new DefaultNameProvider();
+>         }
+> 
+>         return nameProvider;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+409c537
+<         return (String)map.get(id);
+---
+>         return (String) map.get(id);
+411a540,544
+>     
+> 
+> 
+> 
+> 
+421,453c554,555
+<     private static Provider getDefaultProvider() {
+<         Provider provider = null;
+< 
+<         try {
+<             String providerClass =
+<                 System.getProperty("org.joda.time.DateTimeZone.Provider");
+<             if (providerClass != null) {
+<                 try {
+<                     provider = (Provider)Class.forName(providerClass).newInstance();
+<                 }
+<                 catch (Exception e) {
+<                     Thread t = Thread.currentThread();
+<                     t.getThreadGroup().uncaughtException(t, e);
+<                 }
+<             }
+<         } catch (SecurityException e) {
+<         }
+< 
+<         if (provider == null) {
+<             try {
+<                 provider = new ZoneInfoProvider("org/joda/time/tz/data");
+<             } catch (Exception e) {
+<                 Thread t = Thread.currentThread();
+<                 t.getThreadGroup().uncaughtException(t, e);
+<             }
+<         }
+< 
+<         if (provider == null) {
+<             provider = new UTCProvider();
+<         }
+< 
+<         return provider;
+<     }
+---
+>     
+>     
+455,456c557
+<     private static NameProvider getDefaultNameProvider() {
+<         NameProvider nameProvider = null;
+---
+>     private final String iID;
+458,471c559
+<         try {
+<             String providerClass =
+<                 System.getProperty("org.joda.time.DateTimeZone.NameProvider");
+<             if (providerClass != null) {
+<                 try {
+<                     nameProvider = (NameProvider)Class.forName(providerClass).newInstance();
+<                 }
+<                 catch (Exception e) {
+<                     Thread t = Thread.currentThread();
+<                     t.getThreadGroup().uncaughtException(t, e);
+<                 }
+<             }
+<         } catch (SecurityException e) {
+<         }
+---
+>     
+473,475d560
+<         if (nameProvider == null) {
+<             nameProvider = new DefaultNameProvider();
+<         }
+477,478d561
+<         return nameProvider;
+<     }
+480,481d562
+<     
+<     
+483d563
+<     private final String iID;
+485c565
+<     public DateTimeZone(String id) {
+---
+>     protected DateTimeZone(String id) {
+605d684
+< 
+608c687
+<             throw new IllegalArgumentException("The instant must not be null");
+---
+>             return getOffset(DateTimeUtils.currentTimeMillis());

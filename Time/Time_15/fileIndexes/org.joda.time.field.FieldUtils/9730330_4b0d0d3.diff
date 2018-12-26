@@ -1,0 +1,50 @@
+18a19,20
+> import org.joda.time.DateTimeFieldType;
+> import org.joda.time.IllegalFieldValueException;
+142,151c144,163
+<             throw new IllegalArgumentException(
+<                 "Value "
+<                     + value
+<                     + " for "
+<                     + field.getName()
+<                     + " must be in the range ["
+<                     + lowerBound
+<                     + ','
+<                     + upperBound
+<                     + ']');
+---
+>             throw new IllegalFieldValueException
+>                 (field.getType(), new Integer(value),
+>                  new Integer(lowerBound), new Integer(upperBound));
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void verifyValueBounds(DateTimeFieldType fieldType, 
+>                                          int value, int lowerBound, int upperBound) {
+>         if ((value < lowerBound) || (value > upperBound)) {
+>             throw new IllegalFieldValueException
+>                 (fieldType, new Integer(value),
+>                  new Integer(lowerBound), new Integer(upperBound));
+166,175c178,180
+<             throw new IllegalArgumentException(
+<                 "Value "
+<                     + value
+<                     + " for "
+<                     + fieldName
+<                     + " must be in the range ["
+<                     + lowerBound
+<                     + ','
+<                     + upperBound
+<                     + ']');
+---
+>             throw new IllegalFieldValueException
+>                 (fieldName, new Integer(value),
+>                  new Integer(lowerBound), new Integer(upperBound));

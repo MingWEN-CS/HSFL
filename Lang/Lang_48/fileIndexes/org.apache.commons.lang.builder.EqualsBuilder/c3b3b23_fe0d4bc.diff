@@ -1,0 +1,89 @@
+20a21,23
+> import java.util.Arrays;
+> import java.util.Collections;
+> import java.util.List;
+121c124,147
+<         return reflectionEquals(lhs, rhs, false, null);
+---
+>         return reflectionEquals(lhs, rhs, false, null, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean reflectionEquals(Object lhs, Object rhs, String[] excludeFields) {
+>         return reflectionEquals(lhs, rhs, false, null, excludeFields);
+145c171
+<         return reflectionEquals(lhs, rhs, testTransients, null);
+---
+>         return reflectionEquals(lhs, rhs, testTransients, null, null);
+173a200,230
+>         return reflectionEquals(lhs, rhs, testTransients, reflectUpToClass, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean reflectionEquals(Object lhs, Object rhs, boolean testTransients, Class reflectUpToClass,
+>             String[] excludeFields) {
+205c262
+<             reflectionAppend(lhs, rhs, testClass, equalsBuilder, testTransients);
+---
+>             reflectionAppend(lhs, rhs, testClass, equalsBuilder, testTransients, excludeFields);
+208c265
+<                 reflectionAppend(lhs, rhs, testClass, equalsBuilder, testTransients);
+---
+>                 reflectionAppend(lhs, rhs, testClass, equalsBuilder, testTransients, excludeFields);
+230a288
+> 
+236c294,295
+<         boolean useTransients) {
+---
+>         boolean useTransients,
+>         String[] excludeFields) {
+237a297
+>         List excludedFieldList = excludeFields != null ? Arrays.asList(excludeFields) : Collections.EMPTY_LIST;
+241c301,302
+<             if ((f.getName().indexOf('$') == -1)
+---
+>             if (!excludedFieldList.contains(f.getName())
+>                 && (f.getName().indexOf('$') == -1)

@@ -1,0 +1,40 @@
+351c351,352
+<     if (options.inlineVariables && !beforeSmartNameRemoval) {
+---
+>     if ((options.inlineVariables || options.inlineLocalVariables)
+>         && !beforeSmartNameRemoval) {
+963c964,973
+<         return new InlineVariables(compiler, false, true);
+---
+>         InlineVariables.Mode mode;
+>         if (options.inlineVariables) {
+>           mode = InlineVariables.Mode.ALL;
+>         } else if (options.inlineLocalVariables) {
+>           mode = InlineVariables.Mode.LOCALS_ONLY;
+>         } else {
+>           throw new IllegalStateException("No variable inlining option set.");
+>         }
+> 
+>         return new InlineVariables(compiler, mode, true);
+973c983,984
+<       return new InlineVariables(compiler, true, true);
+---
+>       return new InlineVariables(
+>           compiler, InlineVariables.Mode.CONSTANTS_ONLY, true);
+1080c1091
+<           compiler, 
+---
+>           compiler,
+1083c1094
+<           options.inlineLocalFunctions, 
+---
+>           options.inlineLocalFunctions,
+1094a1106,1107
+>       boolean preserveAnonymousFunctionNames =
+>         options.anonymousFunctionNaming != AnonymousFunctionNamingPolicy.OFF;
+1096c1109,1111
+<           compiler, options.removeUnusedVarsInGlobalScope);
+---
+>           compiler,
+>           options.removeUnusedVarsInGlobalScope,
+>           preserveAnonymousFunctionNames);

@@ -1,0 +1,88 @@
+19a20
+> import org.apache.commons.math.FunctionEvaluationException;
+20a22,23
+> import org.apache.commons.math.analysis.DifferentiableMultivariateVectorialFunction;
+> import org.apache.commons.math.analysis.MultivariateMatrixFunction;
+21a25
+> import org.apache.commons.math.linear.LUDecompositionImpl;
+24,25d27
+< import org.apache.commons.math.linear.decomposition.LUDecompositionImpl;
+< import org.apache.commons.math.optimization.ObjectiveException;
+29,30c31
+< import org.apache.commons.math.optimization.VectorialDifferentiableObjectiveFunction;
+< import org.apache.commons.math.optimization.VectorialDifferentiableOptimizer;
+---
+> import org.apache.commons.math.optimization.DifferentiableMultivariateVectorialOptimizer;
+41c42
+< public abstract class AbstractLeastSquaresOptimizer implements VectorialDifferentiableOptimizer {
+---
+> public abstract class AbstractLeastSquaresOptimizer implements DifferentiableMultivariateVectorialOptimizer {
+80c81,84
+<     private VectorialDifferentiableObjectiveFunction f;
+---
+>     private DifferentiableMultivariateVectorialFunction f;
+> 
+>     
+>     private MultivariateMatrixFunction jF;
+89c93
+<     protected double[] variables;
+---
+>     protected double[] point;
+162c166
+<     protected void updateJacobian() throws ObjectiveException {
+---
+>     protected void updateJacobian() throws FunctionEvaluationException {
+164c168
+<         jacobian = f.jacobian(variables, objective);
+---
+>         jacobian = jF.value(point);
+166,167c170,171
+<             throw new ObjectiveException("dimension mismatch {0} != {1}",
+<                                          jacobian.length, rows);
+---
+>             throw new FunctionEvaluationException(point, "dimension mismatch {0} != {1}",
+>                                                   jacobian.length, rows);
+184c188
+<         throws ObjectiveException {
+---
+>         throws FunctionEvaluationException {
+187c191
+<         objective = f.objective(variables);
+---
+>         objective = f.value(point);
+189,190c193,194
+<             throw new ObjectiveException("dimension mismatch {0} != {1}",
+<                                          objective.length, rows);
+---
+>             throw new FunctionEvaluationException(point, "dimension mismatch {0} != {1}",
+>                                                   objective.length, rows);
+243c247
+<         throws ObjectiveException, OptimizationException {
+---
+>         throws FunctionEvaluationException, OptimizationException {
+282c286
+<         throws ObjectiveException, OptimizationException {
+---
+>         throws FunctionEvaluationException, OptimizationException {
+298c302
+<     public VectorialPointValuePair optimize(final VectorialDifferentiableObjectiveFunction f,
+---
+>     public VectorialPointValuePair optimize(final DifferentiableMultivariateVectorialFunction f,
+301c305
+<         throws ObjectiveException, OptimizationException, IllegalArgumentException {
+---
+>         throws FunctionEvaluationException, OptimizationException, IllegalArgumentException {
+314a319
+>         jF             = f.jacobian();
+317c322
+<         this.variables = startPoint.clone();
+---
+>         this.point     = startPoint.clone();
+322c327
+<         cols      = variables.length;
+---
+>         cols      = point.length;
+339c344
+<         throws ObjectiveException, OptimizationException, IllegalArgumentException;
+---
+>         throws FunctionEvaluationException, OptimizationException, IllegalArgumentException;

@@ -1,0 +1,245 @@
+1a2,245
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math3.distribution;
+> 
+> import java.util.ArrayList;
+> import java.util.List;
+> import org.apache.commons.math3.exception.DimensionMismatchException;
+> import org.apache.commons.math3.exception.MathArithmeticException;
+> import org.apache.commons.math3.exception.MathIllegalArgumentException;
+> import org.apache.commons.math3.exception.NotPositiveException;
+> import org.apache.commons.math3.random.RandomGenerator;
+> import org.apache.commons.math3.random.Well19937c;
+> import org.apache.commons.math3.util.Pair;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class DiscreteRealDistribution extends AbstractRealDistribution {
+> 
+>     
+>     private static final long serialVersionUID = 20130308L;
+> 
+>     
+> 
+> 
+> 
+>     protected final DiscreteDistribution<Double> innerDistribution;
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DiscreteRealDistribution(final double[] singletons, final double[] probabilities)
+>         throws DimensionMismatchException, NotPositiveException, MathArithmeticException, MathIllegalArgumentException {
+>         this(new Well19937c(), singletons, probabilities);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DiscreteRealDistribution(final RandomGenerator rng,
+>                                     final double[] singletons, final double[] probabilities)
+>         throws DimensionMismatchException, NotPositiveException, MathArithmeticException, MathIllegalArgumentException {
+>         super(rng);
+>         if (singletons.length != probabilities.length) {
+>             throw new DimensionMismatchException(probabilities.length, singletons.length);
+>         }
+> 
+>         List<Pair<Double, Double>> samples = new ArrayList<Pair<Double, Double>>(singletons.length);
+> 
+>         for (int i = 0; i < singletons.length; i++) {
+>             samples.add(new Pair<Double, Double>(singletons[i], probabilities[i]));
+>         }
+> 
+>         innerDistribution = new DiscreteDistribution<Double>(rng, samples);
+>     }
+> 
+>     
+> 
+> 
+>     @Override
+>     public double probability(final double x) {
+>         return innerDistribution.probability(x);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double density(final double x) {
+>         return probability(x);
+>     }
+> 
+>     
+> 
+> 
+>     public double cumulativeProbability(final double x) {
+>         double probability = 0;
+> 
+>         for (final Pair<Double, Double> sample : innerDistribution.getSamples()) {
+>             if (sample.getKey() <= x) {
+>                 probability += sample.getValue();
+>             }
+>         }
+> 
+>         return probability;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public double getNumericalMean() {
+>         double mean = 0;
+> 
+>         for (final Pair<Double, Double> sample : innerDistribution.getSamples()) {
+>             mean += sample.getValue() * sample.getKey();
+>         }
+> 
+>         return mean;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public double getNumericalVariance() {
+>         double mean = 0;
+>         double meanOfSquares = 0;
+> 
+>         for (final Pair<Double, Double> sample : innerDistribution.getSamples()) {
+>             mean += sample.getValue() * sample.getKey();
+>             meanOfSquares += sample.getValue() * sample.getKey() * sample.getKey();
+>         }
+> 
+>         return meanOfSquares - mean * mean;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getSupportLowerBound() {
+>         double min = Double.POSITIVE_INFINITY;
+>         for (final Pair<Double, Double> sample : innerDistribution.getSamples()) {
+>             if (sample.getKey() < min && sample.getValue() > 0) {
+>                 min = sample.getKey();
+>             }
+>         }
+> 
+>         return min;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getSupportUpperBound() {
+>         double max = Double.NEGATIVE_INFINITY;
+>         for (final Pair<Double, Double> sample : innerDistribution.getSamples()) {
+>             if (sample.getKey() > max && sample.getValue() > 0) {
+>                 max = sample.getKey();
+>             }
+>         }
+> 
+>         return max;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean isSupportLowerBoundInclusive() {
+>         return true;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean isSupportUpperBoundInclusive() {
+>         return true;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean isSupportConnected() {
+>         return true;
+>     }
+> 
+>     
+> 
+> 
+>     @Override
+>     public double sample() {
+>         return innerDistribution.sample();
+>     }
+> }

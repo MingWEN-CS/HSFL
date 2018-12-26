@@ -1,0 +1,157 @@
+1a2,157
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math3.genetics;
+> 
+> import java.util.ArrayList;
+> import java.util.Iterator;
+> import java.util.List;
+> 
+> import org.apache.commons.math3.exception.util.LocalizedFormats;
+> import org.apache.commons.math3.exception.NotPositiveException;
+> import org.apache.commons.math3.exception.NumberIsTooLargeException;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public abstract class ListPopulation implements Population {
+> 
+>     
+>     private List<Chromosome> chromosomes;
+> 
+>     
+>     private int populationLimit;
+> 
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public ListPopulation(final List<Chromosome> chromosomes, final int populationLimit) {
+>         if (chromosomes.size() > populationLimit) {
+>             throw new NumberIsTooLargeException(LocalizedFormats.LIST_OF_CHROMOSOMES_BIGGER_THAN_POPULATION_SIZE,
+>                                                 chromosomes.size(), populationLimit, false);
+>         }
+>         if (populationLimit <= 0) {
+>             throw new NotPositiveException(LocalizedFormats.POPULATION_LIMIT_NOT_POSITIVE, populationLimit);
+>         }
+> 
+>         this.chromosomes = chromosomes;
+>         this.populationLimit = populationLimit;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public ListPopulation(final int populationLimit) {
+>         if (populationLimit <= 0) {
+>             throw new NotPositiveException(LocalizedFormats.POPULATION_LIMIT_NOT_POSITIVE, populationLimit);
+>         }
+>         this.populationLimit = populationLimit;
+>         this.chromosomes = new ArrayList<Chromosome>(populationLimit);
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public void setChromosomes(final List<Chromosome> chromosomes) {
+>         this.chromosomes = chromosomes;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public List<Chromosome> getChromosomes() {
+>         return chromosomes;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public void addChromosome(final Chromosome chromosome) {
+>         this.chromosomes.add(chromosome);
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public Chromosome getFittestChromosome() {
+>         
+>         Chromosome bestChromosome = this.chromosomes.get(0);
+>         for (Chromosome chromosome : this.chromosomes) {
+>             if (chromosome.compareTo(bestChromosome) > 0) {
+>                 
+>                 bestChromosome = chromosome;
+>             }
+>         }
+>         return bestChromosome;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public int getPopulationLimit() {
+>         return this.populationLimit;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public void setPopulationLimit(final int populationLimit) {
+>         this.populationLimit = populationLimit;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public int getPopulationSize() {
+>         return this.chromosomes.size();
+>     }
+> 
+>     
+> 
+> 
+>     @Override
+>     public String toString() {
+>         return this.chromosomes.toString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public Iterator<Chromosome> iterator() {
+>         return chromosomes.iterator();
+>     }
+> }

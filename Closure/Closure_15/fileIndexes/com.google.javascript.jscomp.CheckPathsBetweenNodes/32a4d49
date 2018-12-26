@@ -1,0 +1,214 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Predicate;
+import com.google.javascript.jscomp.graph.Annotation;
+import com.google.javascript.jscomp.graph.DiGraph;
+import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+
+
+
+
+
+
+
+
+
+
+
+
+class CheckPathsBetweenNodes<N, E> {
+
+  private final Predicate<N> nodePredicate;
+  private final Predicate<DiGraphEdge<N, E>> edgePredicate;
+  private final boolean inclusive;
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+  private static final Annotation BACK_EDGE = new Annotation() {};
+  
+  private static final Annotation WHITE = null;
+  
+  private static final Annotation GRAY = new Annotation() {};
+  
+  private static final Annotation BLACK = new Annotation() {};
+  
+  private final DiGraph<N, E> graph;
+  private final DiGraphNode<N, E> start;
+  private final DiGraphNode<N, E> end;
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  CheckPathsBetweenNodes(DiGraph<N, E> graph, DiGraphNode<N, E> a,
+      DiGraphNode<N, E> b, Predicate<N> nodePredicate,
+      Predicate<DiGraphEdge<N, E>> edgePredicate, boolean inclusive) {
+    this.graph = graph;
+    this.start = a;
+    this.end = b;
+    this.nodePredicate = nodePredicate;
+    this.edgePredicate = edgePredicate;
+    this.inclusive = inclusive;
+  }
+  
+  
+
+
+  CheckPathsBetweenNodes(DiGraph<N, E> graph, DiGraphNode<N, E> a,
+      DiGraphNode<N, E> b, Predicate<N> nodePredicate,
+      Predicate<DiGraphEdge<N, E>> edgePredicate) {
+    this(graph, a, b, nodePredicate, edgePredicate, true);
+  }
+  
+
+  
+
+
+
+  public boolean allPathsSatisfyPredicate() {
+    setUp();
+    boolean result = checkAllPathsWithoutBackEdges(start, end);
+    tearDown();
+    return result;
+  }
+  
+  
+
+
+
+  public boolean somePathsSatisfyPredicate() {
+    setUp();
+    boolean result = checkSomePathsWithoutBackEdges(start, end);
+    tearDown();
+    return result;
+  }
+
+  private void setUp() {
+    graph.pushNodeAnnotations();
+    graph.pushEdgeAnnotations();
+    discoverBackEdges(this.start);
+  }
+  
+  private void tearDown() {
+    graph.popNodeAnnotations();
+    graph.popEdgeAnnotations();
+  }
+  
+  private void discoverBackEdges(DiGraphNode<N, E> u) {
+    u.setAnnotation(GRAY);
+    for (DiGraphEdge<N, E> e : u.getOutEdges()) {
+      if (ignoreEdge(e)) {
+        continue;
+      }
+      DiGraphNode<N, E> v = e.getDestination();
+      if (v.getAnnotation() == WHITE) {
+        discoverBackEdges(v);
+      } else if (v.getAnnotation() == GRAY) {
+        e.setAnnotation(BACK_EDGE);
+      }
+    }
+    u.setAnnotation(BLACK);
+  }
+
+  private boolean ignoreEdge(DiGraphEdge<N, E> e) {
+    return !edgePredicate.apply(e);
+  }
+
+  
+
+
+
+  private boolean checkAllPathsWithoutBackEdges(DiGraphNode<N, E> a,
+      DiGraphNode<N, E> b) {
+    if (nodePredicate.apply(a.getValue()) &&
+        (inclusive || (a != start && a != end))) {
+      return true;
+    }
+    if (a == b) {
+      return false;
+    }
+    for (DiGraphEdge<N, E> e : a.getOutEdges()) {
+      if (ignoreEdge(e)) {
+        continue;
+      }
+      if (e.getAnnotation() == BACK_EDGE) {
+        continue;
+      }
+      DiGraphNode<N, E> next = e.getDestination();
+      if (!checkAllPathsWithoutBackEdges(next, b)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  
+
+
+
+  private boolean checkSomePathsWithoutBackEdges(DiGraphNode<N, E> a,
+      DiGraphNode<N, E> b) {
+    if (nodePredicate.apply(a.getValue()) &&
+        (inclusive || (a != start && a != end))) {
+      return true;
+    }
+    if (a == b) {
+      return false;
+    }
+    for (DiGraphEdge<N, E> e : a.getOutEdges()) {
+      if (ignoreEdge(e)) {
+        continue;
+      }
+      if (e.getAnnotation() == BACK_EDGE) {
+        continue;
+      }
+      DiGraphNode<N, E> next = e.getDestination();
+      if (checkSomePathsWithoutBackEdges(next, b)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}

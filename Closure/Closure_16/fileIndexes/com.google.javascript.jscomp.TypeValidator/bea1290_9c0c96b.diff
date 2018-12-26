@@ -1,0 +1,34 @@
+40a41
+> import com.google.javascript.rhino.jstype.StaticSlot;
+573c574
+<             implemented.getImplicitPrototype().getOwnPropertyNames()) {
+---
+>              implemented.getImplicitPrototype().getOwnPropertyNames()) {
+586c587,588
+<     if (!instance.hasProperty(prop)) {
+---
+>     StaticSlot<JSType> propSlot = instance.getSlot(prop);
+>     if (propSlot == null) {
+595c597,604
+<       JSType found = instance.getPropertyType(prop);
+---
+>       Node propNode = propSlot.getDeclaration() == null ?
+>           null : propSlot.getDeclaration().getNode();
+> 
+>       
+>       
+>       propNode = propNode == null ? n : propNode;
+> 
+>       JSType found = propSlot.getType();
+597c606
+<         = implementedInterface.getImplicitPrototype().getPropertyType(prop);
+---
+>           = implementedInterface.getImplicitPrototype().getPropertyType(prop);
+602,604c611,613
+<         FunctionType constructor
+<           = implementedInterface.toObjectType().getConstructor();
+<         registerMismatch(found, required, report(t.makeError(n,
+---
+>         FunctionType constructor =
+>             implementedInterface.toObjectType().getConstructor();
+>         registerMismatch(found, required, report(t.makeError(propNode,

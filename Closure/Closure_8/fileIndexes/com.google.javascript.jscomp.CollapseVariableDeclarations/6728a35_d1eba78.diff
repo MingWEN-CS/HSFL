@@ -1,0 +1,52 @@
+22a23
+> import com.google.javascript.jscomp.Scope.Var;
+129a131,133
+>     
+>     
+>     private final Set<Var> blacklistedVars = Sets.newHashSet();
+131a136,139
+>       if (n.getType() == Token.VAR) {
+>         blacklistStubVars(t, n);
+>       }
+> 
+154a163
+>           blacklistStubVars(t, n);
+169d177
+<   }
+171,173c179,185
+<   private boolean canBeRedeclared(Node n, Scope s) {
+<     if (!NodeUtil.isExprAssign(n)) {
+<       return false;
+---
+>     private void blacklistStubVars(NodeTraversal t, Node varNode) {
+>       for (Node child = varNode.getFirstChild();
+>            child != null; child = child.getNext()) {
+>         if (child.getFirstChild() == null) {
+>           blacklistedVars.add(t.getScope().getVar(child.getString()));
+>         }
+>       }
+175,176d186
+<     Node assign = n.getFirstChild();
+<     Node lhs = assign.getFirstChild();
+178,180c188,193
+<     if (!NodeUtil.isName(lhs)) {
+<       return false;
+<     }
+---
+>     private boolean canBeRedeclared(Node n, Scope s) {
+>       if (!NodeUtil.isExprAssign(n)) {
+>         return false;
+>       }
+>       Node assign = n.getFirstChild();
+>       Node lhs = assign.getFirstChild();
+182c195,202
+<     return s.isDeclared(lhs.getString(), false);
+---
+>       if (!NodeUtil.isName(lhs)) {
+>         return false;
+>       }
+> 
+>       Var var = s.getVar(lhs.getString());
+>       return var != null &&
+>           var.getScope() == s && !blacklistedVars.contains(var);
+>     }

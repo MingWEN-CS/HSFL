@@ -1,0 +1,98 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.Period;
+import org.joda.time.ReadWritableInterval;
+import org.joda.time.ReadWritablePeriod;
+
+
+
+
+
+
+
+
+
+
+class NullConverter extends AbstractConverter
+        implements InstantConverter, PartialConverter, DurationConverter, PeriodConverter, IntervalConverter {
+
+    
+
+
+    static final NullConverter INSTANCE = new NullConverter();
+
+    
+
+
+    protected NullConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+    public long getDurationMillis(Object object) {
+        return 0L;
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public void setInto(ReadWritablePeriod duration, Object object, Chronology chrono) {
+        duration.setPeriod((Period) null);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public void setInto(ReadWritableInterval writableInterval, Object object, Chronology chrono) {
+        writableInterval.setChronology(chrono);
+        long now = DateTimeUtils.currentTimeMillis();
+        writableInterval.setInterval(now, now);
+    }
+
+    
+    
+
+
+
+
+    public Class<?> getSupportedType() {
+        return null;
+    }
+
+}

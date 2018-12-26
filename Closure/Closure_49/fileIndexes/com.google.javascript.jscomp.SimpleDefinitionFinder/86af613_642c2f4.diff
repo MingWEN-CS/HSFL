@@ -1,0 +1,41 @@
+307a308,342
+>   boolean canModifyDefinition(Definition definition) {
+>     if (isExported(definition)) {
+>       return false;
+>     }
+> 
+>     
+>     
+>     
+>     
+>     Collection<UseSite> useSites = getUseSites(definition);
+>     if (useSites.isEmpty()) {
+>       return false;
+>     }
+> 
+>     for (UseSite site : useSites) {
+>       
+>       
+> 
+>       
+>       
+> 
+>       Node nameNode = site.node;
+>       Collection<Definition> singleSiteDefinitions =
+>           getDefinitionsReferencedAt(nameNode);
+>       if (singleSiteDefinitions.size() > 1) {
+>         return false;
+>       }
+> 
+>       Preconditions.checkState(!singleSiteDefinitions.isEmpty());
+>       Preconditions.checkState(singleSiteDefinitions.contains(definition));
+>     }
+> 
+>     return true;
+>   }
+> 
+311,312c346
+<   static boolean maybeExported(
+<       AbstractCompiler compiler, Definition definition) {
+---
+>   private boolean isExported(Definition definition) {

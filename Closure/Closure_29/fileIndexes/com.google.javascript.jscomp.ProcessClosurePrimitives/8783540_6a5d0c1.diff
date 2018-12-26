@@ -1,0 +1,49 @@
+912c912
+<         return makeVarDeclNode(namespace, firstNode);
+---
+>         return makeVarDeclNode();
+914c914
+<         return makeAssignmentExprNode(namespace, firstNode);
+---
+>         return makeAssignmentExprNode();
+922,925c922
+< 
+< 
+< 
+<     private Node makeVarDeclNode(String namespace, Node sourceNode) {
+---
+>     private Node makeVarDeclNode() {
+938c935
+<       decl.copyInformationFromForTree(sourceNode);
+---
+>       decl.copyInformationFromForTree(getSourceInfoNode());
+958,961c955,956
+< 
+< 
+< 
+<     private Node makeAssignmentExprNode(String namespace, Node node) {
+---
+>     private Node makeAssignmentExprNode() {
+>       Node sourceInfoNode = getSourceInfoNode();
+965c960,961
+<                   compiler.getCodingConvention(), namespace, node, namespace),
+---
+>                   compiler.getCodingConvention(), namespace,
+>                   sourceInfoNode, namespace),
+969c965
+<       decl.copyInformationFromForTree(node);
+---
+>       decl.copyInformationFromForTree(sourceInfoNode);
+970a967,978
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private Node getSourceInfoNode() {
+>       return (firstNode.getFirstChild() != null &&
+>               NodeUtil.isExprCall(firstNode)) ?
+>           firstNode.getFirstChild().getLastChild() :
+>           firstNode;

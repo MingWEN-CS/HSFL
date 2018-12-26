@@ -1,0 +1,41 @@
+40a41,42
+>   private final boolean doCommaSpliting;
+> 
+53a56,59
+>   PeepholeSubstituteAlternateSyntax(boolean doCommaSpliting) {
+>     this.doCommaSpliting = doCommaSpliting;
+>   }
+> 
+125a132,134
+>       case Token.COMMA:
+>         return tryFoldComma(node);
+> 
+130a140,167
+>     }
+>   }
+> 
+>   private Node tryFoldComma(Node n) {
+>     if (!doCommaSpliting) {
+>       return n;
+>     }
+>     Node parent = n.getParent();
+>     Node left = n.getFirstChild();
+>     Node right = n.getLastChild();
+> 
+>     if (parent.getType() == Token.EXPR_RESULT
+>         && parent.getParent().getType() != Token.LABEL) {
+>       
+>       n.detachChildren();
+>       
+>       parent.replaceChild(n, left);
+>       
+>       Node newStatement = new Node(Token.EXPR_RESULT, right);
+>       newStatement.copyInformationFrom(n);
+> 
+>       
+>       
+>       parent.getParent().addChildAfter(newStatement, parent);
+>       reportCodeChange();
+>       return left;
+>     } else {
+>       return n;

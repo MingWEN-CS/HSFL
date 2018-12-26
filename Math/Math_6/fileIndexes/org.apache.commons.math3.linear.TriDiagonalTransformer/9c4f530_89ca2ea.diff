@@ -1,0 +1,55 @@
+100,101c100,101
+<             cachedQt = MatrixUtils.createRealMatrix(m, m);
+< 
+---
+>             double[][] qta = new double[m][m];
+>           
+106c106
+<                 cachedQt.setEntry(k, k, 1);
+---
+>                 qta[k][k] = 1;
+109c109
+<                     cachedQt.setEntry(k, k, 1 + beta * hK[k]);
+---
+>                     qta[k][k] = 1 + beta * hK[k];
+111c111
+<                         cachedQt.setEntry(k, i, beta * hK[i]);
+---
+>                         qta[k][i] = beta * hK[i];
+116c116
+<                             beta += cachedQt.getEntry(j, i) * hK[i];
+---
+>                             beta += qta[j][i] * hK[i];
+119c119
+<                         cachedQt.setEntry(j, k, beta * hK[k]);
+---
+>                         qta[j][k] = beta * hK[k];
+121c121
+<                             cachedQt.addToEntry(j, i, beta * hK[i]);
+---
+>                             qta[j][i] += beta * hK[i];
+126c126,127
+<             cachedQt.setEntry(0, 0, 1);
+---
+>             qta[0][0] = 1;
+>             cachedQt = MatrixUtils.createRealMatrix(qta);
+140c141
+<             cachedT = MatrixUtils.createRealMatrix(m, m);
+---
+>             double[][] ta = new double[m][m];
+142c143
+<                 cachedT.setEntry(i, i, main[i]);
+---
+>                 ta[i][i] = main[i];
+144c145
+<                     cachedT.setEntry(i, i - 1, secondary[i - 1]);
+---
+>                     ta[i][i - 1] = secondary[i - 1];
+147c148
+<                     cachedT.setEntry(i, i + 1, secondary[i]);
+---
+>                     ta[i][i + 1] = secondary[i];
+150c151
+< 
+---
+>             cachedT = MatrixUtils.createRealMatrix(ta);

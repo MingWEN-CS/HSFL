@@ -1,0 +1,35 @@
+1040a1041,1042
+> 
+>         TernaryValue ternary = TernaryValue.UNKNOWN;
+1044c1046
+<             result = left.getString().equals(right.getString());
+---
+>             ternary = areStringsEqual(left.getString(), right.getString());
+1049c1051,1052
+<             result = !left.getString().equals(right.getString());
+---
+>             ternary =
+>                 areStringsEqual(left.getString(), right.getString()).not();
+1050a1054
+>         }
+1052,1053c1056,1057
+<           default:
+<             return n;  
+---
+>         if (ternary == TernaryValue.UNKNOWN) {
+>           return n;
+1054a1059
+>         result = ternary.toBoolean(true);
+1156a1162,1173
+>   }
+> 
+>   
+>   private TernaryValue areStringsEqual(String a, String b) {
+>     
+>     
+>     if (a.indexOf('\u000B') != -1 ||
+>         b.indexOf('\u000B') != -1) {
+>       return TernaryValue.UNKNOWN;
+>     } else {
+>       return a.equals(b) ? TernaryValue.TRUE : TernaryValue.FALSE;
+>     }

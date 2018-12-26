@@ -1,0 +1,70 @@
+45a46
+> 
+64c65
+<     private Date start;
+---
+>     private long start;
+67c68
+<     private Date end;
+---
+>     private long end;
+76c77,81
+<         this(new Date(start), new Date(end));
+---
+>         if (start > end) {
+>             throw new IllegalArgumentException("Requires start <= end.");
+>         }
+>         this.start = start;
+>         this.end = end;
+86,90c91
+<         if (start.getTime() > end.getTime()) {
+<             throw new IllegalArgumentException("Requires end >= start.");
+<         }
+<         this.start = start;
+<         this.end = end;
+---
+>         this(start.getTime(), end.getTime());
+99c100,111
+<         return this.start;
+---
+>         return new Date(this.start);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getStartMillis() {
+>     	return this.start;
+108c120,131
+<         return this.end;
+---
+>         return new Date(this.end);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getEndMillis() {
+>     	return this.end;
+128c151
+<         if (!this.start.equals(that.getStart())) {
+---
+>         if (!this.getStart().equals(that.getStart())) {
+131c154
+<         if (!this.end.equals(that.getEnd())) {
+---
+>         if (!this.getEnd().equals(that.getEnd())) {
+194,195c217,218
+<         result = 37 * result + this.start.hashCode();
+<         result = 37 * result + this.end.hashCode();
+---
+>         result = 37 * result + (int) this.start;
+>         result = 37 * result + (int) this.end;

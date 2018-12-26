@@ -1,0 +1,27 @@
+42a43
+> import com.google.common.base.Joiner;
+43a45
+> import com.google.common.collect.ImmutableList;
+55c57
+<     this(registry, constructor, false);
+---
+>     this(registry, constructor, false, null);
+59,60c61,64
+<                      boolean isNativeType) {
+<     super(registry, null, null, isNativeType);
+---
+>                      boolean isNativeType,
+>                      ImmutableList<JSType> templatizedTypes) {
+>     super(registry, null, null, isNativeType, constructor.getTemplateKeys(),
+>         templatizedTypes);
+98c102,109
+<       return constructor.getReferenceName();
+---
+>       String typeString = constructor.getReferenceName();
+> 
+>       ImmutableList<JSType> templatizedTypes = getTemplatizedTypes();
+>       if (!templatizedTypes.isEmpty()) {
+>         typeString += ".<" + Joiner.on(",").join(templatizedTypes) + ">";
+>       }
+> 
+>       return typeString;

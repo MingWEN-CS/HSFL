@@ -1,0 +1,103 @@
+181c181,192
+<     private static final double HEX_40000000 = 1073741824.0;
+---
+> 
+> 
+> 
+> 
+>     
+> 
+> 
+> 
+>     private static final long HEX_40000000 = 0x40000000L; 
+>     
+>     
+>     private static final long MASK_30BITS = -1L - (HEX_40000000 -1); 
+236a248,277
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static double getSign(double d){ 
+>         long l = Double.doubleToLongBits(d);
+>         return l < 0 ? -1.0 : 1.0;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static double doubleHighPart(double d) {
+>         if (d > -MathUtils.SAFE_MIN && d < MathUtils.SAFE_MIN){
+>             return d; 
+>         }
+>         long xl = Double.doubleToLongBits(d);
+>         xl = xl & MASK_30BITS; 
+>         return Double.longBitsToDouble(xl);
+>     }
+> 
+>     
+2760c2801
+<             return xa;
+---
+>             return leftPlane ? getSign(xa) * Math.PI : xa;
+2917c2958
+<                     return 0.0;
+---
+>                     return y; 
+2919c2960
+<                     return Math.PI;
+---
+>                     return getSign(y) * Math.PI;
+2923,2926d2963
+<             if (result != result) { 
+<                 return x/y;
+<             }
+< 
+2937a2975,2976
+>         
+> 
+2982a3022,3023
+>         
+> 
+2993,2995c3034,3037
+<         if (x > 8e298 || x < -8e298) { 
+<             x *= 9.31322574615478515625E-10;
+<             y *= 9.31322574615478515625E-10;
+---
+>         
+>         final double r = y/x;
+>         if (Double.isInfinite(r)) { 
+>             return atan(r, 0, x < 0);
+2998,3001c3040,3041
+<         
+<         double temp = x * HEX_40000000;
+<         final double xa = x + temp - temp;
+<         final double xb = x - xa;
+---
+>         double ra = doubleHighPart(r);
+>         double rb = r - ra;
+3004,3007c3044,3045
+<         final double r = y/x;
+<         temp = r * HEX_40000000;
+<         double ra = r + temp - temp;
+<         double rb = r - ra;
+---
+>         final double xa = doubleHighPart(x);
+>         final double xb = x - xa;
+3011c3049
+<         temp = ra + rb;
+---
+>         double temp = ra + rb;
+3013a3052,3055
+> 
+>         if (ra == 0 && (y < 0)) { 
+>             ra = -0.0;
+>         }

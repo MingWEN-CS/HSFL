@@ -1,0 +1,33 @@
+278,282c278,282
+<         if (parent.isVar()) {
+<           if (n.hasChildren() && n.getFirstChild().isQualifiedName()) {
+<             String name = n.getString();
+<             Var aliasVar = scope.getVar(name);
+<             aliases.put(name, aliasVar);
+---
+>         if (parent.isVar() &&
+>             n.hasChildren() && n.getFirstChild().isQualifiedName()) {
+>           String name = n.getString();
+>           Var aliasVar = scope.getVar(name);
+>           aliases.put(name, aliasVar);
+284,290c284,295
+<             String qualifiedName =
+<                 aliasVar.getInitialValue().getQualifiedName();
+<             transformation.addAlias(name, qualifiedName);
+<           } else {
+<             
+<             report(t, n, GOOG_SCOPE_NON_ALIAS_LOCAL, n.getString());
+<           }
+---
+>           String qualifiedName =
+>               aliasVar.getInitialValue().getQualifiedName();
+>           transformation.addAlias(name, qualifiedName);
+>         } else if (v.isBleedingFunction()) {
+>           
+>           
+>         } else if (parent.getType() == Token.LP) {
+>           
+>           
+>         } else {
+>           
+>           report(t, n, GOOG_SCOPE_NON_ALIAS_LOCAL, n.getString());

@@ -1,0 +1,60 @@
+171,179c171,175
+<           
+<           
+<           if (n.hasOneChild()) {
+<             
+<             Node nameNode = n.getFirstChild();
+<             if (nameNode.getType() == Token.NAME && nameNode.hasChildren()
+<                 && nameNode.getFirstChild().getType() == Token.FUNCTION) {
+<               maybeAddFunction(new FunctionVar(n), t.getModule());
+<             }
+---
+>           Preconditions.checkState(n.hasOneChild());
+>           Node nameNode = n.getFirstChild();
+>           if (nameNode.getType() == Token.NAME && nameNode.hasChildren()
+>               && nameNode.getFirstChild().getType() == Token.FUNCTION) {
+>             maybeAddFunction(new FunctionVar(n), t.getModule());
+275a272,283
+> 
+>           if (NodeUtil.containsFunction(block)) {
+>             fs.setHasInnerFunctions(true);
+>             
+>             
+>             
+>             
+>             
+>             if (hasLocalNames(fnNode)) {
+>               fs.setInline(false);
+>             }
+>           }
+291a300,312
+>   private boolean hasLocalNames(Node fnNode) {
+>     Node block = NodeUtil.getFunctionBody(fnNode);
+>     return NodeUtil.getFnParameters(fnNode).hasChildren()
+>         || NodeUtil.has(
+>              block, 
+>              new NodeUtil.MatchDeclaration(), 
+>              new NodeUtil.MatchShallowStatement());
+>   }
+> 
+>   
+> 
+> 
+> 
+432c453,454
+<           fs.getNamesToAlias(), mode, fs.getReferencesThis());
+---
+>           fs.getNamesToAlias(), mode, fs.getReferencesThis(),
+>           fs.hasInnerFunctions());
+757a780
+>     private boolean hasInnerFunctions = false;
+771a795,803
+>     }
+> 
+>     public void setHasInnerFunctions(boolean hasInnerFunctions) {
+>       this.hasInnerFunctions = hasInnerFunctions;
+>     }
+> 
+> 
+>     public boolean hasInnerFunctions() {
+>       return hasInnerFunctions;

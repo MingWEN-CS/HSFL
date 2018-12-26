@@ -1,0 +1,42 @@
+214c214,219
+<       return nextConvention.describeFunctionBind(n);
+---
+>       return describeFunctionBind(n, false);
+>     }
+> 
+>     @Override
+>     public Bind describeFunctionBind(Node n, boolean useTypeInfo) {
+>       return nextConvention.describeFunctionBind(n, useTypeInfo);
+409,410c414,415
+<       
+<       
+---
+>       return describeFunctionBind(n, false);
+>     }
+411a417,418
+>     @Override
+>     public Bind describeFunctionBind(Node n, boolean useTypeInfo) {
+432,438c439,453
+<           && callTarget.getLastChild().getString().equals("bind")
+<           && callTarget.getFirstChild().isFunction()) {
+<         
+<         Node fn = callTarget.getFirstChild();
+<         Node thisValue = callTarget.getNext();
+<         Node parameters = safeNext(thisValue);
+<         return new Bind(fn, thisValue, parameters);
+---
+>           && callTarget.getLastChild().getString().equals("bind")) {
+>         Node maybeFn = callTarget.getFirstChild();
+>         JSType maybeFnType = maybeFn.getJSType();
+>         FunctionType fnType = null;
+>         if (useTypeInfo && maybeFnType != null) {
+>           fnType = maybeFnType.restrictByNotNullOrUndefined()
+>               .toMaybeFunctionType();
+>         }
+> 
+>         if (fnType != null || maybeFn.isFunction()) {
+>           
+>           Node thisValue = callTarget.getNext();
+>           Node parameters = safeNext(thisValue);
+>           return new Bind(maybeFn, thisValue, parameters);
+>         }

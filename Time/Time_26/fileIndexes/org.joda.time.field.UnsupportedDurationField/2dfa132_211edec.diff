@@ -1,0 +1,47 @@
+58a59
+> import org.joda.time.DurationFieldType;
+83c84
+<     public static synchronized UnsupportedDurationField getInstance(String name) {
+---
+>     public static synchronized UnsupportedDurationField getInstance(DurationFieldType type) {
+89c90
+<             field = (UnsupportedDurationField)cCache.get(name);
+---
+>             field = (UnsupportedDurationField) cCache.get(type);
+92,93c93,94
+<             field = new UnsupportedDurationField(name);
+<             cCache.put(name, field);
+---
+>             field = new UnsupportedDurationField(type);
+>             cCache.put(type, field);
+99c100
+<     private final String iName;
+---
+>     private final DurationFieldType iType;
+106,107c107,108
+<     private UnsupportedDurationField(String name) {
+<         iName = name;
+---
+>     private UnsupportedDurationField(DurationFieldType type) {
+>         iType = type;
+113a115,118
+>     public final DurationFieldType getType() {
+>         return iType;
+>     }
+> 
+115c120
+<         return iName;
+---
+>         return iType.getName();
+297c302
+<         return "UnsupportedDurationField";
+---
+>         return "UnsupportedDurationField[" + getName() + ']';
+304c309
+<         return getInstance(iName);
+---
+>         return getInstance(iType);
+308c313
+<         return new UnsupportedOperationException(iName + " field is unsupported");
+---
+>         return new UnsupportedOperationException(iType + " field is unsupported");

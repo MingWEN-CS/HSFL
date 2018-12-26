@@ -1,0 +1,8 @@
+121c121,125
+<         return ((Calendar) object).getTime().getTime();
+---
+>         Calendar calendar = (Calendar) object;
+>         long millisLocal = calendar.getTime().getTime() +
+>             calendar.get(Calendar.ZONE_OFFSET) + calendar.get(Calendar.DST_OFFSET);
+>         DateTimeZone tz = DateTimeZone.forTimeZone(calendar.getTimeZone());
+>         return millisLocal - tz.getOffsetFromLocal(millisLocal);

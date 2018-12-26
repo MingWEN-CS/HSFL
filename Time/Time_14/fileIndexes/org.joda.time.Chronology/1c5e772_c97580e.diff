@@ -1,0 +1,316 @@
+56,58d55
+< import java.io.Serializable;
+< import org.joda.time.chrono.UnsupportedDateTimeField;
+< import org.joda.time.chrono.UnsupportedDurationField;
+82c79
+< public abstract class Chronology implements Serializable {
+---
+> public interface Chronology {
+84,92d80
+<     static final long serialVersionUID = -7310865996721419676L;
+< 
+<     
+< 
+< 
+<     protected Chronology() {
+<         super();
+<     }
+< 
+99c87
+<     public abstract DateTimeZone getDateTimeZone();
+---
+>     DateTimeZone getDateTimeZone();
+108c96
+<     public abstract Chronology withUTC();
+---
+>     Chronology withUTC();
+117c105
+<     public abstract Chronology withDateTimeZone(DateTimeZone zone);
+---
+>     Chronology withDateTimeZone(DateTimeZone zone);
+130,132c118
+<     public long getDateOnlyMillis(long instant) {
+<         return dayOfYear().roundFloor(instant);
+<     }
+---
+>     long getDateOnlyMillis(long instant);
+148,152c134,135
+<     public long getDateOnlyMillis(int year, int monthOfYear, int dayOfMonth)
+<         throws IllegalArgumentException
+<     {
+<         return getDateTimeMillis(year, monthOfYear, dayOfMonth, 0);
+<     }
+---
+>     long getDateOnlyMillis(int year, int monthOfYear, int dayOfMonth)
+>         throws IllegalArgumentException;
+165,167c148
+<     public long getTimeOnlyMillis(long instant) {
+<         return dayOfYear().remainder(instant);
+<     }
+---
+>     long getTimeOnlyMillis(long instant);
+185,193c166,168
+<     public long getTimeOnlyMillis(int hourOfDay, int minuteOfHour,
+<                                   int secondOfMinute, int millisOfSecond)
+<         throws IllegalArgumentException
+<     {
+<         long instant = hourOfDay().set(0, hourOfDay);
+<         instant = minuteOfHour().set(instant, minuteOfHour);
+<         instant = secondOfMinute().set(instant, secondOfMinute);
+<         return millisOfSecond().set(instant, millisOfSecond);
+<     }
+---
+>     long getTimeOnlyMillis(int hourOfDay, int minuteOfHour,
+>                            int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException;
+210,218c185,186
+<     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+<                                   int millisOfDay)
+<         throws IllegalArgumentException
+<     {
+<         long instant = year().set(0, year);
+<         instant = monthOfYear().set(instant, monthOfYear);
+<         instant = dayOfMonth().set(instant, dayOfMonth);
+<         return millisOfDay().set(instant, millisOfDay);
+<     }
+---
+>     long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth, int millisOfDay)
+>         throws IllegalArgumentException;
+237,246c205,208
+<     public long getDateTimeMillis(long instant,
+<                                   int hourOfDay, int minuteOfHour,
+<                                   int secondOfMinute, int millisOfSecond)
+<         throws IllegalArgumentException
+<     {
+<         instant = hourOfDay().set(instant, hourOfDay);
+<         instant = minuteOfHour().set(instant, minuteOfHour);
+<         instant = secondOfMinute().set(instant, secondOfMinute);
+<         return millisOfSecond().set(instant, millisOfSecond);
+<     }
+---
+>     long getDateTimeMillis(long instant,
+>                            int hourOfDay, int minuteOfHour,
+>                            int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException;
+267,279c229,232
+<     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+<                                   int hourOfDay, int minuteOfHour,
+<                                   int secondOfMinute, int millisOfSecond)
+<         throws IllegalArgumentException
+<     {
+<         long instant = year().set(0, year);
+<         instant = monthOfYear().set(instant, monthOfYear);
+<         instant = dayOfMonth().set(instant, dayOfMonth);
+<         instant = hourOfDay().set(instant, hourOfDay);
+<         instant = minuteOfHour().set(instant, minuteOfHour);
+<         instant = secondOfMinute().set(instant, secondOfMinute);
+<         return millisOfSecond().set(instant, millisOfSecond);
+<     }
+---
+>     long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+>                            int hourOfDay, int minuteOfHour,
+>                            int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException;
+288,290c241
+<     public DurationField millis() {
+<         return UnsupportedDurationField.getInstance("millis");
+<     }
+---
+>     DurationField millis();
+297,299c248
+<     public DateTimeField millisOfSecond() {
+<         return UnsupportedDateTimeField.getInstance("millisOfSecond", millis());
+<     }
+---
+>     DateTimeField millisOfSecond();
+306,308c255
+<     public DateTimeField millisOfDay() {
+<         return UnsupportedDateTimeField.getInstance("millisOfDay", millis());
+<     }
+---
+>     DateTimeField millisOfDay();
+317,319c264
+<     public DurationField seconds() {
+<         return UnsupportedDurationField.getInstance("seconds");
+<     }
+---
+>     DurationField seconds();
+326,328c271
+<     public DateTimeField secondOfMinute() {
+<         return UnsupportedDateTimeField.getInstance("secondOfMinute", seconds());
+<     }
+---
+>     DateTimeField secondOfMinute();
+335,337c278
+<     public DateTimeField secondOfDay() {
+<         return UnsupportedDateTimeField.getInstance("secondOfDay", seconds());
+<     }
+---
+>     DateTimeField secondOfDay();
+346,348c287
+<     public DurationField minutes() {
+<         return UnsupportedDurationField.getInstance("minutes");
+<     }
+---
+>     DurationField minutes();
+355,357c294
+<     public DateTimeField minuteOfHour() {
+<         return UnsupportedDateTimeField.getInstance("minuteOfHour", minutes());
+<     }
+---
+>     DateTimeField minuteOfHour();
+364,366c301
+<     public DateTimeField minuteOfDay() {
+<         return UnsupportedDateTimeField.getInstance("minuteOfDay", minutes());
+<     }
+---
+>     DateTimeField minuteOfDay();
+375,377c310
+<     public DurationField hours() {
+<         return UnsupportedDurationField.getInstance("hours");
+<     }
+---
+>     DurationField hours();
+384,386c317
+<     public DateTimeField hourOfDay() {
+<         return UnsupportedDateTimeField.getInstance("hourOfDay", hours());
+<     }
+---
+>     DateTimeField hourOfDay();
+393,395c324
+<     public DateTimeField clockhourOfDay() {
+<         return UnsupportedDateTimeField.getInstance("clockhourOfDay", hours());
+<     }
+---
+>     DateTimeField clockhourOfDay();
+402,404c331
+<     public DateTimeField hourOfHalfday() {
+<         return UnsupportedDateTimeField.getInstance("hourOfHalfday", hours());
+<     }
+---
+>     DateTimeField hourOfHalfday();
+411,413c338
+<     public DateTimeField clockhourOfHalfday() {
+<         return UnsupportedDateTimeField.getInstance("clockhourOfHalfday", hours());
+<     }
+---
+>     DateTimeField clockhourOfHalfday();
+420,423c345
+<     public DateTimeField halfdayOfDay() {
+<         return UnsupportedDateTimeField.getInstance
+<             ("halfdayOfDay", UnsupportedDurationField.getInstance("halfdays"));
+<     }
+---
+>     DateTimeField halfdayOfDay();
+432,434c354
+<     public DurationField days() {
+<         return UnsupportedDurationField.getInstance("days");
+<     }
+---
+>     DurationField days();
+444,446c364
+<     public DateTimeField dayOfWeek() {
+<         return UnsupportedDateTimeField.getInstance("dayOfWeek", days());
+<     }
+---
+>     DateTimeField dayOfWeek();
+453,455c371
+<     public DateTimeField dayOfMonth() {
+<         return UnsupportedDateTimeField.getInstance("dayOfMonth", days());
+<     }
+---
+>     DateTimeField dayOfMonth();
+462,464c378
+<     public DateTimeField dayOfYear() {
+<         return UnsupportedDateTimeField.getInstance("dayOfYear", days());
+<     }
+---
+>     DateTimeField dayOfYear();
+473,475c387
+<     public DurationField weeks() {
+<         return UnsupportedDurationField.getInstance("weeks");
+<     }
+---
+>     DurationField weeks();
+482,484c394
+<     public DateTimeField weekOfWeekyear() {
+<         return UnsupportedDateTimeField.getInstance("weekOfWeekyear", weeks());
+<     }
+---
+>     DateTimeField weekOfWeekyear();
+491,493c401
+<     public DurationField weekyears() {
+<         return UnsupportedDurationField.getInstance("weekyears");
+<     }
+---
+>     DurationField weekyears();
+500,502c408
+<     public DateTimeField weekyear() {
+<         return UnsupportedDateTimeField.getInstance("weekyear", weekyears());
+<     }
+---
+>     DateTimeField weekyear();
+511,513c417
+<     public DurationField months() {
+<         return UnsupportedDurationField.getInstance("months");
+<     }
+---
+>     DurationField months();
+520,522c424
+<     public DateTimeField monthOfYear() {
+<         return UnsupportedDateTimeField.getInstance("monthOfYear", months());
+<     }
+---
+>     DateTimeField monthOfYear();
+531,533c433
+<     public DurationField years() {
+<         return UnsupportedDurationField.getInstance("years");
+<     }
+---
+>     DurationField years();
+540,542c440
+<     public DateTimeField year() {
+<         return UnsupportedDateTimeField.getInstance("year", years());
+<     }
+---
+>     DateTimeField year();
+549,551c447
+<     public DateTimeField yearOfEra() {
+<         return UnsupportedDateTimeField.getInstance("yearOfEra", years());
+<     }
+---
+>     DateTimeField yearOfEra();
+558,560c454
+<     public DateTimeField yearOfCentury() {
+<         return UnsupportedDateTimeField.getInstance("yearOfCentury", years());
+<     }
+---
+>     DateTimeField yearOfCentury();
+567,569c461
+<     public DurationField centuries() {
+<         return UnsupportedDurationField.getInstance("centuries");
+<     }
+---
+>     DurationField centuries();
+576,578c468
+<     public DateTimeField centuryOfEra() {
+<         return UnsupportedDateTimeField.getInstance("centuryOfEra", centuries());
+<     }
+---
+>     DateTimeField centuryOfEra();
+585,587c475
+<     public DurationField eras() {
+<         return UnsupportedDurationField.getInstance("eras");
+<     }
+---
+>     DurationField eras();
+594,596c482
+<     public DateTimeField era() {
+<         return UnsupportedDateTimeField.getInstance("era", eras());
+<     }
+---
+>     DateTimeField era();
+603c489
+<     public abstract String toString();
+---
+>     String toString();

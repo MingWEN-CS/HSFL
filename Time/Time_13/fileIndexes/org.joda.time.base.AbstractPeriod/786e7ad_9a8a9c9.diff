@@ -1,0 +1,1089 @@
+61d60
+< import org.joda.time.DurationField;
+67,68d65
+< import org.joda.time.ReadWritablePeriod;
+< import org.joda.time.ReadableDuration;
+70d66
+< import org.joda.time.ReadableInterval;
+72,73d67
+< import org.joda.time.convert.ConverterManager;
+< import org.joda.time.convert.PeriodConverter;
+94,186d87
+<     private static final long serialVersionUID = -2110953284060001145L;
+<     
+<     private static final int STATE_UNKNOWN = 0;
+<     
+<     private static final int STATE_NOT_CALCULABLE = 1;
+<     
+<     private static final int STATE_CALCULATED = 2;
+< 
+<     
+<     private final PeriodType iType;
+<     
+<     private transient int iState;
+<     
+<     private transient long iDuration;
+<     
+<     private int iYears;
+<     
+<     private int iMonths;
+<     
+<     private int iWeeks;
+<     
+<     private int iDays;
+<     
+<     private int iHours;
+<     
+<     private int iMinutes;
+<     
+<     private int iSeconds;
+<     
+<     private int iMillis;
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPeriod(long duration, PeriodType type) {
+<         super();
+<         type = checkPeriodType(type);
+<         iType = type;
+<         
+<         setPeriod(type, duration);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPeriod(int years, int months, int weeks, int days,
+<                             int hours, int minutes, int seconds, int millis,
+<                             PeriodType type) {
+<         super();
+<         type = checkPeriodType(type);
+<         iType = type;
+<         
+<         setPeriod(type, years, months, weeks, days, hours, minutes, seconds, millis);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPeriod(long startInstant, long endInstant, PeriodType type) {
+<         super();
+<         type = checkPeriodType(type);
+<         iType = type;
+<         
+<         setPeriod(type, startInstant, endInstant);
+<     }
+< 
+<     
+< 
+< 
+189,215c90
+< 
+< 
+< 
+<     protected AbstractPeriod(
+<             ReadableInstant startInstant, ReadableInstant  endInstant, PeriodType type) {
+<         super();
+<         type = checkPeriodType(type);
+<         if (startInstant == null && endInstant == null) {
+<             iType = type;
+<         } else {
+<             long start = (startInstant == null ? DateTimeUtils.currentTimeMillis() : startInstant.getMillis());
+<             long end = (endInstant == null ? DateTimeUtils.currentTimeMillis() : endInstant.getMillis());
+<             iType = type;
+<             
+<             setPeriod(type, start, end);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected AbstractPeriod(Object period, PeriodType type) {
+---
+>     protected AbstractPeriod() {
+217,265d91
+<         PeriodConverter converter = ConverterManager.getInstance().getPeriodConverter(period);
+<         type = (type == null ? converter.getPeriodType(period, false) : type);
+<         type = checkPeriodType(type);
+<         iType = type;
+<         if (this instanceof ReadWritablePeriod) {
+<             converter.setInto((ReadWritablePeriod) this, period);
+<         } else {
+<             
+<             setPeriod(type, new MutablePeriod(period, type));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected abstract PeriodType checkPeriodType(PeriodType type);
+< 
+<     
+<     
+< 
+< 
+<     public final PeriodType getPeriodType() {
+<         return iType;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public final boolean isPrecise() {
+<         int state = iState;
+<         if (state == STATE_UNKNOWN) {
+<             state = updateTotalMillis();
+<         }
+<         return (state == STATE_CALCULATED);
+282c108
+<     public final long addTo(long instant, int scalar) {
+---
+>     public long addTo(long instant, int scalar) {
+299c125
+<     public final long addTo(long instant, int scalar, Chronology chrono) {
+---
+>     public long addTo(long instant, int scalar, Chronology chrono) {
+304c130
+<         PeriodType type = iType;
+---
+>         PeriodType type = getPeriodType();
+310c136
+<         value = scaleValue(iYears, scalar);
+---
+>         value = scaleValue(getYears(), scalar);
+314c140
+<         value = scaleValue(iMonths, scalar);
+---
+>         value = scaleValue(getMonths(), scalar);
+318c144
+<         value = scaleValue(iWeeks, scalar);
+---
+>         value = scaleValue(getWeeks(), scalar);
+322c148
+<         value = scaleValue(iDays, scalar);
+---
+>         value = scaleValue(getDays(), scalar);
+326c152
+<         value = scaleValue(iHours, scalar);
+---
+>         value = scaleValue(getHours(), scalar);
+330c156
+<         value = scaleValue(iMinutes, scalar);
+---
+>         value = scaleValue(getMinutes(), scalar);
+334c160
+<         value = scaleValue(iSeconds, scalar);
+---
+>         value = scaleValue(getSeconds(), scalar);
+338c164
+<         value = scaleValue(iMillis, scalar);
+---
+>         value = scaleValue(getMillis(), scalar);
+379c205
+<     public final Instant addTo(ReadableInstant instant, int scalar) {
+---
+>     public Instant addTo(ReadableInstant instant, int scalar) {
+397c223
+<     public final void addInto(ReadWritableInstant instant, int scalar) {
+---
+>     public void addInto(ReadWritableInstant instant, int scalar) {
+410,495c236
+<     public final int getYears() {
+<         return iYears;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public final int getMonths() {
+<         return iMonths;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public final int getWeeks() {
+<         return iWeeks;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public final int getDays() {
+<         return iDays;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public final int getHours() {
+<         return iHours;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public final int getMinutes() {
+<         return iMinutes;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public final int getSeconds() {
+<         return iSeconds;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public final int getMillis() {
+<         return iMillis;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public final Period toPeriod() {
+<         if (this instanceof Period) {
+<             return (Period) this;
+<         }
+---
+>     public Period toPeriod() {
+506c247
+<     public final MutablePeriod toMutablePeriod() {
+---
+>     public MutablePeriod toMutablePeriod() {
+519,538c260
+<     public final long toDurationMillis() {
+<         int state = iState;
+<         if (state == STATE_UNKNOWN) {
+<             state = updateTotalMillis();
+<         }
+<         if (state != STATE_CALCULATED) {
+<             throw new IllegalStateException("Duration is imprecise");
+<         }
+<         return iDuration;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public final Duration toDuration() {
+---
+>     public Duration toDuration() {
+554c276
+<     public final boolean equals(Object readablePeriod) {
+---
+>     public boolean equals(Object readablePeriod) {
+583c305
+<     public final int hashCode() {
+---
+>     public int hashCode() {
+609,1336d330
+<     }
+< 
+<     
+<     
+< 
+< 
+<     private static void checkArgument(DurationField field) {
+<         if (!field.isSupported()) {
+<             throw new IllegalArgumentException
+<                 ("Time period does not support field '" + field.getName() + "'");
+<         }
+<     }
+< 
+<     
+< 
+< 
+<     private static void checkSupport(DurationField field) {
+<         if (!field.isSupported()) {
+<             throw new UnsupportedOperationException
+<                 ("Time period does not support field '" + field.getName() + "'");
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(ReadablePeriod period) {
+<         if (period == null) {
+<             setPeriod(iType, 0L);
+<         } else {
+<             setPeriod(iType, period);
+<         }
+<     }
+< 
+<     
+< 
+< 
+<     private void setPeriod(PeriodType type, ReadablePeriod period) {
+<         setPeriod(type,
+<             period.getYears(), period.getMonths(),
+<             period.getWeeks(), period.getDays(),
+<             period.getHours(), period.getMinutes(),
+<             period.getSeconds(), period.getMillis());
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(int years, int months, int weeks, int days,
+<                                int hours, int minutes, int seconds, int millis) {
+<         setPeriod(iType, years, months, weeks, days, hours, minutes, seconds, millis);
+<     }
+< 
+<     
+< 
+< 
+<     private void setPeriod(PeriodType type,
+<                              int years, int months, int weeks, int days,
+<                              int hours, int minutes, int seconds, int millis) {
+<         if (years != 0) {
+<             checkArgument(type.years());
+<         }
+<         if (months != 0) {
+<             checkArgument(type.months());
+<         }
+<         if (weeks != 0) {
+<             checkArgument(type.weeks());
+<         }
+<         if (days != 0) {
+<             checkArgument(type.days());
+<         }
+<         if (hours != 0) {
+<             checkArgument(type.hours());
+<         }
+<         if (minutes != 0) {
+<             checkArgument(type.minutes());
+<         }
+<         if (seconds != 0) {
+<             checkArgument(type.seconds());
+<         }
+<         if (millis != 0) {
+<             checkArgument(type.millis());
+<         }
+<         
+<         
+<         iYears = years;
+<         iMonths = months;
+<         iWeeks = weeks;
+<         iDays = days;
+<         iHours = hours;
+<         iMinutes = minutes;
+<         iSeconds = seconds;
+<         iMillis = millis;
+<         iState = STATE_UNKNOWN;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(long startInstant, long endInstant) {
+<         setPeriod(iType, startInstant, endInstant);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     private void setPeriod(PeriodType type, long startInstant, long endInstant) {
+<         long baseTotalMillis = (endInstant - startInstant);
+<         int years = 0, months = 0, weeks = 0, days = 0;
+<         int hours = 0, minutes = 0, seconds = 0, millis = 0;
+<         DurationField field;
+<         field = type.years();
+<         if (field.isSupported()) {
+<             years = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, years);
+<         }
+<         field = type.months();
+<         if (field.isSupported()) {
+<             months = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, months);
+<         }
+<         field = type.weeks();
+<         if (field.isSupported()) {
+<             weeks = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, weeks);
+<         }
+<         field = type.days();
+<         if (field.isSupported()) {
+<             days = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, days);
+<         }
+<         field = type.hours();
+<         if (field.isSupported()) {
+<             hours = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, hours);
+<         }
+<         field = type.minutes();
+<         if (field.isSupported()) {
+<             minutes = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, minutes);
+<         }
+<         field = type.seconds();
+<         if (field.isSupported()) {
+<             seconds = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, seconds);
+<         }
+<         field = type.millis();
+<         if (field.isSupported()) {
+<             millis = field.getDifference(endInstant, startInstant);
+<             startInstant = field.add(startInstant, millis);
+<         }
+<         
+<         
+<         iYears = years;
+<         iMonths = months;
+<         iWeeks = weeks;
+<         iDays = days;
+<         iHours = hours;
+<         iMinutes = minutes;
+<         iSeconds = seconds;
+<         iMillis = millis;
+<         iState = STATE_UNKNOWN;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(long duration) {
+<         setPeriod(iType, duration);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private void setPeriod(PeriodType type, long duration) {
+<         if (duration == 0) {
+<             iDuration = duration;
+<             iYears = 0;
+<             iMonths = 0;
+<             iWeeks = 0;
+<             iDays = 0;
+<             iHours = 0;
+<             iMinutes = 0;
+<             iSeconds = 0;
+<             iMillis = 0;
+<             iState = STATE_CALCULATED;
+<             return;
+<         }
+<         
+<         long startInstant = 0;
+<         int years = 0, months = 0, weeks = 0, days = 0;
+<         int hours = 0, minutes = 0, seconds = 0, millis = 0;
+<         DurationField field;
+<         
+<         field = type.years();
+<         if (field.isSupported() && field.isPrecise()) {
+<             years = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, years);
+<         }
+<         field = type.months();
+<         if (field.isSupported() && field.isPrecise()) {
+<             months = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, months);
+<         }
+<         field = type.weeks();
+<         if (field.isSupported() && field.isPrecise()) {
+<             weeks = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, weeks);
+<         }
+<         field = type.days();
+<         if (field.isSupported() && field.isPrecise()) {
+<             days = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, days);
+<         }
+<         field = type.hours();
+<         if (field.isSupported() && field.isPrecise()) {
+<             hours = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, hours);
+<         }
+<         field = type.minutes();
+<         if (field.isSupported() && field.isPrecise()) {
+<             minutes = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, minutes);
+<         }
+<         field = type.seconds();
+<         if (field.isSupported() && field.isPrecise()) {
+<             seconds = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, seconds);
+<         }
+<         field = type.millis();
+<         if (field.isSupported() && field.isPrecise()) {
+<             millis = field.getDifference(duration, startInstant);
+<             startInstant = field.add(startInstant, millis);
+<         }
+<         
+<         
+<         iYears = years;
+<         iMonths = months;
+<         iWeeks = weeks;
+<         iDays = days;
+<         iHours = hours;
+<         iMinutes = minutes;
+<         iSeconds = seconds;
+<         iMillis = millis;
+<         iState = STATE_UNKNOWN;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(ReadableInterval interval) {
+<         if (interval != null) {
+<             setPeriod(interval.getStartMillis(), interval.getEndMillis());
+<         } else {
+<             setPeriod(0L);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setPeriod(ReadableDuration duration) {
+<         if (duration != null) {
+<             setPeriod(duration.getMillis());
+<         } else {
+<             setPeriod(0L);
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     private int updateTotalMillis() {
+<         final PeriodType type = iType;
+< 
+<         boolean isPrecise = true;
+<         long totalMillis = 0;
+< 
+<         DurationField field;
+<         int years = iYears, months = iMonths, weeks = iWeeks, days = iDays;
+<         int hours = iHours, minutes = iMinutes, seconds = iSeconds, millis = iMillis;
+<         if (years != 0) {
+<             field = type.years();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(years));
+<             }
+<         }
+<         if (months != 0) {
+<             field = type.months();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(months));
+<             }
+<         }
+<         if (weeks != 0) {
+<             field = type.weeks();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(weeks));
+<             }
+<         }
+<         if (days != 0) {
+<             field = type.days();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(days));
+<             }
+<         }
+<         if (hours != 0) {
+<             field = type.hours();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(hours));
+<             }
+<         }
+<         if (minutes != 0) {
+<             field = type.minutes();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(minutes));
+<             }
+<         }
+<         if (seconds != 0) {
+<             field = type.seconds();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(seconds));
+<             }
+<         }
+<         if (millis != 0) {
+<             field = type.millis();
+<             if (isPrecise &= field.isPrecise()) {
+<                 totalMillis = FieldUtils.safeAdd(totalMillis, field.getMillis(millis));
+<             }
+<         }
+<         
+<         iDuration = totalMillis;
+<         if (isPrecise) {
+<             return iState = STATE_CALCULATED;
+<         } else {
+<             return iState = STATE_NOT_CALCULABLE;
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void add(ReadablePeriod period) {
+<         if (period != null) {
+<             setPeriod(
+<                 FieldUtils.safeAdd(getYears(), period.getYears()),
+<                 FieldUtils.safeAdd(getMonths(), period.getMonths()),
+<                 FieldUtils.safeAdd(getWeeks(), period.getWeeks()),
+<                 FieldUtils.safeAdd(getDays(), period.getDays()),
+<                 FieldUtils.safeAdd(getHours(), period.getHours()),
+<                 FieldUtils.safeAdd(getMinutes(), period.getMinutes()),
+<                 FieldUtils.safeAdd(getSeconds(), period.getSeconds()),
+<                 FieldUtils.safeAdd(getMillis(), period.getMillis())
+<             );
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void add(int years, int months, int weeks, int days,
+<                        int hours, int minutes, int seconds, int millis) {
+<         setPeriod(
+<             FieldUtils.safeAdd(getYears(), years),
+<             FieldUtils.safeAdd(getMonths(), months),
+<             FieldUtils.safeAdd(getWeeks(), weeks),
+<             FieldUtils.safeAdd(getDays(), days),
+<             FieldUtils.safeAdd(getHours(), hours),
+<             FieldUtils.safeAdd(getMinutes(), minutes),
+<             FieldUtils.safeAdd(getSeconds(), seconds),
+<             FieldUtils.safeAdd(getMillis(), millis)
+<         );
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void add(ReadableInterval interval) {
+<         if (interval != null) {
+<             add(interval.toPeriod(getPeriodType()));
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void add(ReadableDuration duration) {
+<         if (duration != null) {
+<             add(new Period(duration.getMillis(), getPeriodType()));
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void add(long duration) {
+<         add(new Period(duration, getPeriodType()));
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void normalize() {
+<         setPeriod(toDurationMillis());
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setYears(int years) {
+<         if (years != iYears) {
+<             if (years != 0) {
+<                 checkSupport(iType.years());
+<             }
+<             iYears = years;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addYears(int years) {
+<         if (years != 0) {
+<             setYears(FieldUtils.safeAdd(getYears(), years));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setMonths(int months) {
+<         if (months != iMonths) {
+<             if (months != 0) {
+<                 checkSupport(iType.months());
+<             }
+<             iMonths = months;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addMonths(int months) {
+<         if (months != 0) {
+<             setMonths(FieldUtils.safeAdd(getMonths(), months));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setWeeks(int weeks) {
+<         if (weeks != iWeeks) {
+<             if (weeks != 0) {
+<                 checkSupport(iType.weeks());
+<             }
+<             iWeeks = weeks;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addWeeks(int weeks) {
+<         if (weeks != 0) {
+<             setWeeks(FieldUtils.safeAdd(getWeeks(), weeks));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setDays(int days) {
+<         if (days != iDays) {
+<             if (days != 0) {
+<                 checkSupport(iType.days());
+<             }
+<             iDays = days;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addDays(int days) {
+<         if (days != 0) {
+<             setDays(FieldUtils.safeAdd(getDays(), days));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setHours(int hours) {
+<         if (hours != iHours) {
+<             if (hours != 0) {
+<                 checkSupport(iType.hours());
+<             }
+<             iHours = hours;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addHours(int hours) {
+<         if (hours != 0) {
+<             setHours(FieldUtils.safeAdd(getHours(), hours));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setMinutes(int minutes) {
+<         if (minutes != iMinutes) {
+<             if (minutes != 0) {
+<                 checkSupport(iType.minutes());
+<             }
+<             iMinutes = minutes;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addMinutes(int minutes) {
+<         if (minutes != 0) {
+<             setMinutes(FieldUtils.safeAdd(getMinutes(), minutes));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setSeconds(int seconds) {
+<         if (seconds != iSeconds) {
+<             if (seconds != 0) {
+<                 checkSupport(iType.seconds());
+<             }
+<             iSeconds = seconds;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addSeconds(int seconds) {
+<         if (seconds != 0) {
+<             setSeconds(FieldUtils.safeAdd(getSeconds(), seconds));
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected void setMillis(int millis) {
+<         if (millis != iMillis) {
+<             if (millis != 0) {
+<                 checkSupport(iType.millis());
+<             }
+<             iMillis = millis;
+<             iState = STATE_UNKNOWN;
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void addMillis(int millis) {
+<         if (millis != 0) {
+<             setMillis(FieldUtils.safeAdd(getMillis(), millis));
+<         }

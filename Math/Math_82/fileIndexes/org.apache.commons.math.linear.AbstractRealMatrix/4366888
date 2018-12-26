@@ -1,0 +1,862 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.linear;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.util.MathUtils;
+
+
+
+
+
+
+
+
+
+public abstract class AbstractRealMatrix implements RealMatrix, Serializable {
+    
+    
+    private static final long serialVersionUID = -3665653040524315561L;
+
+    
+
+
+    private LUSolver lu;
+
+    
+
+
+    protected AbstractRealMatrix() {
+        lu = null;
+    }
+
+    
+
+
+
+
+
+
+    protected AbstractRealMatrix(final int rowDimension, final int columnDimension)
+        throws IllegalArgumentException {
+        if (rowDimension <= 0 ) {
+            throw MathRuntimeException.createIllegalArgumentException("invalid row dimension {0}" +
+                                                                      " (must be positive)",
+                                                                      new Object[] { rowDimension });
+        }
+        if (columnDimension <= 0) {
+            throw MathRuntimeException.createIllegalArgumentException("invalid column dimension {0}" +
+                                                                      " (must be positive)",
+                                                                      new Object[] { columnDimension });
+        }
+        lu = null;
+    }
+
+    
+    public abstract RealMatrix createMatrix(final int rowDimension, final int columnDimension)
+        throws IllegalArgumentException;
+
+    
+    public abstract RealMatrix copy();
+
+    
+    public RealMatrix add(RealMatrix m) throws IllegalArgumentException {
+        final int rowCount    = getRowDimension();
+        final int columnCount = getColumnDimension();
+        if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+            throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+                                                                      " addition compatible",
+                                                                      new Object[] {
+                                                                          getRowDimension(),
+                                                                          getColumnDimension(),
+                                                                          m.getRowDimension(),
+                                                                          m.getColumnDimension()
+                                                                      });
+        }
+
+        final RealMatrix out = createMatrix(rowCount, columnCount);
+        for (int row = 0; row < rowCount; ++row) {
+            for (int col = 0; col < columnCount; ++col) {
+                out.setEntry(row, col, getEntry(row, col) + m.getEntry(row, col));
+            }  
+        }
+
+        return out;
+
+    }
+
+    
+    public RealMatrix subtract(final RealMatrix m) throws IllegalArgumentException {
+        final int rowCount    = getRowDimension();
+        final int columnCount = getColumnDimension();
+        if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+            throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+                                                                      " subtraction compatible",
+                                                                      new Object[] {
+                                                                          getRowDimension(),
+                                                                          getColumnDimension(),
+                                                                          m.getRowDimension(),
+                                                                          m.getColumnDimension()
+                                                                      });
+        }
+
+        final RealMatrix out = createMatrix(rowCount, columnCount);
+        for (int row = 0; row < rowCount; ++row) {
+            for (int col = 0; col < columnCount; ++col) {
+                out.setEntry(row, col, getEntry(row, col) - m.getEntry(row, col));
+            }  
+        }
+
+        return out;
+
+    }
+
+    
+    public RealMatrix scalarAdd(final double d) {
+
+        final int rowCount    = getRowDimension();
+        final int columnCount = getColumnDimension();
+        final RealMatrix out = createMatrix(rowCount, columnCount);
+        for (int row = 0; row < rowCount; ++row) {
+            for (int col = 0; col < columnCount; ++col) {
+                out.setEntry(row, col, getEntry(row, col) + d);
+            }
+        }
+
+        return out;
+
+    }
+
+    
+    public RealMatrix scalarMultiply(final double d) {
+
+        final int rowCount    = getRowDimension();
+        final int columnCount = getColumnDimension();
+        final RealMatrix out = createMatrix(rowCount, columnCount);
+        for (int row = 0; row < rowCount; ++row) {
+            for (int col = 0; col < columnCount; ++col) {
+                out.setEntry(row, col, getEntry(row, col) * d);
+            }
+        }
+
+        return out;
+
+    }
+
+    
+    public RealMatrix multiply(final RealMatrix m)
+        throws IllegalArgumentException {
+        if (getColumnDimension() != m.getRowDimension()) {
+            throw MathRuntimeException.createIllegalArgumentException("{0}x{1} and {2}x{3} matrices are not" +
+                                                                      " multiplication compatible",
+                                                                      new Object[] {
+                                                                          getRowDimension(),
+                                                                          getColumnDimension(),
+                                                                          m.getRowDimension(),
+                                                                          m.getColumnDimension()
+                                                                      });
+        }
+
+        final int nRows = getRowDimension();
+        final int nCols = m.getColumnDimension();
+        final int nSum = getColumnDimension();
+        final RealMatrix out = createMatrix(nRows, nCols);
+        for (int row = 0; row < nRows; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+                double sum = 0;
+                for (int i = 0; i < nSum; ++i) {
+                    sum += getEntry(row, i) * m.getEntry(i, col);
+                }
+                out.setEntry(row, col, sum);
+            }
+        }
+
+        return out;
+
+    }
+
+    
+    public RealMatrix preMultiply(final RealMatrix m)
+        throws IllegalArgumentException {
+        return m.multiply(this);
+    }
+
+    
+    public abstract double[][] getData();
+
+    
+    public double getNorm() {
+        final int rowCount    = getRowDimension();
+        final int columnCount = getColumnDimension();
+        double maxColSum = 0;
+        for (int col = 0; col < columnCount; ++col) {
+            double sum = 0;
+            for (int row = 0; row < rowCount; ++row) {
+                sum += Math.abs(getEntry(row, col));
+            }
+            maxColSum = Math.max(maxColSum, sum);
+        }
+        return maxColSum;
+    }
+    
+    
+    public double getFrobeniusNorm() {
+        final int rowCount    = getRowDimension();
+        final int columnCount = getColumnDimension();
+        double sum2 = 0;
+        for (int col = 0; col < columnCount; ++col) {
+            for (int row = 0; row < rowCount; ++row) {
+                final double mij = getEntry(row, col);
+                sum2 += mij * mij;
+            }
+        }
+        return Math.sqrt(sum2);
+    }
+    
+    
+    public RealMatrix getSubMatrix(final int startRow, final int endRow,
+                                   final int startColumn, final int endColumn)
+        throws MatrixIndexException {
+
+        checkRowIndex(startRow);
+        checkRowIndex(endRow);
+        if (startRow > endRow) {
+            throw new MatrixIndexException("initial row {0} after final row {1}",
+                                           new Object[] { startRow, endRow });
+        }
+
+        checkColumnIndex(startColumn);
+        checkColumnIndex(endColumn);
+        if (startColumn > endColumn) {
+            throw new MatrixIndexException("initial column {0} after final column {1}",
+                                           new Object[] { startColumn, endColumn });
+        }
+
+        final RealMatrix subMatrix =
+            createMatrix(endRow - startRow + 1, endColumn - startColumn + 1);
+        for (int i = startRow; i <= endRow; ++i) {
+            for (int j = startColumn; j <= endColumn; ++j) {
+                subMatrix.setEntry(i - startRow, j - startColumn, getEntry(i, j));
+            }
+        }
+
+        return subMatrix;
+
+    }
+
+    
+    public RealMatrix getSubMatrix(int[] selectedRows, int[] selectedColumns)
+        throws MatrixIndexException {
+
+        if (selectedRows.length * selectedColumns.length == 0) {
+            if (selectedRows.length == 0) {
+                throw new MatrixIndexException("empty selected row index array", null);
+            }
+            throw new MatrixIndexException("empty selected column index array", null);
+        }
+
+        final RealMatrix subMatrix =
+            createMatrix(selectedRows.length, selectedColumns.length);
+        try  {
+            for (int i = 0; i < selectedRows.length; i++) {
+                for (int j = 0; j < selectedColumns.length; j++) {
+                    subMatrix.setEntry(i, j, getEntry(selectedRows[i], selectedColumns[j]));
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            
+            
+            for (final int row : selectedRows) {
+                checkRowIndex(row);
+            }
+            for (final int column : selectedColumns) {
+                checkColumnIndex(column);
+            }
+        }
+
+        return subMatrix;
+
+    } 
+
+    
+    public void setSubMatrix(final double[][] subMatrix, final int row, final int column) 
+        throws MatrixIndexException {
+
+        final int nRows = subMatrix.length;
+        if (nRows == 0) {
+            throw new IllegalArgumentException("Matrix must have at least one row."); 
+        }
+
+        final int nCols = subMatrix[0].length;
+        if (nCols == 0) {
+            throw new IllegalArgumentException("Matrix must have at least one column."); 
+        }
+
+        for (int r = 1; r < nRows; ++r) {
+            if (subMatrix[r].length != nCols) {
+                throw new IllegalArgumentException("All input rows must have the same length.");
+            }
+        }
+
+        checkRowIndex(row);
+        checkColumnIndex(column);
+        checkRowIndex(nRows + row - 1);
+        checkColumnIndex(nCols + column - 1);
+
+        for (int i = 0; i < nRows; ++i) {
+            for (int j = 0; j < nCols; ++j) {
+                setEntry(row + i, column + j, subMatrix[i][j]);
+            }
+        } 
+
+        lu = null;
+
+    }
+
+    
+    public RealMatrix getRowMatrix(final int row)
+        throws MatrixIndexException {
+
+        checkRowIndex(row);
+        final int nCols = getColumnDimension();
+        final RealMatrix out = createMatrix(1, nCols);
+        for (int i = 0; i < nCols; ++i) {
+            out.setEntry(0, i, getEntry(row, i));
+        }
+
+        return out;
+
+    }
+    
+    
+    public void setRowMatrix(final int row, final RealMatrix matrix)
+        throws MatrixIndexException, InvalidMatrixException {
+
+        checkRowIndex(row);
+        final int nCols = getColumnDimension();
+        if ((matrix.getRowDimension() != 1) ||
+            (matrix.getColumnDimension() != nCols)) {
+            throw new InvalidMatrixException("dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+                                             new Object[] {
+                                                 matrix.getRowDimension(),
+                                                 matrix.getColumnDimension(),
+                                                 1, nCols
+                                             });
+        }
+        for (int i = 0; i < nCols; ++i) {
+            setEntry(row, i, matrix.getEntry(0, i));
+        }
+
+    }
+    
+    
+    public RealMatrix getColumnMatrix(final int column)
+        throws MatrixIndexException {
+
+        checkColumnIndex(column);
+        final int nRows = getRowDimension();
+        final RealMatrix out = createMatrix(nRows, 1);
+        for (int i = 0; i < nRows; ++i) {
+            out.setEntry(i, 0, getEntry(i, column));
+        }
+
+        return out;
+
+    }
+
+    
+    public void setColumnMatrix(final int column, final RealMatrix matrix)
+        throws MatrixIndexException, InvalidMatrixException {
+
+        checkColumnIndex(column);
+        final int nRows = getRowDimension();
+        if ((matrix.getRowDimension() != nRows) ||
+            (matrix.getColumnDimension() != 1)) {
+            throw new InvalidMatrixException("dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+                                             new Object[] {
+                                                 matrix.getRowDimension(),
+                                                 matrix.getColumnDimension(),
+                                                 nRows, 1
+                                             });
+        }
+        for (int i = 0; i < nRows; ++i) {
+            setEntry(i, column, matrix.getEntry(i, 0));
+        }
+
+    }
+    
+    
+    public RealVector getRowVector(final int row)
+        throws MatrixIndexException {
+        return new RealVectorImpl(getRow(row), false);
+    }
+
+    
+    public void setRowVector(final int row, final RealVector vector)
+        throws MatrixIndexException, InvalidMatrixException {
+
+        checkRowIndex(row);
+        final int nCols = getColumnDimension();
+        if (vector.getDimension() != nCols) {
+            throw new InvalidMatrixException("dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+                                             new Object[] {
+                                                 1, vector.getDimension(),
+                                                 1, nCols
+                                             });
+        }
+        for (int i = 0; i < nCols; ++i) {
+            setEntry(row, i, vector.getEntry(i));
+        }
+
+    }
+    
+    
+    public RealVector getColumnVector(final int column)
+        throws MatrixIndexException {
+        return new RealVectorImpl(getColumn(column), false);
+    }
+
+    
+    public void setColumnVector(final int column, final RealVector vector)
+        throws MatrixIndexException, InvalidMatrixException {
+
+        checkColumnIndex(column);
+        final int nRows = getRowDimension();
+        if (vector.getDimension() != nRows) {
+            throw new InvalidMatrixException("dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+                                             new Object[] {
+                                                 vector.getDimension(), 1,
+                                                 nRows, 1
+                                             });
+        }
+        for (int i = 0; i < nRows; ++i) {
+            setEntry(i, column, vector.getEntry(i));
+        }
+
+    }
+    
+    
+    public double[] getRow(final int row)
+        throws MatrixIndexException {
+
+        checkRowIndex(row);
+        final int nCols = getColumnDimension();
+        final double[] out = new double[nCols];
+        for (int i = 0; i < nCols; ++i) {
+            out[i] = getEntry(row, i);
+        }
+
+        return out;
+
+    }
+
+    
+    public void setRow(final int row, final double[] array)
+        throws MatrixIndexException, InvalidMatrixException {
+
+        checkRowIndex(row);
+        final int nCols = getColumnDimension();
+        if (array.length != nCols) {
+            throw new InvalidMatrixException("dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+                                             new Object[] {
+                                                 1, array.length,
+                                                 1, nCols
+                                             });
+        }
+        for (int i = 0; i < nCols; ++i) {
+            setEntry(row, i, array[i]);
+        }
+
+    }
+    
+    
+    public double[] getColumn(final int column)
+        throws MatrixIndexException {
+
+        checkColumnIndex(column);
+        final int nRows = getRowDimension();
+        final double[] out = new double[nRows];
+        for (int i = 0; i < nRows; ++i) {
+            out[i] = getEntry(i, column);
+        }
+
+        return out;
+
+    }
+
+    
+    public void setColumn(final int column, final double[] array)
+        throws MatrixIndexException, InvalidMatrixException {
+
+        checkColumnIndex(column);
+        final int nRows = getRowDimension();
+        if (array.length != nRows) {
+            throw new InvalidMatrixException("dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+                                             new Object[] {
+                                                 array.length, 1,
+                                                 nRows, 1
+                                             });
+        }
+        for (int i = 0; i < nRows; ++i) {
+            setEntry(i, column, array[i]);
+        }
+
+    }
+    
+    
+    public abstract double getEntry(int row, int column)
+        throws MatrixIndexException;
+
+    
+    public abstract void setEntry(int row, int column, double value)
+        throws MatrixIndexException;
+
+    
+    public RealMatrix transpose() {
+
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        final RealMatrix out = createMatrix(nCols, nRows);
+        for (int row = 0; row < nRows; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+                out.setEntry(col, row, getEntry(row, col));
+            }
+        }
+
+        return out;
+
+    }
+
+    
+    @Deprecated
+    public RealMatrix inverse()
+        throws InvalidMatrixException {
+        if (lu == null) {
+            lu = new LUSolver(new LUDecompositionImpl(this, MathUtils.SAFE_MIN));
+        }
+        return lu.getInverse();
+    }
+
+    
+    @Deprecated
+    public double getDeterminant()
+        throws InvalidMatrixException {
+        if (lu == null) {
+            lu = new LUSolver(new LUDecompositionImpl(this, MathUtils.SAFE_MIN));
+        }
+        return lu.getDeterminant();
+    }
+
+    
+    public boolean isSquare() {
+        return (getColumnDimension() == getRowDimension());
+    }
+
+    
+    @Deprecated
+    public boolean isSingular() {
+        if (lu == null) {
+            lu = new LUSolver(new LUDecompositionImpl(this, MathUtils.SAFE_MIN));
+       }
+        return !lu.isNonSingular();
+    }
+
+    
+    public abstract int getRowDimension();
+
+    
+    public abstract int getColumnDimension();
+
+    
+    public double getTrace()
+        throws NonSquareMatrixException {
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        if (nRows != nCols) {
+            throw new NonSquareMatrixException(nRows, nCols);
+       }
+        double trace = 0;
+        for (int i = 0; i < nRows; ++i) {
+            trace += getEntry(i, i);
+        }
+        return trace;
+    }
+
+    
+    public double[] operate(final double[] v)
+        throws IllegalArgumentException {
+
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        if (v.length != nCols) {
+            throw MathRuntimeException.createIllegalArgumentException("vector length mismatch:" +
+                                                                      " got {0} but expected {1}",
+                                                                      new Object[] {
+                                                                          v.length, nCols
+                                                                      });
+        }
+
+        final double[] out = new double[nRows];
+        for (int row = 0; row < nRows; ++row) {
+            double sum = 0;
+            for (int i = 0; i < nCols; ++i) {
+                sum += getEntry(row, i) * v[i];
+            }
+            out[row] = sum;
+        }
+
+        return out;
+
+    }
+
+    
+    public RealVector operate(final RealVector v)
+        throws IllegalArgumentException {
+
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        if (v.getDimension() != nCols) {
+            throw MathRuntimeException.createIllegalArgumentException("vector length mismatch:" +
+                                                                      " got {0} but expected {1}",
+                                                                      new Object[] {
+                                                                          v.getDimension(), nCols
+                                                                      });
+        }
+
+        final double[] out = new double[nRows];
+        for (int row = 0; row < nRows; ++row) {
+            double sum = 0;
+            for (int i = 0; i < nCols; ++i) {
+                sum += getEntry(row, i) * v.getEntry(i);
+            }
+            out[row] = sum;
+        }
+
+        return new RealVectorImpl(out, false);
+
+    }
+
+    
+    public double[] preMultiply(final double[] v)
+        throws IllegalArgumentException {
+
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        if (v.length != nRows) {
+            throw MathRuntimeException.createIllegalArgumentException("vector length mismatch:" +
+                                                                      " got {0} but expected {1}",
+                                                                      new Object[] {
+                                                                          v.length, nRows
+                                                                      });
+        }
+
+        final double[] out = new double[nCols];
+        for (int col = 0; col < nCols; ++col) {
+            double sum = 0;
+            for (int i = 0; i < nRows; ++i) {
+                sum += getEntry(i, col) * v[i];
+            }
+            out[col] = sum;
+        }
+
+        return out;
+
+    }
+
+    
+    public RealVector preMultiply(final RealVector v)
+        throws IllegalArgumentException {
+
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        if (v.getDimension() != nRows) {
+            throw MathRuntimeException.createIllegalArgumentException("vector length mismatch:" +
+                                                                      " got {0} but expected {1}",
+                                                                      new Object[] {
+                                                                          v.getDimension(), nRows
+                                                                      });
+        }
+
+        final double[] out = new double[nCols];
+        for (int col = 0; col < nCols; ++col) {
+            double sum = 0;
+            for (int i = 0; i < nRows; ++i) {
+                sum += getEntry(i, col) * v.getEntry(i);
+            }
+            out[col] = sum;
+        }
+
+        return new RealVectorImpl(out);
+
+    }
+
+    
+    @Deprecated
+    public double[] solve(final double[] b)
+        throws IllegalArgumentException, InvalidMatrixException {
+        if (lu == null) {
+            lu = new LUSolver(new LUDecompositionImpl(this, MathUtils.SAFE_MIN));
+        }
+        return lu.solve(b);
+    }
+
+    
+    @Deprecated
+    public RealMatrix solve(final RealMatrix b)
+        throws IllegalArgumentException, InvalidMatrixException  {
+        if (lu == null) {
+            lu = new LUSolver(new LUDecompositionImpl(this, MathUtils.SAFE_MIN));
+        }
+        return lu.solve(b);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Deprecated
+    public void luDecompose()
+        throws InvalidMatrixException {
+        if (lu == null) {
+            lu = new LUSolver(new LUDecompositionImpl(this, MathUtils.SAFE_MIN));
+        }
+    }
+
+    
+
+
+
+    public String toString() {
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        final StringBuffer res = new StringBuffer();
+        res.append("RealMatrixImpl{");
+
+        for (int i = 0; i < nRows; ++i) {
+            if (i > 0) {
+                res.append(",");
+            }
+            res.append("{");
+            for (int j = 0; j < nCols; ++j) {
+                if (j > 0) {
+                    res.append(",");
+                }
+                res.append(getEntry(i, j));
+            } 
+            res.append("}");
+        } 
+
+        res.append("}");
+        return res.toString();
+
+    } 
+    
+    
+
+
+
+
+
+
+
+    public boolean equals(final Object object) {
+        if (object == this ) {
+            return true;
+        }
+        if (object instanceof RealMatrix == false) {
+            return false;
+        }
+        RealMatrix m = (RealMatrix) object;
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        if (m.getColumnDimension() != nCols || m.getRowDimension() != nRows) {
+            return false;
+        }
+        for (int row = 0; row < nRows; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+                if (getEntry(row, col) != m.getEntry(row, col)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    
+
+
+
+
+    public int hashCode() {
+        int ret = 7;
+        final int nRows = getRowDimension();
+        final int nCols = getColumnDimension();
+        ret = ret * 31 + nRows;
+        ret = ret * 31 + nCols;
+        for (int row = 0; row < nRows; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+               ret = ret * 31 + (11 * (row+1) + 17 * (col+1)) * 
+                   MathUtils.hash(getEntry(row, col));
+           }
+        }
+        return ret;
+    }
+
+    
+
+
+
+
+    private void checkRowIndex(final int row) {
+        if (row < 0 || row >= getRowDimension()) {
+            throw new MatrixIndexException("row index {0} out of allowed range [{1}, {2}]",
+                                           new Object[] { row, 0, getRowDimension() - 1});
+        }
+    }
+
+    
+
+
+
+
+    private void checkColumnIndex(final int column)
+        throws MatrixIndexException {
+        if (column < 0 || column >= getColumnDimension()) {
+            throw new MatrixIndexException("column index {0} out of allowed range [{1}, {2}]",
+                                           new Object[] { column, 0, getColumnDimension() - 1});
+        }
+    }
+
+}

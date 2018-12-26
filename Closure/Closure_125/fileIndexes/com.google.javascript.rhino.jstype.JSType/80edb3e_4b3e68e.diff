@@ -1,0 +1,78 @@
+556d555
+< 
+604,626c603,605
+<     TemplatizedType thisParamType = toMaybeTemplatizedType();
+<     TemplatizedType thatParamType = that.toMaybeTemplatizedType();
+<     if (thisParamType != null || thatParamType != null) {
+<       
+<       boolean paramsMatch = false;
+<       if (thisParamType != null && thatParamType != null) {
+<         paramsMatch = thisParamType.getTemplateType().checkEquivalenceHelper(
+<             thatParamType.getTemplateType(), eqMethod);
+<       } else if (eqMethod == EquivalenceMethod.IDENTITY) {
+<         paramsMatch = false;
+<       } else {
+<         
+<         
+<         
+<         paramsMatch = true;
+<       }
+< 
+<       JSType thisRootType = thisParamType == null ?
+<           this : thisParamType.getReferencedTypeInternal();
+<       JSType thatRootType = thatParamType == null ?
+<           that : thatParamType.getReferencedTypeInternal();
+<       return paramsMatch &&
+<           thisRootType.checkEquivalenceHelper(thatRootType, eqMethod);
+---
+>     if (!getTemplateTypeMap().checkEquivalenceHelper(
+>         that.getTemplateTypeMap(), eqMethod)) {
+>       return false;
+1276,1277c1255,1264
+<       return thisType.toMaybeTemplatizedType().isTemplatizedSubtypeOf(
+<           thatType);
+---
+>       return !areIncompatibleArrays(thisType, thatType) &&
+>           thisType.toMaybeTemplatizedType().getReferencedType().isSubtype(
+>               thatType);
+>     }
+>     if (thatType.isTemplatizedType()) {
+>       if (!isExemptFromTemplateTypeInvariance(thatType) &&
+>           !thisType.getTemplateTypeMap().checkEquivalenceHelper(
+>               thatType.getTemplateTypeMap(), EquivalenceMethod.IDENTITY)) {
+>         return false;
+>       }
+1285a1273,1305
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private static boolean areIncompatibleArrays(JSType type1, JSType type2) {
+>     ObjectType type1Obj = type1.toObjectType();
+>     ObjectType type2Obj = type2.toObjectType();
+>     if (type1Obj == null || type2Obj == null) {
+>       return false;
+>     }
+> 
+>     if (!"Array".equals(type1Obj.getReferenceName()) ||
+>         !"Array".equals(type2Obj.getReferenceName())) {
+>       return false;
+>     }
+> 
+>     String templateKey = JSTypeRegistry.OBJECT_ELEMENT_TEMPLATE;
+>     JSType elemType1 = type1.getTemplateTypeMap().getTemplateType(templateKey);
+>     JSType elemType2 = type2.getTemplateTypeMap().getTemplateType(templateKey);
+>     return !elemType1.isSubtype(elemType2) && !elemType2.isSubtype(elemType1);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static boolean isExemptFromTemplateTypeInvariance(JSType type) {
+>     ObjectType objType = type.toObjectType();
+>     return objType == null ||
+>         "Array".equals(objType.getReferenceName()) ||
+>         "Object".equals(objType.getReferenceName());

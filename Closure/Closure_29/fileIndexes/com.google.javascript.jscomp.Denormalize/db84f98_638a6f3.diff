@@ -1,0 +1,26 @@
+19a20
+> import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+109a111,133
+>     }
+>   }
+> 
+>   static class StripConstantAnnotations
+>       extends AbstractPostOrderCallback
+>       implements CompilerPass {
+>     private AbstractCompiler compiler;
+> 
+>     StripConstantAnnotations(AbstractCompiler compiler) {
+>       this.compiler = compiler;
+>     }
+> 
+>     @Override
+>     public void process(Node externs, Node js) {
+>       NodeTraversal.traverse(compiler, externs, this);
+>       NodeTraversal.traverse(compiler, js, this);
+>     }
+> 
+>     @Override
+>     public void visit(NodeTraversal t, Node node, Node parent) {
+>       if (node.getType() == Token.NAME || node.getType() == Token.STRING) {
+>         node.removeProp(Node.IS_CONSTANT_NAME);
+>       }

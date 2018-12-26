@@ -1,0 +1,53 @@
+20d19
+< import java.io.Serializable;
+25a25
+> import org.apache.commons.math.MaxEvaluationsExceededException;
+28a29
+> import org.apache.commons.math.optimization.MultivariateRealOptimizer;
+31d31
+< import org.apache.commons.math.optimization.MultivariateRealOptimizer;
+88,93c88
+< public abstract class DirectSearchOptimizer implements MultivariateRealOptimizer, Serializable {
+<     
+<     
+< 
+<     
+<     private static final long serialVersionUID = 4299910390345933369L;
+---
+> public abstract class DirectSearchOptimizer implements MultivariateRealOptimizer {
+110a106,108
+>     private int maxEvaluations;
+> 
+>     
+120a119
+>         setMaxEvaluations(Integer.MAX_VALUE);
+229a229,238
+>     public void setMaxEvaluations(int maxEvaluations) {
+>         this.maxEvaluations = maxEvaluations;
+>     }
+> 
+>     
+>     public int getMaxEvaluations() {
+>         return maxEvaluations;
+>     }
+> 
+>     
+332a342
+> 
+335c345,348
+<         evaluations++;
+---
+>         if (++evaluations > maxEvaluations) {
+>             throw new FunctionEvaluationException(new MaxEvaluationsExceededException(maxEvaluations),
+>                                                   x);
+>         }
+351c364
+<                     n, simplex.length);
+---
+>                     n, startConfiguration.length);
+373a387
+> 
+375c389
+<         throws FunctionEvaluationException {
+---
+>         throws FunctionEvaluationException, OptimizationException {

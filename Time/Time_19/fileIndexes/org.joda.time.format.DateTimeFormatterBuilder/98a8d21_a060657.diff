@@ -1,0 +1,69 @@
+980c980,994
+<         return append0(new TimeZoneName(TimeZoneName.LONG_NAME), null);
+---
+>         return append0(new TimeZoneName(TimeZoneName.LONG_NAME, null), null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendTimeZoneName(Map<String, DateTimeZone> parseLookup) {
+>         TimeZoneName pp = new TimeZoneName(TimeZoneName.LONG_NAME, parseLookup);
+>         return append0(pp, pp);
+991c1005,1020
+<         return append0(new TimeZoneName(TimeZoneName.SHORT_NAME), null);
+---
+>         return append0(new TimeZoneName(TimeZoneName.SHORT_NAME, null), null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendTimeZoneShortName(Map<String, DateTimeZone> parseLookup) {
+>         TimeZoneName pp = new TimeZoneName(TimeZoneName.SHORT_NAME, parseLookup);
+>         return append0(pp, pp);
+1799c1828
+<                     array = new Object[] {validValues, new Integer(maxLength)};
+---
+>                     array = new Object[] {validValues, Integer.valueOf(maxLength)};
+2401c2430
+<             implements DateTimePrinter {
+---
+>             implements DateTimePrinter, DateTimeParser {
+2405a2435
+>         private final Map<String, DateTimeZone> iParseLookup;
+2408c2438
+<         TimeZoneName(int type) {
+---
+>         TimeZoneName(int type, Map<String, DateTimeZone> parseLookup) {
+2410a2441
+>             iParseLookup = parseLookup;
+2447a2479,2493
+>         }
+> 
+>         public int estimateParsedLength() {
+>             return (iType == SHORT_NAME ? 4 : 20);
+>         }
+> 
+>         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+>             String str = text.substring(position);
+>             for (String name : iParseLookup.keySet()) {
+>                 if (str.startsWith(name)) {
+>                     bucket.setZone(iParseLookup.get(name));
+>                     return position + name.length();
+>                 }
+>             }
+>             return ~position;

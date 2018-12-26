@@ -1,0 +1,111 @@
+24a25,26
+> import javax.annotation.Nullable;
+> 
+77,83c79
+<     Node defaultCase = findDefaultCase(n);
+<     if (defaultCase != null && isUselessCase(defaultCase)) {
+<       NodeUtil.redeclareVarsInsideBranch(defaultCase);
+<       n.removeChild(defaultCase);
+<       reportCodeChange();
+<       defaultCase = null;
+<     }
+---
+>     Node defaultCase = tryOptimizeDefaultCase(n);
+86d81
+<     
+88a84
+>       Node prev = null;
+92,95c88,91
+<         if (!mayHaveSideEffects(c.getFirstChild()) && isUselessCase(c)) {
+<           NodeUtil.redeclareVarsInsideBranch(c);
+<           n.removeChild(c);
+<           reportCodeChange();
+---
+>         if (!mayHaveSideEffects(c.getFirstChild()) && isUselessCase(c, prev)) {
+>           removeCase(n, c);
+>         } else {
+>           prev = c;
+99a96
+>     
+116,117c113,120
+<   private Node findDefaultCase(Node n) {
+<     for (Node c : n.children()) {
+---
+> 
+>   private Node tryOptimizeDefaultCase(Node n) {
+>     Preconditions.checkState(n.getType() == Token.SWITCH);
+> 
+>     Node lastNonRemovable = n.getFirstChild();  
+> 
+>     
+>     for (Node c = n.getFirstChild().getNext(); c != null; c = c.getNext()) {
+118a122,137
+>         
+>         Node caseToRemove = lastNonRemovable.getNext();
+>         for (Node next; caseToRemove != c; caseToRemove = next) {
+>           next = caseToRemove.getNext();
+>           removeCase(n, caseToRemove);
+>         }
+> 
+>         
+>         Node prevCase = (lastNonRemovable == n.getFirstChild())
+>             ? null : lastNonRemovable;
+> 
+>         
+>         if (isUselessCase(c, prevCase)) {
+>           removeCase(n, c);
+>           return null;
+>         }
+119a139,144
+>       } else {
+>         Preconditions.checkState(c.getType() == Token.CASE);
+>         if (c.getLastChild().hasChildren()
+>             || mayHaveSideEffects(c.getFirstChild())) {
+>           lastNonRemovable = c;
+>         }
+128c153,179
+<   private boolean isUselessCase(Node caseNode) {
+---
+> 
+>   private void removeCase(Node switchNode, Node caseNode) {
+>     NodeUtil.redeclareVarsInsideBranch(caseNode);
+>     switchNode.removeChild(caseNode);
+>     reportCodeChange();
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private boolean isUselessCase(Node caseNode, @Nullable Node previousCase) {
+>     Preconditions.checkState(
+>         previousCase == null || previousCase.getNext() == caseNode);
+>     
+>     
+>     Node switchNode = caseNode.getParent();
+>     if (switchNode.getLastChild() != caseNode
+>         && previousCase != null) {
+>       Node previousBlock = previousCase.getLastChild();
+>       if (!previousBlock.hasChildren()
+>           || !isExit(previousBlock.getLastChild())) {
+>         return false;
+>       }
+>     }
+> 
+164a216,230
+>   }
+> 
+>   
+> 
+> 
+>   private boolean isExit(Node n) {
+>     switch (n.getType()) {
+>       case Token.BREAK:
+>       case Token.CONTINUE:
+>       case Token.RETURN:
+>       case Token.THROW:
+>         return true;
+>       default:
+>         return false;
+>     }

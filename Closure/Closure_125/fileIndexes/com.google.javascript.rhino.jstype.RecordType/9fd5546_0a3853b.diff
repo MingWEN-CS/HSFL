@@ -1,0 +1,46 @@
+43a44,45
+> import com.google.javascript.rhino.Node;
+> import com.google.javascript.rhino.jstype.RecordTypeBuilder.RecordProperty;
+65c67
+<   private SortedMap<String, JSType> properties = Maps.newTreeMap();
+---
+>   private final SortedMap<String, JSType> properties = Maps.newTreeMap();
+74c76,78
+<   RecordType(JSTypeRegistry registry, Map<String, JSType> properties) {
+---
+> 
+> 
+>   RecordType(JSTypeRegistry registry, Map<String, RecordProperty> properties) {
+78c82,87
+<       defineDeclaredProperty(property, properties.get(property), false);
+---
+>       RecordProperty prop = properties.get(property);
+>       if (prop == null) {
+>         throw new IllegalStateException(
+>             "RecordProperty associated with a property should not be null!");
+>       }
+>       defineDeclaredProperty(property, prop.getType(), false, prop.getPropertyNode());
+113c122
+<       boolean inferred, boolean inExterns) {
+---
+>       boolean inferred, boolean inExterns, Node propertyNode) {
+122c131,132
+<     return super.defineProperty(propertyName, type, inferred, inExterns);
+---
+>     return super.defineProperty(propertyName, type, inferred, inExterns,
+>         propertyNode);
+141c151,152
+<         builder.addProperty(property, getPropertyType(property));
+---
+>         builder.addProperty(property, getPropertyType(property),
+>             getPropertyNode(property));
+164c175,176
+<         builder.addProperty(property, getPropertyType(property));
+---
+>         builder.addProperty(property, getPropertyType(property),
+>             getPropertyNode(property));
+169c181,182
+<           builder.addProperty(property, thatRecord.getPropertyType(property));
+---
+>           builder.addProperty(property, thatRecord.getPropertyType(property),
+>               thatRecord.getPropertyNode(property));

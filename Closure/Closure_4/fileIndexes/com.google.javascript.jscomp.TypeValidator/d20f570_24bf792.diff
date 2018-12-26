@@ -1,0 +1,72 @@
+109a110,117
+>   static final DiagnosticType HIDDEN_INTERFACE_PROPERTY_MISMATCH =
+>       DiagnosticType.warning(
+>         "JSC_HIDDEN_INTERFACE_PROPERTY_MISMATCH",
+>         "mismatch of the {0} property type and the type " +
+>         "of the property it overrides from interface {1}\n" +
+>         "original: {2}\n" +
+>         "override: {3}");
+> 
+116c124,125
+<       INTERFACE_METHOD_NOT_IMPLEMENTED);
+---
+>       INTERFACE_METHOD_NOT_IMPLEMENTED,
+>       HIDDEN_INTERFACE_PROPERTY_MISMATCH);
+558c567,568
+<   void expectAllInterfacePropertiesImplemented(FunctionType type) {
+---
+>   void expectAllInterfaceProperties(NodeTraversal t, Node n,
+>       FunctionType type) {
+564,575c574,610
+<           if (!instance.hasProperty(prop)) {
+<             Node source = type.getSource();
+<             Preconditions.checkNotNull(source);
+<             String sourceName = (String) source.getProp(Node.SOURCENAME_PROP);
+<             sourceName = sourceName == null ? "" : sourceName;
+<             if (shouldReport) {
+<               compiler.report(JSError.make(sourceName, source,
+<                   INTERFACE_METHOD_NOT_IMPLEMENTED,
+<                   prop, implemented.toString(), instance.toString()));
+<             }
+<             registerMismatch(instance, implemented);
+<           }
+---
+>           expectInterfaceProperty(t, n, instance, implemented, prop);
+>         }
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private void expectInterfaceProperty(NodeTraversal t, Node n,
+>       ObjectType instance, ObjectType implementedInterface, String prop) {
+>     if (!instance.hasProperty(prop)) {
+>       
+>       String sourceName = (String) n.getProp(Node.SOURCENAME_PROP);
+>       sourceName = sourceName == null ? "" : sourceName;
+>       if (shouldReport) {
+>         compiler.report(JSError.make(sourceName, n,
+>             INTERFACE_METHOD_NOT_IMPLEMENTED,
+>             prop, implementedInterface.toString(), instance.toString()));
+>       }
+>       registerMismatch(instance, implementedInterface);
+>     } else {
+>       JSType found = instance.getPropertyType(prop);
+>       JSType required
+>         = implementedInterface.getImplicitPrototype().getPropertyType(prop);
+>       found = found.restrictByNotNullOrUndefined();
+>       required = required.restrictByNotNullOrUndefined();
+>       if (!found.canAssignTo(required)) {
+>         
+>         if (shouldReport) {
+>           FunctionType constructor
+>             = implementedInterface.toObjectType().getConstructor();
+>           compiler.report(t.makeError(n,
+>               HIDDEN_INTERFACE_PROPERTY_MISMATCH, prop,
+>               constructor.getTopMostDefiningType(prop).toString(),
+>               required.toString(), found.toString()));
+576a612
+>         registerMismatch(found, required);

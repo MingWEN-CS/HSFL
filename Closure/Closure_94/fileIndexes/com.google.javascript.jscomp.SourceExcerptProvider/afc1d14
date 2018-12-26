@@ -1,0 +1,93 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+
+
+
+
+
+
+public interface SourceExcerptProvider {
+  
+
+
+  enum SourceExcerpt {
+    
+
+
+    LINE {
+      @Override
+      public String get(SourceExcerptProvider source, String sourceName,
+          int lineNumber, ExcerptFormatter formatter) {
+        return formatter.formatLine(
+            source.getSourceLine(sourceName, lineNumber), lineNumber);
+      }
+    },
+    
+
+
+    REGION {
+      @Override
+      public String get(SourceExcerptProvider source, String sourceName,
+          int lineNumber, ExcerptFormatter formatter) {
+        return formatter.formatRegion(
+            source.getSourceRegion(sourceName, lineNumber));
+      }
+    };
+
+    
+
+
+    public abstract String get(SourceExcerptProvider source, String sourceName,
+        int lineNumber, ExcerptFormatter formatter);
+  }
+
+  
+
+
+
+
+
+
+  String getSourceLine(String sourceName, int lineNumber);
+
+  
+
+
+
+
+
+
+
+
+  Region getSourceRegion(String sourceName, int lineNumber);
+
+  
+
+
+  interface ExcerptFormatter {
+    
+
+
+    String formatLine(String line, int lineNumber);
+
+    
+
+
+    String formatRegion(Region region);
+  }
+}

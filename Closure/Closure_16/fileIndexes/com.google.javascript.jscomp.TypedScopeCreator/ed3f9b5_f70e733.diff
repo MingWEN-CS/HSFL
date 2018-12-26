@@ -1,0 +1,310 @@
+419a420,423
+>     void assertDefinitionNode(Node n, int type) {
+>       Preconditions.checkState(sourceName != null);
+>       Preconditions.checkState(n.getType() == type);
+>     }
+420a425
+>     
+422a428,432
+>     void defineCatch(Node n, Node parent) {
+>       assertDefinitionNode(n, Token.CATCH);
+>       Node catchName = n.getFirstChild();
+>       defineSlot(catchName, n, null);
+>     }
+423a434
+>     
+426,427c437,459
+<     void define(Node n, Node parent) {
+<       Preconditions.checkState(sourceName != null);
+---
+>     void defineVar(Node n, Node parent) {
+>       assertDefinitionNode(n, Token.VAR);
+>       JSDocInfo info = n.getJSDocInfo();
+>       if (n.hasMoreThanOneChild()) {
+>         if (info != null) {
+>           
+>           compiler.report(JSError.make(sourceName, n, MULTIPLE_VAR_DEF));
+>         }
+>         for (Node name : n.children()) {
+>           defineName(name, n, parent, name.getJSDocInfo());
+>         }
+>       } else {
+>         Node name = n.getFirstChild();
+>         defineName(name, n, parent,
+>             (info != null) ? info : name.getJSDocInfo());
+>       }
+>     }
+> 
+>     
+> 
+> 
+>     void defineDeclaredFunction(Node n, Node parent) {
+>       assertDefinitionNode(n, Token.FUNCTION);
+430,434c462,474
+<       switch (n.getType()) {
+<         case Token.CATCH:
+<           Node catchName = n.getFirstChild();
+<           defineSlot(catchName, n, null);
+<           break;
+---
+>       int parentType = parent.getType();
+>       Preconditions.checkState(
+>           (scope.isLocal() || parentType != Token.ASSIGN) &&
+>           parentType != Token.NAME,
+>           "function defined as standalone function when it is being " +
+>           "assigned");
+>       String functionName = n.getFirstChild().getString();
+>       FunctionType functionType = getFunctionType(functionName, n, info,
+>           null);
+>       if (NodeUtil.isFunctionDeclaration(n)) {
+>         defineSlot(n.getFirstChild(), n, functionType);
+>       }
+>     }
+436,450c476
+<         case Token.VAR:
+<           if (n.hasMoreThanOneChild()) {
+<             if (info != null) {
+<               
+<               compiler.report(JSError.make(sourceName, n, MULTIPLE_VAR_DEF));
+<             }
+<             for (Node name : n.children()) {
+<               defineName(name, n, parent, name.getJSDocInfo());
+<             }
+<           } else {
+<             Node name = n.getFirstChild();
+<             defineName(name, n, parent,
+<                 (info != null) ? info : name.getJSDocInfo());
+<           }
+<           break;
+---
+>     
+452,465d477
+<         case Token.FUNCTION:
+<           int parentType = parent.getType();
+<           Preconditions.checkState(
+<               (scope.isLocal() || parentType != Token.ASSIGN) &&
+<               parentType != Token.NAME,
+<               "function defined as standalone function when it is being " +
+<               "assigned");
+<           String functionName = n.getFirstChild().getString();
+<           FunctionType functionType = getFunctionType(functionName, n, info,
+<               null);
+<           if (NodeUtil.isFunctionDeclaration(n)) {
+<             defineSlot(n.getFirstChild(), n, functionType);
+<           }
+<           break;
+467,475c479,481
+<         case Token.ASSIGN:
+<           
+<           
+<           
+<           
+<           
+<           
+<           
+<           
+---
+>     void defineNamedTypeAssign(Node n, Node parent) {
+>       assertDefinitionNode(n, Token.ASSIGN);
+>       JSDocInfo info = n.getJSDocInfo();
+477,491c483,490
+<           Node rvalue = n.getLastChild();
+<           Node lvalue = n.getFirstChild();
+<           info = (info != null) ? info : rvalue.getJSDocInfo();
+<           if (rvalue.getType() == Token.FUNCTION ||
+<               info != null && info.isConstructor()) {
+<             getFunctionType(lvalue.getQualifiedName(), rvalue, info,
+<                 lvalue);
+<           } else if (info != null && info.hasEnumParameterType()) {
+<             JSType type = getEnumType(lvalue.getQualifiedName(), n, rvalue,
+<                 info.getEnumParameterType().evaluate(scope, typeRegistry));
+<             if (type != null) {
+<               setDeferredType(lvalue, type);
+<             }
+<           }
+<           break;
+---
+>       
+>       
+>       
+>       
+>       
+>       
+>       
+>       
+493,494c492,504
+<         default:
+<           throw new IllegalStateException(Integer.toString(n.getType()));
+---
+>       Node rvalue = n.getLastChild();
+>       Node lvalue = n.getFirstChild();
+>       info = (info != null) ? info : rvalue.getJSDocInfo();
+>       if (rvalue.getType() == Token.FUNCTION ||
+>           info != null && info.isConstructor()) {
+>         getFunctionType(lvalue.getQualifiedName(), rvalue, info,
+>             lvalue);
+>       } else if (info != null && info.hasEnumParameterType()) {
+>         JSType type = getEnumType(lvalue.getQualifiedName(), n, rvalue,
+>             info.getEnumParameterType().evaluate(scope, typeRegistry));
+>         if (type != null) {
+>           setDeferredType(lvalue, type);
+>         }
+843,899c853
+<           SubclassRelationship relationship =
+<               codingConvention.getClassesDefinedByCall(n);
+<           if (relationship != null) {
+<             ObjectType superClass = ObjectType.cast(
+<                 typeRegistry.getType(relationship.superclassName));
+<             ObjectType subClass = ObjectType.cast(
+<                 typeRegistry.getType(relationship.subclassName));
+<             if (superClass != null && subClass != null) {
+<               FunctionType superCtor = superClass.getConstructor();
+<               FunctionType subCtor = subClass.getConstructor();
+< 
+<               if (relationship.type == SubclassType.INHERITS) {
+<                 validator.expectSuperType(t, n, superClass, subClass);
+<               }
+< 
+<               if (superCtor != null && subCtor != null) {
+<                 codingConvention.applySubclassRelationship(
+<                     superCtor, subCtor, relationship.type);
+<               }
+<             }
+<           }
+< 
+<           String singletonGetterClassName =
+<               codingConvention.getSingletonGetterClassName(n);
+<           if (singletonGetterClassName != null) {
+<             ObjectType objectType = ObjectType.cast(
+<                 typeRegistry.getType(singletonGetterClassName));
+<             if (objectType != null) {
+<               FunctionType functionType = objectType.getConstructor();
+< 
+<               if (functionType != null) {
+<                 FunctionType getterType =
+<                     typeRegistry.createFunctionType(objectType);
+<                 codingConvention.applySingletonGetter(functionType, getterType,
+<                                                       objectType);
+<               }
+<             }
+<           }
+< 
+<           DelegateRelationship delegateRelationship =
+<               codingConvention.getDelegateRelationship(n);
+<           if (delegateRelationship != null) {
+<             applyDelegateRelationship(delegateRelationship);
+<           }
+< 
+<           ObjectLiteralCast objectLiteralCast =
+<               codingConvention.getObjectLiteralCast(t, n);
+<           if (objectLiteralCast != null) {
+<             ObjectType type = ObjectType.cast(
+<                 typeRegistry.getType(objectLiteralCast.typeName));
+<             if (type != null && type.getConstructor() != null) {
+<               setDeferredType(objectLiteralCast.objectNode, type);
+<             } else {
+<               compiler.report(JSError.make(t.getSourceName(), n,
+<                                            CONSTRUCTOR_EXPECTED));
+<             }
+<           }
+---
+>           checkForClassDefiningCalls(t, n, parent);
+912c866,867
+<           define(n, parent);
+---
+> 
+>           defineDeclaredFunction(n, parent);
+917c872
+<           define(n, parent);
+---
+>           defineNamedTypeAssign(n, parent);
+932c887
+<           define(n, parent);
+---
+>           defineCatch(n, parent);
+936c891
+<           define(n, parent);
+---
+>           defineVar(n, parent);
+955a911,979
+>     
+> 
+> 
+> 
+> 
+>     private void checkForClassDefiningCalls(
+>         NodeTraversal t, Node n, Node parent) {
+>       SubclassRelationship relationship =
+>           codingConvention.getClassesDefinedByCall(n);
+>       if (relationship != null) {
+>         ObjectType superClass = ObjectType.cast(
+>             typeRegistry.getType(relationship.superclassName));
+>         ObjectType subClass = ObjectType.cast(
+>             typeRegistry.getType(relationship.subclassName));
+>         if (superClass != null && subClass != null) {
+>           FunctionType superCtor = superClass.getConstructor();
+>           FunctionType subCtor = subClass.getConstructor();
+> 
+>           if (relationship.type == SubclassType.INHERITS) {
+>             validator.expectSuperType(t, n, superClass, subClass);
+>           }
+> 
+>           if (superCtor != null && subCtor != null) {
+>             codingConvention.applySubclassRelationship(
+>                 superCtor, subCtor, relationship.type);
+>           }
+>         }
+>       }
+> 
+>       String singletonGetterClassName =
+>           codingConvention.getSingletonGetterClassName(n);
+>       if (singletonGetterClassName != null) {
+>         ObjectType objectType = ObjectType.cast(
+>             typeRegistry.getType(singletonGetterClassName));
+>         if (objectType != null) {
+>           FunctionType functionType = objectType.getConstructor();
+> 
+>           if (functionType != null) {
+>             FunctionType getterType =
+>                 typeRegistry.createFunctionType(objectType);
+>             codingConvention.applySingletonGetter(functionType, getterType,
+>                 objectType);
+>           }
+>         }
+>       }
+> 
+>       DelegateRelationship delegateRelationship =
+>           codingConvention.getDelegateRelationship(n);
+>       if (delegateRelationship != null) {
+>         applyDelegateRelationship(delegateRelationship);
+>       }
+> 
+>       ObjectLiteralCast objectLiteralCast =
+>           codingConvention.getObjectLiteralCast(t, n);
+>       if (objectLiteralCast != null) {
+>         ObjectType type = ObjectType.cast(
+>             typeRegistry.getType(objectLiteralCast.typeName));
+>         if (type != null && type.getConstructor() != null) {
+>           setDeferredType(objectLiteralCast.objectNode, type);
+>         } else {
+>           compiler.report(JSError.make(t.getSourceName(), n,
+>                   CONSTRUCTOR_EXPECTED));
+>         }
+>       }
+>     }
+> 
+>     
+> 
+> 
+1358c1382
+<           define(n, parent);
+---
+>           defineDeclaredFunction(n, parent);
+1361a1386,1388
+>           defineCatch(n, parent);
+>           break;
+> 
+1363c1390
+<           define(n, parent);
+---
+>           defineVar(n, parent);

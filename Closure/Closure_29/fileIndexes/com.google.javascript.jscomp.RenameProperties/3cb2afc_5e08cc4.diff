@@ -1,0 +1,164 @@
+19a20
+> import com.google.common.collect.Sets;
+21a23,28
+> import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+> import com.google.javascript.jscomp.graph.Graph.GraphEdge;
+> import com.google.javascript.jscomp.graph.LinkedUndirectedGraph;
+> import com.google.javascript.jscomp.graph.UndiGraph;
+> import com.google.javascript.jscomp.graph.UndiGraph.UndiGraphEdge;
+> import com.google.javascript.jscomp.graph.UndiGraph.UndiGraphNode;
+26c33,43
+< import java.util.*;
+---
+> import java.util.ArrayList;
+> import java.util.Arrays;
+> import java.util.Collection;
+> import java.util.Comparator;
+> import java.util.HashMap;
+> import java.util.HashSet;
+> import java.util.Iterator;
+> import java.util.List;
+> import java.util.Map;
+> import java.util.Set;
+> import java.util.TreeSet;
+66a84,93
+> 
+> 
+> 
+> 
+> 
+> 
+>   private final UndiGraph<Property, PropertyAffinity> affinityGraph =
+>       LinkedUndirectedGraph.createWithoutAnnotations();
+> 
+>   
+73c100,102
+<   
+---
+>   private static final Comparator<Property> FREQUENCY_COMPARATOR =
+>     new Comparator<Property>() {
+>       public int compare(Property p1, Property p2) {
+74a104
+>         
+77,83c107,117
+<   private static final Comparator<Property> FREQUENCY_COMPARATOR =
+<       new Comparator<Property>() {
+<         public int compare(Property p1, Property p2) {
+<           if (p1.numOccurrences != p2.numOccurrences) {
+<             return p2.numOccurrences - p1.numOccurrences;
+<           }
+<           return p1.oldName.compareTo(p2.oldName);
+---
+>         if (p1.numOccurrences != p2.numOccurrences) {
+>           return p2.numOccurrences - p1.numOccurrences;
+> 
+>         
+> 
+> 
+> 
+> 
+> 
+>         } else if (p1.affinityScore != p2.affinityScore) {
+>           return p2.affinityScore - p1.affinityScore;
+85c119,125
+<       };
+---
+> 
+>         
+> 
+> 
+>         return p1.oldName.compareTo(p2.oldName);
+>        }
+>     };
+173a214
+>     computeAffinityScores();
+253a295,322
+> 
+> 
+> 
+>   private void computeAffinityScores() {
+>     for (Property p : propertyMap.values()) {
+>       UndiGraphNode<Property, PropertyAffinity> node =
+>           affinityGraph.getUndirectedGraphNode(p);
+> 
+>       int affinityScore = 0;
+>       for (Iterator<UndiGraphEdge<Property, PropertyAffinity>> edgeIterator =
+>           node.getNeighborEdgesIterator(); edgeIterator.hasNext();) {
+>         UndiGraphEdge<Property,PropertyAffinity> edge = edgeIterator.next();
+>         affinityScore += edge.getValue().affinity +
+>             (node == edge.getNodeA() ?
+>                 edge.getNodeB().getValue().numOccurrences :
+>                 edge.getNodeA().getValue().numOccurrences);
+>       }
+>       node.getValue().affinityScore = affinityScore;
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+266d334
+< 
+268d335
+< 
+316a384
+> 
+323c391,394
+<   private class ProcessProperties extends AbstractPostOrderCallback {
+---
+>   private class ProcessProperties extends AbstractPostOrderCallback implements
+>       ScopedCallback {
+> 
+>     private Set<Property> currentHighAffinityProperties = null;
+444a516
+>         affinityGraph.createNode(prop);
+446a519,548
+>       if (currentHighAffinityProperties != null) {
+>         currentHighAffinityProperties.add(prop);
+>       }
+>     }
+> 
+>     @Override
+>     public void enterScope(NodeTraversal t) {
+>       if (!t.inGlobalScope() && t.getScope().getParent().isGlobal()) {
+>         currentHighAffinityProperties = Sets.newHashSet();
+>       }
+>     }
+> 
+>     @Override
+>     public void exitScope(NodeTraversal t) {
+>       if (!t.inGlobalScope() && t.getScope().getParent().isGlobal()) {
+>         for (Property p1 : currentHighAffinityProperties) {
+>           for (Property p2 : currentHighAffinityProperties) {
+>             if (p1.oldName.compareTo(p2.oldName) < 0) {
+>               GraphEdge<Property,PropertyAffinity> edge =
+>                   affinityGraph.getFirstEdge(p1, p2);
+>               if (edge == null) {
+>                 affinityGraph.connect(p1, new PropertyAffinity(1), p2);
+>               } else {
+>                 edge.getValue().increase();
+>               }
+>             }
+>           }
+>         }
+>         currentHighAffinityProperties = null;
+>       }
+458a561
+>     int affinityScore = 0;
+461a565,576
+>     }
+>   }
+> 
+>   private class PropertyAffinity {
+>     private int affinity = 0;
+> 
+>     private PropertyAffinity(int affinity) {
+>       this.affinity = affinity;
+>     }
+> 
+>     private void increase() {
+>       affinity++;

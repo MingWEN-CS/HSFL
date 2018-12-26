@@ -1,0 +1,80 @@
+26a27
+> import java.util.HashSet;
+48,49c49
+<      "peepholeOptimizations"
+<      );
+---
+>      "peepholeOptimizations");
+54a55,60
+>   
+>   enum State {
+>     RUN_PASSES_NOT_RUN_IN_PREV_ITER,
+>     RUN_PASSES_THAT_CHANGED_STH_IN_PREV_ITER
+>   }
+> 
+127d132
+< 
+268c273
+<     private final String name;
+---
+>     final String name;
+326a332,339
+>       
+>       Set<NamedPass> madeChanges = new HashSet<NamedPass>();
+>       
+>       Set<NamedPass> runInPrevIter = new HashSet<NamedPass>();
+>       State s = State.RUN_PASSES_NOT_RUN_IN_PREV_ITER;
+>       boolean lastIterMadeChanges;
+>       int count = 0;
+> 
+328,331c341
+<         
+<         
+<         int count = 0;
+<         out: do {
+---
+>         while (true) {
+335,341c345,363
+< 
+<           recentChange.reset();  
+< 
+<           for (CompilerPass pass : myPasses) {
+<             pass.process(externs, root);
+<             if (hasHaltingErrors()) {
+<               break out;
+---
+>           lastIterMadeChanges = false;
+>           for (NamedPass pass : myPasses) {
+>             recentChange.reset();
+>             if ((s == State.RUN_PASSES_NOT_RUN_IN_PREV_ITER &&
+>                 !runInPrevIter.contains(pass)) ||
+>                 (s == State.RUN_PASSES_THAT_CHANGED_STH_IN_PREV_ITER &&
+>                     madeChanges.contains(pass))) {
+>               pass.process(externs, root);
+>               runInPrevIter.add(pass);
+>               if (hasHaltingErrors()) {
+>                 return;
+>               } else if (recentChange.hasCodeChanged()) {
+>                 madeChanges.add(pass);
+>                 lastIterMadeChanges = true;
+>               } else {
+>                 madeChanges.remove(pass);
+>               }
+>             } else {
+>               runInPrevIter.remove(pass);
+344,348c366,374
+< 
+<         } while (recentChange.hasCodeChanged() && !hasHaltingErrors());
+< 
+<         if (randomizeLoops) {
+<           loopsRun.add(getPassOrder());
+---
+>           if (s == State.RUN_PASSES_NOT_RUN_IN_PREV_ITER) {
+>             if (lastIterMadeChanges) {
+>               s = State.RUN_PASSES_THAT_CHANGED_STH_IN_PREV_ITER;
+>             } else {
+>               return;
+>             }
+>           } else if (!lastIterMadeChanges) {
+>             s = State.RUN_PASSES_NOT_RUN_IN_PREV_ITER;
+>           }

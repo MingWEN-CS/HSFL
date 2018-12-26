@@ -1,0 +1,121 @@
+288c288
+<     public RealMatrix getSubMatrix(int[] selectedRows, int[] selectedColumns)
+---
+>     public RealMatrix getSubMatrix(final int[] selectedRows, final int[] selectedColumns)
+290a291
+>         
+292a294
+>         
+295,297c297,304
+<         for (int i = 0; i < selectedRows.length; i++) {
+<             for (int j = 0; j < selectedColumns.length; j++) {
+<                 subMatrix.setEntry(i, j, getEntry(selectedRows[i], selectedColumns[j]));
+---
+>         subMatrix.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+> 
+>             
+>             private static final long serialVersionUID = 4572851009041214720L;
+> 
+>             
+>             public double visit(final int row, final int column, final double value) {
+>                 return getEntry(selectedRows[row], selectedColumns[column]);
+299c306,307
+<         }
+---
+> 
+>         });
+305a314,387
+>     public void copySubMatrix(final int startRow, final int endRow,
+>                               final int startColumn, final int endColumn,
+>                               final double[][] destination)
+>         throws MatrixIndexException, IllegalArgumentException {
+> 
+>         
+>         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+>         final int rowsCount    = endRow + 1 - startRow;
+>         final int columnsCount = endColumn + 1 - startColumn;
+>         if ((destination.length < rowsCount) || (destination[0].length < columnsCount)) {
+>             throw MathRuntimeException.createIllegalArgumentException(
+>                     "dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+>                     new Object[] {
+>                         destination.length, destination[0].length,
+>                         rowsCount, columnsCount
+>                     });
+>         }
+> 
+>         
+>         walkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {
+> 
+>             
+>             private static final long serialVersionUID = -6302162622577015104L;
+> 
+>             
+>             private int startRow;
+> 
+>             
+>             private int startColumn;
+> 
+>             
+>             public void start(final int rows, final int columns,
+>                               final int startRow, final int endRow,
+>                               final int startColumn, final int endColumn) {
+>                 this.startRow    = startRow;
+>                 this.startColumn = startColumn;
+>             }
+> 
+>             
+>             public void visit(final int row, final int column, final double value) {
+>                 destination[row - startRow][column - startColumn] = value;
+>             }
+> 
+>         }, startRow, endRow, startColumn, endColumn);
+> 
+>     }
+> 
+>     
+>     public void copySubMatrix(int[] selectedRows, int[] selectedColumns, double[][] destination)
+>         throws MatrixIndexException, IllegalArgumentException {
+> 
+>         
+>         checkSubMatrixIndex(selectedRows, selectedColumns);
+>         if ((destination.length < selectedRows.length) ||
+>             (destination[0].length < selectedColumns.length)) {
+>             throw MathRuntimeException.createIllegalArgumentException(
+>                     "dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+>                     new Object[] {
+>                         destination.length, destination[0].length,
+>                         selectedRows.length, selectedColumns.length
+>                     });
+>         }
+> 
+>         
+>         for (int i = 0; i < selectedRows.length; i++) {
+>             final double[] destinationI = destination[i];
+>             for (int j = 0; j < selectedColumns.length; j++) {
+>                 destinationI[j] = getEntry(selectedRows[i], selectedColumns[j]);
+>             }
+>         }
+> 
+>     }
+> 
+>     
+557c639
+<         walkInOptimizedOrder(new RealMatrixPreservingVisitor() {
+---
+>         walkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {
+560,566c642
+<             private static final long serialVersionUID = 3807296710038754174L;
+< 
+<             
+<             public void start(final int rows, final int columns,
+<                               final int startRow, final int endRow,
+<                               final int startColumn, final int endColumn) {
+<             }
+---
+>             private static final long serialVersionUID = 2482589609486637597L;
+571,575d646
+<             }
+< 
+<             
+<             public double end() {
+<                 return 0;

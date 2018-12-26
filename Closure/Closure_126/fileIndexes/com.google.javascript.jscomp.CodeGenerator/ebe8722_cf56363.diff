@@ -1,0 +1,114 @@
+36a37,39
+>   private static final String LT_ESCAPED = "\\x3c";
+>   private static final String GT_ESCAPED = "\\x3e";
+> 
+48a52,63
+>   private final boolean trustedStrings;
+> 
+>   private CodeGenerator(CodeConsumer consumer) {
+>     cc = consumer;
+>     outputCharsetEncoder = null;
+>     preferSingleQuotes = false;
+>     trustedStrings = true;
+>   }
+> 
+>   static CodeGenerator forCostEstimation(CodeConsumer consumer) {
+>     return new CodeGenerator(consumer);
+>   }
+51,52c66,67
+<       CodeConsumer consumer, Charset outputCharset,
+<       boolean preferSingleQuotes) {
+---
+>       CodeConsumer consumer,
+>       CompilerOptions options) {
+53a69,70
+> 
+>     Charset outputCharset = options.getOutputCharset();
+63c80,81
+<     this.preferSingleQuotes = preferSingleQuotes;
+---
+>     this.preferSingleQuotes = options.preferSingleQuotes;
+>     this.trustedStrings = options.trustedStrings;
+993c1011
+<         outputCharsetEncoder, useSlashV);
+---
+>         outputCharsetEncoder, useSlashV, false);
+997,998c1015,1016
+<   static String regexpEscape(String s, CharsetEncoder outputCharsetEncoder) {
+<     return strEscape(s, '/', "\"", "'", "\\", outputCharsetEncoder, false);
+---
+>   String regexpEscape(String s, CharsetEncoder outputCharsetEncoder) {
+>     return strEscape(s, '/', "\"", "'", "\\", outputCharsetEncoder, false, true);
+1004,1005c1022,1023
+<   static String escapeToDoubleQuotedJsString(String s) {
+<     return strEscape(s, '"',  "\\\"", "\'", "\\\\", null, false);
+---
+>   String escapeToDoubleQuotedJsString(String s) {
+>     return strEscape(s, '"',  "\\\"", "\'", "\\\\", null, false, false);
+1011c1029
+<   static String regexpEscape(String s) {
+---
+>   String regexpEscape(String s) {
+1016,1017c1034,1036
+<   private static String strEscape(
+<       String s, char quote,
+---
+>   private String strEscape(
+>       String s,
+>       char quote,
+1022c1041,1042
+<       boolean useSlashV) {
+---
+>       boolean useSlashV,
+>       boolean isRegexp) {
+1050c1070,1097
+<         case '>':                       
+---
+>         case '=':
+>           
+>           if (trustedStrings || isRegexp) {
+>             sb.append(c);
+>           } else {
+>             sb.append("\\x3d");
+>           }
+>           break;
+> 
+>         case '&':
+>           if (trustedStrings || isRegexp) {
+>             sb.append(c);
+>           } else {
+>             sb.append("\\x26");
+>           }
+>           break;
+> 
+>         case '>':
+>           if (!trustedStrings && !isRegexp) {
+>             sb.append(GT_ESCAPED);
+>             break;
+>           }
+> 
+>           
+>           
+>           
+>           
+>           
+1054c1101
+<             sb.append("\\>");
+---
+>             sb.append(GT_ESCAPED);
+1059a1107,1113
+>           if (!trustedStrings && !isRegexp) {
+>             sb.append(LT_ESCAPED);
+>             break;
+>           }
+> 
+>           
+>           
+1068c1122
+<             sb.append("<\\");
+---
+>             sb.append(LT_ESCAPED);
+1071c1125
+<             sb.append("<\\");
+---
+>             sb.append(LT_ESCAPED);

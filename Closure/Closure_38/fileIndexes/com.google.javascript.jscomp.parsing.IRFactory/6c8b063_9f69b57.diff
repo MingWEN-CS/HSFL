@@ -1,0 +1,234 @@
+109a110,115
+>   
+>   
+>   private Node templateNode;
+> 
+>   
+> 
+118a125,136
+>     
+>     this.templateNode = createTemplateNode();
+>   }
+> 
+>   
+>   
+>   
+>   private Node createTemplateNode() {
+>     
+>     Node templateNode = new Node(Token.SCRIPT);
+>     templateNode.putProp(Node.SOURCEFILE_PROP, sourceName);
+>     return templateNode;
+176,177c194,196
+<         Node newBlock = new Node(Token.BLOCK, irNode,
+<             irNode.getLineno(), irNode.getCharno());
+---
+>         Node newBlock = newNode(Token.BLOCK, irNode);
+>         newBlock.setLineno(irNode.getLineno());
+>         newBlock.setCharno(irNode.getCharno());
+281c300
+<       Node node = new Node(transformTokenType(n.getType()));
+---
+>       Node node = newNode(transformTokenType(n.getType()));
+313c332
+<       Node node = new Node(Token.ARRAYLIT);
+---
+>       Node node = newNode(Token.ARRAYLIT);
+347c366
+<       Node node = new Node(Token.SCRIPT);
+---
+>       Node node = newNode(Token.SCRIPT);
+397c416
+<       Node node = new Node(Token.BREAK);
+---
+>       Node node = newNode(Token.BREAK);
+410c429
+<       Node node = new Node(Token.CATCH, transform(catchVar));
+---
+>       Node node = newNode(Token.CATCH, transform(catchVar));
+414c433
+<         Node catchCondition = new Node(Token.EMPTY);
+---
+>         Node catchCondition = newNode(Token.EMPTY);
+429c448
+<       return new Node(
+---
+>       return newNode(
+438c457
+<       Node node = new Node(Token.CONTINUE);
+---
+>       Node node = newNode(Token.CONTINUE);
+450c469
+<       return new Node(
+---
+>       return newNode(
+458c477
+<       return new Node(
+---
+>       return newNode(
+466c485
+<       Node node = new Node(Token.EMPTY);
+---
+>       Node node = newNode(Token.EMPTY);
+472c491
+<       Node node = new Node(transformTokenType(statementNode.getType()));
+---
+>       Node node = newNode(transformTokenType(statementNode.getType()));
+479c498
+<       return new Node(
+---
+>       return newNode(
+488c507
+<       Node node = new Node(
+---
+>       Node node = newNode(
+499c518
+<       Node node = new Node(transformTokenType(callNode.getType()),
+---
+>       Node node = newNode(transformTokenType(callNode.getType()),
+520c539
+<       Node node = new Node(Token.FUNCTION);
+---
+>       Node node = newNode(Token.FUNCTION);
+536c555
+<       Node lp = new Node(Token.LP);
+---
+>       Node lp = newNode(Token.LP);
+566c585
+<       Node node = new Node(Token.IF);
+---
+>       Node node = newNode(Token.IF);
+577c596
+<       Node n =  new Node(
+---
+>       Node n =  newNode(
+594c613
+<       return new Node(transformTokenType(literalNode.getType()));
+---
+>       return newNode(transformTokenType(literalNode.getType()));
+599c618
+<       return Node.newString(Token.LABEL_NAME, labelNode.getName());
+---
+>       return newStringNode(Token.LABEL_NAME, labelNode.getName());
+604c623
+<       Node node = new Node(Token.LABEL);
+---
+>       Node node = newNode(Token.LABEL);
+619c638
+<         cur = new Node(Token.LABEL);
+---
+>         cur = newNode(Token.LABEL);
+627c646
+<       return Node.newString(Token.NAME, nameNode.getIdentifier());
+---
+>       return newStringNode(Token.NAME, nameNode.getIdentifier());
+637,638c656
+<       Node newNode = Node.newNumber(literalNode.getNumber());
+<       return newNode;
+---
+>       return newNumberNode(literalNode.getNumber());
+647c665
+<       Node node = new Node(Token.OBJECTLIT);
+---
+>       Node node = newNode(Token.OBJECTLIT);
+675c693
+<       return new Node(
+---
+>       return newNode(
+683c701
+<       Node literalStringNode = Node.newString(literalNode.getValue());
+---
+>       Node literalStringNode = newStringNode(literalNode.getValue());
+686c704
+<       Node node = new Node(Token.REGEXP, literalStringNode);
+---
+>       Node node = newNode(Token.REGEXP, literalStringNode);
+689c707
+<         Node flagsNode = Node.newString(flags);
+---
+>         Node flagsNode = newStringNode(flags);
+699c717
+<       Node node = new Node(Token.RETURN);
+---
+>       Node node = newNode(Token.RETURN);
+713c731
+<       Node n = Node.newString(literalNode.getValue());
+---
+>       Node n = newStringNode(literalNode.getValue());
+721c739
+<         node = new Node(Token.DEFAULT);
+---
+>         node = newNode(Token.DEFAULT);
+724c742
+<         node = new Node(Token.CASE, transform(expr));
+---
+>         node = newNode(Token.CASE, transform(expr));
+726c744
+<       Node block = new Node(Token.BLOCK);
+---
+>       Node block = newNode(Token.BLOCK);
+741c759
+<       Node node = new Node(Token.SWITCH,
+---
+>       Node node = newNode(Token.SWITCH,
+751c769
+<       return new Node(Token.THROW,
+---
+>       return newNode(Token.THROW,
+757c775
+<       Node node = new Node(Token.TRY,
+---
+>       Node node = newNode(Token.TRY,
+759c777
+<       Node block = new Node(Token.BLOCK);
+---
+>       Node block = newNode(Token.BLOCK);
+796c814
+<         Node node = new Node(type, operand);
+---
+>         Node node = newNode(type, operand);
+806c824
+<       Node node = new Node(Token.VAR);
+---
+>       Node node = newNode(Token.VAR);
+825c843
+<       return new Node(
+---
+>       return newNode(
+833c851
+<       return new Node(
+---
+>       return newNode(
+847c865
+<       return new Node(Token.EMPTY);
+---
+>       return newNode(Token.EMPTY);
+1182a1201,1229
+>   }
+> 
+>   
+>   private Node newNode(int type) {
+>     return new Node(type).clonePropsFrom(templateNode);
+>   }
+> 
+>   private Node newNode(int type, Node child1) {
+>     return new Node(type, child1).clonePropsFrom(templateNode);
+>   }
+> 
+>   private Node newNode(int type, Node child1, Node child2) {
+>     return new Node(type, child1, child2).clonePropsFrom(templateNode);
+>   }
+> 
+>   private Node newNode(int type, Node child1, Node child2, Node child3) {
+>     return new Node(type, child1, child2, child3).clonePropsFrom(templateNode);
+>   }
+> 
+>   private Node newStringNode(String value) {
+>     return Node.newString(value).clonePropsFrom(templateNode);
+>   }
+> 
+>   private Node newStringNode(int type, String value) {
+>     return Node.newString(type, value).clonePropsFrom(templateNode);
+>   }
+> 
+>   private Node newNumberNode(Double value) {
+>     return Node.newNumber(value).clonePropsFrom(templateNode);

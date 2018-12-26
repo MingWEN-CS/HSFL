@@ -1,0 +1,35 @@
+172,173c172,175
+<       if (lValue.isQualifiedName()) {
+<         if (lValue.getType() == Token.GETPROP) {
+---
+>       if (NodeUtil.isGet(lValue)) {
+>         
+>         JSType lValueType = lValue.getJSType();
+>         if (lValueType != null && lValueType.isNominalConstructor()) {
+175,184c177,178
+<           JSType lValueType = lValue.getJSType();
+<           if (lValueType != null && lValueType.isConstructor()) {
+<             
+<             
+<             return (lValueType.toMaybeFunctionType()).getInstanceType();
+<           } else {
+<             
+<             
+<             return normalizeClassType(lValue.getFirstChild().getJSType());
+<           }
+---
+>           
+>           return (lValueType.toMaybeFunctionType()).getInstanceType();
+188c182
+<           return normalizeClassType(lValue.getJSType());
+---
+>           return normalizeClassType(lValue.getFirstChild().getJSType());
+189a184,187
+>       } else {
+>         
+>         
+>         return normalizeClassType(lValue.getJSType());
+206c204
+<     } else if (type.isConstructor()) {
+---
+>     } else if (type.isNominalConstructor()) {

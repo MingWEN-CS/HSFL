@@ -1,0 +1,103 @@
+153a154,157
+>   public boolean isNoResolvedType() {
+>     return false;
+>   }
+> 
+159c163
+<     return isNoType() || isNoObjectType();
+---
+>     return isNoType() || isNoObjectType() || isNoResolvedType();
+513,514c517,520
+<     if (bType.isAllType() || bType.isEmptyType() || bType.isUnknownType() ||
+<         aType.isAllType() || aType.isEmptyType() || aType.isUnknownType()) {
+---
+>     if (bType.isAllType() || bType.isUnknownType() ||
+>         bType.isNoResolvedType() ||
+>         aType.isAllType() || aType.isUnknownType() ||
+>         aType.isNoResolvedType()) {
+516a523,533
+> 
+>     boolean aIsEmpty = aType.isEmptyType();
+>     boolean bIsEmpty = bType.isEmptyType();
+>     if (aIsEmpty || bIsEmpty) {
+>       if (aIsEmpty && bIsEmpty) {
+>         return TernaryValue.TRUE;
+>       } else {
+>         return UNKNOWN;
+>       }
+>     }
+> 
+525,528c542,544
+<       if (!otherType.getGreatestSubtype(
+<               getNativeType(JSTypeNative.OBJECT_TYPE)).isEmptyType()) {
+<         return TernaryValue.UNKNOWN;
+<       } else {
+---
+>       JSType meet = otherType.getGreatestSubtype(
+>           getNativeType(JSTypeNative.OBJECT_TYPE));
+>       if (meet.isNoType() || meet.isNoObjectType()) {
+529a546,547
+>       } else {
+>         return TernaryValue.UNKNOWN;
+581c599,602
+<     return thisType.registry.createUnionType(thisType, thatType);
+---
+>     boolean areEquivalent = thisType.isEquivalentTo(thatType);
+>     return areEquivalent ? thisType :
+>         filterNoResolvedType(
+>             thisType.registry.createUnionType(thisType, thatType));
+597c618
+<      if (that.isRecordType()) {
+---
+>     if (that.isRecordType()) {
+609c630,632
+<     if (thisType.isUnknownType() || thatType.isUnknownType()) {
+---
+>     if (thisType.isEquivalentTo(thatType)) {
+>       return thisType;
+>     } else if (thisType.isUnknownType() || thatType.isUnknownType()) {
+615c638
+<       return thisType;
+---
+>       return filterNoResolvedType(thisType);
+617c640
+<       return thatType;
+---
+>       return filterNoResolvedType(thatType);
+625a649,684
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   static JSType filterNoResolvedType(JSType type) {
+>     if (type.isNoResolvedType()) {
+>       
+>       
+>       return type.getNativeType(JSTypeNative.NO_RESOLVED_TYPE);
+>     } else if (type instanceof UnionType) {
+>       UnionType unionType = (UnionType) type;
+>       boolean needsFiltering = false;
+>       for (JSType alt : unionType.getAlternates()) {
+>         if (alt.isNoResolvedType()) {
+>           needsFiltering = true;
+>           break;
+>         }
+>       }
+> 
+>       if (needsFiltering) {
+>         UnionTypeBuilder builder = new UnionTypeBuilder(type.registry);
+>         for (JSType alt : unionType.getAlternates()) {
+>           if (!alt.isNoResolvedType()) {
+>             builder.addAlternate(alt);
+>           }
+>         }
+>         return builder.build();
+>       }
+>     }
+>     return type;

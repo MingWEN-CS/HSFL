@@ -1,0 +1,158 @@
+57a58,59
+> 
+> 
+277a280,283
+> 
+>         case Token.FUNCTION:
+>           normalizeFunctionDeclaration(n);
+>           break;
+283a290,339
+> 
+> 
+> 
+> 
+> 
+>     private void normalizeFunctionDeclaration(Node n) {
+>       Preconditions.checkState(n.getType() == Token.FUNCTION);
+>       if (!NodeUtil.isFunctionAnonymous(n)
+>           && !NodeUtil.isHoistedFunctionDeclaration(n)) {
+>         rewriteFunctionDeclaration(n);
+>       }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private void rewriteFunctionDeclaration(Node n) {
+>       
+>       Node oldNameNode = n.getFirstChild();
+>       Node fnNameNode = oldNameNode.cloneNode();
+>       Node var = new Node(Token.VAR, fnNameNode, n.getLineno(), n.getCharno());
+>       var.copyInformationFrom(n);
+> 
+>       
+>       oldNameNode.setString("");
+> 
+>       
+>       Node parent = n.getParent();
+>       parent.replaceChild(n, var);
+>       fnNameNode.addChildToFront(n);
+> 
+>       reportCodeChange("Function declaration");
+>     }
+> 
+>     
+> 
+> 
+486c542,553
+<       if (parent.getType() == Token.VAR) {
+---
+>       Var v = s.getVar(name);
+>       
+>       Preconditions.checkState(
+>           v == null || v.getParentNode().getType() != Token.CATCH);
+>       if (v != null && parent.getType() == Token.FUNCTION) {
+>         if (v.getParentNode().getType() == Token.VAR) {
+>           s.undeclare(v);
+>           s.declare(name, n, n.getJSType(), v.input);
+>           replaceVarWithAssignment(v.getNameNode(), v.getParentNode(),
+>               v.getParentNode().getParent());
+>         }
+>       } else if (parent.getType() == Token.VAR) {
+488a556,577
+>         replaceVarWithAssignment(n, parent, gramps);
+>       }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private void replaceVarWithAssignment(Node n, Node parent, Node gramps) {
+>       if (n.hasChildren()) {
+489a579
+>         parent.removeChild(n);
+490a581,585
+>         Node value = n.getFirstChild();
+>         n.removeChild(value);
+>         Node replacement = new Node(Token.ASSIGN, n, value);
+>         gramps.replaceChild(parent, new Node(Token.EXPR_RESULT, replacement));
+>       } else {
+492,506c587,589
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         if (n.hasChildren()) {
+---
+>         if (NodeUtil.isStatementBlock(gramps)) {
+>           gramps.removeChild(parent);
+>         } else if (gramps.getType() == Token.FOR) {
+508d590
+<           parent.removeChild(n);
+510,514d591
+<           Node value = n.getFirstChild();
+<           n.removeChild(value);
+<           Node replacement = new Node(Token.ASSIGN, n, value);
+<           gramps.replaceChild(parent, new Node(Token.EXPR_RESULT, replacement));
+<         } else {
+516,527c593,597
+<           if (NodeUtil.isStatementBlock(gramps)) {
+<             gramps.removeChild(parent);
+<           } else if (gramps.getType() == Token.FOR) {
+<             
+<             
+<             
+<             parent.removeChild(n);
+<             gramps.replaceChild(parent, n);
+<           } else {
+<             Preconditions.checkState(gramps.getType() == Token.LABEL);
+<             gramps.replaceChild(parent, new Node(Token.EMPTY));
+<           }
+---
+>           parent.removeChild(n);
+>           gramps.replaceChild(parent, n);
+>         } else {
+>           Preconditions.checkState(gramps.getType() == Token.LABEL);
+>           gramps.replaceChild(parent, new Node(Token.EMPTY));
+529d598
+<         reportCodeChange("Duplicate VAR declaration");
+530a600
+>       reportCodeChange("Duplicate VAR declaration");
+532d601
+< 

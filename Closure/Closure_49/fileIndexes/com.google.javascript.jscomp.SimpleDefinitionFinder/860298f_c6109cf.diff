@@ -1,0 +1,149 @@
+68a69,77
+>   private DefinitionSite getDefinitionAt(Node node) {
+>     return definitionSiteMap.get(node);
+>   }
+> 
+>   DefinitionSite getDefinitionForFunction(Node function) {
+>     Preconditions.checkState(NodeUtil.isFunction(function));
+>     return getDefinitionAt(getNameNodeFromFunctionNode(function));
+>   }
+> 
+279a289,426
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static boolean isCallOrNewSite(UseSite use) {
+>     Node call = use.node.getParent();
+>     if (call == null) {
+>       
+>       return false;
+>     }
+>     
+>     
+>     
+>     return NodeUtil.isCallOrNew(call) && call.getFirstChild() == use.node;
+>   }
+> 
+>   
+> 
+> 
+>   static boolean maybeExported(
+>       AbstractCompiler compiler, Definition definition) {
+>     
+>     Node lValue = definition.getLValue();
+>     if (lValue == null) {
+>       return true;
+>     }
+> 
+>     String partialName;
+>     if (NodeUtil.isGetProp(lValue)) {
+>       partialName = lValue.getLastChild().getString();
+>     } else if (NodeUtil.isName(lValue)) {
+>       partialName = lValue.getString();
+>     } else {
+>       
+>       
+>       return true;
+>     }
+> 
+>     CodingConvention codingConvention = compiler.getCodingConvention();
+>     if (codingConvention.isExported(partialName)) {
+>       return true;
+>     }
+> 
+>     return false;
+>   }
+> 
+>   
+> 
+> 
+>   static boolean isSimpleFunctionDeclaration(Node fn) {
+>     Node parent = fn.getParent();
+>     Node gramps = parent.getParent();
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+> 
+>     
+>     
+>     Node nameNode = SimpleDefinitionFinder.getNameNodeFromFunctionNode(fn);
+>     if (nameNode != null
+>         && NodeUtil.isName(nameNode)
+>         && nameNode.getString().equals(NodeUtil.JSC_PROPERTY_NAME_FN)) {
+>       return false;
+>     }
+> 
+>     
+>     if (NodeUtil.isFunctionDeclaration(fn)) {
+>       return true;
+>     }
+> 
+>     
+>     
+>     if (fn.getFirstChild().getString().isEmpty()
+>         && (NodeUtil.isExprAssign(gramps) || NodeUtil.isName(parent))) {
+>       return true;
+>     }
+> 
+>     return false;
+>   }
+> 
+>   
+> 
+> 
+>   static Node getNameNodeFromFunctionNode(Node function) {
+>     Preconditions.checkState(NodeUtil.isFunction(function));
+>     if (NodeUtil.isFunctionDeclaration(function)) {
+>       return function.getFirstChild();
+>     } else {
+>       Node parent = function.getParent();
+>       if (NodeUtil.isVarDeclaration(parent)) {
+>         return parent;
+>       } else if (NodeUtil.isAssign(parent)) {
+>         return parent.getFirstChild();
+>       } else if (NodeUtil.isObjectLitKey(parent, parent.getParent())) {
+>         return parent;
+>       }
+>     }
+>     return null;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   void removeReferences(Node node) {
+>     if (DefinitionsRemover.isDefinitionNode(node)) {
+>       DefinitionSite defSite = definitionSiteMap.get(node);
+>       if (defSite != null) {
+>         Definition def = defSite.definition;
+>         String name = getSimplifiedName(def.getLValue());
+>         if (name != null) {
+>           this.definitionSiteMap.remove(node);
+>           this.nameDefinitionMultimap.remove(name, node);
+>         }
+>       }
+>     } else {
+>       Node useSite = node;
+>       if (NodeUtil.isGetProp(useSite)) {
+>         String propName = useSite.getLastChild().getString();
+>         if (propName.equals("apply") || propName.equals("call")) {
+>           useSite = useSite.getFirstChild();
+>         }
+>       }
+>       String name = getSimplifiedName(useSite);
+>       if (name != null) {
+>         this.nameUseSiteMultimap.remove(name, new UseSite(useSite, null));
+>       }
+>     }
+> 
+>     for (Node child : node.children()) {
+>       removeReferences(child);

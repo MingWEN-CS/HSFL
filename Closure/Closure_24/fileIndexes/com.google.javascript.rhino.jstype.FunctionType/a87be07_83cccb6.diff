@@ -1,0 +1,78 @@
+43a44
+> import static com.google.javascript.rhino.jstype.ObjectType.Property;
+87d87
+<   private PrototypeObjectType prototype;
+89c89,90
+<   private SimpleSlot prototypeSlot;
+---
+> 
+>   private Property prototypeSlot;
+291c292
+<     if (prototype == null) {
+---
+>     if (prototypeSlot == null) {
+306c307
+<     if (prototype == null) {
+---
+>     if (prototypeSlot == null) {
+312c313,314
+<               isNativeObjectType()));
+---
+>               isNativeObjectType()),
+>           null);
+314c316
+<     return prototype;
+---
+>     return (ObjectType) prototypeSlot.getType();
+322a325,328
+>     setPrototypeBasedOn(baseType, null);
+>   }
+> 
+>   void setPrototypeBasedOn(ObjectType baseType, Node propertyNode) {
+348c354
+<     setPrototype((PrototypeObjectType) baseType);
+---
+>     setPrototype((PrototypeObjectType) baseType, propertyNode);
+356c362
+<   public boolean setPrototype(PrototypeObjectType prototype) {
+---
+>   boolean setPrototype(PrototypeObjectType prototype, Node propertyNode) {
+365c371,372
+<     PrototypeObjectType oldPrototype = this.prototype;
+---
+>     PrototypeObjectType oldPrototype = prototypeSlot == null
+>         ? null : (PrototypeObjectType) prototypeSlot.getType();
+368,370c375,377
+<     this.prototype = prototype;
+<     this.prototypeSlot = new SimpleSlot("prototype", prototype, true);
+<     this.prototype.setOwnerFunction(this);
+---
+>     this.prototypeSlot = new Property("prototype", prototype, true,
+>         propertyNode == null ? source : propertyNode);
+>     prototype.setOwnerFunction(this);
+558c565,566
+<         if (objType.isEquivalentTo(prototype)) {
+---
+>         if (prototypeSlot != null &&
+>             objType.isEquivalentTo(prototypeSlot.getType())) {
+561c569
+<         this.setPrototypeBasedOn(objType);
+---
+>         this.setPrototypeBasedOn(objType, propertyNode);
+988,989c996,997
+<       if (prototype != null) {
+<         prototype.clearCachedValues();
+---
+>       if (prototypeSlot != null) {
+>         ((PrototypeObjectType) prototypeSlot.getType()).clearCachedValues();
+1005c1013
+<     return prototype != null || super.hasCachedValues();
+---
+>     return prototypeSlot != null || super.hasCachedValues();
+1020c1028,1031
+<     prototype = (PrototypeObjectType) safeResolve(prototype, t, scope);
+---
+>     if (prototypeSlot != null) {
+>       prototypeSlot.setType(
+>           (PrototypeObjectType) safeResolve(prototypeSlot.getType(), t, scope));
+>     }

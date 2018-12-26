@@ -1,0 +1,51 @@
+67a68
+> import org.joda.time.field.FieldUtils;
+234a236,283
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeZone getInstance(int hoursOffset) throws IllegalArgumentException {
+>         return getInstance(hoursOffset, 0);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeZone getInstance(int hoursOffset, int minutesOffset) throws IllegalArgumentException {
+>         if (hoursOffset == 0 && minutesOffset == 0) {
+>             return DateTimeZone.UTC;
+>         }
+>         if (minutesOffset < 0 || minutesOffset > 59) {
+>             throw new IllegalArgumentException("Minutes out of range: " + minutesOffset);
+>         }
+>         int offset = 0;
+>         try {
+>             int hoursInMinutes = FieldUtils.safeMultiplyToInt(hoursOffset, 60);
+>             if (hoursInMinutes < 0) {
+>                 minutesOffset = FieldUtils.safeAdd(hoursInMinutes, -minutesOffset);
+>             } else {
+>                 minutesOffset = FieldUtils.safeAdd(hoursInMinutes, minutesOffset);
+>             }
+>             offset = FieldUtils.safeMultiplyToInt(minutesOffset, DateTimeConstants.MILLIS_PER_MINUTE);
+>         } catch (ArithmeticException ex) {
+>             throw new IllegalArgumentException("Offset is too large");
+>         }
+>         String id = offsetFormatter().print(0, UTC, offset);
+>         return fixedOffsetZone(id, offset);

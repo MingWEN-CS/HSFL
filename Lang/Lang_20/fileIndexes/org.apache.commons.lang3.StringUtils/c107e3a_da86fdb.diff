@@ -1,0 +1,124 @@
+1375c1375,1379
+<         for (int i = 0; i < cs.length(); i++) {
+---
+>         int csLen = cs.length();
+>         int csLast = csLen - 1;
+>         int searchLen = searchChars.length;
+>         int searchLast = searchLen - 1;
+>         for (int i = 0; i < csLen; i++) {
+1377c1381
+<             for (int j = 0; j < searchChars.length; j++) {
+---
+>             for (int j = 0; j < searchLen; j++) {
+1379c1383,1390
+<                     return i;
+---
+>                     if (i < csLast && j < searchLast && Character.isHighSurrogate(ch)) {
+>                         
+>                         if (searchChars[j + 1] == cs.charAt(i + 1)) {
+>                             return i;
+>                         }
+>                     } else {
+>                         return i;
+>                     }
+1440c1451
+<     public static boolean containsAny(CharSequence cs, char[] searchChars) {
+---
+>     public static boolean containsAny(String cs, char[] searchChars) {
+1446,1447c1457,1458
+<         int csLastIndex = csLength - 1;
+<         int searchLastIndex = searchLength - 1;
+---
+>         int csLast = csLength - 1;
+>         int searchLast = searchLength - 1;
+1452,1454c1463,1468
+<                     if (i < csLastIndex && j < searchLastIndex && ch >= Character.MIN_HIGH_SURROGATE && ch <= Character.MAX_HIGH_SURROGATE) {
+<                         
+<                         if (searchChars[j + 1] == cs.charAt(i + 1)) {
+---
+>                     if (Character.isHighSurrogate(ch)) {
+>                         if (j == searchLast) {
+>                             
+>                             return true;
+>                         }
+>                         if (i < csLast && searchChars[j + 1] == cs.charAt(i + 1)) {
+1494c1508
+<     public static boolean containsAny(CharSequence cs, String searchChars) {
+---
+>     public static boolean containsAny(String cs, String searchChars) {
+1529c1543,1548
+<         outer : for (int i = 0; i < cs.length(); i++) {
+---
+>         int csLen = cs.length();
+>         int csLast = csLen - 1;
+>         int searchLen = searchChars.length;
+>         int searchLast = searchLen - 1;
+>         outer:
+>         for (int i = 0; i < csLen; i++) {
+1531c1550
+<             for (int j = 0; j < searchChars.length; j++) {
+---
+>             for (int j = 0; j < searchLen; j++) {
+1533c1552,1558
+<                     continue outer;
+---
+>                     if (i < csLast && j < searchLast && Character.isHighSurrogate(ch)) {
+>                         if (searchChars[j + 1] == cs.charAt(i + 1)) {
+>                             continue outer;
+>                         }
+>                     } else {
+>                         continue outer;
+>                     }
+1567,1569c1592,1604
+<         for (int i = 0; i < str.length(); i++) {
+<             if (searchChars.indexOf(str.charAt(i)) < 0) {
+<                 return i;
+---
+>         int strLen = str.length();
+>         for (int i = 0; i < strLen; i++) {
+>             char ch = str.charAt(i);
+>             boolean chFound = searchChars.indexOf(ch) >= 0;
+>             if (i + 1 < strLen && Character.isHighSurrogate(ch)) {
+>                 char ch2 = str.charAt(i + 1);
+>                 if (chFound && searchChars.indexOf(ch2) < 0) {
+>                     return i;
+>                 }
+>             } else {
+>                 if (!chFound) {
+>                     return i;
+>                 }
+1665,1666c1700,1701
+<     public static boolean containsNone(CharSequence cs, char[] invalidChars) {
+<         if (cs == null || invalidChars == null) {
+---
+>     public static boolean containsNone(CharSequence cs, char[] searchChars) {
+>         if (cs == null || searchChars == null) {
+1669,1671c1704,1708
+<         int strSize = cs.length();
+<         int validSize = invalidChars.length;
+<         for (int i = 0; i < strSize; i++) {
+---
+>         int csLen = cs.length();
+>         int csLast = csLen - 1;
+>         int searchLen = searchChars.length;
+>         int searchLast = searchLen - 1;
+>         for (int i = 0; i < csLen; i++) {
+1673,1675c1710,1723
+<             for (int j = 0; j < validSize; j++) {
+<                 if (invalidChars[j] == ch) {
+<                     return false;
+---
+>             for (int j = 0; j < searchLen; j++) {
+>                 if (searchChars[j] == ch) {
+>                     if (Character.isHighSurrogate(ch)) {
+>                         if (j == searchLast) {
+>                             
+>                             return false;
+>                         }
+>                         if (i < csLast && searchChars[j + 1] == cs.charAt(i + 1)) {
+>                             return false;
+>                         }
+>                     } else {
+>                         
+>                         return false;
+>                     }

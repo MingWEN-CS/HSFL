@@ -1,0 +1,269 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.base;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.ReadWritableInstant;
+import org.joda.time.ReadableInstant;
+import org.joda.time.ReadablePartial;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class AbstractPartial implements ReadablePartial {
+
+    
+    
+
+
+    protected AbstractPartial() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+    public DateTimeField[] getFields() {
+        DateTimeField[] result = new DateTimeField[getFieldSize()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = getField(i);
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+    public int[] getValues() {
+        int[] result = new int[getFieldSize()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = getValue(i);
+        }
+        return result;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public int get(DateTimeField field) {
+        for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+            if (getField(i) == field) {
+                return getValue(i);
+            }
+        }
+        throw new IllegalArgumentException("Field '" + field + "' is not supported");
+    }
+
+    
+
+
+
+
+
+    public boolean isSupported(DateTimeField field) {
+        for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+            if (getField(i) == field) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public long resolve(long baseInstant, DateTimeZone zone) {
+        Chronology chrono = getChronology().withZone(zone);
+        return resolve(baseInstant, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime resolveDateTime(ReadableInstant baseInstant) {
+        Chronology chrono = DateTimeUtils.getInstantChronology(baseInstant);
+        long instantMillis = DateTimeUtils.getInstantMillis(baseInstant);
+        long resolved = resolve(instantMillis, chrono);
+        return new DateTime(resolved, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public void resolveInto(ReadWritableInstant baseInstant) {
+        if (baseInstant == null) {
+            throw new IllegalArgumentException("The instant must not be null");
+        }
+        Chronology chrono = baseInstant.getChronology();
+        long resolved = resolve(baseInstant.getMillis(), chrono);
+        baseInstant.setMillis(resolved);
+    }
+
+    
+
+
+
+
+
+
+    protected long resolve(long baseInstant, Chronology chrono) {
+        long millis = baseInstant;
+        for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+            millis = getField(i).set(millis, getValue(i));
+        }
+        return millis;
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean equals(Object partial) {
+        if (partial instanceof ReadablePartial == false) {
+            return false;
+        }
+        ReadablePartial other = (ReadablePartial) partial;
+        if (getFieldSize() != other.getFieldSize()) {
+            return false;
+        }
+        for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+            if (getValue(i) != other.getValue(i) || getField(i) != other.getField(i)) {
+                return false;
+            }
+        }
+        return (getChronology() == other.getChronology());
+    }
+
+    
+
+
+
+
+
+    public int hashCode() {
+        int total = 157;
+        for (int i = 0, isize = getFieldSize(); i < isize; i++) {
+            total = 23 * total + getValue(i);
+            total = 23 * total + getField(i).hashCode();
+        }
+        total += getChronology().hashCode();
+        return total;
+    }
+
+}

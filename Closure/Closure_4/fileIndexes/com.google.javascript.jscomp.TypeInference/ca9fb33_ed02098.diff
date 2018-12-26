@@ -1,0 +1,34 @@
+818,831c818,825
+<       if (assertedNodeName != null) {
+<         JSType type = getJSType(assertedNode);
+<         JSType narrowed = type.restrictByNotNullOrUndefined();
+<         if (type != narrowed) {
+<           scope = narrowScope(scope, assertedNode, narrowed);
+<           callNode.setJSType(narrowed);
+<         }
+<       } else if (assertedNode.isAnd() ||
+<                  assertedNode.isOr()) {
+<         BooleanOutcomePair conditionOutcomes =
+<             traverseWithinShortCircuitingBinOp(assertedNode, scope);
+<         scope = reverseInterpreter.getPreciserScopeKnowingConditionOutcome(
+<             assertedNode, conditionOutcomes.getOutcomeFlowScope(
+<                 assertedNode.getType(), true), true);
+---
+>       
+>       scope = reverseInterpreter.getPreciserScopeKnowingConditionOutcome(
+>           assertedNode, scope, true);
+>       
+>       JSType type = getJSType(assertedNode);
+>       JSType narrowed = type.restrictByNotNullOrUndefined();
+>       if (type != narrowed) {
+>         callNode.setJSType(narrowed);
+833c827
+<     } else if (assertedNodeName != null) {
+---
+>     } else {
+838c832,834
+<         scope = narrowScope(scope, assertedNode, narrowed);
+---
+>         if (assertedNodeName != null) {
+>           scope = narrowScope(scope, assertedNode, narrowed);
+>         }

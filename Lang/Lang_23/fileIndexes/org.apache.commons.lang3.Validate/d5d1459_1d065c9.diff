@@ -1,0 +1,352 @@
+18a19
+> import java.text.MessageFormat;
+40a42,105
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+77c142
+<             throw new IllegalArgumentException(message + value);
+---
+>             throw new IllegalArgumentException(getMessage(message, value));
+103c168,169
+<             throw new IllegalArgumentException(message + value);
+---
+>             
+>             throw new IllegalArgumentException(getMessage(message, value));
+130c196
+<             throw new IllegalArgumentException(message + value);
+---
+>             throw new IllegalArgumentException(getMessage(message, value));
+185a252,277
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void isTrue(boolean expression, Object... msgObjects) {
+>         if (expression == false) {
+>             throw new IllegalArgumentException(getMessage(msgObjects));
+>         }
+>     }
+> 
+>     
+223a316,337
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void notNull(Object object, Object... msgObjects) {
+>         if (object == null) {
+>             throw new IllegalArgumentException(getMessage(msgObjects));
+>         }
+>     }   
+> 
+262a377,396
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void notEmpty(Object[] array, Object... msgObjects) {
+>         notEmpty(array, getMessage(msgObjects));
+>     }
+> 
+>     
+300a435,454
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void notEmpty(Collection<?> collection, Object... msgObjects) {
+>         notEmpty(collection, getMessage(msgObjects));
+>     }
+> 
+>     
+338a493,512
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void notEmpty(Map<?,?> map, Object... msgObjects) {
+>         notEmpty(map, getMessage(msgObjects));
+>     }
+> 
+>     
+376a551,570
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void notEmpty(String string, Object... msgObjects) {
+>         notEmpty(string, getMessage(msgObjects));
+>     }
+> 
+>     
+432a627,656
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void noNullElements(Object[] array, Object... msgObjects) {
+>         Validate.notNull(array);
+>         for (int i = 0; i < array.length; i++) {
+>             if (array[i] == null) {
+>                 
+>                 throw new IllegalArgumentException(getMessage(msgObjects));
+>             }
+>         }
+>     }
+> 
+>     
+501a726,760
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void noNullElements(Collection collection, Object... msgObjects) {
+>         Validate.notNull(collection);
+>         int i = 0;
+>         for (Iterator it = collection.iterator(); it.hasNext(); i++) {
+>             if (it.next() == null) {
+>                 
+>                 throw new IllegalArgumentException(getMessage(msgObjects));
+>             }
+>         }
+>     }
+> 
+> 
+>     
+>     
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+540a800,869
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void allElementsOfType(Collection collection, Class clazz, Object... msgObjects) {
+>         Validate.notNull(collection);
+>         Validate.notNull(clazz);
+>         int i = 0;
+>         for (Iterator it = collection.iterator(); it.hasNext(); i++) {
+>             if (clazz.isInstance(it.next()) == false) {
+>                 
+>                 throw new IllegalArgumentException(getMessage(msgObjects));
+>             }
+>         }
+>     }
+> 
+>     
+>     
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String getMessage(Object... msgObjects) {
+>         if (msgObjects.length > 0 && msgObjects[0] instanceof String) {
+>             String message = (String) msgObjects[0];
+>             if (msgObjects.length == 2 && !message.matches("[^\\{]*\\{\\d*\\}.*")) {
+>                 
+>                 return message + msgObjects[1]; 
+>             }
+>             
+>             MessageFormat form = new MessageFormat((String) msgObjects[0]);
+>             Object[] params = new Object[msgObjects.length - 1];
+>             System.arraycopy(msgObjects, 1, params, 0, msgObjects.length - 1);
+>             return form.format(params);
+>         }
+>         else {
+>             StringBuffer sb = new StringBuffer("Validation failed: [");
+>             for(int i = 0; i < msgObjects.length; i++) {
+>                 if (i > 0) {
+>                     sb.append(' ');
+>                 }
+>                 sb.append(msgObjects[i]);
+>             }
+>             sb.append(']');
+>             return sb.toString();

@@ -1,0 +1,96 @@
+495c495,496
+<         if (n.getParent().getType() != Token.OBJECTLIT) {
+---
+>         
+>         if (!NodeUtil.isObjectLitKey(n, n.getParent())) {
+497,498d497
+<         } else {
+<           typeable = false;
+502,505d500
+<       case Token.ARRAYLIT:
+<         ensureTyped(t, n, ARRAY_TYPE);
+<         break;
+< 
+507c502,503
+<         if (n.getParent().getType() != Token.OBJECTLIT) {
+---
+>         
+>         if (!NodeUtil.isObjectLitKey(n, n.getParent())) {
+509,510d504
+<         } else {
+<           typeable = false;
+513a508,516
+>       case Token.GET:
+>       case Token.SET:
+>         
+>         break;
+> 
+>       case Token.ARRAYLIT:
+>         ensureTyped(t, n, ARRAY_TYPE);
+>         break;
+> 
+776a780,784
+>         if (n.getType() == Token.OBJECTLIT) {
+>           for (Node key : n.children()) {
+>             visitObjLitKey(t, key, n);
+>           }
+>         }
+925a934,991
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void visitObjLitKey(NodeTraversal t, Node key, Node objlit) {
+>     
+>     
+> 
+>     
+>     
+>     Node rvalue = key.getFirstChild();
+>     JSType rightType = NodeUtil.getObjectLitKeyTypeFromValueType(
+>         key, getJSType(rvalue));
+>     if (rightType == null) {
+>       rightType = getNativeType(UNKNOWN_TYPE);
+>     }
+> 
+>     Node owner = objlit;
+> 
+>     
+> 
+>     JSType keyType = getJSType(key);
+>     boolean valid = validator.expectCanAssignToPropertyOf(t, key,
+>         rightType, keyType,
+>         owner, NodeUtil.getObjectLitKeyName(key));
+>     if (valid) {
+>       ensureTyped(t, key, rightType);
+>     } else {
+>       ensureTyped(t, key);
+>     }
+> 
+>     
+>     
+>     
+>     
+>     
+> 
+>     JSType objlitType = getJSType(objlit);
+>     ObjectType type = ObjectType.cast(
+>         objlitType.restrictByNotNullOrUndefined());
+>     if (type != null) {
+>       String property = NodeUtil.getObjectLitKeyName(key);
+>       if (type.hasProperty(property) &&
+>           !type.isPropertyTypeInferred(property) &&
+>           !propertyIsImplicitCast(type, property)) {
+>         validator.expectCanAssignToPropertyOf(
+>             t, key, keyType,
+>             type.getPropertyType(property), owner, property);
+>       }
+>       return;

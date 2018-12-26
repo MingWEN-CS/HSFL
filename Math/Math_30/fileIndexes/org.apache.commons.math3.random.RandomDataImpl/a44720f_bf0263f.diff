@@ -1,0 +1,202 @@
+26a27
+> import org.apache.commons.math.MathException;
+27a29,41
+> import org.apache.commons.math.distribution.BetaDistributionImpl;
+> import org.apache.commons.math.distribution.BinomialDistributionImpl;
+> import org.apache.commons.math.distribution.CauchyDistributionImpl;
+> import org.apache.commons.math.distribution.ChiSquaredDistributionImpl;
+> import org.apache.commons.math.distribution.ContinuousDistribution;
+> import org.apache.commons.math.distribution.FDistributionImpl;
+> import org.apache.commons.math.distribution.GammaDistributionImpl;
+> import org.apache.commons.math.distribution.HypergeometricDistributionImpl;
+> import org.apache.commons.math.distribution.IntegerDistribution;
+> import org.apache.commons.math.distribution.PascalDistributionImpl;
+> import org.apache.commons.math.distribution.TDistributionImpl;
+> import org.apache.commons.math.distribution.WeibullDistributionImpl;
+> import org.apache.commons.math.distribution.ZipfDistributionImpl;
+517a532,684
+> 
+>     public double nextBeta(double alpha, double beta) throws MathException {
+>         return nextInversionDeviate(new BetaDistributionImpl(alpha, beta));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int nextBinomial(int numberOfTrials, double probabilityOfSuccess) throws MathException {
+>         return nextInversionDeviate(new BinomialDistributionImpl(numberOfTrials, probabilityOfSuccess));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double nextCauchy(double median, double scale) throws MathException {
+>         return nextInversionDeviate(new CauchyDistributionImpl(median, scale));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double nextChiSquare(double df) throws MathException {
+>         return nextInversionDeviate(new ChiSquaredDistributionImpl(df));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double nextF(double numeratorDf, double denominatorDf) throws MathException {
+>         return nextInversionDeviate(new FDistributionImpl(numeratorDf, denominatorDf));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double nextGamma(double shape, double scale) throws MathException {
+>         return nextInversionDeviate(new GammaDistributionImpl(shape, scale));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int nextHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize) throws MathException {
+>         return nextInversionDeviate(new HypergeometricDistributionImpl(populationSize, numberOfSuccesses, sampleSize));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int nextPascal(int r, double p) throws MathException {
+>         return nextInversionDeviate(new PascalDistributionImpl(r, p));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double nextT(double df) throws MathException {
+>         return nextInversionDeviate(new TDistributionImpl(df));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double nextWeibull(double shape, double scale) throws MathException {
+>         return nextInversionDeviate(new WeibullDistributionImpl(shape, scale));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int nextZipf(int numberOfElements, double exponent) throws MathException {
+>         return nextInversionDeviate(new ZipfDistributionImpl(numberOfElements, exponent));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+705a873,903
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double nextInversionDeviate(ContinuousDistribution distribution) throws MathException {
+>         return distribution.inverseCumulativeProbability(nextUniform(0, 1));
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int nextInversionDeviate(IntegerDistribution distribution) throws MathException {
+>         final double target = nextUniform(0, 1);
+>         final int glb = distribution.inverseCumulativeProbability(target);
+>         if (distribution.cumulativeProbability(glb) == 1.0d) { 
+>             return glb;
+>         } else {
+>             return glb + 1;
+>         }

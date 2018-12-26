@@ -1,0 +1,19 @@
+30a31,33
+> 
+> 
+> 
+54c57,58
+<     switch (n.getType()) {
+---
+>     int nType = n.getType();
+>     switch (nType) {
+57c61,67
+<         if (convention.isConstant(n.getString())) {
+---
+>         String nString = n.getString();
+>         if (nType == Token.NAME &&
+>             n.getParent().getType() == Token.CALL &&
+>             "eval".equals(nString)) {
+>           n.putBooleanProp(Node.DIRECT_EVAL, true);
+>         }
+>         if (convention.isConstant(nString)) {

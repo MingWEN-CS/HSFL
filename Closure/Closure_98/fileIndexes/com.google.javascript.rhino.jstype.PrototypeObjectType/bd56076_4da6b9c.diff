@@ -1,0 +1,33 @@
+47a48
+> import java.util.List;
+67d67
+< 
+363a364,371
+> 
+>     
+>     if (that instanceof UnionType) {
+>       
+>       
+>       return false;
+>     }
+> 
+367a376,390
+> 
+>     
+>     
+>     
+>     ObjectType thatObj = that.toObjectType();
+>     ObjectType thatCtor = thatObj == null ? null : thatObj.getConstructor();
+>     if (thatCtor != null && thatCtor.isInterface()) {
+>       Iterable<ObjectType> thisInterfaces = getCtorImplementedInterfaces();
+>       for (ObjectType thisInterface : thisInterfaces) {
+>         if (thisInterface.isSubtype(that)) {
+>           return true;
+>         }
+>       }
+>     }
+> 
+369d391
+<     ObjectType thatObj = ObjectType.cast(that);
+378a401
+> 

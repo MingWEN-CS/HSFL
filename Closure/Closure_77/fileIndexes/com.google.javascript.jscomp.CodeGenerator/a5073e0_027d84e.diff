@@ -1,0 +1,72 @@
+295a296,333
+>       case Token.GET:
+>       case Token.SET:
+>         Preconditions.checkState(n.getParent().getType() == Token.OBJECTLIT);
+>         Preconditions.checkState(childCount == 1);
+>         Preconditions.checkState(first.getType() == Token.FUNCTION);
+> 
+>         
+>         Preconditions.checkState(first.getFirstChild().getString().isEmpty());
+>         if (type == Token.GET) {
+>           
+>           Preconditions.checkState(!first.getChildAtIndex(1).hasChildren());
+>           add("get ");
+>         } else {
+>           
+>           Preconditions.checkState(first.getChildAtIndex(1).hasOneChild());
+>           add("set ");
+>         }
+> 
+>         
+>         String name = n.getString();
+>         Node fn = first;
+>         Node parameters = fn.getChildAtIndex(1);
+>         Node body = fn.getLastChild();
+> 
+>         
+>         if (TokenStream.isJSIdentifier(name) &&
+>             
+>             
+>             NodeUtil.isLatin(name)) {
+>           add(name);
+>         } else {
+>           add(jsString(n.getString(), outputCharsetEncoder));
+>         }
+> 
+>         add(parameters);
+>         add(body, Context.PRESERVE_BLOCK);
+>         break;
+> 
+590,598c628,629
+<           
+<           
+<           if (c.getType() == Token.STRING &&
+<               !TokenStream.isKeyword(c.getString()) &&
+<               TokenStream.isJSIdentifier(c.getString()) &&
+<               
+<               
+<               NodeUtil.isLatin(c.getString())) {
+<             add(c.getString());
+---
+>           if (c.getType() == Token.GET || c.getType() == Token.SET) {
+>             add(c);
+600c631,644
+<             addExpr(c, 1);
+---
+>             
+>             
+>             if (c.getType() == Token.STRING &&
+>                 !TokenStream.isKeyword(c.getString()) &&
+>                 TokenStream.isJSIdentifier(c.getString()) &&
+>                 
+>                 
+>                 NodeUtil.isLatin(c.getString())) {
+>               add(c.getString());
+>             } else {
+>               addExpr(c, 1);
+>             }
+>             add(":");
+>             addExpr(c.getFirstChild(), 1);
+602,603d645
+<           add(":");
+<           addExpr(c.getFirstChild(), 1);

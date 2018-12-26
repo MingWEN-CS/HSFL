@@ -1,0 +1,113 @@
+103c103
+<       addLeftExpr(first, p, context);
+---
+>       addExpr(first, p, context);
+198c198
+<             addExpr(first, NodeUtil.precedence(Token.ASSIGN));
+---
+>             addExpr(first, NodeUtil.precedence(Token.ASSIGN), Context.OTHER);
+221c221,240
+<         addList(first, false, context);
+---
+> 
+>         
+>         
+>         
+>         
+>         
+>         Node firstNonComma = n.getFirstChild();
+>         while (firstNonComma.getType() == Token.COMMA) {
+>           firstNonComma = firstNonComma.getFirstChild();
+>         }
+> 
+>         addExpr(firstNonComma, 0, context);
+> 
+>         Node current = firstNonComma;
+>         do {
+>           current = current.getParent();
+>           cc.listSeparator();
+>           addExpr(current.getFirstChild().getNext(), 0, Context.OTHER);
+>         } while (current != n);
+> 
+237c256
+<         addExpr(first, NodeUtil.precedence(type));
+---
+>         addExpr(first, NodeUtil.precedence(type), Context.OTHER);
+251c270
+<           addExpr(first, NodeUtil.precedence(type));
+---
+>           addExpr(first, NodeUtil.precedence(type), Context.OTHER);
+260c279
+<         addLeftExpr(first, p + 1, context);
+---
+>         addExpr(first, p + 1, context);
+262c281
+<         addExpr(first.getNext(), 1);
+---
+>         addExpr(first.getNext(), 1, Context.OTHER);
+264c283
+<         addExpr(last, 1);
+---
+>         addExpr(last, 1, Context.OTHER);
+453c472
+<         addLeftExpr(first, NodeUtil.precedence(type), context);
+---
+>         addExpr(first, NodeUtil.precedence(type), context);
+466c485
+<         addLeftExpr(first, NodeUtil.precedence(type), context);
+---
+>         addExpr(first, NodeUtil.precedence(type), context);
+489c508
+<           addLeftExpr(first, NodeUtil.precedence(type), context);
+---
+>           addExpr(first, NodeUtil.precedence(type), context);
+511c530
+<           addExpr(first, NodeUtil.precedence(Token.COMMA));
+---
+>           addExpr(first, NodeUtil.precedence(Token.COMMA), Context.OTHER);
+514c533
+<           addLeftExpr(first, NodeUtil.precedence(type), context);
+---
+>           addExpr(first, NodeUtil.precedence(type), context);
+618c637
+<         addExpr(first, precedence);
+---
+>         addExpr(first, precedence, Context.OTHER);
+676c695
+<                 addExpr(c, 1);
+---
+>                 addExpr(c, 1, Context.OTHER);
+680c699
+<             addExpr(c.getFirstChild(), 1);
+---
+>             addExpr(c.getFirstChild(), 1, Context.OTHER);
+854,870d872
+<   
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<   void addLeftExpr(Node n, int minPrecedence, Context context) {
+<     addExpr(n, minPrecedence, context);
+<   }
+< 
+<   void addExpr(Node n, int minPrecedence) {
+<     addExpr(n, minPrecedence, Context.OTHER);
+<   }
+< 
+896c898
+<         addLeftExpr(n, isArrayOrFunctionArgument ? 1 : 0, lhsContext);
+---
+>         addExpr(n, isArrayOrFunctionArgument ? 1 : 0, lhsContext);
+899c901
+<         addExpr(n, isArrayOrFunctionArgument ? 1 : 0);
+---
+>         addExpr(n, isArrayOrFunctionArgument ? 1 : 0, Context.OTHER);
+918c920
+<       addExpr(n, 1);
+---
+>       addExpr(n, 1, Context.OTHER);

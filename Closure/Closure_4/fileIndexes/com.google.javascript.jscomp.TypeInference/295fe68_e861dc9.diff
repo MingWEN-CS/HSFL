@@ -1,0 +1,32 @@
+1014,1015c1014
+<     if (fnType.getTemplateTypeNames().isEmpty()
+<         || !call.hasMoreThanOneChild()) {
+---
+>     if (fnType.getTemplateTypeNames().isEmpty()) {
+1020,1023c1019,1034
+<     maybeResolveTemplateTypeFromNodes(
+<         fnType.getParameters(),
+<         call.getChildAtIndex(1).siblings(),
+<         resolvedTypes);
+---
+> 
+>     Node callTarget = call.getFirstChild();
+>     if (NodeUtil.isGet(callTarget)) {
+>       Node obj = callTarget.getFirstChild();
+>       maybeResolveTemplatedType(
+>           fnType.getTypeOfThis(),
+>           getJSType(obj),
+>           resolvedTypes);
+>     }
+> 
+>     if (call.hasMoreThanOneChild()) {
+>       maybeResolveTemplateTypeFromNodes(
+>           fnType.getParameters(),
+>           call.getChildAtIndex(1).siblings(),
+>           resolvedTypes);
+>     }
+1047a1059,1062
+>         
+>         maybeResolveTemplatedType(
+>             paramFunctionType.getTypeOfThis(),
+>             argFunctionType.getTypeOfThis(), resolvedTypes);

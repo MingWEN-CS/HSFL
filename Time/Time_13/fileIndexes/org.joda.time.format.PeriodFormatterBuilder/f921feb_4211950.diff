@@ -1,0 +1,641 @@
+93,97c93,108
+<     private static final int PRINT_ZERO_RARELY = 1;
+<     private static final int PRINT_ZERO_IF_SUPPORTED = 2;
+<     private static final int PRINT_ZERO_ALWAYS = 3;
+< 
+<     private boolean iFavorFirstFieldForZero;
+---
+>     private static final int PRINT_ZERO_RARELY_FIRST = 1;
+>     private static final int PRINT_ZERO_RARELY_LAST = 2;
+>     private static final int PRINT_ZERO_IF_SUPPORTED = 3;
+>     private static final int PRINT_ZERO_ALWAYS = 4;
+>     private static final int PRINT_ZERO_NEVER = 5;
+>     
+>     private static final int YEARS = 0;
+>     private static final int MONTHS = 1;
+>     private static final int WEEKS = 2;
+>     private static final int DAYS = 3;
+>     private static final int HOURS = 4;
+>     private static final int MINUTES = 5;
+>     private static final int SECONDS = 6;
+>     private static final int MILLIS = 7;
+>     private static final int SECONDS_MILLIS = 8;
+>     private static final int SECONDS_OPTIONAL_MILLIS = 9;
+110,111c121
+<     
+<     private List iAlternateFormatters;
+---
+>     private FieldFormatter[] iFieldFormatters;
+121a132
+> 
+130a142
+> 
+139a152
+> 
+142,153c155
+<         List altFormatters = iAlternateFormatters;
+<         if (altFormatters.size() > 0) {
+<             
+<             
+<             for (int i=altFormatters.size(); --i>=0; ) {
+<                 if (altFormatters.get(i) instanceof FieldFormatter) {
+<                     formatter = new AlternateSelector
+<                         (formatter, altFormatters, iFavorFirstFieldForZero);
+<                     break;
+<                 }
+<             }
+<         }
+---
+>         iFieldFormatters = (FieldFormatter[]) iFieldFormatters.clone();
+169d170
+< 
+171d171
+<         iFavorFirstFieldForZero = false;
+173c173
+<         iPrintZeroSetting = PRINT_ZERO_RARELY;
+---
+>         iPrintZeroSetting = PRINT_ZERO_RARELY_LAST;
+182,186c182
+<         if (iAlternateFormatters == null) {
+<             iAlternateFormatters = new ArrayList();
+<         } else {
+<             iAlternateFormatters.clear();
+<         }
+---
+>         iFieldFormatters = new FieldFormatter[10];
+219d214
+<         iAlternateFormatters.add(literal);
+264a260,269
+>     public PeriodFormatterBuilder printZeroRarelyLast() {
+>         iPrintZeroSetting = PRINT_ZERO_RARELY_LAST;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+267,268c272,273
+<     public PeriodFormatterBuilder printZeroRarely() {
+<         iPrintZeroSetting = PRINT_ZERO_RARELY;
+---
+>     public PeriodFormatterBuilder printZeroRarelyFirst() {
+>         iPrintZeroSetting = PRINT_ZERO_RARELY_FIRST;
+302a308,321
+> 
+>     public PeriodFormatterBuilder printZeroNever() {
+>         iPrintZeroSetting = PRINT_ZERO_NEVER;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+355c374
+<         appendField(1);
+---
+>         appendField(YEARS);
+365c384
+<         appendField(2);
+---
+>         appendField(MONTHS);
+375c394
+<         appendField(3);
+---
+>         appendField(WEEKS);
+385c404
+<         appendField(4);
+---
+>         appendField(DAYS);
+395c414
+<         appendField(5);
+---
+>         appendField(HOURS);
+405c424
+<         appendField(6);
+---
+>         appendField(MINUTES);
+415c434
+<         appendField(7);
+---
+>         appendField(SECONDS);
+427c446
+<         appendField(9);
+---
+>         appendField(SECONDS_MILLIS);
+439c458
+<         appendField(10);
+---
+>         appendField(SECONDS_OPTIONAL_MILLIS);
+449c468
+<         appendField(8);
+---
+>         appendField(MILLIS);
+459c478
+<         appendField(8, 3);
+---
+>         appendField(7, 3);
+469c488
+<             iMaxParsedDigits, iRejectSignedValues, type, iPrefix, null);
+---
+>             iMaxParsedDigits, iRejectSignedValues, type, iFieldFormatters, iPrefix, null);
+471,473c490
+<         if (iPrintZeroSetting == PRINT_ZERO_RARELY) {
+<             iAlternateFormatters.add(field);
+<         }
+---
+>         iFieldFormatters[type] = field;
+536c553
+<         Object newField = new FieldFormatter((FieldFormatter) originalField, suffix);
+---
+>         FieldFormatter newField = new FieldFormatter((FieldFormatter) originalField, suffix);
+538,543c555,556
+< 
+<         int index = iAlternateFormatters.lastIndexOf(originalField);
+<         if (index >= 0) {
+<             iAlternateFormatters.set(index, newField);
+<         }
+< 
+---
+>         iFieldFormatters[newField.getFieldType()] = newField;
+>         
+669,704d681
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public PeriodFormatterBuilder favorLastFieldForZero() {
+<         iFavorFirstFieldForZero = false;
+<         return this;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public PeriodFormatterBuilder favorFirstFieldForZero() {
+<         iFavorFirstFieldForZero = true;
+<         return this;
+<     }
+< 
+923c900,901
+< 
+---
+>         
+>         
+924a903,904
+>         
+> 
+925a906,908
+> 
+>         private final FieldFormatter[] iFieldFormatters;
+>         
+927a911
+>         
+931c915,916
+<                        int fieldType, PeriodFieldAffix prefix, PeriodFieldAffix suffix) {
+---
+>                        int fieldType, FieldFormatter[] fieldFormatters,
+>                        PeriodFieldAffix prefix, PeriodFieldAffix suffix) {
+936a922
+>             iFieldFormatters = fieldFormatters;
+946a933
+>             iFieldFormatters = field.iFieldFormatters;
+954,963d940
+<         FieldFormatter(FieldFormatter field, int printZeroSetting) {
+<             iMinPrintedDigits = field.iMinPrintedDigits;
+<             iPrintZeroSetting = printZeroSetting;
+<             iMaxParsedDigits = field.iMaxParsedDigits;
+<             iRejectSignedValues = field.iRejectSignedValues;
+<             iFieldType = field.iFieldType;
+<             iPrefix = field.iPrefix;
+<             iSuffix = field.iSuffix;
+<         }
+< 
+982c959
+<             if (iFieldType >= 9) {
+---
+>             if (iFieldType >= 8) {
+984c961,962
+<                 if (iFieldType == 10 && (Math.abs(valueLong) % DateTimeConstants.MILLIS_PER_SECOND) == 0) {
+---
+>                 if (iFieldType == SECONDS_OPTIONAL_MILLIS &&
+>                     (Math.abs(valueLong) % DateTimeConstants.MILLIS_PER_SECOND) == 0) {
+991,993c969,970
+<             PeriodFieldAffix affix;
+<             if ((affix = iPrefix) != null) {
+<                 sum += affix.calculatePrintedLength(value);
+---
+>             if (iPrefix != null) {
+>                 sum += iPrefix.calculatePrintedLength(value);
+995,996c972,973
+<             if ((affix = iSuffix) != null) {
+<                 sum += affix.calculatePrintedLength(value);
+---
+>             if (iSuffix != null) {
+>                 sum += iSuffix.calculatePrintedLength(value);
+1008c985
+<             if (iFieldType >= 9) {
+---
+>             if (iFieldType >= 8) {
+1012,1014c989,990
+<             PeriodFieldAffix affix;
+<             if ((affix = iPrefix) != null) {
+<                 affix.printTo(buf, value);
+---
+>             if (iPrefix != null) {
+>                 iPrefix.printTo(buf, value);
+1022c998
+<             if (iFieldType >= 9) {
+---
+>             if (iFieldType >= 8) {
+1024c1000
+<                 if (iFieldType == 9 || dp > 0) {
+---
+>                 if (iFieldType == SECONDS_MILLIS || dp > 0) {
+1029,1030c1005,1006
+<             if ((affix = iSuffix) != null) {
+<                 affix.printTo(buf, value);
+---
+>             if (iSuffix != null) {
+>                 iSuffix.printTo(buf, value);
+1040c1016
+<             if (iFieldType >= 9) {
+---
+>             if (iFieldType >= 8) {
+1044,1046c1020,1021
+<             PeriodFieldAffix affix;
+<             if ((affix = iPrefix) != null) {
+<                 affix.printTo(out, value);
+---
+>             if (iPrefix != null) {
+>                 iPrefix.printTo(out, value);
+1054c1029
+<             if (iFieldType >= 9) {
+---
+>             if (iFieldType >= 8) {
+1056c1031
+<                 if (iFieldType == 9 || dp > 0) {
+---
+>                 if (iFieldType == SECONDS_MILLIS || dp > 0) {
+1061,1062c1036,1037
+<             if ((affix = iSuffix) != null) {
+<                 affix.printTo(out, value);
+---
+>             if (iSuffix != null) {
+>                 iSuffix.printTo(out, value);
+1113c1088
+<             if (!mustParse && !isSupported(period.getPeriodType())) {
+---
+>             if (!mustParse && !isSupported(period.getPeriodType(), iFieldType)) {
+1181c1156
+<             setFieldValue(period, value);
+---
+>             setFieldValue(period, iFieldType, value);
+1199a1175,1177
+>             if (type != null && isSupported(type, iFieldType) == false) {
+>                 return Long.MAX_VALUE;
+>             }
+1206,1209c1184
+<             case 1:
+<                 if (type != null && type.years().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case YEARS:
+1212,1215c1187
+<             case 2:
+<                 if (type != null && type.months().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case MONTHS:
+1218,1221c1190
+<             case 3:
+<                 if (type != null && type.weeks().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case WEEKS:
+1224,1227c1193
+<             case 4:
+<                 if (type != null && type.days().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case DAYS:
+1230,1233c1196
+<             case 5:
+<                 if (type != null && type.hours().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case HOURS:
+1236,1239c1199
+<             case 6:
+<                 if (type != null && type.minutes().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case MINUTES:
+1242,1245c1202
+<             case 7:
+<                 if (type != null && type.seconds().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case SECONDS:
+1248,1251c1205
+<             case 8:
+<                 if (type != null && type.millis().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case MILLIS:
+1254,1258c1208,1209
+<             case 9: 
+<             case 10:
+<                 if (type != null && type.seconds().isSupported() == false && type.millis().isSupported() == false) {
+<                     return Long.MAX_VALUE;
+<                 }
+---
+>             case SECONDS_MILLIS: 
+>             case SECONDS_OPTIONAL_MILLIS:
+1263,1264c1214,1241
+<             if (value == 0 && iPrintZeroSetting == PRINT_ZERO_RARELY) {
+<                 return Long.MAX_VALUE;
+---
+>             
+>             if (value == 0) {
+>                 switch (iPrintZeroSetting) {
+>                 case PRINT_ZERO_NEVER:
+>                     return Long.MAX_VALUE;
+>                 case PRINT_ZERO_RARELY_LAST:
+>                     if (isZero(period) && iFieldFormatters[iFieldType] == this) {
+>                         for (int i = iFieldType + 1; i < 10; i++) {
+>                             if (isSupported(type, i) && iFieldFormatters[i] != null) {
+>                                 return Long.MAX_VALUE;
+>                             }
+>                         }
+>                     } else {
+>                         return Long.MAX_VALUE;
+>                     }
+>                     break;
+>                 case PRINT_ZERO_RARELY_FIRST:
+>                     if (isZero(period) && iFieldFormatters[iFieldType] == this) {
+>                         for (int i = Math.min(iFieldType, 8) - 1; i >= 0; i++) {
+>                             if (isSupported(type, i) && iFieldFormatters[i] != null) {
+>                                 return Long.MAX_VALUE;
+>                             }
+>                         }
+>                     } else {
+>                         return Long.MAX_VALUE;
+>                     }
+>                     break;
+>                 }
+1270,1271c1247,1255
+<         boolean isSupported(PeriodType type) {
+<             switch (iFieldType) {
+---
+>         boolean isZero(ReadablePeriod period) {
+>             return (period.getYears() == 0 && period.getMonths() == 0 &&
+>                     period.getWeeks() == 0 && period.getDays() == 0 &&
+>                     period.getHours() == 0 && period.getMinutes() == 0 &&
+>                     period.getSeconds() == 0 && period.getMillis() == 0);
+>         }
+> 
+>         boolean isSupported(PeriodType type, int field) {
+>             switch (field) {
+1274c1258
+<             case 1:
+---
+>             case YEARS:
+1276c1260
+<             case 2:
+---
+>             case MONTHS:
+1278c1262
+<             case 3:
+---
+>             case WEEKS:
+1280c1264
+<             case 4:
+---
+>             case DAYS:
+1282c1266
+<             case 5:
+---
+>             case HOURS:
+1284c1268
+<             case 6:
+---
+>             case MINUTES:
+1286c1270
+<             case 7:
+---
+>             case SECONDS:
+1288c1272
+<             case 8:
+---
+>             case MILLIS:
+1290,1291c1274,1275
+<             case 9: 
+<             case 10:
+---
+>             case SECONDS_MILLIS: 
+>             case SECONDS_OPTIONAL_MILLIS:
+1296,1297c1280,1281
+<         void setFieldValue(ReadWritablePeriod period, int value) {
+<             switch (iFieldType) {
+---
+>         void setFieldValue(ReadWritablePeriod period, int field, int value) {
+>             switch (field) {
+1300c1284
+<             case 1:
+---
+>             case YEARS:
+1303c1287
+<             case 2:
+---
+>             case MONTHS:
+1306c1290
+<             case 3:
+---
+>             case WEEKS:
+1309c1293
+<             case 4:
+---
+>             case DAYS:
+1312c1296
+<             case 5:
+---
+>             case HOURS:
+1315c1299
+<             case 6:
+---
+>             case MINUTES:
+1318c1302
+<             case 7:
+---
+>             case SECONDS:
+1321c1305
+<             case 8:
+---
+>             case MILLIS:
+1327,1328c1311,1312
+<         int getPrintZeroSetting() {
+<             return iPrintZeroSetting;
+---
+>         int getFieldType() {
+>             return iFieldType;
+1562,1687d1545
+<         }
+<     }
+< 
+<     
+<     
+< 
+< 
+<     private static final class AlternateSelector extends AbstractPeriodFormatter
+<         implements PeriodFormatter
+<     {
+<         private final PeriodFormatter iPrimaryFormatter;
+<         private final PeriodPrinter[] iAlternatePrinters;
+<         private final boolean iFavorFirstFieldForZero;
+< 
+<         AlternateSelector(PeriodFormatter primaryFormatter,
+<                           List alternatePrinters,
+<                           boolean favorFirstFieldForZero) {
+<             iPrimaryFormatter = primaryFormatter;
+<             iAlternatePrinters = (PeriodPrinter[])alternatePrinters.toArray
+<                 (new PeriodPrinter[alternatePrinters.size()]);
+<             iFavorFirstFieldForZero = favorFirstFieldForZero;
+<         }
+< 
+<         public int countFieldsToPrint(ReadablePeriod period, int stopAt) {
+<             int count = iPrimaryFormatter.countFieldsToPrint(period, stopAt);
+<             if (count < 1 && stopAt >= 1) {
+<                 if (chooseFieldToPrint(period) != null) {
+<                     return 1;
+<                 }
+<             }
+<             return count;
+<         }
+< 
+<         public int calculatePrintedLength(ReadablePeriod period) {
+<             if (iPrimaryFormatter.countFieldsToPrint(period, 1) > 0) {
+<                 return iPrimaryFormatter.calculatePrintedLength(period);
+<             }
+< 
+<             Object chosenOne = chooseFieldToPrint(period);
+< 
+<             int sum = 0;
+<             PeriodPrinter[] printers = iAlternatePrinters;
+<             for (int i=printers.length; --i>=0; ) {
+<                 PeriodPrinter dp = printers[i];
+<                 if (dp == chosenOne || !(dp instanceof FieldFormatter)) {
+<                     sum += dp.calculatePrintedLength(period);
+<                 }
+<             }
+<             return sum;
+<         }
+< 
+<         public void printTo(StringBuffer buf, ReadablePeriod period) {
+<             if (iPrimaryFormatter.countFieldsToPrint(period, 1) > 0) {
+<                 iPrimaryFormatter.printTo(buf, period);
+<                 return;
+<             }
+< 
+<             Object chosenOne = chooseFieldToPrint(period);
+<             
+<             PeriodPrinter[] printers = iAlternatePrinters;
+<             int len = printers.length;
+<             for (int i=0; i<len; i++) {
+<                 PeriodPrinter dp = printers[i];
+<                 if (dp == chosenOne || !(dp instanceof FieldFormatter)) {
+<                     dp.printTo(buf, period);
+<                 }
+<             }
+<         }
+< 
+<         public void printTo(Writer out, ReadablePeriod period) throws IOException {
+<             if (iPrimaryFormatter.countFieldsToPrint(period, 1) > 0) {
+<                 iPrimaryFormatter.printTo(out, period);
+<                 return;
+<             }
+<             
+<             Object chosenOne = chooseFieldToPrint(period);
+< 
+<             PeriodPrinter[] printers = iAlternatePrinters;
+<             int len = printers.length;
+<             for (int i=0; i<len; i++) {
+<                 PeriodPrinter dp = printers[i];
+<                 if (dp == chosenOne || !(dp instanceof FieldFormatter)) {
+<                     dp.printTo(out, period);
+<                 }
+<             }
+<         }
+< 
+<         public int parseInto(ReadWritablePeriod period,
+<                              String periodStr, int position) {
+<             return iPrimaryFormatter.parseInto(period, periodStr, position);
+<         }
+< 
+<         private FieldFormatter chooseFieldToPrint(ReadablePeriod period) {
+<             PeriodType type = period.getPeriodType();
+<             PeriodPrinter[] printers = iAlternatePrinters;
+<             if (iFavorFirstFieldForZero) {
+<                 int len = printers.length;
+<                 for (int i=0; i<len; i++) {
+<                     PeriodPrinter dp = printers[i];
+<                     if (dp instanceof FieldFormatter) {
+<                         FieldFormatter ff = (FieldFormatter) dp;
+<                         if (ff.isSupported(type)) {
+<                             if (ff.getPrintZeroSetting() == PRINT_ZERO_RARELY) {
+<                                 ff = new FieldFormatter(ff, PRINT_ZERO_IF_SUPPORTED);
+<                                 printers[i] = ff;
+<                             }
+<                             return ff;
+<                         }
+<                     }
+<                 }
+<             } else {
+<                 for (int i=printers.length; --i>=0; ) {
+<                     PeriodPrinter dp = printers[i];
+<                     if (dp instanceof FieldFormatter) {
+<                         FieldFormatter ff = (FieldFormatter) dp;
+<                         if (ff.isSupported(type)) {
+<                             if (ff.getPrintZeroSetting() == PRINT_ZERO_RARELY) {
+<                                 ff = new FieldFormatter(ff, PRINT_ZERO_IF_SUPPORTED);
+<                                 printers[i] = ff;
+<                             }
+<                             return ff;
+<                         }
+<                     }
+<                 }
+<             }
+<             return null;

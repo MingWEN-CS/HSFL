@@ -1,0 +1,73 @@
+625a626,628
+> 
+>       
+>       outputManifest();
+725a729,737
+>   @VisibleForTesting
+>   String expandManifest(JSModule forModule) {
+>     if (Strings.isEmpty(config.outputManifest)) {
+>       return null;
+>     }
+>     return expandCommandLinePath(config.outputManifest, forModule);
+>   }
+> 
+>   
+914a927,973
+>   
+> 
+> 
+> 
+>   private boolean shouldGenerateManifestPerModule() {
+>     return !config.module.isEmpty()
+>         && config.outputManifest != null
+>         && config.outputManifest.contains("%outname%");
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private void outputManifest() throws IOException {
+>     String outputManifest = config.outputManifest;
+>     if (Strings.isEmpty(outputManifest)) {
+>       return;
+>     }
+> 
+>     if (shouldGenerateManifestPerModule()) {
+>       
+>       Iterable<JSModule> modules = compiler.getModuleGraph().getAllModules();
+>       for (JSModule module : modules) {
+>         printManifestTo(module.getInputs(), expandManifest(module));
+>       }
+>     } else {
+>       
+>       printManifestTo(compiler.getInputsInOrder(), expandManifest(null));
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private void printManifestTo(Iterable<CompilerInput> inputs, String path)
+>       throws IOException {
+>     List<String> names = Lists.newArrayList();
+>     for (CompilerInput input : inputs) {
+>       names.add(input.getName());
+>     }
+>     String result = Joiner.on("\n").join(names);
+>     PrintStream out = toPrintStream(path);
+>     out.append(result);
+>     out.close();
+>   }
+> 
+1281a1341,1350
+>       return this;
+>     }
+> 
+>     private String outputManifest = "";
+> 
+>     
+> 
+> 
+>     CommandLineConfig setOutputManifest(String outputManifest) {
+>       this.outputManifest = outputManifest;

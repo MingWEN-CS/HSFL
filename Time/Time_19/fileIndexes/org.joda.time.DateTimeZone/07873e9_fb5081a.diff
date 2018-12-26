@@ -1,0 +1,102 @@
+67a68
+> import org.joda.time.chrono.BaseChronology;
+152,162d152
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+<         
+< 
+235,236c225
+<             
+<             int offset = -(int) offsetFormatter().parseMillis(id, ISOChronology.getInstance(UTC));
+---
+>             int offset = parseOffset(id);
+241c230
+<                 id = printTimeZone(offset);
+---
+>                 id = printOffset(offset);
+294c283
+<         String id = printTimeZone(offset);
+---
+>         String id = printOffset(offset);
+337,339c326
+<                 
+<                 int offset = -(int) offsetFormatter().parseMillis
+<                     (convId, ISOChronology.getInstance(UTC));
+---
+>                 int offset = parseOffset(convId);
+343c330
+<                     convId = printTimeZone(offset);
+---
+>                     convId = printOffset(offset);
+608,617c595,615
+<     
+< 
+< 
+< 
+< 
+<     private static synchronized DateTimeFormatter offsetFormatter() {
+<         if (cOffsetFormatter == null) {
+<             cOffsetFormatter = new DateTimeFormatterBuilder()
+<                 .appendTimeZoneOffset(null, true, 2, 4)
+<                 .toFormatter();
+---
+>     private static int parseOffset(String str) {
+>         Chronology chrono;
+>         if (cDefault != null) {
+>             chrono = ISOChronology.getInstanceUTC();
+>         } else {
+>             
+>             
+>             chrono = new BaseChronology() {
+>                 public DateTimeZone getZone() {
+>                     return null;
+>                 }
+>                 public Chronology withUTC() {
+>                     return this;
+>                 }
+>                 public Chronology withZone(DateTimeZone zone) {
+>                     return this;
+>                 }
+>                 public String toString() {
+>                     return getClass().getName();
+>                 }
+>             };
+619c617,618
+<         return cOffsetFormatter;
+---
+> 
+>         return -(int) offsetFormatter().parseMillis(str, chrono);
+631c630
+<     private static String printTimeZone(int offset) {
+---
+>     private static String printOffset(int offset) {
+665a665,678
+> 
+> 
+> 
+> 
+>     private static synchronized DateTimeFormatter offsetFormatter() {
+>         if (cOffsetFormatter == null) {
+>             cOffsetFormatter = new DateTimeFormatterBuilder()
+>                 .appendTimeZoneOffset(null, true, 2, 4)
+>                 .toFormatter();
+>         }
+>         return cOffsetFormatter;
+>     }
+> 
+>     
+741c754
+<         return printTimeZone(getOffset(instant));
+---
+>         return printOffset(getOffset(instant));
+781c794
+<         return printTimeZone(getOffset(instant));
+---
+>         return printOffset(getOffset(instant));

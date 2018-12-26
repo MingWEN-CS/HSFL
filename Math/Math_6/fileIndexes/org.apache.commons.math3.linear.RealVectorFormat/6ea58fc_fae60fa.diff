@@ -1,0 +1,117 @@
+28,29d27
+< import org.apache.commons.math.exception.MathIllegalArgumentException;
+< import org.apache.commons.math.exception.util.LocalizedFormats;
+46,47c44
+< public class RealVectorFormat extends CompositeFormat {
+< 
+---
+> public class RealVectorFormat {
+50d46
+< 
+53d48
+< 
+56d50
+< 
+59d52
+< 
+62d54
+< 
+65d56
+< 
+68d58
+< 
+71d60
+< 
+74d62
+< 
+77d64
+< 
+87c74,75
+<         this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_SEPARATOR, getDefaultNumberFormat());
+---
+>         this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_SEPARATOR,
+>              CompositeFormat.getDefaultNumberFormat());
+106c94,95
+<         this(prefix, suffix, separator, getDefaultNumberFormat());
+---
+>         this(prefix, suffix, separator,
+>              CompositeFormat.getDefaultNumberFormat());
+183c172
+<         return new RealVectorFormat(getDefaultNumberFormat(locale));
+---
+>         return new RealVectorFormat(CompositeFormat.getDefaultNumberFormat(locale));
+192,194c181,182
+< 
+<     public static String formatRealVector(RealVector v) {
+<         return getInstance().format(v);
+---
+>     public String format(RealVector v) {
+>         return format(v, new StringBuffer(), new FieldPosition(0)).toString();
+219c207
+<             formatDouble(vector.getEntry(i), format, toAppendTo, pos);
+---
+>             CompositeFormat.formatDouble(vector.getEntry(i), format, toAppendTo, pos);
+226,251d213
+< 
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Override
+<     public StringBuffer format(Object obj, StringBuffer toAppendTo,
+<                                FieldPosition pos) {
+< 
+<         if (obj instanceof RealVector) {
+<             return format((RealVector) obj, toAppendTo, pos);
+<         }
+< 
+<         throw new MathIllegalArgumentException(LocalizedFormats.CANNOT_FORMAT_INSTANCE_AS_REAL_VECTOR,
+<                                                obj.getClass().getName());
+< 
+284,285c246,247
+<         parseAndIgnoreWhitespace(source, pos);
+<         if (!parseFixedstring(source, trimmedPrefix, pos)) {
+---
+>         CompositeFormat.parseAndIgnoreWhitespace(source, pos);
+>         if (!CompositeFormat.parseFixedstring(source, trimmedPrefix, pos)) {
+294,295c256,257
+<                 parseAndIgnoreWhitespace(source, pos);
+<                 if (!parseFixedstring(source, trimmedSeparator, pos)) {
+---
+>                 CompositeFormat.parseAndIgnoreWhitespace(source, pos);
+>                 if (!CompositeFormat.parseFixedstring(source, trimmedSeparator, pos)) {
+301,302c263,264
+<                 parseAndIgnoreWhitespace(source, pos);
+<                 Number component = parseNumber(source, format, pos);
+---
+>                 CompositeFormat.parseAndIgnoreWhitespace(source, pos);
+>                 Number component = CompositeFormat.parseNumber(source, format, pos);
+316,317c278,279
+<         parseAndIgnoreWhitespace(source, pos);
+<         if (!parseFixedstring(source, trimmedSuffix, pos)) {
+---
+>         CompositeFormat.parseAndIgnoreWhitespace(source, pos);
+>         if (!CompositeFormat.parseFixedstring(source, trimmedSuffix, pos)) {
+327,338d288
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     @Override
+<     public Object parseObject(String source, ParsePosition pos) {
+<         return parse(source, pos);

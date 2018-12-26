@@ -1,0 +1,91 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.ReadWritablePeriod;
+import org.joda.time.ReadableDuration;
+
+
+
+
+
+
+
+
+class ReadableDurationConverter extends AbstractConverter
+        implements DurationConverter, PeriodConverter {
+
+    
+
+
+    static final ReadableDurationConverter INSTANCE = new ReadableDurationConverter();
+
+    
+
+
+    protected ReadableDurationConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public long getDurationMillis(Object object) {
+        return ((ReadableDuration) object).getMillis();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public void setInto(ReadWritablePeriod writablePeriod, Object object, Chronology chrono) {
+        ReadableDuration dur = (ReadableDuration) object;
+        chrono = DateTimeUtils.getChronology(chrono);
+        long duration = dur.getMillis();
+        int[] values = chrono.get(writablePeriod, duration);
+        for (int i = 0; i < values.length; i++) {
+            writablePeriod.setValue(i, values[i]);
+        }
+    }
+
+    
+    
+
+
+
+
+    public Class<?> getSupportedType() {
+        return ReadableDuration.class;
+    }
+
+}

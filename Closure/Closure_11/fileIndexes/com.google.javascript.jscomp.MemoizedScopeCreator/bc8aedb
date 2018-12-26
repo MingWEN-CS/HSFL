@@ -1,0 +1,64 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+import com.google.javascript.rhino.Node;
+
+import java.util.Map;
+
+
+
+
+
+
+
+
+
+
+
+
+
+class MemoizedScopeCreator implements ScopeCreator {
+
+  private final Map<Node, Scope> scopes = Maps.newHashMap();
+  private final ScopeCreator delegate;
+
+  
+
+
+  MemoizedScopeCreator(ScopeCreator delegate) {
+    this.delegate = delegate;
+  }
+
+  @Override
+  public Scope createScope(Node n, Scope parent) {
+    Scope scope = scopes.get(n);
+    if (scope == null) {
+      scope = delegate.createScope(n, parent);
+      scopes.put(n, scope);
+    } else {
+      Preconditions.checkState(parent == scope.getParent());
+    }
+    return scope;
+  }
+
+  public Scope getScopeIfMemoized(Node n) {
+    return scopes.get(n);
+  }
+}

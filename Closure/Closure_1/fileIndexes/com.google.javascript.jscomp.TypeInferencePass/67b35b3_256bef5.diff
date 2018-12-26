@@ -1,0 +1,38 @@
+19a20,21
+> import com.google.common.collect.HashMultimap;
+> import com.google.common.collect.Multimap;
+20a23
+> import com.google.javascript.jscomp.Scope.Var;
+28d30
+< 
+39a42,47
+>   
+> 
+> 
+> 
+>   private final Multimap<Scope, Var> escapedLocalVars = HashMultimap.create();
+> 
+73c81,83
+<         new TypeInference(compiler, computeCfg(n), reverseInterpreter, scope);
+---
+>         new TypeInference(
+>             compiler, computeCfg(n), reverseInterpreter, scope,
+>             escapedLocalVars.get(scope));
+75a86
+>       escapedLocalVars.putAll(typeInference.getAssignedOuterLocalVars());
+89c100,102
+<       inferTypes(t, node, scope);
+---
+>       if (scope.isGlobal()) {
+>         inferTypes(t, node, scope);
+>       }
+92c105,111
+<     public void exitScope(NodeTraversal t) {}
+---
+>     public void exitScope(NodeTraversal t) {
+>       Scope scope = t.getScope();
+>       Node node = t.getCurrentNode();
+>       if (scope.isLocal()) {
+>         inferTypes(t, node, scope);
+>       }
+>     }

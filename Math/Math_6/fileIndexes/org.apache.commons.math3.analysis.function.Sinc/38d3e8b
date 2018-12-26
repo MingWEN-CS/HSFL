@@ -1,0 +1,76 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.analysis.function;
+
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.util.FastMath;
+
+
+
+
+
+
+
+
+
+
+
+
+public class Sinc implements UnivariateRealFunction {
+    
+    private final boolean normalized;
+
+    
+
+
+    public Sinc() {
+        this(false);
+    }
+
+    
+
+
+
+
+
+    public Sinc(boolean normalized) {
+        this.normalized = normalized;
+    }
+
+    
+    public double value(double x) {
+        if (normalized) {
+            final double piTimesX = Math.PI * x;
+            return sinc(piTimesX);
+        } else {
+            return sinc(x);
+        }
+    }
+
+    
+
+
+
+    private static double sinc(double x) {
+        
+        
+        
+        
+        return FastMath.abs(x) < 1e-9 ? 1 : FastMath.sin(x) / x;
+    }
+}

@@ -1,0 +1,81 @@
+416a417,439
+> 
+>     public DateTimeFormatterBuilder appendFixedDecimal(
+>             DateTimeFieldType fieldType, int numDigits) {
+>         if (fieldType == null) {
+>             throw new IllegalArgumentException("Field type must not be null");
+>         }
+>         if (numDigits <= 0) {
+>             throw new IllegalArgumentException("Illegal number of digits: " + numDigits);
+>         }
+>         return append0(new FixedNumber(fieldType, numDigits, false));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+442a466,488
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendFixedSignedDecimal(
+>             DateTimeFieldType fieldType, int numDigits) {
+>         if (fieldType == null) {
+>             throw new IllegalArgumentException("Field type must not be null");
+>         }
+>         if (numDigits <= 0) {
+>             throw new IllegalArgumentException("Illegal number of digits: " + numDigits);
+>         }
+>         return append0(new FixedNumber(fieldType, numDigits, true));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1325a1372,1403
+>         }
+>     }
+> 
+>     
+>     static class FixedNumber extends PaddedNumber {
+> 
+>         protected FixedNumber(DateTimeFieldType fieldType, int numDigits, boolean signed) {
+>             super(fieldType, numDigits, signed, numDigits);
+>         }
+> 
+>         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+>             int newPos = super.parseInto(bucket, text, position);
+>             if (newPos < 0) {
+>                 return newPos;
+>             }
+>             int expectedPos = position + iMaxParsedDigits;
+>             if (newPos != expectedPos) {
+>                 if (iSigned) {
+>                     char c = text.charAt(position);
+>                     if (c == '-' || c == '+') {
+>                         expectedPos++;
+>                     }
+>                 }
+>                 if (newPos > expectedPos) {
+>                     
+>                     return ~(expectedPos + 1);
+>                 } else if (newPos < expectedPos) {
+>                     
+>                     return ~newPos;
+>                 }
+>             }
+>             return newPos;

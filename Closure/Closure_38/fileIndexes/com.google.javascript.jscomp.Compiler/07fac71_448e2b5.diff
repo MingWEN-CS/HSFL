@@ -1,0 +1,468 @@
+63c63
+<   CompilerOptions options_ = null;
+---
+>   CompilerOptions options = null;
+68c68
+<   private CompilerInput[] externs_;
+---
+>   private CompilerInput[] externs;
+71c71
+<   private JSModule[] modules_;
+---
+>   private JSModule[] modules;
+74c74
+<   private JSModuleGraph moduleGraph_;
+---
+>   private JSModuleGraph moduleGraph;
+77c77
+<   private CompilerInput[] inputs_;
+---
+>   private CompilerInput[] inputs;
+90c90
+<   private Map<String, CompilerInput> inputsByName_;
+---
+>   private Map<String, CompilerInput> inputsByName;
+93c93
+<   private SourceMap sourceMap_;
+---
+>   private SourceMap sourceMap;
+96c96
+<   private String externExports_ = null;
+---
+>   private String externExports = null;
+114c114
+<   private FunctionInformationMap functionInformationMap_;
+---
+>   private FunctionInformationMap functionInformationMap;
+117c117
+<   private final StringBuilder debugLog_ = new StringBuilder();
+---
+>   private final StringBuilder debugLog = new StringBuilder();
+154c154
+<   private static final Logger logger_ =
+---
+>   private static final Logger logger =
+212,213c212,213
+<     boolean colorize = options_.shouldColorizeErrorOutput();
+<     return options_.errorFormat.toFormatter(this, colorize);
+---
+>     boolean colorize = options.shouldColorizeErrorOutput();
+>     return options.errorFormat.toFormatter(this, colorize);
+221c221
+<     options_ = options;
+---
+>     this.options = options;
+225c225
+<             new LoggerErrorManager(createMessageFormatter(), logger_));
+---
+>             new LoggerErrorManager(createMessageFormatter(), logger));
+229c229
+<         printer.setSummaryDetailLevel(options_.summaryDetailLevel);
+---
+>         printer.setSummaryDetailLevel(options.summaryDetailLevel);
+242,245c242,245
+<     externs_ = makeCompilerInput(externs, true);
+<     modules_ = null;
+<     moduleGraph_ = null;
+<     inputs_ = makeCompilerInput(inputs, false);
+---
+>     this.externs = makeCompilerInput(externs, true);
+>     this.modules = null;
+>     this.moduleGraph = null;
+>     this.inputs = makeCompilerInput(inputs, false);
+263a264
+>     fillEmptyModules(modules);
+265,266c266,267
+<     externs_ = makeCompilerInput(externs, true);
+<     modules_ = modules;
+---
+>     this.externs = makeCompilerInput(externs, true);
+>     this.modules = modules;
+270c271
+<       moduleGraph_ = new JSModuleGraph(modules);
+---
+>       this.moduleGraph = new JSModuleGraph(modules);
+278c279
+<     inputs_ = getAllInputsFromModules();
+---
+>     this.inputs = getAllInputsFromModules();
+289,290c290,291
+<     if (options_.sourceMapOutputPath != null) {
+<       sourceMap_ = new SourceMap();
+---
+>     if (options.sourceMapOutputPath != null) {
+>       sourceMap = new SourceMap();
+322a324,326
+>   
+>   
+> 
+323a328,337
+> 
+>   private void fillEmptyModules(JSModule[] modules) {
+>     for (int i = 1; i < modules.length; i ++) {
+>       JSModule module = modules[i];
+>       if (module.getInputs().isEmpty()) {
+>         module.add(JSSourceFile.fromCode("[" + module.getName() + "]", ""));
+>       }
+>     }
+>   }
+>   
+335c349
+<     inputs_ = getAllInputsFromModules();
+---
+>     inputs = getAllInputsFromModules();
+346c360
+<     for (JSModule module : modules_) {
+---
+>     for (JSModule module : modules) {
+379,380c393,394
+<     inputsByName_ = new HashMap<String, CompilerInput>();
+<     for (CompilerInput input : externs_) {
+---
+>     inputsByName = new HashMap<String, CompilerInput>();
+>     for (CompilerInput input : externs) {
+382,383c396,397
+<       if (!inputsByName_.containsKey(name)) {
+<         inputsByName_.put(name, input);
+---
+>       if (!inputsByName.containsKey(name)) {
+>         inputsByName.put(name, input);
+388c402
+<     for (CompilerInput input : inputs_) {
+---
+>     for (CompilerInput input : inputs) {
+390,391c404,405
+<       if (!inputsByName_.containsKey(name)) {
+<         inputsByName_.put(name, input);
+---
+>       if (!inputsByName.containsKey(name)) {
+>         inputsByName.put(name, input);
+484c498
+<     final boolean dumpTraceReport = options_.tracer.isOn();
+---
+>     final boolean dumpTraceReport = options.tracer.isOn();
+537c551
+<     if (options_.nameAnonymousFunctionsOnly) {
+---
+>     if (options.nameAnonymousFunctionsOnly) {
+543c557
+<     if (!options_.skipAllPasses) {
+---
+>     if (!options.skipAllPasses) {
+549c563
+<       if (options_.externExportsPath != null) {
+---
+>       if (options.externExportsPath != null) {
+554c568
+<       if (!options_.ideMode) {
+---
+>       if (!options.ideMode) {
+559c573
+<     if (options_.recordFunctionInformation) {
+---
+>     if (options.recordFunctionInformation) {
+563c577
+<     if (options_.devMode == DevMode.START_AND_END) {
+---
+>     if (options.devMode == DevMode.START_AND_END) {
+584c598
+<     return new DefaultPassConfig(options_);
+---
+>     return new DefaultPassConfig(options);
+620c634
+<     if (options_.devMode == DevMode.EVERY_PASS) {
+---
+>     if (options.devMode == DevMode.EVERY_PASS) {
+630c644
+<     if (options_.nameAnonymousFunctionsOnly) {
+---
+>     if (options.nameAnonymousFunctionsOnly) {
+634c648
+<     if (options_.removeTryCatchFinally) {
+---
+>     if (options.removeTryCatchFinally) {
+638,643c652,657
+<     if (!options_.stripTypes.isEmpty() ||
+<         !options_.stripNameSuffixes.isEmpty() ||
+<         !options_.stripTypePrefixes.isEmpty() ||
+<         !options_.stripNamePrefixes.isEmpty()) {
+<       stripCode(options_.stripTypes, options_.stripNameSuffixes,
+<           options_.stripTypePrefixes, options_.stripNamePrefixes);
+---
+>     if (!options.stripTypes.isEmpty() ||
+>         !options.stripNameSuffixes.isEmpty() ||
+>         !options.stripTypePrefixes.isEmpty() ||
+>         !options.stripNamePrefixes.isEmpty()) {
+>       stripCode(options.stripTypes, options.stripNameSuffixes,
+>           options.stripTypePrefixes, options.stripNamePrefixes);
+657c671
+<     logger_.info("Creating extern file for exports");
+---
+>     logger.info("Creating extern file for exports");
+663c677
+<     externExports_ = pass.getGeneratedExterns();
+---
+>     externExports = pass.getGeneratedExterns();
+681c695
+<     if (options_.devMode == DevMode.EVERY_PASS) {
+---
+>     if (options.devMode == DevMode.EVERY_PASS) {
+694c708
+<     logger_.info("Remove try/catch/finally");
+---
+>     logger.info("Remove try/catch/finally");
+707c721
+<     logger_.info("Strip code");
+---
+>     logger.info("Strip code");
+719c733
+<     if (options_.customPasses != null) {
+---
+>     if (options.customPasses != null) {
+722c736
+<         for (CompilerPass p : options_.customPasses.get(executionTime)) {
+---
+>         for (CompilerPass p : options.customPasses.get(executionTime)) {
+763c777
+<     if (options_.tracer.isOn()) {
+---
+>     if (options.tracer.isOn()) {
+771c785
+<     if (options_.tracer.isOn()) {
+---
+>     if (options.tracer.isOn()) {
+781c795
+<     return new Result(getErrors(), getWarnings(), debugLog_.toString(),
+---
+>     return new Result(getErrors(), getWarnings(), debugLog.toString(),
+783,784c797,798
+<         state.anonymousFunctionNameMap, functionInformationMap_,
+<         sourceMap_, externExports_, state.cssNames);
+---
+>         state.anonymousFunctionNameMap, functionInformationMap,
+>         sourceMap, externExports, state.cssNames);
+865,866c879,880
+<     if (options_.ambiguateProperties ||
+<         options_.disambiguateProperties) {
+---
+>     if (options.ambiguateProperties ||
+>         options.disambiguateProperties) {
+884c898
+<     return inputsByName_.get(name);
+---
+>     return inputsByName.get(name);
+889c903
+<     if (inputsByName_.containsKey(name)) {
+---
+>     if (inputsByName.containsKey(name)) {
+894c908
+<     inputsByName_.put(name, input);
+---
+>     inputsByName.put(name, input);
+905c919
+<     inputsByName_.put(sourceName, new CompilerInput(ast));
+---
+>     inputsByName.put(sourceName, new CompilerInput(ast));
+910c924
+<     return moduleGraph_;
+---
+>     return moduleGraph;
+937c951
+<       if (options_.closurePass) {
+---
+>       if (options.closurePass) {
+963c977
+<     boolean devMode = options_.devMode != DevMode.OFF;
+---
+>     boolean devMode = options.devMode != DevMode.OFF;
+978c992
+<     if (options_.tracer.isOn()) {
+---
+>     if (options.tracer.isOn()) {
+980c994
+<           options_.tracer == TracerMode.ALL);
+---
+>           options.tracer == TracerMode.ALL);
+990c1004
+<       for (CompilerInput input : externs_) {
+---
+>       for (CompilerInput input : externs) {
+998c1012
+<       for (CompilerInput input : inputs_) {
+---
+>       for (CompilerInput input : inputs) {
+1016,1017c1030,1031
+<         if (options_.sourceMapOutputPath != null ||
+<             options_.nameReferenceReportPath != null) {
+---
+>         if (options.sourceMapOutputPath != null ||
+>             options.nameReferenceReportPath != null) {
+1048c1062
+<     inputsByName_.put(input.getName(), input);
+---
+>     inputsByName.put(input.getName(), input);
+1053c1067
+<     if (options_ == null) {
+---
+>     if (options == null) {
+1070,1071c1084,1085
+<     if (inputsByName_ == null) {
+<       inputsByName_ = Maps.newHashMap();
+---
+>     if (inputsByName == null) {
+>       inputsByName = Maps.newHashMap();
+1073c1087
+<     inputsByName_.put(input.getName(), input);
+---
+>     inputsByName.put(input.getName(), input);
+1119c1133
+<           int numInputs = inputs_.length;
+---
+>           int numInputs = inputs.length;
+1123c1137
+<             Node scriptNode = inputs_[i].getAstRoot(Compiler.this);
+---
+>             Node scriptNode = inputs[i].getAstRoot(Compiler.this);
+1204c1218
+<         if (options_.printInputDelimiter) {
+---
+>         if (options.printInputDelimiter) {
+1210c1224
+<           String delimiter = options_.inputDelimiter;
+---
+>           String delimiter = options.inputDelimiter;
+1231,1232c1245,1246
+<         if (options_.sourceMapOutputPath != null) {
+<           sourceMap_.setStartingPosition(
+---
+>         if (options.sourceMapOutputPath != null) {
+>           sourceMap.setStartingPosition(
+1256,1259c1270,1273
+<     builder.setPrettyPrint(options_.prettyPrint);
+<     builder.setLineBreak(options_.lineBreak);
+<     builder.setSourceMap(sourceMap_);
+<     builder.setOutputCharset(options_.outputCharset);
+---
+>     builder.setPrettyPrint(options.prettyPrint);
+>     builder.setLineBreak(options.lineBreak);
+>     builder.setSourceMap(sourceMap);
+>     builder.setOutputCharset(options.outputCharset);
+1324c1338
+<     if (options_.devMode == DevMode.EVERY_PASS) {
+---
+>     if (options.devMode == DevMode.EVERY_PASS) {
+1336c1350
+<     options_.cssRenamingMap = map;
+---
+>     options.cssRenamingMap = map;
+1341c1355
+<     return options_.cssRenamingMap;
+---
+>     return options.cssRenamingMap;
+1352c1366
+<     (new DefaultPassConfig(options_)).processDefines.create(this)
+---
+>     (new DefaultPassConfig(options)).processDefines.create(this)
+1357,1358c1371,1372
+<     return options_.propertyRenaming == PropertyRenamingPolicy.HEURISTIC ||
+<         options_.propertyRenaming ==
+---
+>     return options.propertyRenaming == PropertyRenamingPolicy.HEURISTIC ||
+>         options.propertyRenaming ==
+1364c1378
+<     logger_.info("Computing Control Flow Graph");
+---
+>     logger.info("Computing Control Flow Graph");
+1373c1387
+<     logger_.info("Normalizing");
+---
+>     logger.info("Normalizing");
+1389c1403
+<     logger_.info("Recording function information");
+---
+>     logger.info("Recording function information");
+1395c1409
+<     functionInformationMap_ = recordFunctionInfoPass.getMap();
+---
+>     functionInformationMap = recordFunctionInfoPass.getMap();
+1428c1442
+<     CodingConvention convention = options_.getCodingConvention();
+---
+>     CodingConvention convention = options.getCodingConvention();
+1435c1449
+<     return options_.ideMode;
+---
+>     return options.ideMode;
+1449c1463
+<     return options_.checkTypes;
+---
+>     return options.checkTypes;
+1460c1474
+<     WarningsGuard guard = options_.getWarningsGuard();
+---
+>     WarningsGuard guard = options.getWarningsGuard();
+1525,1527c1539,1541
+<     debugLog_.append(str);
+<     debugLog_.append('\n');
+<     logger_.fine(str);
+---
+>     debugLog.append(str);
+>     debugLog.append('\n');
+>     logger.fine(str);
+1531,1532c1545,1546
+<     if (inputsByName_.containsKey(sourceName)) {
+<       return inputsByName_.get(sourceName).getSourceFile();
+---
+>     if (inputsByName.containsKey(sourceName)) {
+>       return inputsByName.get(sourceName).getSourceFile();
+1566c1580
+<       if (inputs_.length == 0) {
+---
+>       if (inputs.length == 0) {
+1570c1584
+<       return inputs_[0].getAstRoot(this);
+---
+>       return inputs[0].getAstRoot(this);
+1577,1582d1590
+<     for (JSModule m : getModuleGraph().getTransitiveDepsDeepestFirst(module)) {
+<       inputs = m.getInputs();
+<       if (inputs.size() > 0) {
+<         return inputs.get(0).getAstRoot(this);
+<       }
+<     }
+1587c1595
+<     return sourceMap_;
+---
+>     return sourceMap;
+1599c1607
+<     return options_;
+---
+>     return options;
+1603c1611
+<     return functionInformationMap_;
+---
+>     return functionInformationMap;
+1610c1618
+<     logger_.setLevel(level);
+---
+>     logger.setLevel(level);
+1626c1634
+<     if (options_ == null) {
+---
+>     if (options == null) {
+1665,1667c1673,1675
+<     state.externs = externs_;
+<     state.inputs = inputs_;
+<     state.modules = modules_;
+---
+>     state.externs = externs;
+>     state.inputs = inputs;
+>     state.modules = modules;
+1682,1684c1690,1692
+<     externs_ = state.externs;
+<     inputs_ = state.inputs;
+<     modules_ = state.modules;
+---
+>     externs = state.externs;
+>     inputs = state.inputs;
+>     modules = state.modules;

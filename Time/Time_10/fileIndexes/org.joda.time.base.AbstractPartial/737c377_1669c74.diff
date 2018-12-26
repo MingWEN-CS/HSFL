@@ -1,0 +1,75 @@
+61,62d60
+< import org.joda.time.DateTimeZone;
+< import org.joda.time.ReadWritableInstant;
+185,190c183
+<         for (int i = 0, isize = size(); i < isize; i++) {
+<             if (getFieldType(i) == type) {
+<                 return getValue(i);
+<             }
+<         }
+<         throw new IllegalArgumentException("Field '" + type + "' is not supported");
+---
+>         return getValue(indexOfSupported(type));
+200,205c193
+<         for (int i = 0, isize = size(); i < isize; i++) {
+<             if (getFieldType(i) == type) {
+<                 return true;
+<             }
+<         }
+<         return false;
+---
+>         return (indexOf(type) != -1);
+209d196
+<     
+215,223c202,208
+< 
+< 
+< 
+< 
+< 
+< 
+<     public long resolve(long baseInstant, DateTimeZone zone) {
+<         Chronology chrono = getChronology().withZone(zone);
+<         return chrono.set(this, baseInstant);
+---
+>     public int indexOf(DateTimeFieldType type) {
+>         for (int i = 0, isize = size(); i < isize; i++) {
+>             if (getFieldType(i) == type) {
+>                 return i;
+>             }
+>         }
+>         return -1;
+234,242c219,224
+< 
+< 
+< 
+< 
+<     public DateTime resolveDateTime(ReadableInstant baseInstant) {
+<         Chronology chrono = DateTimeUtils.getInstantChronology(baseInstant);
+<         long instantMillis = DateTimeUtils.getInstantMillis(baseInstant);
+<         long resolved = chrono.set(this, instantMillis);
+<         return new DateTime(resolved, chrono);
+---
+>     protected int indexOfSupported(DateTimeFieldType type) {
+>         int index = indexOf(type);
+>         if (index == -1) {
+>             throw new IllegalArgumentException("Field '" + type + "' is not supported");
+>         }
+>         return index;
+245a228
+>     
+256,259c239,240
+<     public void resolveInto(ReadWritableInstant baseInstant) {
+<         if (baseInstant == null) {
+<             throw new IllegalArgumentException("The instant must not be null");
+<         }
+---
+> 
+>     public DateTime toDateTimeUsing(ReadableInstant baseInstant) {
+261,262c242,244
+<         long resolved = chrono.set(this, baseInstant.getMillis());
+<         baseInstant.setMillis(resolved);
+---
+>         long instantMillis = DateTimeUtils.getInstantMillis(baseInstant);
+>         long resolved = chrono.set(this, instantMillis);
+>         return new DateTime(resolved, chrono);

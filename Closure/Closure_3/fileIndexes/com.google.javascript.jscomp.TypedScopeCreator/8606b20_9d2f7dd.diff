@@ -1,0 +1,54 @@
+507a508
+>               FunctionType propType = null;
+509,520c510,521
+<                 String propName = lvalueNode.getLastChild().getString();
+<                 JSType propType = ownerType.getPropertyType(propName);
+<                 if (propType instanceof FunctionType) {
+<                   functionType =
+<                       new FunctionTypeBuilder(
+<                           name, compiler, errorRoot, sourceName, scope)
+<                       .setSourceNode(fnRoot)
+<                       .inferFromOverriddenFunction(
+<                           (FunctionType) propType, parametersNode)
+<                       .inferThisType(info, owner)
+<                       .buildAndRegister();
+<                 }
+---
+>                 propType = findOverriddenFunction(
+>                     ownerType, lvalueNode.getLastChild().getString());
+>               }
+> 
+>               if (propType != null) {
+>                 functionType =
+>                     new FunctionTypeBuilder(
+>                         name, compiler, errorRoot, sourceName, scope)
+>                     .setSourceNode(fnRoot)
+>                     .inferFromOverriddenFunction(propType, parametersNode)
+>                     .inferThisType(info, owner)
+>                     .buildAndRegister();
+546a548,572
+>     }
+> 
+>     
+> 
+> 
+>     private FunctionType findOverriddenFunction(
+>         ObjectType ownerType, String propName) {
+>       
+>       
+>       JSType propType = ownerType.getPropertyType(propName);
+>       if (propType instanceof FunctionType) {
+>         return (FunctionType) propType;
+>       } else {
+>         
+>         
+>         for (ObjectType iface :
+>                  ownerType.getCtorImplementedInterfaces()) {
+>           propType = iface.getPropertyType(propName);
+>           if (propType instanceof FunctionType) {
+>             return (FunctionType) propType;
+>           }
+>         }
+>       }
+> 
+>       return null;

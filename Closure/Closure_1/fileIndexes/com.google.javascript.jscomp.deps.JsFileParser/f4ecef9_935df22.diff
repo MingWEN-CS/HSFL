@@ -1,0 +1,42 @@
+44c44
+<       "(?:^|;)\\s*goog\\.(provide|require)\\s*\\((.*?)\\)");
+---
+>       "(?:^|;)\\s*goog\\.(provide|require|addDependency)\\s*\\((.*?)\\)");
+144c144,145
+<         line.indexOf("require") != -1) {
+---
+>         line.indexOf("require") != -1 ||
+>         line.indexOf("addDependency") != -1) {
+156,158c157,159
+<         boolean isRequire = googMatcher.group(1).charAt(0) == 'r';
+<         
+<         String arg = parseJsString(googMatcher.group(2));
+---
+>         char firstChar = googMatcher.group(1).charAt(0);
+>         boolean isProvide = firstChar == 'p';
+>         boolean isRequire = firstChar == 'r';
+160,162c161
+<         
+<         if (isRequire) {
+<           
+---
+>         if (isProvide || isRequire) {
+163a163,164
+>           String arg = parseJsString(googMatcher.group(2));
+> 
+165,166c166,174
+<           if (!"goog".equals(arg)) {
+<             requires.add(arg);
+---
+>           if (isRequire) {
+>             
+>             
+>             
+>             if (!"goog".equals(arg)) {
+>               requires.add(arg);
+>             }
+>           } else {
+>             provides.add(arg);
+168,169d175
+<         } else {
+<           provides.add(arg);

@@ -1,0 +1,53 @@
+27a28,29
+> import com.google.javascript.rhino.jstype.FunctionType;
+> import com.google.javascript.rhino.jstype.JSType;
+1862a1865,1913
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   static String getObjectLitKeyName(Node key) {
+>     switch (key.getType()) {
+>       case Token.NUMBER:
+>         return NodeUtil.getStringValue(key);
+>       case Token.STRING:
+>       case Token.GET:
+>       case Token.SET:
+>         return key.getString();
+>     }
+>     throw new IllegalStateException("Unexpected node type: " + key);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static JSType getObjectLitKeyTypeFromValueType(Node key, JSType valueType) {
+>     if (valueType != null) {
+>       switch (key.getType()) {
+>         case Token.GET:
+>           
+>           if (valueType.isFunctionType()) {
+>             FunctionType fntype = ((FunctionType) valueType);
+>             valueType = fntype.getReturnType();
+>           } else {
+>             return null;
+>           }
+>           break;
+>         case Token.SET:
+>           if (valueType.isFunctionType()) {
+>             
+>             FunctionType fntype = ((FunctionType) valueType);
+>             Node param = fntype.getParametersNode().getFirstChild();
+>             
+>             valueType = param.getJSType();
+>           } else {
+>             return null;
+>           }
+>           break;
+>       }
+>     }
+>     return valueType;

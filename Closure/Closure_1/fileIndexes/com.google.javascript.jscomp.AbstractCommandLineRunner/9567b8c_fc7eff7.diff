@@ -1,0 +1,37 @@
+183a184
+>     Throwable error = null;
+194,196d194
+<     } catch (AbstractCommandLineRunner.FlagUsageException e) {
+<       System.err.println(e.getMessage());
+<       result = -1;
+198c196,211
+<       t.printStackTrace();
+---
+>       error = t;
+>     }
+>     exit(runTimeStats, error);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   void exit(RunTimeStats runTimeStats, Throwable error) {
+>     int result = 0;
+>     if (error instanceof AbstractCommandLineRunner.FlagUsageException) {
+>       System.err.println(error.getMessage());
+>       result = -1;
+>     } else if (error != null) {
+>       error.printStackTrace();
+200a214
+> 
+203a218
+> 
+1030c1045
+<   private class RunTimeStats {
+---
+>   class RunTimeStats {
+1033c1048
+<     private long lastStartTime = 0;
+---
+>     long lastStartTime = 0;

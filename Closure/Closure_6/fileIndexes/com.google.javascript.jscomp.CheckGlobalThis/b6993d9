@@ -1,0 +1,192 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.jscomp.CheckLevel;
+import com.google.javascript.jscomp.NodeTraversal.Callback;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+final class CheckGlobalThis implements Callback {
+
+  static final DiagnosticType GLOBAL_THIS = DiagnosticType.warning(
+      "JSC_USED_GLOBAL_THIS",
+      "dangerous use of the global 'this' object");
+
+  private final AbstractCompiler compiler;
+  private final CheckLevel level;
+
+  
+
+
+
+
+  private Node assignLhsChild = null;
+
+  CheckGlobalThis(AbstractCompiler compiler, CheckLevel level) {
+    this.compiler = compiler;
+    this.level = level;
+  }
+
+  
+
+
+
+  public boolean shouldTraverse(NodeTraversal t, Node n, Node parent) {
+
+    if (n.getType() == Token.FUNCTION) {
+      
+      
+      JSDocInfo jsDoc = getFunctionJsDocInfo(n);
+      if (jsDoc != null &&
+          (jsDoc.isConstructor() ||
+           jsDoc.isInterface() ||
+           jsDoc.hasThisType() ||
+           jsDoc.isOverride())) {
+        return false;
+      }
+
+      
+      
+      
+      
+      
+      
+      int pType = parent.getType();
+      if (!(pType == Token.BLOCK ||
+            pType == Token.SCRIPT ||
+            pType == Token.NAME ||
+            pType == Token.ASSIGN ||
+
+            
+            pType == Token.STRING ||
+            pType == Token.NUMBER)) {
+        return false;
+      }
+    }
+
+    if (parent != null && parent.getType() == Token.ASSIGN) {
+      Node lhs = parent.getFirstChild();
+      Node rhs = lhs.getNext();
+
+      if (n == lhs) {
+        
+        
+        
+        if (assignLhsChild == null) {
+          assignLhsChild = lhs;
+        }
+      } else {
+        
+        
+        if (NodeUtil.isGet(lhs)) {
+          if (lhs.getType() == Token.GETPROP &&
+              lhs.getLastChild().getString().equals("prototype")) {
+            return false;
+          }
+          Node llhs = lhs.getFirstChild();
+          if (llhs.getType() == Token.GETPROP &&
+              llhs.getLastChild().getString().equals("prototype")) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  public void visit(NodeTraversal t, Node n, Node parent) {
+    if (n.getType() == Token.THIS && shouldReportThis(n, parent)) {
+      compiler.report(t.makeError(n, level, GLOBAL_THIS));
+    }
+    if (n == assignLhsChild) {
+      assignLhsChild = null;
+    }
+  }
+
+  private boolean shouldReportThis(Node n, Node parent) {
+    if (assignLhsChild != null) {
+      
+      return true;
+    }
+
+    
+    return parent != null && NodeUtil.isGet(parent);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  private JSDocInfo getFunctionJsDocInfo(Node n) {
+    JSDocInfo jsDoc = n.getJSDocInfo();
+    Node parent = n.getParent();
+    if (jsDoc == null) {
+      int parentType = parent.getType();
+      if (parentType == Token.NAME || parentType == Token.ASSIGN) {
+        jsDoc = parent.getJSDocInfo();
+        if (jsDoc == null && parentType == Token.NAME) {
+          Node gramps = parent.getParent();
+          if (gramps.getType() == Token.VAR) {
+            jsDoc = gramps.getJSDocInfo();
+          }
+        }
+      }
+    }
+    return jsDoc;
+  }
+}

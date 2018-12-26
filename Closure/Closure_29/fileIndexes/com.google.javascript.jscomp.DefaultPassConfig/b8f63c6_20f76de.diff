@@ -1,0 +1,33 @@
+445a446,464
+>     if (options.specializeInitialModule) {
+>       
+>       
+>       
+>       
+> 
+>       passes.addAll(getMainOptimizationLoop());
+> 
+>       if (options.crossModuleCodeMotion) {
+>         passes.add(crossModuleCodeMotion);
+>       }
+> 
+>       if (options.crossModuleMethodMotion) {
+>         passes.add(crossModuleMethodMotion);
+>       }
+> 
+>       passes.add(specializeInitialModule.makeOneTimePass());
+>     }
+> 
+1492a1512,1523
+>     }
+>   };
+> 
+>   
+> 
+> 
+>   private PassFactory specializeInitialModule =
+>       new PassFactory("specializeInitialModule", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new SpecializeModule(compiler, devirtualizePrototypeMethods,
+>           inlineFunctions, removeUnusedPrototypeProperties);

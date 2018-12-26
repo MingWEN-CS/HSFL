@@ -1,0 +1,65 @@
+361,385d360
+<     public long getDateOnlyMillis(int year, int monthOfYear, int dayOfMonth)
+<         throws IllegalArgumentException
+<     {
+<         Chronology base;
+<         if ((base = getBase()) != null) {
+<             return base.getDateOnlyMillis(year, monthOfYear, dayOfMonth);
+<         }
+< 
+<         return getDateTimeMillis(year, monthOfYear, dayOfMonth, 0);
+<     }
+< 
+<     public long getTimeOnlyMillis(int hourOfDay, int minuteOfHour,
+<                                   int secondOfMinute, int millisOfSecond)
+<         throws IllegalArgumentException
+<     {
+<         Chronology base;
+<         if ((base = getBase()) != null) {
+<             return base.getTimeOnlyMillis(hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+<         }
+< 
+<         
+<         return iGregorianChronology.getTimeOnlyMillis
+<             (hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+<     }
+< 
+410,424d384
+<     public long getDateTimeMillis(long instant,
+<                                   int hourOfDay, int minuteOfHour,
+<                                   int secondOfMinute, int millisOfSecond)
+<         throws IllegalArgumentException
+<     {
+<         Chronology base;
+<         if ((base = getBase()) != null) {
+<             return base.getDateTimeMillis
+<                 (instant, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+<         }
+< 
+<         return getDateOnlyMillis(instant)
+<             + getTimeOnlyMillis(hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+<     }
+< 
+437,438c397,411
+<         return getDateTimeMillis(year, monthOfYear, dayOfMonth, 0)
+<             + getTimeOnlyMillis(hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+---
+>         
+>         long instant = iGregorianChronology.getDateTimeMillis
+>             (year, monthOfYear, dayOfMonth,
+>              hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+>         if (instant < iCutoverMillis) {
+>             
+>             instant = iJulianChronology.getDateTimeMillis
+>                 (year, monthOfYear, dayOfMonth,
+>                  hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+>             if (instant >= iCutoverMillis) {
+>                 
+>                 throw new IllegalArgumentException("Specified date does not exist");
+>             }
+>         }
+>         return instant;
+470c443
+<         if (withUTC().getTimeOnlyMillis(iCutoverMillis) == 0) {
+---
+>         if (withUTC().dayOfYear().remainder(iCutoverMillis) == 0) {

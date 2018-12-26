@@ -1,0 +1,37 @@
+302d301
+< 
+308c307,338
+<         if (nextNode != null && elseBranch == null &&
+---
+>         if (nextNode != null && elseBranch == null
+>             && isReturnBlock(thenBranch)
+>             && nextNode.isIf()) {
+>           Node nextCond = nextNode.getFirstChild();
+>           Node nextThen = nextCond.getNext();
+>           Node nextElse = nextThen.getNext();
+>           if (thenBranch.isEquivalentToTyped(nextThen)) {
+>             
+>             
+>             
+>             
+>             child.detachFromParent();
+>             child.detachChildren();
+>             Node newCond = new Node(Token.OR, cond);
+>             nextNode.replaceChild(nextCond, newCond);
+>             newCond.addChildToBack(nextCond);
+>             reportCodeChange();
+>           } else if (nextElse != null
+>               && thenBranch.isEquivalentToTyped(nextElse)) {
+>             
+>             
+>             
+>             
+>             child.detachFromParent();
+>             child.detachChildren();
+>             Node newCond = new Node(Token.AND,
+>                 new Node(Token.NOT, cond).copyInformationFrom(cond));
+>             nextNode.replaceChild(nextCond, newCond);
+>             newCond.addChildToBack(nextCond);
+>             reportCodeChange();
+>           }
+>         } else if (nextNode != null && elseBranch == null &&

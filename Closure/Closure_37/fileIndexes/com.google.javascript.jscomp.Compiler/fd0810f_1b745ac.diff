@@ -1,0 +1,32 @@
+980a981,1011
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   boolean replaceIncrementalSourceAst(JsAst ast) {
+>     String sourceName = ast.getSourceFile().getName();
+>     CompilerInput oldInput =
+>         Preconditions.checkNotNull(
+>             getInput(sourceName),
+>             "No input to replace: " + sourceName);
+>     Node newRoot = ast.getAstRoot(this);
+>     if (newRoot == null) {
+>       return false;
+>     }
+> 
+>     Node oldRoot = oldInput.getAstRoot(this);
+>     if (oldRoot != null) {
+>       oldRoot.getParent().replaceChild(oldRoot, newRoot);
+>     } else {
+>       getRoot().getLastChild().addChildToBack(newRoot);
+>     }
+> 
+>     inputsByName.put(sourceName, new CompilerInput(ast));
+>     return true;
+>   }
+> 

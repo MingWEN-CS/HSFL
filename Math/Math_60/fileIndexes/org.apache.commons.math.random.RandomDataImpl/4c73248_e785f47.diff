@@ -1,0 +1,384 @@
+16a17
+> 
+25a27,30
+> import org.apache.commons.math.util.MathUtils;
+> 
+> 
+> 
+96a102
+> 
+98c104
+<     
+---
+> 
+119a126,132
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+137c150
+<             Integer c = new Integer(randomBytes[i]);
+---
+>             Integer c = Integer.valueOf(randomBytes[i]);
+144c157
+<              String hex = Integer.toHexString(c.intValue() + 128);
+---
+>             String hex = Integer.toHexString(c.intValue() + 128);
+146,150c159,163
+<              
+<              if (hex.length() == 1)  {
+<                  hex = "0" + hex;
+<              }
+<              outBuffer.append(hex);
+---
+>             
+>             if (hex.length() == 1) {
+>                 hex = "0" + hex;
+>             }
+>             outBuffer.append(hex);
+162a176,177
+> 
+> 
+165,166c180,181
+<             throw new IllegalArgumentException
+<                 ("upper bound must be > lower bound");
+---
+>             throw new IllegalArgumentException(
+>                     "upper bound must be > lower bound");
+169c184,185
+<         return lower + (int) (rand.nextDouble() * (upper - lower + 1));
+---
+>         double r = rand.nextDouble();
+>         return (int) ((r * upper) + ((1.0 - r) * lower) + r);
+179a196,197
+> 
+> 
+182,183c200,201
+<             throw new IllegalArgumentException
+<                 ("upper bound must be > lower bound");
+---
+>             throw new IllegalArgumentException(
+>                     "upper bound must be > lower bound");
+186c204,205
+<         return lower + (long) (rand.nextDouble() * (upper - lower + 1));
+---
+>         double r = rand.nextDouble();
+>         return (long) ((r * upper) + ((1.0 - r) * lower) + r);
+189c208,214
+<      
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+208,211c233,236
+<        
+<        SecureRandom secRan = getSecRan();
+<        MessageDigest alg = null;
+<        try {
+---
+>         
+>         SecureRandom secRan = getSecRan();
+>         MessageDigest alg = null;
+>         try {
+213,216c238,241
+<        } catch (NoSuchAlgorithmException ex) {
+<            return null; 
+<        }
+<        alg.reset();
+---
+>         } catch (NoSuchAlgorithmException ex) {
+>             return null; 
+>         }
+>         alg.reset();
+218,219c243,244
+<        
+<        int numIter = (len / 40) + 1;
+---
+>         
+>         int numIter = (len / 40) + 1;
+221,222c246,247
+<        StringBuffer outBuffer = new StringBuffer();
+<        for (int iter = 1; iter < numIter + 1; iter++) {
+---
+>         StringBuffer outBuffer = new StringBuffer();
+>         for (int iter = 1; iter < numIter + 1; iter++) {
+232c257
+<                 Integer c = new Integer(hash[i]);
+---
+>                 Integer c = Integer.valueOf(hash[i]);
+241c266
+<                
+---
+>                 
+245c270
+<                outBuffer.append(hex);
+---
+>                 outBuffer.append(hex);
+259a285,286
+> 
+> 
+261,266c288,293
+<           if (lower >= upper) {
+<               throw new IllegalArgumentException
+<                 ("lower bound must be < upper bound");
+<           }
+<           SecureRandom sec = getSecRan();
+<           return lower + (int) (sec.nextDouble() * (upper - lower + 1));
+---
+>         if (lower >= upper) {
+>             throw new IllegalArgumentException(
+>                     "lower bound must be < upper bound");
+>         }
+>         SecureRandom sec = getSecRan();
+>         return lower + (int) (sec.nextDouble() * (upper - lower + 1));
+277a305,306
+> 
+> 
+280,281c309,310
+<             throw new IllegalArgumentException
+<             ("lower bound must be < upper bound");
+---
+>             throw new IllegalArgumentException(
+>                     "lower bound must be < upper bound");
+302a332,344
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+307,310c349
+<         double p = Math.exp(-mean);
+<         long n = 0;
+<         double r = 1.0d;
+<         double rnd = 1.0d;
+---
+> 
+312,318c351,366
+<         while (n < 1000 * mean) {
+<             rnd = rand.nextDouble();
+<             r = r * rnd;
+<             if (r >= p) {
+<                 n++;
+<             } else {
+<                 return n;
+---
+> 
+>         double pivot = 6.0;
+>         if (mean < pivot) {
+>             double p = Math.exp(-mean);
+>             long n = 0;
+>             double r = 1.0d;
+>             double rnd = 1.0d;
+> 
+>             while (n < 1000 * mean) {
+>                 rnd = rand.nextDouble();
+>                 r = r * rnd;
+>                 if (r >= p) {
+>                     n++;
+>                 } else {
+>                     return n;
+>                 }
+319a368,432
+>             return n;
+>         } else {
+>             double mu = Math.floor(mean);
+>             double delta = Math.floor(pivot + (mu - pivot) / 2.0); 
+>             
+>             
+>             double mu2delta = 2.0 * mu + delta;
+>             double muDeltaHalf = mu + delta / 2.0;
+>             double logMeanMu = Math.log(mean / mu);
+> 
+>             double muFactorialLog = MathUtils.factorialLog((int) mu);
+> 
+>             double c1 = Math.sqrt(Math.PI * mu / 2.0);
+>             double c2 = c1 +
+>                         Math.sqrt(Math.PI * muDeltaHalf /
+>                                   (2.0 * Math.exp(1.0 / mu2delta)));
+>             double c3 = c2 + 2.0;
+>             double c4 = c3 + Math.exp(1.0 / 78.0);
+>             double c = c4 + 2.0 / delta * mu2delta *
+>                        Math.exp(-delta / mu2delta * (1.0 + delta / 2.0));
+> 
+>             double y = 0.0;
+>             double x = 0.0;
+>             double w = Double.POSITIVE_INFINITY;
+> 
+>             boolean accept = false;
+>             while (!accept) {
+>                 double u = nextUniform(0.0, c);
+>                 double e = nextExponential(mean);
+> 
+>                 if (u <= c1) {
+>                     double z = nextGaussian(0.0, 1.0);
+>                     y = -Math.abs(z) * Math.sqrt(mu) - 1.0;
+>                     x = Math.floor(y);
+>                     w = -z * z / 2.0 - e - x * logMeanMu;
+>                     if (x < -mu) {
+>                         w = Double.POSITIVE_INFINITY;
+>                     }
+>                 } else if (c1 < u && u <= c2) {
+>                     double z = nextGaussian(0.0, 1.0);
+>                     y = 1.0 + Math.abs(z) * Math.sqrt(muDeltaHalf);
+>                     x = Math.ceil(y);
+>                     w = (-y * y + 2.0 * y) / mu2delta - e - x * logMeanMu;
+>                     if (x > delta) {
+>                         w = Double.POSITIVE_INFINITY;
+>                     }
+>                 } else if (c2 < u && u <= c3) {
+>                     x = 0.0;
+>                     w = -e;
+>                 } else if (c3 < u && u <= c4) {
+>                     x = 1.0;
+>                     w = -e - logMeanMu;
+>                 } else if (c4 < u) {
+>                     double v = nextExponential(mean);
+>                     y = delta + v * 2.0 / delta * mu2delta;
+>                     x = Math.ceil(y);
+>                     w = -delta / mu2delta * (1.0 + y / 2.0) - e - x * logMeanMu;
+>                 }
+>                 accept = (w <= x * Math.log(mu) -
+>                          MathUtils.factorialLog((int) (mu + x)) /
+>                          muFactorialLog);
+>             }
+>             
+>             
+>             return (long) (x + mu);
+321d433
+<         return n;
+332a445,446
+> 
+> 
+353,356c467,471
+<     public double nextExponential(double mean)  {
+<         if (mean < 0.0)  {
+<             throw new IllegalArgumentException
+<                 ("Exponential mean must be >= 0");
+---
+> 
+> 
+>     public double nextExponential(double mean) {
+>         if (mean < 0.0) {
+>             throw new IllegalArgumentException("Exponential mean must be >= 0");
+376a492,496
+> 
+> 
+> 
+> 
+> 
+379,380c499,500
+<             throw new IllegalArgumentException
+<             ("lower bound must be <= upper bound");
+---
+>             throw new IllegalArgumentException(
+>                     "lower bound must be < upper bound");
+386c506
+<         while(u <= 0.0){
+---
+>         while (u <= 0.0) {
+416a537
+> 
+431a553,554
+> 
+> 
+444a568
+> 
+458a583,584
+> 
+> 
+493a620,622
+> 
+> 
+> 
+495c624
+<         throws NoSuchAlgorithmException, NoSuchProviderException {
+---
+>             throws NoSuchAlgorithmException, NoSuchProviderException {
+507a637,655
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+510,511c658
+<             throw new IllegalArgumentException
+<                 ("permutation k exceeds n");
+---
+>             throw new IllegalArgumentException("permutation k exceeds n");
+514,515c661
+<             throw new IllegalArgumentException
+<                 ("permutation k must be > 0");
+---
+>             throw new IllegalArgumentException("permutation k must be > 0");
+541c687,690
+<     public Object[] nextSample(Collection c, int k) {
+---
+> 
+> 
+> 
+>     public Object[] nextSample(Collection<?> c, int k) {
+544,545c693,694
+<             throw new IllegalArgumentException
+<                 ("sample size exceeds collection size");
+---
+>             throw new IllegalArgumentException(
+>                     "sample size exceeds collection size");
+548,549c697
+<             throw new IllegalArgumentException
+<                 ("sample size must be > 0");
+---
+>             throw new IllegalArgumentException("sample size must be > 0");
+552,558c700,706
+<        Object[] objects = c.toArray();
+<        int[] index = nextPermutation(len, k);
+<        Object[] result = new Object[k];
+<        for (int i = 0; i < k; i++) {
+<            result[i] = objects[index[i]];
+<        }
+<        return result;
+---
+>         Object[] objects = c.toArray();
+>         int[] index = nextPermutation(len, k);
+>         Object[] result = new Object[k];
+>         for (int i = 0; i < k; i++) {
+>             result[i] = objects[index[i]];
+>         }
+>         return result;
+569a718,719
+> 
+> 
+572c722
+<         for (int i = list.length - 1 ; i >= end; i--) {
+---
+>         for (int i = list.length - 1; i >= end; i--) {
+584a735
+> 

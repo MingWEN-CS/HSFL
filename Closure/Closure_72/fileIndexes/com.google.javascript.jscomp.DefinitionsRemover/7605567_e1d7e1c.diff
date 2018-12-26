@@ -1,0 +1,192 @@
+37c37
+<   static Definition getDefinition(Node n, Node parent) {
+---
+>   static Definition getDefinition(Node n, boolean isExtern) {
+39a40,41
+> 
+>     Node parent = n.getParent();
+45c47
+<       return new VarDefinition(n);
+---
+>       return new VarDefinition(n, isExtern);
+48c50
+<         return new NamedFunctionDefinition(parent);
+---
+>         return new NamedFunctionDefinition(parent, isExtern);
+50c52
+<         return new FunctionExpressionDefinition(parent);
+---
+>         return new FunctionExpressionDefinition(parent, isExtern);
+53c55
+<       return new AssignmentDefinition(parent);
+---
+>       return new AssignmentDefinition(parent, isExtern);
+55c57,58
+<       return new ObjectLiteralPropertyDefinition(parent, n, n.getNext());
+---
+>       return new ObjectLiteralPropertyDefinition(parent, n, n.getNext(),
+>           isExtern);
+58c61
+<       return new FunctionArgumentDefinition(function, n);
+---
+>       return new FunctionArgumentDefinition(function, n, isExtern);
+63,64c66,72
+<   static interface Definition {
+<     void remove();
+---
+>   static abstract class Definition {
+> 
+>     private final boolean isExtern;
+> 
+>     Definition(boolean isExtern) {
+>       this.isExtern = isExtern;
+>     }
+71a80,87
+>     public void remove() {
+>       if (!isExtern) {
+>         performRemove();
+>       } else {
+>         throw new IllegalStateException("Attempt to remove() an extern" +
+>             " definition.");
+>       }
+>     }
+72a89
+>     
+75c92
+<     Node getLValue();
+---
+>     protected abstract void performRemove();
+81c98,116
+<     Node getRValue();
+---
+> 
+> 
+> 
+> 
+> 
+>     public abstract Node getLValue();
+> 
+>     
+> 
+> 
+> 
+>     public abstract Node getRValue();
+> 
+>     
+> 
+> 
+>     public boolean isExtern() {
+>       return isExtern;
+>     }
+88c123
+<   abstract static class IncompleteDefinition implements Definition {
+---
+>   abstract static class IncompleteDefinition extends Definition {
+93c128,129
+<     IncompleteDefinition(Node lValue) {
+---
+>     IncompleteDefinition(Node lValue, boolean inExterns) {
+>       super(inExterns);
+112d147
+< 
+117,118c152,153
+<     UnknownDefinition(Node lValue) {
+<       super(lValue);
+---
+>     UnknownDefinition(Node lValue, boolean inExterns) {
+>       super(lValue, inExterns);
+122c157
+<     public void remove() {
+---
+>     public void performRemove() {
+134c169
+<       super(lValue);
+---
+>       super(lValue, true);
+138c173
+<     public void remove() {
+---
+>     public void performRemove() {
+147d181
+< 
+149,150c183,186
+<     FunctionArgumentDefinition(Node function, Node argumentName) {
+<       super(argumentName);
+---
+>     FunctionArgumentDefinition(Node function,
+>         Node argumentName,
+>         boolean inExterns) {
+>       super(argumentName, inExterns);
+156c192
+<     public void remove() {
+---
+>     public void performRemove() {
+165c201
+<   static abstract class FunctionDefinition implements Definition {
+---
+>   abstract static class FunctionDefinition extends Definition {
+169c205,206
+<     FunctionDefinition(Node node) {
+---
+>     FunctionDefinition(Node node, boolean inExterns) {
+>       super(inExterns);
+190,191c227,228
+<     NamedFunctionDefinition(Node node) {
+<       super(node);
+---
+>     NamedFunctionDefinition(Node node, boolean inExterns) {
+>       super(node, inExterns);
+195c232
+<     public void remove() {
+---
+>     public void performRemove() {
+205,206c242,243
+<     FunctionExpressionDefinition(Node node) {
+<       super(node);
+---
+>     FunctionExpressionDefinition(Node node, boolean inExterns) {
+>       super(node, inExterns);
+212c249
+<     public void remove() {
+---
+>     public void performRemove() {
+222c259
+<   static final class AssignmentDefinition implements Definition {
+---
+>   static final class AssignmentDefinition extends Definition {
+225c262,263
+<     AssignmentDefinition(Node node) {
+---
+>     AssignmentDefinition(Node node, boolean inExterns) {
+>       super(inExterns);
+231c269
+<     public void remove() {
+---
+>     public void performRemove() {
+254c292
+<   static final class ObjectLiteralPropertyDefinition implements Definition {
+---
+>   static final class ObjectLiteralPropertyDefinition extends Definition {
+259a298,300
+>     ObjectLiteralPropertyDefinition(Node lit, Node name, Node value,
+>           boolean isExtern) {
+>       super(isExtern);
+261d301
+<     ObjectLiteralPropertyDefinition(Node lit, Node name, Node value) {
+268c308
+<     public void remove() {
+---
+>     public void performRemove() {
+294c334
+<   static final class VarDefinition implements Definition {
+---
+>   static final class VarDefinition extends Definition {
+296c336,337
+<     VarDefinition(Node node) {
+---
+>     VarDefinition(Node node, boolean inExterns) {
+>       super(inExterns);
+305c346
+<     public void remove() {
+---
+>     public void performRemove() {

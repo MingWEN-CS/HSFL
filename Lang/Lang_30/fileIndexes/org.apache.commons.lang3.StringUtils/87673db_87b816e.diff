@@ -1,0 +1,122 @@
+3430,3431c3430,3431
+<     public static String replaceOnce(String text, String repl, String with) {
+<         return replace(text, repl, with, 1);
+---
+>     public static String replaceOnce(String text, String searchString, String replacement) {
+>         return replace(text, searchString, replacement, 1);
+3457,3458c3457,3458
+<     public static String replace(String text, String repl, String with) {
+<         return replace(text, repl, with, -1);
+---
+>     public static String replace(String text, String searchString, String replacement) {
+>         return replace(text, searchString, replacement, -1);
+3489,3490c3489,3490
+<     public static String replace(String text, String repl, String with, int max) {
+<         if (isEmpty(text) || isEmpty(repl) || with == null || max == 0) {
+---
+>     public static String replace(String text, String searchString, String replacement, int max) {
+>         if (isEmpty(text) || isEmpty(searchString) || replacement == null || max == 0) {
+3494c3494
+<         int end = text.indexOf(repl, start);
+---
+>         int end = text.indexOf(searchString, start);
+3498,3499c3498,3499
+<         int replLength = repl.length();
+<         int increase = with.length() - replLength;
+---
+>         int replLength = searchString.length();
+>         int increase = replacement.length() - replLength;
+3504c3504
+<             buf.append(text.substring(start, end)).append(with);
+---
+>             buf.append(text.substring(start, end)).append(replacement);
+3509c3509
+<             end = text.indexOf(repl, start);
+---
+>             end = text.indexOf(searchString, start);
+3554,3555c3554,3555
+<     public static String replaceEach(String text, String[] repl, String[] with) {
+<         return replaceEach(text, repl, with, false, 0);
+---
+>     public static String replaceEach(String text, String[] searchList, String[] replacementList) {
+>         return replaceEach(text, searchList, replacementList, false, 0);
+3603c3603
+<     public static String replaceEachRepeatedly(String text, String[] repl, String[] with) {
+---
+>     public static String replaceEachRepeatedly(String text, String[] searchList, String[] replacementList) {
+3606,3607c3606,3607
+<         int timeToLive = repl == null ? 0 : repl.length;
+<         return replaceEach(text, repl, with, true, timeToLive);
+---
+>         int timeToLive = searchList == null ? 0 : searchList.length;
+>         return replaceEach(text, searchList, replacementList, true, timeToLive);
+3656c3656,3658
+<     private static String replaceEach(String text, String[] repl, String[] with, boolean repeat, int timeToLive) {
+---
+> 
+> 
+>     private static String replaceEach(String text, String[] searchList, String[] replacementList, boolean repeat, int timeToLive) {
+3661c3663
+<         if (text == null || text.length() == 0 || repl == null || repl.length == 0 || with == null || with.length == 0) {
+---
+>         if (text == null || text.length() == 0 || searchList == null || searchList.length == 0 || replacementList == null || replacementList.length == 0) {
+3670,3671c3672,3673
+<         int replLength = repl.length;
+<         int withLength = with.length;
+---
+>         int searchLength = searchList.length;
+>         int replacementLength = replacementList.length;
+3674c3676
+<         if (replLength != withLength) {
+---
+>         if (searchLength != replacementLength) {
+3676c3678
+<                 + replLength
+---
+>                 + searchLength
+3678c3680
+<                 + withLength);
+---
+>                 + replacementLength);
+3682c3684
+<         boolean[] noMoreMatchesForReplIndex = new boolean[replLength];
+---
+>         boolean[] noMoreMatchesForReplIndex = new boolean[searchLength];
+3691,3692c3693,3694
+<         for (int i = 0; i < replLength; i++) {
+<             if (noMoreMatchesForReplIndex[i] || repl[i] == null || repl[i].length() == 0 || with[i] == null) {
+---
+>         for (int i = 0; i < searchLength; i++) {
+>             if (noMoreMatchesForReplIndex[i] || searchList[i] == null || searchList[i].length() == 0 || replacementList[i] == null) {
+3695c3697
+<             tempIndex = text.indexOf(repl[i]);
+---
+>             tempIndex = text.indexOf(searchList[i]);
+3720,3721c3722,3723
+<         for (int i = 0; i < repl.length; i++) {
+<             int greater = with[i].length() - repl[i].length();
+---
+>         for (int i = 0; i < searchList.length; i++) {
+>             int greater = replacementList[i].length() - searchList[i].length();
+3736c3738
+<             buf.append(with[replaceIndex]);
+---
+>             buf.append(replacementList[replaceIndex]);
+3738c3740
+<             start = textIndex + repl[replaceIndex].length();
+---
+>             start = textIndex + searchList[replaceIndex].length();
+3745,3746c3747,3748
+<             for (int i = 0; i < replLength; i++) {
+<                 if (noMoreMatchesForReplIndex[i] || repl[i] == null || repl[i].length() == 0 || with[i] == null) {
+---
+>             for (int i = 0; i < searchLength; i++) {
+>                 if (noMoreMatchesForReplIndex[i] || searchList[i] == null || searchList[i].length() == 0 || replacementList[i] == null) {
+3749c3751
+<                 tempIndex = text.indexOf(repl[i], start);
+---
+>                 tempIndex = text.indexOf(searchList[i], start);
+3773c3775
+<         return replaceEach(result, repl, with, repeat, timeToLive - 1);
+---
+>         return replaceEach(result, searchList, replacementList, repeat, timeToLive - 1);

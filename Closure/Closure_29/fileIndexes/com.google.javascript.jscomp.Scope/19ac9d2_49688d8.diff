@@ -1,0 +1,27 @@
+21a22,23
+> import com.google.common.base.Predicate;
+> import com.google.common.collect.Iterators;
+64a67,76
+>   private static final Predicate<Var> DECLARATIVELY_UNBOUND_VARS_WITHOUT_TYPES =
+>       new Predicate<Var>() {
+>     @Override public boolean apply(Var var) {
+>       return var.getParentNode() != null &&
+>           var.getType() == null && 
+>           var.getParentNode().getType() == Token.VAR &&
+>           !var.isExtern();
+>     }
+>   };
+> 
+282c294
+<       return "Scope.Var " + name;
+---
+>       return "Scope.Var " + name + "{" + type + "}";
+531a544,551
+>   }
+> 
+>   
+> 
+> 
+>   public Iterator<Var> getDeclarativelyUnboundVarsWithoutTypes() {
+>     return Iterators.filter(
+>         getVars(), DECLARATIVELY_UNBOUND_VARS_WITHOUT_TYPES);

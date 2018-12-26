@@ -1,0 +1,110 @@
+130a131,135
+>     
+>     boolean referencesArguments = NodeUtil.isNameReferenced(
+>         block, "arguments", NodeUtil.MATCH_NOT_FUNCTION);
+> 
+>     
+135,137c140,142
+<           return n.getString().equals("arguments")
+<             || n.getString().equals("eval")
+<             || n.getString().equals(fnName)
+---
+>           return n.getString().equals("eval")
+>             || (!fnName.isEmpty()
+>                 && n.getString().equals(fnName))
+145c150,151
+<     return !NodeUtil.has(block, p, Predicates.<Node>alwaysTrue());
+---
+>     return !referencesArguments
+>         && !NodeUtil.has(block, p, Predicates.<Node>alwaysTrue());
+172,181d177
+<     
+<     
+<     
+<     if (containsFunctions && !t.inGlobalScope()) {
+<       
+<       
+<       return CanInlineResult.NO;
+<     }
+< 
+<     
+192c188
+<           t, callNode, fnNode, needAliases);
+---
+>           t, callNode, fnNode, needAliases, containsFunctions);
+532a529
+> 
+534c531,532
+<       NodeTraversal t, Node callNode, Node fnNode, Set<String> namesToAlias) {
+---
+>       NodeTraversal t, Node callNode, Node fnNode, Set<String> namesToAlias,
+>       boolean containsFunctions) {
+546c544
+<             t, callNode, fnNode, namesToAlias)) {
+---
+>             t, callNode, fnNode, namesToAlias, containsFunctions)) {
+563c561,562
+<       NodeTraversal t, Node callNode, Node fnNode, Set<String> namesToAlias) {
+---
+>       NodeTraversal t, Node callNode, final Node fnNode,
+>       Set<String> namesToAlias, boolean containsFunctions) {
+574,578c573,574
+<     boolean fnContainsVars = NodeUtil.has(
+<         NodeUtil.getFunctionBody(fnNode),
+<         new NodeUtil.MatchDeclaration(),
+<         new NodeUtil.MatchShallowStatement());
+<     boolean callerContainsFunction = false;
+---
+>     boolean hasLocalNames = hasLocalNames(fnNode);
+>     boolean forbidTemps = false;
+583c579,596
+<       callerContainsFunction = NodeUtil.containsFunction(fnCallerBody);
+---
+>       
+>       forbidTemps = NodeUtil.isNameReferenced(
+>           fnCallerBody, "eval", NodeUtil.MATCH_NOT_FUNCTION);
+>       if (!forbidTemps && containsFunctions) {
+>         
+>         
+>         Predicate<Node> match = new Predicate<Node>(){
+>           @Override
+>           public boolean apply(Node n) {
+>             if (n.getType() == Token.FUNCTION) {
+>               return n != fnNode;
+>             }
+>             return false;
+>           }
+>         };
+>         forbidTemps = NodeUtil.has(fnCallerBody,
+>             match, NodeUtil.MATCH_NOT_FUNCTION);
+>       }
+586,588c599,602
+<     if (fnContainsVars && callerContainsFunction) {
+<       return false;
+<     }
+---
+>     if (forbidTemps) {
+>       if (hasLocalNames) {
+>         return false;
+>       }
+590,592c604,605
+<     
+<     
+<     if (callerContainsFunction) {
+---
+>       
+>       
+608a622,634
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private boolean hasLocalNames(Node fnNode) {
+>     Node block = NodeUtil.getFunctionBody(fnNode);
+>     return NodeUtil.getFunctionParameters(fnNode).hasChildren()
+>         || NodeUtil.has(
+>              block,
+>              new NodeUtil.MatchVarDeclaration(),
+>              new NodeUtil.MatchShallowStatement());

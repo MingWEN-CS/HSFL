@@ -1,0 +1,23 @@
+320,321c320,324
+<     checks.add(options.messageBundle != null ?
+<         replaceMessages : createEmptyPass("replaceMessages"));
+---
+>     if (options.replaceMessagesWithChromeI18n) {
+>       checks.add(replaceMessagesForChrome);
+>     } else if (options.messageBundle != null) {
+>       checks.add(replaceMessages);
+>     }
+970a974,986
+>     }
+>   };
+> 
+>   final PassFactory replaceMessagesForChrome =
+>       new PassFactory("replaceMessages", true) {
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       return new ReplaceMessagesForChrome(compiler,
+>           new GoogleJsMessageIdGenerator(null),
+>           
+>           true,
+>           
+>           JsMessage.Style.getFromParams(true, false));

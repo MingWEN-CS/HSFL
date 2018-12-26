@@ -1,0 +1,45 @@
+24a25
+> import com.google.javascript.rhino.jstype.JSType;
+25a27
+> import com.google.javascript.rhino.jstype.JSTypeRegistry;
+349,352c351
+<         
+<         
+<         new AssertionFunctionSpec("goog.asserts.assertInstanceof",
+<             JSTypeNative.OBJECT_TYPE)
+---
+>         new AssertInstanceofSpec("goog.asserts.assertInstanceof")
+402a402,434
+> 
+>   
+> 
+> 
+> 
+>   public static class AssertInstanceofSpec extends AssertionFunctionSpec {
+>     public AssertInstanceofSpec(String functionName) {
+>       super(functionName, JSTypeNative.OBJECT_TYPE);
+>     }
+> 
+>     
+> 
+> 
+> 
+>     @Override
+>     public JSType getAssertedType(Node call, JSTypeRegistry registry) {
+>       if (call.getChildCount() > 2) {
+>         Node constructor = call.getFirstChild().getNext().getNext();
+>         if (constructor != null) {
+>           JSType ownerType = constructor.getJSType();
+>           if (ownerType != null
+>               && ownerType.isFunctionType()
+>               && ownerType.isConstructor()) {
+>             FunctionType functionType = ((FunctionType) ownerType);
+>             return functionType.getInstanceType();
+>           }
+>         }
+>       }
+>       return super.getAssertedType(call, registry);
+>     }
+>   }
+> 
+> 

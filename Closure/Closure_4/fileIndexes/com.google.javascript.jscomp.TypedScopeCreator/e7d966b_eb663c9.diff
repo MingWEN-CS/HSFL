@@ -1,0 +1,62 @@
+93a94,95
+>   private static final String LEGACY_TYPEDEF = "goog.typedef";
+> 
+219c221,222
+<     NodeTraversal.traverse(compiler, root, new DiscoverEnums(typeRegistry));
+---
+>     NodeTraversal.traverse(
+>         compiler, root, new DiscoverEnumsAndTypedefs(typeRegistry));
+242c245
+<     declareNativeValueType(s, "goog.typedef", NO_TYPE);
+---
+>     declareNativeValueType(s, LEGACY_TYPEDEF, NO_TYPE);
+268c271,272
+<   private static class DiscoverEnums extends AbstractShallowStatementCallback {
+---
+>   private static class DiscoverEnumsAndTypedefs
+>       extends AbstractShallowStatementCallback {
+271c275
+<     DiscoverEnums(JSTypeRegistry registry) {
+---
+>     DiscoverEnumsAndTypedefs(JSTypeRegistry registry) {
+282,283c286,288
+<             identifyEnumInNameNode(
+<                 child, NodeUtil.getInfoForNameNode(child));
+---
+>             identifyNameNode(
+>                 child, child.getFirstChild(),
+>                 NodeUtil.getInfoForNameNode(child));
+287,290c292,299
+<           Node maybeAssign = node.getFirstChild();
+<           if (maybeAssign.getType() == Token.ASSIGN) {
+<             identifyEnumInNameNode(
+<                 maybeAssign.getFirstChild(), maybeAssign.getJSDocInfo());
+---
+>           Node firstChild = node.getFirstChild();
+>           if (firstChild.getType() == Token.ASSIGN) {
+>             identifyNameNode(
+>                 firstChild.getFirstChild(), firstChild.getLastChild(),
+>                 firstChild.getJSDocInfo());
+>           } else {
+>             identifyNameNode(
+>                 firstChild, null, firstChild.getJSDocInfo());
+296,298c305,319
+<     private void identifyEnumInNameNode(Node nameNode, JSDocInfo info) {
+<       if (info != null && info.hasEnumParameterType()) {
+<         registry.identifyEnumName(nameNode.getQualifiedName());
+---
+>     private void identifyNameNode(
+>         Node nameNode, Node valueNode, JSDocInfo info) {
+>       if (nameNode.isQualifiedName()) {
+>         if (info != null) {
+>           if (info.hasEnumParameterType()) {
+>             registry.identifyNonNullableName(nameNode.getQualifiedName());
+>           } else if (info.hasTypedefType()) {
+>             registry.identifyNonNullableName(nameNode.getQualifiedName());
+>           }
+>         }
+> 
+>         if (valueNode != null &&
+>             LEGACY_TYPEDEF.equals(valueNode.getQualifiedName())) {
+>           registry.identifyNonNullableName(nameNode.getQualifiedName());
+>         }

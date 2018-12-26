@@ -1,0 +1,163 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang.time;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class StopWatch {
+    
+    
+
+
+    private long startTime = -1;
+    
+
+
+    private long stopTime = -1;
+
+    
+
+
+    public StopWatch() {
+    }
+
+    
+
+
+
+
+    public void start() {
+        stopTime = -1;
+        startTime = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+    public void stop() {
+        stopTime = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+    public void reset() {
+        startTime = -1;
+        stopTime = -1;
+    }
+
+    
+
+
+
+
+
+
+    public void split() {
+        stopTime = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+    public void unsplit() {
+        stopTime = -1;
+    }
+
+    
+
+
+
+
+
+    public void suspend() {
+        stopTime = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+    public void resume() {
+        startTime += (System.currentTimeMillis() - stopTime);
+        stopTime = -1;
+    }
+
+    
+
+
+
+
+
+
+
+    public long getTime() {
+        if (stopTime == -1) {
+            if (startTime == -1) {
+                return 0;
+            }
+            return (System.currentTimeMillis() - this.startTime);
+        }
+        return (this.stopTime - this.startTime);
+    }
+
+    
+
+
+
+
+
+
+
+    public String toString() {
+        return DurationFormatUtils.formatISO(getTime());
+    }
+
+}

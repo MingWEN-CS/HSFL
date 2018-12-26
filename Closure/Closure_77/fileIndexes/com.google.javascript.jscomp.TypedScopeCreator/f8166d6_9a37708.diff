@@ -1,0 +1,28 @@
+423c423
+<       return parent == null || parent.getType() != Token.FUNCTION ||
+---
+>       boolean descend = parent == null || parent.getType() != Token.FUNCTION ||
+424a425,440
+> 
+>       if (descend) {
+>         
+>         
+>         if (NodeUtil.isStatementParent(n)) {
+>           for (Node child = n.getFirstChild();
+>                child != null;
+>                child = child.getNext()) {
+>             if (NodeUtil.isHoistedFunctionDeclaration(child)) {
+>               defineFunctionLiteral(child, n);
+>             }
+>           }
+>         }
+>       }
+> 
+>       return descend;
+441c457,460
+<           defineFunctionLiteral(n, parent);
+---
+>           
+>           if (!NodeUtil.isHoistedFunctionDeclaration(n)) {
+>             defineFunctionLiteral(n, parent);
+>           }

@@ -1,0 +1,36 @@
+247a248,249
+>         case Token.GET:
+>         case Token.SET:
+256c258,270
+<           type = getValueType(n.getFirstChild());
+---
+>           switch (n.getType()) {
+>             case Token.STRING:
+>               type = getValueType(n.getFirstChild());
+>               break;
+>             case Token.GET:
+>               type = Name.Type.GET;
+>               break;
+>             case Token.SET:
+>               type = Name.Type.SET;
+>               break;
+>             default:
+>               throw new IllegalStateException("unexpected:" + n);
+>           }
+755a770,771
+>       GET,
+>       SET,
+891c907
+<       return !inExterns && (isClassOrEnum ||
+---
+>       return !inExterns && !isGetOrSetDefinition() && (isClassOrEnum ||
+895a912,915
+>     boolean isGetOrSetDefinition() {
+>       return this.type == Type.GET || this.type == Type.SET;
+>     }
+> 
+897c917,918
+<       if (type == Type.OTHER || globalSets != 1 || localSets != 0) {
+---
+>       if (type == Type.OTHER || isGetOrSetDefinition()
+>           || globalSets != 1 || localSets != 0) {

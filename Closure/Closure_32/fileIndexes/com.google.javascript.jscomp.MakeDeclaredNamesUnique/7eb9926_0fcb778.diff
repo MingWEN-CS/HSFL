@@ -1,0 +1,55 @@
+47a48,49
+>   
+>   
+48a51,59
+> 
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+80,91c91
+<     if (declarationRoot.getType() == Token.FUNCTION) {
+<       
+<       Node fnParams = declarationRoot.getFirstChild().getNext();
+<       for (Node c = fnParams.getFirstChild(); c != null; c = c.getNext()) {
+<         String name = c.getString();
+<         renamer.addDeclaredName(name);
+<       }
+< 
+<       
+<       Node functionBody = declarationRoot.getLastChild();
+<       findDeclaredNames(functionBody, null, renamer);
+<     } else {
+---
+>     if (declarationRoot.getType() != Token.FUNCTION) {
+125a126,142
+>       case Token.LP: {
+>           Renamer renamer = nameStack.peek().forChildScope();
+> 
+>           
+>           for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+>             String name = c.getString();
+>             renamer.addDeclaredName(name);
+>           }
+> 
+>           
+>           Node functionBody = n.getNext();
+>           findDeclaredNames(functionBody, null, renamer);
+> 
+>           nameStack.push(renamer);
+>         }
+>         break;
+> 
+159a177,184
+>         
+>         nameStack.pop();
+>         break;
+> 
+>       case Token.LP:
+>         
+>         
+>         

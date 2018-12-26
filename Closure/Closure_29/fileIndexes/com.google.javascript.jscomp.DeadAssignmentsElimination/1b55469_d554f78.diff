@@ -1,0 +1,162 @@
+31d30
+< import java.util.logging.Logger;
+46,47d44
+<   private static final Logger logger =
+<     Logger.getLogger(DeadAssignmentsElimination.class.getName());
+114c111
+<           tryRemoveAssignment(t, NodeUtil.getConditionExpression(n), n, state);
+---
+>           tryRemoveAssignment(t, NodeUtil.getConditionExpression(n), state);
+119,121c116
+<                 t, NodeUtil.getConditionExpression(n), n, state);
+<             tryRemoveAssignment(
+<                 t, n.getFirstChild().getNext().getNext(), n, state);
+---
+>                 t, NodeUtil.getConditionExpression(n), state);
+128c123
+<             tryRemoveAssignment(t, n.getFirstChild(), n, state);
+---
+>             tryRemoveAssignment(t, n.getFirstChild(), state);
+134,136c129
+<       if (NodeUtil.isExpressionNode(n)) {
+<         tryRemoveAssignment(t, n.getFirstChild(), n, state);
+<       }
+---
+>       tryRemoveAssignment(t, n, state);
+139a133,136
+>   private void tryRemoveAssignment(NodeTraversal t, Node n,
+>       FlowState<LiveVariableLattice> state) {
+>     tryRemoveAssignment(t, n, n, state);
+>   }
+140a138,139
+>   
+> 
+149c148
+<   private void tryRemoveAssignment(NodeTraversal t, Node n, Node parent,
+---
+>   private void tryRemoveAssignment(NodeTraversal t, Node n, Node exprRoot,
+151c150,154
+<     if (NodeUtil.isAssign(n)) {
+---
+> 
+>     
+>     
+>     if (NodeUtil.isAssignmentOp(n)) {
+> 
+152a156,164
+>       Node rhs = lhs.getNext();
+>       
+>       
+>       
+>       if (rhs != null) {
+>         tryRemoveAssignment(t, rhs, exprRoot, state);
+>         rhs = lhs.getNext();
+>       }
+> 
+168c180,181
+<       if (state.getIn().isLive(var)) {
+---
+>       if (state.getIn().isLive(var) &&
+>           isVariableStillLiveWithinExpression(n, exprRoot, var.name)) {
+181d193
+<       Node rhs = n.getLastChild();
+183,186c195,210
+<       logger.info("Removing dead assignemnt to " + name + " in "
+<           + t.getSourceName() + " line " + n.getLineno());
+<       n.removeChild(rhs);
+<       parent.replaceChild(n, rhs);
+---
+>       if (NodeUtil.isAssign(n)) {
+>         n.removeChild(rhs);
+>         n.getParent().replaceChild(n, rhs);
+>       } else if (NodeUtil.isAssignmentOp(n)) {
+>         n.removeChild(rhs);
+>         n.removeChild(lhs);
+>         Node op = new Node(NodeUtil.getOpFromAssignmentOp(n), lhs, rhs);
+>         n.getParent().replaceChild(n, op);
+>       } else {
+>         
+>         
+>         
+>         
+>         Preconditions.checkState(false, "Unknow statement");
+>       }
+>       
+193c217,219
+<         tryRemoveAssignment(t, c, n, state);
+---
+>         if (!ControlFlowGraph.isEnteringNewCfgNode(c)) {
+>           tryRemoveAssignment(t, c, exprRoot, state);
+>         }
+197a224,294
+>   }
+>   
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private boolean isVariableStillLiveWithinExpression(
+>       Node n, Node exprRoot, String variable) {
+>     while (n != exprRoot) {
+>       for(Node sibling = n.getNext(); sibling != null;
+>           sibling = sibling.getNext()) {
+>         if (!ControlFlowGraph.isEnteringNewCfgNode(sibling)) {
+>           VariableLiveness state = readVariableBeforeKilling(sibling, variable);
+>           
+>           
+>           if (state == VariableLiveness.READ) {
+>             return true;
+>           } else if (state == VariableLiveness.KILL) {
+>             return false;
+>           }
+>         }
+>       }
+>       n = n.getParent();
+>     }
+>     return false;
+>   }
+>   
+>   
+>   private enum VariableLiveness {
+>     MAYBE_LIVE, 
+>     READ, 
+>     KILL, 
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private VariableLiveness readVariableBeforeKilling(Node n, String variable) {
+>     if (NodeUtil.isName(n) && variable.equals(n.getString())) {
+>       if (NodeUtil.isLhs(n, n.getParent())) {
+>         return VariableLiveness.KILL;
+>       } else {
+>         return VariableLiveness.READ;
+>       }
+>     }
+>     for (Node child = n.getFirstChild();
+>         child != null; child = child.getNext()) {
+>       if (!ControlFlowGraph.isEnteringNewCfgNode(child)) {
+>         VariableLiveness state = readVariableBeforeKilling(child, variable);
+>         if (state != VariableLiveness.MAYBE_LIVE) {
+>           return state;
+>         }
+>       }
+>     }
+>     return VariableLiveness.MAYBE_LIVE;

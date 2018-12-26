@@ -1,0 +1,613 @@
+58a59
+> import java.util.HashMap;
+61a63
+> import org.joda.time.DateTimeConstants;
+63a66,68
+> import org.joda.time.DurationField;
+> 
+> 
+72a78,86
+> 
+>     static final long serialVersionUID = -1079258847191166848L;
+> 
+>     static boolean useTimeArithmetic(DurationField field) {
+>         
+>         
+>         return field != null && field.getUnitMillis() < DateTimeConstants.MILLIS_PER_HOUR * 12;
+>     }
+> 
+75a90,102
+>     private transient DurationField iErasField;
+>     private transient DurationField iCenturiesField;
+>     private transient DurationField iYearsField;
+>     private transient DurationField iMonthsField;
+>     private transient DurationField iWeekyearsField;
+>     private transient DurationField iWeeksField;
+>     private transient DurationField iDaysField;
+> 
+>     private transient DurationField iHoursField;
+>     private transient DurationField iMinutesField;
+>     private transient DurationField iSecondsField;
+>     private transient DurationField iMillisField;
+> 
+127d153
+<         DateTimeZone z = iZone;
+129,139d154
+<         iYearField = new ZonedDateField(c.year(), z);
+<         iYearOfEraField = new ZonedDateField(c.yearOfEra(), z);
+<         iYearOfCenturyField = new ZonedDateField(c.yearOfCentury(), z);
+<         iCenturyOfEraField = new ZonedDateField(c.centuryOfEra(), z);
+<         iEraField = new ZonedDateField(c.era(), z);
+<         iDayOfMonthField = new ZonedDateField(c.dayOfMonth(), z);
+<         iDayOfWeekField = new ZonedDateField(c.dayOfWeek(), z);
+<         iDayOfYearField = new ZonedDateField(c.dayOfYear(), z);
+<         iMonthOfYearField = new ZonedDateField(c.monthOfYear(), z);
+<         iWeekOfWeekyearField = new ZonedDateField(c.weekOfWeekyear(), z);
+<         iWeekyearField = new ZonedDateField(c.weekyear(), z);
+141,150c156,157
+<         iMillisOfSecondField = new ZonedTimeField(c.millisOfSecond(), z);
+<         iMillisOfDayField = new ZonedTimeField(c.millisOfDay(), z);
+<         iSecondOfMinuteField = new ZonedTimeField(c.secondOfMinute(), z);
+<         iSecondOfDayField = new ZonedTimeField(c.secondOfDay(), z);
+<         iMinuteOfHourField = new ZonedTimeField(c.minuteOfHour(), z);
+<         iMinuteOfDayField = new ZonedTimeField(c.minuteOfDay(), z);
+<         iHourOfDayField = new ZonedTimeField(c.hourOfDay(), z);
+<         iHourOfHalfdayField = new ZonedTimeField(c.hourOfHalfday(), z);
+<         iClockhourOfDayField = new ZonedTimeField(c.clockhourOfDay(), z);
+<         iClockhourOfHalfdayField = new ZonedTimeField(c.clockhourOfHalfday(), z);
+---
+>         
+>         HashMap converted = new HashMap();
+153c160,226
+<         iHalfdayOfDayField = new ZonedDateField(c.halfdayOfDay(), z);
+---
+> 
+>         iErasField = convertField(c.eras(), converted);
+>         iCenturiesField = convertField(c.centuries(), converted);
+>         iYearsField = convertField(c.years(), converted);
+>         iMonthsField = convertField(c.months(), converted);
+>         iWeekyearsField = convertField(c.weekyears(), converted);
+>         iWeeksField = convertField(c.weeks(), converted);
+>         iDaysField = convertField(c.days(), converted);
+> 
+>         iHoursField = convertField(c.hours(), converted);
+>         iMinutesField = convertField(c.minutes(), converted);
+>         iSecondsField = convertField(c.seconds(), converted);
+>         iMillisField = convertField(c.millis(), converted);
+> 
+>         
+> 
+>         iYearField = convertField(c.year(), converted);
+>         iYearOfEraField = convertField(c.yearOfEra(), converted);
+>         iYearOfCenturyField = convertField(c.yearOfCentury(), converted);
+>         iCenturyOfEraField = convertField(c.centuryOfEra(), converted);
+>         iEraField = convertField(c.era(), converted);
+>         iDayOfWeekField = convertField(c.dayOfWeek(), converted);
+>         iDayOfMonthField = convertField(c.dayOfMonth(), converted);
+>         iDayOfYearField = convertField(c.dayOfYear(), converted);
+>         iMonthOfYearField = convertField(c.monthOfYear(), converted);
+>         iWeekOfWeekyearField = convertField(c.weekOfWeekyear(), converted);
+>         iWeekyearField = convertField(c.weekyear(), converted);
+> 
+>         iMillisOfSecondField = convertField(c.millisOfSecond(), converted);
+>         iMillisOfDayField = convertField(c.millisOfDay(), converted);
+>         iSecondOfMinuteField = convertField(c.secondOfMinute(), converted);
+>         iSecondOfDayField = convertField(c.secondOfDay(), converted);
+>         iMinuteOfHourField = convertField(c.minuteOfHour(), converted);
+>         iMinuteOfDayField = convertField(c.minuteOfDay(), converted);
+>         iHourOfDayField = convertField(c.hourOfDay(), converted);
+>         iHourOfHalfdayField = convertField(c.hourOfHalfday(), converted);
+>         iClockhourOfDayField = convertField(c.clockhourOfDay(), converted);
+>         iClockhourOfHalfdayField = convertField(c.clockhourOfHalfday(), converted);
+>         iHalfdayOfDayField = convertField(c.halfdayOfDay(), converted);
+>     }
+> 
+>     private DurationField convertField(DurationField field, HashMap converted) {
+>         if (field == null || !field.isSupported()) {
+>             return field;
+>         }
+>         if (converted.containsKey(field)) {
+>             return (DurationField)converted.get(field);
+>         }
+>         ZonedDurationField zonedField = new ZonedDurationField(field, iZone);
+>         converted.put(field, zonedField);
+>         return zonedField;
+>     }
+> 
+>     private DateTimeField convertField(DateTimeField field, HashMap converted) {
+>         if (field == null || !field.isSupported()) {
+>             return field;
+>         }
+>         if (converted.containsKey(field)) {
+>             return (DateTimeField)converted.get(field);
+>         }
+>         ZonedDateTimeField zonedField =
+>             new ZonedDateTimeField(field, iZone,
+>                                    convertField(field.getDurationField(), converted),
+>                                    convertField(field.getRangeDurationField(), converted),
+>                                    convertField(field.getLeapDurationField(), converted));
+>         converted.put(field, zonedField);
+>         return zonedField;
+166c239
+<             throw new IllegalArgumentException("The DateTimeZone must not be null");
+---
+>             zone = DateTimeZone.getDefault();
+176a250,305
+>     public long getDateOnlyMillis(int year, int monthOfYear, int dayOfMonth)
+>         throws IllegalArgumentException
+>     {
+>         return localToUTC(iChronology.getDateOnlyMillis
+>                           (year, monthOfYear, dayOfMonth));
+>     }
+> 
+>     public long getTimeOnlyMillis(int hourOfDay, int minuteOfHour,
+>                                   int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException
+>     {
+>         return localToUTC(iChronology.getTimeOnlyMillis
+>                           (hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond));
+>     }
+> 
+>     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+>                                   int millisOfDay)
+>         throws IllegalArgumentException
+>     {
+>         return localToUTC(iChronology.getDateTimeMillis
+>                           (year, monthOfYear, dayOfMonth, millisOfDay));
+>     }
+> 
+>     public long getDateTimeMillis(long instant,
+>                                   int hourOfDay, int minuteOfHour,
+>                                   int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException
+>     {
+>         return localToUTC(iChronology.getDateTimeMillis
+>                           (instant + iZone.getOffset(instant),
+>                            hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond));
+>     }
+> 
+>     public long getDateTimeMillis(int year, int monthOfYear, int dayOfMonth,
+>                                   int hourOfDay, int minuteOfHour,
+>                                   int secondOfMinute, int millisOfSecond)
+>         throws IllegalArgumentException
+>     {
+>         return localToUTC(iChronology.getDateTimeMillis
+>                           (year, monthOfYear, dayOfMonth, 
+>                            hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond));
+>     }
+> 
+>     
+> 
+> 
+>     private long localToUTC(long instant) {
+>         int offset = iZone.getOffsetFromLocal(instant);
+>         instant -= offset;
+>         if (offset != iZone.getOffset(instant)) {
+>             throw new IllegalArgumentException
+>                 ("Illegal instant due to time zone offset transition");
+>         }
+>         return instant;
+>     }
+> 
+179a309,312
+>     public DurationField millis() {
+>         return iMillisField;
+>     }
+> 
+190a324,327
+>     public DurationField seconds() {
+>         return iSecondsField;
+>     }
+> 
+201a339,342
+>     public DurationField minutes() {
+>         return iMinutesField;
+>     }
+> 
+212a354,357
+>     public DurationField hours() {
+>         return iHoursField;
+>     }
+> 
+235c380,384
+<     
+---
+> 
+>     public DurationField days() {
+>         return iDaysField;
+>     }
+> 
+250c399,403
+<     
+---
+> 
+>     public DurationField weeks() {
+>         return iWeeksField;
+>     }
+> 
+254a408,411
+>     public DurationField weekyears() {
+>         return iWeekyearsField;
+>     }
+> 
+261c418,422
+<     
+---
+> 
+>     public DurationField months() {
+>         return iMonthsField;
+>     }
+> 
+268c429,433
+<     
+---
+> 
+>     public DurationField years() {
+>         return iYearsField;
+>     }
+> 
+280a446,449
+>     public DurationField centuries() {
+>         return iCenturiesField;
+>     }
+> 
+284a454,457
+>     public DurationField eras() {
+>         return iErasField;
+>     }
+> 
+288a462,465
+>     public String toString() {
+>         return iChronology.toString();
+>     }
+> 
+302c479,557
+<     static class ZonedDateField extends DateTimeField {
+---
+> 
+> 
+>     static class ZonedDurationField extends AbstractDurationField {
+>         static final long serialVersionUID = -485345310999208286L;
+> 
+>         final DurationField iField;
+>         final boolean iTimeField;
+>         final DateTimeZone iZone;
+> 
+>         ZonedDurationField(DurationField field, DateTimeZone zone) {
+>             super(field.getName());
+>             if (!field.isSupported()) {
+>                 throw new IllegalArgumentException();
+>             }
+>             iField = field;
+>             iTimeField = useTimeArithmetic(field);
+>             this.iZone = zone;
+>         }
+> 
+>         public boolean isPrecise() {
+>             return iTimeField ? iField.isPrecise() : iZone.isFixed();
+>         }
+> 
+>         public long getUnitMillis() {
+>             return iField.getUnitMillis();
+>         }
+> 
+>         public int getValue(long duration, long instant) {
+>             return iField.getValue(duration, instant + this.iZone.getOffset(instant));
+>         }
+> 
+>         public long getValueAsLong(long duration, long instant) {
+>             return iField.getValueAsLong(duration, instant + this.iZone.getOffset(instant));
+>         }
+> 
+>         public long getMillis(int value, long instant) {
+>             return iField.getMillis(value, instant + this.iZone.getOffset(instant));
+>         }
+> 
+>         public long getMillis(long value, long instant) {
+>             return iField.getMillis(value, instant + this.iZone.getOffset(instant));
+>         }
+> 
+>         public long add(long instant, int value) {
+>             int offset = this.iZone.getOffset(instant);
+>             instant = iField.add(instant + offset, value);
+>             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+>         }
+> 
+>         public long add(long instant, long value) {
+>             int offset = this.iZone.getOffset(instant);
+>             instant = iField.add(instant + offset, value);
+>             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+>         }
+> 
+>         public int getDifference(long minuendInstant, long subtrahendInstant) {
+>             int offset = this.iZone.getOffset(subtrahendInstant);
+>             return iField.getDifference
+>                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+>                  subtrahendInstant + offset);
+>         }
+> 
+>         public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant) {
+>             int offset = this.iZone.getOffset(subtrahendInstant);
+>             return iField.getDifferenceAsLong
+>                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+>                  subtrahendInstant + offset);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     static final class ZonedDateTimeField extends AbstractDateTimeField {
+>         static final long serialVersionUID = -3968986277775529794L;
+> 
+305,306c560,569
+<         
+<         ZonedDateField(DateTimeField field, DateTimeZone zone) {
+---
+>         final DurationField iDurationField;
+>         final boolean iTimeField;
+>         final DurationField iRangeDurationField;
+>         final DurationField iLeapDurationField;
+> 
+>         ZonedDateTimeField(DateTimeField field,
+>                            DateTimeZone zone,
+>                            DurationField durationField,
+>                            DurationField rangeDurationField,
+>                            DurationField leapDurationField) {
+307a571,573
+>             if (!field.isSupported()) {
+>                 throw new IllegalArgumentException();
+>             }
+309a576,579
+>             iDurationField = durationField;
+>             iTimeField = useTimeArithmetic(durationField);
+>             iRangeDurationField = rangeDurationField;
+>             iLeapDurationField = leapDurationField;
+311,313c581,583
+<         
+<         public int get(long millis) {
+<             return iField.get(millis + this.iZone.getOffset(millis));
+---
+> 
+>         public boolean isLenient() {
+>             return iField.isLenient();
+315,317c585,587
+<         
+<         public String getAsText(long millis, Locale locale) {
+<             return iField.getAsText(millis + this.iZone.getOffset(millis), locale);
+---
+> 
+>         public int get(long instant) {
+>             return iField.get(instant + this.iZone.getOffset(instant));
+319,321c589,591
+<         
+<         public String getAsShortText(long millis, Locale locale) {
+<             return iField.getAsShortText(millis + this.iZone.getOffset(millis), locale);
+---
+> 
+>         public String getAsText(long instant, Locale locale) {
+>             return iField.getAsText(instant + this.iZone.getOffset(instant), locale);
+323,326c593,595
+<         
+<         public long add(long millis, int value) {
+<             millis = iField.add(millis + this.iZone.getOffset(millis), value);
+<             return millis - this.iZone.getOffsetFromLocal(millis);
+---
+> 
+>         public String getAsShortText(long instant, Locale locale) {
+>             return iField.getAsShortText(instant + this.iZone.getOffset(instant), locale);
+328,331c597,601
+<         
+<         public long add(long millis, long value) {
+<             millis = iField.add(millis + this.iZone.getOffset(millis), value);
+<             return millis - this.iZone.getOffsetFromLocal(millis);
+---
+> 
+>         public long add(long instant, int value) {
+>             int offset = this.iZone.getOffset(instant);
+>             instant = iField.add(instant + offset, value);
+>             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+334,336c604,607
+<         public long addWrapped(long millis, int value) {
+<             millis = iField.addWrapped(millis + this.iZone.getOffset(millis), value);
+<             return millis - this.iZone.getOffsetFromLocal(millis);
+---
+>         public long add(long instant, long value) {
+>             int offset = this.iZone.getOffset(instant);
+>             instant = iField.add(instant + offset, value);
+>             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+339,341c610,613
+<         public long getDifference(long minuendMillis, long subtrahendMillis) {
+<             return iField.getDifference(minuendMillis + this.iZone.getOffset(minuendMillis),
+<                                         subtrahendMillis + this.iZone.getOffset(subtrahendMillis));
+---
+>         public long addWrapped(long instant, int value) {
+>             int offset = this.iZone.getOffset(instant);
+>             instant = iField.addWrapped(instant + offset, value);
+>             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+344,350c616,622
+<         public long set(long millis, int value) {
+<             long offset = this.iZone.getOffset(millis);
+<             
+<             millis = iField.set(millis + offset, value);
+<             long offsetFromLocal = this.iZone.getOffsetFromLocal(millis);
+<             millis -= offsetFromLocal;
+<             
+---
+>         public long set(long instant, int value) {
+>             long offset = this.iZone.getOffset(instant);
+> 
+>             instant = iField.set(instant + offset, value);
+>             long offsetFromLocal = this.iZone.getOffsetFromLocal(instant);
+>             instant -= offsetFromLocal;
+> 
+352c624
+<                 if (get(millis) != value) {
+---
+>                 if (get(instant) != value) {
+357,358c629,630
+<             
+<             return millis;
+---
+> 
+>             return instant;
+360,362c632,634
+<         
+<         public long set(long millis, String text, Locale locale) {
+<             millis = iField.set(millis + this.iZone.getOffset(millis), text, locale);
+---
+> 
+>         public long set(long instant, String text, Locale locale) {
+>             instant = iField.set(instant + this.iZone.getOffset(instant), text, locale);
+364,368c636
+<             return millis - this.iZone.getOffsetFromLocal(millis);
+<         }
+<         
+<         public boolean isLeap(long millis) {
+<             return iField.isLeap(millis + this.iZone.getOffset(millis));
+---
+>             return instant - this.iZone.getOffsetFromLocal(instant);
+371,376c639,643
+<         public int getLeapAmount(long millis) {
+<             return iField.getLeapAmount(millis + this.iZone.getOffset(millis));
+<         }
+<         
+<         public long getUnitMillis() {
+<             return iField.getUnitMillis();
+---
+>         public int getDifference(long minuendInstant, long subtrahendInstant) {
+>             int offset = this.iZone.getOffset(subtrahendInstant);
+>             return iField.getDifference
+>                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+>                  subtrahendInstant + offset);
+379,380c646,650
+<         public long getRangeMillis() {
+<             return iField.getRangeMillis();
+---
+>         public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant) {
+>             int offset = this.iZone.getOffset(subtrahendInstant);
+>             return iField.getDifferenceAsLong
+>                 (minuendInstant + (iTimeField ? offset : this.iZone.getOffset(minuendInstant)),
+>                  subtrahendInstant + offset);
+383,388c653,654
+<         public int getMinimumValue() {
+<             return iField.getMinimumValue();
+<         }
+<         
+<         public int getMinimumValue(long millis) {
+<             return iField.getMinimumValue(millis + this.iZone.getOffset(millis));
+---
+>         public final DurationField getDurationField() {
+>             return iDurationField;
+390,392c656,658
+<         
+<         public int getMaximumValue() {
+<             return iField.getMaximumValue();
+---
+> 
+>         public final DurationField getRangeDurationField() {
+>             return iRangeDurationField;
+394,396c660,662
+<         
+<         public int getMaximumValue(long millis) {
+<             return iField.getMaximumValue(millis + this.iZone.getOffset(millis));
+---
+> 
+>         public boolean isLeap(long instant) {
+>             return iField.isLeap(instant + this.iZone.getOffset(instant));
+398,401c664,666
+<         
+<         public long roundFloor(long millis) {
+<             millis = iField.roundFloor(millis + this.iZone.getOffset(millis));
+<             return millis - this.iZone.getOffsetFromLocal(millis);
+---
+> 
+>         public int getLeapAmount(long instant) {
+>             return iField.getLeapAmount(instant + this.iZone.getOffset(instant));
+403,406c668,670
+<         
+<         public long roundCeiling(long millis) {
+<             millis = iField.roundCeiling(millis + this.iZone.getOffset(millis));
+<             return millis - this.iZone.getOffsetFromLocal(millis);
+---
+> 
+>         public final DurationField getLeapDurationField() {
+>             return iLeapDurationField;
+409,411c673,676
+<         public long remainder(long millis) {
+<             millis = iField.remainder(millis + this.iZone.getOffset(millis));
+<             return millis - this.iZone.getOffsetFromLocal(millis);
+---
+>         public long roundFloor(long instant) {
+>             int offset = this.iZone.getOffset(instant);
+>             instant = iField.roundFloor(instant + offset);
+>             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+414,415c679,682
+<         public int getMaximumTextLength(Locale locale) {
+<             return iField.getMaximumTextLength(locale);
+---
+>         public long roundCeiling(long instant) {
+>             int offset = this.iZone.getOffset(instant);
+>             instant = iField.roundCeiling(instant + offset);
+>             return instant - (iTimeField ? offset : this.iZone.getOffsetFromLocal(instant));
+417,419c684,686
+<         
+<         public int getMaximumShortTextLength(Locale locale) {
+<             return iField.getMaximumShortTextLength(locale);
+---
+> 
+>         public long remainder(long instant) {
+>             return iField.remainder(instant + this.iZone.getOffset(instant));
+421d687
+<     }
+423,425c689,690
+<     static class ZonedTimeField extends ZonedDateField {
+<         ZonedTimeField(DateTimeField field, DateTimeZone zone) {
+<             super(field, zone);
+---
+>         public int getMinimumValue() {
+>             return iField.getMinimumValue();
+428,431c693,695
+<         
+<         
+<         
+<         
+---
+>         public int getMinimumValue(long instant) {
+>             return iField.getMinimumValue(instant + this.iZone.getOffset(instant));
+>         }
+433,435c697,698
+<         public long add(long millis, int value) {
+<             int offset = this.iZone.getOffset(millis);
+<             return iField.add(millis + offset, value) - offset;
+---
+>         public int getMaximumValue() {
+>             return iField.getMaximumValue();
+437,440c700,702
+<         
+<         public long add(long millis, long value) {
+<             int offset = this.iZone.getOffset(millis);
+<             return iField.add(millis + offset, value) - offset;
+---
+> 
+>         public int getMaximumValue(long instant) {
+>             return iField.getMaximumValue(instant + this.iZone.getOffset(instant));
+443,445c705,706
+<         public long addWrapped(long millis, int value) {
+<             int offset = this.iZone.getOffset(millis);
+<             return iField.addWrapped(millis + offset, value) - offset;
+---
+>         public int getMaximumTextLength(Locale locale) {
+>             return iField.getMaximumTextLength(locale);
+448,450c709,710
+<         public long getDifference(long minuendMillis, long subtrahendMillis) {
+<             int offset = this.iZone.getOffset(subtrahendMillis);
+<             return iField.getDifference(minuendMillis + offset, subtrahendMillis + offset);
+---
+>         public int getMaximumShortTextLength(Locale locale) {
+>             return iField.getMaximumShortTextLength(locale);
+452a713
+> 

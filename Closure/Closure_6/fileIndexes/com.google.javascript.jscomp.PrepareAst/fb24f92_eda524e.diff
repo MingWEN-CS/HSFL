@@ -1,0 +1,48 @@
+21,22d20
+< import com.google.javascript.rhino.JSDocInfo;
+< import com.google.javascript.rhino.JSTypeExpression;
+67c65
+<             compiler, externs, new PrepareAnnotations(compiler));
+---
+>             compiler, externs, new PrepareAnnotations());
+71c69
+<             compiler, root, new PrepareAnnotations(compiler));
+---
+>             compiler, root, new PrepareAnnotations());
+123,126c121
+<     private final CodingConvention convention;
+< 
+<     PrepareAnnotations(AbstractCompiler compiler) {
+<       this.convention = compiler.getCodingConvention();
+---
+>     PrepareAnnotations() {
+145d139
+<           annotateFunctions(n, parent);
+217,243d210
+<       }
+<     }
+< 
+<     
+< 
+< 
+<     private void annotateFunctions(Node n, Node parent) {
+<       JSDocInfo fnInfo = NodeUtil.getFunctionJSDocInfo(n);
+< 
+<       
+<       
+<       Node args = n.getFirstChild().getNext();
+<       for (Node arg = args.getFirstChild();
+<            arg != null;
+<            arg = arg.getNext()) {
+<         String argName = arg.getString();
+<         JSTypeExpression typeExpr = fnInfo == null ?
+<             null : fnInfo.getParameterType(argName);
+< 
+<         if (convention.isOptionalParameter(arg) ||
+<             typeExpr != null && typeExpr.isOptionalArg()) {
+<           arg.putBooleanProp(Node.IS_OPTIONAL_PARAM, true);
+<         }
+<         if (convention.isVarArgsParameter(arg) ||
+<             typeExpr != null && typeExpr.isVarArgs()) {
+<           arg.putBooleanProp(Node.IS_VAR_ARGS_PARAM, true);
+<         }

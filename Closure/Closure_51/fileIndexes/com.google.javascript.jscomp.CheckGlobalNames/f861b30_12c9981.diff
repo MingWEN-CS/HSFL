@@ -1,0 +1,27 @@
+42a43,47
+>   static final DiagnosticType NAME_DEFINED_LATE_WARNING =
+>       DiagnosticType.warning(
+>           "JSC_NAME_DEFINED_LATE",
+>           "{0} is not defined yet, so properties cannot be defined on it");
+> 
+109,112c114,123
+<     if (!isDefined) {
+<       if (declaration != null) {
+<         reportRefToUndefinedName(name, declaration);
+<       }
+---
+>     Name parent = name.parent;
+>     if (isDefined &&
+>         declaration != null &&
+>         parent != null &&
+>         parent.declaration != null &&
+>         parent.localSets == 0 &&
+>         parent.declaration.preOrderIndex > declaration.preOrderIndex) {
+>       compiler.report(
+>           JSError.make(declaration.source.getName(), declaration.node,
+>               NAME_DEFINED_LATE_WARNING, parent.fullName()));
+117,120d127
+<       if (ref == name.declaration) {
+<         continue;
+<       }
+< 

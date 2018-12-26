@@ -1,0 +1,50 @@
+46a47,49
+>   private static final String BASE_JS_START = "var COMPILED = false;";
+> 
+>   
+51a55,58
+>   private boolean fileHasProvidesOrRequires;
+> 
+>   
+>   private boolean includeGoogBase = false;
+71a79,96
+> 
+> 
+> 
+>   public JsFileParser setIncludeGoogBase(boolean include) {
+>     includeGoogBase = include;
+>     return this;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+96a122
+>     fileHasProvidesOrRequires = false;
+113c139
+<     boolean hasProvidesOrRequires = false;
+---
+>     boolean lineHasProvidesOrRequires = false;
+122c148,153
+<         hasProvidesOrRequires = true;
+---
+>         lineHasProvidesOrRequires = true;
+> 
+>         if (includeGoogBase && !fileHasProvidesOrRequires) {
+>           fileHasProvidesOrRequires = true;
+>           requires.add("goog");
+>         }
+140a172,173
+>     } else if (includeGoogBase && line.startsWith(BASE_JS_START)) {
+>       provides.add("goog");
+143c176
+<     return !shortcutMode || hasProvidesOrRequires ||
+---
+>     return !shortcutMode || lineHasProvidesOrRequires ||

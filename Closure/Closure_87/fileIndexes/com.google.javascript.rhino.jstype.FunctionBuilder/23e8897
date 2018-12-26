@@ -1,0 +1,150 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+
+public final class FunctionBuilder {
+  private final JSTypeRegistry registry;
+  private String name = null;
+  private Node sourceNode = null;
+  private Node parametersNode = null;
+  private JSType returnType = null;
+  private ObjectType typeOfThis = null;
+  private String templateTypeName = null;
+  private boolean inferredReturnType = false;
+  private boolean isConstructor = false;
+  private boolean isNativeType = false;
+
+  public FunctionBuilder(JSTypeRegistry registry) {
+    this.registry = registry;
+  }
+
+  
+  public FunctionBuilder withName(String name) {
+    this.name = name;
+    return this;
+  }
+
+  
+  public FunctionBuilder withSourceNode(Node sourceNode) {
+    this.sourceNode = sourceNode;
+    return this;
+  }
+
+  
+  public FunctionBuilder withParams(FunctionParamBuilder params) {
+    this.parametersNode = params.build();
+    return this;
+  }
+
+  
+
+
+  public FunctionBuilder withParamsNode(Node parametersNode) {
+    this.parametersNode = parametersNode;
+    return this;
+  }
+
+  
+  public FunctionBuilder withReturnType(JSType returnType) {
+    this.returnType = returnType;
+    return this;
+  }
+
+  
+  public FunctionBuilder withInferredReturnType(JSType returnType) {
+    this.returnType = returnType;
+    this.inferredReturnType = true;
+    return this;
+  }
+
+  
+  public FunctionBuilder withTypeOfThis(ObjectType typeOfThis) {
+    this.typeOfThis = typeOfThis;
+    return this;
+  }
+
+  
+  public FunctionBuilder withTemplateName(String templateTypeName) {
+    this.templateTypeName = templateTypeName;
+    return this;
+  }
+
+  
+  public FunctionBuilder forConstructor() {
+    this.isConstructor = true;
+    return this;
+  }
+
+  
+  FunctionBuilder forNativeType() {
+    this.isNativeType = true;
+    return this;
+  }
+
+  
+  public FunctionBuilder copyFromOtherFunction(FunctionType otherType) {
+    this.name = otherType.getReferenceName();
+    this.sourceNode = otherType.getSource();
+    this.parametersNode = otherType.getParametersNode();
+    this.returnType = otherType.getReturnType();
+    this.typeOfThis = otherType.getTypeOfThis();
+    this.templateTypeName = otherType.getTemplateTypeName();
+    this.isConstructor = otherType.isConstructor();
+    this.isNativeType = otherType.isNativeObjectType();
+    return this;
+  }
+
+  
+  public FunctionType build() {
+    return new FunctionType(registry, name, sourceNode,
+        new ArrowType(registry, parametersNode, returnType, inferredReturnType),
+        typeOfThis, templateTypeName, isConstructor, isNativeType);
+  }
+}

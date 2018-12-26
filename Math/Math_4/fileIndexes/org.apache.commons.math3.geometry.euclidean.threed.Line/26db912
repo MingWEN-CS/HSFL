@@ -1,0 +1,216 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.geometry.euclidean.threed;
+
+import org.apache.commons.math.exception.MathArithmeticException;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+import org.apache.commons.math.geometry.Vector;
+import org.apache.commons.math.geometry.euclidean.oned.Euclidean1D;
+import org.apache.commons.math.geometry.euclidean.oned.Vector1D;
+import org.apache.commons.math.geometry.partitioning.Embedding;
+import org.apache.commons.math.util.FastMath;
+import org.apache.commons.math.util.MathUtils;
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Line implements Embedding<Euclidean3D, Euclidean1D> {
+
+    
+    private Vector3D direction;
+
+    
+    private Vector3D zero;
+
+    
+
+
+
+
+    public Line(final Vector3D p, final Vector3D direction) {
+        reset(p, direction);
+    }
+
+    
+
+
+
+
+    public Line(final Line line) {
+        this.direction = line.direction;
+        this.zero      = line.zero;
+    }
+
+    
+
+
+
+
+    public void reset(final Vector3D p, final Vector3D dir) {
+        final double norm = dir.getNorm();
+        if (norm == 0.0) {
+            throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+        }
+        this.direction = new Vector3D(1.0 / norm, dir);
+        zero = new Vector3D(1.0, p, -p.dotProduct(this.direction), this.direction);
+    }
+
+    
+
+
+    public Line revert() {
+        return new Line(zero, direction.negate());
+    }
+
+    
+
+
+    public Vector3D getDirection() {
+        return direction;
+    }
+
+    
+
+
+    public Vector3D getOrigin() {
+        return zero;
+    }
+
+    
+
+
+
+
+
+
+    public double getAbscissa(final Vector3D point) {
+        return point.subtract(zero).dotProduct(direction);
+    }
+
+    
+
+
+
+    public Vector3D pointAt(final double abscissa) {
+        return new Vector3D(1.0, zero, abscissa, direction);
+    }
+
+    
+
+
+    public Vector1D toSubSpace(final Vector<Euclidean3D> point) {
+        return new Vector1D(getAbscissa((Vector3D) point));
+    }
+
+    
+
+
+    public Vector3D toSpace(final Vector<Euclidean1D> point) {
+        return pointAt(((Vector1D) point).getX());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isSimilarTo(final Line line) {
+        final double angle = Vector3D.angle(direction, line.direction);
+        return ((angle < 1.0e-10) || (angle > (FastMath.PI - 1.0e-10))) && contains(line.zero);
+    }
+
+    
+
+
+
+    public boolean contains(final Vector3D p) {
+        return distance(p) < 1.0e-10;
+    }
+
+    
+
+
+
+    public double distance(final Vector3D p) {
+        final Vector3D d = p.subtract(zero);
+        final Vector3D n = new Vector3D(1.0, d, -d.dotProduct(direction), direction);
+        return n.getNorm();
+    }
+
+    
+
+
+
+    public double distance(final Line line) {
+
+        final Vector3D normal = Vector3D.crossProduct(direction, line.direction);
+        final double n = normal.getNorm();
+        if (n < MathUtils.SAFE_MIN) {
+            
+            return distance(line.zero);
+        }
+
+        
+        final double offset = line.zero.subtract(zero).dotProduct(normal) / n;
+
+        return FastMath.abs(offset);
+
+    }
+
+    
+
+
+
+    public Vector3D closestPoint(final Line line) {
+
+        final double cos = direction.dotProduct(line.direction);
+        final double n = 1 - cos * cos;
+        if (n < MathUtils.EPSILON) {
+            
+            return zero;
+        }
+
+        final Vector3D delta0 = line.zero.subtract(zero);
+        final double a        = delta0.dotProduct(direction);
+        final double b        = delta0.dotProduct(line.direction);
+
+        return new Vector3D(1, zero, (a - b * cos) / n, direction);
+
+    }
+
+    
+
+
+
+
+    public Vector3D intersection(final Line line) {
+        final Vector3D closest = closestPoint(line);
+        return line.contains(closest) ? closest : null;
+    }
+
+}

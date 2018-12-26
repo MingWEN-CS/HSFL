@@ -1,0 +1,48 @@
+19a20
+> import com.google.common.base.Predicate;
+676a678,691
+>   private static final Predicate<Node> NON_LOCAL_RESULT_PREDICATE =
+>       new Predicate<Node>() {
+>         @Override
+>         public boolean apply(Node input) {
+>           if (input.getType() == Token.CALL) {
+>             return false;
+>           }
+>           
+>           
+>           
+>           return true;
+>         }
+>       };
+> 
+828a844,853
+>       String name = nameInfo.name;
+> 
+>       
+>       
+>       
+>       
+>       if (maybeHiddenAlias(name, n)) {
+>         recordAlias(name, WINDOW);
+>       }
+> 
+831d855
+<       String name = nameInfo.name;
+872a897,913
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private boolean maybeHiddenAlias(String name, Node n) {
+>       Node parent = n.getParent();
+>       if (NodeUtil.isLhs(n, parent)) {
+>         Node rhs = (parent.getType() == Token.VAR)
+>             ? n.getFirstChild() : parent.getLastChild();
+>         return (rhs != null && !NodeUtil.evaluatesToLocalValue(
+>             rhs, NON_LOCAL_RESULT_PREDICATE));
+>       }
+>       return false;

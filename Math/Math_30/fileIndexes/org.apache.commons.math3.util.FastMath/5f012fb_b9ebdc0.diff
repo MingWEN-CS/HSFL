@@ -1,0 +1,82 @@
+604a605,612
+> 
+>     public static float nextUp(final float a) {
+>         return nextAfter(a, Float.POSITIVE_INFINITY);
+>     }
+> 
+>     
+> 
+> 
+3359c3367
+<         if (Double.isNaN(d) || Double.isInfinite(d)) {
+---
+>         if (Double.isNaN(d)) {
+3360a3369,3376
+>         } else if (Double.isInfinite(d)) {
+>             if (d < direction) {
+>                 return -Double.MAX_VALUE;
+>             } else if (direction < d) {
+>                 return Double.MAX_VALUE;
+>             } else {
+>                 return d;
+>             }
+3390a3407,3465
+>             }
+>         }
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static float nextAfter(float f, float direction) {
+> 
+>         
+>         if (Float.isNaN(f)) {
+>             return f;
+>         } else if (Float.isInfinite(f)) {
+>             if (f < direction) {
+>                 return -Float.MAX_VALUE;
+>             } else if (direction < f) {
+>                 return Float.MAX_VALUE;
+>             } else {
+>                 return f;
+>             }
+>         } else if (f == 0f) {
+>             return (direction < 0f) ? -Float.MIN_VALUE : Float.MIN_VALUE;
+>         }
+>         
+>         
+> 
+>         
+>         int bits     = Float.floatToIntBits(f);
+>         int sign     = bits & 0x80000000;
+>         int exponent = bits & 0x7f800000;
+>         int mantissa = bits & 0x007fffff;
+> 
+>         if (f * (direction - f) >= 0f) {
+>             
+>             if (mantissa == 0x000fffff) {
+>                 return Float.intBitsToFloat(sign | (exponent + 0x00800000));
+>             } else {
+>                 return Float.intBitsToFloat(sign | exponent | (mantissa + 1));
+>             }
+>         } else {
+>             
+>             if (mantissa == 0) {
+>                 return Float.intBitsToFloat(sign | (exponent - 0x00800000) | 0x007fffff);
+>             } else {
+>                 return Float.intBitsToFloat(sign | exponent | (mantissa - 1));

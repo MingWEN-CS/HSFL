@@ -1,0 +1,583 @@
+55c55
+<     private static final long serialVersionUID = 4237564493130426188L;
+---
+>     private static final long serialVersionUID = -4828886979278117018L;
+107a108,109
+> 
+> 
+109c111
+<         this.copyIn(d);
+---
+>         copyIn(d);
+121a124,162
+> 
+> 
+> 
+> 
+> 
+> 
+>     public RealMatrixImpl(double[][] d, boolean copyArray) {
+>         if (copyArray) {
+>             copyIn(d);
+>         } else {
+>             if (d == null) {
+>                 throw new NullPointerException();
+>             }   
+>             final int nRows = d.length;
+>             if (nRows == 0) {
+>                 throw new IllegalArgumentException("Matrix must have at least one row."); 
+>             }
+>             final int nCols = d[0].length;
+>             if (nCols == 0) {
+>                 throw new IllegalArgumentException("Matrix must have at least one column."); 
+>             }
+>             for (int r = 1; r < nRows; r++) {
+>                 if (d[r].length != nCols) {
+>                     throw new IllegalArgumentException("All input rows must have the same length.");
+>                 }
+>             }       
+>             data = d;
+>         }
+>         lu = null;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+123c164
+<         int nRows = v.length;
+---
+>         final int nRows = v.length;
+136c177
+<         return new RealMatrixImpl(this.copyOut());
+---
+>         return new RealMatrixImpl(copyOut(), false);
+147,148c188,218
+<         if (this.getColumnDimension() != m.getColumnDimension() ||
+<                 this.getRowDimension() != m.getRowDimension()) {
+---
+>         try {
+>             return add((RealMatrixImpl) m);
+>         } catch (ClassCastException cce) {
+>             final int rowCount    = getRowDimension();
+>             final int columnCount = getColumnDimension();
+>             if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+>                 throw new IllegalArgumentException("matrix dimension mismatch");
+>             }
+>             final double[][] outData = new double[rowCount][columnCount];
+>             for (int row = 0; row < rowCount; row++) {
+>                 final double[] dataRow    = data[row];
+>                 final double[] outDataRow = outData[row];
+>                 for (int col = 0; col < columnCount; col++) {
+>                     outDataRow[col] = dataRow[col] + m.getEntry(row, col);
+>                 }  
+>             }
+>             return new RealMatrixImpl(outData, false);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public RealMatrixImpl add(RealMatrixImpl m) throws IllegalArgumentException {
+>         final int rowCount    = getRowDimension();
+>         final int columnCount = getColumnDimension();
+>         if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+151,153c221
+<         int rowCount = this.getRowDimension();
+<         int columnCount = this.getColumnDimension();
+<         double[][] outData = new double[rowCount][columnCount];
+---
+>         final double[][] outData = new double[rowCount][columnCount];
+154a223,225
+>             final double[] dataRow    = data[row];
+>             final double[] mRow       = m.data[row];
+>             final double[] outDataRow = outData[row];
+156c227
+<                 outData[row][col] = data[row][col] + m.getEntry(row, col);
+---
+>                 outDataRow[col] = dataRow[col] + mRow[col];
+159c230
+<         return new RealMatrixImpl(outData);
+---
+>         return new RealMatrixImpl(outData, false);
+170,171c241,271
+<         if (this.getColumnDimension() != m.getColumnDimension() ||
+<                 this.getRowDimension() != m.getRowDimension()) {
+---
+>         try {
+>             return subtract((RealMatrixImpl) m);
+>         } catch (ClassCastException cce) {
+>             final int rowCount    = getRowDimension();
+>             final int columnCount = getColumnDimension();
+>             if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+>                 throw new IllegalArgumentException("matrix dimension mismatch");
+>             }
+>             final double[][] outData = new double[rowCount][columnCount];
+>             for (int row = 0; row < rowCount; row++) {
+>                 final double[] dataRow    = data[row];
+>                 final double[] outDataRow = outData[row];
+>                 for (int col = 0; col < columnCount; col++) {
+>                     outDataRow[col] = dataRow[col] - m.getEntry(row, col);
+>                 }  
+>             }
+>             return new RealMatrixImpl(outData, false);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public RealMatrixImpl subtract(RealMatrixImpl m) throws IllegalArgumentException {
+>         final int rowCount    = getRowDimension();
+>         final int columnCount = getColumnDimension();
+>         if (columnCount != m.getColumnDimension() || rowCount != m.getRowDimension()) {
+174,176c274
+<         int rowCount = this.getRowDimension();
+<         int columnCount = this.getColumnDimension();
+<         double[][] outData = new double[rowCount][columnCount];
+---
+>         final double[][] outData = new double[rowCount][columnCount];
+177a276,278
+>             final double[] dataRow    = data[row];
+>             final double[] mRow       = m.data[row];
+>             final double[] outDataRow = outData[row];
+179,180c280,281
+<                 outData[row][col] = data[row][col] - m.getEntry(row, col);
+<             }
+---
+>                 outDataRow[col] = dataRow[col] - mRow[col];
+>             }  
+182c283
+<         return new RealMatrixImpl(outData);
+---
+>         return new RealMatrixImpl(outData, false);
+192,194c293,295
+<         int rowCount = this.getRowDimension();
+<         int columnCount = this.getColumnDimension();
+<         double[][] outData = new double[rowCount][columnCount];
+---
+>         final int rowCount    = getRowDimension();
+>         final int columnCount = getColumnDimension();
+>         final double[][] outData = new double[rowCount][columnCount];
+195a297,298
+>             final double[] dataRow    = data[row];
+>             final double[] outDataRow = outData[row];
+197c300
+<                 outData[row][col] = data[row][col] + d;
+---
+>                 outDataRow[col] = dataRow[col] + d;
+200c303
+<         return new RealMatrixImpl(outData);
+---
+>         return new RealMatrixImpl(outData, false);
+209,211c312,314
+<         int rowCount = this.getRowDimension();
+<         int columnCount = this.getColumnDimension();
+<         double[][] outData = new double[rowCount][columnCount];
+---
+>         final int rowCount    = getRowDimension();
+>         final int columnCount = getColumnDimension();
+>         final double[][] outData = new double[rowCount][columnCount];
+212a316,317
+>             final double[] dataRow    = data[row];
+>             final double[] outDataRow = outData[row];
+214c319
+<                 outData[row][col] = data[row][col] * d;
+---
+>                 outDataRow[col] = dataRow[col] * d;
+217c322
+<         return new RealMatrixImpl(outData);
+---
+>         return new RealMatrixImpl(outData, false);
+227a333,365
+>         try {
+>             return multiply((RealMatrixImpl) m);
+>         } catch (ClassCastException cce) {
+>             if (this.getColumnDimension() != m.getRowDimension()) {
+>                 throw new IllegalArgumentException("Matrices are not multiplication compatible.");
+>             }
+>             final int nRows = this.getRowDimension();
+>             final int nCols = m.getColumnDimension();
+>             final int nSum = this.getColumnDimension();
+>             final double[][] outData = new double[nRows][nCols];
+>             for (int row = 0; row < nRows; row++) {
+>                 final double[] dataRow    = data[row];
+>                 final double[] outDataRow = outData[row];
+>                 for (int col = 0; col < nCols; col++) {
+>                     double sum = 0;
+>                     for (int i = 0; i < nSum; i++) {
+>                         sum += dataRow[i] * m.getEntry(i, col);
+>                     }
+>                     outDataRow[col] = sum;
+>                 }
+>             }
+>             return new RealMatrixImpl(outData, false);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public RealMatrixImpl multiply(RealMatrixImpl m) throws IllegalArgumentException {
+231,235c369,372
+<         int nRows = this.getRowDimension();
+<         int nCols = m.getColumnDimension();
+<         int nSum = this.getColumnDimension();
+<         double[][] outData = new double[nRows][nCols];
+<         double sum = 0;
+---
+>         final int nRows = this.getRowDimension();
+>         final int nCols = m.getColumnDimension();
+>         final int nSum = this.getColumnDimension();
+>         final double[][] outData = new double[nRows][nCols];
+236a374,375
+>             final double[] dataRow    = data[row];
+>             final double[] outDataRow = outData[row];
+238c377
+<                 sum = 0;
+---
+>                 double sum = 0;
+240c379
+<                     sum += data[row][i] * m.getEntry(i, col);
+---
+>                     sum += dataRow[i] * m.data[i][col];
+242c381
+<                 outData[row][col] = sum;
+---
+>                 outDataRow[col] = sum;
+244,245c383,384
+<         }
+<         return new RealMatrixImpl(outData);
+---
+>         }            
+>         return new RealMatrixImpl(outData, false);
+309,310c448,450
+<     public RealMatrix getSubMatrix(int startRow, int endRow, int startColumn,
+<             int endColumn) throws MatrixIndexException {
+---
+>     public RealMatrix getSubMatrix(int startRow, int endRow,
+>                                    int startColumn, int endColumn)
+>         throws MatrixIndexException {
+313c453
+<              endColumn > data[0].length ) {
+---
+>              endColumn > data[0].length) {
+317,319c457,458
+<         RealMatrixImpl subMatrix = new RealMatrixImpl(endRow - startRow+1,
+<                 endColumn - startColumn+1);
+<         double[][] subMatrixData = subMatrix.getDataRef();
+---
+>         final double[][] subMatrixData =
+>             new double[endRow - startRow + 1][endColumn - startColumn + 1];
+321,325c460,464
+<             for (int j = startColumn; j <= endColumn; j++) {
+<                     subMatrixData[i - startRow][j - startColumn] = data[i][j];
+<                 }
+<             }
+<         return subMatrix;
+---
+>             System.arraycopy(data[i], startColumn,
+>                              subMatrixData[i - startRow], 0,
+>                              endColumn - startColumn + 1);
+>         }
+>         return new RealMatrixImpl(subMatrixData, false);
+340c479
+<     throws MatrixIndexException {
+---
+>         throws MatrixIndexException {
+345,347c484,485
+<         RealMatrixImpl subMatrix = new RealMatrixImpl(selectedRows.length,
+<                 selectedColumns.length);
+<         double[][] subMatrixData = subMatrix.getDataRef();
+---
+>         final double[][] subMatrixData =
+>             new double[selectedRows.length][selectedColumns.length];
+349a488,489
+>                 final double[] subI = subMatrixData[i];
+>                 final double[] dataSelectedI = data[selectedRows[i]];
+351c491
+<                     subMatrixData[i][j] = data[selectedRows[i]][selectedColumns[j]];
+---
+>                     subI[j] = dataSelectedI[selectedColumns[j]];
+354,355c494
+<         }
+<         catch (ArrayIndexOutOfBoundsException e) {
+---
+>         } catch (ArrayIndexOutOfBoundsException e) {
+358c497
+<         return subMatrix;
+---
+>         return new RealMatrixImpl(subMatrixData, false);
+394c533
+<         int nRows = subMatrix.length;
+---
+>         final int nRows = subMatrix.length;
+399c538
+<         int nCols = subMatrix[0].length;
+---
+>         final int nCols = subMatrix[0].length;
+438,439c577,578
+<         int ncols = this.getColumnDimension();
+<         double[][] out = new double[1][ncols]; 
+---
+>         final int ncols = this.getColumnDimension();
+>         final double[][] out = new double[1][ncols]; 
+441c580
+<         return new RealMatrixImpl(out);
+---
+>         return new RealMatrixImpl(out, false);
+456,457c595,596
+<         int nRows = this.getRowDimension();
+<         double[][] out = new double[nRows][1]; 
+---
+>         final int nRows = this.getRowDimension();
+>         final double[][] out = new double[nRows][1]; 
+461c600
+<         return new RealMatrixImpl(out);
+---
+>         return new RealMatrixImpl(out, false);
+478,479c617,618
+<         int ncols = this.getColumnDimension();
+<         double[] out = new double[ncols];
+---
+>         final int ncols = this.getColumnDimension();
+>         final double[] out = new double[ncols];
+498,499c637,638
+<         int nRows = this.getRowDimension();
+<         double[] out = new double[nRows];
+---
+>         final int nRows = this.getRowDimension();
+>         final double[] out = new double[nRows];
+523c662,664
+<         if (!isValidCoordinate(row,column)) {
+---
+>         try {
+>             return data[row][column];
+>         } catch (ArrayIndexOutOfBoundsException e) {
+526d666
+<         return data[row][column];
+535,538c675,677
+<         int nRows = this.getRowDimension();
+<         int nCols = this.getColumnDimension();
+<         RealMatrixImpl out = new RealMatrixImpl(nCols, nRows);
+<         double[][] outData = out.getDataRef();
+---
+>         final int nRows = getRowDimension();
+>         final int nCols = getColumnDimension();
+>         final double[][] outData = new double[nCols][nRows];
+539a679
+>             final double[] dataRow = data[row];
+541c681
+<                 outData[col][row] = data[row][col];
+---
+>                 outData[col][row] = dataRow[col];
+544c684
+<         return out;
+---
+>         return new RealMatrixImpl(outData, false);
+554,555c694
+<         return solve(MatrixUtils.createRealIdentityMatrix
+<                 (this.getRowDimension()));
+---
+>         return solve(MatrixUtils.createRealIdentityMatrix(getRowDimension()));
+635c774,776
+<         if (v.length != this.getColumnDimension()) {
+---
+>         final int nRows = this.getRowDimension();
+>         final int nCols = this.getColumnDimension();
+>         if (v.length != nCols) {
+638,640c779
+<         int nRows = this.getRowDimension();
+<         int nCols = this.getColumnDimension();
+<         double[] out = new double[v.length];
+---
+>         final double[] out = new double[v.length];
+641a781
+>             final double[] dataRow = data[row];
+644c784
+<                 sum += data[row][i] * v[i];
+---
+>                 sum += dataRow[i] * v[i];
+657c797
+<         int nRows = this.getRowDimension();
+---
+>         final int nRows = this.getRowDimension();
+661,662c801,802
+<         int nCols = this.getColumnDimension();
+<         double[] out = new double[nCols];
+---
+>         final int nCols = this.getColumnDimension();
+>         final double[] out = new double[nCols];
+685c825
+<         int nRows = this.getRowDimension();
+---
+>         final int nRows = this.getRowDimension();
+689,691c829,831
+<         RealMatrix bMatrix = new RealMatrixImpl(b);
+<         double[][] solution = ((RealMatrixImpl) (solve(bMatrix))).getDataRef();
+<         double[] out = new double[nRows];
+---
+>         final RealMatrix bMatrix = new RealMatrixImpl(b);
+>         final double[][] solution = ((RealMatrixImpl) (solve(bMatrix))).getDataRef();
+>         final double[] out = new double[nRows];
+720,722c860,862
+<         int nCol = this.getColumnDimension();
+<         int nColB = b.getColumnDimension();
+<         int nRowB = b.getRowDimension();
+---
+>         final int nCol  = this.getColumnDimension();
+>         final int nColB = b.getColumnDimension();
+>         final int nRowB = b.getRowDimension();
+725c865
+<         double[][] bp = new double[nRowB][nColB];
+---
+>         final double[][] bp = new double[nRowB][nColB];
+726a867
+>             final double[] bpRow = bp[row];
+728c869
+<                 bp[row][col] = b.getEntry(permutation[row], col);
+---
+>                 bpRow[col] = b.getEntry(permutation[row], col);
+734a876,877
+>                 final double[] bpI = bp[i];
+>                 final double[] luI = lu[i];
+736c879
+<                     bp[i][j] -= bp[col][j] * lu[i][col];
+---
+>                     bpI[j] -= bp[col][j] * luI[col];
+742a886,887
+>             final double[] bpCol = bp[col];
+>             final double luDiag = lu[col][col];
+744c889
+<                 bp[col][j] /= lu[col][col];
+---
+>                 bpCol[j] /= luDiag;
+746a892,893
+>                 final double[] bpI = bp[i];
+>                 final double[] luI = lu[i];
+748c895
+<                     bp[i][j] -= bp[col][j] * lu[i][col];
+---
+>                     bpI[j] -= bp[col][j] * luI[col];
+753,754c900,901
+<         RealMatrixImpl outMat = new RealMatrixImpl(bp);
+<         return outMat;
+---
+>         return new RealMatrixImpl(bp, false);
+> 
+777,778c924,925
+<         int nRows = this.getRowDimension();
+<         int nCols = this.getColumnDimension();
+---
+>         final int nRows = this.getRowDimension();
+>         final int nCols = this.getColumnDimension();
+782c929
+<         lu = this.getData();
+---
+>         lu = getData();
+798c945,946
+<                 sum = lu[row][col];
+---
+>                 final double[] luRow = lu[row];
+>                 sum = luRow[col];
+800c948
+<                     sum -= lu[row][i] * lu[i][col];
+---
+>                     sum -= luRow[i] * lu[i][col];
+802c950
+<                 lu[row][col] = sum;
+---
+>                 luRow[col] = sum;
+809c957,958
+<                 sum = lu[row][col];
+---
+>                 final double[] luRow = lu[row];
+>                 sum = luRow[col];
+811c960
+<                     sum -= lu[row][i] * lu[i][col];
+---
+>                     sum -= luRow[i] * lu[i][col];
+813c962
+<                 lu[row][col] = sum;
+---
+>                 luRow[col] = sum;
+842a992
+>             final double luDiag = lu[col][col];
+844c994
+<                 lu[row][col] /= lu[col][col];
+---
+>                 lu[row][col] /= luDiag;
+858c1008
+<                 if (i > 0)
+---
+>                 if (i > 0) {
+859a1010
+>                 }
+862c1013
+<                     if (j > 0)
+---
+>                     if (j > 0) {
+863a1015
+>                     }
+890,891c1042,1043
+<         int nRows = getRowDimension();
+<         int nCols = getColumnDimension();
+---
+>         final int nRows = getRowDimension();
+>         final int nCols = getColumnDimension();
+895a1048
+>             final double[] dataRow = data[row];
+897c1050
+<                 if (Double.doubleToLongBits(data[row][col]) != 
+---
+>                 if (Double.doubleToLongBits(dataRow[col]) != 
+913,914c1066,1067
+<         int nRows = getRowDimension();
+<         int nCols = getColumnDimension();
+---
+>         final int nRows = getRowDimension();
+>         final int nCols = getColumnDimension();
+918c1071,1072
+<            for (int col = 0; col < nCols; col++) {
+---
+>             final double[] dataRow = data[row];
+>             for (int col = 0; col < nCols; col++) {
+920c1074
+<                    MathUtils.hash(data[row][col]);
+---
+>                    MathUtils.hash(dataRow[col]);
+975c1129
+<         int[] out = new int[permutation.length];
+---
+>         final int[] out = new int[permutation.length];
+988,989c1142,1143
+<         int nRows = this.getRowDimension();
+<         double[][] out = new double[nRows][this.getColumnDimension()];
+---
+>         final int nRows = this.getRowDimension();
+>         final double[][] out = new double[nRows][this.getColumnDimension()];
+1019,1021c1173,1174
+<         int nRows = this.getRowDimension();
+<         int nCols = this.getColumnDimension();
+< 
+---
+>         final int nRows = getRowDimension();
+>         final int nCols = getColumnDimension();

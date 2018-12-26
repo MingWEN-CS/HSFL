@@ -1,0 +1,75 @@
+65a66,67
+> 
+> 
+70c72,77
+<         Integer i = Integer.getInteger("org.joda.time.tz.CachedDateTimeZone.size");
+---
+>         Integer i;
+>         try {
+>             i = Integer.getInteger("org.joda.time.tz.CachedDateTimeZone.size");
+>         } catch (SecurityException e) {
+>             i = null;
+>         }
+72,81c79,93
+<         
+<         
+<         int cacheSize = (i == null) ? 512 : i.intValue();
+< 
+<         
+<         cacheSize--;
+<         int shift = 0;
+<         while (cacheSize > 0) {
+<             shift++;
+<             cacheSize >>= 1;
+---
+>         int cacheSize;
+>         if (i == null) {
+>             
+>             
+>             cacheSize = 512; 
+>         } else {
+>             cacheSize = i.intValue();
+>             
+>             cacheSize--;
+>             int shift = 0;
+>             while (cacheSize > 0) {
+>                 shift++;
+>                 cacheSize >>= 1;
+>             }
+>             cacheSize = 1 << shift;
+83d94
+<         cacheSize = 1 << shift;
+130,131c141,146
+<     public String getNameKey(long millis) {
+<         return getInfo(millis).getNameKey(millis);
+---
+>     public String getNameKey(long instant) {
+>         return getInfo(instant).getNameKey(instant);
+>     }
+> 
+>     public int getOffset(long instant) {
+>         return getInfo(instant).getOffset(instant);
+134,135c149,150
+<     public int getOffset(long millis) {
+<         return getInfo(millis).getOffset(millis);
+---
+>     public int getStandardOffset(long instant) {
+>         return getInfo(instant).getStandardOffset(instant);
+138,139c153,154
+<     public int getStandardOffset(long millis) {
+<         return getInfo(millis).getStandardOffset(millis);
+---
+>     public boolean isFixed() {
+>         return iZone.isFixed();
+142,143c157,158
+<     public long nextTransition(long millis) {
+<         return iZone.nextTransition(millis);
+---
+>     public long nextTransition(long instant) {
+>         return iZone.nextTransition(instant);
+146,147c161,162
+<     public long previousTransition(long millis) {
+<         return iZone.previousTransition(millis);
+---
+>     public long previousTransition(long instant) {
+>         return iZone.previousTransition(instant);

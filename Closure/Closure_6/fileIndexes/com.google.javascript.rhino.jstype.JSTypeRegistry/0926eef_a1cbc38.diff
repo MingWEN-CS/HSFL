@@ -1,0 +1,43 @@
+536c536
+<         createFunctionType(NO_TYPE, true, ALL_TYPE);
+---
+>         createNativeFunctionTypeWithVarArgs(NO_TYPE, ALL_TYPE);
+549c549
+<       createFunctionType(ALL_TYPE, true, NO_TYPE);
+---
+>         createNativeFunctionTypeWithVarArgs(ALL_TYPE, NO_TYPE);
+974c974,979
+<     return shouldTolerateUndefinedValues()
+---
+>     if (type.isTemplateType()) {
+>       
+>       
+>       return type;
+>     } else {
+>       return shouldTolerateUndefinedValues()
+976a982
+>     }
+1102a1109,1121
+> 
+>   private FunctionType createNativeFunctionTypeWithVarArgs(
+>       JSType returnType, JSType... parameterTypes) {
+>     return createNativeFunctionType(
+>         returnType, createParametersWithVarArgs(parameterTypes));
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+1289a1309,1317
+>         .build();
+>   }
+> 
+>   private FunctionType createNativeFunctionType(
+>       JSType returnType, Node parameters) {
+>     return new FunctionBuilder(this)
+>         .withParamsNode(parameters)
+>         .withReturnType(returnType)
+>         .forNativeType()

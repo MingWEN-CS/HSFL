@@ -1,0 +1,47 @@
+26a27
+> import org.joda.time.IllegalFieldValueException;
+278c279
+<         return computeMillis(false);
+---
+>         return computeMillis(false, null);
+289a291,303
+>         return computeMillis(resetFields, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long computeMillis(boolean resetFields, String text) {
+297c311
+<         
+---
+> 
+299,300c313,321
+<         for (int i=0; i<count; i++) {
+<             millis = savedFields[i].set(millis, resetFields);
+---
+>         try {
+>             for (int i=0; i<count; i++) {
+>                 millis = savedFields[i].set(millis, resetFields);
+>             }
+>         } catch (IllegalFieldValueException e) {
+>             if (text != null) {
+>                 e.prependMessage("Cannot parse \"" + text + '"');
+>             }
+>             throw e;
+309,310c330,335
+<                 throw new IllegalArgumentException
+<                     ("Illegal instant due to time zone offset transition");
+---
+>                 String message =
+>                     "Illegal instant due to time zone offset transition (" + iZone + ')';
+>                 if (text != null) {
+>                     message = "Cannot parse \"" + text + "\": " + message;
+>                 }
+>                 throw new IllegalArgumentException(message);

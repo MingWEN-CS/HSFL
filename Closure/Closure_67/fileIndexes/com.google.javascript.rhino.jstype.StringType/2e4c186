@@ -1,0 +1,110 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.FALSE;
+import static com.google.javascript.rhino.jstype.TernaryValue.UNKNOWN;
+
+
+
+
+
+
+public final class StringType extends ValueType {
+  private static final long serialVersionUID = 1L;
+
+  StringType(JSTypeRegistry registry) {
+    super(registry);
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    TernaryValue result = super.testForEquality(that);
+    if (result != null) {
+      return result;
+    }
+    if (that.isUnknownType() || that.isSubtype(
+            getNativeType(JSTypeNative.OBJECT_NUMBER_STRING_BOOLEAN))) {
+      return UNKNOWN;
+    }
+    return FALSE;
+  }
+
+  @Override
+  public boolean isStringValueType() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesNumberContext() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesStringContext() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesObjectContext() {
+    
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return "string";
+  }
+
+  @Override
+  public JSType autoboxesTo() {
+    return getNativeType(JSTypeNative.STRING_OBJECT_TYPE);
+  }
+
+  @Override
+  public BooleanLiteralSet getPossibleToBooleanOutcomes() {
+    return BooleanLiteralSet.BOTH;
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseStringType();
+  }
+}

@@ -1,0 +1,158 @@
+24d23
+< import org.apache.commons.math.MathRuntimeException;
+48c47
+<   protected double previousTime;
+---
+>   private double globalPreviousTime;
+51c50,56
+<   protected double currentTime;
+---
+>   private double globalCurrentTime;
+> 
+>   
+>   private double softPreviousTime;
+> 
+>   
+>   private double softCurrentTime;
+90,91c95,98
+<     previousTime            = Double.NaN;
+<     currentTime             = Double.NaN;
+---
+>     globalPreviousTime      = Double.NaN;
+>     globalCurrentTime       = Double.NaN;
+>     softPreviousTime        = Double.NaN;
+>     softCurrentTime         = Double.NaN;
+109,112c116,121
+<     previousTime      = Double.NaN;
+<     currentTime       = Double.NaN;
+<     h                 = Double.NaN;
+<     interpolatedTime  = Double.NaN;
+---
+>     globalPreviousTime = Double.NaN;
+>     globalCurrentTime  = Double.NaN;
+>     softPreviousTime   = Double.NaN;
+>     softCurrentTime    = Double.NaN;
+>     h                  = Double.NaN;
+>     interpolatedTime   = Double.NaN;
+143,146c152,157
+<     previousTime      = interpolator.previousTime;
+<     currentTime       = interpolator.currentTime;
+<     h                 = interpolator.h;
+<     interpolatedTime  = interpolator.interpolatedTime;
+---
+>     globalPreviousTime = interpolator.globalPreviousTime;
+>     globalCurrentTime  = interpolator.globalCurrentTime;
+>     softPreviousTime   = interpolator.softPreviousTime;
+>     softCurrentTime    = interpolator.softCurrentTime;
+>     h                  = interpolator.h;
+>     interpolatedTime   = interpolator.interpolatedTime;
+171,174c182,187
+<     previousTime      = Double.NaN;
+<     currentTime       = Double.NaN;
+<     h                 = Double.NaN;
+<     interpolatedTime  = Double.NaN;
+---
+>     globalPreviousTime = Double.NaN;
+>     globalCurrentTime  = Double.NaN;
+>     softPreviousTime   = Double.NaN;
+>     softCurrentTime    = Double.NaN;
+>     h                  = Double.NaN;
+>     interpolatedTime   = Double.NaN;
+211c224,226
+<     previousTime = currentTime;
+---
+>     globalPreviousTime = globalCurrentTime;
+>     softPreviousTime   = globalPreviousTime;
+>     softCurrentTime    = globalCurrentTime;
+219,220c234,236
+<     currentTime = t;
+<     h           = currentTime - previousTime;
+---
+>     globalCurrentTime = t;
+>     softCurrentTime   = globalCurrentTime;
+>     h                 = globalCurrentTime - globalPreviousTime;
+228a245,279
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public void setSoftBounds(final double softPreviousTime, final double softCurrentTime) {
+>       this.softPreviousTime = softPreviousTime;
+>       this.softCurrentTime  = softCurrentTime;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   public double getGlobalPreviousTime() {
+>     return globalPreviousTime;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   public double getGlobalCurrentTime() {
+>     return globalCurrentTime;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+230c281
+<     return previousTime;
+---
+>     return softPreviousTime;
+233a285,288
+> 
+> 
+> 
+> 
+235c290
+<     return currentTime;
+---
+>     return softCurrentTime;
+273c328
+<           final double oneMinusThetaH = currentTime - interpolatedTime;
+---
+>           final double oneMinusThetaH = globalCurrentTime - interpolatedTime;
+288c343
+<           final double oneMinusThetaH = currentTime - interpolatedTime;
+---
+>           final double oneMinusThetaH = globalCurrentTime - interpolatedTime;
+379,380c434,437
+<     out.writeDouble(previousTime);
+<     out.writeDouble(currentTime);
+---
+>     out.writeDouble(globalPreviousTime);
+>     out.writeDouble(globalCurrentTime);
+>     out.writeDouble(softPreviousTime);
+>     out.writeDouble(softCurrentTime);
+399c456,458
+<       throw MathRuntimeException.createIOException(e);
+---
+>         IOException ioe = new IOException(e.getLocalizedMessage());
+>         ioe.initCause(e);
+>         throw ioe;
+417,421c476,482
+<     previousTime  = in.readDouble();
+<     currentTime   = in.readDouble();
+<     h             = in.readDouble();
+<     forward       = in.readBoolean();
+<     dirtyState    = true;
+---
+>     globalPreviousTime  = in.readDouble();
+>     globalCurrentTime   = in.readDouble();
+>     softPreviousTime    = in.readDouble();
+>     softCurrentTime     = in.readDouble();
+>     h                   = in.readDouble();
+>     forward             = in.readBoolean();
+>     dirtyState          = true;

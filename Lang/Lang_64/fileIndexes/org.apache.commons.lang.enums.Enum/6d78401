@@ -1,0 +1,623 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang.enums;
+
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang.StringUtils;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class Enum implements Comparable, Serializable {
+
+    
+    private static final long serialVersionUID = -487045951170455942L;
+    
+    
+    
+    
+
+
+    private static final Map EMPTY_MAP = Collections.unmodifiableMap(new HashMap(0));
+    
+    
+
+
+    private static final Map cEnumClasses = new HashMap();
+    
+    
+
+
+    private final String iName;
+    
+    
+
+
+    private transient final int iHashCode;
+    
+    
+
+
+
+    protected transient String iToString = null;
+
+    
+
+
+    private static class Entry {
+        
+
+
+        final Map map = new HashMap();
+        
+
+
+        final Map unmodifiableMap = Collections.unmodifiableMap(map);
+        
+
+
+        final List list = new ArrayList(25);
+        
+
+
+        final List unmodifiableList = Collections.unmodifiableList(list);
+
+        
+
+
+        private Entry() {
+          super();
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected Enum(String name) {
+        super();
+        init(name);
+        iName = name;
+        iHashCode = 7 + getEnumClass().hashCode() + 3 * name.hashCode();
+        
+    }
+
+    
+
+
+
+
+
+
+    private void init(String name) {
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("The Enum name must not be empty or null");
+        }
+        
+        Class enumClass = getEnumClass();
+        if (enumClass == null) {
+            throw new IllegalArgumentException("getEnumClass() must not be null");
+        }
+        Class cls = getClass();
+        boolean ok = false;
+        while (cls != null && cls != Enum.class && cls != ValuedEnum.class) {
+            if (cls == enumClass) {
+                ok = true;
+                break;
+            }
+            cls = cls.getSuperclass();
+        }
+        if (ok == false) {
+            throw new IllegalArgumentException("getEnumClass() must return a superclass of this class");
+        }
+        
+        
+        Entry entry = (Entry) cEnumClasses.get(enumClass);
+        if (entry == null) {
+            entry = createEntry(enumClass);
+            cEnumClasses.put(enumClass, entry);
+        }
+        if (entry.map.containsKey(name)) {
+            throw new IllegalArgumentException("The Enum name must be unique, '" + name + "' has already been added");
+        }
+        entry.map.put(name, this);
+        entry.list.add(this);
+    }
+
+    
+
+
+
+
+
+    protected Object readResolve() {
+        Entry entry = (Entry) cEnumClasses.get(getEnumClass());
+        if (entry == null) {
+            return null;
+        }
+        return (Enum) entry.map.get(getName());
+    }
+    
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected static Enum getEnum(Class enumClass, String name) {
+        Entry entry = getEntry(enumClass);
+        if (entry == null) {
+            return null;
+        }
+        return (Enum) entry.map.get(name);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    protected static Map getEnumMap(Class enumClass) {
+        Entry entry = getEntry(enumClass);
+        if (entry == null) {
+            return EMPTY_MAP;
+        }
+        return entry.unmodifiableMap;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected static List getEnumList(Class enumClass) {
+        Entry entry = getEntry(enumClass);
+        if (entry == null) {
+            return Collections.EMPTY_LIST;
+        }
+        return entry.unmodifiableList;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected static Iterator iterator(Class enumClass) {
+        return Enum.getEnumList(enumClass).iterator();
+    }
+
+    
+    
+
+
+
+
+
+    private static Entry getEntry(Class enumClass) {
+        if (enumClass == null) {
+            throw new IllegalArgumentException("The Enum Class must not be null");
+        }
+        if (Enum.class.isAssignableFrom(enumClass) == false) {
+            throw new IllegalArgumentException("The Class must be a subclass of Enum");
+        }
+        Entry entry = (Entry) cEnumClasses.get(enumClass);
+        return entry;
+    }
+    
+    
+
+
+
+
+
+
+
+    private static Entry createEntry(Class enumClass) {
+        Entry entry = new Entry();
+        Class cls = enumClass.getSuperclass();
+        while (cls != null && cls != Enum.class && cls != ValuedEnum.class) {
+            Entry loopEntry = (Entry) cEnumClasses.get(cls);
+            if (loopEntry != null) {
+                entry.list.addAll(loopEntry.list);
+                entry.map.putAll(loopEntry.map);
+                break;  
+            }
+            cls = cls.getSuperclass();
+        }
+        return entry;
+    }
+    
+    
+    
+
+
+
+
+    public final String getName() {
+        return iName;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public Class getEnumClass() {
+        return getClass();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public final boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        } else if (other == null) {
+            return false;
+        } else if (other.getClass() == this.getClass()) {
+            
+            
+            
+            return iName.equals(((Enum) other).iName);
+        } else {
+            
+            if (other.getClass().getName().equals(this.getClass().getName()) == false) {
+                return false;
+            }
+            return iName.equals( getNameInOtherClassLoader(other) );
+        }
+    }
+    
+    
+
+
+
+
+    public final int hashCode() {
+        return iHashCode;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int compareTo(Object other) {
+        if (other == this) {
+            return 0;
+        }
+        if (other.getClass() != this.getClass()) {
+            if (other.getClass().getName().equals(this.getClass().getName())) {
+                return iName.compareTo( getNameInOtherClassLoader(other) );
+            }
+        }
+        return iName.compareTo(((Enum) other).iName);
+    }
+
+    
+
+
+
+
+
+    private String getNameInOtherClassLoader(Object other) {
+        try {
+            Method mth = other.getClass().getMethod("getName", null);
+            String name = (String) mth.invoke(other, null);
+            return name;
+        } catch (NoSuchMethodException e) {
+            
+        } catch (IllegalAccessException e) {
+            
+        } catch (InvocationTargetException e) {
+            
+        }
+        throw new IllegalStateException("This should not happen");
+    }
+
+    
+
+
+
+
+
+
+    public String toString() {
+        if (iToString == null) {
+            String shortName = ClassUtils.getShortClassName(getEnumClass());
+            iToString = shortName + "[" + getName() + "]";
+        }
+        return iToString;
+    }
+    
+}

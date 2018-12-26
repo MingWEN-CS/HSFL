@@ -1,0 +1,31 @@
+231a232,235
+>   static final DiagnosticType IN_USED_WITH_STRUCT =
+>       DiagnosticType.warning("JSC_IN_USED_WITH_STRUCT",
+>                              "Cannot use the IN operator with structs");
+> 
+260a265
+>       IN_USED_WITH_STRUCT,
+672,673d676
+<         validator.expectObject(t, n, getJSType(n.getLastChild()),
+<                                "'in' requires an object");
+674a678,679
+>         right = n.getLastChild();
+>         rightType = getJSType(right);
+675a681,684
+>         validator.expectObject(t, n, rightType, "'in' requires an object");
+>         if (rightType.isStruct()) {
+>           report(t, right, IN_USED_WITH_STRUCT);
+>         }
+763d771
+<       case Token.FOR:
+765a774,783
+>         typeable = false;
+>         break;
+> 
+>       case Token.FOR:
+>         if (NodeUtil.isForIn(n)) {
+>           Node obj = n.getChildAtIndex(1);
+>           if (getJSType(obj).isStruct()) {
+>             report(t, obj, IN_USED_WITH_STRUCT);
+>           }
+>         }

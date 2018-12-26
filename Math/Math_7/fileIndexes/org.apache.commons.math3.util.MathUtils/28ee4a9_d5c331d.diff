@@ -1,0 +1,57 @@
+989a990,1045
+>      
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>      public static double[] normalizeArray(double[] values, double normalizedSum)
+>        throws ArithmeticException, IllegalArgumentException {
+>          if (Double.isInfinite(normalizedSum)) {
+>              throw MathRuntimeException.createIllegalArgumentException(
+>                      "Cannot normalize to an infinite value");
+>          }
+>          if (Double.isNaN(normalizedSum)) {
+>              throw MathRuntimeException.createIllegalArgumentException(
+>                      "Cannot normalize to NaN");
+>          }
+>          double sum = 0d;
+>          final int len = values.length;
+>          double[] out = new double[len];
+>          for (int i = 0; i < len; i++) {
+>              if (Double.isInfinite(values[i])) {
+>                  throw MathRuntimeException.createArithmeticException(
+>                          "Array contains an infinite element", values[i], i);
+>              }
+>              if (!Double.isNaN(values[i])) {
+>                  sum += values[i];
+>              }
+>          }
+>          if (sum == 0) {
+>              throw MathRuntimeException.createArithmeticException(
+>                      "Array sums to zero"); 
+>          }
+>          for (int i = 0; i < len; i++) {
+>              if (Double.isNaN(values[i])) {
+>                  out[i] = Double.NaN;
+>              } else {
+>                  out[i] = values[i] * normalizedSum / sum;
+>              }
+>          }
+>          return out;  
+>      }

@@ -1,0 +1,34 @@
+333,335c333,335
+<   @Override
+<   public boolean isEquivalentTo(JSType object) {
+<     if (object == null) {
+---
+>   boolean checkUnionEquivalenceHelper(
+>       UnionType that, boolean tolerateUnknowns) {
+>     if (!tolerateUnknowns && alternates.size() != that.alternates.size()) {
+338,340c338,339
+<     if (object.isUnionType()) {
+<       UnionType that = object.toMaybeUnionType();
+<       if (alternates.size() != that.alternates.size()) {
+---
+>     for (JSType alternate : that.alternates) {
+>       if (!hasAlternate(alternate, tolerateUnknowns)) {
+343,350d341
+<       for (JSType alternate : that.alternates) {
+<         if (!hasAlternate(alternate)) {
+<           return false;
+<         }
+<       }
+<       return true;
+<     } else {
+<       return false;
+351a343
+>     return true;
+354c346
+<   private boolean hasAlternate(JSType type) {
+---
+>   private boolean hasAlternate(JSType type, boolean tolerateUnknowns) {
+356c348
+<       if (alternate.isEquivalentTo(type)) {
+---
+>       if (alternate.checkEquivalenceHelper(type, tolerateUnknowns)) {

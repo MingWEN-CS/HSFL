@@ -1,0 +1,302 @@
+32a33
+> import org.joda.time.field.FieldUtils;
+487a489,490
+> 
+> 
+501a505,506
+> 
+> 
+515a521,522
+> 
+> 
+530a538,539
+> 
+> 
+544a554,555
+> 
+> 
+554a566,567
+> 
+> 
+571a585,658
+> 
+> 
+> 
+> 
+>     public DateTime toDateTimeDefaultZone(LocalTime time) {
+>         return toDateTime(time, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTime toDateTime(LocalTime time, DateTimeZone zone) {
+>         if (time != null && getChronology() != time.getChronology()) {
+>             throw new IllegalArgumentException("The chronology of the time does not match");
+>         }
+>         Chronology chrono = getChronology().withZone(zone);
+>         long instant = DateTimeUtils.currentTimeMillis();
+>         instant = chrono.set(this, instant);
+>         if (time != null) {
+>             instant = chrono.set(time, instant);
+>         }
+>         return new DateTime(instant, chrono);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Interval toIntervalDefaultZone() {
+>         return toInterval(null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Interval toInterval(DateTimeZone zone) {
+>         zone = DateTimeUtils.getZone(zone);
+>         return toDateMidnight(zone).toInterval();
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+675a763,764
+> 
+> 
+680c769,777
+<         long instant = getChronology().add(period, getLocalMillis(), scalar);
+---
+>         long instant = getLocalMillis();
+>         Chronology chrono = getChronology();
+>         for (int i = 0; i < period.size(); i++) {
+>             long value = FieldUtils.safeMultiply(period.getValue(i), scalar);
+>             DurationFieldType type = period.getFieldType(i);
+>             if (isSupported(type)) {
+>                 instant = type.getField(chrono).add(instant, value);
+>             }
+>         }
+698a796,797
+> 
+> 
+809a909,911
+> 
+> 
+> 
+976a1079,1084
+> 
+> 
+> 
+> 
+> 
+> 
+1027a1136,1312
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withEra(int era) {
+>         return withLocalMillis(getChronology().era().set(getLocalMillis(), era));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withCenturyOfEra(int centuryOfEra) {
+>         return withLocalMillis(getChronology().centuryOfEra().set(getLocalMillis(), centuryOfEra));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withYearOfEra(int yearOfEra) {
+>         return withLocalMillis(getChronology().yearOfEra().set(getLocalMillis(), yearOfEra));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withYearOfCentury(int yearOfCentury) {
+>         return withLocalMillis(getChronology().yearOfCentury().set(getLocalMillis(), yearOfCentury));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withYear(int year) {
+>         return withLocalMillis(getChronology().year().set(getLocalMillis(), year));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withWeekyear(int weekyear) {
+>         return withLocalMillis(getChronology().weekyear().set(getLocalMillis(), weekyear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withMonthOfYear(int monthOfYear) {
+>         return withLocalMillis(getChronology().monthOfYear().set(getLocalMillis(), monthOfYear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withWeekOfWeekyear(int weekOfWeekyear) {
+>         return withLocalMillis(getChronology().weekOfWeekyear().set(getLocalMillis(), weekOfWeekyear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withDayOfYear(int dayOfYear) {
+>         return withLocalMillis(getChronology().dayOfYear().set(getLocalMillis(), dayOfYear));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withDayOfMonth(int dayOfMonth) {
+>         return withLocalMillis(getChronology().dayOfMonth().set(getLocalMillis(), dayOfMonth));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate withDayOfWeek(int dayOfWeek) {
+>         return withLocalMillis(getChronology().dayOfWeek().set(getLocalMillis(), dayOfWeek));

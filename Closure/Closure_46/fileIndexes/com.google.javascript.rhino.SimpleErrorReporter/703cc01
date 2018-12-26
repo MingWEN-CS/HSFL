@@ -1,0 +1,120 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+
+
+
+
+public class SimpleErrorReporter implements ErrorReporter {
+    private List<String> warnings = null;
+    private List<String> errors = null;
+
+    @Override
+    public void warning(String message, String sourceName, int line,
+                        String lineSource, int lineOffset)
+    {
+        if (warnings == null) {
+            warnings = new ArrayList<String>();
+        }
+        warnings.add(formatDetailedMessage(
+            message, sourceName, line, lineSource, lineOffset));
+    }
+
+    @Override
+    public void error(String message, String sourceName, int line,
+                      String lineSource, int lineOffset)
+    {
+        if (errors == null) {
+            errors = new ArrayList<String>();
+        }
+        errors.add(formatDetailedMessage(
+            message, sourceName, line, lineSource, lineOffset));
+    }
+
+    @Override
+    public EvaluatorException runtimeError(
+        String message, String sourceName, int line, String lineSource,
+        int lineOffset)
+    {
+        return new EvaluatorException(
+            message, sourceName, line, lineSource, lineOffset);
+    }
+
+    
+
+
+    public List<String> errors()
+    {
+        return errors;
+    }
+
+    
+
+
+    public List<String> warnings()
+    {
+        return warnings;
+    }
+
+    private String formatDetailedMessage(
+        String message, String sourceName, int line, String lineSource,
+        int lineOffset)
+    {
+        RhinoException e = new RhinoException(message);
+        if (sourceName != null) {
+          e.initSourceName(sourceName);
+        }
+        if (lineSource != null) {
+          e.initLineSource(lineSource);
+        }
+        if (line > 0) {
+          e.initLineNumber(line);
+        }
+        if (lineOffset > 0) {
+          e.initColumnNumber(lineOffset);
+        }
+        return e.getMessage();
+    }
+}

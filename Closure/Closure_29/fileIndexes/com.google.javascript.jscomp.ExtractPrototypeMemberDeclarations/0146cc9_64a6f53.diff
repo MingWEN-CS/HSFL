@@ -1,0 +1,26 @@
+116,117c116,121
+<     Node var = new Node(Token.VAR, Node.newString(Token.NAME, prototypeAlias));
+<     compiler.getNodeForCodeInsertion(null).addChildrenToFront(var);
+---
+>     Node injectionPoint = compiler.getNodeForCodeInsertion(null);
+> 
+>     Node var = NodeUtil.newVarNode(prototypeAlias, null)
+>         .copyInformationFromForTree(injectionPoint);
+>     
+>     injectionPoint.addChildrenToFront(var);
+132,133c136,138
+<     String className = instance.declarations.getFirst().qualifiedClassName;
+<     Node stmt = new Node(instance.declarations.getFirst().node.getType(),
+---
+>     PrototypeMemberDeclaration first = instance.declarations.getFirst();
+>     String className = first.qualifiedClassName;
+>     Node stmt = new Node(first.node.getType(),
+137c142,143
+<                 instance.parent, className + ".prototype")));
+---
+>                 instance.parent, className + ".prototype")))
+>         .copyInformationFromForTree(first.node);
+139c145
+<     instance.parent.addChildBefore(stmt, instance.declarations.getFirst().node);
+---
+>     instance.parent.addChildBefore(stmt, first.node);

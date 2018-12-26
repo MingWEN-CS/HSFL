@@ -1,0 +1,103 @@
+678c678,683
+<         throws NullArgumentException, DimensionMismatchException {
+---
+>         throws NullArgumentException,
+>                DimensionMismatchException {
+>         final int yListLen = yList.length;
+>         final int len = x.length;
+> 
+>         
+681a687,695
+>         for (int j = 0; j < yListLen; j++) {
+>             final double[] y = yList[j];
+>             if (y == null) {
+>                 throw new NullArgumentException();
+>             }
+>             if (y.length != len) {
+>                 throw new DimensionMismatchException(y.length, len);
+>             }
+>         }
+683,687c697,699
+<         final int len = x.length;
+<         final List<Pair<Double, double[]>> list
+<             = new ArrayList<Pair<Double, double[]>>(len);
+< 
+<         final int yListLen = yList.length;
+---
+>         
+>         final List<Pair<Double, Integer>> list
+>             = new ArrayList<Pair<Double, Integer>>(len);
+689,700c701
+<             final double[] yValues = new double[yListLen];
+<             for (int j = 0; j < yListLen; j++) {
+<                 double[] y = yList[j];
+<                 if (y == null) {
+<                     throw new NullArgumentException();
+<                 }
+<                 if (y.length != len) {
+<                     throw new DimensionMismatchException(y.length, len);
+<                 }
+<                 yValues[j] = y[i];
+<             }
+<             list.add(new Pair<Double, double[]>(x[i], yValues));
+---
+>             list.add(new Pair<Double, Integer>(x[i], i));
+703,719c704,715
+<         final Comparator<Pair<Double, double[]>> comp
+<             = new Comparator<Pair<Double, double[]>>() {
+<             public int compare(Pair<Double, double[]> o1,
+<                                Pair<Double, double[]> o2) {
+<                 int val;
+<                 switch (dir) {
+<                 case INCREASING:
+<                     val = o1.getKey().compareTo(o2.getKey());
+<                 break;
+<                 case DECREASING:
+<                     val = o2.getKey().compareTo(o1.getKey());
+<                 break;
+<                 default:
+<                     
+<                     throw new MathInternalError();
+<                 }
+<                 return val;
+---
+>         
+>         final Comparator<Pair<Double, Integer>> comp
+>             = dir == MathArrays.OrderDirection.INCREASING ?
+>             new Comparator<Pair<Double, Integer>>() {
+>             public int compare(Pair<Double, Integer> o1,
+>                                Pair<Double, Integer> o2) {
+>                 return o1.getKey().compareTo(o2.getKey());
+>             }
+>         } : new Comparator<Pair<Double,Integer>>() {
+>             public int compare(Pair<Double, Integer> o1,
+>                                Pair<Double, Integer> o2) {
+>                 return o2.getKey().compareTo(o1.getKey());
+722a719
+>         
+724a722,725
+>         
+>         
+>         
+>         final int[] indices = new int[len];
+726c727
+<             final Pair<Double, double[]> e = list.get(i);
+---
+>             final Pair<Double, Integer> e = list.get(i);
+728,730c729,740
+<             final double[] yValues = e.getValue();
+<             for (int j = 0; j < yListLen; j++) {
+<                 yList[j][i] = yValues[j];
+---
+>             indices[i] = e.getValue();
+>         }
+> 
+>         
+>         
+>         for (int j = 0; j < yListLen; j++) {
+>             
+>             final double[] yInPlace = yList[j];
+>             final double[] yOrig = yInPlace.clone();
+> 
+>             for (int i = 0; i < len; i++) {
+>                 yInPlace[i] = yOrig[indices[i]];

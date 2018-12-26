@@ -1,0 +1,165 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import com.google.common.collect.ImmutableList;
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+
+public final class FunctionBuilder {
+  private final JSTypeRegistry registry;
+  private String name = null;
+  private Node sourceNode = null;
+  private Node parametersNode = null;
+  private JSType returnType = null;
+  private JSType typeOfThis = null;
+  private TemplateTypeMap templateTypeMap = null;
+  private boolean inferredReturnType = false;
+  private boolean isConstructor = false;
+  private boolean isNativeType = false;
+
+  public FunctionBuilder(JSTypeRegistry registry) {
+    this.registry = registry;
+  }
+
+  
+  public FunctionBuilder withName(String name) {
+    this.name = name;
+    return this;
+  }
+
+  
+  public FunctionBuilder withSourceNode(Node sourceNode) {
+    this.sourceNode = sourceNode;
+    return this;
+  }
+
+  
+  public FunctionBuilder withParams(FunctionParamBuilder params) {
+    this.parametersNode = params.build();
+    return this;
+  }
+
+  
+
+
+  public FunctionBuilder withParamsNode(Node parametersNode) {
+    this.parametersNode = parametersNode;
+    return this;
+  }
+
+  
+  public FunctionBuilder withReturnType(JSType returnType) {
+    this.returnType = returnType;
+    return this;
+  }
+
+  
+  public FunctionBuilder withReturnType(JSType returnType, boolean inferred) {
+    this.returnType = returnType;
+    this.inferredReturnType = inferred;
+    return this;
+  }
+
+  
+  public FunctionBuilder withInferredReturnType(JSType returnType) {
+    this.returnType = returnType;
+    this.inferredReturnType = true;
+    return this;
+  }
+
+  
+  public FunctionBuilder withTypeOfThis(JSType typeOfThis) {
+    this.typeOfThis = typeOfThis;
+    return this;
+  }
+
+  
+  public FunctionBuilder withTemplateKeys(
+      ImmutableList<TemplateType> templateKeys) {
+    this.templateTypeMap = registry.createTemplateTypeMap(templateKeys, null);
+    return this;
+  }
+
+  
+  public FunctionBuilder forConstructor() {
+    this.isConstructor = true;
+    return this;
+  }
+
+  
+  public FunctionBuilder setIsConstructor(boolean isConstructor) {
+    this.isConstructor = isConstructor;
+    return this;
+  }
+
+  
+  FunctionBuilder forNativeType() {
+    this.isNativeType = true;
+    return this;
+  }
+
+  
+  public FunctionBuilder copyFromOtherFunction(FunctionType otherType) {
+    this.name = otherType.getReferenceName();
+    this.sourceNode = otherType.getSource();
+    this.parametersNode = otherType.getParametersNode();
+    this.returnType = otherType.getReturnType();
+    this.typeOfThis = otherType.getTypeOfThis();
+    this.templateTypeMap = otherType.getTemplateTypeMap();
+    this.isConstructor = otherType.isConstructor();
+    this.isNativeType = otherType.isNativeObjectType();
+    return this;
+  }
+
+  
+  public FunctionType build() {
+    return new FunctionType(registry, name, sourceNode,
+        new ArrowType(registry, parametersNode, returnType, inferredReturnType),
+        typeOfThis, templateTypeMap, isConstructor, isNativeType);
+  }
+}

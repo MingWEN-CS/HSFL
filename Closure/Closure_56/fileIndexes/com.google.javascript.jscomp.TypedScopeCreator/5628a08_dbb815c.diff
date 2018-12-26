@@ -1,0 +1,61 @@
+56c56
+< import com.google.javascript.jscomp.NodeTraversal.AbstractShallowCallback;
+---
+> import com.google.javascript.jscomp.NodeTraversal.AbstractShallowStatementCallback;
+257c257
+<   private static class DiscoverEnums extends AbstractShallowCallback {
+---
+>   private static class DiscoverEnums extends AbstractShallowStatementCallback {
+268,270d267
+<         case Token.NAME:
+<           nameNode = node;
+<           break;
+272,273c269,272
+<           if (node.hasOneChild()) {
+<             nameNode = node.getFirstChild();
+---
+>           for (Node child = node.getFirstChild();
+>                child != null; child = child.getNext()) {
+>             identifyEnumInNameNode(
+>                 child, NodeUtil.getInfoForNameNode(child));
+276,277c275,280
+<         case Token.ASSIGN:
+<           nameNode = node.getFirstChild();
+---
+>         case Token.EXPR_RESULT:
+>           Node maybeAssign = node.getFirstChild();
+>           if (maybeAssign.getType() == Token.ASSIGN) {
+>             identifyEnumInNameNode(
+>                 maybeAssign.getFirstChild(), maybeAssign.getJSDocInfo());
+>           }
+279a283
+>     }
+281,285c285,287
+<       if (nameNode != null) {
+<         JSDocInfo info = node.getJSDocInfo();
+<         if (info != null && info.hasEnumParameterType()) {
+<           registry.identifyEnumName(nameNode.getQualifiedName());
+<         }
+---
+>     private void identifyEnumInNameNode(Node nameNode, JSDocInfo info) {
+>       if (info != null && info.hasEnumParameterType()) {
+>         registry.identifyEnumName(nameNode.getQualifiedName());
+1237c1239
+<         extends AbstractShallowCallback {
+---
+>         extends AbstractShallowStatementCallback {
+1245,1246c1247,1249
+<         if (parent != null && parent.getType() == Token.EXPR_RESULT) {
+<           switch (n.getType()) {
+---
+>         if (n.getType() == Token.EXPR_RESULT) {
+>           Node child = n.getFirstChild();
+>           switch (child.getType()) {
+1248c1251
+<               maybeCollectMember(t, n.getFirstChild(), n);
+---
+>               maybeCollectMember(t, child.getFirstChild(), child);
+1251c1254
+<               maybeCollectMember(t, n, n);
+---
+>               maybeCollectMember(t, child, child);

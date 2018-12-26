@@ -1,0 +1,23 @@
+1388c1388
+<           codingConvention.getObjectLiteralCast(t, n);
+---
+>           codingConvention.getObjectLiteralCast(n);
+1390,1393c1390,1398
+<         ObjectType type = ObjectType.cast(
+<             typeRegistry.getType(objectLiteralCast.typeName));
+<         if (type != null && type.getConstructor() != null) {
+<           setDeferredType(objectLiteralCast.objectNode, type);
+---
+>         if (objectLiteralCast.diagnosticType == null) {
+>           ObjectType type = ObjectType.cast(
+>               typeRegistry.getType(objectLiteralCast.typeName));
+>           if (type != null && type.getConstructor() != null) {
+>             setDeferredType(objectLiteralCast.objectNode, type);
+>           } else {
+>             compiler.report(JSError.make(t.getSourceName(), n,
+>                     CONSTRUCTOR_EXPECTED));
+>           }
+1396c1401
+<                   CONSTRUCTOR_EXPECTED));
+---
+>                   objectLiteralCast.diagnosticType));

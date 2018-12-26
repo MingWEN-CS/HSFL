@@ -1,0 +1,34 @@
+23a24
+> import com.google.javascript.rhino.JSDocInfo;
+212a214
+> 
+218a221,225
+> 
+>       case Token.EXPR_RESULT:
+>         handleTypedefDefinition(t, n, parent);
+>         break;
+> 
+315a323,340
+> 
+>   private void handleTypedefDefinition(
+>       NodeTraversal t, Node n, Node parent) {
+>     JSDocInfo info = n.getFirstChild().getJSDocInfo();
+>     if (t.inGlobalScope() && info != null && info.hasTypedefType()) {
+>       String name = n.getFirstChild().getQualifiedName();
+>       if (name != null) {
+>         ProvidedName pn = providedNames.get(name);
+>         if (pn != null) {
+>           pn.addDefinition(n, t.getModule());
+>         }
+>       }
+>     }
+>   }
+> 
+>   
+> 
+> 
+857c882,883
+<         if (NodeUtil.isExpressionNode(candidateDefinition)) {
+---
+>         if (NodeUtil.isExpressionNode(candidateDefinition) &&
+>             !candidateDefinition.getFirstChild().isQualifiedName()) {

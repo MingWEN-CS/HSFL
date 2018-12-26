@@ -1,0 +1,276 @@
+117,120d116
+<       case Token.BITAND:
+<       case Token.BITOR:
+<         return tryFoldBitAndOr(subtree, left, right);
+< 
+133d128
+<       case Token.MUL:
+136c131,144
+<         return tryFoldArithmetic(subtree, left, right);
+---
+>         if (left.getType() == Token.NUMBER && right.getType() == Token.NUMBER) {
+>           return tryFoldOp(subtree, left, right);
+>         } else {
+>           return subtree;
+>         }
+> 
+>       case Token.MUL:
+>       case Token.BITAND:
+>       case Token.BITOR:
+>         if (left.getType() == Token.NUMBER && right.getType() == Token.NUMBER) {
+>           return tryFoldOp(subtree, left, right);
+>         } else {
+>           return tryFoldLeftChildOp(subtree, left, right);
+>         }
+439,441d446
+< 
+< 
+< 
+490c495
+<       return tryFoldArithmetic(n, left, right);
+---
+>       return tryFoldOp(n, left, right);
+499,546c504,510
+<   private Node tryFoldArithmetic(Node n, Node left, Node right) {
+<     if (left.getType() == Token.NUMBER &&
+<         right.getType() == Token.NUMBER) {
+<       double result;
+<       double lval = left.getDouble();
+<       double rval = right.getDouble();
+< 
+<       switch (n.getType()) {
+<         case Token.ADD:
+<           result = lval + rval;
+<           break;
+<         case Token.SUB:
+<           result = lval - rval;
+<           break;
+<         case Token.MUL:
+<           result = lval * rval;
+<           break;
+<         case Token.MOD:
+<           if (rval == 0) {
+<             error(DIVIDE_BY_0_ERROR, right);
+<             return n;
+<           }
+<           result = lval % rval;
+<           break;
+<         case Token.DIV:
+<           if (rval == 0) {
+<             error(DIVIDE_BY_0_ERROR, right);
+<             return n;
+<           }
+<           result = lval / rval;
+<           break;
+<         default:
+<           throw new Error("Unknown arithmetic operator");
+<       }
+< 
+<       
+<       if (String.valueOf(result).length() <=
+<           String.valueOf(lval).length() + String.valueOf(rval).length() + 1 &&
+< 
+<           
+<           
+<           Math.abs(result) <= MAX_FOLD_NUMBER) {
+<         Node newNumber = Node.newNumber(result);
+<         n.getParent().replaceChild(n, newNumber);
+<         reportCodeChange();
+<         return newNumber;
+<       }
+<    }
+---
+>   private Node tryFoldOp(Node n, Node left, Node right) {
+>     Node result = performArithmeticOp(n.getType(), left, right);
+>     if (result != null) {
+>       n.getParent().replaceChild(n, result);
+>       reportCodeChange();
+>       return result;
+>     }
+550,551c514
+<   private Node tryFoldAdd(Node node, Node left, Node right) {
+<     Preconditions.checkArgument(node.getType() == Token.ADD);
+---
+>   
+553,559c516,561
+<     if (NodeUtil.isLiteralValue(left, false) &&
+<         NodeUtil.isLiteralValue(right, false)) {
+<       
+<       return tryFoldAddConstant(node, left, right);
+<     } else {
+<       
+<       return tryFoldLeftChildAdd(node, left, right);
+---
+> 
+>   private Node performArithmeticOp(int opType, Node left, Node right) {
+>     Preconditions.checkState(left.getType() == Token.NUMBER);
+>     Preconditions.checkState(right.getType() == Token.NUMBER);
+>     double result;
+>     double lval = left.getDouble();
+>     double rval = right.getDouble();
+> 
+>     switch (opType) {
+>       case Token.BITAND:
+>         if (!areValidInts(lval, rval)) {
+>           return null;
+>         }
+>         result = (int)lval & (int)rval;
+>         break;
+>       case Token.BITOR:
+>         if (!areValidInts(lval, rval)) {
+>           return null;
+>         }
+>         result = (int)lval | (int)rval;
+>         break;
+>       case Token.ADD:
+>         result = lval + rval;
+>         break;
+>       case Token.SUB:
+>         result = lval - rval;
+>         break;
+>       case Token.MUL:
+>         result = lval * rval;
+>         break;
+>       case Token.MOD:
+>         if (rval == 0) {
+>           error(DIVIDE_BY_0_ERROR, right);
+>           return null;
+>         }
+>         result = lval % rval;
+>         break;
+>       case Token.DIV:
+>         if (rval == 0) {
+>           error(DIVIDE_BY_0_ERROR, right);
+>           return null;
+>         }
+>         result = lval / rval;
+>         break;
+>       default:
+>         throw new Error("Unexpected arithmetic operator");
+560a563,576
+> 
+>     
+>     
+>     if (String.valueOf(result).length() <=
+>         String.valueOf(lval).length() + String.valueOf(rval).length() + 1 &&
+> 
+>         
+>         
+>         Math.abs(result) <= MAX_FOLD_NUMBER) {
+>       Node newNumber = Node.newNumber(result);
+>       return newNumber;
+>     }
+> 
+>     return null;
+566,568c582,585
+<   private Node tryFoldBitAndOr(Node n, Node left, Node right) {
+<     Preconditions.checkArgument(n.getType() == Token.BITAND
+<         || n.getType() == Token.BITOR);
+---
+>   private boolean isValidInt(double val) {
+>     return !(val < Integer.MIN_VALUE || val > Integer.MAX_VALUE)
+>         && val == (int)val;
+>   }
+570,573c587
+<     if (left.getType() != Token.NUMBER ||
+<         right.getType() != Token.NUMBER) {
+<       return n;
+<     }
+---
+>   
+575,577d588
+<     double resultDouble;
+<     double lval = left.getDouble();
+<     double rval = right.getDouble();
+578a590,605
+> 
+>   private boolean areValidInts(double val1, double val2) {
+>     return isValidInt(val1) && isValidInt(val2);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private Node tryFoldLeftChildOp(Node n, Node left, Node right) {
+>     int opType = n.getType();
+579a607,608
+>     Preconditions.checkState(
+>       NodeUtil.isAssociative(opType) && NodeUtil.isCommutative(opType));
+581,582c610,611
+<     if (lval < Integer.MIN_VALUE || lval > Integer.MAX_VALUE ||
+<         rval < Integer.MIN_VALUE || rval > Integer.MAX_VALUE) {
+---
+>     if (right.getType() == Token.NUMBER && left.getType() == opType) {
+>       Preconditions.checkState(left.getChildCount() == 2);
+584,586c613,614
+<       
+<       return n;
+<     }
+---
+>       Node ll = left.getFirstChild();
+>       Node lr = ll.getNext();
+588,592c616,624
+<     
+<     int lvalInt = (int) lval;
+<     if (lvalInt != lval) {
+<       return n;
+<     }
+---
+>       Node valueToCombine;
+>       if (ll.getType() == Token.NUMBER) {
+>         valueToCombine = ll;
+>       } else if (lr.getType() == Token.NUMBER) {
+>         valueToCombine = lr;
+>       } else {
+>         
+>         return n;
+>       }
+594,596c626,632
+<     int rvalInt = (int) rval;
+<     if (rvalInt != rval) {
+<       return n;
+---
+>       Node replacement = performArithmeticOp(opType, valueToCombine, right);
+>       if (replacement != null) {
+>         left.removeChild(valueToCombine);
+>         n.replaceChild(left, left.removeFirstChild());
+>         n.replaceChild(right, replacement);
+>         reportCodeChange();
+>       }
+599,608c635,636
+<     switch (n.getType()) {
+<       case Token.BITAND:
+<         resultDouble = lvalInt & rvalInt;
+<         break;
+<       case Token.BITOR:
+<         resultDouble = lvalInt | rvalInt;
+<         break;
+<       default:
+<         throw new Error("Unknown bitwise operator");
+<     }
+---
+>     return n;
+>   }
+610,613c638,648
+<     Node newNumber = Node.newNumber(resultDouble);
+<     n.getParent().replaceChild(n, newNumber);
+<     reportCodeChange();
+<     return newNumber;
+---
+>   private Node tryFoldAdd(Node node, Node left, Node right) {
+>     Preconditions.checkArgument(node.getType() == Token.ADD);
+> 
+>     if (NodeUtil.isLiteralValue(left, false) &&
+>         NodeUtil.isLiteralValue(right, false)) {
+>       
+>       return tryFoldAddConstant(node, left, right);
+>     } else {
+>       
+>       return tryFoldLeftChildAdd(node, left, right);
+>     }

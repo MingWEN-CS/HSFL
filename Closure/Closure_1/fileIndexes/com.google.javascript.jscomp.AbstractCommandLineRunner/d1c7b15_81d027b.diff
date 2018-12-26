@@ -1,0 +1,45 @@
+109a110,111
+>   private Map<String, String> parsedModuleWrappers = null;
+> 
+591a594,613
+>   private String getModuleOutputFileName(JSModule m) {
+>     return config.moduleOutputPathPrefix + m.getName() + ".js";
+>   }
+> 
+>   @VisibleForTesting
+>   void writeModuleOutput(Appendable out, JSModule m)
+>       throws FlagUsageException, IOException {
+>     if (parsedModuleWrappers == null) {
+>       parsedModuleWrappers = parseModuleWrappers(
+>           config.moduleWrapper,
+>           Lists.newArrayList(compiler.getModuleGraph().getAllModules()));
+>     }
+> 
+>     String fileName = getModuleOutputFileName(m);
+>     String baseName = new File(fileName).getName();
+>     writeOutput(out, compiler, compiler.toSource(m),
+>         parsedModuleWrappers.get(m.getName()).replace("%basename%", baseName),
+>         "%s");
+>   }
+> 
+757,760c779,780
+<         String moduleFilePrefix = config.moduleOutputPathPrefix;
+<         maybeCreateDirsForPath(moduleFilePrefix);
+<         Map<String, String> moduleWrappers =
+<             parseModuleWrappers(config.moduleWrapper, modules);
+---
+>         parsedModuleWrappers = parseModuleWrappers(config.moduleWrapper, modules);
+>         maybeCreateDirsForPath(config.moduleOutputPathPrefix);
+776,777c796
+<           Writer writer = fileNameToOutputWriter(
+<               moduleFilePrefix + m.getName() + ".js");
+---
+>           Writer writer = fileNameToOutputWriter(getModuleOutputFileName(m));
+783,784c802
+<           writeOutput(writer, compiler, compiler.toSource(m),
+<               moduleWrappers.get(m.getName()), "%s");
+---
+>           writeModuleOutput(writer, m);
+1573,1574d1590
+< 
+< 

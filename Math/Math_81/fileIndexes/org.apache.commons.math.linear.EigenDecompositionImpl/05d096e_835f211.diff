@@ -1,0 +1,81 @@
+854,857c854,857
+<             double eMin = (i0 == n0) ? 0 : work[4 * n0 - 6];
+<             double eMax = 0;
+<             double qMax = work[4 * n0 - 4];
+<             double qMin = qMax;
+---
+>             double offDiagMin = (i0 == n0) ? 0 : work[4 * n0 - 6];
+>             double offDiagMax = 0;
+>             double diagMax    = work[4 * n0 - 4];
+>             double diagMin    = diagMax;
+864,866c864,866
+<                 if (qMin >= 4 * eMax) {
+<                     qMin = Math.min(qMin, work[i + 4]);
+<                     eMax = Math.max(eMax, work[i + 2]);
+---
+>                 if (diagMin >= 4 * offDiagMax) {
+>                     diagMin    = Math.min(diagMin, work[i + 4]);
+>                     offDiagMax = Math.max(offDiagMax, work[i + 2]);
+868,869c868,869
+<                 qMax = Math.max(qMax, work[i] + work[i + 2]);
+<                 eMin = Math.min(eMin, work[i + 2]);
+---
+>                 diagMax    = Math.max(diagMax, work[i] + work[i + 2]);
+>                 offDiagMin = Math.min(offDiagMin, work[i + 2]);
+871c871
+<             work[4 * n0 - 2] = eMin;
+---
+>             work[4 * n0 - 2] = offDiagMin;
+874c874
+<             dMin = -Math.max(0, qMin - 2 * Math.sqrt(qMin * eMax));
+---
+>             dMin = -Math.max(0, diagMin - 2 * Math.sqrt(diagMin * offDiagMax));
+890c890
+<                     (work[4 * n0 - 1] <= TOLERANCE_2 * qMax) &&
+---
+>                     (work[4 * n0 - 1] <= TOLERANCE_2 * diagMax) &&
+892,894c892,894
+<                     int split = i0 - 1;
+<                     qMax = work[4 * i0];
+<                     eMin = work[4 * i0 + 2];
+---
+>                     int split  = i0 - 1;
+>                     diagMax    = work[4 * i0];
+>                     offDiagMin = work[4 * i0 + 2];
+902,903c902,903
+<                             qMax         = 0;
+<                             eMin         = work[i + 6];
+---
+>                             diagMax      = 0;
+>                             offDiagMin   = work[i + 6];
+906,907c906,907
+<                             qMax         = Math.max(qMax, work[i + 4]);
+<                             eMin         = Math.min(eMin, work[i + 2]);
+---
+>                             diagMax      = Math.max(diagMax, work[i + 4]);
+>                             offDiagMin   = Math.min(offDiagMin, work[i + 2]);
+911c911
+<                     work[4 * n0 - 2] = eMin;
+---
+>                     work[4 * n0 - 2] = offDiagMin;
+1667c1667
+<     private void updateSigma(final double tau) {
+---
+>     private void updateSigma(final double shift) {
+1671,1672c1671,1672
+<         if (tau < sigma) {
+<             sigmaLow += tau;
+---
+>         if (shift < sigma) {
+>             sigmaLow += shift;
+1677,1678c1677,1678
+<             final double t = sigma + tau;
+<             sigmaLow += sigma - (t - tau);
+---
+>             final double t = sigma + shift;
+>             sigmaLow += sigma - (t - shift);
+1734,1735c1734
+<             final double g = work[sixI] + d[i] * work[sixI + 9] / work[sixI + 10];
+<             final double absG = Math.abs(g);
+---
+>             final double absG = Math.abs(work[sixI] + d[i] * work[sixI + 9] / work[sixI + 10]);

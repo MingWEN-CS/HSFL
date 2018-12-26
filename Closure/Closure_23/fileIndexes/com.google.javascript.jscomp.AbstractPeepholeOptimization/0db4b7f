@@ -1,0 +1,157 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+
+
+
+
+
+
+abstract class AbstractPeepholeOptimization {
+
+  private NodeTraversal currentTraversal;
+
+  
+
+
+
+
+
+
+
+
+  abstract Node optimizeSubtree(Node subtree);
+
+  
+
+
+
+
+
+
+  protected void error(DiagnosticType diagnostic, Node n) {
+    JSError error = currentTraversal.makeError(n, diagnostic, n.toString());
+    currentTraversal.getCompiler().report(error);
+  }
+
+  
+
+
+
+  protected void reportCodeChange() {
+    Preconditions.checkNotNull(currentTraversal);
+    currentTraversal.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+
+  protected boolean areNodesEqualForInlining(Node n1, Node n2) {
+    
+
+
+    Preconditions.checkNotNull(currentTraversal);
+    return currentTraversal.getCompiler().areNodesEqualForInlining(n1, n2);
+  }
+
+  
+
+
+
+  protected boolean isASTNormalized() {
+    Preconditions.checkNotNull(currentTraversal);
+    Preconditions.checkNotNull(currentTraversal.getCompiler());
+
+    return currentTraversal.getCompiler().getLifeCycleStage().isNormalized();
+  }
+
+  
+
+
+  void beginTraversal(NodeTraversal traversal) {
+    currentTraversal = traversal;
+  }
+
+  
+
+
+  void endTraversal(NodeTraversal traversal) {
+    currentTraversal = null;
+  }
+
+  
+  
+
+  
+
+
+
+  boolean mayEffectMutableState(Node n) {
+    return NodeUtil.mayEffectMutableState(n, currentTraversal.getCompiler());
+  }
+
+  
+
+
+  boolean mayHaveSideEffects(Node n) {
+    return NodeUtil.mayHaveSideEffects(n, currentTraversal.getCompiler());
+  }
+
+  
+
+
+
+
+  boolean isEcmaScript5OrGreater() {
+    return currentTraversal != null
+        && currentTraversal.getCompiler().acceptEcmaScript5();
+  }
+
+  
+
+
+  CodingConvention getCodingConvention() {
+    
+    return currentTraversal.getCompiler().getCodingConvention();
+  }
+
+  
+
+
+  @VisibleForTesting
+  static Node validateResult(Node n) {
+    done: {
+      if (n != null && n.getType() != Token.SCRIPT
+          && (n.getType() != Token.BLOCK || !n.isSyntheticBlock())) {
+        for (Node parent : n.getAncestors()) {
+          if (parent.getType() == Token.SCRIPT) {
+            break done;
+          }
+        }
+        Preconditions.checkState(false);
+      }
+    }
+    return n;
+  }
+}

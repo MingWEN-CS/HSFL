@@ -1,0 +1,183 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.FALSE;
+import static com.google.javascript.rhino.jstype.TernaryValue.TRUE;
+
+import com.google.javascript.rhino.ErrorReporter;
+import com.google.javascript.rhino.Node;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+
+
+
+
+public class EnumType extends PrototypeObjectType {
+  private static final long serialVersionUID = 1L;
+
+  
+
+
+
+  private final Node source;
+
+  
+  private EnumElementType elementsType;
+  
+  private final Set<String> elements = new HashSet<String>();
+
+  
+
+
+
+
+
+  EnumType(JSTypeRegistry registry, String name, Node source,
+      JSType elementsType) {
+    super(registry, "enum{" + name + "}", null);
+    this.source = source;
+    this.elementsType = new EnumElementType(registry, elementsType, name);
+  }
+
+  
+
+
+  public Node getSource() {
+    return source;
+  }
+
+  @Override
+  public EnumType toMaybeEnumType() {
+    return this;
+  }
+
+  @Override
+  public ObjectType getImplicitPrototype() {
+    return registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+  }
+
+  
+
+
+
+
+  public Set<String> getElements() {
+    return Collections.unmodifiableSet(elements);
+  }
+
+  
+
+
+
+
+
+  public boolean defineElement(String name, Node definingNode) {
+    elements.add(name);
+    return defineDeclaredProperty(name, elementsType, definingNode);
+  }
+
+  
+
+
+  public EnumElementType getElementsType() {
+    return elementsType;
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    TernaryValue result = super.testForEquality(that);
+    if (result != null) {
+      return result;
+    }
+    return this.isEquivalentTo(that) ? TRUE : FALSE;
+  }
+
+  @Override
+  public boolean isSubtype(JSType that) {
+    return that.isEquivalentTo(getNativeType(JSTypeNative.OBJECT_TYPE)) ||
+        that.isEquivalentTo(getNativeType(JSTypeNative.OBJECT_PROTOTYPE)) ||
+        JSType.isSubtypeHelper(this, that);
+  }
+
+  @Override
+  String toStringHelper(boolean forAnnotations) {
+    return forAnnotations ? "Object" : getReferenceName();
+  }
+
+  @Override
+  public String getDisplayName() {
+    return elementsType.getDisplayName();
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseObjectType(this);
+  }
+
+  @Override
+  public FunctionType getConstructor() {
+    return null;
+  }
+
+  @Override
+  public boolean matchesNumberContext() {
+    return false;
+  }
+
+  @Override
+  public boolean matchesStringContext() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesObjectContext() {
+    return true;
+  }
+
+  @Override
+  JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+    elementsType = (EnumElementType) elementsType.resolve(t, scope);
+    return super.resolveInternal(t, scope);
+  }
+}

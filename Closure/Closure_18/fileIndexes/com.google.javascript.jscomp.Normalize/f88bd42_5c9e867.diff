@@ -1,0 +1,81 @@
+95a96,106
+>   static Node parseAndNormalizeTestCode(
+>       AbstractCompiler compiler, String code, String prefix) {
+>     Node js = compiler.parseTestCode(code);
+>     NodeTraversal.traverse(compiler, js,
+>         new Normalize.NormalizeStatements(compiler, false));
+>     NodeTraversal.traverse(
+>         compiler, js,
+>         new MakeDeclaredNamesUnique());
+>     return js;
+>   }
+> 
+128c139
+<     new PropogateConstantAnnotations(compiler, assertOnChange)
+---
+>     new PropagateConstantAnnotationsOverVars(compiler, assertOnChange)
+134c145,148
+<   public static class PropogateConstantAnnotations
+---
+>   
+> 
+> 
+>   static class PropagateConstantAnnotationsOverVars
+140c154
+<     public PropogateConstantAnnotations(
+---
+>     PropagateConstantAnnotationsOverVars(
+166,167c180,185
+<         if ((info != null && info.isConstant()) &&
+<             !n.getBooleanProp(Node.IS_CONSTANT_NAME)) {
+---
+>         boolean shouldBeConstant =
+>             (info != null && info.isConstant()) ||
+>             NodeUtil.isConstantByConvention(
+>                 compiler.getCodingConvention(), n, parent);
+>         boolean isMarkedConstant = n.getBooleanProp(Node.IS_CONSTANT_NAME);
+>         if (shouldBeConstant && !isMarkedConstant) {
+176,178d193
+<           
+<           
+<           
+270a286
+> 
+312a329,363
+> 
+>         case Token.NAME:
+>         case Token.STRING:
+>           annotateConstantsByConvention(n, parent);
+>           break;
+>       }
+>     }
+> 
+>     
+> 
+> 
+>     private void annotateConstantsByConvention(Node n, Node parent) {
+>       Preconditions.checkState(
+>           n.getType() == Token.NAME || n.getType() == Token.STRING);
+> 
+>       
+>       
+>       
+>       boolean isObjLitKey = NodeUtil.isObjectLitKey(n, parent);
+>       boolean isProperty = isObjLitKey ||
+>           (parent.getType() == Token.GETPROP &&
+>            parent.getLastChild() == n);
+>       if (n.getType() == Token.NAME || isProperty) {
+>         if (NodeUtil.isConstantByConvention(
+>                 compiler.getCodingConvention(), n, parent)) {
+>           n.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>           
+>         }
+699d749
+< 

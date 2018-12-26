@@ -1,0 +1,100 @@
+22d21
+< import com.google.common.base.Pair;
+24a24
+> import com.google.javascript.rhino.jstype.JSType.TypePair;
+47,50c47,50
+<   private static final Function<Pair<JSType, JSType>, Pair<JSType, JSType>> EQ =
+<     new Function<Pair<JSType, JSType>, Pair<JSType, JSType>>() {
+<       public Pair<JSType, JSType> apply(Pair<JSType, JSType> p) {
+<         if (p.first == null || p.second == null) {
+---
+>   private static final Function<TypePair, TypePair> EQ =
+>     new Function<TypePair, TypePair>() {
+>       public TypePair apply(TypePair p) {
+>         if (p.typeA == null || p.typeB == null) {
+53c53
+<         return p.first.getTypesUnderEquality(p.second);
+---
+>         return p.typeA.getTypesUnderEquality(p.typeB);
+60,63c60,63
+<   private static final Function<Pair<JSType, JSType>, Pair<JSType, JSType>> NE =
+<     new Function<Pair<JSType, JSType>, Pair<JSType, JSType>>() {
+<       public Pair<JSType, JSType> apply(Pair<JSType, JSType> p) {
+<         if (p.first == null || p.second == null) {
+---
+>   private static final Function<TypePair, TypePair> NE =
+>     new Function<TypePair, TypePair>() {
+>       public TypePair apply(TypePair p) {
+>         if (p.typeA == null || p.typeB == null) {
+66c66
+<         return p.first.getTypesUnderInequality(p.second);
+---
+>         return p.typeA.getTypesUnderInequality(p.typeB);
+74,77c74,77
+<       Function<Pair<JSType, JSType>, Pair<JSType, JSType>> SHEQ =
+<     new Function<Pair<JSType, JSType>, Pair<JSType, JSType>>() {
+<       public Pair<JSType, JSType> apply(Pair<JSType, JSType> p) {
+<         if (p.first == null || p.second == null) {
+---
+>       Function<TypePair, TypePair> SHEQ =
+>     new Function<TypePair, TypePair>() {
+>       public TypePair apply(TypePair p) {
+>         if (p.typeA == null || p.typeB == null) {
+80c80
+<         return p.first.getTypesUnderShallowEquality(p.second);
+---
+>         return p.typeA.getTypesUnderShallowEquality(p.typeB);
+88,91c88,91
+<       Function<Pair<JSType, JSType>, Pair<JSType, JSType>> SHNE =
+<     new Function<Pair<JSType, JSType>, Pair<JSType, JSType>>() {
+<       public Pair<JSType, JSType> apply(Pair<JSType, JSType> p) {
+<         if (p.first == null || p.second == null) {
+---
+>       Function<TypePair, TypePair> SHNE =
+>     new Function<TypePair, TypePair>() {
+>       public TypePair apply(TypePair p) {
+>         if (p.typeA == null || p.typeB == null) {
+94c94
+<         return p.first.getTypesUnderShallowInequality(p.second);
+---
+>         return p.typeA.getTypesUnderShallowInequality(p.typeB);
+102,107c102,107
+<       Function<Pair<JSType, JSType>, Pair<JSType, JSType>> INEQ =
+<     new Function<Pair<JSType, JSType>, Pair<JSType, JSType>>() {
+<       public Pair<JSType, JSType> apply(Pair<JSType, JSType> p) {
+<         return new Pair<JSType, JSType>(
+<             getRestrictedWithoutUndefined(p.first),
+<             getRestrictedWithoutUndefined(p.second));
+---
+>       Function<TypePair, TypePair> INEQ =
+>     new Function<TypePair, TypePair>() {
+>       public TypePair apply(TypePair p) {
+>         return new TypePair(
+>             getRestrictedWithoutUndefined(p.typeA),
+>             getRestrictedWithoutUndefined(p.typeB));
+241c241
+<       Function<Pair<JSType, JSType>, Pair<JSType, JSType>> merging) {
+---
+>       Function<TypePair, TypePair> merging) {
+266c266
+<     Pair<JSType, JSType> merged = merging.apply(Pair.of(leftType, rightType));
+---
+>     TypePair merged = merging.apply(new TypePair(leftType, rightType));
+270,271c270,271
+<         ((leftIsRefineable && merged.first != null) ||
+<          (rightIsRefineable && merged.second != null))) {
+---
+>         ((leftIsRefineable && merged.typeA != null) ||
+>          (rightIsRefineable && merged.typeB != null))) {
+273,274c273,274
+<       if (leftIsRefineable && merged.first != null) {
+<         declareNameInScope(informed, left, merged.first);
+---
+>       if (leftIsRefineable && merged.typeA != null) {
+>         declareNameInScope(informed, left, merged.typeA);
+276,277c276,277
+<       if (rightIsRefineable && merged.second != null) {
+<         declareNameInScope(informed, right, merged.second);
+---
+>       if (rightIsRefineable && merged.typeB != null) {
+>         declareNameInScope(informed, right, merged.typeB);

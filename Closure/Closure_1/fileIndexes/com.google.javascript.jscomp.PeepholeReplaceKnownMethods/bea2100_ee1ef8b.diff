@@ -1,0 +1,43 @@
+694c694
+<     return matchIndex;
+---
+>     return matchIndex + separator.length();
+702d701
+<     Preconditions.checkArgument(stringValue != null);
+710c709,710
+<     
+---
+> 
+> 
+718c718,719
+<     
+---
+> 
+> 
+724,725c725,726
+<       int startIndex = 0, matchIndex;    
+<       while ((matchIndex =
+---
+>       int startIndex = 0, matchEndIndex;
+>       while ((matchEndIndex =
+728,737c729,730
+<         splitStrings.add(stringValue.substring(startIndex, matchIndex));
+< 
+<         startIndex = matchIndex + separator.length();
+<       }
+< 
+<       if (splitStrings.size() < limit) {
+<         if (startIndex < stringValue.length()) {
+<           splitStrings.add(stringValue.substring(startIndex));
+<         } else {
+<           splitStrings.add("");
+---
+>         if (separator.length() == 0) {
+>           matchEndIndex++;
+738a732,737
+>         splitStrings.add(stringValue.substring(startIndex,
+>             matchEndIndex - separator.length()));
+>         startIndex = matchEndIndex;
+>       }
+>       if (startIndex < stringValue.length() && splitStrings.size() < limit) {
+>         splitStrings.add(stringValue.substring(startIndex));

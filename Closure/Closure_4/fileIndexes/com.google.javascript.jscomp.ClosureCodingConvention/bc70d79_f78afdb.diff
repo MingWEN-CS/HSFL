@@ -1,0 +1,54 @@
+22a23
+> import com.google.common.collect.Sets;
+38d38
+< 
+46a47,48
+>   private final Set<String> indirectlyDeclaredProperties;
+> 
+52a55,61
+> 
+>     Set<String> props = Sets.newHashSet(
+>         "superClass_",
+>         "instance_",
+>         "getInstance");
+>     props.addAll(wrapped.getIndirectlyDeclaredProperties());
+>     indirectlyDeclaredProperties = ImmutableSet.copyOf(props);
+61a71
+>     super.applySubclassRelationship(parentCtor, childCtor, type);
+85a96,99
+>     SubclassRelationship relationship =
+>         super.getClassesDefinedByCall(callNode);
+>     if (relationship != null) return relationship;
+> 
+171c185,186
+<     return "superClass_".equals(propertyName);
+---
+>     return "superClass_".equals(propertyName) ||
+>         super.isSuperClassReference(propertyName);
+258c273
+<     return null;
+---
+>     return super.identifyTypeDeclarationCall(n);
+275c290
+<       return null;
+---
+>       return super.getSingletonGetterClassName(callNode);
+283a299
+>     super.applySingletonGetter(functionType, getterType, objectType);
+304c320,321
+<         call.getFirstChild().getQualifiedName());
+---
+>         call.getFirstChild().getQualifiedName()) ||
+>         super.isPropertyTestFunction(call);
+309a327,331
+>     ObjectLiteralCast proxyCast = super.getObjectLiteralCast(callNode);
+>     if (proxyCast != null) {
+>       return proxyCast;
+>     }
+> 
+401a424,428
+>   }
+> 
+>   @Override
+>   public Collection<String> getIndirectlyDeclaredProperties() {
+>     return indirectlyDeclaredProperties;

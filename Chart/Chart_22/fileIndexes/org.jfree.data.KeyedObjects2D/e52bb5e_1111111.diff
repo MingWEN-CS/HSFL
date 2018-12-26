@@ -1,0 +1,119 @@
+109a110,111
+> 
+> 
+207d208
+<     public Object getObject(Comparable rowKey, Comparable columnKey) {
+209c210,220
+<         Object result = null;
+---
+> 
+> 
+> 
+> 
+>     public Object getObject(Comparable rowKey, Comparable columnKey) {
+>         if (rowKey == null) {
+>             throw new IllegalArgumentException("Null 'rowKey' argument.");
+>         }
+>         if (columnKey == null) {
+>             throw new IllegalArgumentException("Null 'columnKey' argument.");
+>         }
+210a222,230
+>         if (row < 0) {
+>             throw new UnknownKeyException("Row key (" + rowKey 
+>                     + ") not recognised.");
+>         }
+>         int column = this.columnKeys.indexOf(columnKey);
+>         if (column < 0) {
+>             throw new UnknownKeyException("Column key (" + columnKey 
+>                     + ") not recognised.");
+>         }
+212,213c232,236
+<             KeyedObjects rowData = (KeyedObjects) this.rows.get(row);
+<             result = rowData.getObject(columnKey);
+---
+>         KeyedObjects rowData = (KeyedObjects) this.rows.get(row);
+>             return rowData.getObject(columnKey);
+>         }
+>         else {
+>             return null;
+215,216d237
+<         return result;
+< 
+226,228c247,248
+<     public void addObject(Object object, 
+<                           Comparable rowKey, 
+<                           Comparable columnKey) {
+---
+>     public void addObject(Object object, Comparable rowKey, 
+>             Comparable columnKey) {
+239,241c259,260
+<     public void setObject(Object object, 
+<                           Comparable rowKey, 
+<                           Comparable columnKey) {
+---
+>     public void setObject(Object object, Comparable rowKey, 
+>             Comparable columnKey) {
+242a262,267
+>         if (rowKey == null) {
+>             throw new IllegalArgumentException("Null 'rowKey' argument.");
+>         }
+>         if (columnKey == null) {
+>             throw new IllegalArgumentException("Null 'columnKey' argument.");
+>         }
+266a292,295
+> 
+> 
+> 
+> 
+270a300,319
+>         boolean allNull = true;
+>         int rowIndex = getRowIndex(rowKey);
+>         KeyedObjects row = (KeyedObjects) this.rows.get(rowIndex);
+> 
+>         for (int item = 0, itemCount = row.getItemCount(); item < itemCount; 
+>              item++) {
+>             if (row.getObject(item) != null) {
+>                 allNull = false;
+>                 break;
+>             }
+>         }
+>         
+>         if (allNull) {
+>             this.rowKeys.remove(rowIndex);
+>             this.rows.remove(rowIndex);
+>         }
+>         
+>         
+>         
+>         
+277a327,328
+> 
+> 
+287a339,342
+> 
+> 
+> 
+> 
+289c344,345
+<         removeRow(getRowIndex(rowKey));
+---
+>         int index = getRowIndex(rowKey);
+>         removeRow(index);
+296a353,354
+> 
+> 
+306a365,368
+> 
+> 
+> 
+> 
+307a370,374
+>         int index = getColumnIndex(columnKey);
+>         if (index < 0) {
+>             throw new UnknownKeyException("Column key (" + columnKey 
+>                     + ") not recognised.");
+>         }
+311c378
+<             rowData.removeValue(columnKey);
+---
+>                 rowData.removeValue(columnKey);

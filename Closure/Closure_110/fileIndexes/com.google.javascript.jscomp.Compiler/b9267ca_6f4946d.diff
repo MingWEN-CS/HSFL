@@ -1,0 +1,55 @@
+666d665
+<     final boolean dumpTraceReport = options != null && options.tracer.isOn();
+669,690d667
+<     Callable<T> bootCompilerThread = new Callable<T>() {
+<       @Override
+<       public T call() {
+<         try {
+<           compilerThread = Thread.currentThread();
+<           if (dumpTraceReport) {
+<             Tracer.initCurrentThreadTrace();
+<           }
+<           return callable.call();
+<         } catch (Throwable e) {
+<           exception[0] = e;
+<         } finally {
+<           compilerThread = null;
+<           if (dumpTraceReport) {
+<             Tracer.logAndClearCurrentThreadTrace();
+<             tracker.outputTracerReport(outStream == null ?
+<                 System.out : outStream);
+<           }
+<         }
+<         return null;
+<       }
+<     };
+698a676,701
+>         final boolean dumpTraceReport =
+>             options != null && options.tracer.isOn();
+>         Callable<T> bootCompilerThread = new Callable<T>() {
+>           @Override
+>           public T call() {
+>             try {
+>               compilerThread = Thread.currentThread();
+>               if (dumpTraceReport) {
+>                 Tracer.initCurrentThreadTrace();
+>               }
+>               return callable.call();
+>             } catch (Throwable e) {
+>               exception[0] = e;
+>             } finally {
+>               compilerThread = null;
+>               if (dumpTraceReport) {
+>                 Tracer.logCurrentThreadTrace();
+>                 tracker.outputTracerReport(outStream == null ?
+>                     System.out : outStream);
+>               }
+>               Tracer.clearCurrentThreadTrace();
+>             }
+>             return null;
+>           }
+>         };
+> 
+709a713,714
+>       } finally {
+>         Tracer.clearCurrentThreadTrace();

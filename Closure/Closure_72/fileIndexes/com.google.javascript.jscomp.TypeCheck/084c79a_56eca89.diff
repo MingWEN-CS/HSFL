@@ -1,0 +1,34 @@
+881,890c881,889
+<       JSType type = objectJsType.restrictByNotNullOrUndefined();
+<       if (type instanceof ObjectType) {
+<         ObjectType objectType = (ObjectType) type;
+<         if (objectType.hasProperty(property)) {
+<           if (!objectType.isPropertyTypeInferred(property) &&
+<               !propertyIsImplicitCast(objectType, property)) {
+<             validator.expectCanAssignToPropertyOf(
+<                 t, assign, getJSType(rvalue),
+<                 objectType.getPropertyType(property), object, property);
+<           }
+---
+>       ObjectType type = ObjectType.cast(
+>           objectJsType.restrictByNotNullOrUndefined());
+>       if (type != null) {
+>         if (type.hasProperty(property) &&
+>             !type.isPropertyTypeInferred(property) &&
+>             !propertyIsImplicitCast(type, property)) {
+>           validator.expectCanAssignToPropertyOf(
+>               t, assign, getJSType(rvalue),
+>               type.getPropertyType(property), object, property);
+961c960
+<             ((ObjectType) implementedInterface).getConstructor();
+---
+>             implementedInterface.toObjectType().getConstructor();
+1308c1307,1308
+<         if (baseInterface instanceof ObjectType) {
+---
+>         ObjectType baseInterfaceObj = ObjectType.cast(baseInterface);
+>         if (baseInterfaceObj != null) {
+1310c1310
+<               ((ObjectType) baseInterface).getConstructor();
+---
+>               baseInterfaceObj.getConstructor();

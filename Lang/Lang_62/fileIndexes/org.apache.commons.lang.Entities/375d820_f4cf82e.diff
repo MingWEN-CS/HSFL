@@ -1,0 +1,281 @@
+17a18,19
+> import java.io.IOException;
+> import java.io.Writer;
+223a226
+> 
+231a235,236
+> 
+> 
+234a240,241
+> 
+> 
+248a256
+> 
+250a259
+> 
+264a274
+> 
+273a284,286
+> 
+> 
+> 
+290a304
+> 
+366a381,385
+>     
+> 
+> 
+> 
+> 
+373a393,398
+>         
+> 
+> 
+> 
+> 
+> 
+375a401,406
+>         
+> 
+> 
+> 
+> 
+> 
+377a409,414
+>         
+> 
+> 
+> 
+> 
+> 
+384a422,424
+>         
+> 
+> 
+389a430,432
+>         
+> 
+> 
+393a437,439
+>         
+> 
+> 
+407a454,456
+>         
+> 
+> 
+412a462,464
+>         
+> 
+> 
+416a469,471
+>         
+> 
+> 
+426a482,484
+>         
+> 
+> 
+433a492,494
+>       
+> 
+> 
+443a505,507
+>         
+> 
+> 
+450a515,520
+>         
+> 
+> 
+> 
+> 
+> 
+457a528,530
+>         
+> 
+> 
+471a545,547
+>         
+> 
+> 
+476a553,558
+>         
+> 
+> 
+> 
+> 
+> 
+482a565,567
+>         
+> 
+> 
+489a575,579
+>         
+> 
+> 
+> 
+> 
+501a592,594
+>         
+> 
+> 
+510a604,606
+>         
+> 
+> 
+522a619,621
+>         
+> 
+> 
+523a623
+>           ; 
+525a626,631
+>         
+> 
+> 
+> 
+> 
+> 
+530a637,642
+> 
+> 
+> 
+> 
+> 
+> 
+549a662,664
+>         
+> 
+> 
+563a679,681
+>         
+> 
+> 
+575a694,698
+>     
+> 
+> 
+> 
+> 
+581a705,710
+>     
+> 
+> 
+> 
+> 
+> 
+585a715,720
+>     
+> 
+> 
+> 
+> 
+> 
+589a725,729
+>     
+> 
+> 
+> 
+> 
+637a778,811
+> 
+> 
+> 
+> 
+>     public void escape(Writer writer, String str) throws IOException {
+>         int len = str.length();
+>         for (int i = 0; i < len; i++) {
+>             char c = str.charAt(i);
+>             String entityName = this.entityName(c);
+>             if (entityName == null) {
+>                 if (c > 0x7F) {
+>                     writer.write("&#");
+>                     writer.write(Integer.toString(c, 10));
+>                     writer.write(';');
+>                 } else {
+>                     writer.write(c);
+>                 }
+>             } else {
+>                 writer.write('&');
+>                 writer.write(entityName);
+>                 writer.write(';');
+>             }
+>         }
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+685a860,924
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void unescape(Writer writer, String string) throws IOException {
+>         int len = string.length();
+>         if (len == 0) {
+>             return;
+>         }
+>         for (int i = 0; i < len; i++) {
+>             char c = string.charAt(i);
+>             if (c == '&') {
+>                 int nextIdx = i+1;
+>                 int semiColonIdx = string.indexOf(';', nextIdx);
+>                 if (semiColonIdx == -1) {
+>                     writer.write(c);
+>                     continue;
+>                 }
+>                 String entityContent = string.substring(nextIdx, semiColonIdx);
+>                 int entityValue = -1;
+>                 int entityContentLen = entityContent.length();
+>                 if (entityContentLen > 0) {
+>                     if (entityContent.charAt(0) == '#') { 
+>                         if (entityContentLen > 1) {  
+>                             char isHexChar = entityContent.charAt(1);
+>                             try {
+>                                 switch (isHexChar) {
+>                                     case 'X' :
+>                                     case 'x' : {
+>                                         entityValue = Integer.parseInt(entityContent.substring(2), 16);
+>                                     }
+>                                     default : {
+>                                         entityValue = Integer.parseInt(entityContent.substring(1), 10);
+>                                     }
+>                                 }
+>                             } catch (NumberFormatException e) {
+>                             }
+>                         }
+>                     } else { 
+>                         entityValue = this.entityValue(entityContent);
+>                     }
+>                 }
+>                 
+>                 if (entityValue == -1) {
+>                     writer.write('&');
+>                     writer.write(entityContent);
+>                     writer.write(';');
+>                 } else {
+>                     writer.write(entityValue);
+>                 }
+>                 i = semiColonIdx; 
+>             } else {
+>                 writer.write(c);
+>             }
+>         }
+>     }
+>     

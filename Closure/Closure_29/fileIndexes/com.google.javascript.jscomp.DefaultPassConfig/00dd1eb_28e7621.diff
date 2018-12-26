@@ -1,0 +1,47 @@
+316d315
+<       passes.add(undoConstantRenaming);
+318d316
+<       passes.add(renameConstants.makeOneTimePass());
+377c375
+<       passes.addAll(getCodeRemovingPasses(true));
+---
+>       passes.addAll(getCodeRemovingPasses());
+537c535
+<     passes.addAll(getCodeRemovingPasses(false));
+---
+>     passes.addAll(getCodeRemovingPasses());
+554,555c552
+<   private List<PassFactory> getCodeRemovingPasses(
+<       boolean beforeSmartNameRemoval) {
+---
+>   private List<PassFactory> getCodeRemovingPasses() {
+557,558c554
+<     if ((options.inlineVariables || options.inlineLocalVariables)
+<         && !beforeSmartNameRemoval) {
+---
+>     if (options.inlineVariables || options.inlineLocalVariables) {
+1093,1116d1088
+<     }
+<   };
+< 
+<   
+< 
+< 
+< 
+<   private final PassFactory undoConstantRenaming =
+<       new PassFactory("undoConstantNames", true) {
+<     @Override
+<     protected CompilerPass createInternal(AbstractCompiler compiler) {
+<       return new MakeDeclaredNamesUnique.UndoConstantRenaming(compiler);
+<     }
+<   };
+< 
+<   
+< 
+< 
+< 
+<   private final PassFactory renameConstants =
+<       new PassFactory("renameConstants", false) {
+<     @Override
+<     protected CompilerPass createInternal(AbstractCompiler compiler) {
+<       return new Normalize(compiler, false).new RenameConstants();

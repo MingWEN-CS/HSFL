@@ -1,0 +1,34 @@
+19a20
+> import com.google.common.collect.ImmutableMap;
+24d24
+< import com.google.common.collect.Sets;
+680c680
+<   Set<String> idGenerators;
+---
+>   ImmutableMap<String, RenamingMap> idGenerators;
+983c983
+<     idGenerators = Collections.emptySet();
+---
+>     idGenerators = ImmutableMap.of();
+1231c1231,1249
+<     this.idGenerators = Sets.newHashSet(idGenerators);
+---
+>     ImmutableMap.Builder<String, RenamingMap> builder = ImmutableMap.builder();
+>     for (String name : idGenerators) {
+>        builder.put(name, UNIQUE_ID_GENERATOR);
+>     }
+>     this.idGenerators = builder.build();
+>   }
+> 
+>   
+> 
+> 
+> 
+>   public static final RenamingMap UNIQUE_ID_GENERATOR =
+>       ReplaceIdGenerators.UNIQUE;
+> 
+>   
+> 
+> 
+>   public void setIdGenerators(Map<String, RenamingMap> idGenerators) {
+>     this.idGenerators = ImmutableMap.copyOf(idGenerators);

@@ -1,0 +1,85 @@
+131a132
+>       scopeBuilder.resolveStubDeclarations();
+708a710,718
+>     
+> 
+> 
+> 
+> 
+> 
+>     private final List<StubDeclaration> stubDeclarations =
+>         Lists.newArrayList();
+> 
+1006,1022c1016,1017
+<           
+<           
+<           ObjectType ownerType = getObjectSlot(ownerName);
+<           JSType unknownType = typeRegistry.getNativeType(UNKNOWN_TYPE);
+<           if (ownerType == null) {
+<             defineSlot(n, parent, unknownType, false);
+<           } else {
+<             boolean isExtern = t.getInput().isExtern();
+<             if (isExtern || ownerType.isFunctionPrototypeType()) {
+<               
+<               
+<               ownerType.defineDeclaredProperty(
+<                   propName, unknownType, isExtern);
+<             } else {
+<               typeRegistry.registerPropertyOnType(propName, ownerType);
+<             }
+<           }
+---
+>           stubDeclarations.add(new StubDeclaration(
+>               n, t.getInput().isExtern(), ownerName));
+1115a1111,1161
+>       }
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private void resolveStubDeclarations() {
+>       for (StubDeclaration stub : stubDeclarations) {
+>         Node n = stub.node;
+>         Node parent = n.getParent();
+>         String qName = n.getQualifiedName();
+>         String propName = n.getLastChild().getString();
+>         String ownerName = stub.ownerName;
+>         boolean isExtern = stub.isExtern;
+> 
+>         if (scope.isDeclared(qName, false)) {
+>           continue;
+>         }
+> 
+>         
+>         
+>         ObjectType ownerType = getObjectSlot(ownerName);
+>         ObjectType unknownType = typeRegistry.getNativeObjectType(UNKNOWN_TYPE);
+>         defineSlot(n, parent, unknownType, true);
+> 
+>         if (ownerType != null &&
+>             (isExtern || ownerType.isFunctionPrototypeType())) {
+>           
+>           
+>           ownerType.defineInferredProperty(
+>               propName, unknownType, isExtern);
+>         } else {
+>           typeRegistry.registerPropertyOnType(
+>               propName, ownerType == null ? unknownType : ownerType);
+>         }
+>       }
+>     }
+> 
+>     
+> 
+> 
+>     private final class StubDeclaration {
+>       private final Node node;
+>       private final boolean isExtern;
+>       private final String ownerName;
+> 
+>       private StubDeclaration(Node node, boolean isExtern, String ownerName) {
+>         this.node = node;
+>         this.isExtern = isExtern;
+>         this.ownerName = ownerName;

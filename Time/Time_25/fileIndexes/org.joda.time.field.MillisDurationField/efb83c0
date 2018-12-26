@@ -1,0 +1,201 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.field;
+
+import java.io.Serializable;
+
+import org.joda.time.DurationField;
+import org.joda.time.DurationFieldType;
+
+
+
+
+
+
+
+
+
+public final class MillisDurationField extends DurationField implements Serializable {
+
+    
+    private static final long serialVersionUID = 2656707858124633367L;
+
+    
+    public static final DurationField INSTANCE = new MillisDurationField();
+
+    
+
+
+    private MillisDurationField() {
+        super();
+    }
+    
+    
+    public DurationFieldType getType() {
+        return DurationFieldType.millis();
+    }
+
+    public String getName() {
+        return "millis";
+    }
+
+    
+
+
+
+
+    public boolean isSupported() {
+        return true;
+    }
+
+    
+
+
+
+
+    public final boolean isPrecise() {
+        return true;
+    }
+
+    
+
+
+
+
+    public final long getUnitMillis() {
+        return 1;
+    }
+
+    
+    public int getValue(long duration) {
+        return FieldUtils.safeToInt(duration);
+    }
+
+    public long getValueAsLong(long duration) {
+        return duration;
+    }
+
+    public int getValue(long duration, long instant) {
+        return FieldUtils.safeToInt(duration);
+    }
+
+    public long getValueAsLong(long duration, long instant) {
+        return duration;
+    }
+
+    public long getMillis(int value) {
+        return value;
+    }
+
+    public long getMillis(long value) {
+        return value;
+    }
+
+    public long getMillis(int value, long instant) {
+        return value;
+    }
+
+    public long getMillis(long value, long instant) {
+        return value;
+    }
+
+    public long add(long instant, int value) {
+        return FieldUtils.safeAdd(instant, value);
+    }
+
+    public long add(long instant, long value) {
+        return FieldUtils.safeAdd(instant, value);
+    }
+
+    public int getDifference(long minuendInstant, long subtrahendInstant) {
+        return FieldUtils.safeToInt(FieldUtils.safeAdd(minuendInstant, -subtrahendInstant));
+    }
+
+    public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant) {
+        return FieldUtils.safeAdd(minuendInstant, -subtrahendInstant);
+    }
+
+    
+    public int compareTo(Object durationField) {
+        DurationField otherField = (DurationField) durationField;
+        long otherMillis = otherField.getUnitMillis();
+        long thisMillis = getUnitMillis();
+        
+        if (thisMillis == otherMillis) {
+            return 0;
+        }
+        if (thisMillis < otherMillis) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+    
+
+
+
+
+    public String toString() {
+        return "DurationField[millis]";
+    }
+
+    
+
+
+    private Object readResolve() {
+        return INSTANCE;
+    }
+
+}

@@ -1,0 +1,63 @@
+20a21
+> import com.google.javascript.rhino.IR;
+142c143
+<         Node replacement = new Node(Token.BLOCK).copyInformationFrom(subtree);
+---
+>         Node replacement = IR.block().srcref(subtree);
+249,250c250
+<                 resultList = new Node(Token.COMMA, resultList, c)
+<                     .copyInformationFrom(c);
+---
+>                 resultList = IR.comma(resultList, c).srcref(c);
+265c265
+<           result = new Node(Token.EMPTY).copyInformationFrom(n);
+---
+>           result = IR.empty().srcref(n);
+308,309c308
+<       Node replacement = new Node(Token.EXPR_RESULT, condition)
+<                             .copyInformationFrom(n);
+---
+>       Node replacement = IR.exprResult(condition).srcref(n);
+527,528c526,527
+<           int replacementConditionNodeType =
+<             (value.toBoolean(true)) ? Token.TRUE : Token.FALSE;
+---
+>           Node replacementConditionNode =
+>               NodeUtil.booleanNode(value.toBoolean(true));
+530c529
+<               new Node(replacementConditionNodeType));
+---
+>               replacementConditionNode);
+673c672
+<         elseBody = new Node(Token.BLOCK).copyInformationFrom(n);
+---
+>         elseBody = IR.block().srcref(n);
+676c675
+<       Node newCond = new Node(newConditionValue ? Token.TRUE : Token.FALSE);
+---
+>       Node newCond = NodeUtil.booleanNode(newConditionValue);
+679,680c678
+<       branchToKeep.addChildToFront(
+<           new Node(Token.EXPR_RESULT, cond).copyInformationFrom(cond));
+---
+>       branchToKeep.addChildToFront(IR.exprResult(cond).srcref(cond));
+740,742c738
+<       replacement = new Node(Token.COMMA).copyInformationFrom(n);
+<       replacement.addChildToFront(cond);
+<       replacement.addChildToBack(branchToKeep);
+---
+>       replacement = IR.comma(cond, branchToKeep).srcref(n);
+803c799
+<       Node statement = new Node(Token.EXPR_RESULT, cond.detachFromParent())
+---
+>       Node statement = IR.exprResult(cond.detachFromParent())
+837,838c833,834
+<       Node condStatement = new Node(Token.EXPR_RESULT, cond.detachFromParent())
+<           .copyInformationFrom(cond);
+---
+>       Node condStatement = IR.exprResult(cond.detachFromParent())
+>           .srcref(cond);
+867c863
+<           new Node(Token.EMPTY));
+---
+>           IR.empty());

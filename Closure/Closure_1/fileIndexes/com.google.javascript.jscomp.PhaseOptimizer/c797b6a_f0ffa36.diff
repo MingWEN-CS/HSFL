@@ -1,0 +1,43 @@
+56c56
+<   private List<CompilerPass> passes = Lists.newArrayList();
+---
+>   private final List<CompilerPass> passes = Lists.newArrayList();
+72c72,81
+<   PhaseOptimizer(AbstractCompiler compiler, PerformanceTracker tracker) {
+---
+>   private final ProgressRange progressRange;
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   PhaseOptimizer(AbstractCompiler compiler, PerformanceTracker tracker,
+>       ProgressRange progressRange) {
+74a84
+>     this.progressRange = progressRange;
+166a177,183
+>     double progress = 0.0;
+>     double progressStep = 0.0;
+>     if (progressRange != null) {
+>       progressStep = (progressRange.maxValue - progressRange.initialValue)
+>           / passes.size();
+>       progress = progressRange.initialValue;
+>     }
+168a186,189
+>       if (progressRange != null) {
+>         progress += progressStep;
+>         compiler.setProgress(progress);
+>       }
+382a404,413
+>     }
+>   }
+> 
+>   static class ProgressRange {
+>     public final double initialValue;
+>     public final double maxValue;
+> 
+>     public ProgressRange(double initialValue, double maxValue) {
+>       this.initialValue = initialValue;
+>       this.maxValue = maxValue;

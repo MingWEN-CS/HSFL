@@ -1,0 +1,49 @@
+43,44c43,47
+<     
+<     private static final long serialVersionUID = 1708010296707839488L;
+---
+>   
+>   private static final long serialVersionUID = 1708010296707839488L;
+> 
+>   
+>   private double[] currentDerivative;
+57a61
+>     currentDerivative = null;
+65c69,71
+<   public DummyStepInterpolator(final double[] y, final boolean forward) {
+---
+> 
+> 
+>   public DummyStepInterpolator(final double[] y, final double[] yDot, final boolean forward) {
+66a73
+>     currentDerivative = yDot;
+75a83
+>     currentDerivative = interpolator.currentDerivative.clone();
+99c107,108
+<       System.arraycopy(currentState, 0, interpolatedState, 0, currentState.length);
+---
+>       System.arraycopy(currentState,      0, interpolatedState,       0, currentState.length);
+>       System.arraycopy(currentDerivative, 0, interpolatedDerivatives, 0, currentDerivative.length);
+109c118,119
+<     
+---
+> 
+>       
+110a121,127
+> 
+>     if (currentDerivative != null) {
+>         for (int i = 0; i < currentDerivative.length; ++i) {
+>             out.writeDouble(currentDerivative[i]);
+>         }
+>     }
+> 
+122a140,148
+> 
+>     if (currentState == null) {
+>         currentDerivative = null;
+>     } else {
+>         currentDerivative  = new double[currentState.length];
+>         for (int i = 0; i < currentDerivative.length; ++i) {
+>             currentDerivative[i] = in.readDouble();
+>         }
+>     }

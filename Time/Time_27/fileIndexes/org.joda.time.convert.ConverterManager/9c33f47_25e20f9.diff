@@ -1,0 +1,114 @@
+107a108,118
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+122a134
+>     private ConverterSet iPartialConverters;
+141a154,162
+>         iPartialConverters = new ConverterSet(new Converter[] {
+>             ReadableInstantConverter.INSTANCE,
+>             StringConverter.INSTANCE,
+>             CalendarConverter.INSTANCE,
+>             DateConverter.INSTANCE,
+>             LongConverter.INSTANCE,
+>             NullConverter.INSTANCE,
+>         });
+> 
+261a283,369
+>     public PartialConverter getPartialConverter(Object object) {
+>         PartialConverter converter =
+>             (PartialConverter)iPartialConverters.select(object == null ? null : object.getClass());
+>         if (converter != null) {
+>             return converter;
+>         }
+>         throw new IllegalArgumentException("No partial converter found for type: " +
+>             (object == null ? "null" : object.getClass().getName()));
+>     }
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+>     public PartialConverter[] getPartialConverters() {
+>         ConverterSet set = iPartialConverters;
+>         PartialConverter[] converters = new PartialConverter[set.size()];
+>         set.copyInto(converters);
+>         return converters;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PartialConverter addPartialConverter(PartialConverter converter)
+>             throws SecurityException {
+>         
+>         checkAlterPartialConverters();
+>         if (converter == null) {
+>             return null;
+>         }
+>         PartialConverter[] removed = new PartialConverter[1];
+>         iPartialConverters = iPartialConverters.add(converter, removed);
+>         return removed[0];
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PartialConverter removePartialConverter(PartialConverter converter)
+>             throws SecurityException {
+>         
+>         checkAlterPartialConverters();
+>         if (converter == null) {
+>             return null;
+>         }
+>         PartialConverter[] removed = new PartialConverter[1];
+>         iPartialConverters = iPartialConverters.remove(converter, removed);
+>         return removed[0];
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+>     private void checkAlterPartialConverters() throws SecurityException {
+>         SecurityManager sm = System.getSecurityManager();
+>         if (sm != null) {
+>             sm.checkPermission(new JodaTimePermission("ConverterManager.alterPartialConverters"));
+>         }
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+519a628
+>             iPartialConverters.size() + " partial," +

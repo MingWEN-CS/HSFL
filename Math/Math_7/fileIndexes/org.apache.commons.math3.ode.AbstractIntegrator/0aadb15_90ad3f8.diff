@@ -1,0 +1,54 @@
+32,33c32
+< import org.apache.commons.math3.exception.MathIllegalArgumentException;
+< import org.apache.commons.math3.exception.MathIllegalStateException;
+---
+> import org.apache.commons.math3.exception.MathInternalError;
+34a34
+> import org.apache.commons.math3.exception.NoBracketingException;
+128,130c128,135
+<         addEventHandler(handler, maxCheckInterval, convergence,
+<                         maxIterationCount,
+<                         new BracketingNthOrderBrentSolver(convergence, 5));
+---
+>         try {
+>             addEventHandler(handler, maxCheckInterval, convergence,
+>                             maxIterationCount,
+>                             new BracketingNthOrderBrentSolver(convergence, 5));
+>         } catch (NumberIsTooSmallException ntse) {
+>             
+>             throw new MathInternalError();
+>         }
+213c218,219
+<         throws MathIllegalStateException, MathIllegalArgumentException {
+---
+>         throws DimensionMismatchException, NumberIsTooSmallException,
+>                MaxCountExceededException, NoBracketingException {
+252a259,260
+> 
+> 
+254c262,263
+<         throws MathIllegalStateException, MathIllegalArgumentException;
+---
+>         throws NumberIsTooSmallException, DimensionMismatchException,
+>                MaxCountExceededException, NoBracketingException;
+261a271
+> 
+263c273
+<         throws MaxCountExceededException {
+---
+>         throws MaxCountExceededException, DimensionMismatchException {
+288a299,301
+> 
+> 
+> 
+291c304
+<         throws MathIllegalStateException {
+---
+>         throws MaxCountExceededException, DimensionMismatchException, NoBracketingException {
+400a414,415
+> 
+> 
+402c417
+<         throws NumberIsTooSmallException {
+---
+>         throws NumberIsTooSmallException, DimensionMismatchException {

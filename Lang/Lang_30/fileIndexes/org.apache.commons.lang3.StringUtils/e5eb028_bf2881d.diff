@@ -1,0 +1,260 @@
+59d58
+< import java.util.StringTokenizer;
+105c104,119
+< 
+---
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+124d137
+<        
+290d302
+<         StringBuffer buffer = new StringBuffer();
+291a304
+>         StringBuffer buffer = new StringBuffer(sz);
+1006a1020,1022
+> 
+> 
+> 
+1030a1047,1048
+> 
+> 
+1031a1050,1051
+>         
+>         
+1035c1055,1058
+<         char[] chars = str.toCharArray();
+---
+>         int len = str.length();
+>         if (len == 0) {
+>             return ArrayUtils.EMPTY_STRING_ARRAY;
+>         }
+1037,1041c1060,1069
+<         int start = 0;
+<         for (int i = 0; i < chars.length; i++) {
+<             if (chars[i] == separatorChar) {
+<                 list.add(str.substring(start, i));
+<                 start = i + 1;
+---
+>         int i =0, start = 0;
+>         boolean match = false;
+>         while (i < len) {
+>             if (str.charAt(i) == separatorChar) {
+>                 if (match) {
+>                     list.add(str.substring(start, i));
+>                     match = false;
+>                 }
+>                 start = ++i;
+>                 continue;
+1042a1071,1075
+>             match = true;
+>             i++;
+>         }
+>         if (match) {
+>             list.add(str.substring(start, i));
+1044d1076
+<         list.add(str.substring(start));
+1067a1100,1103
+> 
+> 
+> 
+> 
+1098,1099d1133
+< 
+< 
+1100a1135,1138
+>         
+>         
+>         
+>         
+1104c1142,1149
+<         StringTokenizer tok = null;
+---
+>         int len = str.length();
+>         if (len == 0) {
+>             return ArrayUtils.EMPTY_STRING_ARRAY;
+>         }
+>         List list = new ArrayList();
+>         int sizePlus1 = 1;
+>         int i =0, start = 0;
+>         boolean match = false;
+1106a1152,1167
+>             while (i < len) {
+>                 if (Character.isWhitespace(str.charAt(i))) {
+>                     if (match) {
+>                         if (sizePlus1++ == max) {
+>                             i = len;
+>                         }
+>                         list.add(str.substring(start, i));
+>                         match = false;
+>                     }
+>                     start = ++i;
+>                     continue;
+>                 }
+>                 match = true;
+>                 i++;
+>             }
+>         } else if (separatorChars.length() == 1) {
+1108,1110c1169,1184
+<             
+<             
+<             tok = new StringTokenizer(str);
+---
+>             char sep = separatorChars.charAt(0);
+>             while (i < len) {
+>                 if (str.charAt(i) == sep) {
+>                     if (match) {
+>                         if (sizePlus1++ == max) {
+>                             i = len;
+>                         }
+>                         list.add(str.substring(start, i));
+>                         match = false;
+>                     }
+>                     start = ++i;
+>                     continue;
+>                 }
+>                 match = true;
+>                 i++;
+>             }
+1112,1136c1186,1200
+<             tok = new StringTokenizer(str, separatorChars);
+<         }
+< 
+<         int listSize = tok.countTokens();
+<         if (max > 0 && listSize > max) {
+<             listSize = max;
+<         }
+< 
+<         String[] list = new String[listSize];
+<         int i = 0;
+<         int lastTokenBegin = 0;
+<         int lastTokenEnd = 0;
+<         while (tok.hasMoreTokens()) {
+<             if (max > 0 && i == listSize - 1) {
+<                 
+<                 
+<                 
+<                 String endToken = tok.nextToken();
+<                 lastTokenBegin = str.indexOf(endToken, lastTokenEnd);
+<                 list[i] = str.substring(lastTokenBegin);
+<                 break;
+<             } else {
+<                 list[i] = tok.nextToken();
+<                 lastTokenBegin = str.indexOf(list[i], lastTokenEnd);
+<                 lastTokenEnd = lastTokenBegin + list[i].length();
+---
+>             
+>             while (i < len) {
+>                 if (separatorChars.indexOf(str.charAt(i)) >= 0) {
+>                     if (match) {
+>                         if (sizePlus1++ == max) {
+>                             i = len;
+>                         }
+>                         list.add(str.substring(start, i));
+>                         match = false;
+>                     }
+>                     start = ++i;
+>                     continue;
+>                 }
+>                 match = true;
+>                 i++;
+1138d1201
+<             i++;
+1140c1203,1206
+<         return list;
+---
+>         if (match) {
+>             list.add(str.substring(start, i));
+>         }
+>         return (String[]) list.toArray(new String[list.size()]);
+1794a1861,1862
+>         
+>         
+1801c1869,1872
+<         int inputLength = str.length();
+---
+>         int inputLength;
+>         if (repeat == 1 || (inputLength = str.length()) == 0) {
+>             return str;
+>         }
+1806,1807c1877
+<         char[] input = str.toCharArray();
+<         char[] output = new char[repeat * inputLength];
+---
+>         int outputLength = inputLength * repeat;
+1810c1880,1881
+<                 char ch = input[0];
+---
+>                 char ch = str.charAt(0);
+>                 char[] output1 = new char[outputLength];
+1812c1883
+<                     output[i] = ch;
+---
+>                     output1[i] = ch;
+1814c1885
+<                 break;
+---
+>                 return new String(output1);
+1816,1817c1887,1889
+<                 char ch0 = input[0];
+<                 char ch1 = input[1];
+---
+>                 char ch0 = str.charAt(0);
+>                 char ch1 = str.charAt(1);
+>                 char[] output2 = new char[outputLength];
+1819,1820c1891,1892
+<                     output[i] = ch0;
+<                     output[i + 1] = ch1;
+---
+>                     output2[i] = ch0;
+>                     output2[i + 1] = ch1;
+1822c1894
+<                 break;
+---
+>                 return new String(output2);
+1824,1827c1896,1900
+<                 for (int i = repeat - 1; i >= 0; i--) {
+<                     System.arraycopy(input, 0, output, i * inputLength, inputLength);
+<                 }
+<                 break;            
+---
+>                 StringBuffer buf = new StringBuffer(outputLength);
+>                 for (int i = 0; i < repeat; i++) {
+>                     buf.append(str);
+>                 }        
+>                 return buf.toString();
+1829d1901
+<         return new String(output);
+2227d2298
+< 
+2256d2326
+< 
+2283d2352
+< 
+2323d2391
+< 
+2573d2640
+<         char[] strChars = str.toCharArray();
+2575c2642
+<             char ch = strChars[i];
+---
+>             char ch = str.charAt(i);
+2612d2678
+<         char[] strChars = str.toCharArray();
+2614c2680
+<             char ch = strChars[i];
+---
+>             char ch = str.charAt(i);

@@ -1,0 +1,723 @@
+12,16d11
+< 
+< 
+< 
+< 
+< 
+25a21
+> 
+26a23
+> 
+27a25,26
+>     private static final byte  NB = (byte)-1;
+> 
+29,39c28,29
+<     private static final byte ZB = (byte) 0;
+<     
+<     
+<     private static final byte NB = (byte) -1;
+<     
+<     
+<     private static final byte PB = (byte) 1;
+<     
+<     
+<     private static final short ZS = (short) 0;
+<     
+---
+>     private static final short NS = (short)-1;
+> 
+41c31,32
+<     private static final short NS = (short) -1;
+---
+>     private static final byte  PB = (byte)1;
+> 
+42a34,35
+>     private static final short PS = (short)1;
+> 
+44c37,38
+<     private static final short PS = (short) 1;
+---
+>     private static final byte  ZB = (byte)0;
+> 
+45a40,41
+>     private static final short ZS = (short)0;
+> 
+49a46
+>         super();
+51c48
+<     
+---
+> 
+60,61c57,64
+<     public static double round(double x, int scale) {
+<         return round(x, scale, BigDecimal.ROUND_HALF_UP);
+---
+> 
+> 
+>     public static int addAndCheck(int x, int y) {
+>         long s = (long)x + (long)y;
+>         if (s < Integer.MIN_VALUE || s > Integer.MAX_VALUE) {
+>             throw new ArithmeticException("overflow: add");
+>         }
+>         return (int)s;
+75,82d77
+<     public static double round(
+<         double x, int scale, int roundingMethod)
+<     {
+<         return (new BigDecimal(new Double(x).toString()).setScale(scale, roundingMethod))
+<             .doubleValue();
+<     }
+<     
+<     
+90,91c85,114
+<     public static float round(float x, int scale) {
+<         return round(x, scale, BigDecimal.ROUND_HALF_UP);
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static long binomialCoefficient(final int n, final int k) {
+>         if (n < k) {
+>             throw new IllegalArgumentException(
+>                 "must have n >= k for binomial coefficient (n,k)");
+>         }
+>         if (n < 0) {
+>             throw new IllegalArgumentException(
+>                 "must have n >= 0 for binomial coefficient (n,k)");
+>         }
+>         if ((n == k) || (k == 0)) {
+>             return 1;
+>         }
+>         if ((k == 1) || (k == n - 1)) {
+>             return n;
+>         }
+> 
+>         long result = Math.round(binomialCoefficientDouble(n, k));
+>         if (result == Long.MAX_VALUE) {
+>             throw new ArithmeticException(
+>                 "result too large to represent in a long integer");
+>         }
+>         return result;
+105,110d127
+<     public static float round(float x, int scale, int roundingMethod) {
+<         return (new BigDecimal(new Float(x).toString()).setScale(scale, roundingMethod)).floatValue();
+<     }
+<     
+<     
+< 
+122,126c139,140
+<     public static double sign(final double x) {
+<         if (Double.isNaN(x)) {
+<             return Double.NaN;
+<         }
+<         return (x == 0.0) ? 0.0 : (x > 0.0) ? 1.0 : -1.0;
+---
+>     public static double binomialCoefficientDouble(final int n, final int k) {
+>         return Math.floor(Math.exp(binomialCoefficientLog(n, k)) + 0.5);
+128c142
+<     
+---
+> 
+141,149d154
+<     public static float sign(final float x) {
+<         if (Float.isNaN(x)) {
+<             return Float.NaN;
+<         }
+<         return (x == 0.0F) ? 0.0F : (x > 0.0F) ? 1.0F : -1.0F;
+<     }
+<     
+<     
+< 
+155a161,176
+>     public static double binomialCoefficientLog(final int n, final int k) {
+>         if (n < k) {
+>             throw new IllegalArgumentException(
+>                 "must have n >= k for binomial coefficient (n,k)");
+>         }
+>         if (n < 0) {
+>             throw new IllegalArgumentException(
+>                 "must have n >= 0 for binomial coefficient (n,k)");
+>         }
+>         if ((n == k) || (k == 0)) {
+>             return 0;
+>         }
+>         if ((k == 1) || (k == n - 1)) {
+>             return Math.log((double)n);
+>         }
+>         double logSum = 0;
+156a178,181
+>         
+>         for (int i = k + 1; i <= n; i++) {
+>             logSum += Math.log((double)i);
+>         }
+157a183,186
+>         
+>         for (int i = 2; i <= n - k; i++) {
+>             logSum -= Math.log((double)i);
+>         }
+159,160c188
+<     public static byte sign(final byte x) {
+<         return (x == ZB) ? ZB : (x > ZB) ? PB : NB;
+---
+>         return logSum;
+161a190
+> 
+163d191
+<     
+169a198,203
+>     public static double cosh(double x) {
+>         return (Math.exp(x) + Math.exp(-x)) / 2.0;
+>     }
+> 
+>     
+> 
+175,176c209,211
+<     public static short sign(final short x) {
+<         return (x == ZS) ? ZS : (x > ZS) ? PS : NS;
+---
+> 
+>     public static boolean equals(double x, double y) {
+>         return ((Double.isNaN(x) && Double.isNaN(y)) || x == y);
+178c213
+<     
+---
+> 
+190,194d224
+<     public static int sign(final int x) {
+<         return (x == 0) ? 0 : (x > 0) ? 1 : -1;
+<     }
+<     
+<     
+205,206c235,242
+<     public static long sign(final long x) {
+<         return (x == 0L) ? 0L : (x > 0L) ? 1L : -1L;
+---
+> 
+>     public static long factorial(final int n) {
+>         long result = Math.round(factorialDouble(n));
+>         if (result == Long.MAX_VALUE) {
+>             throw new ArithmeticException(
+>                 "result too large to represent in a long integer");
+>         }
+>         return result;
+208c244
+<     
+---
+> 
+217,224d252
+<     public static double indicator(final double x) {
+<         if (Double.isNaN(x)) {
+<             return Double.NaN;
+<         }
+<         return (x >= 0.0) ? 1.0 : -1.0;
+<     }
+<     
+<     
+232,234c260,267
+<     public static float indicator(final float x) {
+<         if (Float.isNaN(x)) {
+<             return Float.NaN;
+---
+> 
+> 
+> 
+> 
+> 
+>     public static double factorialDouble(final int n) {
+>         if (n < 0) {
+>             throw new IllegalArgumentException("must have n >= 0 for n!");
+236c269
+<         return (x >= 0.0F) ? 1.0F : -1.0F;
+---
+>         return Math.floor(Math.exp(factorialLog(n)) + 0.5);
+238c271
+<     
+---
+> 
+246,250d278
+<     public static byte indicator(final byte x) {
+<         return (x >= ZB) ? PB : NB;
+<     }
+<     
+<     
+257,258c285,293
+<     public static short indicator(final short x) {
+<         return (x >= ZS) ? PS : NS;
+---
+>     public static double factorialLog(final int n) {
+>         if (n < 0) {
+>             throw new IllegalArgumentException("must have n > 0 for n!");
+>         }
+>         double logSum = 0;
+>         for (int i = 2; i <= n; i++) {
+>             logSum += Math.log((double)i);
+>         }
+>         return logSum;
+260c295
+<     
+---
+> 
+268,272d302
+<     public static int indicator(final int x) {
+<         return (x >= 0) ? 1 : -1;
+<     }
+<     
+<     
+279,280c309,357
+<     public static long indicator(final long x) {
+<         return (x >= 0L) ? 1L : -1L;
+---
+>     public static int gcd(int u, int v) {
+>         if (u * v == 0) {
+>             return (Math.abs(u) + Math.abs(v));
+>         }
+>         
+>         
+>         
+>         
+>         
+>         if (u > 0) {
+>             u = -u;
+>         } 
+>         if (v > 0) {
+>             v = -v;
+>         } 
+>         
+>         int k = 0;
+>         while ((u & 1) == 0 && (v & 1) == 0 && k < 31) { 
+>                                                             
+>             u /= 2;
+>             v /= 2;
+>             k++; 
+>         }
+>         if (k == 31) {
+>             throw new ArithmeticException("overflow: gcd is 2^31");
+>         }
+>         
+>         
+>         int t = ((u & 1) == 1) ? v : -(u / 2);
+>         
+>         
+>         do {
+>             
+>             
+>             while ((t & 1) == 0) { 
+>                 t /= 2; 
+>             }
+>             
+>             if (t > 0) {
+>                 u = -t;
+>             } else {
+>                 v = t;
+>             }
+>             
+>             t = (v - u) / 2;
+>             
+>             
+>         } while (t != 0);
+>         return -u * (1 << k); 
+281a359
+> 
+283d360
+<     
+288a366,374
+>     public static int hash(double value) {
+>         long bits = Double.doubleToLongBits(value);
+>         return (int)(bits ^ (bits >>> 32));
+>     }
+> 
+>     
+> 
+> 
+> 
+291a378,380
+>     public static byte indicator(final byte x) {
+>         return (x >= ZB) ? PB : NB;
+>     }
+292a382
+>     
+299a390,395
+>     public static double indicator(final double x) {
+>         if (Double.isNaN(x)) {
+>             return Double.NaN;
+>         }
+>         return (x >= 0.0) ? 1.0 : -1.0;
+>     }
+300a397
+>     
+307,326c404,406
+<     public static long binomialCoefficient(final int n, final int k) {
+<         if (n < k) {
+<             throw new IllegalArgumentException(
+<             "must have n >= k for binomial coefficient (n,k)");
+<         }
+<         if (n < 0) {
+<             throw new IllegalArgumentException(
+<             "must have n >= 0 for binomial coefficient (n,k)");
+<         }
+<         if ((n == k) || (k == 0)) {
+<             return 1;
+<         }
+<         if ((k == 1) || (k == n - 1)) {
+<             return n;
+<         }
+<         
+<         long result = Math.round(binomialCoefficientDouble(n, k));
+<         if (result == Long.MAX_VALUE) {
+<             throw new ArithmeticException(
+<             "result too large to represent in a long integer");
+---
+>     public static float indicator(final float x) {
+>         if (Float.isNaN(x)) {
+>             return Float.NaN;
+328c408
+<         return result;
+---
+>         return (x >= 0.0F) ? 1.0F : -1.0F;
+330,332d409
+<     
+<     
+< 
+333a411
+>     
+338a417,419
+>     public static int indicator(final int x) {
+>         return (x >= 0) ? 1 : -1;
+>     }
+339a421
+>     
+344a427,429
+>     public static long indicator(final long x) {
+>         return (x >= 0L) ? 1L : -1L;
+>     }
+345a431
+>     
+352,353c438,439
+<     public static double binomialCoefficientDouble(final int n, final int k) {
+<         return Math.floor(Math.exp(binomialCoefficientLog(n, k)) + 0.5);
+---
+>     public static short indicator(final short x) {
+>         return (x >= ZS) ? PS : NS;
+355c441
+<     
+---
+> 
+364a451,453
+>     public static int lcm(int a, int b) {
+>         return Math.abs(mulAndCheck(a / gcd(a, b), b));
+>     }
+365a455
+>     
+373,397c463,468
+<     public static double binomialCoefficientLog(final int n, final int k) {
+<         if (n < k) {
+<             throw new IllegalArgumentException(
+<             "must have n >= k for binomial coefficient (n,k)");
+<         }
+<         if (n < 0) {
+<             throw new IllegalArgumentException(
+<             "must have n >= 0 for binomial coefficient (n,k)");
+<         }
+<         if ((n == k) || (k == 0)) {
+<             return 0;
+<         }
+<         if ((k == 1) || (k == n - 1)) {
+<             return Math.log((double) n);
+<         }
+<         double logSum = 0;
+<         
+<         
+<         for (int i = k + 1; i <= n; i++) {
+<             logSum += Math.log((double) i);
+<         }
+<         
+<         
+<         for (int i = 2; i <= n - k; i++) {
+<             logSum -= Math.log((double) i);
+---
+> 
+> 
+>     public static int mulAndCheck(int x, int y) {
+>         long m = ((long)x) * ((long)y);
+>         if (m < Integer.MIN_VALUE || m > Integer.MAX_VALUE) {
+>             throw new ArithmeticException("overflow: mul");
+399,400c470
+<         
+<         return logSum;
+---
+>         return (int)m;
+402,404d471
+<     
+<     
+< 
+405a473
+>     
+413a482,484
+>     public static double round(double x, int scale) {
+>         return round(x, scale, BigDecimal.ROUND_HALF_UP);
+>     }
+414a486
+>     
+426,432c498,501
+<     public static long factorial(final int n) {
+<         long result = Math.round(factorialDouble(n));
+<         if (result == Long.MAX_VALUE) {
+<             throw new ArithmeticException(
+<             "result too large to represent in a long integer");
+<         }
+<         return result;
+---
+>     public static double round(double x, int scale, int roundingMethod) {
+>         double sign = sign(x);
+>         double factor = Math.pow(10.0, scale) * sign;
+>         return roundUnscaled(x * factor, sign, roundingMethod) / factor;
+434c503
+<     
+---
+> 
+443a513,515
+>     public static float round(float x, int scale) {
+>         return round(x, scale, BigDecimal.ROUND_HALF_UP);
+>     }
+444a517
+>     
+456,460c529,532
+<     public static double factorialDouble(final int n) {
+<         if (n < 0) {
+<             throw new IllegalArgumentException("must have n >= 0 for n!");
+<         }
+<         return Math.floor(Math.exp(factorialLog(n)) + 0.5);
+---
+>     public static float round(float x, int scale, int roundingMethod) {
+>         float sign = sign(x);
+>         float factor = (float)Math.pow(10.0f, scale) * sign;
+>         return (float)roundUnscaled(x * factor, sign, roundingMethod) / factor;
+462c534
+<     
+---
+> 
+475,477c547,574
+<     public static double factorialLog(final int n) {
+<         if (n < 0) {
+<             throw new IllegalArgumentException("must have n > 0 for n!");
+---
+>     private static double roundUnscaled(double unscaled, double sign,
+>         int roundingMethod) {
+>         switch (roundingMethod) {
+>         case BigDecimal.ROUND_CEILING :
+>             if (sign == -1) {
+>                 unscaled = Math.floor(unscaled);
+>             } else {
+>                 unscaled = Math.ceil(unscaled);
+>             }
+>             break;
+>         case BigDecimal.ROUND_DOWN :
+>             unscaled = Math.floor(unscaled);
+>             break;
+>         case BigDecimal.ROUND_FLOOR :
+>             if (sign == -1) {
+>                 unscaled = Math.ceil(unscaled);
+>             } else {
+>                 unscaled = Math.floor(unscaled);
+>             }
+>             break;
+>         case BigDecimal.ROUND_HALF_DOWN : {
+>             double fraction = Math.abs(unscaled - Math.floor(unscaled));
+>             if (fraction > 0.5) {
+>                 unscaled = Math.ceil(unscaled);
+>             } else {
+>                 unscaled = Math.floor(unscaled);
+>             }
+>             break;
+479,481c576,590
+<         double logSum = 0;
+<         for (int i = 2; i <= n; i++) {
+<             logSum += Math.log((double) i);
+---
+>         case BigDecimal.ROUND_HALF_EVEN : {
+>             double fraction = Math.abs(unscaled - Math.floor(unscaled));
+>             if (fraction > 0.5) {
+>                 unscaled = Math.ceil(unscaled);
+>             } else if (fraction < 0.5) {
+>                 unscaled = Math.floor(unscaled);
+>             } else {
+>                 if (Math.floor(unscaled) / 2.0 == Math.floor(Math
+>                     .floor(unscaled) / 2.0)) { 
+>                     unscaled = Math.floor(unscaled);
+>                 } else { 
+>                     unscaled = Math.ceil(unscaled);
+>                 }
+>             }
+>             break;
+483c592,612
+<         return logSum;
+---
+>         case BigDecimal.ROUND_HALF_UP : {
+>             double fraction = Math.abs(unscaled - Math.floor(unscaled));
+>             if (fraction >= 0.5) {
+>                 unscaled = Math.ceil(unscaled);
+>             } else {
+>                 unscaled = Math.floor(unscaled);
+>             }
+>             break;
+>         }
+>         case BigDecimal.ROUND_UNNECESSARY :
+>             if (unscaled != Math.floor(unscaled)) {
+>                 throw new ArithmeticException("Inexact result from rounding");
+>             }
+>             break;
+>         case BigDecimal.ROUND_UP :
+>             unscaled = Math.ceil(unscaled);
+>             break;
+>         default :
+>             throw new IllegalArgumentException("Invalid rounding method.");
+>         }
+>         return unscaled;
+485c614
+<     
+---
+> 
+493,494c622,626
+<     public static double cosh(double x) {
+<         return (Math.exp(x) + Math.exp(-x)) / 2.0;
+---
+> 
+> 
+> 
+>     public static byte sign(final byte x) {
+>         return (x == ZB) ? ZB : (x > ZB) ? PB : NB;
+496c628
+<     
+---
+> 
+504,508d635
+<     public static double sinh(double x) {
+<         return (Math.exp(x) - Math.exp(-x)) / 2.0;
+<     }
+<     
+<     
+514,516c641,645
+<     public static int hash(double value) {
+<         long bits = Double.doubleToLongBits(value);
+<         return (int)(bits ^ (bits >>> 32));
+---
+>     public static double sign(final double x) {
+>         if (Double.isNaN(x)) {
+>             return Double.NaN;
+>         }
+>         return (x == 0.0) ? 0.0 : (x > 0.0) ? 1.0 : -1.0;
+518c647
+<     
+---
+> 
+527,528c656,663
+<     public static boolean equals(double x, double y) {
+<         return ((Double.isNaN(x) && Double.isNaN(y)) || x == y);
+---
+> 
+> 
+> 
+>     public static float sign(final float x) {
+>         if (Float.isNaN(x)) {
+>             return Float.NaN;
+>         }
+>         return (x == 0.0F) ? 0.0F : (x > 0.0F) ? 1.0F : -1.0F;
+540,541c675,677
+<     public static int lcm(int a, int b) {
+<         return Math.abs(mulAndCheck(a / gcd(a, b) , b));
+---
+> 
+>     public static int sign(final int x) {
+>         return (x == 0) ? 0 : (x > 0) ? 1 : -1;
+554,596c690,691
+< 
+<     public static int gcd(int u, int v) {
+<         if (u * v == 0) {
+<             return (Math.abs(u) + Math.abs(v));
+<         }
+<         
+<         
+<         
+<         
+<         
+<         if (u>0) { u=-u; } 
+<         if (v>0) { v=-v; } 
+<         
+<         int k=0;
+<         while ((u&1)==0 && (v&1)==0 && k<31) { 
+<             u/=2; v/=2; k++; 
+<         }
+<         if (k==31) {
+<             throw new ArithmeticException("overflow: gcd is 2^31");
+<         }
+<         
+<         
+<         int t = ((u&1)==1) ? v : -(u/2);
+<         
+<         
+<         do {
+<             
+<             
+<             while ((t&1)==0) { 
+<                 t/=2; 
+<             }
+<             
+<             if (t>0) {
+<                 u = -t;
+<             } else {
+<                 v = t;
+<             }
+<             
+<             t = (v - u)/2;
+<             
+<             
+<         } while (t!=0);
+<         return -u*(1<<k); 
+---
+>     public static long sign(final long x) {
+>         return (x == 0L) ? 0L : (x > 0L) ? 1L : -1L;
+609,619d703
+<     public static int mulAndCheck(int x, int y) {
+<         long m = ((long)x)*((long)y);
+<         if (m < Integer.MIN_VALUE ||
+<                 m > Integer.MAX_VALUE) {
+<             throw new ArithmeticException("overflow: mul");
+<         }
+<         return (int)m;
+<     }
+<     
+<     
+< 
+620a705,707
+>     public static short sign(final short x) {
+>         return (x == ZS) ? ZS : (x > ZS) ? PS : NS;
+>     }
+621a709
+>     
+628,634c716,717
+<     public static int addAndCheck(int x, int y) {
+<         long s = (long)x+(long)y;
+<         if (s < Integer.MIN_VALUE ||
+<                 s > Integer.MAX_VALUE) {
+<             throw new ArithmeticException("overflow: add");
+<         }
+<         return (int)s;
+---
+>     public static double sinh(double x) {
+>         return (Math.exp(x) - Math.exp(-x)) / 2.0;
+636c719
+<     
+---
+> 
+648,650c731,732
+<         long s = (long)x-(long)y;
+<         if (s < Integer.MIN_VALUE ||
+<                 s > Integer.MAX_VALUE) {
+---
+>         long s = (long)x - (long)y;
+>         if (s < Integer.MIN_VALUE || s > Integer.MAX_VALUE) {

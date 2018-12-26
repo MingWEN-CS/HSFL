@@ -1,0 +1,75 @@
+86c86
+<         return escapeJavaStyleString(str, false);
+---
+>         return escapeJavaStyleString(str, false, false);
+102c102
+<         escapeJavaStyleString(out, str, false);
+---
+>         escapeJavaStyleString(out, str, false, false);
+127c127
+<         return escapeJavaStyleString(str, true);
+---
+>         return escapeJavaStyleString(str, true, true);
+143c143
+<         escapeJavaStyleString(out, str, true);
+---
+>         escapeJavaStyleString(out, str, true, true);
+153c153,154
+<     private static String escapeJavaStyleString(String str, boolean escapeSingleQuotes) {
+---
+> 
+>     private static String escapeJavaStyleString(String str, boolean escapeSingleQuotes, boolean escapeForwardSlash) {
+159c160
+<             escapeJavaStyleString(writer, str, escapeSingleQuotes);
+---
+>             escapeJavaStyleString(writer, str, escapeSingleQuotes, escapeForwardSlash);
+176c177,179
+<     private static void escapeJavaStyleString(Writer out, String str, boolean escapeSingleQuote) throws IOException {
+---
+> 
+>     private static void escapeJavaStyleString(Writer out, String str, boolean escapeSingleQuote,
+>             boolean escapeForwardSlash) throws IOException {
+197c200
+<                     case '\b':
+---
+>                     case '\b' :
+201c204
+<                     case '\n':
+---
+>                     case '\n' :
+205c208
+<                     case '\t':
+---
+>                     case '\t' :
+209c212
+<                     case '\f':
+---
+>                     case '\f' :
+213c216
+<                     case '\r':
+---
+>                     case '\r' :
+227c230
+<                     case '\'':
+---
+>                     case '\'' :
+229c232
+<                           out.write('\\');
+---
+>                             out.write('\\');
+233c236
+<                     case '"':
+---
+>                     case '"' :
+237c240
+<                     case '\\':
+---
+>                     case '\\' :
+241,242c244,247
+<                     case '/':
+<                         out.write('\\');
+---
+>                     case '/' :
+>                         if (escapeForwardSlash) {
+>                             out.write('\\');
+>                         }

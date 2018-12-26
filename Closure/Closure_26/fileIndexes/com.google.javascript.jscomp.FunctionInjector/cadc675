@@ -1,0 +1,870 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.ExpressionDecomposer.DecompositionType;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+
+class FunctionInjector {
+
+  private final AbstractCompiler compiler;
+  private final Supplier<String> safeNameIdSupplier;
+  private final boolean allowDecomposition;
+  private Set<String> knownConstants = Sets.newHashSet();
+
+  
+
+
+
+
+  public FunctionInjector(
+      AbstractCompiler compiler,
+      Supplier<String> safeNameIdSupplier,
+      boolean allowDecomposition) {
+    Preconditions.checkNotNull(compiler);
+    Preconditions.checkNotNull(safeNameIdSupplier);
+    this.compiler = compiler;
+    this.safeNameIdSupplier = safeNameIdSupplier;
+    this.allowDecomposition = allowDecomposition;
+  }
+
+  
+  enum InliningMode {
+    
+
+
+
+    DIRECT,
+
+    
+
+
+
+    BLOCK
+  }
+
+  
+  static class Reference {
+    final Node callNode;
+    final JSModule module;
+    final InliningMode mode;
+
+    Reference(Node callNode, JSModule module, InliningMode mode){
+      this.callNode = callNode;
+      this.module = module;
+      this.mode = mode;
+    }
+  }
+
+  
+
+
+
+
+
+  private static final int NAME_COST_ESTIMATE =
+      InlineCostEstimator.ESTIMATED_IDENTIFIER_COST;
+
+  
+  private static final int COMMA_COST = 1;
+
+  
+  private static final int PAREN_COST = 2;
+
+
+  
+
+
+
+
+
+
+
+  boolean doesFunctionMeetMinimumRequirements(
+      String fnName, Node fnNode) {
+    Node block = NodeUtil.getFunctionBody(fnNode);
+
+    
+    
+    if (NodeUtil.isNameReferenced(block, fnName)) {
+      return false;
+    }
+
+    String fnRecursionName = fnNode.getFirstChild().getString();
+    if (fnRecursionName != null
+        && !fnRecursionName.isEmpty()
+        && !fnRecursionName.equals(fnName)
+        && NodeUtil.isNameReferenced(block, fnRecursionName)) {
+      return false;
+    }
+
+    
+    if (NodeUtil.isNameReferenced(block, "arguments")) {
+      return false;
+    }
+
+    
+    
+    if (NodeUtil.containsFunctionDeclaration(block)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  
+
+
+
+
+
+
+
+
+  CanInlineResult canInlineReferenceToFunction(NodeTraversal t,
+      Node callNode, Node fnNode, Set<String> needAliases,
+      InliningMode mode, boolean referencesThis) {
+
+    
+    if (!isSupportedCallType(callNode)) {
+      return CanInlineResult.NO;
+    }
+
+    
+    if (referencesThis && !NodeUtil.isFunctionObjectCall(callNode)) {
+      
+      
+      return CanInlineResult.NO;
+    }
+
+    if (mode == InliningMode.DIRECT) {
+      return canInlineReferenceDirectly(callNode, fnNode);
+    } else {
+      return canInlineReferenceAsStatementBlock(
+          t, callNode, fnNode, needAliases);
+    }
+  }
+
+  
+
+
+
+
+  private boolean isSupportedCallType(Node callNode) {
+    if (callNode.getFirstChild().getType() != Token.NAME) {
+      if (NodeUtil.isFunctionObjectCall(callNode)) {
+        Node thisValue = callNode.getFirstChild().getNext();
+        if (thisValue == null || thisValue.getType() != Token.THIS) {
+          return false;
+        }
+      } else if (NodeUtil.isFunctionObjectApply(callNode)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  
+
+
+  Node inline(
+      NodeTraversal t, Node callNode, String fnName, Node fnNode,
+      InliningMode mode) {
+    Preconditions.checkState(compiler.isNormalized());
+
+    if (mode == InliningMode.DIRECT) {
+      return inlineReturnValue(callNode, fnNode);
+    } else {
+      return inlineFunction(callNode, fnNode, fnName);
+    }
+  }
+
+  
+
+
+
+
+  private Node inlineReturnValue(Node callNode, Node fnNode) {
+    Node block = fnNode.getLastChild();
+    Node callParentNode = callNode.getParent();
+
+    
+    
+    
+
+    
+    Map<String, Node> argMap =
+        FunctionArgumentInjector.getFunctionCallParameterMap(
+            fnNode, callNode, this.safeNameIdSupplier);
+
+    Node newExpression;
+    if (!block.hasChildren()) {
+      Node srcLocation = block;
+      newExpression = NodeUtil.newUndefinedNode(srcLocation);
+    } else {
+      Node returnNode = block.getFirstChild();
+      Preconditions.checkArgument(returnNode.getType() == Token.RETURN);
+
+      
+      Node safeReturnNode = returnNode.cloneTree();
+      Node inlineResult = FunctionArgumentInjector.inject(
+          safeReturnNode, null, argMap);
+      Preconditions.checkArgument(safeReturnNode == inlineResult);
+      newExpression = safeReturnNode.removeFirstChild();
+    }
+
+    callParentNode.replaceChild(callNode, newExpression);
+    return newExpression;
+  }
+
+  
+
+
+  private enum CallSiteType {
+
+    
+
+
+
+    UNSUPPORTED,
+
+    
+
+
+
+
+    SIMPLE_CALL,
+
+    
+
+
+
+
+
+
+
+    SIMPLE_ASSIGNMENT,
+
+    
+
+
+
+
+
+
+
+
+    VAR_DECL_SIMPLE_ASSIGNMENT,
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    EXPRESSION,
+
+    
+
+
+
+
+    DECOMPOSABLE_EXPRESSION,
+  }
+
+  
+
+
+  private CallSiteType classifyCallSite(Node callNode) {
+    Node parent = callNode.getParent();
+    Node grandParent = parent.getParent();
+
+    
+    if (NodeUtil.isExprCall(parent)) {
+      
+      return CallSiteType.SIMPLE_CALL;
+    } else if (NodeUtil.isExprAssign(grandParent)
+        && !NodeUtil.isLhs(callNode, parent)
+        && parent.getFirstChild().getType() == Token.NAME
+        && !NodeUtil.isConstantName(parent.getFirstChild())) {
+      
+      return CallSiteType.SIMPLE_ASSIGNMENT;
+    } else if (parent.getType() == Token.NAME
+        && !NodeUtil.isConstantName(parent)
+        && grandParent.getType() == Token.VAR
+        && grandParent.hasOneChild()) {
+      
+      
+      
+      return CallSiteType.VAR_DECL_SIMPLE_ASSIGNMENT;
+    } else {
+      Node expressionRoot = ExpressionDecomposer.findExpressionRoot(callNode);
+      if (expressionRoot != null) {
+        ExpressionDecomposer decomposer = new ExpressionDecomposer(
+            compiler, safeNameIdSupplier, knownConstants);
+        DecompositionType type = decomposer.canExposeExpression(
+            callNode);
+        if (type == DecompositionType.MOVABLE) {
+          return CallSiteType.EXPRESSION;
+        } else if (type == DecompositionType.DECOMPOSABLE) {
+          return CallSiteType.DECOMPOSABLE_EXPRESSION;
+        } else {
+          Preconditions.checkState(type == DecompositionType.UNDECOMPOSABLE);
+        }
+      }
+    }
+
+    return CallSiteType.UNSUPPORTED;
+  }
+
+  
+
+
+
+
+  private Node inlineFunction(
+      Node callNode, Node fnNode, String fnName) {
+    Node parent = callNode.getParent();
+    Node grandParent = parent.getParent();
+
+    
+    
+    CallSiteType callSiteType = classifyCallSite(callNode);
+    Preconditions.checkArgument(callSiteType != CallSiteType.UNSUPPORTED);
+
+    
+    
+    
+    String resultName = null;
+    boolean needsDefaultReturnResult = true;
+    switch (callSiteType) {
+      case SIMPLE_ASSIGNMENT:
+        resultName = parent.getFirstChild().getString();
+        break;
+
+      case VAR_DECL_SIMPLE_ASSIGNMENT:
+        resultName = parent.getString();
+        break;
+
+      case SIMPLE_CALL:
+        resultName = null;  
+        needsDefaultReturnResult = false;
+        break;
+
+      case EXPRESSION:
+        resultName = getUniqueResultName();
+        needsDefaultReturnResult = false; 
+                                          
+        break;
+
+      case DECOMPOSABLE_EXPRESSION:
+        throw new IllegalStateException(
+            "Decomposable expressions must decomposed before inlining.");
+
+      default:
+        throw new IllegalStateException("Unexpected call site type.");
+    }
+
+    boolean isCallInLoop = isCallWithinLoop(callNode);
+
+    FunctionToBlockMutator mutator = new FunctionToBlockMutator(
+        compiler, this.safeNameIdSupplier);
+
+    Node newBlock = mutator.mutate(
+        fnName, fnNode, callNode, resultName,
+        needsDefaultReturnResult, isCallInLoop);
+
+    
+    
+    
+    Node greatGrandParent = grandParent.getParent();
+    switch (callSiteType) {
+      case VAR_DECL_SIMPLE_ASSIGNMENT:
+        
+        parent.removeChild(parent.getFirstChild());
+        Preconditions.checkState(parent.getFirstChild() == null);
+        
+        greatGrandParent.addChildAfter(newBlock, grandParent);
+        break;
+
+      case SIMPLE_ASSIGNMENT:
+        
+        
+        Preconditions.checkState(NodeUtil.isExpressionNode(grandParent));
+        greatGrandParent.replaceChild(grandParent, newBlock);
+        break;
+
+      case SIMPLE_CALL:
+        
+        Preconditions.checkState(NodeUtil.isExpressionNode(parent));
+        grandParent.replaceChild(parent, newBlock);
+        break;
+
+      case EXPRESSION:
+        
+        
+        
+        
+        Node injectionPoint = ExpressionDecomposer.findInjectionPoint(callNode);
+        Preconditions.checkNotNull(injectionPoint);
+        Node injectionPointParent = injectionPoint.getParent();
+        Preconditions.checkNotNull(injectionPointParent);
+        Preconditions.checkState(
+            NodeUtil.isStatementBlock(injectionPointParent));
+
+        
+        newBlock.addChildrenToFront(
+            NodeUtil.newVarNode(resultName, null)
+                 .copyInformationFromForTree(callNode));
+        
+        
+        injectionPointParent.addChildBefore(newBlock, injectionPoint);
+        
+        
+        parent.replaceChild(callNode, Node.newString(Token.NAME, resultName));
+        break;
+
+      default:
+        throw new IllegalStateException("Unexpected call site type.");
+    }
+
+    return newBlock;
+  }
+
+  
+
+
+
+  private boolean isCallWithinLoop(Node callNode) {
+    for (Node parent : callNode.getAncestors()) {
+      if (NodeUtil.isLoopStructure(parent)) {
+        return true;
+      }
+
+      if (NodeUtil.isFunction(parent)) {
+        break;
+      }
+    }
+    return false;
+  }
+
+
+  
+
+
+
+  boolean isDirectCallNodeReplacementPossible(Node fnNode) {
+    
+    Node block = NodeUtil.getFunctionBody(fnNode);
+
+    
+    
+    if (!block.hasChildren()) {
+      
+      return true;
+    } else if (block.hasOneChild()) {
+      
+      if (block.getFirstChild().getType() == Token.RETURN
+          && block.getFirstChild().getFirstChild() != null) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  enum CanInlineResult {
+    YES,
+    AFTER_DECOMPOSITION,
+    NO
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+  private CanInlineResult canInlineReferenceAsStatementBlock(
+      NodeTraversal t, Node callNode, Node fnNode, Set<String> namesToAlias) {
+    CallSiteType callSiteType = classifyCallSite(callNode);
+    if (callSiteType == CallSiteType.UNSUPPORTED) {
+      return CanInlineResult.NO;
+    }
+
+    if (!allowDecomposition
+        && callSiteType == CallSiteType.DECOMPOSABLE_EXPRESSION) {
+      return CanInlineResult.NO;
+    }
+
+    if (!callMeetsBlockInliningRequirements(
+            t, callNode, fnNode, namesToAlias)) {
+      return CanInlineResult.NO;
+    }
+
+    if (callSiteType == CallSiteType.DECOMPOSABLE_EXPRESSION)  {
+      return CanInlineResult.AFTER_DECOMPOSITION;
+    } else {
+      return CanInlineResult.YES;
+    }
+  }
+
+  
+
+
+
+
+  private boolean callMeetsBlockInliningRequirements(
+      NodeTraversal t, Node callNode, Node fnNode, Set<String> namesToAlias) {
+    
+    
+
+    
+    
+    
+
+    
+    
+    
+    boolean fnContainsVars = NodeUtil.isNodeTypeReferenced(
+        NodeUtil.getFunctionBody(fnNode), Token.VAR);
+    boolean callerContainsFunction = false;
+    if (!t.inGlobalScope()) {
+      Node fnCaller = t.getScopeRoot();
+      Node fnCallerBody = fnCaller.getLastChild();
+
+      callerContainsFunction = NodeUtil.containsFunctionDeclaration(
+          fnCallerBody);
+    }
+
+    if (fnContainsVars && callerContainsFunction) {
+      return false;
+    }
+
+    
+    
+    if (callerContainsFunction) {
+      Map<String, Node> args =
+          FunctionArgumentInjector.getFunctionCallParameterMap(
+              fnNode, callNode, this.safeNameIdSupplier);
+      boolean hasArgs = !args.isEmpty();
+      if (hasArgs) {
+        
+        Set<String> allNamesToAlias = Sets.newHashSet(namesToAlias);
+        FunctionArgumentInjector.maybeAddTempsForCallArguments(
+            fnNode, args, allNamesToAlias, compiler.getCodingConvention());
+        if (!allNamesToAlias.isEmpty()) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  private CanInlineResult canInlineReferenceDirectly(
+      Node callNode, Node fnNode) {
+    if (!isDirectCallNodeReplacementPossible(fnNode)) {
+      return CanInlineResult.NO;
+    }
+
+    Node block = fnNode.getLastChild();
+
+    
+    Node cArg = callNode.getFirstChild().getNext();
+
+    
+    
+    
+    if (callNode.getFirstChild().getType() != Token.NAME) {
+      if (NodeUtil.isFunctionObjectCall(callNode)) {
+        
+        Preconditions.checkNotNull(cArg);
+        Preconditions.checkState(cArg.getType() == Token.THIS);
+        cArg = cArg.getNext();
+      } else {
+        
+        Preconditions.checkState(!NodeUtil.isFunctionObjectApply(callNode));
+      }
+    }
+
+    
+    Node fnParam = NodeUtil.getFnParameters(fnNode).getFirstChild();
+    while (cArg != null || fnParam != null) {
+      
+      if (fnParam != null) {
+        if (cArg != null) {
+          
+          
+          
+          if (NodeUtil.mayEffectMutableState(cArg)
+              && NodeUtil.getNameReferenceCount(
+                  block, fnParam.getString()) > 1) {
+            return CanInlineResult.NO;
+          }
+        }
+
+        
+        fnParam = fnParam.getNext();
+      }
+
+      
+      
+      if (cArg != null) {
+        if (NodeUtil.mayHaveSideEffects(cArg)) {
+          return CanInlineResult.NO;
+        }
+        cArg = cArg.getNext();
+      }
+    }
+
+    return CanInlineResult.YES;
+  }
+
+  
+
+
+  private String getUniqueResultName() {
+    return "JSCompiler_inline_result_" + safeNameIdSupplier.get();
+  }
+
+  
+
+
+
+  boolean inliningLowersCost(
+      JSModule fnModule, Node fnNode, Collection<? extends Reference> refs,
+      Set<String> namesToAlias, boolean isRemovable, boolean referencesThis) {
+    int referenceCount = refs.size();
+    if (referenceCount == 0) {
+      return true;
+    }
+
+    int referencesUsingBlockInlining = 0;
+
+    boolean checkModules = isRemovable && fnModule != null;
+    JSModuleGraph moduleGraph = compiler.getModuleGraph();
+
+    for (Reference ref : refs) {
+      if (ref.mode == InliningMode.BLOCK) {
+        referencesUsingBlockInlining++;
+      }
+
+      
+      if (checkModules && ref.module != null) {
+        if (ref.module != fnModule &&
+            !moduleGraph.dependsOn(ref.module, fnModule)) {
+          
+          
+          isRemovable = false;
+          checkModules = false;  
+        }
+      }
+    }
+
+    int referencesUsingDirectInlining = referenceCount -
+        referencesUsingBlockInlining;
+
+    
+    
+    
+    
+    
+    
+    if (referenceCount == 1 && isRemovable &&
+        referencesUsingDirectInlining == 1) {
+      return true;
+    }
+
+    int callCost = estimateCallCost(fnNode, referencesThis);
+    int overallCallCost = callCost * referenceCount;
+
+    int costDeltaDirect = inlineCostDelta(
+        fnNode, namesToAlias, InliningMode.DIRECT);
+    int costDeltaBlock = inlineCostDelta(
+        fnNode, namesToAlias, InliningMode.BLOCK);
+
+    return doesLowerCost(fnNode, overallCallCost,
+        referencesUsingDirectInlining, costDeltaDirect,
+        referencesUsingBlockInlining, costDeltaBlock,
+        isRemovable);
+  }
+
+  
+
+
+  private boolean doesLowerCost(
+      Node fnNode, int callCost,
+      int directInlines, int costDeltaDirect,
+      int blockInlines, int costDeltaBlock,
+      boolean removable) {
+
+    
+    
+    
+    
+
+    int fnInstanceCount = directInlines + blockInlines - (removable ? 1 : 0);
+    
+    if (fnInstanceCount == 0) {
+      
+      
+      
+      if (blockInlines > 0 && costDeltaBlock > 0) {
+        return false;
+      }
+      return true;
+    }
+
+    int costDelta = (directInlines * costDeltaDirect) +
+        (blockInlines * costDeltaBlock);
+    int threshold = (callCost - costDelta) / fnInstanceCount;
+
+    return InlineCostEstimator.getCost(fnNode, threshold + 1) <= threshold;
+  }
+
+  
+
+
+
+
+  private static int estimateCallCost(Node fnNode, boolean referencesThis) {
+    Node argsNode = NodeUtil.getFnParameters(fnNode);
+    int numArgs = argsNode.getChildCount();
+
+    int callCost = NAME_COST_ESTIMATE + PAREN_COST;
+    if (numArgs > 0) {
+      callCost += (numArgs * NAME_COST_ESTIMATE) + ((numArgs - 1) * COMMA_COST);
+    }
+
+    if (referencesThis) {
+      
+      
+      
+      
+      callCost += 5 + 5;  
+    }
+
+    return callCost;
+  }
+
+  
+
+
+
+  private static int inlineCostDelta(
+      Node fnNode, Set<String> namesToAlias, InliningMode mode) {
+    
+    
+    int paramCount = NodeUtil.getFnParameters(fnNode).getChildCount();
+    int commaCount = (paramCount > 1) ? paramCount - 1 : 0;
+    int costDeltaFunctionOverhead = 15 + commaCount +
+        (paramCount * InlineCostEstimator.ESTIMATED_IDENTIFIER_COST);
+
+    Node block = fnNode.getLastChild();
+    if (!block.hasChildren()) {
+      
+      return -costDeltaFunctionOverhead;
+    }
+
+    if (mode == InliningMode.DIRECT) {
+      
+      
+      return -(costDeltaFunctionOverhead + 7);
+    } else {
+      int aliasCount = namesToAlias.size();
+
+      
+      
+      
+
+      
+      
+      
+      
+      
+      final int INLINE_BLOCK_OVERHEAD = 4; 
+      final int PER_RETURN_OVERHEAD = 2;   
+      final int PER_RETURN_RESULT_OVERHEAD = 3; 
+      final int PER_ALIAS_OVERHEAD = 3; 
+
+      
+      
+      
+      int returnCount = NodeUtil.getNodeTypeReferenceCount(block, Token.RETURN);
+      int resultCount = (returnCount > 0) ? returnCount - 1 : 0;
+      int baseOverhead = (returnCount > 0) ? INLINE_BLOCK_OVERHEAD : 0;
+
+      int overhead = baseOverhead
+          + returnCount * PER_RETURN_OVERHEAD
+          + resultCount * PER_RETURN_RESULT_OVERHEAD
+          + aliasCount * PER_ALIAS_OVERHEAD;
+
+      return (overhead - costDeltaFunctionOverhead);
+    }
+  }
+
+  
+
+
+
+  public void setKnownConstants(Set<String> knownConstants) {
+    
+    
+    Preconditions.checkState(this.knownConstants.isEmpty());
+    this.knownConstants = knownConstants;
+  }
+}

@@ -1,0 +1,75 @@
+131c131,142
+<   protected void initOptionsFromFlags(CompilerOptions options) {
+---
+>   
+>   @Deprecated
+>   protected void initOptionsFromFlags(CompilerOptions options) {}
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   final protected void setRunOptions(CompilerOptions options)
+>       throws FlagUsageException, IOException {
+145c156,157
+<   }
+---
+>     options.setCodingConvention(config.codingConvention);
+>     options.setSummaryDetailLevel(config.summaryDetailLevel);
+147,149c159,160
+<   final protected A getCompiler() {
+<     return compiler;
+<   }
+---
+>     options.outputCharset = getOutputCharset();
+>     inputCharset = getInputCharset();
+151,152d161
+<   final protected void setRunOptions(B options)
+<       throws IOException, FlagUsageException {
+170a180
+>   }
+172,175c182,183
+<     options.setCodingConvention(config.codingConvention);
+<     options.setSummaryDetailLevel(config.summaryDetailLevel);
+< 
+<     inputCharset = getInputCharset();
+---
+>   final protected A getCompiler() {
+>     return compiler;
+512,521d519
+<     
+<     
+<     
+<     
+<     if (inputCharset == Charsets.UTF_8) {
+<       options.outputCharset = Charsets.US_ASCII;
+<     } else {
+<       options.outputCharset = inputCharset;
+<     }
+< 
+676a675,697
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private String getOutputCharset() throws FlagUsageException {
+>     if (!config.charset.isEmpty()) {
+>       if (!Charset.isSupported(config.charset)) {
+>         throw new FlagUsageException(config.charset +
+>             " is not a valid charset name.");
+>       }
+>       return config.charset;
+>     }
+>     return "US-ASCII";

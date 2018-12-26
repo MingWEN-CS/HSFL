@@ -1,0 +1,144 @@
+87a88,89
+>   private SimpleSlot prototypeSlot;
+> 
+271a274,298
+>   @Override
+>   public StaticSlot<JSType> getSlot(String name) {
+>     if ("prototype".equals(name)) {
+>       
+>       getPrototype();
+>       return prototypeSlot;
+>     } else {
+>       return super.getSlot(name);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   public Set<String> getOwnPropertyNames() {
+>     if (prototype == null) {
+>       return super.getOwnPropertyNames();
+>     } else {
+>       Set<String> names = Sets.newHashSet("prototype");
+>       names.addAll(super.getOwnPropertyNames());
+>       return names;
+>     }
+>   }
+> 
+314a342
+>     this.prototypeSlot = new SimpleSlot("prototype", prototype, true);
+437,446d464
+<   public boolean hasProperty(String name) {
+<     return super.hasProperty(name) || "prototype".equals(name);
+<   }
+< 
+<   @Override
+<   public boolean hasOwnProperty(String name) {
+<     return super.hasOwnProperty(name) || "prototype".equals(name);
+<   }
+< 
+<   @Override
+448,482c466,470
+<     if ("prototype".equals(name)) {
+<       return getPrototype();
+<     } else {
+<       if (!hasOwnProperty(name)) {
+<         if ("call".equals(name)) {
+<           
+<           Node params = getParametersNode();
+<           if (params == null) {
+<             
+<             
+<             defineDeclaredProperty(name,
+<                 new FunctionBuilder(registry)
+<                     .withReturnType(getReturnType())
+<                     .build(),
+<                 source);
+<           } else {
+<             params = params.cloneTree();
+<             Node thisTypeNode = Node.newString(Token.NAME, "thisType");
+<             thisTypeNode.setJSType(
+<                 registry.createOptionalNullableType(getTypeOfThis()));
+<             params.addChildToFront(thisTypeNode);
+<             thisTypeNode.setOptionalArg(true);
+< 
+<             defineDeclaredProperty(name,
+<                 new FunctionBuilder(registry)
+<                     .withParamsNode(params)
+<                     .withReturnType(getReturnType())
+<                     .build(),
+<                 source);
+<           }
+<         } else if ("apply".equals(name)) {
+<           
+<           FunctionParamBuilder builder = new FunctionParamBuilder(registry);
+< 
+<           
+---
+>     if (!hasOwnProperty(name)) {
+>       if ("call".equals(name)) {
+>         
+>         Node params = getParametersNode();
+>         if (params == null) {
+485,489c473,484
+<           
+<           builder.addOptionalParams(
+<               registry.createNullableType(getTypeOfThis()),
+<               registry.createNullableType(
+<                   registry.getNativeType(JSTypeNative.OBJECT_TYPE)));
+---
+>           defineDeclaredProperty(name,
+>               new FunctionBuilder(registry)
+>               .withReturnType(getReturnType())
+>               .build(),
+>               source);
+>         } else {
+>           params = params.cloneTree();
+>           Node thisTypeNode = Node.newString(Token.NAME, "thisType");
+>           thisTypeNode.setJSType(
+>               registry.createOptionalNullableType(getTypeOfThis()));
+>           params.addChildToFront(thisTypeNode);
+>           thisTypeNode.setOptionalArg(true);
+493,495c488,490
+<                   .withParams(builder)
+<                   .withReturnType(getReturnType())
+<                   .build(),
+---
+>               .withParamsNode(params)
+>               .withReturnType(getReturnType())
+>               .build(),
+497a493,511
+>       } else if ("apply".equals(name)) {
+>         
+>         FunctionParamBuilder builder = new FunctionParamBuilder(registry);
+> 
+>         
+>         
+>         
+>         
+>         builder.addOptionalParams(
+>             registry.createNullableType(getTypeOfThis()),
+>             registry.createNullableType(
+>                 registry.getNativeType(JSTypeNative.OBJECT_TYPE)));
+> 
+>         defineDeclaredProperty(name,
+>             new FunctionBuilder(registry)
+>             .withParams(builder)
+>             .withReturnType(getReturnType())
+>             .build(),
+>             source);
+499,500d512
+< 
+<       return super.getPropertyType(name);
+501a514,515
+> 
+>     return super.getPropertyType(name);
+521,526d534
+<   }
+< 
+<   @Override
+<   public boolean isPropertyTypeInferred(String property) {
+<     return "prototype".equals(property) ||
+<         super.isPropertyTypeInferred(property);

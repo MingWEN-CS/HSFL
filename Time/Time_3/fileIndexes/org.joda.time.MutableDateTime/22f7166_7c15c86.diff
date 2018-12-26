@@ -1,0 +1,60 @@
+60a61
+> import org.joda.time.field.FieldUtils;
+408,410d408
+<     public void add(final ReadableDuration duration) {
+<         duration.addInto(this, 1);
+<     }
+412d409
+<     
+418,419c415,418
+<     public void add(final ReadableDuration duration, final int scalar) {
+<         duration.addInto(this, scalar);
+---
+> 
+> 
+>     public void add(final Object duration) {
+>         add(duration, 1);
+430c429,435
+<     public void add(final Object duration) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void add(final Object duration, final int scalar) {
+432c437,438
+<             add((ReadableDuration) duration, 1);
+---
+>             ReadableDuration d = (ReadableDuration) duration;
+>             d.addInto(this, scalar);
+435c441
+<             add(converter.getDurationMillis(duration));
+---
+>             add(FieldUtils.safeMultiply(converter.getDurationMillis(duration), scalar));
+521a528,529
+> 
+> 
+524a533,553
+>         }
+>         setMillis(field.add(getMillis(), value));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void add(final DurationField field, final int value) {
+>         if (field == null) {
+>             throw new IllegalArgumentException("The DurationField must not be null");

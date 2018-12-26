@@ -1,0 +1,59 @@
+1591a1592
+> 
+1599,1600c1600,1615
+<         double result = 1;
+<         double d2p    = d;
+---
+>         
+>         
+>         final int splitFactor = 0x8000001;
+>         final double cd       = splitFactor * d;
+>         final double d1High   = cd - (cd - d);
+>         final double d1Low    = d - d1High;
+> 
+>         
+>         double resultHigh = 1;
+>         double resultLow  = 0;
+> 
+>         
+>         double d2p     = d;
+>         double d2pHigh = d1High;
+>         double d2pLow  = d1Low;
+> 
+1601a1617
+> 
+1603c1619,1627
+<                 result *= d2p;
+---
+>                 
+>                 
+>                 final double tmpHigh = resultHigh * d2p;
+>                 final double cRH     = splitFactor * resultHigh;
+>                 final double rHH     = cRH - (cRH - resultHigh);
+>                 final double rHL     = resultHigh - rHH;
+>                 final double tmpLow  = rHL * d2pLow - (((tmpHigh - rHH * d2pHigh) - rHL * d2pHigh) - rHH * d2pLow);
+>                 resultHigh = tmpHigh;
+>                 resultLow  = resultLow * d2p + tmpLow;
+1605c1629,1641
+<             d2p *= d2p;
+---
+> 
+>             
+>             
+>             final double tmpHigh = d2pHigh * d2p;
+>             final double cD2pH   = splitFactor * d2pHigh;
+>             final double d2pHH   = cD2pH - (cD2pH - d2pHigh);
+>             final double d2pHL   = d2pHigh - d2pHH;
+>             final double tmpLow  = d2pHL * d2pLow - (((tmpHigh - d2pHH * d2pHigh) - d2pHL * d2pHigh) - d2pHH * d2pLow);
+>             final double cTmpH   = splitFactor * tmpHigh;
+>             d2pHigh = cTmpH - (cTmpH - tmpHigh);
+>             d2pLow  = d2pLow * d2p + tmpLow + (tmpHigh - d2pHigh);
+>             d2p     = d2pHigh + d2pLow;
+> 
+1606a1643
+> 
+1609c1646,1647
+<         return result;
+---
+>         return resultHigh + resultLow;
+> 

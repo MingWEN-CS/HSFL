@@ -1,0 +1,28 @@
+29a30
+> import com.google.javascript.jscomp.Scope.Var;
+627c628
+<       if (scope.isGlobal() && !fnName.isEmpty()) {
+---
+>       if (getScopeDeclaredIn().isGlobal() && !fnName.isEmpty()) {
+703c704
+<     if (scope.isGlobal() && !fnName.isEmpty()) {
+---
+>     if (getScopeDeclaredIn().isGlobal() && !fnName.isEmpty()) {
+725a727,743
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private Scope getScopeDeclaredIn() {
+>     int dotIndex = fnName.indexOf(".");
+>     if (dotIndex != -1) {
+>       String rootVarName = fnName.substring(0, dotIndex);
+>       Var rootVar = scope.getVar(rootVarName);
+>       if (rootVar != null) {
+>         return rootVar.getScope();
+>       }
+>     }
+>     return scope;

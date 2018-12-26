@@ -1,0 +1,52 @@
+623a624,668
+>         if (field == Calendar.MILLISECOND) {
+>             return;
+>         }
+> 
+>         
+>         
+>         
+>         
+>         
+> 
+>         Date date = val.getTime();
+>         long time = date.getTime();
+>         boolean done = false;
+> 
+>         
+>         int millisecs = val.get(Calendar.MILLISECOND);
+>         if (!round || millisecs < 500) {
+>             time = time - millisecs;
+>             if (field == Calendar.SECOND) {
+>                 done = true;
+>             }
+>         }
+> 
+>         
+>         int seconds = val.get(Calendar.SECOND);
+>         if (!done && (!round || seconds < 30)) {
+>             time = time - (seconds * 1000L);
+>             if (field == Calendar.MINUTE) {
+>                 done = true;
+>             }
+>         }
+> 
+>         
+>         int minutes = val.get(Calendar.MINUTE);
+>         if (!done && (!round || minutes < 30)) {
+>             time = time - (minutes * 60000L);
+>         }
+> 
+>         
+>         if (date.getTime() != time) {
+>             date.setTime(time);
+>             val.setTime(date);
+>         }
+>         
+> 
+692c737,739
+<             val.set(fields[i][0], val.get(fields[i][0]) - offset);
+---
+>             if (offset != 0) {
+>                 val.set(fields[i][0], val.get(fields[i][0]) - offset);
+>             }

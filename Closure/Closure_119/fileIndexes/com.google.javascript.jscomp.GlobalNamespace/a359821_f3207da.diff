@@ -1,0 +1,56 @@
+18a19,20
+> import static com.google.javascript.rhino.jstype.JSTypeNative.GLOBAL_THIS;
+> 
+26a29,31
+> import com.google.javascript.rhino.jstype.JSType;
+> import com.google.javascript.rhino.jstype.StaticScope;
+> import com.google.javascript.rhino.jstype.StaticSlot;
+39c44
+< class GlobalNamespace {
+---
+> class GlobalNamespace implements StaticScope<JSType> {
+87a93,112
+>   @Override
+>   public StaticScope<JSType> getParentScope() {
+>     return null;
+>   }
+> 
+>   @Override
+>   public StaticSlot<JSType> getSlot(String name) {
+>     return getOwnSlot(name);
+>   }
+> 
+>   @Override
+>   public StaticSlot<JSType> getOwnSlot(String name) {
+>     return nameMap.get(name);
+>   }
+> 
+>   @Override
+>   public JSType getTypeOfThis() {
+>     return compiler.getTypeRegistry().getNativeObjectType(GLOBAL_THIS);
+>   }
+> 
+788c813
+<   static class Name {
+---
+>   static class Name implements StaticSlot<JSType> {
+797c822
+<     final String name;
+---
+>     private final String name;
+833a859,873
+>     }
+> 
+>     @Override
+>     public String getName() {
+>       return name;
+>     }
+> 
+>     @Override
+>     public boolean isTypeInferred() {
+>       return false;
+>     }
+> 
+>     @Override
+>     public JSType getType() {
+>       return null;

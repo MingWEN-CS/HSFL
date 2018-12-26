@@ -1,0 +1,69 @@
+30a31
+> import java.util.Collections;
+547a549,591
+>   static boolean canBeSideEffected(Node n) {
+>     Set<String> emptySet = Collections.emptySet();
+>     return canBeSideEffected(n, emptySet);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   static boolean canBeSideEffected(Node n, Set<String> knownConstants) {
+>     switch (n.getType()) {
+>       case Token.CALL:
+>       case Token.NEW:
+>         
+>         
+>         
+>         return true;
+>       case Token.NAME:
+>         
+>         return !NodeUtil.isConstantName(n)
+>             && !knownConstants.contains(n.getString());
+> 
+>       
+>       case Token.GETPROP:
+>       case Token.GETELEM:
+>         return true;
+>     }
+> 
+>     for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+>       if (canBeSideEffected(c, knownConstants)) {
+>         return true;
+>       }
+>     }
+> 
+>     return false;    
+>   }
+> 
+>   
+> 
+> 
+> 
+744a789,804
+> 
+>   static Node getAssignedValue(Node n) {
+>     Preconditions.checkState(isName(n));
+>     Node parent = n.getParent();
+>     if (isVar(parent)) {
+>       return n.getFirstChild();
+>     } else if (isAssign(parent) && parent.getFirstChild() == n) {
+>       return n.getNext();
+>     } else {
+>       return null;
+>     }
+>   }
+>   
+>   
+> 
+> 
+956a1017,1018
+>         parent.removeChild(node);
+>         
+964a1027,1028
+>       
+>       parent.removeChild(node);

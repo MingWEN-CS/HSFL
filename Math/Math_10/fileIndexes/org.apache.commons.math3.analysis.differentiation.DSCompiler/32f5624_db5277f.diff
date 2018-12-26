@@ -1,0 +1,62 @@
+1069,1071c1069,1070
+<         double[] function = new double[1 + order];
+<         final double z = operand[operandOffset];
+<         final double t = FastMath.tan(z);
+---
+>         final double[] function = new double[1 + order];
+>         final double t = FastMath.tan(operand[operandOffset]);
+1072a1072
+> 
+1074,1087c1074,1095
+<             final double secant2 = 1 + t * t;
+<             function[1] = secant2;
+<             for (int n = 2; n <= order; ++n) {
+<                 final int signN4 = ((n & 0x02) == 0) ? 1 : -1;
+<                 double outerSum = 0;
+<                 int sign = 1;
+<                 double secant2Kp2 = secant2;
+<                 for (int k = 0; k < n; ++k) {
+<                     double innerSum = 0;
+<                     for (int j = 0; j < k; ++j) {
+<                         final double alpha = 2 * (k - j) * z;
+<                         final double sc  = ((n & 0x01) == 0) ? FastMath.sin(alpha) : FastMath.cos(alpha);
+<                          innerSum += sc * signN4 * ArithmeticUtils.pow(k - j, n - 1) *
+<                                     ArithmeticUtils.binomialCoefficient(2 * k, j);
+---
+> 
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             final double[] p = new double[order + 2];
+>             p[1] = 1;
+>             final double t2 = t * t;
+>             for (int n = 1; n <= order; ++n) {
+> 
+>                 
+>                 double v = 0;
+>                 p[n + 1] = n * p[n];
+>                 for (int k = n + 1; k >= 0; k -= 2) {
+>                     v = v * t2 + p[k];
+>                     if (k > 2) {
+>                         p[k - 2] = (k - 1) * p[k - 1] + (k - 3) * p[k - 3];
+>                     } else if (k == 2) {
+>                         p[0] = p[1];
+1089,1093d1096
+<                     double twoNm2K = (n >= 2 * k) ? (1 << (n - 2 * k)) : (1.0 / (1 << (2 * k - n)));
+<                     outerSum  += sign * innerSum * ArithmeticUtils.binomialCoefficient(n - 1, k) *
+<                                  twoNm2K * secant2Kp2 / (k + 1);
+<                     sign       = -sign;
+<                     secant2Kp2 *= secant2;
+1095c1098,1103
+<                 function[n] = n * outerSum;
+---
+>                 if ((n & 0x1) == 0) {
+>                     v *= t;
+>                 }
+> 
+>                 function[n] = v;
+> 

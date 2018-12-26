@@ -1,0 +1,153 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat.distribution;
+
+import org.apache.commons.math.RootFinding;
+import org.apache.commons.math.UnivariateFunction;
+
+
+
+
+
+
+
+
+public abstract class AbstractContinuousDistribution
+    implements ContinuousDistribution {
+        
+    
+
+
+    protected AbstractContinuousDistribution() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+
+
+    public double cummulativeProbability(double x0, double x1) {
+        return cummulativeProbability(x1) - cummulativeProbability(x0);
+    }
+    
+    
+
+
+
+
+
+
+    public double inverseCummulativeProbability(final double p) {
+        if (p < 0.0 || p > 1.0) {
+            throw new IllegalArgumentException(
+                "p must be between 0.0 and 1.0, inclusive.");
+        }
+        
+        
+        
+        UnivariateFunction rootFindingFunction = new UnivariateFunction() {
+            public double evaluate(double x) {
+                return cummulativeProbability(x) - p;
+            }
+        };
+        
+        
+        double[] bracket = RootFinding.bracket(rootFindingFunction,
+            getInitialDomain(p), getDomainLowerBound(p),
+            getDomainUpperBound(p));
+        
+        
+        double root = RootFinding.bisection(rootFindingFunction, bracket[0],
+            bracket[1]);
+        
+        return root;
+    }
+    
+    
+
+
+
+
+
+
+
+    protected abstract double getInitialDomain(double p);
+    
+    
+
+
+
+
+
+
+
+
+    protected abstract double getDomainLowerBound(double p);
+    
+    
+
+
+
+
+
+
+
+
+    protected abstract double getDomainUpperBound(double p);
+}

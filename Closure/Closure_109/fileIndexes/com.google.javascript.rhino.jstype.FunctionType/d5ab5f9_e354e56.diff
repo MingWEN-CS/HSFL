@@ -1,0 +1,37 @@
+792c792
+<     if (call.hasEqualParameters(other.call)) {
+---
+>     if (call.hasEqualParameters(other.call, false)) {
+889,896c889,891
+<   @Override
+<   public boolean isEquivalentTo(JSType otherType) {
+<     FunctionType that =
+<         JSType.toMaybeFunctionType(otherType);
+<     if (that == null) {
+<       return false;
+<     }
+<     if (this.isConstructor()) {
+---
+>   boolean checkFunctionEquivalenceHelper(
+>       FunctionType that, boolean tolerateUnknowns) {
+>     if (isConstructor()) {
+902c897
+<     if (this.isInterface()) {
+---
+>     if (isInterface()) {
+904c899
+<         return this.getReferenceName().equals(that.getReferenceName());
+---
+>         return getReferenceName().equals(that.getReferenceName());
+911,912c906,909
+<     return this.typeOfThis.isEquivalentTo(that.typeOfThis) &&
+<         this.call.isEquivalentTo(that.call);
+---
+> 
+>     return typeOfThis.checkEquivalenceHelper(
+>         that.typeOfThis, tolerateUnknowns) &&
+>         call.checkArrowEquivalenceHelper(that.call, tolerateUnknowns);
+921c918
+<     return this.call.isEquivalentTo(otherType.call);
+---
+>     return this.call.checkArrowEquivalenceHelper(otherType.call, false);

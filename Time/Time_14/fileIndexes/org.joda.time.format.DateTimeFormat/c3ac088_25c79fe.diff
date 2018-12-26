@@ -1,0 +1,677 @@
+59d58
+< import java.text.ParseException;
+66a66
+> import org.joda.time.DateTimeField;
+70a71
+> import org.joda.time.chrono.RemainderDateTimeField;
+80a82,159
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+83a163,165
+> 
+> 
+> 
+85a168,173
+>     
+> 
+> 
+> 
+> 
+> 
+89a178,183
+>     
+> 
+> 
+> 
+> 
+> 
+94c188,195
+<     public static DateTimeFormat getInstance(DateTimeZone zone) {
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormat getInstance(final DateTimeZone zone) {
+98c199,207
+<     public static DateTimeFormat getInstance(DateTimeZone zone, Locale locale) {
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormat getInstance(final DateTimeZone zone, final Locale locale) {
+105c214,218
+<     public static DateTimeFormat getInstance(Chronology chrono) {
+---
+> 
+> 
+> 
+> 
+>     public static DateTimeFormat getInstance(final Chronology chrono) {
+112a226,229
+> 
+> 
+> 
+> 
+115c232
+<             throw new IllegalArgumentException("The Chronology must not be null");
+---
+>             chrono = ISOChronology.getInstance();
+118c235
+<             throw new IllegalArgumentException("The Locale must not be null");
+---
+>             locale = Locale.getDefault();
+132a250,503
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void appendPatternTo(DateTimeFormatterBuilder builder, String pattern) {
+>         int length = pattern.length();
+>         int[] indexRef = new int[1];
+> 
+>         for (int i=0; i<length; i++) {
+>             indexRef[0] = i;
+>             String token = parseToken(pattern, indexRef);
+>             i = indexRef[0];
+> 
+>             int tokenLen = token.length();
+>             if (tokenLen == 0) {
+>                 break;
+>             }
+>             char c = token.charAt(0);
+> 
+>             switch (c) {
+>             case 'G': 
+>                 builder.appendEraText();
+>                 break;
+>             case 'C': 
+>                 builder.appendCenturyOfEra(tokenLen, tokenLen);
+>                 break;
+>             case 'x': 
+>             case 'y': 
+>             case 'Y': 
+>                 if (tokenLen == 2) {
+>                     
+>                     
+>                     DateTimeField field;
+>                     Chronology chronoUTC = builder.getChronology().withUTC();
+>                     switch (c) {
+>                     case 'x':
+>                         field = new RemainderDateTimeField
+>                             (chronoUTC.weekyear(), "weekyearOfCentury", "centuries", 100);
+>                         break;
+>                     case 'y': default:
+>                         field = new RemainderDateTimeField
+>                             (chronoUTC.year(), "yearOfCentury", "centuries", 100);
+>                         break;
+>                     case 'Y':
+>                         field = new RemainderDateTimeField
+>                             (chronoUTC.yearOfEra(), "yearOfCentury", "centuries", 100);
+>                         break;
+>                     }
+>                     builder.appendNumeric(field, 2, 2);
+>                 } else {
+>                     
+>                     int maxDigits = 9;
+> 
+>                     
+>                     if (i + 1 < length) {
+>                         indexRef[0]++;
+>                         if (isNumericToken(parseToken(pattern, indexRef))) {
+>                             
+>                             maxDigits = tokenLen;
+>                         }
+>                         indexRef[0]--;
+>                     }
+> 
+>                     switch (c) {
+>                     case 'x':
+>                         builder.appendWeekyear(tokenLen, maxDigits);
+>                         break;
+>                     case 'y':
+>                         builder.appendYear(tokenLen, maxDigits);
+>                         break;
+>                     case 'Y':
+>                         builder.appendYearOfEra(tokenLen, maxDigits);
+>                         break;
+>                     }
+>                 }
+>                 break;
+>             case 'M': 
+>                 if (tokenLen >= 3) {
+>                     if (tokenLen >= 4) {
+>                         builder.appendMonthOfYearText();
+>                     } else {
+>                         builder.appendMonthOfYearShortText();
+>                     }
+>                 } else {
+>                     builder.appendMonthOfYear(tokenLen);
+>                 }
+>                 break;
+>             case 'd': 
+>                 builder.appendDayOfMonth(tokenLen);
+>                 break;
+>             case 'h': 
+>                 builder.appendClockhourOfHalfday(tokenLen);
+>                 break;
+>             case 'H': 
+>                 builder.appendHourOfDay(tokenLen);
+>                 break;
+>             case 'm': 
+>                 builder.appendMinuteOfHour(tokenLen);
+>                 break;
+>             case 's': 
+>                 builder.appendSecondOfMinute(tokenLen);
+>                 break;
+>             case 'S': 
+>                 builder.appendFractionOfSecond(tokenLen, tokenLen);
+>                 break;
+>             case 'e': 
+>                 builder.appendDayOfWeek(tokenLen);
+>                 break;
+>             case 'E': 
+>                 if (tokenLen >= 4) {
+>                     builder.appendDayOfWeekText();
+>                 } else {
+>                     builder.appendDayOfWeekShortText();
+>                 }
+>                 break;
+>             case 'D': 
+>                 builder.appendDayOfYear(tokenLen);
+>                 break;
+>             case 'w': 
+>                 builder.appendWeekOfWeekyear(tokenLen);
+>                 break;
+>             case 'a': 
+>                 builder.appendHalfdayOfDayText();
+>                 break;
+>             case 'k': 
+>                 builder.appendClockhourOfDay(tokenLen);
+>                 break;
+>             case 'K': 
+>                 builder.appendClockhourOfHalfday(tokenLen);
+>                 break;
+>             case 'z': 
+>                 if (tokenLen >= 4) {
+>                     builder.appendTimeZoneName();
+>                 } else {
+>                     builder.appendTimeZoneShortName();
+>                 }
+>                 break;
+>             case 'Z': 
+>                 if (tokenLen >= 4) {
+>                     builder.appendTimeZoneOffset(null, true, 2, 2);
+>                 } else {
+>                     builder.appendTimeZoneOffset(null, false, 2, 2);
+>                 }
+>                 break;
+>             case '\'': 
+>                 String sub = token.substring(1);
+>                 if (sub.length() == 1) {
+>                     builder.appendLiteral(sub.charAt(0));
+>                 } else {
+>                     
+>                     
+>                     builder.appendLiteral(new String(sub));
+>                 }
+>                 break;
+>             default:
+>                 throw new IllegalArgumentException
+>                     ("Illegal pattern component: " + token);
+>             }
+>         }
+>     }
+> 
+>     private static String parseToken(final String pattern, final int[] indexRef) {
+>         StringBuffer buf = new StringBuffer();
+> 
+>         int i = indexRef[0];
+>         int length = pattern.length();
+> 
+>         char c = pattern.charAt(i);
+>         if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z') {
+>             
+>             
+>             buf.append(c);
+> 
+>             while (i + 1 < length) {
+>                 char peek = pattern.charAt(i + 1);
+>                 if (peek == c) {
+>                     buf.append(c);
+>                     i++;
+>                 } else {
+>                     break;
+>                 }
+>             }
+>         } else {
+>             
+>             buf.append('\'');
+> 
+>             boolean inLiteral = false;
+> 
+>             for (; i < length; i++) {
+>                 c = pattern.charAt(i);
+>                 
+>                 if (c == '\'') {
+>                     if (i + 1 < length && pattern.charAt(i + 1) == '\'') {
+>                         
+>                         i++;
+>                         buf.append(c);
+>                     } else {
+>                         inLiteral = !inLiteral;
+>                     }
+>                 } else if (!inLiteral &&
+>                            (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z')) {
+>                     i--;
+>                     break;
+>                 } else {
+>                     buf.append(c);
+>                 }
+>             }
+>         }
+> 
+>         indexRef[0] = i;
+>         return buf.toString();
+>     }
+> 
+>     
+>     private static boolean isNumericToken(final String token) {
+>         int tokenLen = token.length();
+>         if (tokenLen > 0) {
+>             char c = token.charAt(0);
+>             switch (c) {
+>             case 'c': 
+>             case 'C': 
+>             case 'x': 
+>             case 'y': 
+>             case 'Y': 
+>             case 'd': 
+>             case 'h': 
+>             case 'H': 
+>             case 'm': 
+>             case 's': 
+>             case 'S': 
+>             case 'e': 
+>             case 'D': 
+>             case 'F': 
+>             case 'w': 
+>             case 'W': 
+>             case 'k': 
+>             case 'K': 
+>                 return true;
+>             case 'M': 
+>                 if (tokenLen <= 2) {
+>                     return true;
+>                 }
+>             }
+>         }
+>             
+>         return false;
+>     }
+> 
+>     
+>     
+133a505
+>     
+137c509,512
+<     private Map iPatternedCache = new HashMap(7);
+---
+>     private transient Map iPatternedCache = new HashMap(7);
+> 
+>     
+>     private transient Map iStyledCache = new HashMap(7);
+140d514
+<     private Map iStyledCache = new HashMap(7);
+142c516,521
+<     private DateTimeFormat(Chronology chrono, Locale locale) {
+---
+> 
+> 
+> 
+> 
+>     private DateTimeFormat(final Chronology chrono, final Locale locale) {
+>         super();
+147a527
+>     
+154,155c534,535
+<     public synchronized DateTimeFormatter forPattern(String pattern) {
+<         DateTimeFormatter formatter = (DateTimeFormatter)iPatternedCache.get(pattern);
+---
+>     public synchronized DateTimeFormatter forPattern(final String pattern) {
+>         DateTimeFormatter formatter = (DateTimeFormatter) iPatternedCache.get(pattern);
+164,165c544,545
+<         DateTimeFormatterBuilder builder = 
+<             new DateTimeFormatterBuilder(iChrono, iLocale).appendPattern(pattern);
+---
+>         DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder(iChrono, iLocale);
+>         appendPatternTo(builder, pattern);
+191c571
+<     public synchronized DateTimeFormatter forStyle(String style) {
+---
+>     public synchronized DateTimeFormatter forStyle(final String style) {
+210c590
+<     public String getPatternForStyle(String style) {
+---
+>     public String getPatternForStyle(final String style) {
+227c607
+<     private String getDatePattern(char style) {
+---
+>     private String getDatePattern(final char style) {
+236c616
+<     private String getTimePattern(char style) {
+---
+>     private String getTimePattern(final char style) {
+245c625
+<     private String getDateTimePattern(char dateStyle, char timeStyle) {
+---
+>     private String getDateTimePattern(final char dateStyle, final char timeStyle) {
+256c636
+<     private int selectStyle(char c) {
+---
+>     private int selectStyle(final char c) {
+271a652
+>     
+274c655
+<     private static class FPrinter implements DateTimeFormatter {
+---
+>     static class FPrinter implements DateTimeFormatter {
+277c658,659
+<         FPrinter(DateTimePrinter printer) {
+---
+>         FPrinter(final DateTimePrinter printer) {
+>             super();
+289c671
+<         public void printTo(StringBuffer buf, ReadableInstant instant) {
+---
+>         public void printTo(final StringBuffer buf, final ReadableInstant instant) {
+293c675
+<         public void printTo(Writer out, ReadableInstant instant) throws IOException {
+---
+>         public void printTo(final Writer out, final ReadableInstant instant) throws IOException {
+297,298c679,680
+<         public void printTo(StringBuffer buf, long millisUTC) {
+<             mPrinter.printTo(buf, millisUTC);
+---
+>         public void printTo(final StringBuffer buf, final long instant) {
+>             mPrinter.printTo(buf, instant);
+301,302c683,684
+<         public void printTo(Writer out, long millisUTC) throws IOException {
+<             mPrinter.printTo(out, millisUTC);
+---
+>         public void printTo(final Writer out, final long instant) throws IOException {
+>             mPrinter.printTo(out, instant);
+305,306c687,688
+<         public void printTo(StringBuffer buf, long millisUTC, DateTimeZone zone) {
+<             mPrinter.printTo(buf, millisUTC, zone);
+---
+>         public void printTo(final StringBuffer buf, final long instant, final DateTimeZone zone) {
+>             mPrinter.printTo(buf, instant, zone);
+309c691
+<         public void printTo(Writer out, long millisUTC, DateTimeZone zone)
+---
+>         public void printTo(final Writer out, final long instant, final DateTimeZone zone)
+311c693
+<             mPrinter.printTo(out, millisUTC, zone);
+---
+>             mPrinter.printTo(out, instant, zone);
+314,316c696,698
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+<             mPrinter.printTo(buf, millisUTC, zone, millisLocal);
+---
+>         public void printTo(final StringBuffer buf, final long instant,
+>                             final DateTimeZone zone, final long instantLocal) {
+>             mPrinter.printTo(buf, instant, zone, instantLocal);
+319,320c701,702
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal)
+---
+>         public void printTo(final Writer out, final long instant,
+>                             final DateTimeZone zone, final long instantLocal)
+322c704
+<             mPrinter.printTo(out, millisUTC, zone, millisLocal);
+---
+>             mPrinter.printTo(out, instant, zone, instantLocal);
+325c707
+<         public String print(ReadableInstant instant) {
+---
+>         public String print(final ReadableInstant instant) {
+329,330c711,712
+<         public String print(long millisUTC) {
+<             return mPrinter.print(millisUTC);
+---
+>         public String print(final long instant) {
+>             return mPrinter.print(instant);
+333,334c715,716
+<         public String print(long millisUTC, DateTimeZone zone) {
+<             return mPrinter.print(millisUTC, zone);
+---
+>         public String print(final long instant, final DateTimeZone zone) {
+>             return mPrinter.print(instant, zone);
+337,338c719,720
+<         public String print(long millisUTC, DateTimeZone zone, long millisLocal) {
+<             return mPrinter.print(millisUTC, zone, millisLocal);
+---
+>         public String print(final long instant, final DateTimeZone zone, final long instantLocal) {
+>             return mPrinter.print(instant, zone, instantLocal);
+345c727
+<         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+---
+>         public int parseInto(final DateTimeParserBucket bucket, final String text, final int position) {
+349c731
+<         public int parseInto(ReadWritableInstant instant, String text, int position) {
+---
+>         public int parseInto(final ReadWritableInstant instant, final String text, final int position) {
+353c735
+<         public long parseMillis(String text) throws ParseException {
+---
+>         public long parseMillis(final String text) {
+357c739
+<         public long parseMillis(String text, long millis) throws ParseException {
+---
+>         public long parseMillis(final String text, final long instantLocal) {
+361c743
+<         public DateTime parseDateTime(String text) throws ParseException {
+---
+>         public DateTime parseDateTime(final String text) {
+365c747,756
+<         public MutableDateTime parseMutableDateTime(String text) throws ParseException {
+---
+>         public DateTime parseDateTime(final String text, final ReadableInstant instant) {
+>             throw unsupported();
+>         }
+> 
+>         public MutableDateTime parseMutableDateTime(final String text) {
+>             throw unsupported();
+>         }
+> 
+>         public MutableDateTime parseMutableDateTime(final String text,
+>                                                     final ReadableInstant instant) {
+374a766
+>     
+377c769
+<     private static class FParser implements DateTimeFormatter {
+---
+>     static class FParser implements DateTimeFormatter {
+380c772,773
+<         FParser(DateTimeParser parser) {
+---
+>         FParser(final DateTimeParser parser) {
+>             super();
+392c785
+<         public void printTo(StringBuffer buf, ReadableInstant instant) {
+---
+>         public void printTo(final StringBuffer buf, final ReadableInstant instant) {
+396c789
+<         public void printTo(Writer out, ReadableInstant instant) throws IOException {
+---
+>         public void printTo(final Writer out, final ReadableInstant instant) throws IOException {
+400c793
+<         public void printTo(StringBuffer buf, long millisUTC) {
+---
+>         public void printTo(final StringBuffer buf, final long instant) {
+404c797
+<         public void printTo(Writer out, long millisUTC) throws IOException {
+---
+>         public void printTo(final Writer out, final long instant) throws IOException {
+408c801
+<         public void printTo(StringBuffer buf, long millisUTC, DateTimeZone zone) {
+---
+>         public void printTo(final StringBuffer buf, final long instant, final DateTimeZone zone) {
+412c805
+<         public void printTo(Writer out, long millisUTC, DateTimeZone zone) {
+---
+>         public void printTo(final Writer out, final long instant, final DateTimeZone zone) {
+416,417c809,810
+<         public void printTo(StringBuffer buf, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+---
+>         public void printTo(final StringBuffer buf, final long instant,
+>                             final DateTimeZone zone, final long instantLocal) {
+421,422c814,815
+<         public void printTo(Writer out, long millisUTC,
+<                             DateTimeZone zone, long millisLocal) {
+---
+>         public void printTo(final Writer out, final long instant,
+>                             final DateTimeZone zone, final long instantLocal) {
+426c819
+<         public String print(ReadableInstant instant) {
+---
+>         public String print(final ReadableInstant instant) {
+430c823
+<         public String print(long millisUTC) {
+---
+>         public String print(final long instant) {
+434c827
+<         public String print(long millisUTC, DateTimeZone zone) {
+---
+>         public String print(final long instant, final DateTimeZone zone) {
+438c831
+<         public String print(long millisUTC, DateTimeZone zone, long millisLocal) {
+---
+>         public String print(final long instant, final DateTimeZone zone, final long instantLocal) {
+446c839
+<         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+---
+>         public int parseInto(final DateTimeParserBucket bucket, final String text, final int position) {
+450c843
+<         public int parseInto(ReadWritableInstant instant, String text, int position) {
+---
+>         public int parseInto(final ReadWritableInstant instant, final String text, final int position) {
+454c847
+<         public long parseMillis(String text) throws ParseException {
+---
+>         public long parseMillis(final String text) {
+458,459c851,852
+<         public long parseMillis(String text, long millis) throws ParseException {
+<             return mParser.parseMillis(text, millis);
+---
+>         public long parseMillis(final String text, final long instantLocal) {
+>             return mParser.parseMillis(text, instantLocal);
+462c855
+<         public DateTime parseDateTime(String text) throws ParseException {
+---
+>         public DateTime parseDateTime(final String text) {
+466c859,863
+<         public MutableDateTime parseMutableDateTime(String text) throws ParseException {
+---
+>         public DateTime parseDateTime(final String text, final ReadableInstant instant) {
+>             return mParser.parseDateTime(text, instant);
+>         }
+> 
+>         public MutableDateTime parseMutableDateTime(final String text) {
+467a865,869
+>         }
+> 
+>         public MutableDateTime parseMutableDateTime(final String text,
+>                                                     final ReadableInstant instant) {
+>             return mParser.parseMutableDateTime(text, instant);

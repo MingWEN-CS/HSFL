@@ -1,0 +1,104 @@
+108c108
+<     return null;
+---
+>     return PropertyMap.immutableEmptyMap();
+110a111,114
+>   
+> 
+> 
+> 
+112c116,118
+<   public abstract Property getSlot(String name);
+---
+>   public Property getSlot(String name) {
+>     return getPropertyMap().getSlot(name);
+>   }
+116,119c122
+<     if (hasOwnProperty(name)) {
+<       return getSlot(name);
+<     }
+<     return null;
+---
+>     return getPropertyMap().getOwnProperty(name);
+378c381,382
+<     return null;
+---
+>     Property p = getSlot(propertyName);
+>     return p == null ? null : p.getNode();
+387c391,392
+<     return null;
+---
+>     Property p = getOwnSlot(propertyName);
+>     return p == null ? null : p.getJSDocInfo();
+414c419,439
+<   public abstract JSType getPropertyType(String propertyName);
+---
+> 
+> 
+> 
+>   public JSType getPropertyType(String propertyName) {
+>     StaticSlot<JSType> slot = getSlot(propertyName);
+>     if (slot == null) {
+>       if (isNoResolvedType() || isCheckedUnknownType()) {
+>         return getNativeType(JSTypeNative.CHECKED_UNKNOWN_TYPE);
+>       } else if (isEmptyType()) {
+>         return getNativeType(JSTypeNative.NO_TYPE);
+>       }
+>       return getNativeType(JSTypeNative.UNKNOWN_TYPE);
+>     }
+>     return slot.getType();
+>   }
+> 
+>   @Override
+>   public boolean hasProperty(String propertyName) {
+>     
+>     return isEmptyType() || isUnknownType() || getSlot(propertyName) != null;
+>   }
+421c446
+<     return hasProperty(propertyName);
+---
+>     return getOwnSlot(propertyName) != null;
+424a450,453
+> 
+> 
+> 
+> 
+426c455
+<     return ImmutableSet.of();
+---
+>     return getPropertyMap().getOwnPropertyNames();
+432c461,464
+<   public abstract boolean isPropertyTypeInferred(String propertyName);
+---
+>   public boolean isPropertyTypeInferred(String propertyName) {
+>     StaticSlot<JSType> slot = getSlot(propertyName);
+>     return slot == null ? false : slot.isTypeInferred();
+>   }
+437c469,472
+<   public abstract boolean isPropertyTypeDeclared(String propertyName);
+---
+>   public boolean isPropertyTypeDeclared(String propertyName) {
+>     StaticSlot<JSType> slot = getSlot(propertyName);
+>     return slot == null ? false : !slot.isTypeInferred();
+>   }
+442c477
+<   boolean hasOwnDeclaredProperty(String name) {
+---
+>   final boolean hasOwnDeclaredProperty(String name) {
+448c483,484
+<     return false;
+---
+>     Property p = getSlot(propertyName);
+>     return p == null ? false : p.isFromExterns();
+454c490,492
+<   public abstract int getPropertiesCount();
+---
+>   public int getPropertiesCount() {
+>     return getPropertyMap().getPropertiesCount();
+>   }
+469c507,509
+<   abstract void collectPropertyNames(Set<String> props);
+---
+>   final void collectPropertyNames(Set<String> props) {
+>     getPropertyMap().collectPropertyNames(props);
+>   }

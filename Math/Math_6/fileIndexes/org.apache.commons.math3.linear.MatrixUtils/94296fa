@@ -1,0 +1,320 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.linear;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+
+
+
+
+
+
+public class MatrixUtils {
+
+    
+
+
+    public MatrixUtils() {
+        super();
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public static RealMatrix createRealMatrix(double[][] data) {
+        return new RealMatrixImpl(data);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static RealMatrix createRealMatrix(double[][] data, boolean copyArray) {
+        return new RealMatrixImpl(data, copyArray);
+    }
+
+    
+
+
+
+
+
+
+
+    public static RealMatrix createRealIdentityMatrix(int dimension) {
+        double[][] d = new double[dimension][dimension];
+        for (int row = 0; row < dimension; row++) {
+            d[row][row] = 1d;
+        }
+        return new RealMatrixImpl(d, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+    public static BigMatrix createBigMatrix(double[][] data) {
+        return new BigMatrixImpl(data);
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+    public static BigMatrix createBigMatrix(BigDecimal[][] data) {
+        return new BigMatrixImpl(data);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static BigMatrix createBigMatrix(BigDecimal[][] data, boolean copyArray) {
+        return new BigMatrixImpl(data, copyArray);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static BigMatrix createBigMatrix(String[][] data) {
+        return new BigMatrixImpl(data);
+    }
+    
+    
+
+
+
+
+
+
+
+    public static RealVector createRealVector(double[] data) {
+        return new RealVectorImpl(data, true);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static RealMatrix createRowRealMatrix(double[] rowData) {
+        final int nCols = rowData.length;
+        final double[][] data = new double[1][nCols];
+        System.arraycopy(rowData, 0, data[0], 0, nCols);
+        return new RealMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static BigMatrix createRowBigMatrix(double[] rowData) {
+        final int nCols = rowData.length;
+        final BigDecimal[][] data = new BigDecimal[1][nCols];
+        for (int i = 0; i < nCols; ++i) {
+            data[0][i] = new BigDecimal(rowData[i]);
+        }
+        return new BigMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static BigMatrix createRowBigMatrix(BigDecimal[] rowData) {
+        final int nCols = rowData.length;
+        final BigDecimal[][] data = new BigDecimal[1][nCols];
+        System.arraycopy(rowData, 0, data[0], 0, nCols);
+        return new BigMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static BigMatrix createRowBigMatrix(String[] rowData) {
+        final int nCols = rowData.length;
+        final BigDecimal[][] data = new BigDecimal[1][nCols];
+        for (int i = 0; i < nCols; ++i) {
+            data[0][i] = new BigDecimal(rowData[i]);
+        }
+        return new BigMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static RealMatrix createColumnRealMatrix(double[] columnData) {
+        final int nRows = columnData.length;
+        final double[][] data = new double[nRows][1];
+        for (int row = 0; row < nRows; row++) {
+            data[row][0] = columnData[row];
+        }
+        return new RealMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static BigMatrix createColumnBigMatrix(double[] columnData) {
+        final int nRows = columnData.length;
+        final BigDecimal[][] data = new BigDecimal[nRows][1];
+        for (int row = 0; row < nRows; row++) {
+            data[row][0] = new BigDecimal(columnData[row]);
+        }
+        return new BigMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static BigMatrix createColumnBigMatrix(BigDecimal[] columnData) {
+        final int nRows = columnData.length;
+        final BigDecimal[][] data = new BigDecimal[nRows][1];
+        for (int row = 0; row < nRows; row++) {
+            data[row][0] = columnData[row];
+        }
+        return new BigMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static BigMatrix createColumnBigMatrix(String[] columnData) {
+        int nRows = columnData.length;
+        final BigDecimal[][] data = new BigDecimal[nRows][1];
+        for (int row = 0; row < nRows; row++) {
+            data[row][0] = new BigDecimal(columnData[row]);
+        }
+        return new BigMatrixImpl(data, false);
+    }
+    
+    
+
+
+
+
+
+
+
+    public static BigMatrix createBigIdentityMatrix(int dimension) {
+        final BigDecimal[][] d = new BigDecimal[dimension][dimension];
+        for (int row = 0; row < dimension; row++) {
+            final BigDecimal[] dRow = d[row];
+            Arrays.fill(dRow, BigMatrixImpl.ZERO);
+            dRow[row] = BigMatrixImpl.ONE;
+        }
+        return new BigMatrixImpl(d, false);
+    }
+    
+}

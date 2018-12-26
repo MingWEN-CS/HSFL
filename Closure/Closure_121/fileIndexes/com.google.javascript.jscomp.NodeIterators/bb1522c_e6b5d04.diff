@@ -1,0 +1,45 @@
+247c247
+<         
+---
+>         boolean readsState = false;
+249,256c249,252
+<         if (type == Token.NAME && !varName.equals(nextNode.getString())) {
+<           boolean blocked = false;
+<           if (nextParent == null) {
+<             blocked = true;
+<           } else {
+<             boolean assignsName = (nextParent.isAssign()
+<                     && nextNode == nextParent.getFirstChild());
+<             boolean isVarDeclaration = (nextParent.isVar());
+---
+>         if (
+>             (nextNode.isName() && !varName.equals(nextNode.getString())) ||
+>             
+>             (nextNode.isGetProp() || nextNode.isGetElem())) {
+258,260c254,257
+<             if (!assignsName && !isVarDeclaration) {
+<               blocked = true;
+<             }
+---
+>           
+>           if (nextParent == null ||
+>               !NodeUtil.isVarOrSimpleAssignLhs(nextNode, nextParent)) {
+>             readsState = true;
+263,266c260,271
+<           if (blocked) {
+<             lookAhead = null;
+<             return;
+<           }
+---
+>         } else if (nextNode.isCall() || nextNode.isNew()) {
+>           
+>           
+>           
+>           
+>           
+>           readsState = true;
+>         }
+> 
+>         if (readsState) {
+>           lookAhead = null;
+>           return;

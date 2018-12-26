@@ -1,0 +1,90 @@
+225a226,252
+>     JSType value = lookupViaProperties(t, enclosing);
+>     
+>     if ((value instanceof FunctionType) &&
+>         (value.isConstructor() || value.isInterface())) {
+>       FunctionType functionType = (FunctionType) value;
+>       setReferencedType(functionType.getInstanceType(), t, enclosing);
+>     } else if (value instanceof EnumType) {
+>       setReferencedType(((EnumType) value).getElementsType(), t, enclosing);
+>     } else {
+>       
+>       
+>       
+>       
+>       
+>       
+>       handleUnresolvedType(t, value == null || value.isUnknownType());
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   private JSType lookupViaProperties( ErrorReporter t,
+>       StaticScope<JSType> enclosing) {
+228,229c255
+<       handleUnresolvedType(t);
+<       return;
+---
+>       return null;
+233,234c259
+<       handleUnresolvedType(t);
+<       return;
+---
+>       return null;
+241,242c266
+<       handleUnresolvedType(t);
+<       return;
+---
+>       return null;
+246,247c270
+<       handleUnresolvedType(t);
+<       return;
+---
+>       return null;
+254,255c277
+<         handleUnresolvedType(t);
+<         return;
+---
+>         return null;
+258,259c280
+<         handleUnresolvedType(t);
+<         return;
+---
+>         return null;
+263,276c284
+< 
+<     
+<     if (value instanceof FunctionType) {
+<       FunctionType functionType = (FunctionType)value;
+<       if (functionType.isConstructor() || functionType.isInterface()) {
+<         setReferencedType(functionType.getInstanceType(), t, enclosing);
+<       } else {
+<         handleUnresolvedType(t);
+<       }
+<     } else if (value instanceof EnumType) {
+<       setReferencedType(((EnumType) value).getElementsType(), t, enclosing);
+<     } else {
+<       handleUnresolvedType(t);
+<     }
+---
+>     return value;
+302,304c310,315
+<   private void handleUnresolvedType(ErrorReporter t) {
+<     if (!registry.isForwardDeclaredType(reference) && !forgiving &&
+<         registry.isLastGeneration()) {
+---
+>   private void handleUnresolvedType(
+>       ErrorReporter t, boolean ignoreForwardReferencedTypes) {
+>     boolean beForgiving = forgiving ||
+>         (ignoreForwardReferencedTypes &&
+>          registry.isForwardDeclaredType(reference));
+>     if (!beForgiving && registry.isLastGeneration()) {
+320c331
+<     handleUnresolvedType(t);
+---
+>     handleUnresolvedType(t, true);

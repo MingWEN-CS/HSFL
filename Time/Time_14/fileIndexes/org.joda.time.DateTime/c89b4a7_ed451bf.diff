@@ -1,0 +1,95 @@
+58,59d57
+< 
+< import org.joda.time.convert.ConverterManager;
+99d96
+< 
+103c100,101
+<     static final long serialVersionUID = -5171125899451703815L;
+---
+>     
+>     private static final long serialVersionUID = -5171125899451703815L;
+190a189
+> 
+208a208
+> 
+225a226
+> 
+322,323c323,324
+<     public ReadableInstant withMillis(long newMillis) {
+<         return newMillis == getMillis() ? this : new DateTime(newMillis, getChronology());
+---
+>     public final DateTime withMillis(long newMillis) {
+>         return (newMillis == getMillis() ? this : new DateTime(newMillis, getChronology()));
+324a326
+> 
+325a328,340
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withChronology(Chronology newChronology) {
+>         return (newChronology == getChronology() ? this : new DateTime(getMillis(), newChronology));
+>     }
+> 
+336,337c351,359
+<     public ReadableInstant withChronology(Chronology newChronology) {
+<         return newChronology == getChronology() ? this : new DateTime(getMillis(), newChronology);
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withZone(DateTimeZone newDateTimeZone) {
+>         return withChronology(getChronology().withZone(newDateTimeZone));
+338a361
+> 
+339a363,403
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public final DateTime withZoneRetainFields(DateTimeZone newDateTimeZone) {
+>         final long originalMillis = getMillis();
+>         final Chronology originalChrono = getChronology();
+>         final DateTimeZone originalZone;
+>         if (originalChrono == null || (originalZone = originalChrono.getZone()) == null) {
+>             
+>             
+>             
+>             return withMillis(originalMillis);
+>         }
+> 
+>         DateTime newInstant = withChronology(originalChrono.withZone(newDateTimeZone));
+>         newDateTimeZone = newInstant.getZone();
+> 
+>         if (newDateTimeZone == null || newDateTimeZone == originalZone) {
+>             
+>             return newInstant;
+>         }
+> 
+>         long newMillis = originalMillis + originalZone.getOffset(originalMillis);
+>         newMillis -= newDateTimeZone.getOffsetFromLocal(newMillis);
+> 
+>         return newInstant.withMillis(newMillis);
+>     }
+> 

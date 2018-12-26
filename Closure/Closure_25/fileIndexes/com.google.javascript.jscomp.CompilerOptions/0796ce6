@@ -1,0 +1,1456 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.SourcePosition;
+import com.google.javascript.rhino.Token;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+public class CompilerOptions implements Serializable, Cloneable {
+  
+  
+
+  private static final long serialVersionUID = 7L;
+
+  
+
+
+  private LanguageMode languageIn;
+
+  
+
+
+  private LanguageMode languageOut;
+
+  
+
+
+  boolean acceptConstKeyword;
+
+  
+
+
+
+
+  private boolean assumeStrictThis;
+
+  
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  public boolean ideMode;
+
+  
+
+
+
+  boolean inferTypes;
+
+  
+
+
+  boolean skipAllPasses;
+
+  
+
+
+  boolean nameAnonymousFunctionsOnly;
+
+  
+
+
+
+  DevMode devMode;
+
+  
+  
+  
+
+  boolean manageClosureDependencies = false;
+  List<String> manageClosureDependenciesEntryPoints = ImmutableList.of();
+
+  
+  
+  public transient MessageBundle messageBundle = null;
+
+  
+  
+  
+
+  
+  public boolean checkSymbols;
+
+  public CheckLevel checkShadowVars;
+
+  
+
+
+
+  public void setCheckShadowVars(CheckLevel level) {
+    this.checkShadowVars = level;
+  }
+
+  public CheckLevel aggressiveVarCheck;
+
+  
+  public void setAggressiveVarCheck(CheckLevel level) {
+    this.aggressiveVarCheck = level;
+  }
+
+  public CheckLevel checkFunctions;
+
+  
+  public void setCheckFunctions(CheckLevel level) {
+    this.checkFunctions = level;
+  }
+
+  public CheckLevel checkMethods;
+
+  
+  public void setCheckMethods(CheckLevel level) {
+    this.checkMethods = level;
+  }
+
+  
+  public boolean checkDuplicateMessages;
+
+  
+  public boolean allowLegacyJsMessages;
+
+  
+
+
+
+  public boolean strictMessageReplacement;
+
+  
+  public boolean checkSuspiciousCode;
+
+  
+  public boolean checkControlStructures;
+
+  
+  public boolean checkTypes;
+
+  
+  public boolean tightenTypes;
+
+  
+  
+  
+  public boolean inferTypesInGlobalScope;
+
+  
+  public boolean checkTypedPropertyCalls;
+
+  public CheckLevel reportMissingOverride;
+
+  
+
+
+
+  public void setReportMissingOverride(CheckLevel level) {
+    this.reportMissingOverride = level;
+  }
+
+  public CheckLevel reportUnknownTypes;
+
+  
+  public void setReportUnknownTypes(CheckLevel level) {
+    this.reportUnknownTypes = level;
+  }
+
+  
+  public CheckLevel checkRequires;
+
+  public void setCheckRequires(CheckLevel level) {
+    this.checkRequires = level;
+  }
+
+  public CheckLevel checkProvides;
+
+  
+  public void setCheckProvides(CheckLevel level) {
+    this.checkProvides = level;
+  }
+
+  public CheckLevel checkGlobalNamesLevel;
+
+  
+
+
+
+  public void setCheckGlobalNamesLevel(CheckLevel level) {
+    this.checkGlobalNamesLevel = level;
+  }
+
+  public CheckLevel brokenClosureRequiresLevel;
+
+  
+  public void setBrokenClosureRequiresLevel(CheckLevel level) {
+    this.brokenClosureRequiresLevel = level;
+  }
+
+  public CheckLevel checkGlobalThisLevel;
+
+  
+
+
+
+
+
+
+
+  public void setCheckGlobalThisLevel(CheckLevel level) {
+    this.checkGlobalThisLevel = level;
+  }
+
+  public CheckLevel checkMissingGetCssNameLevel;
+
+  
+
+
+
+  public void setCheckMissingGetCssNameLevel(CheckLevel level) {
+    this.checkMissingGetCssNameLevel = level;
+  }
+
+  
+
+
+  public String checkMissingGetCssNameBlacklist;
+
+  
+  
+  public boolean checkEs5Strict;
+
+  
+  public boolean checkCaja;
+
+  
+
+
+
+
+  Set<String> extraAnnotationNames;
+
+  
+  
+  
+
+  
+  public boolean foldConstants;
+
+  
+  public boolean deadAssignmentElimination;
+
+  
+  public boolean inlineConstantVars;
+
+  
+  public boolean inlineFunctions;
+
+  
+  public boolean inlineLocalFunctions;
+
+  
+  public boolean crossModuleCodeMotion;
+
+  
+  public boolean coalesceVariableNames;
+
+  
+  public boolean crossModuleMethodMotion;
+
+  
+  public boolean inlineGetters;
+
+  
+  public boolean inlineVariables;
+
+  
+  public boolean inlineLocalVariables;
+
+  
+  
+  public boolean flowSensitiveInlineVariables;
+
+  
+  public boolean smartNameRemoval;
+
+  
+  public boolean removeDeadCode;
+
+  public CheckLevel checkUnreachableCode;
+
+  
+  public void setCheckUnreachableCode(CheckLevel level) {
+    this.checkUnreachableCode = level;
+  }
+
+  public CheckLevel checkMissingReturn;
+
+  
+  public void setCheckMissingReturn(CheckLevel level) {
+    this.checkMissingReturn = level;
+  }
+
+  
+  public boolean extractPrototypeMemberDeclarations;
+
+  
+  public boolean removeEmptyFunctions;
+
+  
+  public boolean removeUnusedPrototypeProperties;
+
+  
+  public boolean removeUnusedPrototypePropertiesInExterns;
+
+  
+  public boolean removeUnusedVars;
+
+  
+  public boolean removeUnusedLocalVars;
+
+  
+  public boolean aliasExternals;
+
+  
+
+
+
+  public String aliasableGlobals;
+
+  
+
+
+
+  public String unaliasableGlobals;
+
+  
+  public boolean collapseVariableDeclarations;
+
+  
+  public boolean groupVariableDeclarations;
+
+  
+
+
+
+  public boolean collapseAnonymousFunctions;
+
+  
+
+
+
+
+  public Set<String> aliasableStrings;
+
+  
+
+
+
+
+  public String aliasStringsBlacklist;
+
+  
+
+
+
+
+  public boolean aliasAllStrings;
+
+  
+  boolean outputJsStringUsage;
+
+  
+  public boolean convertToDottedProperties;
+
+  
+  public boolean rewriteFunctionExpressions;
+
+  
+
+
+  public boolean optimizeParameters;
+
+  
+
+
+  public boolean optimizeReturns;
+
+  
+
+
+  public boolean optimizeCalls;
+
+  
+
+
+  public boolean optimizeArgumentsArray;
+
+  
+  boolean chainCalls;
+
+  
+  
+  
+
+  
+  public VariableRenamingPolicy variableRenaming;
+
+  
+  public PropertyRenamingPolicy propertyRenaming;
+
+  
+  boolean propertyAffinity;
+
+  
+  public boolean labelRenaming;
+
+  
+  public boolean reserveRawExports;
+
+  
+  boolean shadowVariables;
+
+  
+
+
+  public boolean generatePseudoNames;
+
+  
+  public String renamePrefix;
+
+  
+  public boolean aliasKeywords;
+
+  
+  public boolean collapseProperties;
+
+  
+  public boolean collapseObjectLiterals;
+
+  
+  boolean collapsePropertiesOnExternTypes;
+
+  
+
+
+
+  public boolean devirtualizePrototypeMethods;
+
+  
+
+
+
+  public boolean computeFunctionSideEffects;
+
+  
+
+
+  public String debugFunctionSideEffectsPath;
+
+  
+
+
+
+  public boolean disambiguateProperties;
+
+  
+  public boolean ambiguateProperties;
+
+  
+  public AnonymousFunctionNamingPolicy anonymousFunctionNaming;
+
+  
+  public byte[] inputVariableMapSerialized;
+
+  
+  public byte[] inputPropertyMapSerialized;
+
+  
+  public boolean exportTestFunctions;
+
+  
+  public boolean specializeInitialModule;
+
+  
+  
+  
+
+  
+  boolean runtimeTypeCheck;
+
+  
+
+
+
+
+  String runtimeTypeCheckLogFunction;
+
+  
+  private CodingConvention codingConvention;
+
+  
+  public boolean instrumentForCoverage;
+
+  
+
+
+
+  public boolean instrumentForCoverageOnly;
+
+  
+  public boolean ignoreCajaProperties;
+
+  public String syntheticBlockStartMarker;
+
+  public String syntheticBlockEndMarker;
+
+  
+  public String locale;
+
+  
+  public boolean markAsCompiled;
+
+  
+  public boolean removeTryCatchFinally;
+
+  
+  public boolean closurePass;
+
+  
+  boolean rewriteNewDateGoogNow;
+
+  
+  boolean removeAbstractMethods;
+
+  
+  boolean removeClosureAsserts;
+
+  
+  public boolean gatherCssNames;
+
+  
+  public Set<String> stripTypes;
+
+  
+  public Set<String> stripNameSuffixes;
+
+  
+  public Set<String> stripNamePrefixes;
+
+  
+  public Set<String> stripTypePrefixes;
+
+  
+  public transient
+      Multimap<CustomPassExecutionTime, CompilerPass> customPasses;
+
+  
+  public boolean markNoSideEffectCalls;
+
+  
+  private Map<String, Object> defineReplacements;
+
+  
+  private TweakProcessing tweakProcessing;
+
+  
+  private Map<String, Object> tweakReplacements;
+
+  
+  public boolean moveFunctionDeclarations;
+
+  
+  public String instrumentationTemplate;
+
+  
+
+
+
+  public String appNameStr;
+
+  
+  public boolean recordFunctionInformation;
+
+  public boolean generateExports;
+
+  
+  public CssRenamingMap cssRenamingMap;
+
+  
+  boolean processObjectPropertyString;
+
+  
+  Set<String> idGenerators;
+
+  
+  List<String> replaceStringsFunctionDescriptions;
+  String replaceStringsPlaceholderToken;
+  
+  Set<String> replaceStringsReservedStrings;
+
+  
+  boolean operaCompoundAssignFix;
+
+  
+  
+  
+
+  
+  public boolean prettyPrint;
+
+  
+  public boolean lineBreak;
+
+  
+  public boolean printInputDelimiter;
+
+  
+  public String inputDelimiter = "
+
+  
+  public String reportPath;
+
+  public TracerMode tracer;
+
+  private boolean colorizeErrorOutput;
+
+  public ErrorFormat errorFormat;
+
+  public String jsOutputFile;
+
+  private ComposeWarningsGuard warningsGuard =
+      new ComposeWarningsGuard();
+
+  int summaryDetailLevel = 1;
+
+  int lineLengthThreshold = CodePrinter.DEFAULT_LINE_LENGTH_THRESHOLD;
+
+  
+  
+  
+
+  
+
+
+
+  private boolean externExports;
+
+  
+  String externExportsPath;
+
+  
+  public String nameReferenceReportPath;
+
+  
+  public String nameReferenceGraphPath;
+
+  
+  
+  
+
+  
+  public String sourceMapOutputPath;
+
+  
+  public SourceMap.DetailLevel sourceMapDetailLevel =
+      SourceMap.DetailLevel.SYMBOLS;
+
+  
+  public SourceMap.Format sourceMapFormat =
+      SourceMap.Format.DEFAULT;
+
+  public List<SourceMap.LocationMapping> sourceMapLocationMappings =
+      Collections.emptyList();
+
+  
+
+
+
+  String outputCharset;
+
+  
+
+
+  boolean looseTypes;
+
+  
+
+
+  private transient AliasTransformationHandler aliasHandler;
+
+  
+
+
+
+
+
+  public CompilerOptions() {
+    
+    languageIn = LanguageMode.ECMASCRIPT3;
+
+    
+    acceptConstKeyword = false;
+
+    
+    skipAllPasses = false;
+    nameAnonymousFunctionsOnly = false;
+    devMode = DevMode.OFF;
+    checkSymbols = false;
+    checkShadowVars = CheckLevel.OFF;
+    aggressiveVarCheck = CheckLevel.OFF;
+    checkFunctions = CheckLevel.OFF;
+    checkMethods = CheckLevel.OFF;
+    checkDuplicateMessages = false;
+    allowLegacyJsMessages = false;
+    strictMessageReplacement = false;
+    checkSuspiciousCode = false;
+    checkControlStructures = false;
+    checkTypes = false;
+    tightenTypes = false;
+    inferTypesInGlobalScope = false;
+    checkTypedPropertyCalls = false;
+    reportMissingOverride = CheckLevel.OFF;
+    reportUnknownTypes = CheckLevel.OFF;
+    checkRequires = CheckLevel.OFF;
+    checkProvides = CheckLevel.OFF;
+    checkGlobalNamesLevel = CheckLevel.OFF;
+    brokenClosureRequiresLevel = CheckLevel.ERROR;
+    checkGlobalThisLevel = CheckLevel.OFF;
+    checkUnreachableCode = CheckLevel.OFF;
+    checkMissingReturn = CheckLevel.OFF;
+    checkMissingGetCssNameLevel = CheckLevel.OFF;
+    checkMissingGetCssNameBlacklist = null;
+    checkCaja = false;
+    computeFunctionSideEffects = false;
+    chainCalls = false;
+    extraAnnotationNames = null;
+
+    
+    foldConstants = false;
+    coalesceVariableNames = false;
+    deadAssignmentElimination = false;
+    inlineConstantVars = false;
+    inlineFunctions = false;
+    inlineLocalFunctions = false;
+    assumeStrictThis = false;
+    crossModuleCodeMotion = false;
+    crossModuleMethodMotion = false;
+    inlineGetters = false;
+    inlineVariables = false;
+    inlineLocalVariables = false;
+    smartNameRemoval = false;
+    removeDeadCode = false;
+    extractPrototypeMemberDeclarations = false;
+    removeUnusedPrototypeProperties = false;
+    removeUnusedPrototypePropertiesInExterns = false;
+    removeUnusedVars = false;
+    removeUnusedLocalVars = false;
+    aliasExternals = false;
+    collapseVariableDeclarations = false;
+    groupVariableDeclarations = false;
+    collapseAnonymousFunctions = false;
+    aliasableStrings = Collections.emptySet();
+    aliasStringsBlacklist = "";
+    aliasAllStrings = false;
+    outputJsStringUsage = false;
+    convertToDottedProperties = false;
+    rewriteFunctionExpressions = false;
+    optimizeParameters = false;
+    optimizeReturns = false;
+
+    
+    variableRenaming = VariableRenamingPolicy.OFF;
+    propertyRenaming = PropertyRenamingPolicy.OFF;
+    propertyAffinity = false;
+    labelRenaming = false;
+    generatePseudoNames = false;
+    shadowVariables = false;
+    renamePrefix = null;
+    aliasKeywords = false;
+    collapseProperties = false;
+    collapsePropertiesOnExternTypes = false;
+    collapseObjectLiterals = false;
+    devirtualizePrototypeMethods = false;
+    disambiguateProperties = false;
+    ambiguateProperties = false;
+    anonymousFunctionNaming = AnonymousFunctionNamingPolicy.OFF;
+    exportTestFunctions = false;
+
+    
+    runtimeTypeCheck = false;
+    runtimeTypeCheckLogFunction = null;
+    instrumentForCoverage = false;
+    instrumentForCoverageOnly = false;
+    ignoreCajaProperties = false;
+    syntheticBlockStartMarker = null;
+    syntheticBlockEndMarker = null;
+    locale = null;
+    markAsCompiled = false;
+    removeTryCatchFinally = false;
+    closurePass = false;
+    rewriteNewDateGoogNow = true;
+    removeAbstractMethods = true;
+    removeClosureAsserts = false;
+    stripTypes = Collections.emptySet();
+    stripNameSuffixes = Collections.emptySet();
+    stripNamePrefixes = Collections.emptySet();
+    stripTypePrefixes = Collections.emptySet();
+    customPasses = null;
+    markNoSideEffectCalls = false;
+    defineReplacements = Maps.newHashMap();
+    tweakProcessing = TweakProcessing.OFF;
+    tweakReplacements = Maps.newHashMap();
+    moveFunctionDeclarations = false;
+    instrumentationTemplate = null;
+    appNameStr = "";
+    recordFunctionInformation = false;
+    generateExports = false;
+    cssRenamingMap = null;
+    processObjectPropertyString = false;
+    idGenerators = Collections.emptySet();
+    replaceStringsFunctionDescriptions = Collections.emptyList();
+    replaceStringsPlaceholderToken = "";
+    replaceStringsReservedStrings = Collections.emptySet();
+
+    
+    printInputDelimiter = false;
+    prettyPrint = false;
+    lineBreak = false;
+    reportPath = null;
+    tracer = TracerMode.OFF;
+    colorizeErrorOutput = false;
+    errorFormat = ErrorFormat.SINGLELINE;
+    debugFunctionSideEffectsPath = null;
+    jsOutputFile = "";
+    externExports = false;
+    nameReferenceReportPath = null;
+    nameReferenceGraphPath = null;
+
+    
+    aliasHandler = NULL_ALIAS_TRANSFORMATION_HANDLER;
+
+    operaCompoundAssignFix = true;
+  }
+
+  
+
+
+  public Map<String, Node> getDefineReplacements() {
+    return getReplacementsHelper(defineReplacements);
+  }
+
+  
+
+
+  public Map<String, Node> getTweakReplacements() {
+    return getReplacementsHelper(tweakReplacements);
+  }
+
+  
+
+
+  private static Map<String, Node> getReplacementsHelper(
+      Map<String, Object> source) {
+    Map<String, Node> map = Maps.newHashMap();
+    for (Map.Entry<String, Object> entry : source.entrySet()) {
+      String name = entry.getKey();
+      Object value = entry.getValue();
+      if (value instanceof Boolean) {
+        map.put(name, ((Boolean) value).booleanValue() ?
+            new Node(Token.TRUE) : new Node(Token.FALSE));
+      } else if (value instanceof Integer) {
+        map.put(name, Node.newNumber(((Integer) value).intValue()));
+      } else if (value instanceof Double) {
+        map.put(name, Node.newNumber(((Double) value).doubleValue()));
+      } else {
+        Preconditions.checkState(value instanceof String);
+        map.put(name, Node.newString((String) value));
+      }
+    }
+    return map;
+  }
+
+  
+
+
+
+  public void setDefineToBooleanLiteral(String defineName, boolean value) {
+    defineReplacements.put(defineName, new Boolean(value));
+  }
+
+  
+
+
+
+  public void setDefineToStringLiteral(String defineName, String value) {
+    defineReplacements.put(defineName, value);
+  }
+
+  
+
+
+
+  public void setDefineToNumberLiteral(String defineName, int value) {
+    defineReplacements.put(defineName, new Integer(value));
+  }
+
+  
+
+
+
+  public void setDefineToDoubleLiteral(String defineName, double value) {
+    defineReplacements.put(defineName, new Double(value));
+  }
+
+  
+
+
+
+  public void setTweakToBooleanLiteral(String tweakId, boolean value) {
+    tweakReplacements.put(tweakId, new Boolean(value));
+  }
+
+  
+
+
+
+  public void setTweakToStringLiteral(String tweakId, String value) {
+    tweakReplacements.put(tweakId, value);
+  }
+
+  
+
+
+
+  public void setTweakToNumberLiteral(String tweakId, int value) {
+    tweakReplacements.put(tweakId, new Integer(value));
+  }
+
+  
+
+
+
+  public void setTweakToDoubleLiteral(String tweakId, double value) {
+    tweakReplacements.put(tweakId, new Double(value));
+  }
+
+  
+
+
+  public void skipAllCompilerPasses() {
+    skipAllPasses = true;
+  }
+
+  
+
+
+
+  boolean enables(DiagnosticGroup type) {
+    return warningsGuard.enables(type);
+  }
+
+  
+
+
+
+  boolean disables(DiagnosticGroup type) {
+    return warningsGuard.disables(type);
+  }
+
+  
+
+
+  public void setWarningLevel(DiagnosticGroup type, CheckLevel level) {
+    addWarningsGuard(new DiagnosticGroupWarningsGuard(type, level));
+  }
+
+  WarningsGuard getWarningsGuard() {
+    return warningsGuard;
+  }
+
+  
+
+
+  public void resetWarningsGuard() {
+    warningsGuard = new ComposeWarningsGuard();
+  }
+
+  
+
+
+
+  void useEmergencyFailSafe() {
+    warningsGuard = warningsGuard.makeEmergencyFailSafeGuard();
+  }
+
+  
+
+
+  public void addWarningsGuard(WarningsGuard guard) {
+    warningsGuard.addGuard(guard);
+  }
+
+  
+
+
+
+
+  public void setRenamingPolicy(VariableRenamingPolicy newVariablePolicy,
+      PropertyRenamingPolicy newPropertyPolicy) {
+    this.variableRenaming = newVariablePolicy;
+    this.propertyRenaming = newPropertyPolicy;
+  }
+
+  public void setPropertyAffinity(boolean useAffinity) {
+    this.propertyAffinity = useAffinity;
+  }
+
+  
+  public void setShadowVariables(boolean shadow) {
+    this.shadowVariables = shadow;
+  }
+
+  
+
+
+
+
+  public void setCollapsePropertiesOnExternTypes(boolean collapse) {
+    collapsePropertiesOnExternTypes = collapse;
+  }
+
+  
+
+
+  public void setProcessObjectPropertyString(boolean process) {
+    processObjectPropertyString = process;
+  }
+
+  
+
+
+  public void setIdGenerators(Set<String> idGenerators) {
+    this.idGenerators = Sets.newHashSet(idGenerators);
+  }
+
+  
+
+
+  public void setReplaceStringsConfiguration(
+      String placeholderToken, List<String> functionDescriptors) {
+    this.replaceStringsPlaceholderToken = placeholderToken;
+    this.replaceStringsFunctionDescriptions =
+        Lists.newArrayList(functionDescriptors);
+  }
+
+  public void setRewriteNewDateGoogNow(boolean rewrite) {
+    this.rewriteNewDateGoogNow = rewrite;
+  }
+
+  public void setRemoveAbstractMethods(boolean remove) {
+    this.removeAbstractMethods = remove;
+  }
+
+  public void setRemoveClosureAsserts(boolean remove) {
+    this.removeClosureAsserts = remove;
+  }
+
+  
+
+
+  public void setNameAnonymousFunctionsOnly(boolean value) {
+    this.nameAnonymousFunctionsOnly = value;
+  }
+
+  public void lineLengthThreshold(int value) {
+    this.lineLengthThreshold = value;
+  }
+
+  public void setColorizeErrorOutput(boolean colorizeErrorOutput) {
+    this.colorizeErrorOutput = colorizeErrorOutput;
+  }
+
+  public boolean shouldColorizeErrorOutput() {
+    return colorizeErrorOutput;
+  }
+
+  
+
+
+  public void setChainCalls(boolean value) {
+    this.chainCalls = value;
+  }
+
+  
+
+
+  public void setAcceptConstKeyword(boolean value) {
+    this.acceptConstKeyword = value;
+  }
+
+  
+
+
+
+
+
+  public void enableRuntimeTypeCheck(String logFunction) {
+    this.runtimeTypeCheck = true;
+    this.runtimeTypeCheckLogFunction = logFunction;
+  }
+
+  public void disableRuntimeTypeCheck() {
+    this.runtimeTypeCheck = false;
+  }
+
+  public void setGenerateExports(boolean generateExports) {
+    this.generateExports = generateExports;
+  }
+
+  public void setCodingConvention(CodingConvention codingConvention) {
+    this.codingConvention = codingConvention;
+  }
+
+  public CodingConvention getCodingConvention() {
+    return codingConvention;
+  }
+
+  
+
+
+
+  public void setManageClosureDependencies(boolean newVal) {
+    manageClosureDependencies = newVal;
+  }
+
+  
+
+
+
+
+
+
+
+
+  public void setManageClosureDependencies(List<String> entryPoints) {
+    Preconditions.checkNotNull(entryPoints);
+    manageClosureDependencies = true;
+    manageClosureDependenciesEntryPoints = entryPoints;
+  }
+
+  
+
+
+
+
+
+
+  public void setSummaryDetailLevel(int summaryDetailLevel) {
+    this.summaryDetailLevel = summaryDetailLevel;
+  }
+
+  public void enableExternExports(boolean enable) {
+    this.externExports = enable;
+  }
+
+  public void setExtraAnnotationNames(Set<String> extraAnnotationNames) {
+    this.extraAnnotationNames = Sets.newHashSet(extraAnnotationNames);
+  }
+
+  public boolean isExternExportsEnabled() {
+    return externExports;
+  }
+
+  
+
+
+  public void setOutputCharset(String charsetName) {
+    this.outputCharset = charsetName;
+  }
+
+  
+
+
+  public void setTweakProcessing(TweakProcessing tweakProcessing) {
+    this.tweakProcessing = tweakProcessing;
+  }
+
+  public TweakProcessing getTweakProcessing() {
+    return tweakProcessing;
+  }
+
+  
+
+
+  public void setLanguageIn(LanguageMode languageIn) {
+    this.languageIn = languageIn;
+    this.languageOut = languageIn;
+  }
+
+  public LanguageMode getLanguageIn() {
+    return languageIn;
+  }
+
+  public LanguageMode getLanguageOut() {
+    return languageOut;
+  }
+
+  
+
+
+
+
+
+
+  public void setLooseTypes(boolean looseTypes) {
+    this.looseTypes = looseTypes;
+  }
+
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    CompilerOptions clone = (CompilerOptions) super.clone();
+    
+    return clone;
+  }
+
+  public void setAliasTransformationHandler(
+      AliasTransformationHandler changes) {
+    this.aliasHandler = changes;
+  }
+
+  public AliasTransformationHandler getAliasTransformationHandler() {
+    return this.aliasHandler;
+  }
+
+  
+
+
+
+  public void setInferTypes(boolean enable) {
+    inferTypes = enable;
+  }
+
+  
+
+
+
+  public boolean getInferTypes() {
+    return inferTypes;
+  }
+
+  
+
+
+  public boolean isAssumeStrictThis() {
+    return assumeStrictThis;
+  }
+
+  
+
+
+  public void setAssumeStrictThis(boolean enable) {
+    this.assumeStrictThis = enable;
+  }
+
+  
+  
+
+  
+  static enum LanguageMode {
+    
+
+
+    ECMASCRIPT3,
+
+    
+
+
+    ECMASCRIPT5,
+
+    
+
+
+    ECMASCRIPT5_STRICT,
+  }
+
+  
+  static enum DevMode {
+    
+
+
+    OFF,
+
+    
+
+
+    START,
+
+    
+
+
+    START_AND_END,
+
+    
+
+
+    EVERY_PASS
+  }
+
+  public static enum TracerMode {
+    ALL,  
+    FAST, 
+    OFF;  
+
+    boolean isOn() {
+      return this != OFF;
+    }
+  }
+
+  public static enum TweakProcessing {
+    OFF,  
+    CHECK, 
+    STRIP;  
+
+    public boolean isOn() {
+      return this != OFF;
+    }
+
+    public boolean shouldStrip() {
+      return this == STRIP;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  public interface AliasTransformationHandler {
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public AliasTransformation logAliasTransformation(
+        String sourceFile, SourcePosition<AliasTransformation> position);
+  }
+
+  
+
+
+
+
+
+
+  public interface AliasTransformation {
+
+    
+
+
+
+
+
+
+
+
+    void addAlias(String alias, String definition);
+  }
+
+  
+
+
+
+  static final AliasTransformationHandler NULL_ALIAS_TRANSFORMATION_HANDLER =
+      new NullAliasTransformationHandler();
+
+  private static class NullAliasTransformationHandler
+      implements AliasTransformationHandler, Serializable {
+    private static final long serialVersionUID = 0L;
+
+    private static final AliasTransformation NULL_ALIAS_TRANSFORMATION =
+        new NullAliasTransformation();
+
+    @Override
+    public AliasTransformation logAliasTransformation(
+        String sourceFile, SourcePosition<AliasTransformation> position) {
+      position.setItem(NULL_ALIAS_TRANSFORMATION);
+      return NULL_ALIAS_TRANSFORMATION;
+    }
+
+    private static class NullAliasTransformation
+        implements AliasTransformation, Serializable {
+      private static final long serialVersionUID = 0L;
+
+      @Override
+      public void addAlias(String alias, String definition) {
+      }
+    }
+  }
+}

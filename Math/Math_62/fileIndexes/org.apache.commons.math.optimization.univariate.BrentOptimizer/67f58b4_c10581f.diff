@@ -1,0 +1,143 @@
+20c20,23
+< import org.apache.commons.math.MaxIterationsExceededException;
+---
+> import org.apache.commons.math.util.MathUtils;
+> import org.apache.commons.math.util.FastMath;
+> import org.apache.commons.math.exception.DimensionMismatchException;
+> import org.apache.commons.math.exception.NumberIsTooSmallException;
+21a25,27
+> import org.apache.commons.math.exception.MathUnsupportedOperationException;
+> import org.apache.commons.math.optimization.ConvergenceChecker;
+> import org.apache.commons.math.optimization.AbstractConvergenceChecker;
+23c29,35
+< import org.apache.commons.math.util.FastMath;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+43,48d54
+<     public BrentOptimizer() {
+<         setMaxEvaluations(1000);
+<         setMaximalIterationCount(100);
+<         setAbsoluteAccuracy(1e-11);
+<         setRelativeAccuracy(1e-9);
+<     }
+50,56d55
+<     
+<     protected double doOptimize()
+<         throws MaxIterationsExceededException, FunctionEvaluationException {
+<         return localMin(getGoalType() == GoalType.MINIMIZE,
+<                         getMin(), getStartValue(), getMax(),
+<                         getRelativeAccuracy(), getAbsoluteAccuracy());
+<     }
+58d56
+<     
+64a63,72
+>     public static class BrentConvergenceChecker
+>         extends AbstractConvergenceChecker<UnivariateRealPointValuePair> {
+>         
+> 
+> 
+>         private static final double MIN_RELATIVE_TOLERANCE = 2 * FastMath.ulp(1d);
+> 
+>         
+> 
+> 
+67a76,88
+>         public BrentConvergenceChecker(final double rel,
+>                                        final double abs) {
+>             super(rel, abs);
+>             
+>             if (rel < MIN_RELATIVE_TOLERANCE) {
+>                 throw new NumberIsTooSmallException(rel, MIN_RELATIVE_TOLERANCE, true);
+>             }
+>             if (abs <= 0) {
+>                 throw new NotStrictlyPositiveException(abs);
+>             }
+>         }
+> 
+>         
+82,87c103,117
+<     private double localMin(boolean isMinim,
+<                             double lo, double mid, double hi,
+<                             double eps, double t)
+<         throws MaxIterationsExceededException, FunctionEvaluationException {
+<         if (eps <= 0) {
+<             throw new NotStrictlyPositiveException(eps);
+---
+>         public boolean converged(final int iteration,
+>                                  final UnivariateRealPointValuePair ... points) {
+>             if (points.length != 3) {
+>                 throw new DimensionMismatchException(points.length, 3);
+>             }
+>             
+>             final double a = points[0].getPoint();
+>             final double x = points[1].getPoint();
+>             final double b = points[2].getPoint();
+>             
+>             final double tol1 = getRelativeThreshold() * FastMath.abs(x) + getAbsoluteThreshold();
+>             final double tol2 = 2 * tol1;
+>             
+>             final double m = 0.5 * (a + b);
+>             return FastMath.abs(x - m) <= tol2 - 0.5 * (b - a);
+89,90c119,135
+<         if (t <= 0) {
+<             throw new NotStrictlyPositiveException(t);
+---
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     @Override
+>     public void setConvergenceChecker(ConvergenceChecker<UnivariateRealPointValuePair> checker) {
+>         if (checker instanceof BrentConvergenceChecker) {
+>             super.setConvergenceChecker(checker);
+>         } else {
+>             throw new MathUnsupportedOperationException();
+91a137,151
+>     }
+> 
+>     
+>     protected UnivariateRealPointValuePair doOptimize()
+>         throws FunctionEvaluationException {
+>         final boolean isMinim = (getGoalType() == GoalType.MINIMIZE);
+>         final double lo = getMin();
+>         final double mid = getStartValue();
+>         final double hi = getMax();
+> 
+>         final ConvergenceChecker<UnivariateRealPointValuePair> checker
+>             = getConvergenceChecker();
+>         final double eps = checker.getRelativeThreshold();
+>         final double t = checker.getAbsoluteThreshold();
+> 
+113a174
+>         int iter = 0;
+120c181,186
+<             if (FastMath.abs(x - m) > tol2 - 0.5 * (b - a)) {
+---
+>             
+>             
+>             if (!getConvergenceChecker().converged(iter,
+>                                                    new UnivariateRealPointValuePair(a, Double.NaN),
+>                                                    new UnivariateRealPointValuePair(x, Double.NaN),
+>                                                    new UnivariateRealPointValuePair(b, Double.NaN))) {
+221,222c287
+<                 setFunctionValue(isMinim ? fx : -fx);
+<                 return x;
+---
+>                 return new UnivariateRealPointValuePair(x, (isMinim ? fx : -fx));
+224c289
+<             incrementIterationsCounter();
+---
+>             ++iter;

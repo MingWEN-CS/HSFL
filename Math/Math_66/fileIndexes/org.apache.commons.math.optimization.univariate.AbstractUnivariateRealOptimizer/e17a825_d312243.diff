@@ -1,0 +1,174 @@
+22d21
+< import org.apache.commons.math.MathRuntimeException;
+23a23,25
+> import org.apache.commons.math.MaxIterationsExceededException;
+> import org.apache.commons.math.exception.NotStrictlyPositiveException;
+> import org.apache.commons.math.exception.NoDataException;
+26c28
+< import org.apache.commons.math.util.LocalizedFormats;
+---
+> import org.apache.commons.math.optimization.GoalType;
+37d38
+< 
+39,40c40
+<     protected boolean resultComputed;
+< 
+---
+>     private boolean resultComputed;
+42,43c42
+<     protected double result;
+< 
+---
+>     private double result;
+45,46c44
+<     protected double functionValue;
+< 
+---
+>     private double functionValue;
+49d46
+< 
+51a49,58
+>     
+>     private GoalType goal;
+>     
+>     private double min;
+>     
+>     private double max;
+>     
+>     private double startValue;
+>     
+>     private UnivariateRealFunction function;
+60a68,70
+> 
+> 
+> 
+71c81,89
+<     protected void checkResultComputed() throws IllegalStateException {
+---
+> 
+>     protected AbstractUnivariateRealOptimizer() {}
+> 
+>     
+> 
+> 
+> 
+> 
+>     protected void checkResultComputed() {
+73c91
+<             throw MathRuntimeException.createIllegalStateException(LocalizedFormats.NO_RESULT_AVAILABLE);
+---
+>             throw new NoDataException();
+79c97,99
+<         checkResultComputed();
+---
+>         if (!resultComputed) {
+>             throw new NoDataException();
+>         }
+85c105,112
+<         checkResultComputed();
+---
+>         if (functionValue == Double.NaN) {
+>             final double opt = getResult();
+>             try {
+>                 functionValue = function.value(opt);
+>             } catch (FunctionEvaluationException e) {
+>                 throw new RuntimeException(e);
+>             }
+>         }
+95a123
+> 
+106a135
+> 
+128a158,184
+>     public GoalType getGoalType() {
+>         return goal;
+>     }
+>     
+> 
+> 
+>     public double getMin() {
+>         return min;
+>     }
+>     
+> 
+> 
+>     public double getMax() {
+>         return max;
+>     }
+>     
+> 
+> 
+>     public double getStartValue() {
+>         return startValue;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+143a200,263
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected double computeObjectiveValue(double point)
+>         throws FunctionEvaluationException {
+>         if (++evaluations > maxEvaluations) {
+>             resultComputed = false;
+>             throw new FunctionEvaluationException(new MaxEvaluationsExceededException(maxEvaluations),
+>                                                   point);
+>         }
+>         return function.value(point);
+>     }
+> 
+>     
+>     public double optimize(UnivariateRealFunction function, GoalType goal,
+>                            double min, double max, double startValue)
+>         throws MaxIterationsExceededException, FunctionEvaluationException {
+>         
+>         this.min = min;
+>         this.max = max;
+>         this.startValue = startValue;
+>         this.goal = goal;
+>         this.function = function;
+> 
+>         
+>         functionValue = Double.NaN;
+>         evaluations = 0;
+>         resetIterationsCounter();
+> 
+>         
+>         result = doOptimize();
+>         resultComputed = true;
+> 
+>         return result;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     protected void setFunctionValue(double functionValue) {
+>         this.functionValue = functionValue;
+>     }
+> 
+>     
+>     public double optimize(UnivariateRealFunction f, GoalType goal,
+>                            double min, double max)
+>         throws MaxIterationsExceededException, FunctionEvaluationException {
+>         return optimize(f, goal, min, max, min + 0.5 * (max - min));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     protected abstract double doOptimize();

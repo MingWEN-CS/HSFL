@@ -1,0 +1,23 @@
+892,897c892,894
+<     
+<     
+<     Node calledFn = n.getFirstChild();
+<     boolean looksLikeBind = calledFn.isGetProp()
+<         && calledFn.getLastChild().getString().equals("bind");
+<     if (!looksLikeBind) {
+---
+>     CodingConvention.Bind bind =
+>         compiler.getCodingConvention().describeFunctionBind(n, true);
+>     if (bind == null) {
+901,902c898
+<     Node callTarget = calledFn.getFirstChild();
+<     FunctionType callTargetFn = getJSType(callTarget)
+---
+>     FunctionType callTargetFn = getJSType(bind.target)
+908c904,907
+<     n.setJSType(callTargetFn.getBindReturnType(n.getChildCount() - 1));
+---
+>     n.setJSType(
+>         callTargetFn.getBindReturnType(
+>             
+>             bind.getBoundParameterCount() + 1));

@@ -1,0 +1,35 @@
+46c46
+< import com.google.common.collect.ImmutableSet;
+---
+> import com.google.common.collect.ImmutableList;
+314c314,322
+<       return this.isSubtype(that) && that.isSubtype(this);
+---
+>       if (alternates.size() != that.alternates.size()) {
+>         return false;
+>       }
+>       for (JSType alternate : that.alternates) {
+>         if (!hasAlternate(alternate)) {
+>           return false;
+>         }
+>       }
+>       return true;
+319a328,336
+>   private boolean hasAlternate(JSType type) {
+>     for (JSType alternate : alternates) {
+>       if (alternate.isEquivalentTo(type)) {
+>         return true;
+>       }
+>     }
+>     return false;
+>   }
+> 
+493c510
+<     ImmutableSet.Builder<JSType> resolvedTypes = ImmutableSet.builder();
+---
+>     ImmutableList.Builder<JSType> resolvedTypes = ImmutableList.builder();
+501c518,519
+<       Preconditions.checkState(newAlternates.hashCode() == this.hashcode);
+---
+>       Preconditions.checkState(
+>           newAlternates.hashCode() == this.hashcode);

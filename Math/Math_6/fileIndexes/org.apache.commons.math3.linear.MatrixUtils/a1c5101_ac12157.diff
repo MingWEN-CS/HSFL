@@ -1,0 +1,215 @@
+19a20,22
+> import java.io.IOException;
+> import java.io.ObjectInputStream;
+> import java.io.ObjectOutputStream;
+715a719,928
+>         }
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void serializeRealVector(final RealVector vector,
+>                                            final ObjectOutputStream oos)
+>         throws IOException {
+>         final int n = vector.getDimension();
+>         oos.writeInt(n);
+>         for (int i = 0; i < n; ++i) {
+>             oos.writeDouble(vector.getEntry(i));
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void deserializeRealVector(final Object instance,
+>                                              final String fieldName,
+>                                              final ObjectInputStream ois)
+>       throws ClassNotFoundException, IOException {
+>         try {
+> 
+>             
+>             final int n = ois.readInt();
+>             final double[] data = new double[n];
+>             for (int i = 0; i < n; ++i) {
+>                 data[i] = ois.readDouble();
+>             }
+> 
+>             
+>             final RealVector vector = new RealVectorImpl(data, false);
+> 
+>             
+>             final java.lang.reflect.Field f =
+>                 instance.getClass().getDeclaredField(fieldName);
+>             f.setAccessible(true);
+>             f.set(instance, vector);
+> 
+>         } catch (NoSuchFieldException nsfe) {
+>             IOException ioe = new IOException();
+>             ioe.initCause(nsfe);
+>             throw ioe;
+>         } catch (IllegalAccessException iae) {
+>             IOException ioe = new IOException();
+>             ioe.initCause(iae);
+>             throw ioe;
+>         }
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void serializeRealMatrix(final RealMatrix matrix,
+>                                            final ObjectOutputStream oos)
+>         throws IOException {
+>         final int n = matrix.getRowDimension();
+>         final int m = matrix.getColumnDimension();
+>         oos.writeInt(n);
+>         oos.writeInt(m);
+>         for (int i = 0; i < n; ++i) {
+>             for (int j = 0; j < m; ++j) {
+>                 oos.writeDouble(matrix.getEntry(i, j));
+>             }
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void deserializeRealMatrix(final Object instance,
+>                                              final String fieldName,
+>                                              final ObjectInputStream ois)
+>       throws ClassNotFoundException, IOException {
+>         try {
+> 
+>             
+>             final int n = ois.readInt();
+>             final int m = ois.readInt();
+>             final double[][] data = new double[n][m];
+>             for (int i = 0; i < n; ++i) {
+>                 final double[] dataI = data[i];
+>                 for (int j = 0; j < m; ++j) {
+>                     dataI[j] = ois.readDouble();
+>                 }
+>             }
+> 
+>             
+>             final RealMatrix matrix = new RealMatrixImpl(data, false);
+> 
+>             
+>             final java.lang.reflect.Field f =
+>                 instance.getClass().getDeclaredField(fieldName);
+>             f.setAccessible(true);
+>             f.set(instance, matrix);
+> 
+>         } catch (NoSuchFieldException nsfe) {
+>             IOException ioe = new IOException();
+>             ioe.initCause(nsfe);
+>             throw ioe;
+>         } catch (IllegalAccessException iae) {
+>             IOException ioe = new IOException();
+>             ioe.initCause(iae);
+>             throw ioe;

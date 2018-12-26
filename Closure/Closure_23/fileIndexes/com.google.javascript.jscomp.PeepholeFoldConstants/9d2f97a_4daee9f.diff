@@ -1,0 +1,204 @@
+1221a1222
+>     
+1226c1227,1236
+<       subtree = tryFoldKnownStringMethods(subtree);
+---
+>       Node callTarget = subtree.getFirstChild();
+>       if (callTarget == null) {
+>         return subtree;
+>       }
+> 
+>       if (NodeUtil.isGet(callTarget)) {
+>         subtree = tryFoldKnownStringMethods(subtree);
+>       } else {
+>         subtree = tryFoldKnownNumericMethods(subtree);
+>       }
+1253,1254c1263,1264
+<     if ((stringNode.getType() != Token.STRING) || (
+<         (functionName.getType() != Token.STRING))) {
+---
+>     if ((stringNode.getType() != Token.STRING) ||
+>         (functionName.getType() != Token.STRING)) {
+1284a1295,1325
+> 
+>   private Node tryFoldKnownNumericMethods(Node subtree) {
+>     Preconditions.checkArgument(subtree.getType() == Token.CALL);
+> 
+>     if (isASTNormalized()) {
+>       
+>       
+>       Node callTarget = subtree.getFirstChild();
+> 
+>       if (!NodeUtil.isName(callTarget)) {
+>         return subtree;
+>       }
+> 
+>       String functionNameString = callTarget.getString();
+>       Node firstArgument = callTarget.getNext();
+>       if ((firstArgument != null) &&
+>           (firstArgument.getType() == Token.STRING ||
+>            firstArgument.getType() == Token.NUMBER)) {
+>         if (functionNameString.equals("parseInt") ||
+>             functionNameString.equals("parseFloat")) {
+>           subtree = tryFoldParseNumber(subtree, functionNameString,
+>               firstArgument);
+>         }
+>       }
+>     }
+>     return subtree;
+>   }
+> 
+>   
+> 
+> 
+1303a1345,1494
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private String normalizeNumericString(String input) {
+>     if (input == null || input.length() == 0) {
+>       return input;
+>     }
+> 
+>     int startIndex = 0, endIndex = input.length() - 1;
+>     while (startIndex < input.length() && input.charAt(startIndex) == '0') {
+>       startIndex++;
+>     }
+>     while (endIndex >= 0 && input.charAt(endIndex) == '0') {
+>       endIndex--;
+>     }
+>     if (startIndex >= endIndex) {
+>       return input;
+>     }
+> 
+>     return input.substring(startIndex, endIndex + 1);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   private Node tryFoldParseNumber(
+>       Node n, String functionName, Node firstArg) {
+>     Preconditions.checkArgument(n.getType() == Token.CALL);
+> 
+>     boolean isParseInt = functionName.equals("parseInt");
+>     Node secondArg = firstArg.getNext();
+> 
+>     
+>     int radix = 0;
+>     if (secondArg != null) {
+>       if (!isParseInt) {
+>         return n;
+>       }
+> 
+>       
+>       if ((secondArg.getNext() != null) ||
+>           (secondArg.getType() != Token.NUMBER)) {
+>         return n;
+>       } else {
+>         double tmpRadix = secondArg.getDouble();
+>         if (tmpRadix != (int)tmpRadix)
+>           return n;
+>         radix = (int)tmpRadix;
+>         if (radix < 0 || radix == 1 || radix > 36) {
+>           return n;
+>         }
+>       }
+>     }
+> 
+>     
+>     String stringVal = null;
+>     Double checkVal;
+>     if (firstArg.getType() == Token.NUMBER) {
+>       checkVal = NodeUtil.getNumberValue(firstArg);
+>       if (!(radix == 0 || radix == 10) && isParseInt) {
+>         
+>         stringVal = String.valueOf(checkVal.intValue());
+>       } else {
+>         
+>         
+>         
+>         
+>         Node numericNode;
+>         if (isParseInt) {
+>           numericNode = Node.newNumber(checkVal.intValue());
+>         } else {
+>           numericNode = Node.newNumber(checkVal);
+>         }
+>         n.getParent().replaceChild(n, numericNode);
+>         reportCodeChange();
+>         return numericNode;
+>       }
+>     } else {
+>       stringVal = NodeUtil.getStringValue(firstArg);
+>       if (stringVal == null) {
+>         return n;
+>       }
+> 
+>       
+>       checkVal = NodeUtil.getStringNumberValue(stringVal);
+>       if (checkVal == null || checkVal == Double.NaN) {
+>         return n;
+>       }
+> 
+>       stringVal = NodeUtil.trimJsWhiteSpace(stringVal);
+>     }
+> 
+>     Node newNode;
+>     if (isParseInt) {
+>       if (radix == 0 || radix == 16) {
+>         if (stringVal.length() > 1 &&
+>             stringVal.substring(0, 2).equalsIgnoreCase("0x")) {
+>           radix = 16;
+>           stringVal = stringVal.substring(2);
+>         } else if (radix == 0) {
+>           
+>           
+>           
+>           
+>           
+>           if (!isEcmaScript5OrGreater() &&
+>               stringVal.substring(0, 1).equals("0")) {
+>             return n;
+>           }
+> 
+>           radix = 10;
+>         }
+>       }
+>       int newVal = 0;
+>       try {
+>         newVal = Integer.parseInt(stringVal, radix);
+>       } catch (NumberFormatException e) {
+>         return n;
+>       }
+> 
+>       newNode = Node.newNumber(newVal);
+>     } else {
+>       String normalizedNewVal = "0";
+>       try {
+>         double newVal = Double.parseDouble(stringVal);
+>         newNode = Node.newNumber(newVal);
+>         normalizedNewVal = normalizeNumericString(String.valueOf(newVal));
+>       }
+>       catch(NumberFormatException e) {
+>         return n;
+>       }
+>       
+>       
+>       
+>       if (!normalizeNumericString(stringVal).equals(normalizedNewVal)) {
+>         return n;
+>       }
+>     }
+> 
+>     n.getParent().replaceChild(n, newNode);
+> 
+>     reportCodeChange();
+> 
+>     return newNode;

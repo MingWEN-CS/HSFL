@@ -1,0 +1,49 @@
+210a211,258
+> 
+>   
+> 
+> 
+> 
+>   public void updateReferencesWithGlobalScope(Scope globalScope) {
+>     for (ReferenceCollection collection : refMap.values()) {
+>       List<Reference> newRefs =
+>           Lists.newArrayListWithCapacity(collection.references.size());
+>       for (Reference ref : collection.references) {
+>         if (ref.getScope() != globalScope) {
+>           newRefs.add(ref.cloneWithNewScope(globalScope));
+>         } else {
+>           newRefs.add(ref);
+>         }
+>       }
+>       collection.references = newRefs;
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   static class GlobalVarRefCleanupPass implements HotSwapCompilerPass {
+> 
+>     private final AbstractCompiler compiler;
+> 
+>     public GlobalVarRefCleanupPass(AbstractCompiler compiler) {
+>       this.compiler = compiler;
+>     }
+> 
+>     @Override
+>     public void hotSwapScript(Node scriptRoot, Node originalRoot) {
+>       GlobalVarReferenceMap refMap = compiler.getGlobalVarReferences();
+>       if (refMap != null) {
+>         refMap.updateReferencesWithGlobalScope(compiler.getTopScope());
+>       }
+>     }
+> 
+>     @Override
+>     public void process(Node externs, Node root) {
+>       
+>     }
+>   }

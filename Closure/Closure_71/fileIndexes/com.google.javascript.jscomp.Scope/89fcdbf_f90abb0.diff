@@ -1,0 +1,89 @@
+53a54
+>   private final int depth;
+65c66
+<     String name;
+---
+>     final String name;
+68c69
+<     Node nameNode;
+---
+>     final Node nameNode;
+78c79
+<     private JSDocInfo info = null;
+---
+>     private final JSDocInfo info;
+88c89
+<     CompilerInput input;
+---
+>     final CompilerInput input;
+91c92
+<     boolean isDefine;
+---
+>     final boolean isDefine;
+97c98
+<     int index;
+---
+>     final int index;
+100c101
+<     Scope scope;
+---
+>     final Scope scope;
+107c108,118
+<     private Var(boolean inferred) {
+---
+>     private Var(boolean inferred, String name, Node nameNode, JSType type,
+>                 Scope scope, int index, CompilerInput input, boolean isDefine,
+>                 JSDocInfo info) {
+>       this.name = name;
+>       this.nameNode = nameNode;
+>       this.type = type;
+>       this.scope = scope;
+>       this.index = index;
+>       this.input = input;
+>       this.isDefine = isDefine;
+>       this.info = info;
+143,160d153
+< 
+< 
+<     int getLocalVarIndex() {
+<       int num = index;
+<       Scope s = scope.getParent();
+<       if (s == null) {
+<         throw new IllegalArgumentException("Var is not local");
+<       }
+<       while (s.getParent() != null) {
+<         num += s.getVarCount();
+<         s = s.getParent();
+<       }
+<       return num;
+<     }
+< 
+<     
+< 
+< 
+308a302
+>     this.depth = parent.depth + 1;
+320a315
+>     this.depth = 0;
+332a328,333
+>     this.depth = 0;
+>   }
+> 
+>   
+>   int getDepth() {
+>     return depth;
+401,408d401
+<     Var var = new Var(inferred);
+<     var.name = name;
+<     var.nameNode = nameNode;
+<     var.type = type;
+<     var.scope = this;
+<     var.index = vars.size();
+<     var.input = input;
+< 
+413,414c406,407
+<     var.isDefine = info != null && info.isDefine();
+<     var.info = info;
+---
+>     Var var = new Var(inferred, name, nameNode, type, this, vars.size(), input,
+>         info != null && info.isDefine(), info);

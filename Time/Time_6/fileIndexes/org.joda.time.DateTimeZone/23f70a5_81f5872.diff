@@ -1,0 +1,27 @@
+875a876,878
+> 
+> 
+> 
+878c881
+<         int offsetLocal = getOffset(instantLocal);
+---
+>         final int offsetLocal = getOffset(instantLocal);
+880c883,884
+<         int offsetAdjusted = getOffset(instantLocal - offsetLocal);
+---
+>         final long instantAdjusted = instantLocal - offsetLocal;
+>         final int offsetAdjusted = getOffset(instantAdjusted);
+889c893
+<                 long nextLocal = nextTransition(instantLocal - offsetLocal);
+---
+>                 long nextLocal = nextTransition(instantAdjusted);
+892a897,905
+>                 }
+>             }
+>         } else if (offsetLocal > 0) {
+>             long prev = previousTransition(instantAdjusted);
+>             if (prev < instantAdjusted) {
+>                 int offsetPrev = getOffset(prev);
+>                 int diff = offsetPrev - offsetLocal;
+>                 if (instantAdjusted - prev <= diff) {
+>                     return offsetPrev;

@@ -1,0 +1,1110 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.Serializable;
+
+import org.joda.time.chrono.iso.ISOChronology;
+import org.joda.time.convert.ConverterManager;
+import org.joda.time.convert.DurationConverter;
+import org.joda.time.convert.InstantConverter;
+import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.property.ReadWritableInstantFieldProperty;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class MutableDateTime extends AbstractDateTime
+        implements ReadWritableDateTime, Cloneable, Serializable {
+    
+    static final long serialVersionUID = 2852608688135209575L;
+
+    
+    
+    
+
+
+
+    public MutableDateTime() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+
+    public MutableDateTime(DateTimeZone zone) {
+        super(zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public MutableDateTime(Chronology chronology) {
+        super(chronology);
+    }
+
+    
+    
+
+
+
+
+
+    public MutableDateTime(long instant) {
+        super(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public MutableDateTime(long instant, DateTimeZone zone) {
+        super(instant, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(long instant, Chronology chronology) {
+        super(instant, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(Object instant) {
+        super(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(Object instant, DateTimeZone zone) {
+        super(instant, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(Object instant, Chronology chronology) {
+        super(instant, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(
+            int year,
+            int monthOfYear,
+            int dayOfMonth,
+            int hourOfDay,
+            int minuteOfHour,
+            int secondOfMinute,
+            int millisOfSecond) {
+        super(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(
+            int year,
+            int monthOfYear,
+            int dayOfMonth,
+            int hourOfDay,
+            int minuteOfHour,
+            int secondOfMinute,
+            int millisOfSecond,
+            DateTimeZone zone) {
+        super(year, monthOfYear, dayOfMonth,
+              hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(
+            int year,
+            int monthOfYear,
+            int dayOfMonth,
+            int hourOfDay,
+            int minuteOfHour,
+            int secondOfMinute,
+            int millisOfSecond,
+            Chronology chronology) {
+        super(year, monthOfYear, dayOfMonth,
+              hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public ReadableInstant withMillis(long newMillis) {
+        return new MutableDateTime(newMillis, getChronology());
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public ReadableInstant withChronology(Chronology newChronology) {
+        return new MutableDateTime(getMillis(), newChronology);
+    }
+    
+    
+    
+    
+
+
+
+
+
+
+    public void setMillis(long instant) {
+        super.setMillis(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setMillis(Object instant) {
+        super.setMillis(instant);
+    }
+
+    
+    
+    
+
+
+
+
+    public void add(final long duration) {
+        setMillis(getMillis() + duration);
+    }
+
+    
+
+
+
+
+    public void add(final ReadableDuration duration) {
+        duration.addInto(this, 1);
+    }
+
+    
+
+
+
+
+
+    public void add(final ReadableDuration duration, final int scalar) {
+        duration.addInto(this, scalar);
+    }
+
+    
+
+
+
+
+
+
+
+    public void add(final Object duration) {
+        if (duration instanceof ReadableDuration) {
+            add((ReadableDuration) duration, 1);
+        } else {
+            DurationConverter converter = ConverterManager.getInstance().getDurationConverter(duration);
+            add(converter.getDurationMillis(duration));
+        }
+    }
+
+    
+    
+    
+
+
+
+
+    public void setChronology(Chronology chronology) {
+        super.setChronology(chronology);
+    }
+
+    
+    
+    
+
+
+
+
+
+
+
+
+
+    public void setDateTimeZone(DateTimeZone zone) {
+        super.setDateTimeZone(zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void moveDateTimeZone(DateTimeZone zone) {
+        super.moveDateTimeZone(zone);
+    }
+
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void set(final DateTimeField field, final int value) {
+        setMillis(field.set(getMillis(), value));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void add(final DateTimeField field, final int value) {
+        setMillis(field.add(getMillis(), value));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void addWrapped(final DateTimeField field, final int value) {
+        setMillis(field.addWrapped(getMillis(), value));
+    }
+
+    
+    
+    
+
+
+
+
+
+    public void setYear(final int year) {
+        setMillis(getChronology().year().set(getMillis(), year));
+    }
+
+    
+
+
+
+
+
+    public void addYears(final int years) {
+        setMillis(getChronology().years().add(getMillis(), years));
+    }
+
+    
+    
+
+
+
+
+
+    public void setWeekyear(final int weekyear) {
+        setMillis(getChronology().weekyear().set(getMillis(), weekyear));
+    }
+
+    
+
+
+
+
+
+    public void addWeekyears(final int weekyears) {
+        setMillis(getChronology().weekyears().add(getMillis(), weekyears));
+    }
+
+    
+    
+
+
+
+
+
+    public void setMonthOfYear(final int monthOfYear) {
+        setMillis(getChronology().monthOfYear().set(getMillis(), monthOfYear));
+    }
+
+    
+
+
+
+
+
+    public void addMonths(final int months) {
+        setMillis(getChronology().months().add(getMillis(), months));
+    }
+
+    
+    
+
+
+
+
+
+    public void setWeekOfWeekyear(final int weekOfWeekyear) {
+        setMillis(getChronology().weekOfWeekyear().set(getMillis(), weekOfWeekyear));
+    }
+
+    
+
+
+
+
+
+    public void addWeeks(final int weeks) {
+        setMillis(getChronology().weeks().add(getMillis(), weeks));
+    }
+
+    
+    
+
+
+
+
+
+    public void setDayOfYear(final int dayOfYear) {
+        setMillis(getChronology().dayOfYear().set(getMillis(), dayOfYear));
+    }
+
+    
+
+
+
+
+
+    public void setDayOfMonth(final int dayOfMonth) {
+        setMillis(getChronology().dayOfMonth().set(getMillis(), dayOfMonth));
+    }
+
+    
+
+
+
+
+
+    public void setDayOfWeek(final int dayOfWeek) {
+        setMillis(getChronology().dayOfWeek().set(getMillis(), dayOfWeek));
+    }
+
+    
+
+
+
+
+
+    public void addDays(final int days) {
+        setMillis(getChronology().days().add(getMillis(), days));
+    }
+
+    
+    
+    
+
+
+
+
+
+    public void setHourOfDay(final int hourOfDay) {
+        setMillis(getChronology().hourOfDay().set(getMillis(), hourOfDay));
+    }
+
+    
+
+
+
+
+
+    public void addHours(final int hours) {
+        setMillis(getChronology().hours().add(getMillis(), hours));
+    }
+    
+    
+    
+
+
+
+
+
+    public void setMinuteOfDay(final int minuteOfDay) {
+        setMillis(getChronology().minuteOfDay().set(getMillis(), minuteOfDay));
+    }
+
+    
+
+
+
+
+
+    public void setMinuteOfHour(final int minuteOfHour) {
+        setMillis(getChronology().minuteOfHour().set(getMillis(), minuteOfHour));
+    }
+
+    
+
+
+
+
+
+    public void addMinutes(final int minutes) {
+        setMillis(getChronology().minutes().add(getMillis(), minutes));
+    }
+
+    
+    
+
+
+
+
+
+    public void setSecondOfDay(final int secondOfDay) {
+        setMillis(getChronology().secondOfDay().set(getMillis(), secondOfDay));
+    }
+
+    
+
+
+
+
+
+    public void setSecondOfMinute(final int secondOfMinute) {
+        setMillis(getChronology().secondOfMinute().set(getMillis(), secondOfMinute));
+    }
+
+    
+
+
+
+
+
+    public void addSeconds(final int seconds) {
+        setMillis(getChronology().seconds().add(getMillis(), seconds));
+    }
+
+    
+    
+
+
+
+
+
+    public void setMillisOfDay(final int millisOfDay) {
+        setMillis(getChronology().millisOfDay().set(getMillis(), millisOfDay));
+    }
+
+    
+
+
+
+
+
+    public void setMillisOfSecond(final int millisOfSecond) {
+        setMillis(getChronology().millisOfSecond().set(getMillis(), millisOfSecond));
+    }
+
+    
+
+
+
+
+
+
+
+    public void addMillis(final int millis) {
+        setMillis(getChronology().millis().add(getMillis(), millis));
+    }
+
+    
+    
+    
+
+
+
+
+
+
+    public void setDate(final long instant) {
+        Chronology c = getChronology();
+        setMillis(c.getDateOnlyMillis(instant) + c.getTimeOnlyMillis(getMillis()));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setDate(final Object instant) {
+        if (instant instanceof ReadableInstant) {
+            setDate(((ReadableInstant) instant).getMillis());
+        } else {
+            InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+            setDate(converter.getInstantMillis(instant));
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void setDate(
+            final int year,
+            final int monthOfYear,
+            final int dayOfMonth) {
+        Chronology c = getChronology();
+        long instant = c.getDateTimeMillis(
+            year, monthOfYear, dayOfMonth, 0, 0, 0, 0);
+        setDate(instant);
+    }
+
+    
+    
+
+
+
+
+
+
+    public void setTime(final long millis) {
+        Chronology c = getChronology();
+        setMillis(c.getDateOnlyMillis(getMillis()) + c.getTimeOnlyMillis(millis));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setTime(final Object instant) {
+        if (instant instanceof ReadableInstant) {
+            setDateTime(((ReadableInstant) instant).getMillis());
+        } else {
+            InstantConverter converter = ConverterManager.getInstance().getInstantConverter(instant);
+            setDateTime(converter.getInstantMillis(instant));
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setTime(
+            final int hour,
+            final int minuteOfHour,
+            final int secondOfMinute,
+            final int millisOfSecond) {
+        long instant = getChronology().getDateTimeMillis(
+            getMillis(), hour, minuteOfHour, secondOfMinute, millisOfSecond);
+        setTime(instant);
+    }
+
+    
+    
+
+
+
+
+
+
+    public void setDateTime(final long instant) {
+        setMillis(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setDateTime(final Object instant) {
+        setDateTime(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public void setDateTime(
+            final int year,
+            final int monthOfYear,
+            final int dayOfMonth,
+            final int hourOfDay,
+            final int minuteOfHour,
+            final int secondOfMinute,
+            final int millisOfSecond) {
+        long instant = getChronology().getDateTimeMillis(
+            year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+        setDateTime(instant);
+    }
+
+    
+    
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty era() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().era());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty centuryOfEra() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().centuryOfEra());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty yearOfCentury() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().yearOfCentury());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty yearOfEra() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().yearOfEra());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty year() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().year());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty weekyear() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().weekyear());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty monthOfYear() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().monthOfYear());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty weekOfWeekyear() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().weekOfWeekyear());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty dayOfYear() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().dayOfYear());
+    }
+
+    
+
+
+
+
+
+
+    public ReadWritableInstantFieldProperty dayOfMonth() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().dayOfMonth());
+    }
+
+    
+
+
+
+
+
+
+    public ReadWritableInstantFieldProperty dayOfWeek() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().dayOfWeek());
+    }
+
+    
+    
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty hourOfDay() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().hourOfDay());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty minuteOfDay() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().minuteOfDay());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty minuteOfHour() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().minuteOfHour());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty secondOfDay() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().secondOfDay());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty secondOfMinute() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().secondOfMinute());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty millisOfDay() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().millisOfDay());
+    }
+
+    
+
+
+
+
+    public ReadWritableInstantFieldProperty millisOfSecond() {
+        return new ReadWritableInstantFieldProperty(this, getChronology().millisOfSecond());
+    }
+
+    
+    
+    
+
+
+
+
+    public MutableDateTime copy() {
+        return (MutableDateTime)clone();
+    }
+
+    
+
+
+
+
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new InternalError("Clone error");
+        }
+    }
+
+    
+
+
+
+
+    public String toString() {
+        return ISODateTimeFormat.getInstance(getChronology()).dateTime().print(this);
+    }
+
+}

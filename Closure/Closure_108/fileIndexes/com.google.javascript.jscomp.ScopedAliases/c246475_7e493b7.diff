@@ -1,0 +1,41 @@
+20a21
+> import com.google.javascript.jscomp.Scope.Var;
+170c171
+<     private Map<String, Node> aliases = Maps.newHashMap();
+---
+>     private Map<String, Var> aliases = Maps.newHashMap();
+249c250
+<             aliases.put(n.getString(), n.getFirstChild());
+---
+>             aliases.put(n.getString(), t.getScope().getVar(n.getString()));
+253,255d253
+<             t.getScope().undeclare(t.getScope().getVar(n.getString()));
+< 
+<             
+263c261,262
+<         if (type == Token.NAME && NodeUtil.isAssignmentOp(parent)) {
+---
+>         if (type == Token.NAME && NodeUtil.isAssignmentOp(parent) &&
+>             n == parent.getFirstChild()) {
+278,279c277,279
+<           Node aliasedNode = aliases.get(n.getString());
+<           
+---
+>           String name = n.getString();
+>           Var aliasVar = aliases.get(name);
+> 
+281,282c281,282
+<           if (t.getScope().getVar(n.getString()) == null &&
+<               aliasedNode != null) {
+---
+>           if (aliasVar != null &&
+>               t.getScope().getVar(name) == aliasVar) {
+288a289
+>             Node aliasedNode = aliasVar.getInitialValue();
+312,313c313,315
+<         Node aliasedNode = aliases.get(baseName);
+<         if (aliasedNode != null) {
+---
+>         Var aliasVar = aliases.get(baseName);
+>         if (aliasVar != null) {
+>           Node aliasedNode = aliasVar.getInitialValue();

@@ -1,0 +1,121 @@
+18a19
+> import com.google.common.base.Preconditions;
+20a22,23
+> import com.google.common.collect.LinkedListMultimap;
+> import com.google.common.collect.ListMultimap;
+23a27
+> import com.google.javascript.jscomp.deps.SortedDependencies;
+26a31
+> import java.util.Collections;
+28d32
+< import java.util.HashMap;
+114a119,127
+>   private Iterable<JSModule> getAllModulesInDependencyOrder() {
+>     List<JSModule> modules = Lists.newArrayList(getAllModules());
+>     Collections.sort(modules, new DepthComparator());
+>     return modules;
+>   }
+> 
+>   
+> 
+> 
+274a288,367
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   List<CompilerInput> manageDependencies(List<CompilerInput> inputs) {
+>     SortedDependencies<CompilerInput> sorter =
+>         new SortedDependencies<CompilerInput>(inputs);
+>     List<CompilerInput> inputsWithoutProvides =
+>         sorter.getInputsWithoutProvides();
+> 
+>     
+>     List<CompilerInput> absoluteOrder = sorter.getSortedDependenciesOf(inputs);
+> 
+>     
+>     ListMultimap<JSModule, CompilerInput> inputsWithoutProvidesPerModule =
+>         LinkedListMultimap.create();
+>     for (CompilerInput input : inputsWithoutProvides) {
+>       JSModule module = input.getModule();
+>       Preconditions.checkNotNull(module);
+>       inputsWithoutProvidesPerModule.put(module, input);
+>     }
+> 
+>     
+>     
+>     for (JSModule module : getAllModules()) {
+>       module.removeAll();
+>     }
+> 
+>     
+>     
+>     for (JSModule module : inputsWithoutProvidesPerModule.keySet()) {
+>       List<CompilerInput> transitiveClosure =
+>           sorter.getSortedDependenciesOf(
+>               inputsWithoutProvidesPerModule.get(module));
+>       for (CompilerInput input : transitiveClosure) {
+>         JSModule oldModule = input.getModule();
+>         input.setModule(
+>             oldModule == null ?
+>                 module :
+>                 getDeepestCommonDependencyInclusive(oldModule, module));
+>       }
+>     }
+> 
+>     
+>     
+>     for (CompilerInput input : absoluteOrder) {
+>       JSModule module = input.getModule();
+>       if (module != null) {
+>         module.add(input);
+>       }
+>     }
+> 
+>     
+>     List<CompilerInput> result = Lists.newArrayList();
+>     for (JSModule module : getAllModulesInDependencyOrder()) {
+>       result.addAll(module.getInputs());
+>     }
+> 
+>     return result;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private class DepthComparator implements Comparator<JSModule> {
+>     public int compare(JSModule m1, JSModule m2) {
+>       return depthCompare(m1, m2);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+277,282c370,376
+<       if (m1 == m2) {
+<         return 0;
+<       }
+<       int d1 = getDepth(m1);
+<       int d2 = getDepth(m2);
+<       return d2 < d1 ? -1 : d2 == d1 ? m2.getName().compareTo(m1.getName()) : 1;
+---
+>       return depthCompare(m2, m1);
+>     }
+>   }
+> 
+>   private int depthCompare(JSModule m1, JSModule m2) {
+>     if (m1 == m2) {
+>       return 0;
+283a378,380
+>     int d1 = getDepth(m1);
+>     int d2 = getDepth(m2);
+>     return d1 < d2 ? -1 : d2 == d1 ? m1.getName().compareTo(m2.getName()) : 1;

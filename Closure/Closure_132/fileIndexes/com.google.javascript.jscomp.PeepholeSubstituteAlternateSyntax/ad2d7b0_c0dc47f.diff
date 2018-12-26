@@ -1,0 +1,30 @@
+211,212c211,212
+<     Preconditions.checkNotNull(callTarget);
+<     if (callTarget.isName() && callTarget.getString().equals("String")) {
+---
+>     if (callTarget != null && callTarget.isName() &&
+>           callTarget.getString().equals("String")) {
+215,216c215,216
+<       if (value != null && value.getNext() == null) {
+<         Node replacement = IR.add(
+---
+>       if (value != null) {
+>         Node addition = IR.add(
+219c219
+<         n.getParent().replaceChild(n, replacement);
+---
+>         n.getParent().replaceChild(n, addition);
+221c221
+<         return replacement;
+---
+>         return addition;
+223,231d222
+<     } else if (n.hasOneChild() && NodeUtil.isObjectCallMethod(n, "toString")) {
+<       
+<       Node value = callTarget.getFirstChild();
+<       Node replacement = IR.add(
+<           IR.string("").srcref(callTarget),
+<           value.detachFromParent());
+<       n.getParent().replaceChild(n, replacement);
+<       reportCodeChange();
+<       return replacement;

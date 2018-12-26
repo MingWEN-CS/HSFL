@@ -1,0 +1,66 @@
+88,89d87
+<   private final boolean showInvalidationWarnings;
+< 
+99a98,107
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private final Map<String, CheckLevel> propertiesToErrorFor;
+> 
+265c273,274
+<       AbstractCompiler compiler) {
+---
+>       AbstractCompiler compiler,
+>       Map<String, CheckLevel> propertiesToErrorFor) {
+267c276
+<         compiler, new JSTypeSystem(compiler));
+---
+>         compiler, new JSTypeSystem(compiler), propertiesToErrorFor);
+271c280,281
+<       AbstractCompiler compiler, TightenTypes tt) {
+---
+>       AbstractCompiler compiler, TightenTypes tt,
+>       Map<String, CheckLevel> propertiesToErrorFor) {
+273c283,284
+<         compiler, new ConcreteTypeSystem(tt, compiler.getCodingConvention()));
+---
+>         compiler, new ConcreteTypeSystem(tt, compiler.getCodingConvention()),
+>             propertiesToErrorFor);
+281c292
+<                                  TypeSystem<T> typeSystem) {
+---
+>       TypeSystem<T> typeSystem, Map<String, CheckLevel> propertiesToErrorFor) {
+284,286c295,296
+<     this.showInvalidationWarnings = compiler.getErrorLevel(
+<         JSError.make("", 0, 0, Warnings.INVALIDATION)) != CheckLevel.OFF;
+<     if (this.showInvalidationWarnings) {
+---
+>     this.propertiesToErrorFor = propertiesToErrorFor;
+>     if (!this.propertiesToErrorFor.isEmpty()) {
+439c449
+<         if (showInvalidationWarnings) {
+---
+>         if (propertiesToErrorFor.containsKey(name)) {
+462,464c472,475
+<               t.getSourceName(), n, Warnings.INVALIDATION, name,
+<               (type == null ? "null" : type.toString()), n.toString(),
+<               suggestion));
+---
+>               t.getSourceName(), n, propertiesToErrorFor.get(name),
+>               Warnings.INVALIDATION, name,
+>               (type == null ? "null" : type.toString()),
+>               n.toString(), suggestion));
+486c497
+<           if (showInvalidationWarnings) {
+---
+>           if (propertiesToErrorFor.containsKey(name)) {
+488c499,500
+<                 t.getSourceName(), child, Warnings.INVALIDATION, name,
+---
+>                 t.getSourceName(), child, propertiesToErrorFor.get(name),
+>                 Warnings.INVALIDATION, name,

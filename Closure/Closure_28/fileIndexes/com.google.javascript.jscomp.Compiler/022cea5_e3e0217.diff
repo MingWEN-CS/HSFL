@@ -1,0 +1,16 @@
+25a26
+> import com.google.javascript.jscomp.deps.SortedDependencies.CircularDependencyException;
+1057,1059c1058,1066
+<         inputs =
+<             (moduleGraph == null ? new JSModuleGraph(modules) : moduleGraph)
+<             .manageDependencies(inputs);
+---
+>         try {
+>           inputs =
+>               (moduleGraph == null ? new JSModuleGraph(modules) : moduleGraph)
+>               .manageDependencies(inputs);
+>         } catch (CircularDependencyException e) {
+>           report(JSError.make(
+>               JSModule.CIRCULAR_DEPENDENCY_ERROR, e.getMessage()));
+>           return null;
+>         }

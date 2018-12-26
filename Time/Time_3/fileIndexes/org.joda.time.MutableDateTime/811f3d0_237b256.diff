@@ -1,0 +1,17 @@
+902a903,905
+> 
+> 
+> 
+905,908c908,914
+<         Chronology instantChrono = DateTimeUtils.getInstantChronology(instant);
+<         DateTimeZone zone = instantChrono.getZone();
+<         if (zone != null) {
+<             instantMillis = zone.getMillisKeepLocal(DateTimeZone.UTC, instantMillis);
+---
+>         if (instant instanceof ReadableDateTime) {
+>             ReadableDateTime rdt = (ReadableDateTime) instant;
+>             Chronology instantChrono = DateTimeUtils.getChronology(rdt.getChronology());
+>             DateTimeZone zone = instantChrono.getZone();
+>             if (zone != null) {
+>                 instantMillis = zone.getMillisKeepLocal(getZone(), instantMillis);
+>             }

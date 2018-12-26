@@ -1,0 +1,39 @@
+463c463,465
+<       parent.getParent().removeChild(parent);
+---
+>       if (isNamespacePlaceholder(parent)) {
+>         parent.getParent().removeChild(parent);
+>       }
+666a669
+>     Preconditions.checkState(isNamespacePlaceholder(decl));
+682a686
+>     Preconditions.checkState(isNamespacePlaceholder(decl));
+735c739,741
+<       if ((providedNode != null) && (replacementCandidate != null)) {
+---
+>       if ((providedNode != null)
+>           && (replacementCandidate != null)
+>           && isNamespacePlaceholder(providedNode)) {
+757a764,785
+>   }
+> 
+>   
+> 
+> 
+>   private static boolean isNamespacePlaceholder(Node n) {
+>     if (!n.getBooleanProp(Node.IS_NAMESPACE)) {
+>       return false;
+>     }
+> 
+>     Node value = null;
+>     if (n.getType() == Token.EXPR_RESULT) {
+>       Node assign = n.getFirstChild();
+>       value = assign.getLastChild();
+>     } else if (n.getType() == Token.VAR) {
+>       Node name = n.getFirstChild();
+>       value = name.getFirstChild();
+>     }
+> 
+>     return value != null
+>       && value.getType() == Token.OBJECTLIT
+>       && !value.hasChildren();

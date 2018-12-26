@@ -1,0 +1,78 @@
+43a44
+> import com.google.common.collect.Lists;
+44a46,48
+> import com.google.javascript.rhino.Node;
+> 
+> import java.util.List;
+105a110,114
+>   private List<PropertyContinuation> propertyContinuations = null;
+> 
+>   
+> 
+> 
+121a131,161
+>   @Override
+>   boolean defineProperty(String propertyName, JSType type,
+>       boolean inferred, boolean inExterns, Node propertyNode) {
+>     if (!isResolved()) {
+>       
+>       
+>       if (propertyContinuations == null) {
+>         propertyContinuations = Lists.newArrayList();
+>       }
+>       propertyContinuations.add(
+>           new PropertyContinuation(
+>               propertyName, type, inferred, inExterns, propertyNode));
+>       return true;
+>     } else {
+>       return super.defineProperty(
+>           propertyName, type, inferred, inExterns, propertyNode);
+>     }
+>   }
+> 
+>   private void finishPropertyContinuations() {
+>     ObjectType referencedObjType = getReferencedObjTypeInternal();
+>     if (referencedObjType != null && !referencedObjType.isUnknownType()) {
+>       if (propertyContinuations != null) {
+>         for (PropertyContinuation c : propertyContinuations) {
+>           c.commit(this);
+>         }
+>       }
+>     }
+>     propertyContinuations = null;
+>   }
+> 
+196a237
+>       finishPropertyContinuations();
+206a248,250
+>     if (isResolved()) {
+>       finishPropertyContinuations();
+>     }
+373a418,444
+>     }
+>   }
+> 
+>   
+>   private static final class PropertyContinuation {
+>     private final String propertyName;
+>     private final JSType type;
+>     private final boolean inferred;
+>     private final boolean inExterns;
+>     private final Node propertyNode;
+> 
+>     private PropertyContinuation(
+>         String propertyName,
+>         JSType type,
+>         boolean inferred,
+>         boolean inExterns,
+>         Node propertyNode) {
+>       this.propertyName = propertyName;
+>       this.type = type;
+>       this.inferred = inferred;
+>       this.inExterns = inExterns;
+>       this.propertyNode = propertyNode;
+>     }
+> 
+>     void commit(ObjectType target) {
+>       target.defineProperty(
+>           propertyName, type, inferred, inExterns, propertyNode);

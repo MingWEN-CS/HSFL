@@ -1,0 +1,115 @@
+498a499
+>     
+543d543
+<     
+552,553c552,563
+<     public DateTime withDurationAdded(long durationToAdd) {
+<         return withDurationAdded(durationToAdd, 1);
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTime withFieldAdded(DurationFieldType fieldType, int amount) {
+>         if (fieldType == null || amount == 0) {
+>             return this;
+>         }
+>         long instant = fieldType.getField(getChronology()).add(getMillis(), amount);
+>         return withMillis(instant);
+556a567
+>     
+584,585c595,597
+<     public DateTime withDurationAdded(ReadableDuration durationToAdd) {
+<         if (durationToAdd == null) {
+---
+> 
+>     public DateTime withDurationAdded(ReadableDuration durationToAdd, int scalar) {
+>         if (durationToAdd == null || scalar == 0) {
+588c600
+<         return withDurationAdded(durationToAdd.getMillis(), 1);
+---
+>         return withDurationAdded(durationToAdd.getMillis(), scalar);
+601,602c613,619
+<     public DateTime withDurationAdded(ReadableDuration durationToAdd, int scalar) {
+<         if (durationToAdd == null || scalar == 0) {
+---
+> 
+> 
+> 
+> 
+> 
+>     public DateTime withPeriodAdded(ReadablePeriod period, int scalar) {
+>         if (period == null || scalar == 0) {
+605c622,623
+<         return withDurationAdded(durationToAdd.getMillis(), scalar);
+---
+>         long instant = getChronology().add(getMillis(), period, scalar);
+>         return withMillis(instant);
+617a636,638
+>     public DateTime plus(long duration) {
+>         return withDurationAdded(duration, 1);
+>     }
+618a640
+>     
+624,629c646,650
+<     public DateTime withFieldAdded(DurationFieldType fieldType, int amount) {
+<         if (fieldType == null || amount == 0) {
+<             return this;
+<         }
+<         long instant = fieldType.getField(getChronology()).add(getMillis(), amount);
+<         return withMillis(instant);
+---
+> 
+> 
+> 
+>     public DateTime plus(ReadableDuration duration) {
+>         return withDurationAdded(duration, 1);
+646,647c667,669
+<     public DateTime withPeriodAdded(ReadablePeriod periodToAdd) {
+<         return withPeriodAdded(periodToAdd, 1);
+---
+> 
+>     public DateTime plus(ReadablePeriod period) {
+>         return withPeriodAdded(period, 1);
+650a673,674
+>     
+> 
+657a682,684
+>     public DateTime minus(long duration) {
+>         return withDurationAdded(duration, -1);
+>     }
+658a686
+>     
+665,670c693,715
+<     public DateTime withPeriodAdded(ReadablePeriod period, int scalar) {
+<         if (period == null || scalar == 0) {
+<             return this;
+<         }
+<         long instant = getChronology().add(getMillis(), period, scalar);
+<         return withMillis(instant);
+---
+> 
+> 
+>     public DateTime minus(ReadableDuration durationToAdd) {
+>         return withDurationAdded(durationToAdd, -1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTime minus(ReadablePeriod period) {
+>         return withPeriodAdded(period, -1);

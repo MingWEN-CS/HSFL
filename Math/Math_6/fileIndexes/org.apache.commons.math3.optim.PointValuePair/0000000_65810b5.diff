@@ -1,0 +1,122 @@
+1a2,122
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math3.optim;
+> 
+> import java.io.Serializable;
+> import org.apache.commons.math3.util.Pair;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class PointValuePair extends Pair<double[], Double> implements Serializable {
+>     
+>     private static final long serialVersionUID = 20120513L;
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PointValuePair(final double[] point,
+>                           final double value) {
+>         this(point, value, true);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PointValuePair(final double[] point,
+>                           final double value,
+>                           final boolean copyArray) {
+>         super(copyArray ? ((point == null) ? null :
+>                            point.clone()) :
+>               point,
+>               value);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public double[] getPoint() {
+>         final double[] p = getKey();
+>         return p == null ? null : p.clone();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public double[] getPointRef() {
+>         return getKey();
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private Object writeReplace() {
+>         return new DataTransferObject(getKey(), getValue());
+>     }
+> 
+>     
+>     private static class DataTransferObject implements Serializable {
+>         
+>         private static final long serialVersionUID = 20120513L;
+>         
+> 
+> 
+> 
+>         private final double[] point;
+>         
+> 
+> 
+> 
+>         private final double value;
+> 
+>         
+> 
+> 
+> 
+>         public DataTransferObject(final double[] point, final double value) {
+>             this.point = point.clone();
+>             this.value = value;
+>         }
+> 
+>         
+> 
+> 
+>         private Object readResolve() {
+>             return new PointValuePair(point, value, false);
+>         }
+>     }
+> }

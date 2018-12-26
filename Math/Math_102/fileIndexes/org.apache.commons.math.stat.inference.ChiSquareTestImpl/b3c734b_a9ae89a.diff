@@ -1,0 +1,101 @@
+180a181,273
+>     public double chiSquareDataSetsComparison(long[] observed1, long[] observed2)
+>         throws IllegalArgumentException {
+>         
+>         
+>         if ((observed1.length < 2) || (observed1.length != observed2.length)) {
+>             throw new IllegalArgumentException(
+>                     "oberved1, observed2 array lengths incorrect");
+>         }
+>         
+>         if (!isNonNegative(observed1) || !isNonNegative(observed2)) {
+>             throw new IllegalArgumentException(
+>                 "observed counts must be non-negative");
+>         }
+>         
+>         long countSum1 = 0;
+>         long countSum2 = 0;
+>         boolean unequalCounts = false;
+>         double weight = 0.0;
+>         for (int i = 0; i < observed1.length; i++) {
+>             countSum1 += observed1[i];
+>             countSum2 += observed2[i];   
+>         }
+>         
+>         if (countSum1 * countSum2 == 0) {
+>             throw new IllegalArgumentException(
+>              "observed counts cannot all be 0"); 
+>         }
+>         
+>         unequalCounts = (countSum1 != countSum2);
+>         if (unequalCounts) {
+>             weight = Math.sqrt((double) countSum1 / (double) countSum2);
+>         }
+>         
+>         double sumSq = 0.0d;
+>         double dev = 0.0d;
+>         double obs1 = 0.0d;
+>         double obs2 = 0.0d;
+>         for (int i = 0; i < observed1.length; i++) {
+>             if (observed1[i] == 0 && observed2[i] == 0) {
+>                 throw new IllegalArgumentException(
+>                         "observed counts must not both be zero");
+>             } else {
+>                 obs1 = (double) observed1[i];
+>                 obs2 = (double) observed2[i];
+>                 if (unequalCounts) { 
+>                     dev = obs1/weight - obs2 * weight;
+>                 } else {
+>                     dev = obs1 - obs2;
+>                 }
+>                 sumSq += (dev * dev) / (obs1 + obs2);
+>             }
+>         }
+>         return sumSq;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double chiSquareTestDataSetsComparison(long[] observed1, long[] observed2)
+>         throws IllegalArgumentException, MathException {
+>         distribution.setDegreesOfFreedom((double) observed1.length - 1);
+>         return 1 - distribution.cumulativeProbability(
+>                 chiSquareDataSetsComparison(observed1, observed2));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean chiSquareTestDataSetsComparison(long[] observed1, long[] observed2,
+>             double alpha) throws IllegalArgumentException, MathException {
+>         if ((alpha <= 0) || (alpha > 0.5)) {
+>             throw new IllegalArgumentException(
+>                     "bad significance level: " + alpha);
+>         }
+>         return (chiSquareTestDataSetsComparison(observed1, observed2) < alpha);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+283a377
+>  
+285c379,380
+<     
+---
+> 
+> 

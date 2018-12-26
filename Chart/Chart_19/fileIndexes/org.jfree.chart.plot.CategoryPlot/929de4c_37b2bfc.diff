@@ -1,0 +1,84 @@
+154a155
+> 
+2608c2609,2622
+<             for (int i = 0; i < this.datasets.size(); i++) {
+---
+> 
+>             
+>             int datasetCount = this.datasets.size();
+>             for (int i = 0; i < datasetCount; i++) {
+>                 CategoryItemRenderer r = getRenderer(i);
+>                 if (r != null) {
+>                     CategoryAxis domainAxis = getDomainAxisForDataset(i);
+>                     ValueAxis rangeAxis = getRangeAxisForDataset(i);
+>                     r.drawAnnotations(g2, dataArea, domainAxis, rangeAxis,
+>                             Layer.BACKGROUND, state);
+>                 }
+>             }
+> 
+>             for (int i = 0; i < datasetCount; i++) {
+2610a2625,2635
+> 
+>             
+>             for (int i = 0; i < datasetCount; i++) {
+>                 CategoryItemRenderer r = getRenderer(i);
+>                 if (r != null) {
+>                     CategoryAxis domainAxis = getDomainAxisForDataset(i);
+>                     ValueAxis rangeAxis = getRangeAxisForDataset(i);
+>                     r.drawAnnotations(g2, dataArea, domainAxis, rangeAxis,
+>                             Layer.FOREGROUND, state);
+>                 }
+>             }
+2612a2638,2650
+>             
+>             
+>             int datasetCount = this.datasets.size();
+>             for (int i = datasetCount - 1; i >= 0; i--) {
+>                 CategoryItemRenderer r = getRenderer(i);
+>                 if (r != null) {
+>                     CategoryAxis domainAxis = getDomainAxisForDataset(i);
+>                     ValueAxis rangeAxis = getRangeAxisForDataset(i);
+>                     r.drawAnnotations(g2, dataArea, domainAxis, rangeAxis,
+>                             Layer.BACKGROUND, state);
+>                 }
+>             }
+>             
+2615a2654,2664
+> 
+>             
+>             for (int i = datasetCount - 1; i >= 0; i--) {
+>                 CategoryItemRenderer r = getRenderer(i);
+>                 if (r != null) {
+>                     CategoryAxis domainAxis = getDomainAxisForDataset(i);
+>                     ValueAxis rangeAxis = getRangeAxisForDataset(i);
+>                     r.drawAnnotations(g2, dataArea, domainAxis, rangeAxis,
+>                             Layer.FOREGROUND, state);
+>                 }
+>             }
+2617a2667
+>         
+2626c2676
+<         drawAnnotations(g2, dataArea);
+---
+>         drawAnnotations(g2, dataArea, state);
+2912d2961
+<     protected void drawAnnotations(Graphics2D g2, Rectangle2D dataArea) {
+2914,2921c2963,2971
+<         if (getAnnotations() != null) {
+<             Iterator iterator = getAnnotations().iterator();
+<             while (iterator.hasNext()) {
+<                 CategoryAnnotation annotation 
+<                         = (CategoryAnnotation) iterator.next();
+<                 annotation.draw(g2, this, dataArea, getDomainAxis(), 
+<                         getRangeAxis());
+<             }
+---
+>     protected void drawAnnotations(Graphics2D g2, Rectangle2D dataArea,
+>             PlotRenderingInfo info) {
+> 
+>         Iterator iterator = getAnnotations().iterator();
+>         while (iterator.hasNext()) {
+>             CategoryAnnotation annotation 
+>                     = (CategoryAnnotation) iterator.next();
+>             annotation.draw(g2, this, dataArea, getDomainAxis(), 
+>                     getRangeAxis(), 0, info);

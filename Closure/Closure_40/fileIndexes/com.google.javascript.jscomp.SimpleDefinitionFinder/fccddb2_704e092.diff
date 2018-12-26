@@ -1,0 +1,69 @@
+20a21
+> import com.google.common.collect.Lists;
+30a32
+> import java.util.List;
+170a173,196
+>           
+>           
+>           if (inExterns) {
+>             
+>             
+> 
+>             List<Definition> stubsToRemove = Lists.newArrayList();
+>             String qualifiedName = node.getQualifiedName();
+>             for (Definition prevDef : nameDefinitionMultimap.get(name)) {
+>               if (prevDef instanceof ExternalNameOnlyDefinition
+>                   && node.getJSDocInfo() == null) {
+>                 String prevName = prevDef.getLValue().getQualifiedName();
+>                 if (qualifiedName.equals(prevName)) {
+>                   
+>                   stubsToRemove.add(prevDef);
+>                 }
+>               }
+>             }
+> 
+>             for (Definition prevDef : stubsToRemove) {
+>               nameDefinitionMultimap.remove(name, prevDef);
+>             }
+>           }
+> 
+186,193c212,241
+<           Definition definition = new ExternalNameOnlyDefinition(node);
+<           nameDefinitionMultimap.put(name, definition);
+<           definitionSiteMap.put(node,
+<                                 new DefinitionSite(node,
+<                                                    definition,
+<                                                    traversal.getModule(),
+<                                                    traversal.inGlobalScope(),
+<                                                    inExterns));
+---
+>           
+> 
+>           
+>           
+>           
+>           
+> 
+>           boolean dropStub = false;
+>           if (node.getJSDocInfo() == null) {
+>             String qualifiedName = node.getQualifiedName();
+>             for (Definition prevDef : nameDefinitionMultimap.get(name)) {
+>               String prevName = prevDef.getLValue().getQualifiedName();
+>               if (qualifiedName.equals(prevName)) {
+>                 dropStub = true;
+>                 break;
+>               }
+>             }
+>           }
+> 
+>           if (!dropStub) {
+>             
+>             Definition definition = new ExternalNameOnlyDefinition(node);
+>             nameDefinitionMultimap.put(name, definition);
+>             definitionSiteMap.put(node,
+>                                   new DefinitionSite(node,
+>                                                      definition,
+>                                                      traversal.getModule(),
+>                                                      traversal.inGlobalScope(),
+>                                                      inExterns));
+>           }

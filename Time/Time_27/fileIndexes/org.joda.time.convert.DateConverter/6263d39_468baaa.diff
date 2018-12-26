@@ -1,0 +1,8 @@
+20a21
+> import org.joda.time.DateTimeZone;
+55c56,58
+<         return ((Date) object).getTime();
+---
+>         Date date = (Date) object;
+>         long millisLocal = date.getTime() - date.getTimezoneOffset() * 60000;
+>         return millisLocal - DateTimeZone.getDefault().getOffsetFromLocal(millisLocal);

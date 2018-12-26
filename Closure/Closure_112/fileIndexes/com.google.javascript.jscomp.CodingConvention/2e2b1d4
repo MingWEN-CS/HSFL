@@ -1,0 +1,403 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.jstype.FunctionType;
+import com.google.javascript.rhino.jstype.JSType;
+import com.google.javascript.rhino.jstype.JSTypeNative;
+import com.google.javascript.rhino.jstype.JSTypeRegistry;
+import com.google.javascript.rhino.jstype.ObjectType;
+import com.google.javascript.rhino.jstype.StaticScope;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+
+
+
+
+
+public interface CodingConvention extends Serializable {
+
+  
+
+
+
+
+
+
+  public boolean isConstant(String variableName);
+
+  
+
+
+
+
+  public boolean isConstantKey(String keyName);
+
+  
+
+
+
+
+
+
+  public boolean isValidEnumKey(String key);
+
+  
+
+
+
+
+
+
+
+
+
+
+  public boolean isOptionalParameter(Node parameter);
+
+  
+
+
+
+
+
+
+
+
+  public boolean isVarArgsParameter(Node parameter);
+
+  
+
+
+
+
+
+
+
+  public boolean isExported(String name, boolean local);
+
+  
+
+
+  public boolean isExported(String name);
+
+  
+
+
+
+
+
+
+
+
+
+  public boolean isPrivate(String name);
+
+  
+
+
+
+
+
+
+  public SubclassRelationship getClassesDefinedByCall(Node callNode);
+
+  
+
+
+
+
+  public boolean isSuperClassReference(String propertyName);
+
+  
+
+
+
+  public String extractClassNameIfProvide(Node node, Node parent);
+
+  
+
+
+
+  public String extractClassNameIfRequire(Node node, Node parent);
+
+  
+
+
+
+
+  public String getExportPropertyFunction();
+
+  
+
+
+
+
+  public String getExportSymbolFunction();
+
+  
+
+
+
+  public List<String> identifyTypeDeclarationCall(Node n);
+
+  
+
+
+
+  public void applySubclassRelationship(FunctionType parentCtor,
+      FunctionType childCtor, SubclassType type);
+
+  
+
+
+
+
+
+
+  public String getAbstractMethodName();
+
+  
+
+
+
+
+
+
+  public String getSingletonGetterClassName(Node callNode);
+
+  
+
+
+
+  public void applySingletonGetter(FunctionType functionType,
+      FunctionType getterType, ObjectType objectType);
+
+  
+
+
+  public boolean isInlinableFunction(Node n);
+
+  
+
+
+  public DelegateRelationship getDelegateRelationship(Node callNode);
+
+  
+
+
+
+  public void applyDelegateRelationship(
+      ObjectType delegateSuperclass, ObjectType delegateBase,
+      ObjectType delegator, FunctionType delegateProxy,
+      FunctionType findDelegate);
+
+  
+
+
+  public String getDelegateSuperclassName();
+
+  
+
+
+
+  public void checkForCallingConventionDefiningCalls(
+      Node n, Map<String, String> delegateCallingConventions);
+
+  
+
+
+
+
+
+  public void defineDelegateProxyPrototypeProperties(
+      JSTypeRegistry registry, StaticScope<JSType> scope,
+      List<ObjectType> delegateProxyPrototypes,
+      Map<String, String> delegateCallingConventions);
+
+  
+
+
+  public String getGlobalObject();
+
+  
+
+
+  public Bind describeFunctionBind(Node n);
+
+  
+
+
+
+
+  public Bind describeFunctionBind(Node n, boolean useTypeInfo);
+
+  public static class Bind {
+    
+    final Node target;
+    
+    final Node thisValue;
+    
+    final Node parameters;
+
+    public Bind(Node target, Node thisValue, Node parameters) {
+      this.target = target;
+      this.thisValue = thisValue;
+      this.parameters = parameters;
+    }
+
+    
+
+
+    int getBoundParameterCount() {
+      if (parameters == null) {
+        return 0;
+      }
+      Node paramParent = parameters.getParent();
+      return paramParent.getChildCount() -
+          paramParent.getIndexOfChild(parameters);
+    }
+  }
+
+  
+
+
+  public boolean isPropertyTestFunction(Node call);
+
+  
+
+
+  public boolean isPrototypeAlias(Node getProp);
+
+  
+
+
+
+
+
+
+  public ObjectLiteralCast getObjectLiteralCast(Node callNode);
+
+  
+
+
+  public Collection<AssertionFunctionSpec> getAssertionFunctions();
+
+  static enum SubclassType {
+    INHERITS,
+    MIXIN
+  }
+
+  static class SubclassRelationship {
+    final SubclassType type;
+    final String subclassName;
+    final String superclassName;
+
+    public SubclassRelationship(SubclassType type,
+        Node subclassNode, Node superclassNode) {
+      this.type = type;
+      this.subclassName = subclassNode.getQualifiedName();
+      this.superclassName = superclassNode.getQualifiedName();
+    }
+  }
+
+  
+
+
+
+
+
+  static class DelegateRelationship {
+    
+    final String delegateBase;
+
+    
+    final String delegator;
+
+    DelegateRelationship(String delegateBase, String delegator) {
+      this.delegateBase = delegateBase;
+      this.delegator = delegator;
+    }
+  }
+
+  
+
+
+
+  static class ObjectLiteralCast {
+    
+    final String typeName;
+
+    
+    final Node objectNode;
+
+    
+    final DiagnosticType diagnosticType;
+
+    ObjectLiteralCast(String typeName, Node objectNode,
+        DiagnosticType diagnosticType) {
+      this.typeName = typeName;
+      this.objectNode = objectNode;
+      this.diagnosticType = diagnosticType;
+    }
+  }
+
+  
+
+
+
+
+  public class AssertionFunctionSpec {
+    private final String functionName;
+    private final JSTypeNative assertedType;
+
+    public AssertionFunctionSpec(String functionName) {
+      this(functionName, null);
+    }
+
+    public AssertionFunctionSpec(String functionName,
+        JSTypeNative assertedType) {
+      this.functionName = functionName;
+      this.assertedType = assertedType;
+    }
+
+    
+    public String getFunctionName() {
+      return functionName;
+    }
+
+    
+
+
+
+    public Node getAssertedParam(Node firstParam) {
+      return firstParam;
+    }
+
+    
+
+
+
+    public JSTypeNative getAssertedType() {
+      return assertedType;
+    }
+  }
+}

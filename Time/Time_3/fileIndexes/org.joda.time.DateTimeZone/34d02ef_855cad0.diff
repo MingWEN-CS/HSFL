@@ -1,0 +1,305 @@
+30a31,32
+> import org.joda.convert.FromString;
+> import org.joda.convert.ToString;
+32d33
+< import org.joda.time.chrono.ISOChronology;
+101c102
+<     private static Set cAvailableIDs;
+---
+>     private static Set<String> cAvailableIDs;
+103c104
+<     private static DateTimeZone cDefault;
+---
+>     private static volatile DateTimeZone cDefault;
+108c109
+<     private static Map iFixedOffsetCache;
+---
+>     private static Map<String, SoftReference<DateTimeZone>> iFixedOffsetCache;
+111c112
+<     private static Map cZoneIdConversion;
+---
+>     private static Map<String, String> cZoneIdConversion;
+116,132d116
+< 
+<         try {
+<             try {
+<                 cDefault = forID(System.getProperty("user.timezone"));
+<             } catch (RuntimeException ex) {
+<                 
+<             }
+<             if (cDefault == null) {
+<                 cDefault = forTimeZone(TimeZone.getDefault());
+<             }
+<         } catch (IllegalArgumentException ex) {
+<             
+<         }
+< 
+<         if (cDefault == null) {
+<             cDefault = UTC;
+<         }
+140a125,131
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+142c133,161
+<         return cDefault;
+---
+>         DateTimeZone zone = cDefault;
+>         if (zone == null) {
+>             synchronized(DateTimeZone.class) {
+>                 zone = cDefault;
+>                 if (zone == null) {
+>                     DateTimeZone temp = null;
+>                     try {
+>                         try {
+>                             String id = System.getProperty("user.timezone");
+>                             if (id != null) {  
+>                                 temp = forID(id);
+>                             }
+>                         } catch (RuntimeException ex) {
+>                             
+>                         }
+>                         if (temp == null) {
+>                             temp = forTimeZone(TimeZone.getDefault());
+>                         }
+>                     } catch (IllegalArgumentException ex) {
+>                         
+>                     }
+>                     if (temp == null) {
+>                         temp = UTC;
+>                     }
+>                     cDefault = zone = temp;
+>                 }
+>             }
+>         }
+>         return zone;
+151a171,172
+> 
+> 
+160c181,183
+<         cDefault = zone;
+---
+>         synchronized(DateTimeZone.class) {
+>             cDefault = zone;
+>         }
+178a202
+>     @FromString
+199c223
+<         throw new IllegalArgumentException("The datetime zone id is not recognised: " + id);
+---
+>         throw new IllegalArgumentException("The datetime zone id '" + id + "' is not recognised");
+313,314c337
+< 
+<         throw new IllegalArgumentException("The datetime zone id is not recognised: " + id);
+---
+>         throw new IllegalArgumentException("The datetime zone id '" + id + "' is not recognised");
+330c353
+<             iFixedOffsetCache = new HashMap();
+---
+>             iFixedOffsetCache = new HashMap<String, SoftReference<DateTimeZone>>();
+333c356
+<         Reference ref = (Reference) iFixedOffsetCache.get(id);
+---
+>         Reference<DateTimeZone> ref = iFixedOffsetCache.get(id);
+335c358
+<             zone = (DateTimeZone) ref.get();
+---
+>             zone = ref.get();
+341c364
+<         iFixedOffsetCache.put(id, new SoftReference(zone));
+---
+>         iFixedOffsetCache.put(id, new SoftReference<DateTimeZone>(zone));
+350c373
+<     public static Set getAvailableIDs() {
+---
+>     public static Set<String> getAvailableIDs() {
+395c418
+<         Set ids = provider.getAvailableIDs();
+---
+>         Set<String> ids = provider.getAvailableIDs();
+536c559
+<         Map map = cZoneIdConversion;
+---
+>         Map<String, String> map = cZoneIdConversion;
+539c562
+<             map = new HashMap();
+---
+>             map = new HashMap<String, String>();
+540a564,568
+>             map.put("WET", "WET");
+>             map.put("CET", "CET");
+>             map.put("MET", "CET");
+>             map.put("ECT", "CET");
+>             map.put("EET", "EET");
+542c570
+<             map.put("HST", "Pacific/Honolulu");
+---
+>             map.put("HST", "Pacific/Honolulu");  
+545c573
+<             map.put("MST", "America/Denver");
+---
+>             map.put("MST", "America/Denver");  
+548,549c576,577
+<             map.put("EST", "America/New_York");
+<             map.put("IET", "America/Indianapolis");
+---
+>             map.put("EST", "America/New_York");  
+>             map.put("IET", "America/Indiana/Indianapolis");
+552c580
+<             map.put("AGT", "America/Buenos_Aires");
+---
+>             map.put("AGT", "America/Argentina/Buenos_Aires");
+554,555d581
+<             map.put("WET", "Europe/London");
+<             map.put("ECT", "Europe/Paris");
+558d583
+<             map.put("EET", "Europe/Bucharest");
+560d584
+<             map.put("MET", "Asia/Tehran");
+563c587
+<             map.put("IST", "Asia/Calcutta");
+---
+>             map.put("IST", "Asia/Kolkata");
+565c589
+<             map.put("VST", "Asia/Saigon");
+---
+>             map.put("VST", "Asia/Ho_Chi_Minh");
+574c598
+<         return (String) map.get(id);
+---
+>         return map.get(id);
+578,599c602,617
+<         Chronology chrono;
+<         if (cDefault != null) {
+<             chrono = ISOChronology.getInstanceUTC();
+<         } else {
+<             
+<             
+<             chrono = new BaseChronology() {
+<                 public DateTimeZone getZone() {
+<                     return null;
+<                 }
+<                 public Chronology withUTC() {
+<                     return this;
+<                 }
+<                 public Chronology withZone(DateTimeZone zone) {
+<                     return this;
+<                 }
+<                 public String toString() {
+<                     return getClass().getName();
+<                 }
+<             };
+<         }
+< 
+---
+>         
+>         
+>         Chronology chrono = new BaseChronology() {
+>             public DateTimeZone getZone() {
+>                 return null;
+>             }
+>             public Chronology withUTC() {
+>                 return this;
+>             }
+>             public Chronology withZone(DateTimeZone zone) {
+>                 return this;
+>             }
+>             public String toString() {
+>                 return getClass().getName();
+>             }
+>         };
+685a704
+>     @ToString
+857a877,879
+> 
+> 
+> 
+860c882
+<         int offsetLocal = getOffset(instantLocal);
+---
+>         final int offsetLocal = getOffset(instantLocal);
+862c884,885
+<         int offsetAdjusted = getOffset(instantLocal - offsetLocal);
+---
+>         final long instantAdjusted = instantLocal - offsetLocal;
+>         final int offsetAdjusted = getOffset(instantAdjusted);
+871c894
+<                 long nextLocal = nextTransition(instantLocal - offsetLocal);
+---
+>                 long nextLocal = nextTransition(instantAdjusted);
+876a900,908
+>         } else if (offsetLocal > 0) {
+>             long prev = previousTransition(instantAdjusted);
+>             if (prev < instantAdjusted) {
+>                 int offsetPrev = getOffset(prev);
+>                 int diff = offsetPrev - offsetLocal;
+>                 if (instantAdjusted - prev <= diff) {
+>                     return offsetPrev;
+>                 }
+>             }
+912a945,971
+> 
+> 
+> 
+> 
+> 
+>     public long convertLocalToUTC(long instantLocal, boolean strict, long originalInstantUTC) {
+>         int offsetOriginal = getOffset(originalInstantUTC);
+>         long instantUTC = instantLocal - offsetOriginal;
+>         int offsetLocalFromOriginal = getOffset(instantUTC);
+>         if (offsetLocalFromOriginal == offsetOriginal) {
+>             return instantUTC;
+>         }
+>         return convertLocalToUTC(instantLocal, strict);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+925a985,987
+>                 if (nextLocal == (instantLocal - offsetLocal)) {
+>                     nextLocal = Long.MAX_VALUE;
+>                 }
+926a989,991
+>                 if (nextAdjusted == (instantLocal - offset)) {
+>                     nextAdjusted = Long.MAX_VALUE;
+>                 }
+969,970c1034,1035
+<         long instantLocal = oldInstant + getOffset(oldInstant);
+<         return instantLocal - newZone.getOffsetFromLocal(instantLocal);
+---
+>         long instantLocal = convertUTCToLocal(oldInstant);
+>         return newZone.convertLocalToUTC(instantLocal, false, oldInstant);
+1091a1157,1173
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long adjustOffset(long instant, boolean earlierOrLater) {
+>         long before = convertUTCToLocal(instant - 3 * DateTimeConstants.MILLIS_PER_HOUR);
+>         long after = convertUTCToLocal(instant + 3 * DateTimeConstants.MILLIS_PER_HOUR);
+>         if (before == after) {
+>             return instant;
+>         }
+>         long local = convertUTCToLocal(instant);
+>         return convertLocalToUTC(local, false, earlierOrLater ? after : before);
+>     }
+> 
+>     
+1194a1277
+> 

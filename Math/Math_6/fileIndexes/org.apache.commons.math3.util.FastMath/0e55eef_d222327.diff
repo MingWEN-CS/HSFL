@@ -1,0 +1,37 @@
+3850,3851c3850,3882
+<     public static double hypot(double x, double y) {
+<         return StrictMath.hypot(x, y); 
+---
+>     public static double hypot(final double x, final double y) {
+>         if (Double.isInfinite(x) || Double.isInfinite(y)) {
+>             return Double.POSITIVE_INFINITY;
+>         } else if (Double.isNaN(x) || Double.isNaN(y)) {
+>             return Double.NaN;
+>         } else {
+> 
+>             final int expX = getExponent(x);
+>             final int expY = getExponent(y);
+>             if (expX > expY + 27) {
+>                 
+>                 return abs(x);
+>             } else if (expY > expX + 27) {
+>                 
+>                 return abs(y);
+>             } else {
+> 
+>                 
+>                 final int middleExp = (expX + expY) / 2;
+> 
+>                 
+>                 final double scaledX = scalb(x, -middleExp);
+>                 final double scaledY = scalb(y, -middleExp);
+> 
+>                 
+>                 final double scaledH = sqrt(scaledX * scaledX + scaledY * scaledY);
+> 
+>                 
+>                 return scalb(scaledH, middleExp);
+> 
+>             }
+> 
+>         }

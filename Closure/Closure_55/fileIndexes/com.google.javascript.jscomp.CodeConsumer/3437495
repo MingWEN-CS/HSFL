@@ -1,0 +1,314 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.rhino.Node;
+
+
+
+
+
+
+
+
+
+
+
+
+abstract class CodeConsumer {
+  boolean statementNeedsEnded = false;
+  boolean statementStarted = false;
+  boolean sawFunction = false;
+
+  
+
+
+
+  void startSourceMapping(Node node) {
+  }
+
+  
+
+
+
+  void endSourceMapping(Node node) {
+  }
+
+
+  
+
+
+
+
+  void generateSourceMap(SourceMap map){
+  }
+
+  
+
+
+
+  abstract int getCurrentBufferLength();
+
+  
+
+
+
+  abstract int getCurrentCharIndex();
+
+  
+
+
+  abstract int getCurrentLineIndex();
+
+  
+
+
+
+  boolean continueProcessing() {
+    return true;
+  }
+
+  
+
+
+  abstract char getLastChar();
+
+  void addIdentifier(String identifier) {
+    add(identifier);
+  }
+
+  
+
+
+
+
+
+
+
+
+  abstract void append(String str);
+
+  void appendBlockStart() {
+    append("{");
+  }
+
+  void appendBlockEnd() {
+    append("}");
+  }
+
+  void startNewLine() {
+  }
+
+  void maybeLineBreak() {
+    maybeCutLine();
+  }
+
+  void maybeCutLine() {
+  }
+
+  void endLine() {
+  }
+
+  void notePreferredLineBreak() {
+  }
+
+  void beginBlock() {
+    if (statementNeedsEnded) {
+      append(";");
+      maybeLineBreak();
+    }
+    appendBlockStart();
+
+    endLine();
+    statementNeedsEnded = false;
+  }
+
+  void endBlock() {
+    endBlock(false);
+  }
+
+  void endBlock(boolean shouldEndLine) {
+    appendBlockEnd();
+    if (shouldEndLine) {
+      endLine();
+    }
+    statementNeedsEnded = false;
+  }
+
+  void listSeparator() {
+    add(",");
+    maybeLineBreak();
+  }
+
+  
+
+
+
+
+
+  void endStatement() {
+    endStatement(false);
+  }
+
+  void endStatement(boolean needSemiColon) {
+    if (needSemiColon) {
+      append(";");
+      maybeLineBreak();
+      statementNeedsEnded = false;
+    } else if (statementStarted) {
+      statementNeedsEnded = true;
+    }
+  }
+
+  
+
+
+
+  void maybeEndStatement() {
+    
+    if (statementNeedsEnded) {
+      append(";");
+      maybeLineBreak();
+      endLine();
+      statementNeedsEnded = false;
+    }
+    statementStarted = true;
+  }
+
+  void endFunction() {
+    endFunction(false);
+  }
+
+  void endFunction(boolean statementContext) {
+    sawFunction = true;
+    if (statementContext) {
+      endLine();
+    }
+  }
+
+  void beginCaseBody() {
+    append(":");
+  }
+
+  void endCaseBody() {
+  }
+
+  void add(String newcode) {
+    maybeEndStatement();
+
+    if (newcode.length() == 0) {
+      return;
+    }
+
+    char c = newcode.charAt(0);
+    if ((isWordChar(c) || c == '\\') &&
+        isWordChar(getLastChar())) {
+      
+      
+      append(" ");
+    }
+
+    append(newcode);
+  }
+
+  void appendOp(String op, boolean binOp) {
+    append(op);
+  }
+
+  void addOp(String op, boolean binOp) {
+    maybeEndStatement();
+
+    char first = op.charAt(0);
+    char prev = getLastChar();
+
+    if ((first == '+' || first == '-') && prev == first) {
+      
+      
+      append(" ");
+    } else if (Character.isLetter(first) &&
+               isWordChar(prev)) {
+      
+      append(" ");
+    } else if (prev == '-' && first == '>') {
+      
+      append(" ");
+    }
+
+    
+    appendOp(op, binOp);
+
+    
+    
+    
+    if (binOp) {
+      maybeCutLine();
+    }
+  }
+
+  void addNumber(double x) {
+    
+    
+    char prev = getLastChar();
+    if (x < 0 && prev == '-') {
+      add(" ");
+    }
+
+    if ((long) x == x) {
+      long value = (long) x;
+      long mantissa = value;
+      int exp = 0;
+      if (x >= 100) {
+        while (mantissa / 10 * Math.pow(10, exp + 1) == value) {
+          mantissa /= 10;
+          exp++;
+        }
+      }
+      if (exp > 2) {
+        add(Long.toString(mantissa) + "E" + Integer.toString(exp));
+      } else {
+        add(Long.toString(value));
+      }
+    } else {
+      add(String.valueOf(x));
+    }
+  }
+
+  static boolean isWordChar(char ch) {
+    return (ch == '_' ||
+            ch == '$' ||
+            Character.isLetterOrDigit(ch));
+  }
+
+  
+
+
+
+
+
+
+
+  boolean shouldPreserveExtraBlocks() {
+    return false;
+  }
+
+  
+
+
+  boolean breakAfterBlockFor(Node n, boolean statementContext) {
+    return statementContext;
+  }
+}

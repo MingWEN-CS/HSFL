@@ -1,0 +1,258 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.JSTypeExpression;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+
+
+
+
+
+
+
+
+
+
+class PrepareAst implements CompilerPass {
+
+  private final AbstractCompiler compiler;
+  private final boolean checkOnly;
+
+  PrepareAst(AbstractCompiler compiler) {
+    this(compiler, false);
+  }
+
+  PrepareAst(AbstractCompiler compiler, boolean checkOnly) {
+    this.compiler = compiler;
+    this.checkOnly = checkOnly;
+  }
+
+  private void reportChange() {
+    if (checkOnly) {
+      Preconditions.checkState(false, "normalizeNodeType constraints violated");
+    }
+  }
+
+  @Override
+  public void process(Node externs, Node root) {
+    if (checkOnly) {
+      normalizeNodeTypes(root);
+    } else {
+      
+      
+      
+      
+      if (externs != null) {
+        NodeTraversal.traverse(
+            compiler, externs, new PrepareAnnotations(compiler));
+      }
+      if (root != null) {
+        NodeTraversal.traverse(
+            compiler, root, new PrepareAnnotations(compiler));
+      }
+    }
+  }
+
+  
+
+
+  private void normalizeNodeTypes(Node n) {
+    if (n.getType() == Token.EXPR_VOID) {
+      n.setType(Token.EXPR_RESULT);
+      reportChange();
+    }
+
+    
+    
+    if (n.getType() == Token.FUNCTION) {
+      Preconditions.checkState(n.getProp(Node.FUNCTION_PROP) == null);
+    }
+
+    normalizeBlocks(n);
+
+    for (Node child = n.getFirstChild();
+         child != null; child = child.getNext()) {
+      
+      
+      Preconditions.checkState(child.getParent() == n);
+
+      normalizeNodeTypes(child);
+    }
+  }
+
+  
+
+
+  private void normalizeBlocks(Node n) {
+    if (NodeUtil.isControlStructure(n)
+        && n.getType() != Token.LABEL
+        && n.getType() != Token.SWITCH) {
+      for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+        if (NodeUtil.isControlStructureCodeBlock(n,c) &&
+            c.getType() != Token.BLOCK) {
+          Node newBlock = new Node(Token.BLOCK, n.getLineno(), n.getCharno());
+          newBlock.copyInformationFrom(n);
+          n.replaceChild(c, newBlock);
+          if (c.getType() != Token.EMPTY) {
+            newBlock.addChildrenToFront(c);
+          } else {
+            newBlock.setWasEmptyNode(true);
+          }
+          c = newBlock;
+          reportChange();
+        }
+      }
+    }
+  }
+
+  
+
+
+
+  static class PrepareAnnotations
+      implements NodeTraversal.Callback {
+
+    private final CodingConvention convention;
+
+    PrepareAnnotations(AbstractCompiler compiler) {
+      this.convention = compiler.getCodingConvention();
+    }
+
+    @Override
+    public boolean shouldTraverse(NodeTraversal t, Node n, Node parent) {
+      if (n.getType() == Token.OBJECTLIT) {
+        normalizeObjectLiteralAnnotations(n);
+      }
+      return true;
+    }
+
+    @Override
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      switch (n.getType()) {
+        case Token.CALL:
+          annotateCalls(n);
+          break;
+
+        case Token.FUNCTION:
+          annotateFunctions(n, parent);
+          annotateDispatchers(n, parent);
+          break;
+      }
+    }
+
+    private void normalizeObjectLiteralAnnotations(Node objlit) {
+      Preconditions.checkState(objlit.getType() == Token.OBJECTLIT);
+      for (Node key = objlit.getFirstChild();
+           key != null; key = key.getNext()) {
+        Node value = key.getFirstChild();
+        normalizeObjectLiteralKeyAnnotations(objlit, key, value);
+      }
+    }
+
+    
+
+
+
+    private void annotateCalls(Node n) {
+      Preconditions.checkState(n.getType() == Token.CALL);
+
+      
+      
+      Node first = n.getFirstChild();
+      if (!NodeUtil.isGet(first)) {
+        n.putBooleanProp(Node.FREE_CALL, true);
+      }
+
+      
+      
+      if (first.getType() == Token.NAME &&
+          "eval".equals(first.getString())) {
+        first.putBooleanProp(Node.DIRECT_EVAL, true);
+      }
+    }
+
+    
+
+
+    private void annotateDispatchers(Node n, Node parent) {
+      Preconditions.checkState(n.getType() == Token.FUNCTION);
+      if (parent.getJSDocInfo() != null
+          && parent.getJSDocInfo().isJavaDispatch()) {
+        if (parent.getType() == Token.ASSIGN) {
+          Preconditions.checkState(parent.getLastChild() == n);
+          n.putBooleanProp(Node.IS_DISPATCHER, true);
+        }
+      }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private void normalizeObjectLiteralKeyAnnotations(
+        Node objlit, Node key, Node value) {
+      Preconditions.checkState(objlit.getType() == Token.OBJECTLIT);
+      if (key.getJSDocInfo() != null &&
+          value.getType() == Token.FUNCTION) {
+        value.setJSDocInfo(key.getJSDocInfo());
+      }
+    }
+
+    
+
+
+    private void annotateFunctions(Node n, Node parent) {
+      JSDocInfo fnInfo = NodeUtil.getFunctionJSDocInfo(n);
+
+      
+      
+      Node args = n.getFirstChild().getNext();
+      for (Node arg = args.getFirstChild();
+           arg != null;
+           arg = arg.getNext()) {
+        String argName = arg.getString();
+        JSTypeExpression typeExpr = fnInfo == null ?
+            null : fnInfo.getParameterType(argName);
+
+        if (convention.isOptionalParameter(arg) ||
+            typeExpr != null && typeExpr.isOptionalArg()) {
+          arg.putBooleanProp(Node.IS_OPTIONAL_PARAM, true);
+        }
+        if (convention.isVarArgsParameter(arg) ||
+            typeExpr != null && typeExpr.isVarArgs()) {
+          arg.putBooleanProp(Node.IS_VAR_ARGS_PARAM, true);
+        }
+      }
+    }
+  }
+}

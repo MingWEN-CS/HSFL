@@ -1,0 +1,67 @@
+353,354c353,378
+<     boolean isAssignedOnce() {
+<       boolean assigned = false;
+---
+> 
+>     boolean isAssignedOnceInLifetime() {
+>       Reference ref = getOneAndOnlyAssignment();
+>       if (ref == null) {
+>         return false;
+>       }
+> 
+>       
+>       for (BasicBlock block = ref.getBasicBlock();
+>            block != null; block = block.getParent()) {
+>         if (block.isFunction) {
+>           break;
+>         } else if (block.isLoop) {
+>           return false;
+>         }
+>       }
+> 
+>       return true;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private Reference getOneAndOnlyAssignment() {
+>       Reference assignment = null;
+359,360c383,384
+<           if (!assigned) {
+<             assigned = true;
+---
+>           if (assignment == null) {
+>             assignment = ref;
+362c386
+<             return false;
+---
+>             return null;
+366c390
+<       return assigned;
+---
+>       return assignment;
+528a553,562
+>     private final boolean isFunction;
+> 
+>     
+> 
+> 
+>     private final boolean isLoop;
+> 
+>     
+> 
+> 
+535a570,580
+> 
+>       this.isFunction = root.getType() == Token.FUNCTION;
+> 
+>       if (root.getParent() != null) {
+>         int pType = root.getParent().getType();
+>         this.isLoop = pType == Token.DO ||
+>             pType == Token.WHILE ||
+>             pType == Token.FOR;
+>       } else {
+>         this.isLoop = false;
+>       }

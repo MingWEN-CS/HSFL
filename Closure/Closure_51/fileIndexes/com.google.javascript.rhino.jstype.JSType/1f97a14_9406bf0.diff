@@ -1,0 +1,17 @@
+959c959,961
+<   public abstract boolean isSubtype(JSType that);
+---
+>   public boolean isSubtype(JSType that) {
+>     return isSubtypeHelper(this, that);
+>   }
+982c984
+<   static boolean isSubtype(JSType thisType, JSType thatType) {
+---
+>   static boolean isSubtypeHelper(JSType thisType, JSType thatType) {
+1005,1006c1007,1009
+<     if (thatType instanceof NamedType) {
+<       return thisType.isSubtype(((NamedType)thatType).getReferencedType());
+---
+>     if (thatType instanceof ProxyObjectType) {
+>       return thisType.isSubtype(
+>           ((ProxyObjectType) thatType).getReferencedTypeInternal());

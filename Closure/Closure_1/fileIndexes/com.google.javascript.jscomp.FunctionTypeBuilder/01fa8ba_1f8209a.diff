@@ -1,0 +1,81 @@
+163c163,167
+<       FunctionType oldType, @Nullable Node paramsParent) {
+---
+>       @Nullable FunctionType oldType, @Nullable Node paramsParent) {
+>     if (oldType == null) {
+>       return this;
+>     }
+> 
+164a169
+>     returnTypeInferred = oldType.isReturnTypeInferred();
+177a183
+>       boolean oldParamsNodeHasVarArgs = false;
+181c187,196
+<           paramBuilder.newParameterFromNode(oldParams.next());
+---
+>           Node oldParam = oldParams.next();
+>           Node newParam = paramBuilder.newParameterFromNode(oldParam);
+> 
+>           
+>           
+>           if (currentParam.getNext() != null && newParam.isVarArgs()) {
+>             newParam.setVarArgs(false);
+>             newParam.setOptionalArg(true);
+>             oldParamsNodeHasVarArgs = true;
+>           }
+187c202,203
+<               codingConvention.isOptionalParameter(currentParam),
+---
+>               codingConvention.isOptionalParameter(currentParam) ||
+>                   oldParamsNodeHasVarArgs,
+200,201c216,220
+<     returnType = info != null && info.hasReturnType() ?
+<         info.getReturnType().evaluate(scope, typeRegistry) : null;
+---
+>     if (info != null && info.hasReturnType()) {
+>       returnType = info.getReturnType().evaluate(scope, typeRegistry);
+>       returnTypeInferred = false;
+>     }
+> 
+214c233,234
+<   FunctionTypeBuilder inferReturnStatements(@Nullable Node functionBlock) {
+---
+>   FunctionTypeBuilder inferReturnStatementsAsLastResort(
+>       @Nullable Node functionBlock) {
+377a398,402
+>     Node oldParameterType = null;
+>     if (parametersNode != null) {
+>       oldParameterType = parametersNode.getFirstChild();
+>     }
+> 
+389,392c414,428
+<       JSType parameterType =
+<           info != null && info.hasParameterType(argumentName) ?
+<           info.getParameterType(argumentName).evaluate(scope, typeRegistry) :
+<           typeRegistry.getNativeType(UNKNOWN_TYPE);
+---
+>       JSType parameterType = null;
+>       boolean isOptionalParam = isOptionalParameter(arg, info);
+>       boolean isVarArgs = isVarArgsParameter(arg, info);
+>       if (info != null && info.hasParameterType(argumentName)) {
+>         parameterType =
+>             info.getParameterType(argumentName).evaluate(scope, typeRegistry);
+>       } else if (oldParameterType != null &&
+>           oldParameterType.getJSType() != null) {
+>         parameterType = oldParameterType.getJSType();
+>         isOptionalParam = oldParameterType.isOptionalArg();
+>         isVarArgs = oldParameterType.isVarArgs();
+>       } else {
+>         parameterType = typeRegistry.getNativeType(UNKNOWN_TYPE);
+>       }
+> 
+402,403c438,443
+<           isOptionalParameter(arg, info),
+<           isVarArgsParameter(arg, info));
+---
+>           isOptionalParam,
+>           isVarArgs);
+> 
+>       if (oldParameterType != null) {
+>         oldParameterType = oldParameterType.getNext();
+>       }

@@ -1,0 +1,32 @@
+53a54
+> import com.google.common.collect.Multiset;
+1873a1875,1883
+> 
+>         for (Multiset.Entry<String> entry :
+>                  contents.getAssignedNameCounts().entrySet()) {
+>           Var v = scope.getVar(entry.getElement());
+>           Preconditions.checkState(v.getScope() == scope);
+>           if (entry.getCount() == 1) {
+>             v.markAssignedExactlyOnce();
+>           }
+>         }
+1986c1996,2000
+<       if (t.getScopeDepth() <= 2) {
+---
+>       if (t.getScopeDepth() <= 1) {
+>         
+>         
+>         
+>         
+1994c2008,2011
+<       if (n.isName() && NodeUtil.isLValue(n)) {
+---
+>       if (n.isName() && NodeUtil.isLValue(n) &&
+>           
+>           
+>           !NodeUtil.isBleedingFunctionName(n)) {
+1999a2017,2020
+>           if (ownerScope.isLocal()) {
+>             data.get(ownerScope.getRootNode()).recordAssignedName(name);
+>           }
+> 

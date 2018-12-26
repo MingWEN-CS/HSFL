@@ -1,0 +1,37 @@
+313,322c313
+<       try {
+<         String[] sourceLines = ast.getSourceFile().getCode().split("\n");
+<         lineOffsets = new int[sourceLines.length];
+<         for (int ii = 1; ii < sourceLines.length; ++ii) {
+<           lineOffsets[ii] =
+<               lineOffsets[ii - 1] + sourceLines[ii - 1].length() + 1;
+<         }
+<       } catch (IOException e) {
+<         return 0;
+<       }
+---
+>       findLineOffsets();
+329a321,343
+> 
+>   
+>   public int getNumLines() {
+>     if (lineOffsets == null) {
+>       findLineOffsets();
+>     }
+>     return lineOffsets.length;
+>   }
+> 
+>   private void findLineOffsets() {
+>     try {
+>       String[] sourceLines = ast.getSourceFile().getCode().split("\n");
+>       lineOffsets = new int[sourceLines.length];
+>       for (int ii = 1; ii < sourceLines.length; ++ii) {
+>         lineOffsets[ii] =
+>             lineOffsets[ii - 1] + sourceLines[ii - 1].length() + 1;
+>       }
+>     } catch (IOException e) {
+>       lineOffsets = new int[1];
+>       lineOffsets[0] = 0;
+>     }
+>   }
+> 

@@ -1,0 +1,38 @@
+44d43
+< import com.google.javascript.rhino.jstype.TemplateType;
+92c91
+<   private ImmutableList<TemplateType> templateTypeNames = ImmutableList.of();
+---
+>   private ImmutableList<String> templateTypeNames = ImmutableList.of();
+553,578c552,555
+<   FunctionTypeBuilder inferTemplateTypeName(
+<       @Nullable JSDocInfo info, JSType ownerType) {
+<     if (info != null &&  !info.getTemplateTypeNames().isEmpty()) {
+<       ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+<       for (String key : info.getTemplateTypeNames()) {
+<         builder.add(typeRegistry.createTemplateType(key));
+<       }
+<       templateTypeNames = builder.build();
+<     } else {
+<       templateTypeNames = ImmutableList.of();
+<     }
+< 
+<     ImmutableList<TemplateType> keys = templateTypeNames;
+<     if (ownerType != null) {
+<       ImmutableList<TemplateType> ownerTypeKeys =
+<           ownerType.getTemplateTypeMap().getTemplateKeys();
+<       if (!ownerTypeKeys.isEmpty()) {
+<         ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+<         builder.addAll(templateTypeNames);
+<         builder.addAll(ownerTypeKeys);
+<         keys = builder.build();
+<       }
+<     }
+< 
+<     if (!keys.isEmpty()) {
+<       typeRegistry.setTemplateTypeNames(keys);
+---
+>   FunctionTypeBuilder inferTemplateTypeName(@Nullable JSDocInfo info) {
+>     if (info != null) {
+>       templateTypeNames = info.getTemplateTypeNames();
+>       typeRegistry.setTemplateTypeNames(templateTypeNames);

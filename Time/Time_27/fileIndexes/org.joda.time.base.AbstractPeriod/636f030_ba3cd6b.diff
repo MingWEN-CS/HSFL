@@ -1,0 +1,229 @@
+59a60
+> import org.joda.time.DurationFieldType;
+62d62
+< import org.joda.time.PeriodType;
+98a99,105
+>     public DurationFieldType[] getFieldTypes() {
+>         DurationFieldType[] result = new DurationFieldType[size()];
+>         for (int i = 0; i < result.length; i++) {
+>             result[i] = getFieldType(i);
+>         }
+>         return result;
+>     }
+99a107
+>     
+105,106c113,120
+<     public long addTo(long instant, int scalar) {
+<         return addTo(instant, scalar, null);
+---
+> 
+> 
+>     public int[] getValues() {
+>         int[] result = new int[size()];
+>         for (int i = 0; i < result.length; i++) {
+>             result[i] = getValue(i);
+>         }
+>         return result;
+109a124
+>     
+117a133,139
+>     public int get(DurationFieldType type) {
+>         int index = indexOf(type);
+>         if (index == -1) {
+>             return 0;
+>         }
+>         return getValue(index);
+>     }
+118a141
+>     
+122,164d144
+<     public long addTo(long instant, int scalar, Chronology chrono) {
+<         if (isPrecise()) {
+<             return FieldUtils.safeAdd(instant, toDurationMillis() * scalar);
+<         }
+<         
+<         PeriodType type = getPeriodType();
+<         if (chrono != null) {
+<             type = type.withChronology(chrono);
+<         }
+<         
+<         long value; 
+<         value = scaleValue(getYears(), scalar);
+<         if (value != 0) {
+<             instant = type.years().add(instant, value);
+<         }
+<         value = scaleValue(getMonths(), scalar);
+<         if (value != 0) {
+<             instant = type.months().add(instant, value);
+<         }
+<         value = scaleValue(getWeeks(), scalar);
+<         if (value != 0) {
+<             instant = type.weeks().add(instant, value);
+<         }
+<         value = scaleValue(getDays(), scalar);
+<         if (value != 0) {
+<             instant = type.days().add(instant, value);
+<         }
+<         value = scaleValue(getHours(), scalar);
+<         if (value != 0) {
+<             instant = type.hours().add(instant, value);
+<         }
+<         value = scaleValue(getMinutes(), scalar);
+<         if (value != 0) {
+<             instant = type.minutes().add(instant, value);
+<         }
+<         value = scaleValue(getSeconds(), scalar);
+<         if (value != 0) {
+<             instant = type.seconds().add(instant, value);
+<         }
+<         value = scaleValue(getMillis(), scalar);
+<         if (value != 0) {
+<             instant = type.millis().add(instant, value);
+<         }
+166c146,148
+<         return instant;
+---
+> 
+>     public boolean isSupported(DurationFieldType type) {
+>         return getPeriodType().isSupported(type);
+174a157,159
+>     public int indexOf(DurationFieldType type) {
+>         return getPeriodType().indexOf(type);
+>     }
+176,186c161,200
+<     private static long scaleValue(int value, int scalar) {
+<         long val = value;  
+<         switch (scalar) {
+<         case -1:
+<             return -val;
+<         case 0:
+<             return 0;
+<         case 1:
+<             return val;
+<         default:
+<             return val * scalar;
+---
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long addTo(long instant, int scalar) {
+>         return addTo(instant, scalar, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long addTo(long instant, int scalar, Chronology chrono) {
+>         if (scalar != 0) {
+>             chrono = DateTimeUtils.getChronology(chrono);
+>             for (int i = 0, isize = size(); i < isize; i++) {
+>                 long value = getValue(i); 
+>                 if (value != 0) {
+>                     instant = getFieldType(i).getField(chrono).add(instant, value * scalar);
+>                 }
+>             }
+187a202
+>         return instant;
+257,258c272,278
+<     public Duration toDuration() {
+<         return new Duration(toDurationMillis());
+---
+> 
+> 
+> 
+> 
+>     public long toDurationMillisFrom(long startInstant, Chronology chrono) {
+>         long endInstant = addTo(startInstant, 1, chrono);
+>         return FieldUtils.safeAdd(endInstant, -startInstant);
+262d281
+<     
+273,274c292,308
+<     public boolean equals(Object readablePeriod) {
+<         if (this == readablePeriod) {
+---
+>     public Duration toDurationFrom(ReadableInstant startInstant) {
+>         long millis = DateTimeUtils.getInstantMillis(startInstant);
+>         Chronology chrono = DateTimeUtils.getInstantChronology(startInstant);
+>         return new Duration(toDurationMillisFrom(millis, chrono));
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean equals(Object period) {
+>         if (this == period) {
+277c311
+<         if (readablePeriod instanceof ReadablePeriod == false) {
+---
+>         if (period instanceof ReadablePeriod == false) {
+280,282c314,315
+<         ReadablePeriod other = (ReadablePeriod) readablePeriod;
+<         PeriodType type = getPeriodType();
+<         if (type.equals(other.getPeriodType()) == false) {
+---
+>         ReadablePeriod other = (ReadablePeriod) period;
+>         if (size() != other.size()) {
+285,292c318,323
+<         return getYears() == other.getYears()
+<             && getMonths() == other.getMonths()
+<             && getWeeks() == other.getWeeks()
+<             && getDays() == other.getDays()
+<             && getHours() == other.getHours()
+<             && getMinutes() == other.getMinutes()
+<             && getSeconds() == other.getSeconds()
+<             && getMillis() == other.getMillis();
+---
+>         for (int i = 0, isize = size(); i < isize; i++) {
+>             if (getValue(i) != other.getValue(i) || getFieldType(i) != other.getFieldType(i)) {
+>                 return false;
+>             }
+>         }
+>         return true;
+300,301d330
+< 
+< 
+303,312c332,337
+<         int hash = getPeriodType().hashCode();
+<         hash = 53 * hash + getYears();
+<         hash = 53 * hash + getMonths();
+<         hash = 53 * hash + getWeeks();
+<         hash = 53 * hash + getDays();
+<         hash = 53 * hash + getHours();
+<         hash = 53 * hash + getMinutes();
+<         hash = 53 * hash + getSeconds();
+<         hash = 53 * hash + getMillis();
+<         return hash;
+---
+>         int total = 17;
+>         for (int i = 0, isize = size(); i < isize; i++) {
+>             total = 27 * total + getValue(i);
+>             total = 27 * total + getFieldType(i).hashCode();
+>         }
+>         return total;

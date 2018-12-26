@@ -1,0 +1,52 @@
+98,113c98
+<     
+<     
+<     
+<     if (n.getType() == Token.TRY) {
+<       Node body = n.getFirstChild();
+<       Node catchOrFinallyBlock = body.getNext();
+<       Node finallyBlock = catchOrFinallyBlock.getNext();
+< 
+<       if (!catchOrFinallyBlock.hasChildren() &&
+<           (finallyBlock == null || !finallyBlock.hasChildren())) {
+<         n.removeChild(body);
+<         parent.replaceChild(n, body);
+<         compiler.reportCodeChange();
+<         n = body;
+<       }
+<     }
+---
+> 
+212d196
+< 
+218a203
+>     Node parent = n.getParent();
+224,226c209
+<     
+<     
+<     
+---
+> 
+227a211,213
+>       
+>       
+>       
+229,231d214
+<       case Token.TRY:
+<       case Token.CATCH:
+<       case Token.FINALLY:
+232a216,229
+> 
+>       case Token.BLOCK:
+>         
+>         if (parent.getType() == Token.TRY) {
+>           if (NodeUtil.isTryCatchNodeContainer(n)) {
+>             return;
+>           }
+>         }
+>         break;
+> 
+>       case Token.CATCH:
+>         Node tryNode = parent.getParent();
+>         NodeUtil.maybeAddFinally(tryNode);
+>         break;

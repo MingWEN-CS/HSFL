@@ -1,0 +1,137 @@
+300,302c300,307
+<       boolean hasSideEffects = true;
+<       if (defs != null) {
+<         hasSideEffects = false;
+---
+>       
+>       SideEffectFlags flags = new SideEffectFlags();
+>       if (defs == null) {
+>         flags.setMutatesGlobalState();
+>         flags.setThrows();
+>         flags.setReturnsTainted();
+>       } else {
+>         flags.clearAllFlags();
+306a312,320
+>           
+>           
+>           if (functionInfo.mutatesGlobalState()) {
+>             flags.setMutatesGlobalState();
+>           }
+> 
+>           if (functionInfo.functionThrows) {
+>             flags.setThrows();
+>           }
+308,313c322,332
+<           if ((NodeUtil.isCall(callNode)
+<                   && functionInfo.mayHaveSideEffects())
+<                || (NodeUtil.isNew(callNode)
+<                       && (functionInfo.mutatesGlobalState()
+<                           || functionInfo.functionThrows()))) {
+<             hasSideEffects = true;
+---
+>           if (!NodeUtil.isNew(callNode)) {
+>             if (functionInfo.taintsThis) {
+>               flags.setMutatesThis();
+>             }
+>           }
+> 
+>           if (functionInfo.taintsReturn) {
+>             flags.setReturnsTainted();
+>           }
+> 
+>           if (flags.areAllFlagsSet()) {
+323c342
+<           hasSideEffects = false;
+---
+>           flags.clearSideEffectFlags();
+328c347
+<           hasSideEffects = false;
+---
+>           flags.clearSideEffectFlags();
+332,334c351,408
+<       if (!hasSideEffects) {
+<         callNode.setIsNoSideEffectsCall();
+<       }
+---
+>       callNode.setSideEffectFlags(flags.valueOf());
+>     }
+>   }
+> 
+>   private static class SideEffectFlags {
+>     private int value = Node.SIDE_EFFECTS_ALL;
+> 
+>     int valueOf() {
+>       return value;
+>     }
+> 
+>     
+>     void setAllFlags() {
+>       value = Node.SIDE_EFFECTS_ALL;
+>     }
+> 
+>     
+>     void clearAllFlags() {
+>       value = Node.NO_SIDE_EFFECTS | Node.FLAG_LOCAL_RESULTS;
+>     }
+> 
+>     boolean areAllFlagsSet() {
+>       return value == Node.SIDE_EFFECTS_ALL;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     void clearSideEffectFlags() {
+>       value |= Node.NO_SIDE_EFFECTS;
+>     }
+> 
+>     void setMutatesGlobalState() {
+>       
+>       removeFlag(Node.FLAG_GLOBAL_STATE_UNMODIFIED);
+>       removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+>       removeFlag(Node.FLAG_THIS_UNMODIFIED);
+>     }
+> 
+>     void setThrows() {
+>       removeFlag(Node.FLAG_NO_THROWS);
+>     }
+> 
+>     void setMutatesThis() {
+>       removeFlag(Node.FLAG_THIS_UNMODIFIED);
+>     }
+> 
+>     void setMutatesArguments() {
+>       removeFlag(Node.FLAG_ARGUMENTS_UNMODIFIED);
+>     }
+> 
+>     void setReturnsTainted() {
+>       removeFlag(Node.FLAG_LOCAL_RESULTS);
+>     }
+> 
+>     private void removeFlag(int flag) {
+>       value &= ~flag;
+374c448,449
+<       if (!NodeUtil.nodeTypeMayHaveSideEffects(node)) {
+---
+>       if (!NodeUtil.nodeTypeMayHaveSideEffects(node)
+>           && node.getType() != Token.RETURN) {
+423a499,504
+>             case Token.RETURN:
+>               if (node.hasChildren()
+>                   && !isKnownLocalValue(node.getFirstChild())) {
+>                 sideEffectInfo.setTaintsReturn();
+>               }
+>               break;
+805a887
+>     private boolean taintsReturn = false;
+895a978,986
+> 
+>     
+> 
+> 
+>     void setTaintsReturn() {
+>       taintsReturn = true;
+>       checkInvariant();
+>     }
+> 

@@ -1,0 +1,239 @@
+369a370,607
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight withFields(ReadablePartial partial) {
+>         if (partial == null) {
+>             return this;
+>         }
+>         return withMillis(getChronology().set(partial, getMillis()));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight withField(DateTimeFieldType fieldType, int value) {
+>         if (fieldType == null) {
+>             return this;
+>         }
+>         long instant = fieldType.getField(getChronology()).set(getMillis(), value);
+>         return withMillis(instant);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight withFieldAdded(DurationFieldType fieldType, int amount) {
+>         if (fieldType == null || amount == 0) {
+>             return this;
+>         }
+>         long instant = fieldType.getField(getChronology()).add(getMillis(), amount);
+>         return withMillis(instant);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight withDurationAdded(long durationToAdd, int scalar) {
+>         if (durationToAdd == 0 || scalar == 0) {
+>             return this;
+>         }
+>         long instant = getChronology().add(getMillis(), durationToAdd, scalar);
+>         return withMillis(instant);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight withDurationAdded(ReadableDuration durationToAdd, int scalar) {
+>         if (durationToAdd == null || scalar == 0) {
+>             return this;
+>         }
+>         return withDurationAdded(durationToAdd.getMillis(), scalar);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight withPeriodAdded(ReadablePeriod period, int scalar) {
+>         if (period == null || scalar == 0) {
+>             return this;
+>         }
+>         long instant = getChronology().add(period, getMillis(), scalar);
+>         return withMillis(instant);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight plus(long duration) {
+>         return withDurationAdded(duration, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight plus(ReadableDuration duration) {
+>         return withDurationAdded(duration, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight plus(ReadablePeriod period) {
+>         return withPeriodAdded(period, 1);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight minus(long duration) {
+>         return withDurationAdded(duration, -1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight minus(ReadableDuration durationToAdd) {
+>         return withDurationAdded(durationToAdd, -1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateMidnight minus(ReadablePeriod period) {
+>         return withPeriodAdded(period, -1);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Property property(DateTimeFieldType type) {
+>         DateTimeField field = type.getField(getChronology());
+>         if (field.isSupported() == false) {
+>             throw new IllegalArgumentException("Field '" + type + "' is not supported");
+>         }
+>         return new Property(this, field);
+>     }
+> 
+>     
+>     

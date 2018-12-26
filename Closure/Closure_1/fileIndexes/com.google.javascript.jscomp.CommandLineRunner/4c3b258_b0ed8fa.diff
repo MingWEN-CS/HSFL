@@ -1,0 +1,63 @@
+23a24
+> import com.google.common.io.Files;
+33a35
+> import java.io.File;
+40a43
+> import java.util.StringTokenizer;
+46a50,51
+> import java.nio.charset.Charset;
+> 
+316a322,325
+>     
+>     @Option(name = "--flagfile",
+>         usage = "A file containing additional command-line options.")
+>     private String flag_file = "";    
+407c416
+<   private void initConfigFromFlags(String[] args, PrintStream err) {
+---
+>   private List<String> processArgs(String[] args) {
+413a423
+>     
+429a440,469
+>     
+>     return processedArgs;
+>   }
+>   
+>   private void processFlagFile(PrintStream err) 
+>             throws CmdLineException, IOException {
+>     List<String> argsInFile = Lists.newArrayList();
+>     File flagFileInput = new File(flags.flag_file);
+>     StringTokenizer tokenizer = new StringTokenizer(
+>         Files.toString(flagFileInput, Charset.defaultCharset()));
+> 
+>     while (tokenizer.hasMoreTokens()) {
+>         argsInFile.add(tokenizer.nextToken());
+>     }
+>     
+>     flags.flag_file = "";
+>     List<String> processedFileArgs 
+>         = processArgs(argsInFile.toArray(new String[] {}));
+>     CmdLineParser parserFileArgs = new CmdLineParser(flags);
+>     parserFileArgs.parseArgument(processedFileArgs.toArray(new String[] {}));
+>     
+>     
+>     if (!flags.flag_file.equals("")) {
+>       err.println("ERROR - Arguments in the file cannot contain "
+>           + "--flagfile option.");
+>       isConfigValid = false;
+>     }
+>   }
+>   
+>   private void initConfigFromFlags(String[] args, PrintStream err) {
+430a471,472
+>     List<String> processedArgs = processArgs(args);
+>     
+434a477,480
+>       
+>       if (!flags.flag_file.equals("")) {
+>         processFlagFile(err);
+>       }
+436a483,485
+>       isConfigValid = false;
+>     } catch (IOException ioErr) {
+>       err.println("ERROR - " + flags.flag_file + " read error.");

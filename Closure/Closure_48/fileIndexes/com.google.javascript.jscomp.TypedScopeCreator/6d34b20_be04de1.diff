@@ -1,0 +1,41 @@
+177a178
+>   @Override
+220a222,259
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   void patchGlobalScope(Scope globalScope, Node scriptRoot) {
+>     
+>     
+>     Preconditions.checkState(scriptRoot.getType() == Token.SCRIPT);
+>     Preconditions.checkNotNull(globalScope);
+>     Preconditions.checkState(globalScope.isGlobal());
+> 
+>     
+>     
+> 
+>     
+>     String scriptName = NodeUtil.getSourceName(scriptRoot);
+>     Preconditions.checkNotNull(scriptName);
+>     
+>     Iterator<Var> varIter = globalScope.getVars();
+>     List<Var> varsToRemove = Lists.newArrayList();
+>     while (varIter.hasNext()) {
+>       Var oldVar = varIter.next();
+>       if (scriptName.equals(oldVar.getInputName())) {
+>         varsToRemove.add(oldVar);
+>       }
+>     }
+>     for (Var var : varsToRemove) {
+>       globalScope.undeclare(var);
+>     }
+> 
+>     
+>     GlobalScopeBuilder scopeBuilder = new GlobalScopeBuilder(globalScope);
+>     NodeTraversal.traverse(compiler, scriptRoot, scopeBuilder);

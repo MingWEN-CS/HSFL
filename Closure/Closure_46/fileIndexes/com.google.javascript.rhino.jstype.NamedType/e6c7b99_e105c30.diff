@@ -1,0 +1,37 @@
+193c193
+<       return referencedType;
+---
+>       return registry.isLastGeneration() ? referencedType : this;
+202c202
+<     return referencedType;
+---
+>     return registry.isLastGeneration() ? referencedType : this;
+312,317c312,324
+<     boolean beForgiving = forgiving ||
+<         (ignoreForwardReferencedTypes &&
+<          registry.isForwardDeclaredType(reference));
+<     if (!beForgiving && registry.isLastGeneration()) {
+<       t.warning("Unknown type " + reference, sourceName, lineno, null,
+<           charno);
+---
+>     if (registry.isLastGeneration()) {
+>       boolean beForgiving = forgiving ||
+>           (ignoreForwardReferencedTypes &&
+>            registry.isForwardDeclaredType(reference));
+>       if (!beForgiving && registry.isLastGeneration()) {
+>         t.warning("Unknown type " + reference, sourceName, lineno, null,
+>             charno);
+>       } else {
+>         referencedType = registry.getNativeObjectType(
+>             JSTypeNative.CHECKED_UNKNOWN_TYPE);
+>       }
+> 
+>       setResolvedTypeInternal(referencedType);
+319,320c326
+<       referencedType = registry.getNativeObjectType(
+<           JSTypeNative.CHECKED_UNKNOWN_TYPE);
+---
+>       setResolvedTypeInternal(this);
+322,323d327
+< 
+<     setResolvedTypeInternal(referencedType);

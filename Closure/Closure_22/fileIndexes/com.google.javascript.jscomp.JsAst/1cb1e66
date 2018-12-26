@@ -1,0 +1,107 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+
+import com.google.javascript.jscomp.parsing.ParserRunner;
+
+import com.google.javascript.rhino.InputId;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.io.IOException;
+
+import java.util.logging.Logger;
+
+
+
+
+
+public class JsAst implements SourceAst {
+  private static final Logger logger_ = Logger.getLogger(JsAst.class.getName());
+  private static final long serialVersionUID = 1L;
+
+  private transient InputId inputId;
+  private transient SourceFile sourceFile;
+  private String fileName;
+  private Node root;
+
+  public JsAst(SourceFile sourceFile) {
+    this.inputId = new InputId(sourceFile.getName());
+    this.sourceFile = sourceFile;
+    this.fileName = sourceFile.getName();
+  }
+
+  @Override
+  public Node getAstRoot(AbstractCompiler compiler) {
+    if (root == null) {
+      parse(compiler);
+      root.setInputId(inputId);
+    }
+    return root;
+  }
+
+  @Override
+  public void clearAst() {
+    root = null;
+    
+    
+    
+    sourceFile.clearCachedSource();
+  }
+
+  @Override
+  public InputId getInputId() {
+    return inputId;
+  }
+
+  @Override
+  public SourceFile getSourceFile() {
+    return sourceFile;
+  }
+
+  @Override
+  public void setSourceFile(SourceFile file) {
+    Preconditions.checkState(fileName.equals(file.getName()));
+    sourceFile = file;
+  }
+
+  private void parse(AbstractCompiler compiler) {
+    try {
+      logger_.fine("Parsing: " + sourceFile.getName());
+      root = ParserRunner.parse(sourceFile, sourceFile.getCode(),
+          compiler.getParserConfig(),
+          compiler.getDefaultErrorReporter(),
+          logger_);
+    } catch (IOException e) {
+      compiler.report(
+          JSError.make(AbstractCompiler.READ_ERROR, sourceFile.getName()));
+    }
+
+    if (root == null || compiler.hasHaltingErrors()) {
+      
+      root = new Node(Token.SCRIPT);
+    } else {
+      compiler.prepareAst(root);
+    }
+
+    
+    
+    root.setStaticSourceFile(sourceFile);
+  }
+}

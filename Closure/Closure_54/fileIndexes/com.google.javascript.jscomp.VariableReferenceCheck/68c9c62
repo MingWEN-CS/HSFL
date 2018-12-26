@@ -1,0 +1,159 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.CheckLevel;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.BasicBlock;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.Behavior;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.Reference;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.ReferenceCollection;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+class VariableReferenceCheck implements CompilerPass {
+
+  static final DiagnosticType UNDECLARED_REFERENCE = DiagnosticType.warning(
+      "JSC_REFERENCE_BEFORE_DECLARE",
+      "Variable referenced before declaration: {0}");
+
+  static final DiagnosticType REDECLARED_VARIABLE = DiagnosticType.warning(
+      "JSC_REDECLARED_VARIABLE",
+      "Redeclared variable: {0}");
+
+  private AbstractCompiler compiler;
+  private CheckLevel checkLevel;
+
+  
+  
+  private Set<BasicBlock> blocksWithDeclarations = Sets.newHashSet();
+
+  public VariableReferenceCheck(AbstractCompiler compiler,
+      CheckLevel checkLevel) {
+    this.compiler = compiler;
+    this.checkLevel = checkLevel;
+  }
+
+  @Override
+  public void process(Node externs, Node root) {
+    ReferenceCollectingCallback callback = new ReferenceCollectingCallback(
+        compiler, new ReferenceCheckingBehavior());
+    callback.process(externs, root);
+  }
+
+  
+
+
+
+  private class ReferenceCheckingBehavior implements Behavior {
+
+    @Override
+    public void afterExitScope(NodeTraversal t,
+        Map<Var, ReferenceCollection> referenceMap) {
+
+      
+      for (Iterator<Var> it = t.getScope().getVars(); it.hasNext();) {
+        Var v = it.next();
+        checkVar(t, v, referenceMap.get(v).references);
+      }
+    }
+
+    
+
+
+
+
+
+    private void checkVar(NodeTraversal t, Var v, List<Reference> references) {
+      blocksWithDeclarations.clear();
+      boolean isDeclaredInScope = false;
+      Reference hoistedFn = null;
+
+      
+      for (Reference reference : references) {
+        if (reference.isHoistedFunction()) {
+          blocksWithDeclarations.add(reference.getBasicBlock());
+          isDeclaredInScope = true;
+          hoistedFn = reference;
+          break;
+        }
+      }
+
+      for (Reference reference : references) {
+        if (reference == hoistedFn) {
+          continue;
+        }
+
+        BasicBlock basicBlock = reference.getBasicBlock();
+        boolean isDeclaration = reference.isDeclaration();
+
+        if (isDeclaration) {
+          
+          
+          for (BasicBlock declaredBlock : blocksWithDeclarations) {
+            if (declaredBlock.provablyExecutesBefore(basicBlock)) {
+              compiler.report(
+                  JSError.make(reference.getSourceName(),
+                      reference.getNameNode(),
+                      checkLevel,
+                      REDECLARED_VARIABLE, v.name));
+              break;
+            }
+          }
+        }
+
+        if (!isDeclaration && !isDeclaredInScope) {
+          
+          Node grandparent = reference.getGrandparent();
+          if (grandparent.getType() == Token.NAME
+              && grandparent.getString() == v.name) {
+            continue;
+          }
+
+          
+          
+          if (reference.getScope() == v.scope) {
+            compiler.report(
+                JSError.make(reference.getSourceName(),
+                             reference.getNameNode(),
+                             checkLevel,
+                             UNDECLARED_REFERENCE, v.name));
+          }
+        }
+
+        if (isDeclaration) {
+          blocksWithDeclarations.add(basicBlock);
+          isDeclaredInScope = true;
+        }
+      }
+    }
+  }
+}

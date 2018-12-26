@@ -1,0 +1,81 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+import com.google.common.collect.ImmutableMap;
+
+
+
+
+
+public class RecordTypeBuilder {
+  private boolean isEmpty = true;
+  private JSTypeRegistry registry;
+  private final ImmutableMap.Builder<String, JSType> properties =
+      ImmutableMap.builder();
+
+  public RecordTypeBuilder(JSTypeRegistry registry) {
+    this.registry = registry;
+  }
+
+  
+
+
+
+
+  public RecordTypeBuilder addProperty(String name, JSType type) {
+    isEmpty = false;
+    properties.put(name, type);
+    return this;
+  }
+
+  
+
+
+
+  public JSType build() {
+     
+    if (isEmpty) {
+       return registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+    }
+
+    return registry.createRecordType(properties.build());
+  }
+}

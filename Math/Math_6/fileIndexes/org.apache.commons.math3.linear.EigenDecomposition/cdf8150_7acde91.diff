@@ -1,0 +1,40 @@
+102a103,104
+>     
+>     private final boolean isSymmetric;
+116c118,119
+<         if (isSymmetric(matrix, false)) {
+---
+>         isSymmetric = isSymmetric(matrix, false);
+>         if (isSymmetric) {
+151a155
+>         isSymmetric = true;
+385a390,418
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public RealMatrix getSquareRoot() {
+>         if (!isSymmetric) {
+>             throw new MathUnsupportedOperationException();
+>         }
+> 
+>         final double[] sqrtEigenValues = new double[realEigenvalues.length];
+>         for (int i = 0; i < realEigenvalues.length; i++) {
+>             final double eigen = realEigenvalues[i];
+>             if (eigen <= 0) {
+>                 throw new MathUnsupportedOperationException();
+>             }
+>             sqrtEigenValues[i] = FastMath.sqrt(eigen);
+>         }
+>         final RealMatrix sqrtEigen = MatrixUtils.createRealDiagonalMatrix(sqrtEigenValues);
+>         final RealMatrix v = getV();
+>         final RealMatrix vT = getVT();
+> 
+>         return v.multiply(sqrtEigen).multiply(vT);

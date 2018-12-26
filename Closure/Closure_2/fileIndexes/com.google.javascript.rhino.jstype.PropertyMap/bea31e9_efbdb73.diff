@@ -1,0 +1,34 @@
+43a44
+> import com.google.common.collect.ImmutableMap;
+56a58,62
+>   private static final long serialVersionUID = 1L;
+> 
+>   private static final PropertyMap EMPTY_MAP = new PropertyMap(
+>       ImmutableMap.<String, Property>of());
+> 
+74c80,88
+<     this.properties = Maps.newTreeMap();
+---
+>     this(Maps.<String, Property>newTreeMap());
+>   }
+> 
+>   private PropertyMap(Map<String, Property> underlyingMap) {
+>     this.properties = underlyingMap;
+>   }
+> 
+>   static PropertyMap immutableEmptyMap() {
+>     return EMPTY_MAP;
+78c92,94
+<     this.parentSource = ownerType;
+---
+>     if (this != EMPTY_MAP) {
+>       this.parentSource = ownerType;
+>     }
+82a99,101
+>     if (parentSource == null) {
+>       return null;
+>     }
+91a111,113
+>     if (parentSource == null) {
+>       return ImmutableList.of();
+>     }

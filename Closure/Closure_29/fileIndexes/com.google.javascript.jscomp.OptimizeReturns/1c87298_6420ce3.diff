@@ -1,0 +1,90 @@
+52c52
+<     process(defFinder);
+---
+>     process(externs, root, defFinder);
+56c56,57
+<   public void process(SimpleDefinitionFinder definitions) {
+---
+>   public void process(
+>       Node externs, Node root, SimpleDefinitionFinder definitions) {
+79c80
+<     rewriteReturns(defSite.definition.getRValue());
+---
+>     rewriteReturns(defFinder, defSite.definition.getRValue());
+100c101
+<     if (!isSimpleFunctionDeclaration(rValue)) {
+---
+>     if (!SimpleDefinitionFinder.isSimpleFunctionDeclaration(rValue)) {
+105c106
+<     if (maybeExported(compiler, definition)) {
+---
+>     if (SimpleDefinitionFinder.maybeExported(compiler, definition)) {
+134,186d134
+<   static boolean maybeExported(
+<       AbstractCompiler compiler, Definition definition) {
+<     
+<     Node lValue = definition.getLValue();
+<     if (lValue == null) {
+<       return true;
+<     }
+< 
+<     String partialName;
+<     if (NodeUtil.isGetProp(lValue)) {
+<       partialName = lValue.getLastChild().getString();
+<     } else if (NodeUtil.isName(lValue)) {
+<       partialName = lValue.getString();
+<     } else {
+<       
+<       
+<       return true;
+<     }
+< 
+<     CodingConvention codingConvention = compiler.getCodingConvention();
+<     if (codingConvention.isExported(partialName)) {
+<       return true;
+<     }
+< 
+<     return false;
+<   }
+< 
+<   static boolean isSimpleFunctionDeclaration(Node fn) {
+<     Node parent = fn.getParent();
+<     Node gramps = parent.getParent();
+< 
+<     
+<     
+<     
+<     
+<     
+<     
+< 
+<     
+<     if (NodeUtil.isFunctionDeclaration(fn)) {
+<       return true;
+<     }
+< 
+<     
+<     
+<     if (fn.getFirstChild().getString().isEmpty()
+<         && (NodeUtil.isExprAssign(gramps) || NodeUtil.isName(parent))) {
+<       return true;
+<     }
+< 
+<     return false;
+<   }
+< 
+222c170,171
+<   private void rewriteReturns(Node fnNode) {
+---
+>   private void rewriteReturns(
+>       final SimpleDefinitionFinder defFinder, Node fnNode) {
+229a179,183
+>             boolean keepValue = NodeUtil.mayHaveSideEffects(
+>                 node.getFirstChild(), compiler);
+>             if (!keepValue) {
+>               defFinder.removeReferences(node.getFirstChild());
+>             }
+231c185
+<             if (NodeUtil.mayHaveSideEffects(result, compiler)) {
+---
+>             if (keepValue) {

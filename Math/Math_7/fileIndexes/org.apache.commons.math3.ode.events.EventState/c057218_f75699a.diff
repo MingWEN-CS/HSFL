@@ -1,0 +1,65 @@
+26,27c26,27
+< import org.apache.commons.math3.exception.ConvergenceException;
+< import org.apache.commons.math3.ode.events.EventHandler;
+---
+> import org.apache.commons.math3.exception.MaxCountExceededException;
+> import org.apache.commons.math3.exception.NoBracketingException;
+152c152,155
+<     public void reinitializeBegin(final StepInterpolator interpolator) {
+---
+> 
+> 
+>     public void reinitializeBegin(final StepInterpolator interpolator)
+>         throws MaxCountExceededException {
+186a190,191
+> 
+> 
+188c193
+<         throws ConvergenceException {
+---
+>         throws MaxCountExceededException, NoBracketingException {
+189a195
+>         try {
+201,203c207,213
+<                 public double value(final double t) {
+<                     interpolator.setInterpolatedTime(t);
+<                     return handler.g(t, interpolator.getInterpolatedState());
+---
+>                 public double value(final double t) throws LocalMaxCountExceededException {
+>                     try {
+>                         interpolator.setInterpolatedTime(t);
+>                         return handler.g(t, interpolator.getInterpolatedState());
+>                     } catch (MaxCountExceededException mcee) {
+>                         throw new LocalMaxCountExceededException(mcee);
+>                     }
+277a288,291
+>         } catch (LocalMaxCountExceededException lmcee) {
+>             throw lmcee.getException();
+>         }
+> 
+340a355,379
+> 
+>     }
+> 
+>     
+>     private static class LocalMaxCountExceededException extends RuntimeException {
+> 
+>         
+>         private static final long serialVersionUID = 20120901L;
+> 
+>         
+>         private final MaxCountExceededException wrapped;
+> 
+>         
+> 
+> 
+>         public LocalMaxCountExceededException(final MaxCountExceededException exception) {
+>             wrapped = exception;
+>         }
+> 
+>         
+> 
+> 
+>         public MaxCountExceededException getException() {
+>             return wrapped;
+>         }

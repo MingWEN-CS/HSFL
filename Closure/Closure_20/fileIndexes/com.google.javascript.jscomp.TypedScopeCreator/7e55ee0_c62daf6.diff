@@ -1,0 +1,99 @@
+51a52
+> import com.google.common.collect.ImmutableList;
+57a59,60
+> import com.google.javascript.jscomp.FunctionTypeBuilder.AstFunctionContents;
+> import com.google.javascript.jscomp.NodeTraversal.AbstractScopedCallback;
+143a147,150
+>   private final Map<Node, AstFunctionContents> functionAnalysisResults =
+>       Maps.newHashMap();
+> 
+>   
+192a200,203
+>       (new FirstOrderFunctionAnalyzer(compiler, functionAnalysisResults))
+>           .process(root.getFirstChild(), root.getLastChild());
+> 
+>       
+244a256,258
+>     (new FirstOrderFunctionAnalyzer(
+>         compiler, functionAnalysisResults)).process(null, scriptRoot);
+> 
+868c882
+<               .setSourceNode(fnRoot)
+---
+>               .setContents(getFunctionAnalysisResults(fnRoot))
+892d905
+<               .inferReturnStatementsAsLastResort(fnBlock)
+1723a1737,1746
+> 
+>       AstFunctionContents contents =
+>           getFunctionAnalysisResults(scope.getRootNode());
+>       if (contents != null) {
+>         for (String varName : contents.getEscapedVarNames()) {
+>           Var v = scope.getVar(varName);
+>           Preconditions.checkState(v.getScope() == scope);
+>           v.markEscaped();
+>         }
+>       }
+1791a1815,1876
+> 
+>   
+> 
+> 
+> 
+>   private static class FirstOrderFunctionAnalyzer
+>       extends AbstractScopedCallback implements CompilerPass {
+>     private final AbstractCompiler compiler;
+>     private final Map<Node, AstFunctionContents> data;
+> 
+>     FirstOrderFunctionAnalyzer(
+>         AbstractCompiler compiler, Map<Node, AstFunctionContents> outParam) {
+>       this.compiler = compiler;
+>       this.data = outParam;
+>     }
+> 
+>     @Override public void process(Node externs, Node root) {
+>       if (externs == null) {
+>         NodeTraversal.traverse(compiler, root, this);
+>       } else {
+>         NodeTraversal.traverseRoots(
+>             compiler, ImmutableList.of(externs, root), this);
+>       }
+>     }
+> 
+>     @Override public void enterScope(NodeTraversal t) {
+>       if (!t.inGlobalScope()) {
+>         Node n = t.getScopeRoot();
+>         data.put(n, new AstFunctionContents(n));
+>       }
+>     }
+> 
+>     @Override public void visit(NodeTraversal t, Node n, Node parent) {
+>       if (t.inGlobalScope()) {
+>         return;
+>       }
+> 
+>       if (n.getType() == Token.RETURN && n.getFirstChild() != null) {
+>         data.get(t.getScopeRoot()).recordNonEmptyReturn();
+>       } else if (n.getType() == Token.NAME && NodeUtil.isLValue(n)) {
+>         String name = n.getString();
+>         Scope scope = t.getScope();
+>         Var var = scope.getVar(name);
+>         if (var != null) {
+>           Scope ownerScope = var.getScope();
+>           if (scope != ownerScope && ownerScope.isLocal()) {
+>             data.get(ownerScope.getRootNode()).recordEscapedVarName(name);
+>           }
+>         }
+>       }
+>     }
+>   }
+> 
+>   private AstFunctionContents getFunctionAnalysisResults(@Nullable Node n) {
+>     if (n == null) {
+>       return null;
+>     }
+> 
+>     
+>     
+>     return functionAnalysisResults.get(n);
+>   }

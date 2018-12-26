@@ -1,0 +1,31 @@
+833,834c833,834
+<         recordReference(WINDOW, name,
+<                         RefType.REGULAR);
+---
+>         recordReference(WINDOW, name, RefType.REGULAR);
+>         maybeRecordAlias(name, parent, referring, referringName);
+855,859c855
+<         if ((parent.getType() == Token.NAME ||
+<              parent.getType() == Token.ASSIGN) &&
+<             scopes.get(parent) == referring) {
+<           recordAlias(referringName, name);
+<         } else {
+---
+>         if (!maybeRecordAlias(name, parent, referring, referringName)) {
+876a873,888
+>     }
+> 
+>     
+> 
+> 
+>     private boolean maybeRecordAlias(
+>         String name, Node parent,
+>         NameInformation referring, String referringName) {
+>       if ((parent.getType() == Token.NAME ||
+>           parent.getType() == Token.ASSIGN) &&
+>           referring != null &&
+>           scopes.get(parent) == referring) {
+>         recordAlias(referringName, name);
+>         return true;
+>       }
+>       return false;

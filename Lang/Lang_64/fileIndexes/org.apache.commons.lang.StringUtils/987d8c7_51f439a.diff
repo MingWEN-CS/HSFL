@@ -1,0 +1,245 @@
+85a86,105
+>     private static int PAD_LIMIT = 8192;
+> 
+>     
+> 
+> 
+> 
+> 
+>     private static String blanks = new String(" ");
+> 
+>     
+> 
+> 
+> 
+> 
+>     private final static String[] padding = new String[Character.MAX_VALUE];
+>        
+> 
+>     
+> 
+> 
+1180a1201,1204
+>         if (str.length() == 1 && repeat <= PAD_LIMIT) {
+>            return padding(repeat, str.charAt(0));
+>         }
+> 
+1194a1219,1253
+>     private static String padding(int repeat) {
+>         while (blanks.length() < repeat)  {
+>             blanks = blanks.concat(blanks);
+>         }
+>         return blanks.substring(0, repeat);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String padding(int repeat, char delim) {
+>         if (padding[delim] == null) {
+>             padding[delim] = String.valueOf(delim);
+>         }
+>         while (padding[delim].length() < repeat) {
+>             padding[delim] = padding[delim].concat(padding[delim]);
+>         }
+>         return padding[delim].substring(0, repeat);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+1199c1258,1265
+<         return rightPad(str, size, " ");
+---
+>         int pads = size - str.length();
+>         if (pads <= 0) {
+>             return str; 
+>         }
+>         if (pads > PAD_LIMIT) {
+>             return rightPad(str, size, " ");
+>         }
+>         return str + padding(pads);
+1200a1267
+> 
+1201a1269,1289
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String rightPad(String str, int size, char delim) {
+>         int pads = size - str.length();
+>         if (pads <= 0) {
+>             return str; 
+>         }
+>         if (pads > PAD_LIMIT) {
+>             return rightPad(str, size, String.valueOf(delim));
+>         }
+>         return str + padding(pads, delim);
+>     }
+> 
+1214a1303,1306
+>         if (delim.length() == 1 && size - str.length() <= PAD_LIMIT) {
+>            return rightPad(str, size, delim.charAt(0));
+>         }
+> 
+1233c1325,1332
+<         return leftPad(str, size, " ");
+---
+>         int pads = size - str.length();
+>         if (pads <= 0) { 
+>             return str; 
+>         }
+>         if (pads > PAD_LIMIT) {
+>             return leftPad(str, size, " ");
+>         }
+>         return padding(pads).concat(str);
+1234a1334,1354
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String leftPad(String str, int size, char delim) {
+>         int pads = size - str.length();
+>         if (pads <= 0) {
+>             return str; 
+>         }
+>         if (pads > PAD_LIMIT) {
+>             return leftPad(str, size, " ");
+>         }
+>         return padding(pads, delim).concat(str);
+>     }
+> 
+1245a1366,1367
+>         if (delim.length() == 1 && size - str.length() <= PAD_LIMIT)
+>            return leftPad(str, size, delim.charAt(0));
+1816,1836c1938,1960
+<     public static boolean containsOnly(String str, char[] validChars) {
+<         if (str == null || validChars == null) {
+<             return false;
+<         }
+<         int strSize = str.length();
+<         int validSize = validChars.length;
+<         for (int i = 0; i < strSize; i++) {
+<             char ch = str.charAt(i);
+<             boolean contains = false;
+<             for (int j = 0; j < validSize; j++) {
+<                 if (validChars[j] == ch) {
+<                     contains = true;
+<                     break;
+<                 }
+<             }
+<             if (contains == false) {
+<                 return false;
+<             }
+<         }
+<         return true;
+<     }
+---
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1873a1998,2057
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean containsOnly(String str, char[] valid) {
+>         
+>         if( (valid == null) || (str == null) ) {
+>             return false;
+>         }
+>         if(str.length() == 0) {
+>             return true;
+>         }
+>         if(valid.length == 0) {
+>             return false;
+>         }
+>         return indexOfAnyBut(str, valid) == -1;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>      public static int indexOfAnyBut(String str, char[] searchChars) {
+>          if(searchChars == null) {
+>              return -1;
+>          }
+>          return indexOfAnyBut(str, new String(searchChars));
+>      }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static int indexOfAnyBut(String str, String searchChars) {
+>         if (str == null || searchChars == null) {
+>             return -1;
+>         }
+> 
+>         for (int i = 0; i < str.length(); i ++) {
+>            if (searchChars.indexOf(str.charAt(i)) < 0) {
+>                return i;
+>            }
+>         }
+> 
+>         return -1;

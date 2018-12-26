@@ -1,0 +1,67 @@
+344c344
+<             addJsString(n.getString());
+---
+>             addJsString(n);
+636c636
+<         addJsString(n.getString());
+---
+>         addJsString(n);
+940,944c940,951
+<   void addJsString(String s) {
+<     String cached = ESCAPED_JS_STRINGS.get(s);
+<     if (cached == null) {
+<       cached = jsString(s);
+<       ESCAPED_JS_STRINGS.put(s, cached);
+---
+>   private void addJsString(Node n) {
+>     String s = n.getString();
+>     boolean useSlashV = n.getBooleanProp(Node.SLASH_V);
+>     if (useSlashV) {
+>       add(jsString(n.getString(), useSlashV));
+>     } else {
+>       String cached = ESCAPED_JS_STRINGS.get(s);
+>       if (cached == null) {
+>         cached = jsString(n.getString(), useSlashV);
+>         ESCAPED_JS_STRINGS.put(s, cached);
+>       }
+>       add(cached);
+946d952
+<     add(cached);
+949c955
+<   String jsString(String s) {
+---
+>   private String jsString(String s, boolean useSlashV) {
+975c981
+<         outputCharsetEncoder);
+---
+>         outputCharsetEncoder, useSlashV);
+980c986
+<     return strEscape(s, '/', "\"", "'", "\\", outputCharsetEncoder);
+---
+>     return strEscape(s, '/', "\"", "'", "\\", outputCharsetEncoder, false);
+987c993
+<     return strEscape(s, '"',  "\\\"", "\'", "\\\\", null);
+---
+>     return strEscape(s, '"',  "\\\"", "\'", "\\\\", null, false);
+998,1002c1004,1010
+<   static String strEscape(String s, char quote,
+<                           String doublequoteEscape,
+<                           String singlequoteEscape,
+<                           String backslashEscape,
+<                           CharsetEncoder outputCharsetEncoder) {
+---
+>   private static String strEscape(
+>       String s, char quote,
+>       String doublequoteEscape,
+>       String singlequoteEscape,
+>       String backslashEscape,
+>       CharsetEncoder outputCharsetEncoder,
+>       boolean useSlashV) {
+1008a1017,1023
+>         case '\u000B':
+>           if (useSlashV) {
+>             sb.append("\\v");
+>           } else {
+>             sb.append("\\x0B");
+>           }
+>           break;

@@ -1,0 +1,608 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import static com.google.javascript.rhino.jstype.JSTypeNative.GLOBAL_THIS;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.javascript.rhino.ErrorReporter;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.jstype.JSType;
+import com.google.javascript.rhino.jstype.ObjectType;
+import com.google.javascript.rhino.jstype.StaticReference;
+import com.google.javascript.rhino.jstype.StaticScope;
+import com.google.javascript.rhino.jstype.StaticSlot;
+import com.google.javascript.rhino.jstype.StaticSourceFile;
+import com.google.javascript.rhino.jstype.StaticSymbolTable;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Scope
+    implements StaticScope<JSType>, StaticSymbolTable<Scope.Var, Scope.Var> {
+  private final Map<String, Var> vars = new LinkedHashMap<String, Var>();
+  private final Scope parent;
+  private final int depth;
+  private final Node rootNode;
+
+  
+  private final ObjectType thisType;
+
+  
+  private final boolean isBottom;
+
+  private Var arguments;
+
+  private static final Predicate<Var> DECLARATIVELY_UNBOUND_VARS_WITHOUT_TYPES =
+      new Predicate<Var>() {
+    @Override public boolean apply(Var var) {
+      return var.getParentNode() != null &&
+          var.getType() == null && 
+          var.getParentNode().getType() == Token.VAR &&
+          !var.isExtern();
+    }
+  };
+
+  
+  public static class Var
+      implements StaticSlot<JSType>, StaticReference<JSType> {
+    
+    final String name;
+
+    
+    final Node nameNode;
+
+    
+
+
+    private JSType type;
+
+    
+
+
+    private final JSDocInfo info;
+
+    
+
+
+
+
+    private final boolean typeInferred;
+
+    
+    final CompilerInput input;
+
+    
+    final boolean isDefine;
+
+    
+
+
+
+    final int index;
+
+    
+    final Scope scope;
+
+    
+
+
+
+
+    private Var(boolean inferred, String name, Node nameNode, JSType type,
+                Scope scope, int index, CompilerInput input, boolean isDefine,
+                JSDocInfo info) {
+      this.name = name;
+      this.nameNode = nameNode;
+      this.type = type;
+      this.scope = scope;
+      this.index = index;
+      this.input = input;
+      this.isDefine = isDefine;
+      this.info = info;
+      this.typeInferred = inferred;
+    }
+
+    
+
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    
+
+
+    @Override
+    public Node getNode() {
+      return nameNode;
+    }
+
+    CompilerInput getInput() {
+      return input;
+    }
+
+    @Override
+    public StaticSourceFile getSourceFile() {
+      return nameNode.getStaticSourceFile();
+    }
+
+    @Override
+    public Var getSymbol() {
+      return this;
+    }
+
+    @Override
+    public Var getDeclaration() {
+      return nameNode == null ? null : this;
+    }
+
+    
+
+
+    public Node getParentNode() {
+      return nameNode == null ? null : nameNode.getParent();
+    }
+
+    
+
+
+
+    public boolean isBleedingFunction() {
+      return NodeUtil.isFunctionExpression(getParentNode());
+    }
+
+    
+
+
+    Scope getScope() {
+      return scope;
+    }
+
+    
+
+
+    public boolean isGlobal() {
+      return scope.isGlobal();
+    }
+
+    
+
+
+    public boolean isLocal() {
+      return scope.isLocal();
+    }
+
+    
+
+
+    boolean isExtern() {
+      return input == null || input.isExtern();
+    }
+
+    
+
+
+
+    public boolean isConst() {
+      return nameNode != null && NodeUtil.isConstantName(nameNode);
+    }
+
+    
+
+
+
+    public boolean isDefine() {
+      return isDefine;
+    }
+
+    public Node getInitialValue() {
+      Node parent = getParentNode();
+      int pType = parent.getType();
+      if (pType == Token.FUNCTION) {
+        return parent;
+      } else if (pType == Token.ASSIGN) {
+        return parent.getLastChild();
+      } else if (pType == Token.VAR) {
+        return nameNode.getFirstChild();
+      } else {
+        return null;
+      }
+    }
+
+    
+
+
+
+    @Override
+    public JSType getType() {
+      return type;
+    }
+
+    
+
+
+    public Node getNameNode() {
+      return nameNode;
+    }
+
+    
+
+
+    public JSDocInfo getJSDocInfo() {
+      return info;
+    }
+
+    
+
+
+
+    void setType(JSType type) {
+      Preconditions.checkState(isTypeInferred());
+      this.type = type;
+    }
+
+    
+
+
+    void resolveType(ErrorReporter errorReporter) {
+      if (type != null) {
+        type = type.resolve(errorReporter, scope);
+      }
+    }
+
+    
+
+
+
+    @Override
+    public boolean isTypeInferred() {
+      return typeInferred;
+    }
+
+    public String getInputName() {
+      if (input == null)
+        return "<non-file>";
+      else
+        return input.getName();
+    }
+
+    public boolean isNoShadow() {
+      if (info != null && info.isNoShadow()) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    @Override public boolean equals(Object other) {
+      if (!(other instanceof Var)) {
+        return false;
+      }
+
+      Var otherVar = (Var) other;
+      return otherVar.nameNode == nameNode;
+    }
+
+    @Override public int hashCode() {
+      return nameNode.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "Scope.Var " + name + "{" + type + "}";
+    }
+  }
+
+  
+
+
+
+  
+  public static class Arguments extends Var {
+    Arguments(Scope scope) {
+      super(
+        false, 
+        "arguments", 
+        null,  
+        
+        null,  
+        scope,
+        -1,    
+        null,  
+        false, 
+        null   
+        );
+    }
+
+    @Override public boolean equals(Object other) {
+      if (!(other instanceof Arguments)) {
+        return false;
+      }
+
+      Arguments otherVar = (Arguments) other;
+      return otherVar.scope.getRootNode() == scope.getRootNode();
+    }
+
+    @Override public int hashCode() {
+      return System.identityHashCode(this);
+    }
+  }
+
+  
+
+
+
+
+  Scope(Scope parent, Node rootNode) {
+    Preconditions.checkNotNull(parent);
+    Preconditions.checkArgument(rootNode != parent.rootNode);
+
+    this.parent = parent;
+    this.rootNode = rootNode;
+    JSType nodeType = rootNode.getJSType();
+    if (nodeType != null && nodeType.isFunctionType()) {
+      thisType = nodeType.toMaybeFunctionType().getTypeOfThis();
+    } else {
+      thisType = parent.thisType;
+    }
+    this.isBottom = false;
+    this.depth = parent.depth + 1;
+  }
+
+
+  
+
+
+
+  Scope(Node rootNode, AbstractCompiler compiler) {
+    this.parent = null;
+    this.rootNode = rootNode;
+    thisType = compiler.getTypeRegistry().getNativeObjectType(GLOBAL_THIS);
+    this.isBottom = false;
+    this.depth = 0;
+  }
+
+  
+
+
+
+
+  Scope(Node rootNode, ObjectType thisType) {
+    this.parent = null;
+    this.rootNode = rootNode;
+    this.thisType = thisType;
+    this.isBottom = true;
+    this.depth = 0;
+  }
+
+  
+  int getDepth() {
+    return depth;
+  }
+
+  
+  boolean isBottom() {
+    return isBottom;
+  }
+
+  
+
+
+
+  @Override
+  public Node getRootNode() {
+    return rootNode;
+  }
+
+  public Scope getParent() {
+    return parent;
+  }
+
+  Scope getGlobalScope() {
+    Scope result = this;
+    while (result.getParent() != null) {
+      result = result.getParent();
+    }
+    return result;
+  }
+
+  @Override
+  public StaticScope<JSType> getParentScope() {
+    return parent;
+  }
+
+  
+
+
+  @Override
+  public ObjectType getTypeOfThis() {
+    return thisType;
+  }
+
+  
+
+
+
+
+
+
+
+  Var declare(String name, Node nameNode, JSType type, CompilerInput input) {
+    return declare(name, nameNode, type, input, true);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  Var declare(String name, Node nameNode,
+      JSType type, CompilerInput input, boolean inferred) {
+    Preconditions.checkState(name != null && name.length() > 0);
+
+    
+    Preconditions.checkState(vars.get(name) == null);
+
+    
+    
+    JSDocInfo info = NodeUtil.getInfoForNameNode(nameNode);
+
+    Var var = new Var(inferred, name, nameNode, type, this, vars.size(), input,
+        info != null && info.isDefine(), info);
+
+    vars.put(name, var);
+    return var;
+  }
+
+  
+
+
+
+  void undeclare(Var var) {
+    Preconditions.checkState(var.scope == this);
+    Preconditions.checkState(vars.get(var.name) == var);
+    vars.remove(var.name);
+  }
+
+  @Override
+  public StaticSlot<JSType> getSlot(String name) {
+    return getVar(name);
+  }
+
+  @Override
+  public StaticSlot<JSType> getOwnSlot(String name) {
+    return vars.get(name);
+  }
+
+  
+
+
+  public Var getVar(String name) {
+    Var var = vars.get(name);
+    if (var != null) {
+      return var;
+    } else if (parent != null) { 
+      return parent.getVar(name);
+    } else {
+      return null;
+    }
+  }
+
+  
+
+
+  public Var getArgumentsVar() {
+    if (arguments == null) {
+      arguments = new Arguments(this);
+    }
+    return arguments;
+  }
+
+  
+
+
+  public boolean isDeclared(String name, boolean recurse) {
+    Scope scope = this;
+    if (scope.vars.containsKey(name))
+      return true;
+
+    if (scope.parent != null && recurse) {
+      return scope.parent.isDeclared(name, recurse);
+    }
+    return false;
+  }
+
+  
+
+
+  public Iterator<Var> getVars() {
+    return vars.values().iterator();
+  }
+
+  @Override
+  public Iterable<Var> getReferences(Var var) {
+    return ImmutableList.of(var);
+  }
+
+  @Override
+  public StaticScope<JSType> getScope(Var var) {
+    return var.scope;
+  }
+
+  @Override
+  public Iterable<Var> getAllSymbols() {
+    return Collections.unmodifiableCollection(vars.values());
+  }
+
+  
+
+
+  public int getVarCount() {
+    return vars.size();
+  }
+
+  
+
+
+  public boolean isGlobal() {
+    return parent == null;
+  }
+
+  
+
+
+  public boolean isLocal() {
+    return !isGlobal();
+  }
+
+  
+
+
+  public Iterator<Var> getDeclarativelyUnboundVarsWithoutTypes() {
+    return Iterators.filter(
+        getVars(), DECLARATIVELY_UNBOUND_VARS_WITHOUT_TYPES);
+  }
+}

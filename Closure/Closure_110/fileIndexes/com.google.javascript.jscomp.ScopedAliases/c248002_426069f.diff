@@ -1,0 +1,74 @@
+20a21
+> import com.google.common.collect.Sets;
+31a33
+> import java.util.Set;
+194a197,209
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     private final Set<String> forbiddenLocals = Sets.newHashSet();
+>     private boolean hasNamespaceShadows = false;
+> 
+231a247,250
+>       if (t.getScopeDepth() > 2) {
+>         findNamespaceShadows(t);
+>       }
+> 
+232a252
+>         renameNamespaceShadows(t);
+233a254
+>         forbiddenLocals.clear();
+234a256
+>         hasNamespaceShadows = false;
+286a309,316
+> 
+>           int rootIndex = qualifiedName.indexOf(".");
+>           if (rootIndex != -1) {
+>             String qNameRoot = qualifiedName.substring(0, rootIndex);
+>             if (!aliases.containsKey(qNameRoot)) {
+>               forbiddenLocals.add(qNameRoot);
+>             }
+>           }
+296a327,361
+>       }
+>     }
+> 
+>     
+>     private void findNamespaceShadows(NodeTraversal t) {
+>       if (hasNamespaceShadows) {
+>         return;
+>       }
+> 
+>       Scope scope = t.getScope();
+>       for (Var v : scope.getVarIterable()) {
+>         if (forbiddenLocals.contains(v.getName())) {
+>           hasNamespaceShadows = true;
+>           return;
+>         }
+>       }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private void renameNamespaceShadows(NodeTraversal t) {
+>       if (hasNamespaceShadows) {
+>         MakeDeclaredNamesUnique.Renamer renamer =
+>             new MakeDeclaredNamesUnique.WhitelistedRenamer(
+>                 new MakeDeclaredNamesUnique.ContextualRenamer(),
+>                 forbiddenLocals);
+>         for (String s : forbiddenLocals) {
+>           renamer.addDeclaredName(s);
+>         }
+>         MakeDeclaredNamesUnique uniquifier =
+>             new MakeDeclaredNamesUnique(renamer);
+>         NodeTraversal.traverse(compiler, t.getScopeRoot(), uniquifier);

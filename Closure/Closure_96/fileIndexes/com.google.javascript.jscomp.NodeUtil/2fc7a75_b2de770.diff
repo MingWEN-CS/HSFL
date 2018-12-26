@@ -1,0 +1,19 @@
+1050c1050
+<     return isName(n) && !n.getString().isEmpty();
+---
+>     return isName(n) && !n.getString().isEmpty() && !isLabelName(n);
+1055c1055,1066
+<     return (n != null && n.getType() == Token.LABEL_NAME);
+---
+>     if (n != null && n.getType() == Token.NAME) {
+>       Node parent = n.getParent();
+>       switch (parent.getType()) {
+>         case Token.LABEL:
+>         case Token.BREAK:
+>         case Token.CONTINUE:
+>           if (n == parent.getFirstChild()) {
+>             return true;
+>           }
+>       }
+>     }
+>     return false;

@@ -1,0 +1,57 @@
+258,259c258,260
+<   public boolean isFunctionType() {
+<     return false;
+---
+>   
+>   public final boolean isFunctionType() {
+>     return toMaybeFunctionType() != null;
+262,263c263,294
+<   public boolean isEnumElementType() {
+<     return false;
+---
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public FunctionType toMaybeFunctionType() {
+>     return null;
+>   }
+> 
+>   
+> 
+> 
+>   public static FunctionType toMaybeFunctionType(JSType type) {
+>     return type == null ? null : type.toMaybeFunctionType();
+>   }
+> 
+>   public final boolean isEnumElementType() {
+>     return toMaybeEnumElementType() != null;
+>   }
+> 
+>   
+> 
+> 
+>   public EnumElementType toMaybeEnumElementType() {
+>     return null;
+308a340
+> 
+652,653c684,685
+<     if (thisType instanceof EnumElementType) {
+<       JSType inf = ((EnumElementType) thisType).meet(thatType);
+---
+>     if (thisType.isEnumElementType()) {
+>       JSType inf = thisType.toMaybeEnumElementType().meet(thatType);
+657,658c689,690
+<     } else if (thatType instanceof EnumElementType) {
+<       JSType inf = ((EnumElementType) thatType).meet(thisType);
+---
+>     } else if (thatType.isEnumElementType()) {
+>       JSType inf = thatType.toMaybeEnumElementType().meet(thisType);

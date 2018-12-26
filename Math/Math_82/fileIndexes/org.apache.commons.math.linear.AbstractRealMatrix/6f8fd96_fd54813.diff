@@ -1,0 +1,217 @@
+88c88
+<         checkAdditionCompatible(m);
+---
+>         MatrixUtils.checkAdditionCompatible(this, m);
+107c107
+<         checkSubtractionCompatible(m);
+---
+>         MatrixUtils.checkSubtractionCompatible(this, m);
+159c159
+<         checkMultiplicationCompatible(m);
+---
+>         MatrixUtils.checkMultiplicationCompatible(this, m);
+278c278
+<         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, startRow, endRow, startColumn, endColumn);
+297c297
+<         checkSubMatrixIndex(selectedRows, selectedColumns);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, selectedRows, selectedColumns);
+326c326
+<         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, startRow, endRow, startColumn, endColumn);
+372c372
+<         checkSubMatrixIndex(selectedRows, selectedColumns);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, selectedRows, selectedColumns);
+413,416c413,416
+<         checkRowIndex(row);
+<         checkColumnIndex(column);
+<         checkRowIndex(nRows + row - 1);
+<         checkColumnIndex(nCols + column - 1);
+---
+>         MatrixUtils.checkRowIndex(this, row);
+>         MatrixUtils.checkColumnIndex(this, column);
+>         MatrixUtils.checkRowIndex(this, nRows + row - 1);
+>         MatrixUtils.checkColumnIndex(this, nCols + column - 1);
+432c432
+<         checkRowIndex(row);
+---
+>         MatrixUtils.checkRowIndex(this, row);
+447c447
+<         checkRowIndex(row);
+---
+>         MatrixUtils.checkRowIndex(this, row);
+465c465
+<         checkColumnIndex(column);
+---
+>         MatrixUtils.checkColumnIndex(this, column);
+480c480
+<         checkColumnIndex(column);
+---
+>         MatrixUtils.checkColumnIndex(this, column);
+504c504
+<         checkRowIndex(row);
+---
+>         MatrixUtils.checkRowIndex(this, row);
+527c527
+<         checkColumnIndex(column);
+---
+>         MatrixUtils.checkColumnIndex(this, column);
+544c544
+<         checkRowIndex(row);
+---
+>         MatrixUtils.checkRowIndex(this, row);
+559c559
+<         checkRowIndex(row);
+---
+>         MatrixUtils.checkRowIndex(this, row);
+576c576
+<         checkColumnIndex(column);
+---
+>         MatrixUtils.checkColumnIndex(this, column);
+591c591
+<         checkColumnIndex(column);
+---
+>         MatrixUtils.checkColumnIndex(this, column);
+837c837
+<         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, startRow, endRow, startColumn, endColumn);
+856c856
+<         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, startRow, endRow, startColumn, endColumn);
+903c903
+<         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, startRow, endRow, startColumn, endColumn);
+922c922
+<         checkSubMatrixIndex(startRow, endRow, startColumn, endColumn);
+---
+>         MatrixUtils.checkSubMatrixIndex(this, startRow, endRow, startColumn, endColumn);
+1091,1212d1090
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     protected void checkRowIndex(final int row) {
+<         if (row < 0 || row >= getRowDimension()) {
+<             throw new MatrixIndexException("row index {0} out of allowed range [{1}, {2}]",
+<                                            row, 0, getRowDimension() - 1);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     protected void checkColumnIndex(final int column)
+<         throws MatrixIndexException {
+<         if (column < 0 || column >= getColumnDimension()) {
+<             throw new MatrixIndexException("column index {0} out of allowed range [{1}, {2}]",
+<                                            column, 0, getColumnDimension() - 1);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void checkSubMatrixIndex(final int startRow, final int endRow,
+<                                        final int startColumn, final int endColumn) {
+<         checkRowIndex(startRow);
+<         checkRowIndex(endRow);
+<         if (startRow > endRow) {
+<             throw new MatrixIndexException("initial row {0} after final row {1}",
+<                                            startRow, endRow);
+<         }
+< 
+<         checkColumnIndex(startColumn);
+<         checkColumnIndex(endColumn);
+<         if (startColumn > endColumn) {
+<             throw new MatrixIndexException("initial column {0} after final column {1}",
+<                                            startColumn, endColumn);
+<         }
+< 
+<     
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     protected void checkSubMatrixIndex(final int[] selectedRows, final int[] selectedColumns) {
+<         if (selectedRows.length * selectedColumns.length == 0) {
+<             if (selectedRows.length == 0) {
+<                 throw new MatrixIndexException("empty selected row index array");
+<             }
+<             throw new MatrixIndexException("empty selected column index array");
+<         }
+< 
+<         for (final int row : selectedRows) {
+<             checkRowIndex(row);
+<         }
+<         for (final int column : selectedColumns) {
+<             checkColumnIndex(column);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     protected void checkAdditionCompatible(final RealMatrix m) {
+<         if ((getRowDimension()    != m.getRowDimension()) ||
+<             (getColumnDimension() != m.getColumnDimension())) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     "{0}x{1} and {2}x{3} matrices are not addition compatible",
+<                     getRowDimension(), getColumnDimension(),
+<                     m.getRowDimension(), m.getColumnDimension());
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     protected void checkSubtractionCompatible(final RealMatrix m) {
+<         if ((getRowDimension()    != m.getRowDimension()) ||
+<             (getColumnDimension() != m.getColumnDimension())) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     "{0}x{1} and {2}x{3} matrices are not subtraction compatible",
+<                     getRowDimension(), getColumnDimension(),
+<                     m.getRowDimension(), m.getColumnDimension());
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     protected void checkMultiplicationCompatible(final RealMatrix m) {
+<         if (getColumnDimension() != m.getRowDimension()) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                     "{0}x{1} and {2}x{3} matrices are not multiplication compatible",
+<                     getRowDimension(), getColumnDimension(),
+<                     m.getRowDimension(), m.getColumnDimension());
+<         }

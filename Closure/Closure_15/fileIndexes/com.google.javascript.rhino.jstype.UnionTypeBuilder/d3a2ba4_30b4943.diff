@@ -1,0 +1,50 @@
+46a47
+> import com.google.common.base.Preconditions;
+75a77,96
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   private int functionTypePosition = -1;
+> 
+>   
+127a149
+>         int i = 0;
+149a172,174
+>               if (i == functionTypePosition) {
+>                 functionTypePosition = -1;
+>               }
+151a177
+>           i++;
+153c179,194
+<         alternates.add(alternate);
+---
+> 
+>         if (alternate.isFunctionType()) {
+>           
+>           if (functionTypePosition == -1) {
+>             functionTypePosition = alternates.size();
+>             alternates.add(alternate);
+>           } else {
+>             JSType supremum = alternate.toMaybeFunctionType().getLeastSupertype(
+>                 alternates.get(functionTypePosition).toMaybeFunctionType());
+>             Preconditions.checkState(supremum.isFunctionType());
+>             alternates.set(functionTypePosition, supremum);
+>           }
+>         } else {
+>           alternates.add(alternate);
+>         }
+> 

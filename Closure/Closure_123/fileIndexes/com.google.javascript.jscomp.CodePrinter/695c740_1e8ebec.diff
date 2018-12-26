@@ -1,0 +1,107 @@
+51a52
+>     final private SourceMap.DetailLevel sourceMapDetailLevel;
+57c58,62
+<     MappedCodePrinter(int lineLengthThreshold, boolean createSrcMap) {
+---
+>     MappedCodePrinter(
+>         int lineLengthThreshold,
+>         boolean createSrcMap,
+>         SourceMap.DetailLevel sourceMapDetailLevel) {
+>       Preconditions.checkState(sourceMapDetailLevel != null);
+59a65
+>       this.sourceMapDetailLevel = sourceMapDetailLevel;
+84a91,92
+>       Preconditions.checkState(sourceMapDetailLevel != null);
+>       Preconditions.checkState(node != null);
+87c95,96
+<           && node.getLineno() > 0) {
+---
+>           && node.getLineno() > 0
+>           && sourceMapDetailLevel.apply(node)) {
+90,98c99,104
+< 
+<         
+<         if (index >= 0) {
+<           Mapping mapping = new Mapping();
+<           mapping.node = node;
+<           mapping.start = new Position(line, index);
+<           mappings.push(mapping);
+<           allMappings.add(mapping);
+<         }
+---
+>         Preconditions.checkState(line >= 0);
+>         Mapping mapping = new Mapping();
+>         mapping.node = node;
+>         mapping.start = new Position(line, index);
+>         mappings.push(mapping);
+>         allMappings.add(mapping);
+108,110c114,115
+<       if (createSrcMap
+<           && node.getProp(Node.SOURCEFILE_PROP) != null
+<           && node.getLineno() > 0) {
+---
+>       if (createSrcMap && !mappings.isEmpty() && mappings.peek().node == node) {
+>         Mapping mapping = mappings.pop();
+113,121c118,119
+< 
+<         
+<         if (index >= 0) {
+<           Preconditions.checkState(
+<               !mappings.isEmpty(), "Mismatch in start and end of mapping");
+< 
+<           Mapping mapping = mappings.pop();
+<           mapping.end = new Position(line, index);
+<         }
+---
+>         Preconditions.checkState(line >= 0);
+>         mapping.end = new Position(line, index);
+207a206,208
+> 
+> 
+> 
+209,210c210,213
+<         int lineLengthThreshold, boolean createSourceMap) {
+<       super(lineLengthThreshold, createSourceMap);
+---
+>         int lineLengthThreshold,
+>         boolean createSourceMap,
+>         SourceMap.DetailLevel sourceMapDetailLevel) {
+>       super(lineLengthThreshold, createSourceMap, sourceMapDetailLevel);
+393a397,398
+> 
+> 
+395,396c400,401
+<         boolean createSrcMap) {
+<       super(lineLengthThreshold, createSrcMap);
+---
+>         boolean createSrcMap, SourceMap.DetailLevel sourceMapDetailLevel) {
+>       super(lineLengthThreshold, createSrcMap, sourceMapDetailLevel);
+478a484
+>     private SourceMap.DetailLevel sourceMapDetailLevel = SourceMap.DetailLevel.ALL;
+542a549,557
+>     Builder setSourceMapDetailLevel(SourceMap.DetailLevel level) {
+>       Preconditions.checkState(level != null);
+>       this.sourceMapDetailLevel = level;
+>       return this;
+>     }
+> 
+>     
+> 
+> 
+565c580
+<           sourceMap, outputCharset);
+---
+>           sourceMap, sourceMapDetailLevel, outputCharset);
+580a596
+>                                  SourceMap.DetailLevel sourceMapDetailLevel,
+581a598,599
+>     Preconditions.checkState(sourceMapDetailLevel != null);
+> 
+586,587c604,607
+<             lineBreak, lineLengthThreshold, createSourceMap)
+<         : new PrettyCodePrinter(lineLengthThreshold, createSourceMap);
+---
+>             lineBreak, lineLengthThreshold,
+>             createSourceMap, sourceMapDetailLevel)
+>         : new PrettyCodePrinter(
+>             lineLengthThreshold, createSourceMap, sourceMapDetailLevel);

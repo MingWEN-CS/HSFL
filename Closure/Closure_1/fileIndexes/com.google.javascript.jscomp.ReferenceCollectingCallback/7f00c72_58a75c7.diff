@@ -1,0 +1,29 @@
+32a33
+> import com.google.javascript.rhino.jstype.StaticSymbolTable;
+35a37
+> import java.util.Iterator;
+50c52,53
+<     HotSwapCompilerPass {
+---
+>     HotSwapCompilerPass,
+>     StaticSymbolTable<Var, ReferenceCollectingCallback.Reference> {
+121c124,125
+<   public Set<Var> getReferencedVariables() {
+---
+>   @Override
+>   public Iterable<Var> getAllSymbols() {
+128c132,133
+<   public ReferenceCollection getReferenceCollection(Var v) {
+---
+>   @Override
+>   public ReferenceCollection getReferences(Var v) {
+273c278
+<   static class ReferenceCollection {
+---
+>   static class ReferenceCollection implements Iterable<Reference> {
+275a281,285
+> 
+>     @Override
+>     public Iterator<Reference> iterator() {
+>       return references.iterator();
+>     }

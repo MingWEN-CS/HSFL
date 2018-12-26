@@ -1,0 +1,149 @@
+1a2,149
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.joda.time.convert;
+> 
+> import java.util.Calendar;
+> import java.util.GregorianCalendar;
+> 
+> import org.joda.time.Chronology;
+> import org.joda.time.DateTimeZone;
+> import org.joda.time.chrono.buddhist.BuddhistChronology;
+> import org.joda.time.chrono.gj.GJChronology;
+> import org.joda.time.chrono.iso.ISOChronology;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> final class CalendarConverter extends AbstractConverter implements InstantConverter {
+>     
+>     
+> 
+> 
+>     static final CalendarConverter INSTANCE = new CalendarConverter();
+>     
+>     
+> 
+> 
+>     protected CalendarConverter() {
+>         super();
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+>     public long getInstantMillis(Object object) {
+>         return ((Calendar) object).getTime().getTime();
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Chronology getChronology(Object object) {
+>         Calendar cal = (Calendar) object;
+>         DateTimeZone zone = null;
+>         try {
+>             zone = DateTimeZone.getInstance(cal.getTimeZone());
+>             
+>         } catch (IllegalArgumentException ex) {
+>             zone = DateTimeZone.getDefault();
+>         }
+>         return getChronology(cal, zone);
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Chronology getChronology(Object object, DateTimeZone zone) {
+>         if (object instanceof GregorianCalendar) {
+>             GregorianCalendar gc = (GregorianCalendar) object;
+>             return GJChronology.getInstance(zone, gc.getGregorianChange().getTime(), false);
+>             
+>         } else if (object.getClass().getName().endsWith(".BuddhistCalendar")) {
+>             return BuddhistChronology.getInstance(zone);
+>             
+>         } else {
+>             return ISOChronology.getInstance(zone);
+>         }
+>     }
+>     
+>     
+>     
+> 
+> 
+> 
+> 
+>     public Class getSupportedType() {
+>         return Calendar.class;
+>     }
+>     
+> }

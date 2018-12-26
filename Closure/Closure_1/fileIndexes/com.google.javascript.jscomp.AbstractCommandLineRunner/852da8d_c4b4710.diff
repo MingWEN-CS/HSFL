@@ -1,0 +1,162 @@
+30c30
+< import java.io.BufferedOutputStream;
+---
+> import java.io.BufferedWriter;
+32a33
+> import java.io.FileWriter;
+33a35
+> import java.io.OutputStreamWriter;
+34a37
+> import java.io.Writer;
+83c86
+<   private PrintStream out;
+---
+>   private Appendable out;
+423,424c426,427
+<   static void writeOutput(PrintStream out, Compiler compiler, String code,
+<       String wrapper, String codePlaceholder) {
+---
+>   static void writeOutput(Appendable out, Compiler compiler, String code,
+>       String wrapper, String codePlaceholder) throws IOException {
+431c434
+<         out.print(prefix);
+---
+>         out.append(prefix);
+434c437
+<       out.print(code);
+---
+>       out.append(code);
+437c440
+<       if (suffixStart == wrapper.length()) {
+---
+>       if (suffixStart != wrapper.length()) {
+439,442c442
+<         
+<         out.println();
+<       } else {
+<         out.println(wrapper.substring(suffixStart));
+---
+>         out.append(wrapper.substring(suffixStart));
+443a444,445
+>       
+>       out.append('\n');
+452c454,455
+<       out.println(code);
+---
+>       out.append(code);
+>       out.append('\n');
+504c507
+<       out = toPrintStream(options.jsOutputFile, inputCharset.name());
+---
+>       out = toWriter(options.jsOutputFile, inputCharset.name());
+522c525
+<       out.close();
+---
+>       ((Writer)out).close();
+541c544
+<         out.println();
+---
+>         out.append('\n');
+552c555
+<         out.println();
+---
+>         out.append('\n');
+559c562
+<         out.println("Code contains errors; no tree was generated.");
+---
+>         out.append("Code contains errors; no tree was generated.\n");
+563c566
+<         out.println("");
+---
+>         out.append("\n");
+584c587
+<         PrintStream mapOut = null;
+---
+>         Writer mapOut = null;
+587c590
+<           mapOut = toPrintStream(expandSourceMapPath(options, null));
+---
+>           mapOut = toWriter(expandSourceMapPath(options, null));
+592c595
+<             mapOut = toPrintStream(expandSourceMapPath(options, m));
+---
+>             mapOut = toWriter(expandSourceMapPath(options, m));
+595c598
+<           PrintStream ps = toPrintStream(
+---
+>           Writer writer = toWriter(
+602c605
+<           writeOutput(ps, compiler, compiler.toSource(m), moduleWrappers.get(
+---
+>           writeOutput(writer, compiler, compiler.toSource(m), moduleWrappers.get(
+609c612
+<           ps.close();
+---
+>           writer.close();
+624c627
+<         PrintStream eeOut =
+---
+>         Writer eeOut =
+682c685
+<   private PrintStream openExternExportsStream(B options,
+---
+>   private Writer openExternExportsStream(B options,
+695c698
+<     return toPrintStream(exPath);
+---
+>     return toWriter(exPath);
+747c750
+<   private PrintStream toPrintStream(String fileName) throws IOException {
+---
+>   private Writer toWriter(String fileName) throws IOException {
+751,753c754,755
+<     return new PrintStream(
+<         new BufferedOutputStream(
+<             new FileOutputStream(fileName)), false);
+---
+>     
+>     return new BufferedWriter(new FileWriter(fileName));
+760c762
+<   private PrintStream toPrintStream(String fileName, String charSet)
+---
+>   private Writer toWriter(String fileName, String charSet)
+765,767c767,769
+<     return new PrintStream(
+<         new BufferedOutputStream(
+<             new FileOutputStream(fileName)), false, charSet);
+---
+>     
+>     return new BufferedWriter(
+>         new OutputStreamWriter(new FileOutputStream(fileName), charSet));
+783c785
+<     PrintStream out = toPrintStream(outName);
+---
+>     Writer out = toWriter(outName);
+972c974
+<         PrintStream out = toPrintStream(expandManifest(module));
+---
+>         Writer out = toWriter(expandManifest(module));
+978c980
+<       PrintStream out = toPrintStream(expandManifest(null));
+---
+>       Writer out = toWriter(expandManifest(null));
+1058,1059c1060,1062
+<       out.println("Best time: " + bestRunTime);
+<       out.println("Worst time: " + worstRunTime);
+---
+>       try {
+>         out.append("Best time: " + bestRunTime + "\n");
+>         out.append("Worst time: " + worstRunTime + "\n");
+1061,1064c1064,1070
+<       int i = 1;
+<       for (List<String> loop : loopedPassesInBestRun) {
+<         out.println("\nLoop " + i + ":\n" + Joiner.on("\n").join(loop));
+<         i++;
+---
+>         int i = 1;
+>         for (List<String> loop : loopedPassesInBestRun) {
+>           out.append("\nLoop " + i + ":\n" + Joiner.on("\n").join(loop)+ "\n");
+>           i++;
+>         }
+>       } catch (IOException e) {
+>         throw new RuntimeException("unexpected exception", e);

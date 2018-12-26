@@ -1,0 +1,15 @@
+262c262,263
+<       FunctionType ctor = toObjectType().getConstructor();
+---
+>       ObjectType objType = toObjectType();
+>       FunctionType ctor = objType.getConstructor();
+264,265c265,270
+<       
+<       return ctor != null && ctor.makesStructs();
+---
+>       if (ctor == null) {
+>         JSDocInfo info = objType.getJSDocInfo();
+>         return info != null && info.makesStructs();
+>       } else {
+>         return ctor.makesStructs();
+>       }

@@ -1,0 +1,42 @@
+29a30
+> import com.google.javascript.rhino.JSDocInfo;
+1055c1056
+<       boolean liftedExterns = false;
+---
+>       boolean staleInputs = false;
+1067,1079c1068,1084
+<         if (n.getJSDocInfo() != null && n.getJSDocInfo().isExterns()) {
+<           
+<           
+<           
+<           externsRoot.addChildToBack(n);
+<           input.setIsExtern(true);
+< 
+<           
+<           
+<           input.getModule().remove(input);
+< 
+<           externs.add(input);
+<           liftedExterns = true;
+---
+>         if (n.getJSDocInfo() != null) {
+>           JSDocInfo info = n.getJSDocInfo();
+>           if (info.isExterns()) {
+>             
+>             
+>             
+>             externsRoot.addChildToBack(n);
+>             input.setIsExtern(true);
+> 
+>             input.getModule().remove(input);
+> 
+>             externs.add(input);
+>             staleInputs = true;
+>           } else if (info.isNoCompile()) {
+>             input.getModule().remove(input);
+>             staleInputs = true;
+>           }
+1083c1088
+<       if (liftedExterns) {
+---
+>       if (staleInputs) {

@@ -1,0 +1,21 @@
+424a425,444
+>     
+>     
+>     
+>     if (NodeUtil.isAssignmentOp(parent) && !NodeUtil.isAssign(parent)) {
+>       Node gParent = parent.getParent();
+>       Node assignBack = new Node(Token.ASSIGN,
+>           expr.cloneTree(),
+>           tempNameNode.cloneNode());
+>       if (NodeUtil.isExpressionNode(gParent)) {
+>         gParent.getParent().addChildAfter(
+>             NodeUtil.newExpr(assignBack), gParent);
+>       } else {
+>         
+>         
+>         Node comma = new Node(Token.COMMA);
+>         gParent.replaceChild(parent, comma);
+>         comma.addChildrenToFront(assignBack);
+>         comma.addChildrenToFront(parent);
+>       }
+>     }

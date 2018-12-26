@@ -1,0 +1,164 @@
+1a2,164
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.jscomp.GlobalNamespace.Name;
+> import com.google.javascript.jscomp.GlobalNamespace.Ref;
+> import com.google.javascript.jscomp.CheckLevel;
+> import com.google.javascript.rhino.Node;
+> 
+> 
+> 
+> 
+> 
+> 
+> class CheckGlobalNames implements CompilerPass {
+> 
+>   private final AbstractCompiler compiler;
+>   private final CheckLevel level;
+> 
+>   private GlobalNamespace namespace = null;
+> 
+>   
+>   static final DiagnosticType UNDEFINED_NAME_WARNING = DiagnosticType.warning(
+>       "JSC_UNDEFINED_NAME",
+>       "{0} is never defined");
+> 
+>   static final DiagnosticType STRICT_MODULE_DEP_QNAME =
+>       DiagnosticType.disabled(
+>           "JSC_STRICT_MODULE_DEP_QNAME",
+>           "module {0} cannot reference {2}, defined in " +
+>           "module {1}");
+> 
+>   
+> 
+> 
+>   CheckGlobalNames(AbstractCompiler compiler, CheckLevel level) {
+>     this.compiler = compiler;
+>     this.level = level;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   CheckGlobalNames injectNamespace(GlobalNamespace namespace) {
+>     this.namespace = namespace;
+>     return this;
+>   }
+> 
+>   public void process(Node externs, Node root) {
+>     
+>     
+>     if (namespace == null) {
+>       namespace = new GlobalNamespace(compiler, root);
+>     }
+> 
+>     for (Name name : namespace.getNameForest()) {
+>       checkDescendantNames(name, name.globalSets + name.localSets > 0);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void checkDescendantNames(Name name, boolean nameIsDefined) {
+>     if (name.props != null) {
+>       for (Name prop : name.props) {
+>         
+>         
+>         boolean propIsDefined = false;
+>         if (nameIsDefined) {
+>           
+>           
+>           propIsDefined = (!propertyMustBeInitializedByFullName(prop) ||
+>               prop.globalSets + prop.localSets > 0);
+>         }
+> 
+>         validateName(prop, propIsDefined);
+>         checkDescendantNames(prop, propIsDefined);
+>       }
+>     }
+>   }
+> 
+>   private void validateName(Name name, boolean isDefined) {
+>     
+>     
+>     Ref declaration = name.declaration;
+>     if (!isDefined) {
+>       if (declaration != null) {
+>         reportRefToUndefinedName(name, declaration);
+>       }
+>     }
+> 
+>     if (name.refs != null) {
+>       JSModuleGraph moduleGraph = compiler.getModuleGraph();
+>       for (Ref ref : name.refs) {
+>         if (!isDefined) {
+>           reportRefToUndefinedName(name, ref);
+>         } else {
+>           if (declaration != null &&
+>               ref.module != declaration.module &&
+>               !moduleGraph.dependsOn(ref.module, declaration.module)) {
+>             reportBadModuleReference(name, ref);
+>           }
+>         }
+>       }
+>     }
+>   }
+> 
+>   private void reportBadModuleReference(Name name, Ref ref) {
+>     compiler.report(
+>         JSError.make(ref.sourceName, ref.node, STRICT_MODULE_DEP_QNAME,
+>                      ref.module.getName(), name.declaration.module.getName(),
+>                      name.fullName()));
+>   }
+> 
+>   private void reportRefToUndefinedName(Name name, Ref ref) {
+>     
+>     while (name.parent != null &&
+>            name.parent.globalSets + name.parent.localSets == 0) {
+>       name = name.parent;
+>     }
+> 
+>     compiler.report(
+>         JSError.make(ref.sourceName, ref.node, level, UNDEFINED_NAME_WARNING,
+>                      name.fullName()));
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private static boolean propertyMustBeInitializedByFullName(Name name) {
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     return name.parent != null && name.parent.aliasingGets == 0 &&
+>         name.parent.type == Name.Type.OBJECTLIT;
+>   }
+> }

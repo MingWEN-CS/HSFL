@@ -1,0 +1,128 @@
+56,59d55
+< import org.joda.time.Chronology;
+< import org.joda.time.DateTime;
+< import org.joda.time.DateTimeUtils;
+< import org.joda.time.Duration;
+63,64d58
+< import org.joda.time.ReadWritableInstant;
+< import org.joda.time.ReadableInstant;
+66d59
+< import org.joda.time.field.FieldUtils;
+167,247d159
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public long addTo(long instant, int scalar) {
+<         return addTo(instant, scalar, null);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public long addTo(long instant, int scalar, Chronology chrono) {
+<         if (scalar != 0) {
+<             chrono = DateTimeUtils.getChronology(chrono);
+<             for (int i = 0, isize = size(); i < isize; i++) {
+<                 long value = getValue(i); 
+<                 if (value != 0) {
+<                     instant = getFieldType(i).getField(chrono).add(instant, value * scalar);
+<                 }
+<             }
+<         }
+<         return instant;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public DateTime addTo(ReadableInstant instant, int scalar) {
+<         long instantMillis = DateTimeUtils.getInstantMillis(instant);
+<         Chronology chrono = DateTimeUtils.getInstantChronology(instant, null);
+<         return new DateTime(addTo(instantMillis, scalar, chrono), chrono);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public void addInto(ReadWritableInstant instant, int scalar) {
+<         if (instant == null) {
+<             throw new IllegalArgumentException("The instant must not be null");
+<         }
+<         instant.setMillis(addTo(instant.getMillis(), scalar, instant.getChronology()));
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+261,295d172
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public long toDurationMillisFrom(long startInstant, Chronology chrono) {
+<         long endInstant = addTo(startInstant, 1, chrono);
+<         return FieldUtils.safeAdd(endInstant, -startInstant);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public Duration toDurationFrom(ReadableInstant startInstant) {
+<         long millis = DateTimeUtils.getInstantMillis(startInstant);
+<         Chronology chrono = DateTimeUtils.getInstantChronology(startInstant);
+<         return new Duration(toDurationMillisFrom(millis, chrono));

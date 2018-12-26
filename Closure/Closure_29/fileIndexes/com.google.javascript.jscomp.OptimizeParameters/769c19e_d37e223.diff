@@ -1,0 +1,248 @@
+21a22
+> import com.google.javascript.jscomp.AbstractCompiler.LifeCycleStage;
+22a24
+> import com.google.javascript.jscomp.Scope.Var;
+50,54d51
+<   
+<   OptimizeParameters(AbstractCompiler compiler, NameReferenceGraph unused) {
+<     this(compiler);
+<   }
+< 
+57a55,56
+>     Preconditions.checkState(
+>         compiler.getLifeCycleStage() == LifeCycleStage.NORMALIZED);
+185a185
+>     boolean continueLooking = false;
+194c194
+<         buildParameterList(parameters, cur);
+---
+>         continueLooking = buildParameterList(parameters, cur, site.scope);
+197c197
+<         findConstantParameters(parameters, cur);
+---
+>         continueLooking= findFixedParameters(parameters, cur);
+198a199,206
+>       if (!continueLooking) {
+>         return;
+>       }
+>     }
+> 
+>     continueLooking = adjustForSideEffects(parameters);
+>     if (!continueLooking) {
+>       return;
+206c214
+<       optimizeCallSite(parameters, call);
+---
+>       optimizeCallSite(defFinder, parameters, call);
+217c225,274
+<   private void findConstantParameters(List<Parameter> parameters, Node cur) {
+---
+>   
+> 
+> 
+> 
+>   private boolean adjustForSideEffects(List<Parameter> parameters) {
+>     
+>     
+> 
+>     
+>     
+> 
+>     boolean anyMovable = false;
+>     boolean seenUnmovableSideEffects = false;
+>     boolean seenUnmoveableSideEfffected = false;
+>     for (int i = parameters.size() - 1; i >= 0; i--) {
+>       Parameter current = parameters.get(i);
+> 
+>       
+>       
+>       
+>       
+>       
+> 
+>       if (current.shouldRemove
+>           && ((seenUnmovableSideEffects && current.canBeSideEffected())
+>           || (seenUnmoveableSideEfffected && current.hasSideEffects()))) {
+>         current.shouldRemove = false;
+>       }
+> 
+>       if (current.shouldRemove) {
+>         anyMovable = true;
+>       } else {
+>         if (current.canBeSideEffected) {
+>           seenUnmoveableSideEfffected = true;
+>         }
+> 
+>         if (current.hasSideEffects) {
+>           seenUnmovableSideEffects = true;
+>         }
+>       }
+>     }
+>     return anyMovable;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private boolean findFixedParameters(List<Parameter> parameters, Node cur) {
+>     boolean anyMovable = false;
+219a277
+>       Parameter p;
+221,225c279,289
+<         parameters.add(new Parameter(cur, false));
+<       } else if (parameters.get(index).shouldRemove()) {
+<         Node value = parameters.get(index).getArg();
+<         if (!nodesAreEqual(cur, value)) {
+<           parameters.get(index).setShouldRemove(false);
+---
+>         p = new Parameter(cur, false);
+>         parameters.add(p);
+>       } else {
+>         p = parameters.get(index);
+>         if (p.shouldRemove()) {
+>           Node value = p.getArg();
+>           if (!cur.isEquivalentTo(value)) {
+>             p.setShouldRemove(false);
+>           } else {
+>             anyMovable = true;
+>           }
+227a292,293
+> 
+>       setParameterSideEffectInfo(p, cur);
+233a300,301
+> 
+>     return anyMovable;
+236c304,309
+<   private void buildParameterList(List<Parameter> parameters, Node cur) {
+---
+>   
+> 
+> 
+>   private boolean buildParameterList(
+>       List<Parameter> parameters, Node cur, Scope s) {
+>     boolean anyMovable = false;
+238c311,317
+<       parameters.add(new Parameter(cur, NodeUtil.isLiteralValue(cur, false)));
+---
+>       boolean movable = isMovableValue(cur, s);
+>       Parameter p = new Parameter(cur, movable);
+>       setParameterSideEffectInfo(p, cur);
+>       parameters.add(p);
+>       if (movable) {
+>         anyMovable = true;
+>       }
+239a319,366
+>     return anyMovable;
+>   }
+> 
+>   private void setParameterSideEffectInfo(Parameter p, Node value) {
+>     if (!p.hasSideEffects()) {
+>       p.setHasSideEffects(NodeUtil.mayHaveSideEffects(value, compiler));
+>     }
+> 
+>     if (!p.canBeSideEffected()) {
+>       p.setCanBeSideEffected(NodeUtil.canBeSideEffected(value));
+>     }
+>   }
+> 
+> 
+>   
+> 
+> 
+> 
+>   private boolean isMovableValue(Node n, Scope s) {
+>     
+>     
+>     
+>     switch (n.getType()) {
+>       case Token.THIS:
+>         return false;
+>       case Token.FUNCTION:
+>         
+>         
+>         
+>         return false;
+>       case Token.NAME:
+>         if (n.getString().equals("arguments")) {
+>           return false;
+>         } else {
+>           Var v = s.getVar(n.getString());
+>           if (v != null && v.isLocal()) {
+>             return false;
+>           }
+>         }
+>         break;
+>     }
+> 
+>     for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+>       if (!isMovableValue(c, s)) {
+>         return false;
+>       }
+>     }
+>     return true;
+255c382,383
+<   private void optimizeCallSite(List<Parameter> parameters, Node call) {
+---
+>   private void optimizeCallSite(
+>       SimpleDefinitionFinder defFinder, List<Parameter> parameters, Node call) {
+257,258c385,387
+<       if (parameters.get(index).shouldRemove()) {
+<         eliminateCallParamAt(call, index);
+---
+>       Parameter p = parameters.get(index);
+>       if (p.shouldRemove()) {
+>         eliminateCallParamAt(defFinder, p, call, index);
+267,278d395
+< 
+< 
+< 
+<   private boolean nodesAreEqual(Node n1, Node n2) {
+<     return NodeUtil.isImmutableValue(n1) && NodeUtil.isImmutableValue(n2) &&
+<         n1.isEquivalentTo(n2);
+<   }
+< 
+<   
+< 
+< 
+< 
+281a399,400
+>     private boolean hasSideEffects;
+>     private boolean canBeSideEffected;
+298a418,433
+> 
+>     public void setHasSideEffects(boolean hasSideEffects) {
+>       this.hasSideEffects = hasSideEffects;
+>     }
+> 
+>     public boolean hasSideEffects() {
+>       return hasSideEffects;
+>     }
+> 
+>     public void setCanBeSideEffected(boolean canBeSideEffected) {
+>       this.canBeSideEffected = canBeSideEffected;
+>     }
+> 
+>     public boolean canBeSideEffected() {
+>       return canBeSideEffected;
+>     }
+315,316c450,451
+<     Node newVar = NodeUtil.newVarNode(varName.getQualifiedName(),
+<         value.cloneTree());
+---
+>     Preconditions.checkState(value.getParent() == null);
+>     Node newVar = NodeUtil.newVarNode(varName.getString(), value);
+375c510,513
+<   private Node eliminateCallParamAt(Node call, int argIndex) {
+---
+> 
+> 
+>   private Node eliminateCallParamAt(
+>       SimpleDefinitionFinder defFinder, Parameter p, Node call, int argIndex) {
+383a522,527
+>       
+>       
+>       
+>       if (p.getArg() != formalArgPtr) {
+>         defFinder.removeReferences(formalArgPtr);
+>       }

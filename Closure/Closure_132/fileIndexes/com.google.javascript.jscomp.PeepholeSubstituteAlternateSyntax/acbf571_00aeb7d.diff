@@ -1,0 +1,80 @@
+38a39
+>   private static final int NOT_PRECEDENCE = NodeUtil.precedence(Token.NOT);
+781a783,795
+>   private boolean isLowerPrecedence(Node n, final int precedence) {
+>     return NodeUtil.precedence(n.getType()) < precedence;
+>   }
+> 
+>   
+> 
+> 
+>   private boolean isHigherPrecedence(Node n, final int precedence) {
+>     return NodeUtil.precedence(n.getType()) > precedence;
+>   }
+>   
+> 
+> 
+826a841,848
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+>               
+829,837c851,858
+<               if (leftParent.getType() == Token.NOT
+<                   && rightParent.getType() == Token.NOT) {
+<                 Node left = leftParent.removeFirstChild();
+<                 Node right = rightParent.removeFirstChild();
+< 
+<                 int newOp = (first.getType() == Token.AND) ? Token.OR : Token.AND;
+<                 Node newRoot = new Node(newOp, left, right);
+<                 parent.replaceChild(n, newRoot);
+<                 reportCodeChange();
+---
+>               Node left, right;
+> 
+>               
+>               
+>               
+>               if (leftParent.getType() != Token.NOT
+>                   && rightParent.getType() != Token.NOT) {
+>                 
+840c861,875
+<                 return newRoot;
+---
+>                 int op_precedence = NodeUtil.precedence(first.getType());
+>                 if ((isLowerPrecedence(leftParent, NOT_PRECEDENCE)
+>                     && isHigherPrecedence(leftParent, op_precedence))
+>                     || (isLowerPrecedence(rightParent, NOT_PRECEDENCE)
+>                     && isHigherPrecedence(rightParent, op_precedence))) {
+>                   return n;
+>                 }
+>               }
+> 
+>               if (leftParent.getType() == Token.NOT) {
+>                 left = leftParent.removeFirstChild();
+>               } else {
+>                 leftParent.detachFromParent();
+>                 left = new Node(Token.NOT, leftParent)
+>                   .copyInformationFrom(leftParent);
+841a877,891
+>               if (rightParent.getType() == Token.NOT) {
+>                 right = rightParent.removeFirstChild();
+>               } else {
+>                 rightParent.detachFromParent();
+>                 right = new Node(Token.NOT, rightParent)
+>                   .copyInformationFrom(rightParent);
+>               }
+> 
+>               int newOp = (first.getType() == Token.AND) ? Token.OR : Token.AND;
+>               Node newRoot = new Node(newOp, left, right);
+>               parent.replaceChild(n, newRoot);
+>               reportCodeChange();
+>               
+>               
+>               return newRoot;
+843d892
+<             break;

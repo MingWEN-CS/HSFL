@@ -1,0 +1,440 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.format;
+
+import java.util.Arrays;
+import java.util.Locale;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeFieldType;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class DateTimeParserBucket {
+
+    
+    private final Chronology iChrono;
+    private final long iMillis;
+    
+    
+    private DateTimeZone iZone;
+    private int iOffset;
+    
+    private Locale iLocale;
+    
+    private Integer iPivotYear;
+
+    private SavedField[] iSavedFields = new SavedField[8];
+    private int iSavedFieldsCount;
+    private boolean iSavedFieldsShared;
+    
+    private Object iSavedState;
+
+    
+
+
+
+
+
+
+    public DateTimeParserBucket(long instantLocal, Chronology chrono, Locale locale) {
+        this(instantLocal, chrono, locale, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public DateTimeParserBucket(long instantLocal, Chronology chrono, Locale locale, Integer pivotYear) {
+        super();
+        chrono = DateTimeUtils.getChronology(chrono);
+        iMillis = instantLocal;
+        iChrono = chrono.withUTC();
+        iLocale = (locale == null ? Locale.getDefault() : locale);
+        setZone(chrono.getZone());
+        iPivotYear = pivotYear;
+    }
+
+    
+    
+
+
+    public Chronology getChronology() {
+        return iChrono;
+    }
+
+    
+    
+
+
+
+
+    public Locale getLocale() {
+        return iLocale;
+    }
+
+    
+    
+
+
+
+    public DateTimeZone getZone() {
+        return iZone;
+    }
+    
+    
+
+
+
+
+
+    public void setZone(DateTimeZone zone) {
+        iSavedState = null;
+        iZone = zone == DateTimeZone.UTC ? null : zone;
+        iOffset = 0;
+    }
+    
+    
+    
+
+
+
+    public int getOffset() {
+        return iOffset;
+    }
+    
+    
+
+
+
+    public void setOffset(int offset) {
+        iSavedState = null;
+        iOffset = offset;
+        iZone = null;
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public Integer getPivotYear() {
+        return iPivotYear;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void setPivotYear(Integer pivotYear) {
+        iPivotYear = pivotYear;
+    }
+
+    
+    
+
+
+
+
+
+    public void saveField(DateTimeField field, int value) {
+        saveField(new SavedField(field, value));
+    }
+    
+    
+
+
+
+
+
+    public void saveField(DateTimeFieldType fieldType, int value) {
+        saveField(new SavedField(fieldType.getField(iChrono), value));
+    }
+    
+    
+
+
+
+
+
+
+    public void saveField(DateTimeFieldType fieldType, String text, Locale locale) {
+        saveField(new SavedField(fieldType.getField(iChrono), text, locale));
+    }
+    
+    private void saveField(SavedField field) {
+        SavedField[] savedFields = iSavedFields;
+        int savedFieldsCount = iSavedFieldsCount;
+        
+        if (savedFieldsCount == savedFields.length || iSavedFieldsShared) {
+            
+            SavedField[] newArray = new SavedField
+                [savedFieldsCount == savedFields.length ? savedFieldsCount * 2 : savedFields.length];
+            System.arraycopy(savedFields, 0, newArray, 0, savedFieldsCount);
+            iSavedFields = savedFields = newArray;
+            iSavedFieldsShared = false;
+        }
+        
+        iSavedState = null;
+        savedFields[savedFieldsCount] = field;
+        iSavedFieldsCount = savedFieldsCount + 1;
+    }
+    
+    
+
+
+
+
+
+
+    public Object saveState() {
+        if (iSavedState == null) {
+            iSavedState = new SavedState();
+        }
+        return iSavedState;
+    }
+    
+    
+
+
+
+
+
+
+
+    public boolean restoreState(Object savedState) {
+        if (savedState instanceof SavedState) {
+            if (((SavedState) savedState).restoreState(this)) {
+                iSavedState = savedState;
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    
+
+
+
+
+
+
+    public long computeMillis() {
+        return computeMillis(false);
+    }
+    
+    
+
+
+
+
+
+
+
+    public long computeMillis(boolean resetFields) {
+        SavedField[] savedFields = iSavedFields;
+        int count = iSavedFieldsCount;
+        if (iSavedFieldsShared) {
+            iSavedFields = savedFields = (SavedField[])iSavedFields.clone();
+            iSavedFieldsShared = false;
+        }
+        sort(savedFields, count);
+        
+        long millis = iMillis;
+        for (int i=0; i<count; i++) {
+            millis = savedFields[i].set(millis, resetFields);
+        }
+        
+        if (iZone == null) {
+            millis -= iOffset;
+        } else {
+            int offset = iZone.getOffsetFromLocal(millis);
+            millis -= offset;
+            if (offset != iZone.getOffset(millis)) {
+                throw new IllegalArgumentException
+                    ("Illegal instant due to time zone offset transition");
+            }
+        }
+        
+        return millis;
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private static void sort(Comparable[] array, int high) {
+        if (high > 10) {
+            Arrays.sort(array, 0, high);
+        } else {
+            for (int i=0; i<high; i++) {
+                for (int j=i; j>0 && (array[j-1]).compareTo(array[j])>0; j--) {
+                    Comparable t = array[j];
+                    array[j] = array[j-1];
+                    array[j-1] = t;
+                }
+            }
+        }
+    }
+
+    class SavedState {
+        final DateTimeZone iZone;
+        final int iOffset;
+        final SavedField[] iSavedFields;
+        final int iSavedFieldsCount;
+        
+        SavedState() {
+            this.iZone = DateTimeParserBucket.this.iZone;
+            this.iOffset = DateTimeParserBucket.this.iOffset;
+            this.iSavedFields = DateTimeParserBucket.this.iSavedFields;
+            this.iSavedFieldsCount = DateTimeParserBucket.this.iSavedFieldsCount;
+        }
+        
+        boolean restoreState(DateTimeParserBucket enclosing) {
+            if (enclosing != DateTimeParserBucket.this) {
+                return false;
+            }
+            enclosing.iZone = this.iZone;
+            enclosing.iOffset = this.iOffset;
+            enclosing.iSavedFields = this.iSavedFields;
+            if (this.iSavedFieldsCount < enclosing.iSavedFieldsCount) {
+                
+                
+                
+                
+                enclosing.iSavedFieldsShared = true;
+            }
+            enclosing.iSavedFieldsCount = this.iSavedFieldsCount;
+            return true;
+        }
+    }
+    
+    static class SavedField implements Comparable {
+        final DateTimeField iField;
+        final int iValue;
+        final String iText;
+        final Locale iLocale;
+        
+        SavedField(DateTimeField field, int value) {
+            iField = field;
+            iValue = value;
+            iText = null;
+            iLocale = null;
+        }
+        
+        SavedField(DateTimeField field, String text, Locale locale) {
+            iField = field;
+            iValue = 0;
+            iText = text;
+            iLocale = locale;
+        }
+        
+        long set(long millis, boolean reset) {
+            if (iText == null) {
+                millis = iField.set(millis, iValue);
+            } else {
+                millis = iField.set(millis, iText, iLocale);
+            }
+            if (reset) {
+                millis = iField.roundFloor(millis);
+            }
+            return millis;
+        }
+        
+        
+
+
+
+
+        public int compareTo(Object obj) {
+            DateTimeField other = ((SavedField)obj).iField;
+            int result = compareReverse
+                (iField.getRangeDurationField(), other.getRangeDurationField());
+            if (result != 0) {
+                return result;
+            }
+            return compareReverse
+                (iField.getDurationField(), other.getDurationField());
+        }
+        
+        private int compareReverse(Comparable a, Comparable b) {
+            if (a == null) {
+                if (b == null) {
+                    return 0;
+                }
+                return -1;
+            }
+            if (b == null) {
+                return 1;
+            }
+            return -a.compareTo(b);
+        }
+    }
+}

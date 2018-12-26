@@ -1,0 +1,28 @@
+45a46
+> import java.util.HashSet;
+149a151,156
+>   static final DiagnosticType SAME_INTERFACE_MULTIPLE_IMPLEMENTS =
+>       DiagnosticType.warning(
+>           "JSC_SAME_INTERFACE_MULTIPLE_IMPLEMENTS",
+>           "Cannot @implement the same interface more than once\n" +
+>           "Repeated interface: {0}");
+> 
+362a370
+>           Set<JSType> baseInterfaces = new HashSet<JSType>();
+364a373
+> 
+366a376,389
+>               
+>               
+>               JSType baseInterface = maybeInterType;
+>               if (baseInterface.toMaybeTemplatizedType() != null) {
+>                 baseInterface =
+>                     baseInterface.toMaybeTemplatizedType().getReferencedType();
+>               }
+>               if (baseInterfaces.contains(baseInterface)) {
+>                 reportWarning(SAME_INTERFACE_MULTIPLE_IMPLEMENTS,
+>                               baseInterface.toString());
+>               } else {
+>                 baseInterfaces.add(baseInterface);
+>               }
+> 

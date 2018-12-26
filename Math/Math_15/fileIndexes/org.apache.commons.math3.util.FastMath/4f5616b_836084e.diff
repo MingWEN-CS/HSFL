@@ -1,0 +1,353 @@
+226,283c226,500
+<     public static double cosh(final double a) {
+<         return 0.5 * (FastMath.exp(a) + FastMath.exp(-a));
+<     }
+< 
+<     
+< 
+< 
+< 
+<     public static double sinh(double a) {
+< 
+<         boolean negative = false;
+<         if (a < 0) {
+<             negative = true;
+<             a = -a;
+<         }
+< 
+<         double absSinh;
+<         if (a > 0.3) {
+<             absSinh = 0.5 * (FastMath.exp(a) - FastMath.exp(-a));
+<         } else {
+<             final double a2 = a * a;
+<             if (a > 0.05) {
+<                 absSinh = a * (1 + a2 * (1 + a2  * (1 + a2 * (1 + a2 * (1 + a2 / 110) / 72) / 42) / 20) / 6);
+<             } else {
+<                 absSinh = a * (1 + a2 * (1 + a2  * (1 + a2 / 42) / 20) / 6);
+<             }
+<         }
+< 
+<         return negative ? -absSinh : absSinh;
+< 
+<     }
+< 
+<     
+< 
+< 
+< 
+<     public static double tanh(double a) {
+< 
+<         boolean negative = false;
+<         if (a < 0) {
+<             negative = true;
+<             a = -a;
+<         }
+< 
+<         double absTanh;
+<         if (a > 0.074) {
+<             final double twoA = 2 * a;
+<             absTanh = FastMath.expm1(twoA) / (FastMath.exp(twoA) + 1);
+<         } else {
+<             final double a2 = a * a;
+<             if (a > 0.016) {
+<                 absTanh = a * (1 - a2 * (1 - a2 * (2 - a2 * (17 - a2 * (62 - a2 * 1382 / 55 ) / 9) / 21) / 5) / 3);
+<             } else {
+<                 absTanh = a * (1 - a2 * (1 - a2 * (2 - a2 * 17 / 21) / 5) / 3);
+<             }
+<         }
+< 
+<         return negative ? -absTanh : absTanh;
+---
+>     public static double cosh(double x) {
+>       if (x != x) {
+>           return x;
+>       }
+> 
+>       if (x > 20.0) {
+>           return exp(x)/2.0;
+>       }
+> 
+>       if (x < -20) {
+>           return exp(-x)/2.0;
+>       }
+> 
+>       double hiPrec[] = new double[2];
+>       if (x < 0.0) {
+>           x = -x;
+>       }
+>       exp(x, 0.0, hiPrec);
+> 
+>       double ya = hiPrec[0] + hiPrec[1];
+>       double yb = -(ya - hiPrec[0] - hiPrec[1]);
+> 
+>       double temp = ya * 1073741824.0;
+>       double yaa = ya + temp - temp;
+>       double yab = ya - yaa;
+> 
+>       
+>       double recip = 1.0/ya;
+>       temp = recip * 1073741824.0;
+>       double recipa = recip + temp - temp;
+>       double recipb = recip - recipa;
+> 
+>       
+>       recipb += (1.0 - yaa*recipa - yaa*recipb - yab*recipa - yab*recipb) * recip;
+>       
+>       recipb += -yb * recip * recip;
+> 
+>       
+>       temp = ya + recipa;
+>       yb += -(temp - ya - recipa);
+>       ya = temp;
+>       temp = ya + recipb;
+>       yb += -(temp - ya - recipb);
+>       ya = temp;
+> 
+>       double result = ya + yb;
+>       result *= 0.5;
+>       return result;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public static double sinh(double x) {
+>       boolean negate = false;
+>       if (x != x) {
+>           return x;
+>       }
+> 
+>       if (x > 20.0) {
+>           return exp(x)/2.0;
+>       }
+> 
+>       if (x < -20) {
+>           return -exp(-x)/2.0;
+>       }
+> 
+>       if (x == 0) {
+>           return x;
+>       }
+> 
+>       if (x < 0.0) {
+>           x = -x;
+>           negate = true;
+>       }
+> 
+>       double result;
+> 
+>       if (x > 0.25) {
+>           double hiPrec[] = new double[2];
+>           exp(x, 0.0, hiPrec);
+> 
+>           double ya = hiPrec[0] + hiPrec[1];
+>           double yb = -(ya - hiPrec[0] - hiPrec[1]);
+> 
+>           double temp = ya * 1073741824.0;
+>           double yaa = ya + temp - temp;
+>           double yab = ya - yaa;
+> 
+>           
+>           double recip = 1.0/ya;
+>           temp = recip * 1073741824.0;
+>           double recipa = recip + temp - temp;
+>           double recipb = recip - recipa;
+> 
+>           
+>           recipb += (1.0 - yaa*recipa - yaa*recipb - yab*recipa - yab*recipb) * recip;
+>           
+>           recipb += -yb * recip * recip;
+> 
+>           recipa = -recipa;
+>           recipb = -recipb;
+> 
+>           
+>           temp = ya + recipa;
+>           yb += -(temp - ya - recipa);
+>           ya = temp;
+>           temp = ya + recipb;
+>           yb += -(temp - ya - recipb);
+>           ya = temp;
+> 
+>           result = ya + yb;
+>           result *= 0.5;
+>       }
+>       else {
+>           double hiPrec[] = new double[2];
+>           expm1(x, hiPrec);
+> 
+>           double ya = hiPrec[0] + hiPrec[1];
+>           double yb = -(ya - hiPrec[0] - hiPrec[1]);
+> 
+>           
+>           double denom = 1.0+ya;
+>           double denomr = 1.0/denom;
+>           double denomb = -(denom - 1.0 - ya) + yb;
+>           double ratio = ya*denomr;
+>           double ra, rb;
+>           double temp = ratio * 1073741824.0;
+>           ra = ratio + temp - temp;
+>           rb = ratio - ra;
+> 
+>           temp = denom * 1073741824.0;
+>           double za = denom + temp - temp;
+>           double zb = denom - za;
+> 
+>           rb += (ya - za*ra - za*rb - zb*ra - zb*rb) * denomr;
+> 
+>           
+>           rb += yb*denomr;                        
+>           rb += -ya * denomb * denomr * denomr;   
+> 
+>           
+>           temp = ya + ra;
+>           yb += -(temp - ya - ra);
+>           ya = temp;
+>           temp = ya + rb;
+>           yb += -(temp - ya - rb);
+>           ya = temp;
+> 
+>           result = ya + yb;
+>           result *= 0.5;
+>       }
+> 
+>       if (negate) {
+>           result = -result;
+>       }
+> 
+>       return result;
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public static double tanh(double x) {
+>       boolean negate = false;
+> 
+>       if (x != x) {
+>           return x;
+>       }
+> 
+>       if (x > 20.0) {
+>           return 1.0;
+>       }
+> 
+>       if (x < -20) {
+>           return -1.0;
+>       }
+> 
+>       if (x == 0) {
+>           return x;
+>       }
+> 
+>       if (x < 0.0) {
+>           x = -x;
+>           negate = true;
+>       }
+> 
+>       double result;
+>       if (x >= 0.5) {
+>           double hiPrec[] = new double[2];
+>           
+>           exp(x*2.0, 0.0, hiPrec);
+> 
+>           double ya = hiPrec[0] + hiPrec[1];
+>           double yb = -(ya - hiPrec[0] - hiPrec[1]);
+> 
+>           
+>           double na = -1.0 + ya;
+>           double nb = -(na + 1.0 - ya);
+>           double temp = na + yb;
+>           nb += -(temp - na - yb);
+>           na = temp;
+> 
+>           
+>           double da = 1.0 + ya;
+>           double db = -(da - 1.0 - ya);
+>           temp = da + yb;
+>           db += -(temp - da - yb);
+>           da = temp;
+> 
+>           temp = da * 1073741824.0;
+>           double daa = da + temp - temp;
+>           double dab = da - daa;
+> 
+>           
+>           double ratio = na/da;
+>           temp = ratio * 1073741824.0;
+>           double ratioa = ratio + temp - temp;
+>           double ratiob = ratio - ratioa;
+> 
+>           
+>           ratiob += (na - daa*ratioa - daa*ratiob - dab*ratioa - dab*ratiob) / da;
+> 
+>           
+>           ratiob += nb / da;
+>           
+>           ratiob += -db * na / da / da;
+> 
+>           result = ratioa + ratiob;
+>       }
+>       else {
+>           double hiPrec[] = new double[2];
+>           
+>           expm1(x*2.0, hiPrec);
+> 
+>           double ya = hiPrec[0] + hiPrec[1];
+>           double yb = -(ya - hiPrec[0] - hiPrec[1]);
+> 
+>           
+>           double na = ya;
+>           double nb = yb;
+> 
+>           
+>           double da = 2.0 + ya;
+>           double db = -(da - 2.0 - ya);
+>           double temp = da + yb;
+>           db += -(temp - da - yb);
+>           da = temp;
+> 
+>           temp = da * 1073741824.0;
+>           double daa = da + temp - temp;
+>           double dab = da - daa;
+> 
+>           
+>           double ratio = na/da;
+>           temp = ratio * 1073741824.0;
+>           double ratioa = ratio + temp - temp;
+>           double ratiob = ratio - ratioa;
+> 
+>           
+>           ratiob += (na - daa*ratioa - daa*ratiob - dab*ratioa - dab*ratiob) / da;
+> 
+>           
+>           ratiob += nb / da;
+>           
+>           ratiob += -db * na / da / da;
+> 
+>           result = ratioa + ratiob;
+>       }
+>       
+>       if (negate) {
+>           result = -result;
+>       }
+284a502
+>       return result;
+535a754,762
+>       return expm1(x, null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private static double expm1(double x, double hiPrecOut[]) {
+667a895,899
+> 
+> 	if (hiPrecOut != null) {
+> 	  hiPrecOut[0] = ya;
+> 	  hiPrecOut[1] = yb;
+> 	}

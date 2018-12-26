@@ -1,0 +1,52 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang.text.translate;
+
+import java.io.IOException;
+import java.io.Writer;
+
+
+
+
+
+public class LookupTranslator extends CharSequenceTranslator {
+
+    protected CharSequence[][] lookup;
+
+    
+
+
+
+
+    public LookupTranslator(CharSequence[][] lookup) {
+        this.lookup = lookup;
+    }
+
+    
+
+
+    public int translate(CharSequence input, int index, Writer out) throws IOException {
+        CharSequence subsequence = input.subSequence(index, input.length());
+        for(CharSequence[] seq : lookup) {
+            if( subsequence.toString().startsWith(seq[0].toString()) ) {
+                out.write(seq[1].toString());
+                return seq[0].length();
+            }
+        }
+        return 0;
+    }
+}

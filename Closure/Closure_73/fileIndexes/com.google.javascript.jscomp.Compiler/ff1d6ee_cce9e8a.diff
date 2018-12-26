@@ -1,0 +1,29 @@
+26a27
+> import com.google.javascript.jscomp.deps.SortedDependencies.MissingProvideException;
+63a65,74
+> 
+>   static final DiagnosticType MODULE_DEPENDENCY_ERROR =
+>       DiagnosticType.error("JSC_MODULE_DEPENDENCY_ERROR",
+>           "Bad dependency: {0} -> {1}. "
+>               + "Modules must be listed in dependency order.");
+> 
+>   static final DiagnosticType MISSING_ENTRY_ERROR = DiagnosticType.error(
+>       "JSC_MISSING_ENTRY_ERROR",
+>       "required entry point \"{0}\" never provided");
+> 
+275,279d285
+<   static final DiagnosticType MODULE_DEPENDENCY_ERROR =
+<       DiagnosticType.error("JSC_MODULE_DEPENDENCY_ERROR",
+<           "Bad dependency: {0} -> {1}. "
+<               + "Modules must be listed in dependency order.");
+< 
+1073c1079,1080
+<               .manageDependencies(inputs);
+---
+>               .manageDependencies(
+>                   options.manageClosureDependenciesEntryPoints, inputs);
+1076a1084,1087
+>           return null;
+>         } catch (MissingProvideException e) {
+>           report(JSError.make(
+>               MISSING_ENTRY_ERROR, e.getMessage()));

@@ -1,0 +1,86 @@
+413a414,452
+>   
+> 
+> 
+> 
+>   static boolean isCandidateUsage(Node name) {
+>     Node parent = name.getParent();
+>     Preconditions.checkState(name.getType() == Token.NAME);
+>     if (parent.getType() == Token.VAR || parent.getType() == Token.FUNCTION) {
+>       
+>       
+>       return true;
+>     }
+> 
+>     if (parent.getType() == Token.CALL && parent.getFirstChild() == name) {
+>       
+>       return true;
+>     }
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     if (NodeUtil.isGet(parent)
+>          && name == parent.getFirstChild()
+>          && name.getNext().getType() == Token.STRING
+>          && name.getNext().getString().equals("call")) {
+>       Node gramps = name.getAncestor(2);
+>       if (gramps.getType() == Token.CALL
+>           && gramps.getFirstChild() == parent) {
+>         
+>         return true;
+>       }
+>     }
+>     return false;
+>   }
+503,505c542
+<       if (parent.getType() == Token.VAR || parent.getType() == Token.FUNCTION) {
+<         
+<         
+---
+>       if (isCandidateUsage(n)) {
+509,533d545
+<       if (parent.getType() == Token.CALL && parent.getFirstChild() == n) {
+<         
+<         return;
+<       }
+< 
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       if (NodeUtil.isGet(parent)
+<            && n == parent.getFirstChild()
+<            && n.getNext().getType() == Token.STRING
+<            && n.getNext().getString().equals("call")) {
+<         Node gramps = n.getAncestor(2);
+<         if (gramps.getType() == Token.CALL
+<             && gramps.getFirstChild() == parent) {
+<           
+<           return;
+<         }
+<       }
+< 
+754c766
+<     findCalledFunctions(node, changed);
+---
+>     findCalledFunctions(NodeUtil.getFunctionBody(node), changed);
+765,769c777,779
+<     if (node.getType() == Token.CALL) {
+<       Node child = node.getFirstChild();
+<       if (child.getType() == Token.NAME) {
+<         String name = child.getString();
+<         changed.add(name);
+---
+>     if (node.getType() == Token.NAME) {
+>       if (isCandidateUsage(node)) {
+>         changed.add(node.getString());

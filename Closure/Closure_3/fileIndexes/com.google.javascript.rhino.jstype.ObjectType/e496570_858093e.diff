@@ -1,0 +1,31 @@
+80c80
+< public abstract class ObjectType extends JSType {
+---
+> public abstract class ObjectType extends JSType implements StaticScope<JSType> {
+88a89,109
+>   @Override
+>   public StaticScope<JSType> getParentScope() {
+>     return getImplicitPrototype();
+>   }
+> 
+>   @Override
+>   public abstract StaticSlot<JSType> getSlot(String name);
+> 
+>   @Override
+>   public StaticSlot<JSType> getOwnSlot(String name) {
+>     if (hasOwnProperty(name)) {
+>       return getSlot(name);
+>     }
+>     return null;
+>   }
+> 
+>   @Override
+>   public ObjectType getTypeOfThis() {
+>     return null;
+>   }
+> 
+108c129,130
+<   @Override public JSDocInfo getJSDocInfo() {
+---
+>   @Override
+>   public JSDocInfo getJSDocInfo() {

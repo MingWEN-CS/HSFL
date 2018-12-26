@@ -1,0 +1,53 @@
+1a2,53
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.lang.text.translate;
+> 
+> import java.io.IOException;
+> import java.io.Writer;
+> 
+> 
+> 
+> 
+> 
+> 
+> public class AggregateTranslator extends CharSequenceTranslator {
+> 
+>     private CharSequenceTranslator[] translators;
+> 
+>     
+> 
+> 
+>     public AggregateTranslator(CharSequenceTranslator... translators) {
+>         this.translators = translators;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public int translate(CharSequence input, int index, Writer out) throws IOException {
+>         for (CharSequenceTranslator translator : translators) {
+>             int consumed = translator.translate(input, index, out);
+>             if(consumed != 0) {
+>                 return consumed;
+>             }
+>         }
+>         return 0;
+>     }
+> 
+> }

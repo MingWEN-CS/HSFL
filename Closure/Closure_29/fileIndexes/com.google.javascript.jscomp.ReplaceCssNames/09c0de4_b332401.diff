@@ -1,0 +1,88 @@
+60,80d59
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+206,212c185,196
+<       String name = n.getString();
+<       String[] parts = name.split("-");
+<       if (symbolMap != null) {
+<         String replacement = null;
+<         switch (symbolMap.getStyle()) {
+<           case BY_WHOLE:
+<             replacement = symbolMap.get(name);
+---
+>       if (symbolMap != null || cssNames != null) {
+>         String[] parts = n.getString().split("-");
+>         for (int i = 0; i < parts.length; i++) {
+>           if (cssNames != null) {
+>             Integer count = cssNames.get(parts[i]);
+>             if (count == null) {
+>               count = Integer.valueOf(0);
+>             }
+>             cssNames.put(parts[i], count.intValue() + 1);
+>           }
+>           if (symbolMap != null) {
+>             String replacement = symbolMap.get(parts[i]);
+214,215c198,200
+<               compiler.report(
+<                   t.makeError(n, UNKNOWN_SYMBOL_WARNING, name, name));
+---
+>               
+>               compiler.report(t.makeError(
+>                   n, UNKNOWN_SYMBOL_WARNING, parts[i], n.getString()));
+218,246c203
+<             break;
+<           case BY_PART:
+<             String[] replaced = new String[parts.length];
+<             for (int i = 0; i < parts.length; i++) {
+<               String part = symbolMap.get(parts[i]);
+<               if (part == null) {
+<                 
+<                 compiler.report(
+<                     t.makeError(n, UNKNOWN_SYMBOL_WARNING, parts[i], name));
+<                 return;
+<               }
+<               replaced[i] = part;
+<             }
+<             replacement = Joiner.on("-").join(replaced);
+<             break;
+<           default:
+<             throw new IllegalStateException(
+<               "Unknown replacement style: " + symbolMap.getStyle());
+<         }
+<         n.setString(replacement);
+<       }
+<       if (cssNames != null) {
+<         
+<         
+<         
+<         for (int i = 0; i < parts.length; i++) {
+<           Integer count = cssNames.get(parts[i]);
+<           if (count == null) {
+<             count = Integer.valueOf(0);
+---
+>             parts[i] = replacement;
+248c205,207
+<           cssNames.put(parts[i], count.intValue() + 1);
+---
+>         }
+>         if (symbolMap != null) {
+>           n.setString(Joiner.on("-").join(parts));

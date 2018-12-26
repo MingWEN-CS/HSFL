@@ -1,0 +1,34 @@
+28a29
+> import org.joda.time.ReadablePartial;
+123a125,155
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected BasePeriod(ReadablePartial start, ReadablePartial end, PeriodType type) {
+>         super();
+>         if (start == null || end == null) {
+>             throw new IllegalArgumentException("ReadablePartial objects must not be null");
+>         }
+>         if (start.size() != end.size()) {
+>             throw new IllegalArgumentException("ReadablePartial objects must have the same set of fields");
+>         }
+>         for (int i = 0, isize = start.size(); i < isize; i++) {
+>             if (start.getFieldType(i) != end.getFieldType(i)) {
+>                 throw new IllegalArgumentException("ReadablePartial objects must have the same set of fields");
+>             }
+>         }
+>         iType = checkPeriodType(type);
+>         Chronology chrono = DateTimeUtils.getChronology(start.getChronology()).withUTC();
+>         iValues = chrono.get(this, chrono.set(start, 0L), chrono.set(end, 0L));

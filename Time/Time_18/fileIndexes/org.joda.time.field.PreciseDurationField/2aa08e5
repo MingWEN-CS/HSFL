@@ -1,0 +1,181 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.field;
+
+import org.joda.time.DurationFieldType;
+
+
+
+
+
+
+
+
+
+
+public class PreciseDurationField extends BaseDurationField {
+    
+    private static final long serialVersionUID = -8346152187724495365L;
+
+    
+    private final long iUnitMillis;
+
+    
+
+
+
+
+    
+    public PreciseDurationField(DurationFieldType type, long unitMillis) {
+        super(type);
+        iUnitMillis = unitMillis;
+    }
+    
+    
+    
+
+
+
+
+    public final boolean isPrecise() {
+        return true;
+    }
+    
+    
+
+
+
+
+    public final long getUnitMillis() {
+        return iUnitMillis;
+    }
+
+    
+    
+
+
+
+
+
+
+
+    public long getValueAsLong(long duration, long instant) {
+        return duration / iUnitMillis;
+    }
+
+    
+
+
+
+
+
+
+
+    public long getMillis(int value, long instant) {
+        return value * iUnitMillis;
+    }
+
+    
+
+
+
+
+
+
+
+    public long getMillis(long value, long instant) {
+        return value * iUnitMillis;
+    }
+
+    public long add(long instant, int value) {
+        return instant + value * iUnitMillis;
+    }
+
+    public long add(long instant, long value) {
+        return instant + value * iUnitMillis;
+    }
+
+    public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant) {
+        return (minuendInstant - subtrahendInstant) / iUnitMillis;
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof PreciseDurationField) {
+            PreciseDurationField other = (PreciseDurationField) obj;
+            return (iUnitMillis == other.iUnitMillis);
+        }
+        return false;
+    }
+
+    
+
+
+
+
+    public int hashCode() {
+        long millis = iUnitMillis;
+        return (int) (millis ^ (millis >>> 32));
+    }
+
+}

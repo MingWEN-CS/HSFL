@@ -1,0 +1,20 @@
+396c396
+<   private Node transformParameter(AstNode node) {
+---
+>   private Node transformNodeWithInlineJsDoc(AstNode node) {
+819c819
+<         Node paramNode = transformParameter(param);
+---
+>         Node paramNode = transformNodeWithInlineJsDoc(param);
+1245c1245,1253
+<       Node node = transform(initializerNode.getTarget());
+---
+>       Node node;
+>       Comment comment = initializerNode.getTarget().getJsDocNode();
+>       
+>       
+>       if (comment != null && !comment.getValue().contains("@")) {
+>         node = transformNodeWithInlineJsDoc(initializerNode.getTarget());
+>       } else {
+>         node = transform(initializerNode.getTarget());
+>       }

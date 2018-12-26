@@ -1,0 +1,89 @@
+61a62
+> import org.joda.time.DurationFieldType;
+1185c1186
+<                 value = period.getYears();
+---
+>                 value = period.get(DurationFieldType.years());
+1188c1189
+<                 value = period.getMonths();
+---
+>                 value = period.get(DurationFieldType.months());
+1191c1192
+<                 value = period.getWeeks();
+---
+>                 value = period.get(DurationFieldType.weeks());
+1194c1195
+<                 value = period.getDays();
+---
+>                 value = period.get(DurationFieldType.days());
+1197c1198
+<                 value = period.getHours();
+---
+>                 value = period.get(DurationFieldType.hours());
+1200c1201
+<                 value = period.getMinutes();
+---
+>                 value = period.get(DurationFieldType.minutes());
+1203c1204
+<                 value = period.getSeconds();
+---
+>                 value = period.get(DurationFieldType.seconds());
+1206c1207
+<                 value = period.getMillis();
+---
+>                 value = period.get(DurationFieldType.millis());
+1210c1211,1213
+<                 value = period.getSeconds() * DateTimeConstants.MILLIS_PER_SECOND + period.getMillis();
+---
+>                 int seconds = period.get(DurationFieldType.seconds());
+>                 int millis = period.get(DurationFieldType.millis());
+>                 value = seconds * DateTimeConstants.MILLIS_PER_SECOND + millis;
+1248,1251c1251,1256
+<             return (period.getYears() == 0 && period.getMonths() == 0 &&
+<                     period.getWeeks() == 0 && period.getDays() == 0 &&
+<                     period.getHours() == 0 && period.getMinutes() == 0 &&
+<                     period.getSeconds() == 0 && period.getMillis() == 0);
+---
+>             for (int i = 0, isize = period.size(); i < isize; i++) {
+>                 if (period.getValue(i) != 0) {
+>                     return false;
+>                 }
+>             }
+>             return true;
+1259c1264
+<                 return type.years().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.years());
+1261c1266
+<                 return type.months().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.months());
+1263c1268
+<                 return type.weeks().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.weeks());
+1265c1270
+<                 return type.days().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.days());
+1267c1272
+<                 return type.hours().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.hours());
+1269c1274
+<                 return type.minutes().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.minutes());
+1271c1276
+<                 return type.seconds().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.seconds());
+1273c1278
+<                 return type.millis().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.millis());
+1276c1281,1282
+<                 return type.seconds().isSupported() ||  type.millis().isSupported();
+---
+>                 return type.isSupported(DurationFieldType.seconds()) ||
+>                        type.isSupported(DurationFieldType.millis());

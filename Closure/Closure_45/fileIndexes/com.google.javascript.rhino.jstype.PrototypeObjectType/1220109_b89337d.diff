@@ -1,0 +1,44 @@
+74d73
+<   private ObjectType implicitPrototype;
+78a78,82
+>   
+>   private ObjectType implicitPrototypeFallback;
+> 
+>   
+>   
+109,113c113,114
+<     if (nativeType) {
+<       this.implicitPrototype = implicitPrototype;
+<     } else if (implicitPrototype == null) {
+<       this.implicitPrototype =
+<           registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+---
+>     if (nativeType || implicitPrototype != null) {
+>       setImplicitPrototype(implicitPrototype);
+115c116,117
+<       this.implicitPrototype = implicitPrototype;
+---
+>       setImplicitPrototype(
+>           registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE));
+378c380
+<     return implicitPrototype;
+---
+>     return implicitPrototypeFallback;
+387c389
+<   void setImplicitPrototype(ObjectType implicitPrototype) {
+---
+>   final void setImplicitPrototype(ObjectType implicitPrototype) {
+389c391
+<     this.implicitPrototype = implicitPrototype;
+---
+>     this.implicitPrototypeFallback = implicitPrototype;
+506,509c508,511
+<     
+<     
+<     if (implicitPrototype != null && !implicitPrototype.isNativeObjectType()) {
+<       implicitPrototype = (ObjectType) implicitPrototype.resolve(t, scope);
+---
+>     ObjectType implicitPrototype = getImplicitPrototype();
+>     if (implicitPrototype != null) {
+>       implicitPrototypeFallback =
+>           (ObjectType) implicitPrototype.resolve(t, scope);

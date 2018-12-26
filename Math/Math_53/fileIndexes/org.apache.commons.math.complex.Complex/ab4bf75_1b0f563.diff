@@ -1,0 +1,31 @@
+20,21d19
+< import java.io.IOException;
+< import java.io.ObjectInputStream;
+981,1000c979,980
+<      private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+<         ois.defaultReadObject();
+< 
+<         try {
+<             final java.lang.reflect.Field fNaN = getClass().getDeclaredField("isNaN");
+<             fNaN.setAccessible(true);
+<             fNaN.set(this, Double.isNaN(real) || Double.isNaN(imaginary));
+<             final java.lang.reflect.Field fInf = getClass().getDeclaredField("isInfinite");
+<             fInf.setAccessible(true);
+<             fInf.set(this, !isNaN && (Double.isInfinite(real) || Double.isInfinite(imaginary)));
+<         } catch (IllegalAccessException iae) {
+<             IOException ioe = new IOException();
+<             ioe.initCause(iae);
+<             throw ioe;
+<         } catch (NoSuchFieldException nsfe) {
+<             IOException ioe = new IOException();
+<             ioe.initCause(nsfe);
+<             throw ioe;
+<         }
+< 
+---
+>     private final Object readResolve() {
+>         return createComplex(real, imaginary);
+1002c982
+< 
+---
+>     

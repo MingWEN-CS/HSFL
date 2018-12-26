@@ -1,0 +1,101 @@
+42a43
+> import static com.google.javascript.rhino.jstype.ObjectType.Property;
+52d52
+< import java.io.Serializable;
+247c247
+<       newProp.docInfo = oldProp.docInfo;
+---
+>       newProp.setJSDocInfo(oldProp.getJSDocInfo());
+262c262
+<       return p.propertyNode;
+---
+>       return p.getNode();
+275c275
+<       return p.docInfo;
+---
+>       return p.getJSDocInfo();
+295c295
+<         property.docInfo = info;
+---
+>         property.setJSDocInfo(info);
+502,577d501
+<   private static final class Property
+<       implements Serializable, StaticSlot<JSType>, StaticReference<JSType> {
+<     private static final long serialVersionUID = 1L;
+< 
+<     
+< 
+< 
+<     private String name;
+< 
+<     
+< 
+< 
+<     private JSType type;
+< 
+<     
+< 
+< 
+<     private final boolean inferred;
+< 
+<     
+< 
+< 
+< 
+<     private final Node propertyNode;
+< 
+<     
+<     private JSDocInfo docInfo = null;
+< 
+<     private Property(String name, JSType type, boolean inferred,
+<         Node propertyNode) {
+<       this.name = name;
+<       this.type = type;
+<       this.inferred = inferred;
+<       this.propertyNode = propertyNode;
+<     }
+< 
+<     @Override
+<     public String getName() {
+<       return name;
+<     }
+< 
+<     @Override
+<     public Node getNode() {
+<       return propertyNode;
+<     }
+< 
+<     @Override
+<     public StaticSourceFile getSourceFile() {
+<       return propertyNode == null ? null : propertyNode.getStaticSourceFile();
+<     }
+< 
+<     @Override
+<     public Property getSymbol() {
+<       return this;
+<     }
+< 
+<     @Override
+<     public Property getDeclaration() {
+<       return propertyNode == null ? null : this;
+<     }
+< 
+<     @Override
+<     public JSType getType() {
+<       return type;
+<     }
+< 
+<     @Override
+<     public boolean isTypeInferred() {
+<       return inferred;
+<     }
+< 
+<     boolean isFromExterns() {
+<       return propertyNode == null ? false : propertyNode.isFromExterns();
+<     }
+<   }
+< 
+623c547
+<       prop.type = safeResolve(prop.type, t, scope);
+---
+>       prop.setType(safeResolve(prop.getType(), t, scope));

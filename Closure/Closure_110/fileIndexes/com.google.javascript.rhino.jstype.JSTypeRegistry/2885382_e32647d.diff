@@ -1,0 +1,53 @@
+274c274
+<         new PrototypeObjectType(this, null, null, true);
+---
+>         new PrototypeObjectType(this, null, null, true, null, null);
+594a595,597
+>     Preconditions.checkArgument(
+>         !name.contains("<"), "Type names cannot contain template annotations.");
+> 
+1131c1134
+<         null, null, createParameters(parameterTypes), returnType);
+---
+>         null, null, createParameters(parameterTypes), returnType, null);
+1144c1147,1148
+<         null, null, createParametersWithVarArgs(parameterTypes), returnType);
+---
+>         null, null, createParametersWithVarArgs(parameterTypes), returnType,
+>         null);
+1400c1404
+<         new PrototypeObjectType(this, null, null, true);
+---
+>         new PrototypeObjectType(this, null, null, true, null, null);
+1415a1420
+> 
+1417c1422
+<       Node parameters, JSType returnType) {
+---
+>       Node parameters, JSType returnType, ImmutableList<String> templateKeys) {
+1420c1425
+<         null, true, false);
+---
+>         templateKeys, true, false);
+1438a1444,1464
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   public JSType createTemplatizedType(
+>       JSType baseType, ImmutableList<JSType> templatizedTypes) {
+>     
+>     
+>     if (baseType instanceof InstanceObjectType) {
+>       ObjectType baseObjType = baseType.toObjectType();
+>       return new InstanceObjectType(
+>           this, baseObjType.getConstructor(), baseObjType.isNativeObjectType(),
+>           templatizedTypes);
+>     } else {
+>       throw new IllegalArgumentException(
+>           "Only instance object types can be templatized");
+>     }

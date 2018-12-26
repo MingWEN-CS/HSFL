@@ -1,0 +1,40 @@
+32d31
+< import com.google.javascript.jscomp.CheckLevel;
+1002a1002,1007
+> 
+> 
+> 
+> 
+> 
+> 
+1009,1012c1014,1032
+<       if (objType.isStruct() && !objType.hasProperty(pname)) {
+<         if (!(obj.isThis() &&
+<               getJSType(t.getScope().getRootNode()).isConstructor())) {
+<           report(t, prop, ILLEGAL_PROPERTY_CREATION);
+---
+> 
+>       if (!objType.isStruct() || objType.hasProperty(pname)) {
+>         return;
+>       }
+>       Scope s = t.getScope();
+>       if (obj.isThis() && getJSType(s.getRootNode()).isConstructor()) {
+>         return;
+>       }
+>       
+>       Node assgnStm = lvalue.getParent().getParent();
+>       if (objType instanceof ObjectType &&
+>           s.isGlobal() &&
+>           NodeUtil.isPrototypePropertyDeclaration(assgnStm)) {
+>         ObjectType instance =
+>             objType.toObjectType().getOwnerFunction().getInstanceType();
+>         String file = lvalue.getSourceFileName();
+>         Node ctor = instance.getConstructor().getSource();
+>         if (ctor != null && ctor.getSourceFileName().equals(file)) {
+>           return;
+1014a1035
+>       report(t, prop, ILLEGAL_PROPERTY_CREATION);
+1699c1720
+<       if( functionJSDocInfo != null  &&
+---
+>       if (functionJSDocInfo != null  &&

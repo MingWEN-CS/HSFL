@@ -1,0 +1,60 @@
+37a38
+> import java.util.HashMap;
+3285a3287,3343
+>   }
+> 
+>   
+> 
+> 
+> 
+>   public static Map<Node, Node> mapMainToClone(Node main, Node clone) {
+>     Preconditions.checkState(main.isEquivalentTo(clone));
+>     Map<Node, Node> mtoc = new HashMap<Node, Node>();
+>     mtoc.put(main, clone);
+>     mtocHelper(mtoc, main, clone);
+>     return mtoc;
+>   }
+> 
+>   private static void mtocHelper(Map<Node, Node> map, Node main, Node clone) {
+>     if (main.isFunction()) {
+>       map.put(main, clone);
+>     }
+>     Node mchild = main.getFirstChild(), cchild = clone.getFirstChild();
+>     while (mchild != null) {
+>       mtocHelper(map, mchild, cchild);
+>       mchild = mchild.getNext();
+>       cchild = cchild.getNext();
+>     }
+>   }
+> 
+>   
+>   public static void verifyScopeChanges(Map<Node, Node> map,
+>       Node main, boolean verifyUnchangedNodes) {
+>     
+>     
+>     
+>     
+>     
+>     final Map<Node, Node> mtoc = map;
+>     final boolean checkUnchanged = verifyUnchangedNodes;
+>     Node clone = mtoc.get(main);
+>     if (main.getChangeTime() > clone.getChangeTime()) {
+>       Preconditions.checkState(!main.isEquivalentToShallow(clone));
+>     } else if (checkUnchanged) {
+>       Preconditions.checkState(main.isEquivalentToShallow(clone));
+>     }
+>     visitPreOrder(main,
+>         new Visitor() {
+>           @Override
+>           public void visit(Node n) {
+>             if (n.isFunction() && mtoc.containsKey(n)) {
+>               Node clone = mtoc.get(n);
+>               if (n.getChangeTime() > clone.getChangeTime()) {
+>                 Preconditions.checkState(!n.isEquivalentToShallow(clone));
+>               } else if (checkUnchanged) {
+>                 Preconditions.checkState(n.isEquivalentToShallow(clone));
+>               }
+>             }
+>           }
+>         },
+>         Predicates.<Node>alwaysTrue());

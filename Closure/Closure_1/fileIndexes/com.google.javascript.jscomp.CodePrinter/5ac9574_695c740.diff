@@ -1,0 +1,201 @@
+23a24
+> import java.util.ArrayDeque;
+24a26
+> import java.util.Deque;
+26d27
+< import java.util.Stack;
+42,43d42
+<   
+<   
+49,52d47
+<   private interface HasGetCode {
+<     String getCode();
+<   }
+< 
+54c49
+<     final private Stack<Mapping> mappings;
+---
+>     final private Deque<Mapping> mappings;
+56a52,55
+>     protected final StringBuilder code = new StringBuilder(1024);
+>     protected final int lineLengthThreshold;
+>     protected int lineLength = 0;
+>     protected int lineIndex = 0;
+58c57,58
+<     MappedCodePrinter(boolean createSrcMap) {
+---
+>     MappedCodePrinter(int lineLengthThreshold, boolean createSrcMap) {
+>       this.lineLengthThreshold = lineLengthThreshold;
+60c60
+<       this.mappings = createSrcMap ? new Stack<Mapping>() : null;
+---
+>       this.mappings = createSrcMap ? new ArrayDeque<Mapping>() : null;
+117c117
+<               !mappings.empty(), "Mismatch in start and end of mapping");
+---
+>               !mappings.isEmpty(), "Mismatch in start and end of mapping");
+130d129
+<     @Override
+144c143
+<     void reportLineCut(int lineIndex, int characterPosition) {
+---
+>     void reportLineCut(int lineIndex, int charIndex) {
+147,148c146
+<           mapping.start = convertPosition(mapping.start, lineIndex,
+<                                           characterPosition);
+---
+>           mapping.start = convertPosition(mapping.start, lineIndex, charIndex);
+151,152c149
+<             mapping.end = convertPosition(mapping.end, lineIndex,
+<                                           characterPosition);
+---
+>             mapping.end = convertPosition(mapping.end, lineIndex, charIndex);
+171,180c168,175
+<       int pLine = position.getLineNumber();
+<       int pChar = position.getCharacterIndex();
+< 
+<       
+<       
+<       if (position.getLineNumber() == lineIndex) {
+<         if (position.getCharacterIndex() >= characterPosition) {
+<           pLine++;
+<           pChar -= characterPosition;
+<         }
+---
+>       int originalLine = position.getLineNumber();
+>       int originalChar = position.getCharacterIndex();
+>       if (originalLine == lineIndex && originalChar >= characterPosition) {
+>         
+>         
+>         return new Position(originalLine + 1, originalChar - characterPosition);
+>       } else {
+>         return position;
+181a177
+>     }
+183,187c179,190
+<       
+<       
+<       if (position.getLineNumber() > lineIndex) {
+<         pLine++;
+<       }
+---
+>     public String getCode() {
+>       return code.toString();
+>     }
+> 
+>     @Override
+>     char getLastChar() {
+>       return (code.length() > 0) ? code.charAt(code.length() - 1) : '\0';
+>     }
+> 
+>     protected final int getCurrentCharIndex() {
+>       return lineLength;
+>     }
+189c192,193
+<       return new Position(pLine, pChar);
+---
+>     protected final int getCurrentLineIndex() {
+>       return lineIndex;
+193,195c197,198
+<   private static class PrettyCodePrinter
+<       extends MappedCodePrinter
+<       implements HasGetCode {
+---
+>   static class PrettyCodePrinter
+>       extends MappedCodePrinter {
+199,200d201
+<     private final StringBuilder code = new StringBuilder(1024);
+<     private final int lineLengthThreshold;
+202,203d202
+<     private int lineLength = 0;
+<     private int lineIndex = 0;
+211,236c210
+<       super(createSourceMap);
+<       this.lineLengthThreshold = lineLengthThreshold;
+<     }
+< 
+<     public String getCode() {
+<       return code.toString();
+<     }
+< 
+<     @Override
+<     char getLastChar() {
+<       return (code.length() > 0) ? code.charAt(code.length() - 1) : '\0';
+<     }
+< 
+<     @Override
+<     int getCurrentBufferLength() {
+<       return code.length();
+<     }
+< 
+<     @Override
+<     int getCurrentCharIndex() {
+<       return lineLength;
+<     }
+< 
+<     @Override
+<     int getCurrentLineIndex() {
+<       return lineIndex;
+---
+>       super(lineLengthThreshold, createSourceMap);
+397,398c371
+<       extends MappedCodePrinter
+<       implements HasGetCode {
+---
+>       extends MappedCodePrinter {
+410,411d382
+<     private final StringBuilder code = new StringBuilder(1024);
+< 
+413,416d383
+<     private final int lineLengthThreshold;
+< 
+<     private int lineIndex = 0;
+<     private int lineLength = 0;
+429c396
+<       super(createSrcMap);
+---
+>       super(lineLengthThreshold, createSrcMap);
+431,455d397
+<       this.lineLengthThreshold = lineLengthThreshold;
+<     }
+< 
+<     public String getCode() {
+<       return code.toString();
+<     }
+< 
+<     @Override
+<     char getLastChar() {
+<       return (code.length() > 0) ? code.charAt(code.length() - 1) : '\0';
+<     }
+< 
+<     @Override
+<     int getCurrentBufferLength() {
+<       return code.length();
+<     }
+< 
+<     @Override
+<     int getCurrentCharIndex() {
+<       return lineLength;
+<     }
+< 
+<     @Override
+<     int getCurrentLineIndex() {
+<       return lineIndex;
+641c583
+<     CodeConsumer cp =
+---
+>     MappedCodePrinter mcp =
+648,649c590,591
+<         ? new TypedCodeGenerator(cp, outputCharset)
+<         : new CodeGenerator(cp, outputCharset);
+---
+>         ? new TypedCodeGenerator(mcp, outputCharset)
+>         : new CodeGenerator(mcp, outputCharset);
+652c594
+<     String code = ((HasGetCode) cp).getCode();
+---
+>     String code = mcp.getCode();
+655c597
+<       cp.generateSourceMap(sourceMap);
+---
+>       mcp.generateSourceMap(sourceMap);

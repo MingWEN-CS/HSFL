@@ -1,0 +1,401 @@
+17a18,29
+> import java.util.Collection;
+> 
+> import org.joda.time.DateTimeFieldType;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+119a132,518
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter forFields(
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         if (fields == null || fields.size() == 0) {
+>             throw new IllegalArgumentException("The fields must not be null or empty");
+>         }
+>         int inputSize = fields.size();
+>         boolean reducedPrec = false;
+>         DateTimeFormatterBuilder bld = new DateTimeFormatterBuilder();
+>         
+>         if (fields.contains(DateTimeFieldType.monthOfYear())) {
+>             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.dayOfYear())) {
+>             reducedPrec = dateByOrdinal(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.weekOfWeekyear())) {
+>             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.dayOfMonth())) {
+>             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.dayOfWeek())) {
+>             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+>         } else if (fields.remove(DateTimeFieldType.year())) {
+>             bld.append(yearElement());
+>             reducedPrec = true;
+>         } else if (fields.remove(DateTimeFieldType.weekyear())) {
+>             bld.append(weekyearElement());
+>             reducedPrec = true;
+>         }
+>         boolean datePresent = (fields.size() < inputSize);
+>         
+>         
+>         time(bld, fields, extended, strictISO, reducedPrec, datePresent);
+>         
+>         
+>         if (bld.canBuildFormatter() == false) {
+>             throw new IllegalArgumentException("No valid format for fields: " + fields);
+>         }
+>         return bld.toFormatter();
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static boolean dateByMonth(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         boolean reducedPrec = false;
+>         if (fields.remove(DateTimeFieldType.year())) {
+>             bld.append(yearElement());
+>             if (fields.remove(DateTimeFieldType.monthOfYear())) {
+>                 if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>                     
+>                     appendSeparator(bld, extended);
+>                     bld.appendMonthOfYear(2);
+>                     appendSeparator(bld, extended);
+>                     bld.appendDayOfMonth(2);
+>                 } else {
+>                     
+>                     bld.appendLiteral('-');
+>                     bld.appendMonthOfYear(2);
+>                     reducedPrec = true;
+>                 }
+>             } else {
+>                 if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>                     
+>                     checkNotStrictISO(fields, strictISO);
+>                     bld.appendLiteral('-');
+>                     bld.appendLiteral('-');
+>                     bld.appendDayOfMonth(2);
+>                 } else {
+>                     
+>                     reducedPrec = true;
+>                 }
+>             }
+>             
+>         } else if (fields.remove(DateTimeFieldType.monthOfYear())) {
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('-');
+>             bld.appendMonthOfYear(2);
+>             if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>                 
+>                 appendSeparator(bld, extended);
+>                 bld.appendDayOfMonth(2);
+>             } else {
+>                 
+>                 reducedPrec = true;
+>             }
+>         } else if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>             
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('-');
+>             bld.appendDayOfMonth(2);
+>         }
+>         return reducedPrec;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static boolean dateByOrdinal(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         boolean reducedPrec = false;
+>         if (fields.remove(DateTimeFieldType.year())) {
+>             bld.append(yearElement());
+>             if (fields.remove(DateTimeFieldType.dayOfYear())) {
+>                 
+>                 appendSeparator(bld, extended);
+>                 bld.appendDayOfYear(3);
+>             } else {
+>                 
+>                 reducedPrec = true;
+>             }
+>             
+>         } else if (fields.remove(DateTimeFieldType.dayOfYear())) {
+>             
+>             bld.appendLiteral('-');
+>             bld.appendDayOfYear(3);
+>         }
+>         return reducedPrec;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static boolean dateByWeek(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         boolean reducedPrec = false;
+>         if (fields.remove(DateTimeFieldType.weekyear())) {
+>             bld.append(weekyearElement());
+>             if (fields.remove(DateTimeFieldType.weekOfWeekyear())) {
+>                 appendSeparator(bld, extended);
+>                 bld.appendLiteral('W');
+>                 bld.appendWeekOfWeekyear(2);
+>                 if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>                     
+>                     appendSeparator(bld, extended);
+>                     bld.appendDayOfWeek(1);
+>                 } else {
+>                     
+>                     reducedPrec = true;
+>                 }
+>             } else {
+>                 if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>                     
+>                     checkNotStrictISO(fields, strictISO);
+>                     appendSeparator(bld, extended);
+>                     bld.appendLiteral('W');
+>                     bld.appendLiteral('-');
+>                     bld.appendDayOfWeek(1);
+>                 } else {
+>                     
+>                     reducedPrec = true;
+>                 }
+>             }
+>             
+>         } else if (fields.remove(DateTimeFieldType.weekOfWeekyear())) {
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('W');
+>             bld.appendWeekOfWeekyear(2);
+>             if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>                 
+>                 appendSeparator(bld, extended);
+>                 bld.appendDayOfWeek(1);
+>             } else {
+>                 
+>                 reducedPrec = true;
+>             }
+>         } else if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>             
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('W');
+>             bld.appendLiteral('-');
+>             bld.appendDayOfWeek(1);
+>         }
+>         return reducedPrec;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void time(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO,
+>         boolean reducedPrec,
+>         boolean datePresent) {
+>         
+>         boolean hour = fields.remove(DateTimeFieldType.hourOfDay());
+>         boolean minute = fields.remove(DateTimeFieldType.minuteOfHour());
+>         boolean second = fields.remove(DateTimeFieldType.secondOfMinute());
+>         boolean milli = fields.remove(DateTimeFieldType.millisOfSecond());
+>         if (!hour && !minute && !second && !milli) {
+>             return;
+>         }
+>         if (hour || minute || second || milli) {
+>             if (strictISO && reducedPrec) {
+>                 throw new IllegalArgumentException("No valid ISO8601 format for fields because Date was reduced precision: " + fields);
+>             }
+>             if (datePresent) {
+>                 bld.appendLiteral('T');
+>             }
+>         }
+>         if (hour && minute && second || (hour && !second && !milli)) {
+>             
+>         } else {
+>             if (strictISO && datePresent) {
+>                 throw new IllegalArgumentException("No valid ISO8601 format for fields because Time was truncated: " + fields);
+>             }
+>             if (!hour && (minute && second || (minute && !milli) || second)) {
+>                 
+>             } else {
+>                 if (strictISO) {
+>                     throw new IllegalArgumentException("No valid ISO8601 format for fields: " + fields);
+>                 }
+>             }
+>         }
+>         if (hour) {
+>             bld.appendHourOfDay(2);
+>         } else if (minute || second || milli) {
+>             bld.appendLiteral('-');
+>         }
+>         if (extended && hour && minute) {
+>             bld.appendLiteral(':');
+>         }
+>         if (minute) {
+>             bld.appendMinuteOfHour(2);
+>         } else if (second || milli) {
+>             bld.appendLiteral('-');
+>         }
+>         if (extended && minute && second) {
+>             bld.appendLiteral(':');
+>         }
+>         if (second) {
+>             bld.appendSecondOfMinute(2);
+>         } else if (milli) {
+>             bld.appendLiteral('-');
+>         }
+>         if (milli) {
+>             bld.appendLiteral('.');
+>             bld.appendMillisOfSecond(3);
+>         }
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void checkNotStrictISO(Collection fields, boolean strictISO) {
+>         if (strictISO) {
+>             throw new IllegalArgumentException("No valid ISO8601 format for fields: " + fields);
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void appendSeparator(DateTimeFormatterBuilder bld, boolean extended) {
+>         if (extended) {
+>             bld.appendLiteral('-');
+>         }

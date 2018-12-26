@@ -1,0 +1,162 @@
+105c105,106
+<       LAST_PROP          = 55;
+---
+>       CHANGE_TIME        = 56,    
+>       LAST_PROP          = 56;    
+136a138
+>         case CHANGE_TIME: return "change_time";
+138c140
+<           throw new IllegalStateException("unexpect prop id " + propType);
+---
+>           throw new IllegalStateException("unexpected prop id " + propType);
+167,169c169,172
+<     boolean isEquivalentTo(Node node, boolean compareJsType, boolean recurse) {
+<       boolean equivalent = super.isEquivalentTo(node, compareJsType, recurse);
+<       if (equivalent) {
+---
+>     boolean isEquivalentTo(
+>         Node node, boolean compareJsType, boolean recur, boolean shallow) {
+>       boolean equiv = super.isEquivalentTo(node, compareJsType, recur, shallow);
+>       if (equiv) {
+174c177
+<           return (thisValue != 0.0) || (1/thisValue == 1/thatValue);
+---
+>           return (thisValue != 0.0) || (1 / thisValue == 1 / thatValue);
+225,226c228,230
+<     boolean isEquivalentTo(Node node, boolean compareJsType, boolean recurse) {
+<       return (super.isEquivalentTo(node, compareJsType, recurse)
+---
+>     boolean isEquivalentTo(
+>         Node node, boolean compareJsType, boolean recur, boolean shallow) {
+>       return (super.isEquivalentTo(node, compareJsType, recur, shallow)
+261c265
+<   private static abstract class AbstractPropListItem
+---
+>   private abstract static class AbstractPropListItem
+692,696c696,703
+<     if (prev == null)
+<         first = first.next;
+<     else
+<         prev.next = child.next;
+<     if (child == last) last = prev;
+---
+>     if (prev == null) {
+>       first = first.next;
+>     } else {
+>       prev.next = child.next;
+>     }
+>     if (child == last) {
+>       last = prev;
+>     }
+716c723
+<         first = newChild;
+---
+>       first = newChild;
+718,719c725,729
+<         Node prev = getChildBefore(child);
+<         prev.next = newChild;
+---
+>       Node prev = getChildBefore(child);
+>       prev.next = newChild;
+>     }
+>     if (child == last) {
+>       last = newChild;
+721,722d730
+<     if (child == last)
+<         last = newChild;
+743,744c751,753
+<     if (child == last)
+<         last = newChild;
+---
+>     if (child == last) {
+>       last = newChild;
+>     }
+1358c1367,1369
+<           if (!hasNext()) throw new NoSuchElementException();
+---
+>           if (!hasNext()) {
+>             throw new NoSuchElementException();
+>           }
+1394c1405
+<     for (Node n = first; n != null; n = n.next)
+---
+>     for (Node n = first; n != null; n = n.next) {
+1396c1407
+< 
+---
+>     }
+1432c1443
+<     if (!isEquivalentTo(node2, false, false)) {
+---
+>     if (!isEquivalentTo(node2, false, false, false)) {
+1459c1470
+<     if (!isEquivalentTo(node2, true, false)) {
+---
+>     if (!isEquivalentTo(node2, true, false, false)) {
+1478c1489,1494
+<     return isEquivalentTo(node, false, true);
+---
+>     return isEquivalentTo(node, false, true, false);
+>   }
+> 
+>   
+>   public boolean isEquivalentToShallow(Node node) {
+>     return isEquivalentTo(node, false, true, true);
+1486c1502
+<     return isEquivalentTo(node, true, true);
+---
+>     return isEquivalentTo(node, true, true, false);
+1495c1511,1513
+<   boolean isEquivalentTo(Node node, boolean compareJsType, boolean recurse) {
+---
+> 
+>   boolean isEquivalentTo(
+>       Node node, boolean compareJsType, boolean recur, boolean shallow) {
+1532c1550
+<     if (recurse) {
+---
+>     if (recur) {
+1537c1555,1556
+<         if (!n.isEquivalentTo(n2, compareJsType, true)) {
+---
+>         if (!n.isEquivalentTo(
+>             n2, compareJsType, !(shallow && n.isFunction()), shallow)) {
+1667c1686,1688
+<     if (child == last) last = prev;
+---
+>     if (child == last) {
+>       last = prev;
+>     }
+1868a1890,1899
+>   public void setChangeTime(int time) {
+>     putIntProp(CHANGE_TIME, time);
+>   }
+> 
+>   
+>   public int getChangeTime() {
+>     return getIntProp(CHANGE_TIME);
+>   }
+> 
+>   
+1971,1975c2002,2006
+<   final public static int FLAG_GLOBAL_STATE_UNMODIFIED = 1;
+<   final public static int FLAG_THIS_UNMODIFIED = 2;
+<   final public static int FLAG_ARGUMENTS_UNMODIFIED = 4;
+<   final public static int FLAG_NO_THROWS = 8;
+<   final public static int FLAG_LOCAL_RESULTS = 16;
+---
+>   public static final int FLAG_GLOBAL_STATE_UNMODIFIED = 1;
+>   public static final int FLAG_THIS_UNMODIFIED = 2;
+>   public static final int FLAG_ARGUMENTS_UNMODIFIED = 4;
+>   public static final int FLAG_NO_THROWS = 8;
+>   public static final int FLAG_LOCAL_RESULTS = 16;
+1977c2008
+<   final public static int SIDE_EFFECTS_FLAGS_MASK = 31;
+---
+>   public static final int SIDE_EFFECTS_FLAGS_MASK = 31;
+1979,1980c2010,2011
+<   final public static int SIDE_EFFECTS_ALL = 0;
+<   final public static int NO_SIDE_EFFECTS =
+---
+>   public static final int SIDE_EFFECTS_ALL = 0;
+>   public static final int NO_SIDE_EFFECTS =

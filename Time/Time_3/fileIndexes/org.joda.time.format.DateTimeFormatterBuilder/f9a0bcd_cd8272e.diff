@@ -1,0 +1,176 @@
+74c74
+<     private ArrayList iElementPairs;
+---
+>     private ArrayList<Object> iElementPairs;
+84c84
+<         iElementPairs = new ArrayList();
+---
+>         iElementPairs = new ArrayList<Object>();
+548a549,557
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+557a567,574
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+566a584,591
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+575a601,608
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+984a1018,1020
+> 
+> 
+> 
+989c1025,1052
+<                        (zeroOffsetText, showSeparators, minFields, maxFields));
+---
+>                        (zeroOffsetText, zeroOffsetText, showSeparators, minFields, maxFields));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendTimeZoneOffset(
+>             String zeroOffsetPrintText, String zeroOffsetParseText, boolean showSeparators,
+>             int minFields, int maxFields) {
+>         return append0(new TimeZoneOffset
+>                        (zeroOffsetPrintText, zeroOffsetParseText, showSeparators, minFields, maxFields));
+1618c1681,1682
+<         private static Map cParseCache = new HashMap();
+---
+>         private static Map<Locale, Map<DateTimeFieldType, Object[]>> cParseCache =
+>                     new HashMap<Locale, Map<DateTimeFieldType, Object[]>>();
+1693a1758
+>         @SuppressWarnings("unchecked")
+1698c1763
+<             Set validValues = null;
+---
+>             Set<String> validValues = null;
+1701c1766
+<                 Map innerMap = (Map) cParseCache.get(locale);
+---
+>                 Map<DateTimeFieldType, Object[]> innerMap = cParseCache.get(locale);
+1703c1768
+<                     innerMap = new HashMap();
+---
+>                     innerMap = new HashMap<DateTimeFieldType, Object[]>();
+1706c1771
+<                 Object[] array = (Object[]) innerMap.get(iFieldType);
+---
+>                 Object[] array = innerMap.get(iFieldType);
+1708c1773
+<                     validValues = new HashSet(32);
+---
+>                     validValues = new HashSet<String>(32);
+1737c1802
+<                     validValues = (Set) array[0];
+---
+>                     validValues = (Set<String>) array[0];
+1979c2044,2045
+<         private final String iZeroOffsetText;
+---
+>         private final String iZeroOffsetPrintText;
+>         private final String iZeroOffsetParseText;
+1984c2050
+<         TimeZoneOffset(String zeroOffsetText,
+---
+>         TimeZoneOffset(String zeroOffsetPrintText, String zeroOffsetParseText,
+1989c2055,2056
+<             iZeroOffsetText = zeroOffsetText;
+---
+>             iZeroOffsetPrintText = zeroOffsetPrintText;
+>             iZeroOffsetParseText = zeroOffsetParseText;
+2007,2008c2074,2075
+<             if (iZeroOffsetText != null && iZeroOffsetText.length() > est) {
+<                 est = iZeroOffsetText.length();
+---
+>             if (iZeroOffsetPrintText != null && iZeroOffsetPrintText.length() > est) {
+>                 est = iZeroOffsetPrintText.length();
+2019,2020c2086,2087
+<             if (displayOffset == 0 && iZeroOffsetText != null) {
+<                 buf.append(iZeroOffsetText);
+---
+>             if (displayOffset == 0 && iZeroOffsetPrintText != null) {
+>                 buf.append(iZeroOffsetPrintText);
+2078,2079c2145,2146
+<             if (displayOffset == 0 && iZeroOffsetText != null) {
+<                 out.write(iZeroOffsetText);
+---
+>             if (displayOffset == 0 && iZeroOffsetPrintText != null) {
+>                 out.write(iZeroOffsetPrintText);
+2147,2148c2214,2215
+<             if (iZeroOffsetText != null) {
+<                 if (iZeroOffsetText.length() == 0) {
+---
+>             if (iZeroOffsetParseText != null) {
+>                 if (iZeroOffsetParseText.length() == 0) {
+2159,2160c2226
+<                 if (text.regionMatches(true, position, iZeroOffsetText, 0,
+<                                        iZeroOffsetText.length())) {
+---
+>                 if (text.regionMatches(true, position, iZeroOffsetParseText, 0, iZeroOffsetParseText.length())) {
+2162c2228
+<                     return position + iZeroOffsetText.length();
+---
+>                     return position + iZeroOffsetParseText.length();
+2398c2464
+<         Composite(List elementPairs) {
+---
+>         Composite(List<Object> elementPairs) {
+2401,2402c2467,2468
+<             List printerList = new ArrayList();
+<             List parserList = new ArrayList();
+---
+>             List<Object> printerList = new ArrayList<Object>();
+>             List<Object> parserList = new ArrayList<Object>();
+2542c2608
+<         private void decompose(List elementPairs, List printerList, List parserList) {
+---
+>         private void decompose(List<Object> elementPairs, List<Object> printerList, List<Object> parserList) {
+2565c2631
+<         private void addArrayToList(List list, Object[] array) {
+---
+>         private void addArrayToList(List<Object> list, Object[] array) {

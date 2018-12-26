@@ -1,0 +1,51 @@
+821,822c821,822
+<     public static int indexOf(String str, int searchChar) {
+<         if (isEmpty(str)) {
+---
+>     public static int indexOf(CharSequence seq, int searchChar) {
+>         if (isEmpty(seq)) {
+825c825
+<         return str.indexOf(searchChar);
+---
+>         return StringUtils.indexOfSequence(seq, searchChar, 0);
+853,854c853,854
+<     public static int indexOf(String str, int searchChar, int startPos) {
+<         if (isEmpty(str)) {
+---
+>     public static int indexOf(CharSequence seq, int searchChar, int startPos) {
+>         if (isEmpty(seq)) {
+857c857
+<         return str.indexOf(searchChar, startPos);
+---
+>         return StringUtils.indexOfSequence(seq, searchChar, startPos);
+6416a6417,6446
+>     }
+> 
+>     
+>     static int indexOfSequence(CharSequence cs, int searchChar, int start) {
+>         if (cs instanceof String) {
+>             return ((String) cs).indexOf(searchChar, start);
+>         } else {
+>             int sz = cs.length();
+>             if ( start < 0 ) {
+>                 start = 0;
+>             }
+>             for ( int i=start; i < sz; i++ ) {
+>                 if ( cs.charAt(i) == searchChar) {
+>                     return i;
+>                 }
+>             }
+>             return -1;
+>         }
+>     }
+>     
+>     static int indexOfSequence(CharSequence cs, CharSequence searchChar, int start) {
+>         if (cs instanceof String && searchChar instanceof String) {
+>             
+>             
+>             
+>             return ((String) cs).indexOf( (String) searchChar, start);
+>         } else {
+>             
+>             return cs.toString().indexOf(searchChar.toString(), start);
+>         }

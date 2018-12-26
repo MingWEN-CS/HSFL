@@ -1,0 +1,33 @@
+52a53
+> import com.google.common.collect.Lists;
+733a735,764
+>   }
+> 
+>   
+> 
+> 
+>   ObjectType findCommonSuperObject(ObjectType a, ObjectType b) {
+>     List<ObjectType> stackA = getSuperStack(a);
+>     List<ObjectType> stackB = getSuperStack(b);
+> 
+>     ObjectType result = getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+>     while (!stackA.isEmpty() && !stackB.isEmpty()) {
+>       ObjectType currentA = stackA.remove(stackA.size() - 1);
+>       ObjectType currentB = stackB.remove(stackB.size() - 1);
+>       if (currentA.isEquivalentTo(currentB)) {
+>         result = currentA;
+>       } else {
+>         return result;
+>       }
+>     }
+>     return result;
+>   }
+> 
+>   private static List<ObjectType> getSuperStack(ObjectType a) {
+>     List<ObjectType> stack = Lists.newArrayListWithExpectedSize(5);
+>     for (ObjectType current = a;
+>          current != null;
+>          current = current.getImplicitPrototype()) {
+>       stack.add(current);
+>     }
+>     return stack;

@@ -1,0 +1,44 @@
+1541a1542
+> 
+1557,1562c1558,1559
+<     NEXT_DELIMITER: for (char delimiter : new char[]{',', ' ', ';', '{', '}'}) {
+<       for (String cur : strings) {
+<         if (cur.indexOf(delimiter) != -1) {
+<           continue NEXT_DELIMITER;
+<         }
+<       }
+---
+>     String delimiter = pickDelimiter(strings);
+>     if (delimiter != null) {
+1574a1572,1602
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private String pickDelimiter(String[] strings) {
+>     boolean allLength1 = true;
+>     for (String s : strings) {
+>       if (s.length() != 1) {
+>         allLength1 = false;
+>         break;
+>       }
+>     }
+> 
+>     if (allLength1) {
+>       return "";
+>     }
+> 
+>     String[] delimiters = new String[]{" ", ";", ",", "{", "}", null};
+>     int i = 0;
+>     NEXT_DELIMITER: for (;delimiters[i] != null; i++) {
+>       for (String cur : strings) {
+>         if (cur.contains(delimiters[i])) {
+>           continue NEXT_DELIMITER;
+>         }
+>       }
+>       break;
+>     }
+>     return delimiters[i];

@@ -1,0 +1,84 @@
+56,57d55
+< import java.io.IOException;
+< import java.io.ObjectInputStream;
+150d147
+<         iFields = initFields(iChronology);
+171d167
+<         iFields = initFields(iChronology);
+198d193
+<         iFields = initFields(iChronology);
+216d210
+<         iFields = initFields(iChronology);
+232,233d225
+<         iFields = other.iFields;
+<         iValues = values;
+234a227,228
+>         iValues = values;
+>         iFields = other.iFields;
+243,259d236
+<     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+<         in.defaultReadObject();
+<         iFields = initFields(iChronology);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     protected abstract DateTimeField[] initFields(Chronology chrono);
+< 
+<     
+< 
+< 
+< 
+262,272c239,244
+< 
+<     protected abstract int[] initValues(long instant, Chronology chrono);
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+<     public int getFieldSize() {
+<         return iFields.length;
+---
+>     protected int[] initValues(long instant, Chronology chrono) {
+>         int[] values = new int[getFieldSize()];
+>         for (int i = 0; i < values.length; i++) {
+>             values[i] = getField(i, chrono).get(instant);
+>         }
+>         return values;
+275a248
+>     
+283c256,261
+<         return iFields[index];
+---
+>         DateTimeField[] fields = iFields;
+>         if (fields != null) {
+>             return fields[index];
+>         } else {
+>             return getField(index, getChronology());
+>         }
+293,294c271,277
+<     public int getValue(int index) {
+<         return iValues[index];
+---
+>     public DateTimeField[] getFields() {
+>         DateTimeField[] fields = iFields;
+>         if (fields == null) {
+>             fields = super.getFields();
+>             iFields = fields;
+>         }
+>         return (DateTimeField[]) fields.clone();
+298d280
+<     
+305,306c287,288
+<     public DateTimeField[] getFields() {
+<         return (DateTimeField[]) iFields.clone();
+---
+>     public int getValue(int index) {
+>         return iValues[index];

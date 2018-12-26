@@ -1,0 +1,483 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.base;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Locale;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeField;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
+import org.joda.time.MutableDateTime;
+import org.joda.time.ReadableInstant;
+import org.joda.time.chrono.ISOChronology;
+import org.joda.time.format.ISODateTimeFormat;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class AbstractInstant implements ReadableInstant {
+
+    
+
+
+    protected AbstractInstant() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+    public DateTimeZone getZone() {
+        Chronology chrono = getChronology();
+        return (chrono != null ? chrono.getZone() : null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int get(DateTimeField field) {
+        if (field == null) {
+            throw new IllegalArgumentException("The DateTimeField must not be null");
+        }
+        return field.get(getMillis());
+    }
+
+    
+    
+
+
+
+
+    public Instant toInstant() {
+        return new Instant(getMillis());
+    }
+
+    
+
+
+
+
+    public DateTime toDateTime() {
+        return new DateTime(getMillis());
+    }
+
+    
+
+
+
+
+
+    public DateTime toDateTime(DateTimeZone zone) {
+        Chronology chrono = DateTimeUtils.getChronology(getChronology());
+        chrono = chrono.withZone(zone);
+        return new DateTime(getMillis(), chrono);
+    }
+
+    
+
+
+
+
+
+    public DateTime toDateTime(Chronology chronology) {
+        return new DateTime(getMillis(), chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateTime toTrustedISODateTime() {
+        DateTimeZone zone = getZone();
+        if (zone == null) {
+            return new DateTime(this, (Chronology)null);
+        }
+
+        DateTimeZone trusted = DateTimeZone.getInstance(zone.getID());
+        
+        if (zone == trusted &&
+            getClass() == DateTime.class &&
+            getChronology().getClass() == ISOChronology.class) {
+            return (DateTime) this;
+        }
+        
+        return new DateTime(this, ISOChronology.getInstance(trusted));
+    }
+
+    
+    
+    
+    
+
+    
+
+
+
+
+    public MutableDateTime toMutableDateTime() {
+        return new MutableDateTime(getMillis());
+    }
+
+    
+
+
+
+
+
+    public MutableDateTime toMutableDateTime(DateTimeZone zone) {
+        Chronology chrono = DateTimeUtils.getChronology(getChronology());
+        chrono = chrono.withZone(zone);
+        return new MutableDateTime(getMillis(), chrono);
+    }
+
+    
+
+
+
+
+
+    public MutableDateTime toMutableDateTime(Chronology chronology) {
+        return new MutableDateTime(getMillis(), chronology);
+    }
+
+    
+    
+
+
+
+
+    public Date toDate() {
+        return new Date(getMillis());
+    }
+
+    
+
+
+
+
+
+
+
+    public Calendar toCalendar(Locale locale) {
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
+        DateTimeZone zone = getZone();
+        Calendar cal;
+        if (zone == null) {
+            cal = Calendar.getInstance(locale);
+        } else {
+            cal = Calendar.getInstance(zone.toTimeZone(), locale);
+        }
+        cal.setTime(toDate());
+        return cal;
+    }
+
+    
+
+
+
+
+    public GregorianCalendar toGregorianCalendar() {
+        DateTimeZone zone = getZone();
+        GregorianCalendar cal;
+        if (zone == null) {
+            cal = new GregorianCalendar();
+        } else {
+            cal = new GregorianCalendar(zone.toTimeZone());
+        }
+        cal.setTime(toDate());
+        return cal;
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public boolean equals(Object readableInstant) {
+        
+        if (this == readableInstant) {
+            return true;
+        }
+        if (readableInstant instanceof ReadableInstant) {
+            ReadableInstant otherInstant = (ReadableInstant) readableInstant;
+            if (getMillis() == otherInstant.getMillis()) {
+                Chronology chrono = getChronology();
+                if (chrono == otherInstant.getChronology()) {
+                    return true;
+                }
+                if (chrono != null && chrono.equals(otherInstant.getChronology())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+    public int hashCode() {
+        
+        return
+            ((int) (getMillis() ^ (getMillis() >>> 32))) +
+            (getChronology() == null ? 0 : getChronology().hashCode());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public int compareTo(Object instant) {
+        if (this == instant) {
+            return 0;
+        }
+        
+        ReadableInstant otherInstant = (ReadableInstant) instant;
+        
+        long otherMillis = otherInstant.getMillis();
+        long thisMillis = getMillis();
+        
+        
+        if (thisMillis == otherMillis) {
+            return 0;
+        }
+        if (thisMillis < otherMillis) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean isAfter(long instant) {
+        return (getMillis() > instant);
+    }
+
+    
+
+
+
+
+
+    public boolean isAfterNow() {
+        return isAfter(DateTimeUtils.currentTimeMillis());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isAfter(ReadableInstant instant) {
+        long instantMillis = DateTimeUtils.getInstantMillis(instant);
+        return isAfter(instantMillis);
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean isBefore(long instant) {
+        return (getMillis() < instant);
+    }
+
+    
+
+
+
+
+
+    public boolean isBeforeNow() {
+        return isBefore(DateTimeUtils.currentTimeMillis());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isBefore(ReadableInstant instant) {
+        long instantMillis = DateTimeUtils.getInstantMillis(instant);
+        return isBefore(instantMillis);
+    }
+
+    
+    
+
+
+
+
+
+
+    public boolean isEqual(long instant) {
+        return (getMillis() == instant);
+    }
+
+    
+
+
+
+
+
+    public boolean isEqualNow() {
+        return isEqual(DateTimeUtils.currentTimeMillis());
+    }
+
+    
+
+
+
+
+
+
+    public boolean isEqual(ReadableInstant instant) {
+        long instantMillis = DateTimeUtils.getInstantMillis(instant);
+        return isEqual(instantMillis);
+    }
+
+    
+    
+
+
+
+
+    public String toString() {
+        return ISODateTimeFormat.getInstance(getChronology()).dateTime().print(this);
+    }
+
+}

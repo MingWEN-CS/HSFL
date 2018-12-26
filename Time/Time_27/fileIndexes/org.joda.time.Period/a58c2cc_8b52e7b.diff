@@ -1,0 +1,85 @@
+96c96
+<         return new Period(new int[] {years}, PeriodType.standard());
+---
+>         return new Period(new int[] {years, 0, 0, 0, 0, 0, 0, 0, 0}, PeriodType.standard());
+107c107
+<         return new Period(new int[] {months}, PeriodType.standard());
+---
+>         return new Period(new int[] {0, months, 0, 0, 0, 0, 0, 0}, PeriodType.standard());
+118c118
+<         return new Period(new int[] {weeks}, PeriodType.standard());
+---
+>         return new Period(new int[] {0, 0, weeks, 0, 0, 0, 0, 0}, PeriodType.standard());
+129c129
+<         return new Period(new int[] {days}, PeriodType.standard());
+---
+>         return new Period(new int[] {0, 0, 0, days, 0, 0, 0, 0}, PeriodType.standard());
+140c140
+<         return new Period(new int[] {hours}, PeriodType.standard());
+---
+>         return new Period(new int[] {0, 0, 0, 0, hours, 0, 0, 0}, PeriodType.standard());
+151c151
+<         return new Period(new int[] {minutes}, PeriodType.standard());
+---
+>         return new Period(new int[] {0, 0, 0, 0, 0, minutes, 0, 0}, PeriodType.standard());
+162c162
+<         return new Period(new int[] {seconds}, PeriodType.standard());
+---
+>         return new Period(new int[] {0, 0, 0, 0, 0, 0, seconds, 0}, PeriodType.standard());
+173c173
+<         return new Period(new int[] {millis}, PeriodType.standard());
+---
+>         return new Period(new int[] {0, 0, 0, 0, 0, 0, 0, millis}, PeriodType.standard());
+575a576,609
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period withFields(ReadablePeriod period) {
+>         if (period == null) {
+>             return this;
+>         }
+>         int[] newValues = getValues();  
+>         newValues = super.mergePeriodInto(newValues, period);
+>         return new Period(newValues, getPeriodType());
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period withField(DurationFieldType field, int value) {
+>         if (field == null) {
+>             return this;
+>         }
+>         int[] newValues = getValues();  
+>         super.setFieldInto(newValues, field, value);
+>         return new Period(newValues, getPeriodType());
+>     }
+> 
+696a731,747
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Period plusField(DurationFieldType field, int valueToAdd) {
+>         if (valueToAdd == 0 || field == null) {
+>             return this;
+>         }
+>         int[] newValues = getValues();  
+>         super.addFieldInto(newValues, field, valueToAdd);
+>         return new Period(newValues, getPeriodType());
+>     }
+> 

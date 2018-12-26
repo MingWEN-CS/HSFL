@@ -1,0 +1,209 @@
+66,69c66,72
+< 
+< import org.jfree.chart.util.ObjectUtilities;
+< import org.jfree.chart.util.PublicCloneable;
+< import org.jfree.chart.util.SortOrder;
+---
+> import java.util.ArrayList;
+> import java.util.HashMap;
+> import java.util.Arrays;
+> 
+> import org.jfree.util.ObjectUtilities;
+> import org.jfree.util.PublicCloneable;
+> import org.jfree.util.SortOrder;
+83c86,88
+<     private List data;
+---
+>     private ArrayList keys;
+>     private ArrayList values;
+>     private HashMap keyToValueMapping;
+85c90
+<     
+---
+>   
+89c94,96
+<         this.data = new java.util.ArrayList();
+---
+>         this.keys = new ArrayList();
+>         this.values = new ArrayList();
+>         this.keyToValueMapping = new HashMap();
+98c105
+<         return this.data.size();
+---
+>         return this.keyToValueMapping.size();
+111,116c118
+<         Number result = null;
+<         KeyedValue kval = (KeyedValue) this.data.get(item);
+<         if (kval != null) {
+<             result = kval.getValue();
+<         }
+<         return result;
+---
+>         return (Number) this.values.get(item);
+129,134c131
+<         Comparable result = null;
+<         KeyedValue item = (KeyedValue) this.data.get(index);
+<         if (item != null) {
+<             result = item.getKey();
+<         }
+<         return result;
+---
+>         return (Comparable) this.keys.get(index);
+151,158c148,151
+<         int i = 0;
+<         Iterator iterator = this.data.iterator();
+<         while (iterator.hasNext()) {
+<             KeyedValue kv = (KeyedValue) iterator.next();
+<             if (kv.getKey().equals(key)) {
+<                 return i;
+<             }
+<             i++;
+---
+>         final Integer i = (Integer) keyToValueMapping.get(key);
+>         if (i == null)
+>         {
+>           return -1;  
+160c153
+<         return -1;  
+---
+>         return i.intValue();
+169,175c162
+<         List result = new java.util.ArrayList();
+<         Iterator iterator = this.data.iterator();
+<         while (iterator.hasNext()) {
+<             KeyedValue kv = (KeyedValue) iterator.next();
+<             result.add(kv.getKey());
+<         }
+<         return result;
+---
+>         return (List) keys.clone();
+243,244c230,231
+<             DefaultKeyedValue kv = (DefaultKeyedValue) this.data.get(keyIndex);
+<             kv.setValue(value);
+---
+>             keys.set(keyIndex, key);
+>             values.set(keyIndex, value);
+247,248c234,236
+<             KeyedValue kv = new DefaultKeyedValue(key, value);
+<             this.data.add(kv);
+---
+>           keys.add(key);
+>           values.add(value);
+>           keyToValueMapping.put(key, new Integer(keys.size() - 1));
+279c267
+<         if (position < 0 || position > this.data.size()) {
+---
+>         if (position < 0 || position > getItemCount()) {
+285,291c273,276
+<         int pos = getIndex(key);
+<         if (pos >= 0) {
+<             this.data.remove(pos);
+<         }
+<         KeyedValue kv = new DefaultKeyedValue(key, value);
+<         if (position <= this.data.size()) {
+<             this.data.add(position, kv);
+---
+>         int pos = this.getIndex(key);
+>         if (pos == position) {
+>             this.keys.set(pos, key);
+>             this.values.set(pos, value);
+294c279,298
+<             this.data.add(kv);
+---
+>             if (pos >= 0) {
+>                 this.keys.remove(pos);
+>                 this.values.remove(pos);
+>             }
+>           
+>             this.keys.add(position, key);
+>             this.values.add(position, value);
+>             rebuildIndex();
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private void rebuildIndex () {
+>         keyToValueMapping.clear();
+>         for (int i = 0; i < keys.size(); i++) {
+>           final Object key = keys.get(i);
+>           keyToValueMapping.put(key, new Integer(i));
+308c312,318
+<         this.data.remove(index);
+---
+>         this.keys.remove(index);
+>         this.values.remove(index);
+> 
+>         
+>         if (index < keys.size()) {
+>           rebuildIndex();
+>         }
+320d329
+< 
+323,325c332,333
+<         if (index < 0) {
+<             throw new UnknownKeyException("The key (" + key 
+<                     + ") is not recognised.");
+---
+>         if (index >= 0) {
+>             removeValue(index);
+327d334
+<         removeValue(index);
+336c343,345
+<         this.data.clear();
+---
+>         this.keys.clear();
+>         this.values.clear();
+>         this.keyToValueMapping.clear();
+345c354,361
+<         Comparator comparator = new KeyedValueComparator(
+---
+>       final int size = keys.size();
+>       final DefaultKeyedValue[] data = new DefaultKeyedValue[size];
+> 
+>       for (int i = 0; i < size; i++) {
+>         data[i] = new DefaultKeyedValue((Comparable) keys.get(i), (Number) values.get(i));
+>       }
+> 
+>       Comparator comparator = new KeyedValueComparator(
+347c363,369
+<         Collections.sort(this.data, comparator);
+---
+>       Arrays.sort(data, comparator);
+>       clear();
+> 
+>       for (int i = 0; i < data.length; i++) {
+>         final DefaultKeyedValue value = data[i];
+>         addValue(value.getKey(), value.getValue());
+>       }
+357a380,385
+>         final int size = keys.size();
+>         final DefaultKeyedValue[] data = new DefaultKeyedValue[size];
+>         for (int i = 0; i < size; i++) {
+>           data[i] = new DefaultKeyedValue((Comparable) keys.get(i), (Number) values.get(i));
+>         }
+> 
+360c388,394
+<         Collections.sort(this.data, comparator);
+---
+>         Arrays.sort(data, comparator);
+> 
+>         clear();
+>         for (int i = 0; i < data.length; i++) {
+>           final DefaultKeyedValue value = data[i];
+>           addValue(value.getKey(), value.getValue());
+>         }
+413c447
+<         return (this.data != null ? this.data.hashCode() : 0);
+---
+>         return (this.keys != null ? this.keys.hashCode() : 0);
+426,427c460,463
+<         clone.data = (List) ObjectUtilities.deepClone(this.data);
+<         return clone;    
+---
+>         clone.keys = (ArrayList) keys.clone();
+>         clone.values = (ArrayList) values.clone();
+>         clone.keyToValueMapping = (HashMap) keyToValueMapping.clone();
+>         return clone;

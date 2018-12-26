@@ -1,0 +1,140 @@
+113d112
+< 
+115,117c114
+<     if ((gramp == null) ||
+<         (parent.getFirstChild() != node) ||
+<         !NodeUtil.isExprAssign(gramp)) {
+---
+>     if (gramp == null) {
+121,124c118,149
+<     Node functionNode = parent.getLastChild();
+<     if ((functionNode == null) || !functionNode.isFunction()) {
+<       return false;
+<     }
+---
+>     if (node.isGetProp()) {
+>       if (parent.getFirstChild() != node) {
+>         return false;
+>       }
+> 
+>       if (!NodeUtil.isExprAssign(gramp)) {
+>         return false;
+>       }
+> 
+>       Node functionNode = parent.getLastChild();
+>       if ((functionNode == null) || !functionNode.isFunction()) {
+>         return false;
+>       }
+> 
+>       Node nameNode = node.getFirstChild();
+>       return nameNode.isGetProp() &&
+>           nameNode.getLastChild().getString().equals("prototype");
+>     } else if (node.isStringKey()) {
+>       Preconditions.checkState(parent.isObjectLit());
+> 
+>       if (!gramp.isAssign()) {
+>         return false;
+>       }
+> 
+>       if (gramp.getLastChild() != parent) {
+>         return false;
+>       }
+> 
+>       Node greatGramp = gramp.getParent();
+>       if (greatGramp == null || !greatGramp.isExprResult()) {
+>         return false;
+>       }
+126c151,159
+<     if (!node.isGetProp()) {
+---
+>       Node functionNode = node.getFirstChild();
+>       if ((functionNode == null) || !functionNode.isFunction()) {
+>         return false;
+>       }
+> 
+>       Node target = gramp.getFirstChild();
+>       return target.isGetProp() &&
+>           target.getLastChild().getString().equals("prototype");
+>     } else {
+128a162
+>   }
+130,133c164,171
+<     Node nameNode = node.getFirstChild();
+<     return nameNode.isGetProp() &&
+<         nameNode.getLastChild().getString().equals("prototype");
+< 
+---
+>   private String getMethodName(Node node) {
+>     if (node.isGetProp()) {
+>       return node.getLastChild().getString();
+>     } else if (node.isStringKey()) {
+>       return node.getString();
+>     } else {
+>       throw new IllegalStateException("unexpected");
+>     }
+156d193
+< 
+164,166d200
+< 
+<     
+<     
+187c221
+<         node.getLastChild().getString());
+---
+>         getMethodName(node));
+247d280
+<       
+257a291
+>       
+322a357,358
+>     boolean isObjLitDefKey = node.isStringKey();
+> 
+324,326d359
+<     Node functionNode = parent.getLastChild();
+<     Node expr = parent.getParent();
+<     Node block = expr.getParent();
+328,329c361,373
+<     Node newNameNode = IR.name(newMethodName)
+<         .copyInformationFrom(parent.getFirstChild());
+---
+>     Node refNode = isObjLitDefKey ? node : parent.getFirstChild();
+>     Node newNameNode = IR.name(newMethodName).copyInformationFrom(refNode);
+>     Node newVarNode = IR.var(newNameNode).copyInformationFrom(refNode);
+> 
+>     Node functionNode;
+>     if (!isObjLitDefKey) {
+>       Preconditions.checkState(parent.isAssign());
+>       functionNode = parent.getLastChild();
+>       Node expr = parent.getParent();
+>       Node block = expr.getParent();
+>       parent.removeChild(functionNode);
+>       newNameNode.addChildToFront(functionNode);
+>       block.replaceChild(expr, newVarNode);
+331,333c375,388
+<     if (specializationState != null) {
+<       specializationState.reportRemovedFunction(functionNode, block);
+<     }
+---
+>       if (specializationState != null) {
+>         specializationState.reportRemovedFunction(functionNode, block);
+>       }
+>     } else {
+>       Preconditions.checkState(parent.isObjectLit());
+>       functionNode = node.getFirstChild();
+>       Node assign = parent.getParent();
+>       Node expr = assign.getParent();
+>       Node block = expr.getParent();
+> 
+>       node.removeChild(functionNode);
+>       parent.removeChild(node);
+>       newNameNode.addChildToFront(functionNode);
+>       block.addChildAfter(newVarNode, expr);
+335,337c390,393
+<     parent.removeChild(functionNode);
+<     newNameNode.addChildToFront(functionNode);
+<     block.replaceChild(expr, IR.var(newNameNode));
+---
+>       if (specializationState != null) {
+>         specializationState.reportRemovedFunction(functionNode, block);
+>       }
+>     }

@@ -1,0 +1,40 @@
+428,435d427
+<     
+<     
+<     if (options.optimizeCalls
+<         || options.optimizeParameters
+<         || options.optimizeReturns) {
+<       passes.add(optimizeCalls);
+<     }
+< 
+647a640,643
+>     boolean runOptimizeCalls = options.optimizeCalls
+>         || options.optimizeParameters
+>         || options.optimizeReturns;
+> 
+652c648,653
+<       passes.add(removeUnusedVars);
+---
+>       if (!runOptimizeCalls) {
+>         passes.add(removeUnusedVars);
+>       }
+>     }
+>     if (runOptimizeCalls) {
+>       passes.add(optimizeCallsAndRemoveUnusedVars);
+1334,1335c1335,1336
+<   private final PassFactory optimizeCalls =
+<       new PassFactory("optimizeCalls", true) {
+---
+>   private final PassFactory optimizeCallsAndRemoveUnusedVars =
+>       new PassFactory("optimizeCalls_and_removeUnusedVars", false) {
+1350c1351,1358
+<         passes.addPass(new RemoveUnusedVars(compiler, false, true, true));
+---
+>         boolean removeOnlyLocals = options.removeUnusedLocalVars
+>             && !options.removeUnusedVars;
+>         boolean preserveAnonymousFunctionNames =
+>             options.anonymousFunctionNaming !=
+>             AnonymousFunctionNamingPolicy.OFF;
+>         passes.addPass(
+>             new RemoveUnusedVars(compiler, !removeOnlyLocals,
+>                 preserveAnonymousFunctionNames, true));

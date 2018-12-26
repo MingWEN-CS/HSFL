@@ -1,0 +1,358 @@
+56,58c56
+< import java.text.ParseException;
+< import java.util.Calendar;
+< import java.util.Date;
+---
+> import java.io.Serializable;
+60,61c58,59
+< import org.joda.time.chrono.iso.ISOChronology;
+< import org.joda.time.format.DateTimeParser;
+---
+> 
+> import org.joda.time.convert.ConverterManager;
+92,95c90,100
+< public class DateTime extends AbstractDateTime implements ReadableDateTime {
+<     
+<     
+<     private final long iMillis;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class DateTime extends AbstractDateTime
+>         implements ReadableDateTime, Serializable {
+97c102
+<     private final Chronology iChronology;
+---
+>     static final long serialVersionUID = -5171125899451703815L;
+105d109
+< 
+107,108c111
+<         iChronology = ISOChronology.getInstance();
+<         iMillis = System.currentTimeMillis();
+---
+>         super();
+117a121
+> 
+119,120c123
+<         iChronology = ISOChronology.getInstance(zone);
+<         iMillis = System.currentTimeMillis();
+---
+>         super(zone);
+129a133,134
+> 
+> 
+131,132c136
+<         iChronology = selectChronology(chronology);
+<         iMillis = System.currentTimeMillis();
+---
+>         super(chronology);
+135a140
+>     
+141,144c146,147
+< 
+<     public DateTime(long millis) {
+<         iChronology = ISOChronology.getInstance();
+<         iMillis = millis;
+---
+>     public DateTime(long instant) {
+>         super(instant);
+155,157c158,160
+<     public DateTime(long millis, DateTimeZone zone) {
+<         iChronology = ISOChronology.getInstance(zone);
+<         iMillis = millis;
+---
+> 
+>     public DateTime(long instant, DateTimeZone zone) {
+>         super(instant, zone);
+168,178d170
+<     public DateTime(long millis, Chronology chronology) {
+<         iChronology = selectChronology(chronology);
+<         iMillis = millis;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+181,183c173,174
+<     public DateTime(ReadableInstant instant) {
+<         iChronology = selectChronology(instant);
+<         iMillis = instant.getMillis();
+---
+>     public DateTime(long instant, Chronology chronology) {
+>         super(instant, chronology);
+186a178,180
+>     
+> 
+> 
+196,198c190,191
+<     public DateTime(ReadableInstant instant, DateTimeZone zone) {
+<         iChronology = selectChronology(instant, zone);
+<         iMillis = instant.getMillis();
+---
+>     public DateTime(Object instant) {
+>         super(instant);
+209,212d201
+<     public DateTime(ReadableInstant instant, Chronology chronology) {
+<         iChronology = selectChronology(instant, chronology);
+<         iMillis = instant.getMillis();
+<     }
+214d202
+<     
+220,223c208,209
+< 
+<     public DateTime(Date date) {
+<         iChronology = selectChronology(date);
+<         iMillis = date.getTime();
+---
+>     public DateTime(Object instant, DateTimeZone zone) {
+>         super(instant, zone);
+234,240d219
+<     public DateTime(Date date, DateTimeZone zone) {
+<         iChronology = selectChronology(date, zone);
+<         iMillis = date.getTime();
+<     }
+< 
+<     
+< 
+246,248c225,226
+<     public DateTime(Date date, Chronology chronology) {
+<         iChronology = selectChronology(date, chronology);
+<         iMillis = date.getTime();
+---
+>     public DateTime(Object instant, Chronology chronology) {
+>         super(instant, chronology);
+251a230,231
+>     
+> 
+262,264c242,250
+<     public DateTime(Calendar calendar) {
+<         iChronology = selectChronology(calendar);
+<         iMillis = calendar.getTime().getTime();
+---
+>     public DateTime(
+>             int year,
+>             int monthOfYear,
+>             int dayOfMonth,
+>             int hourOfDay,
+>             int minuteOfHour,
+>             int secondOfMinute,
+>             int millisOfSecond) {
+>         super(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+279,287d264
+<     public DateTime(Calendar calendar, DateTimeZone zone) {
+<         iChronology = selectChronology(calendar, zone);
+<         iMillis = calendar.getTime().getTime();
+<     }
+< 
+<     
+< 
+< 
+< 
+291,293c268,278
+<     public DateTime(Calendar calendar, Chronology chronology) {
+<         iChronology = selectChronology(calendar, chronology);
+<         iMillis = calendar.getTime().getTime();
+---
+>     public DateTime(
+>             int year,
+>             int monthOfYear,
+>             int dayOfMonth,
+>             int hourOfDay,
+>             int minuteOfHour,
+>             int secondOfMinute,
+>             int millisOfSecond,
+>             DateTimeZone zone) {
+>         super(year, monthOfYear, dayOfMonth,
+>               hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond, zone);
+304,310d288
+<     public DateTime(String str) throws ParseException {
+<         iChronology = selectChronology(str);
+<         DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+<         iMillis = p.parseMillis(str);
+<     }
+< 
+<     
+319,322c297,307
+<     public DateTime(String str, DateTimeZone zone) throws ParseException {
+<         iChronology = selectChronology(str, zone);
+<         DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+<         iMillis = p.parseMillis(str);
+---
+>     public DateTime(
+>             int year,
+>             int monthOfYear,
+>             int dayOfMonth,
+>             int hourOfDay,
+>             int minuteOfHour,
+>             int secondOfMinute,
+>             int millisOfSecond,
+>             Chronology chronology) {
+>         super(year, monthOfYear, dayOfMonth,
+>               hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond, chronology);
+325a311
+>     
+334,338d319
+<     public DateTime(String str, Chronology chronology) throws ParseException {
+<         iChronology = selectChronology(str, chronology);
+<         DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+<         iMillis = p.parseMillis(str);
+<     }
+339a321,325
+> 
+>     protected final ReadableInstant create(final long instant, final Chronology chrono) {
+>         return createDateTime(instant, chrono);
+>     }
+>     
+351c337
+<     protected ReadableInstant create(long millis, Chronology chrono) {
+---
+>     protected DateTime createDateTime(final long instant, final Chronology chrono) {
+355c341
+<         if (millis == getMillis() && chrono == getChronology()) {
+---
+>         if (instant == getMillis() && chrono == getChronology()) {
+358c344
+<         return new DateTime(millis, chrono);
+---
+>         return new DateTime(instant, chrono);
+368,379c354,355
+< 
+<     public final long getMillis() {
+<         return iMillis;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     public final Chronology getChronology() {
+<         return iChronology;
+---
+>     public final DateTimeFieldProperty era() {
+>         return new DateTimeFieldProperty(this, getChronology().era());
+383,385d358
+<     
+<     
+< 
+390,392c363,364
+< 
+<     public final DateTimeFieldProperty dayOfWeek() {
+<         return new DateTimeFieldProperty(this, getChronology().dayOfWeek());
+---
+>     public final DateTimeFieldProperty centuryOfEra() {
+>         return new DateTimeFieldProperty(this, getChronology().centuryOfEra());
+400,401c372,373
+<     public final DateTimeFieldProperty dayOfMonth() {
+<         return new DateTimeFieldProperty(this, getChronology().dayOfMonth());
+---
+>     public final DateTimeFieldProperty yearOfCentury() {
+>         return new DateTimeFieldProperty(this, getChronology().yearOfCentury());
+409,410c381,382
+<     public final DateTimeFieldProperty dayOfYear() {
+<         return new DateTimeFieldProperty(this, getChronology().dayOfYear());
+---
+>     public final DateTimeFieldProperty yearOfEra() {
+>         return new DateTimeFieldProperty(this, getChronology().yearOfEra());
+418,419c390,391
+<     public final DateTimeFieldProperty weekOfWeekyear() {
+<         return new DateTimeFieldProperty(this, getChronology().weekOfWeekyear());
+---
+>     public final DateTimeFieldProperty year() {
+>         return new DateTimeFieldProperty(this, getChronology().year());
+445,446c417,418
+<     public final DateTimeFieldProperty year() {
+<         return new DateTimeFieldProperty(this, getChronology().year());
+---
+>     public final DateTimeFieldProperty weekOfWeekyear() {
+>         return new DateTimeFieldProperty(this, getChronology().weekOfWeekyear());
+454,455c426,427
+<     public final DateTimeFieldProperty yearOfEra() {
+<         return new DateTimeFieldProperty(this, getChronology().yearOfEra());
+---
+>     public final DateTimeFieldProperty dayOfYear() {
+>         return new DateTimeFieldProperty(this, getChronology().dayOfYear());
+463,465d434
+<     public final DateTimeFieldProperty yearOfCentury() {
+<         return new DateTimeFieldProperty(this, getChronology().yearOfCentury());
+<     }
+467d435
+<     
+469,473c437,438
+< 
+< 
+< 
+<     public final DateTimeFieldProperty centuryOfEra() {
+<         return new DateTimeFieldProperty(this, getChronology().centuryOfEra());
+---
+>     public final DateTimeFieldProperty dayOfMonth() {
+>         return new DateTimeFieldProperty(this, getChronology().dayOfMonth());
+481,482c446,449
+<     public final DateTimeFieldProperty era() {
+<         return new DateTimeFieldProperty(this, getChronology().era());
+---
+> 
+> 
+>     public final DateTimeFieldProperty dayOfWeek() {
+>         return new DateTimeFieldProperty(this, getChronology().dayOfWeek());
+492,493c459,460
+<     public final DateTimeFieldProperty millisOfSecond() {
+<         return new DateTimeFieldProperty(this, getChronology().millisOfSecond());
+---
+>     public final DateTimeFieldProperty hourOfDay() {
+>         return new DateTimeFieldProperty(this, getChronology().hourOfDay());
+501,502c468,469
+<     public final DateTimeFieldProperty millisOfDay() {
+<         return new DateTimeFieldProperty(this, getChronology().millisOfDay());
+---
+>     public final DateTimeFieldProperty minuteOfDay() {
+>         return new DateTimeFieldProperty(this, getChronology().minuteOfDay());
+510,511c477,478
+<     public final DateTimeFieldProperty secondOfMinute() {
+<         return new DateTimeFieldProperty(this, getChronology().secondOfMinute());
+---
+>     public final DateTimeFieldProperty minuteOfHour() {
+>         return new DateTimeFieldProperty(this, getChronology().minuteOfHour());
+528,529c495,496
+<     public final DateTimeFieldProperty minuteOfHour() {
+<         return new DateTimeFieldProperty(this, getChronology().minuteOfHour());
+---
+>     public final DateTimeFieldProperty secondOfMinute() {
+>         return new DateTimeFieldProperty(this, getChronology().secondOfMinute());
+537,538c504,505
+<     public final DateTimeFieldProperty minuteOfDay() {
+<         return new DateTimeFieldProperty(this, getChronology().minuteOfDay());
+---
+>     public final DateTimeFieldProperty millisOfDay() {
+>         return new DateTimeFieldProperty(this, getChronology().millisOfDay());
+546,547c513,514
+<     public final DateTimeFieldProperty hourOfDay() {
+<         return new DateTimeFieldProperty(this, getChronology().hourOfDay());
+---
+>     public final DateTimeFieldProperty millisOfSecond() {
+>         return new DateTimeFieldProperty(this, getChronology().millisOfSecond());
+558a526,539
+>     }
+> 
+>     
+> 
+> 
+> 
+>     protected final void setMillis(long millis) {
+>     }
+> 
+>     
+> 
+> 
+> 
+>     protected final void setChronology(Chronology chronology) {

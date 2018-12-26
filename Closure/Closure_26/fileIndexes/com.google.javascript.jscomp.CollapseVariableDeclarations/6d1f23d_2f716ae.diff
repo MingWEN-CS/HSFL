@@ -1,0 +1,48 @@
+166,170d165
+<         case Token.NUMBER:
+<         case Token.TRUE:
+<         case Token.FALSE:
+<         case Token.NULL:
+<         case Token.STRING:
+172d166
+<       }
+174c168,170
+<       return false;
+---
+>         default:
+>           return NodeUtil.isImmutableValue(value);
+>       }
+241,262d236
+<           case Token.NUMBER:
+<           case Token.TRUE:
+<           case Token.FALSE:
+<           case Token.NULL:
+<           case Token.STRING:
+<             if (value.getType() == next.getType()) {
+<               if ((next.getType() == Token.STRING ||
+<                       next.getType() == Token.NUMBER) &&
+<                   !next.isEquivalentTo(value)) {
+<                 return false;
+<               }
+< 
+<               
+<               
+<               
+<               exprParent.removeChild(expr);
+<               expr.removeChild(assign);
+<               parent.replaceChild(next, assign);
+<               return true;
+<             }
+<             return false;
+< 
+288a263,272
+>             if (NodeUtil.isImmutableValue(next)
+>                 && next.isEquivalentTo(value)) {
+>               
+>               
+>               
+>               exprParent.removeChild(expr);
+>               expr.removeChild(assign);
+>               parent.replaceChild(next, assign);
+>               return true;
+>             }

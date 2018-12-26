@@ -1,0 +1,49 @@
+57a58
+> import org.joda.time.ReadWritableDuration;
+59a61
+> import org.joda.time.format.DurationParser;
+60a63
+> import org.joda.time.format.ISODurationFormat;
+68c71,72
+< class StringConverter extends AbstractConverter implements InstantConverter {
+---
+> 
+> class StringConverter extends AbstractConverter implements InstantConverter, DurationConverter {
+112a117,153
+>     
+>     
+> 
+> 
+>     public boolean isPrecise(Object object) {
+>         return false;
+>     }
+> 
+>     
+> 
+> 
+>     public long getDurationMillis(Object object) {
+>         throw new UnsupportedOperationException();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setInto(ReadWritableDuration duration, Object object) {
+>         String str = (String) object;
+>         DurationParser parser = ISODurationFormat.getInstance().standard();
+>         int pos = parser.parseInto(duration, str, 0);
+>         if (pos < str.length()) {
+>             if (pos < 0) {
+>                 
+>                 parser.parseMutableDuration(duration.getDurationType(), str);
+>             }
+>             throw new IllegalArgumentException("Invalid format: \"" + str + '"');
+>         }
+>     }
+> 

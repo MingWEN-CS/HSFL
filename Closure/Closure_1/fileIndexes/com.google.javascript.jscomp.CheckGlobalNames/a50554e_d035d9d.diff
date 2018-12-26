@@ -1,0 +1,39 @@
+36a37
+>   private final CodingConvention convention;
+63a65
+>     this.convention = compiler.getCodingConvention();
+88c90
+<         compiler.getCodingConvention().getIndirectlyDeclaredProperties());
+---
+>         convention.getIndirectlyDeclaredProperties());
+242,245c244,268
+<     
+<     
+<     
+<     if (name.parent == null || name.parent.aliasingGets > 0) {
+---
+>     if (name.parent == null) {
+>       return false;
+>     }
+> 
+>     boolean parentIsAliased = false;
+>     if (name.parent.aliasingGets > 0) {
+>       for (Ref ref : name.parent.getRefs()) {
+>         if (ref.type == Ref.Type.ALIASING_GET) {
+>           Node aliaser = ref.getNode().getParent();
+> 
+>           
+>           
+>           
+>           boolean isKnownAlias =
+>               aliaser.isCall() &&
+>               (convention.getClassesDefinedByCall(aliaser) != null ||
+>                convention.getSingletonGetterClassName(aliaser) != null);
+>           if (!isKnownAlias) {
+>             parentIsAliased = true;
+>           }
+>         }
+>       }
+>     }
+> 
+>     if (parentIsAliased) {

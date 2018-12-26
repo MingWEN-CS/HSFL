@@ -1,0 +1,36 @@
+26a27
+> import com.google.javascript.rhino.JSTypeExpression;
+28a30,31
+> import com.google.javascript.rhino.jstype.JSType;
+> import com.google.javascript.rhino.jstype.JSTypeNative;
+64a68,72
+>   static final DiagnosticType INVALID_DEFINE_TYPE_ERROR =
+>     DiagnosticType.error(
+>         "JSC_INVALID_DEFINE_INIT_ERROR",
+>         "@define tag only permits literal types");
+> 
+150a159,168
+>   private boolean isValidDefineType(JSTypeExpression expression) {
+>     JSType type = expression.evaluate(null, compiler.getTypeRegistry());
+>     return !type.isUnknownType() && type.isSubtype(
+>         compiler.getTypeRegistry().getNativeType(
+>             JSTypeNative.NUMBER_STRING_BOOLEAN));
+>   }
+> 
+>   
+> 
+> 
+159c177,187
+<         allDefines.add(name);
+---
+>         
+>         
+>         if (isValidDefineType(name.docInfo.getType())) {
+>           allDefines.add(name);
+>         } else {
+>           JSError error = JSError.make(
+>               name.declaration.sourceName,
+>               name.declaration.node,
+>               INVALID_DEFINE_TYPE_ERROR);
+>           compiler.report(error);
+>         }

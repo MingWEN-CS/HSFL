@@ -1,0 +1,41 @@
+546,557c546
+<             try {
+<                 Method mth = other.getClass().getMethod("getName", null);
+<                 String name = (String) mth.invoke(other, null);
+<                 return iName.equals(name);
+<             } catch (NoSuchMethodException e) {
+<                 
+<             } catch (IllegalAccessException e) {
+<                 
+<             } catch (InvocationTargetException e) {
+<                 
+<             }
+<             return false;
+---
+>             return iName.equals( getNameInOtherClassLoader(other) );
+582a572,574
+> 
+> 
+> 
+586a579,583
+>         if (other.getClass() != this.getClass()) {
+>             if (other.getClass().getName().equals(this.getClass().getName())) {
+>                 return iName.compareTo( getNameInOtherClassLoader(other) );
+>             }
+>         }
+587a585,599
+>     }
+> 
+>     private String getNameInOtherClassLoader(Object other) {
+>         try {
+>             Method mth = other.getClass().getMethod("getName", null);
+>             String name = (String) mth.invoke(other, null);
+>             return name;
+>         } catch (NoSuchMethodException e) {
+>             
+>         } catch (IllegalAccessException e) {
+>             
+>         } catch (InvocationTargetException e) {
+>             
+>         }
+>         throw new IllegalStateException("This should not happen");

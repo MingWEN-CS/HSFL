@@ -1,0 +1,108 @@
+33a34
+> import org.joda.time.format.DateTimeFormat;
+840a842,854
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+842c856,944
+<         return getOffset(instantLocal - getOffset(instantLocal));
+---
+>         
+>         int offsetLocal = getOffset(instantLocal);
+>         
+>         int offsetAdjusted = getOffset(instantLocal - offsetLocal);
+>         
+>         if (offsetLocal != offsetAdjusted) {
+>             
+>             
+>             if (offsetLocal < 0) {
+>                 
+>                 
+>                 
+>                 long nextLocal = nextTransition(instantLocal - offsetLocal);
+>                 long nextAdjusted = nextTransition(instantLocal - offsetAdjusted);
+>                 if (nextLocal != nextAdjusted) {
+>                     return offsetLocal;
+>                 }
+>             }
+>         }
+>         return offsetAdjusted;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long convertUTCToLocal(long instantUTC) {
+>         int offset = getOffset(instantUTC);
+>         long instantLocal = instantUTC + offset;
+>         
+>         if ((instantUTC ^ instantLocal) < 0 && (instantUTC ^ offset) >= 0) {
+>             throw new ArithmeticException("Adding time zone offset caused overflow");
+>         }
+>         return instantLocal;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long convertLocalToUTC(long instantLocal, boolean strict) {
+>         
+>         int offsetLocal = getOffset(instantLocal);
+>         
+>         int offset = getOffset(instantLocal - offsetLocal);
+>         
+>         if (offsetLocal != offset) {
+>             
+>             
+>             
+>             if (strict || offsetLocal < 0) {
+>                 
+>                 long nextLocal = nextTransition(instantLocal - offsetLocal);
+>                 long nextAdjusted = nextTransition(instantLocal - offset);
+>                 if (nextLocal != nextAdjusted) {
+>                     
+>                     if (strict) {
+>                         
+>                         throw new IllegalArgumentException("Illegal instant due to time zone offset transition: " +
+>                                 DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS").print(new Instant(instantLocal)) +
+>                                 " (" + getID() + ")");
+>                     } else {
+>                         
+>                         
+>                         
+>                         offset = offsetLocal;
+>                     }
+>                 }
+>             }
+>         }
+>         
+>         long instantUTC = instantLocal - offset;
+>         
+>         if ((instantLocal ^ instantUTC) < 0 && (instantLocal ^ offset) < 0) {
+>             throw new ArithmeticException("Subtracting time zone offset caused overflow");
+>         }
+>         return instantUTC;

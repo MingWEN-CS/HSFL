@@ -1,0 +1,184 @@
+971c971
+<             if (iFieldType >= 8) {
+---
+>             if (iFieldType >= SECONDS_MILLIS) {
+997c997
+<             if (iFieldType >= 8) {
+---
+>             if (iFieldType >= SECONDS_MILLIS) {
+1010c1010
+<             if (iFieldType >= 8) {
+---
+>             if (iFieldType >= SECONDS_MILLIS) {
+1028c1028
+<             if (iFieldType >= 8) {
+---
+>             if (iFieldType >= SECONDS_MILLIS) {
+1041c1041
+<             if (iFieldType >= 8) {
+---
+>             if (iFieldType >= SECONDS_MILLIS) {
+1114d1113
+<             boolean negative = false;
+1116c1115,1116
+<             int dp = -1;
+---
+>             int fractPos = -1;
+>             boolean hasDigits = false;
+1121,1122c1121
+<                     negative = (c == '-');
+<                     if (negative) {
+---
+>                     if (c == '-') {
+1133,1135c1132,1137
+<                 if (c < '0' || c > '9') {
+<                     if (c == '.' && (iFieldType == SECONDS_MILLIS || iFieldType == SECONDS_OPTIONAL_MILLIS)) {
+<                         if (dp >= 0) {
+---
+>                 if (c >= '0' && c <= '9') {
+>                     hasDigits = true;
+>                 } else {
+>                     if ((c == '.' || c == ',')
+>                          && (iFieldType == SECONDS_MILLIS || iFieldType == SECONDS_OPTIONAL_MILLIS)) {
+>                         if (fractPos >= 0) {
+1137c1139
+<                             return position + length;
+---
+>                             break;
+1139c1141,1143
+<                         dp = length;
+---
+>                         fractPos = position + length + 1;
+>                         
+>                         limit = Math.min(limit + 1, text.length() - position);
+1146c1150,1151
+<             if (length == 0 || (length == 1 && dp == 0) || (dp == -1 && iFieldType == SECONDS_MILLIS)) {
+---
+> 
+>             if (!hasDigits) {
+1157,1161c1162,1176
+<             
+<             if (iFieldType == SECONDS_MILLIS || iFieldType == SECONDS_OPTIONAL_MILLIS) {
+<                 if (dp == -1) {
+<                     position = parseField(period, text, position, negative, length, SECONDS);
+<                     setFieldValue(period, MILLIS, 0);
+---
+> 
+>             if (iFieldType != SECONDS_MILLIS && iFieldType != SECONDS_OPTIONAL_MILLIS) {
+>                 
+>                 setFieldValue(period, iFieldType, parseInt(text, position, length));
+>             } else if (fractPos < 0) {
+>                 setFieldValue(period, SECONDS, parseInt(text, position, length));
+>                 setFieldValue(period, MILLIS, 0);
+>             } else {
+>                 int wholeValue = parseInt(text, position, fractPos - position - 1);
+>                 setFieldValue(period, SECONDS, wholeValue);
+> 
+>                 int fractLen = position + length - fractPos;
+>                 int fractValue;
+>                 if (fractLen <= 0) {
+>                     fractValue = 0;
+1163,1164c1178,1179
+<                     if (dp > 0) {
+<                         position = parseField(period, text, position, negative, dp, SECONDS);
+---
+>                     if (fractLen >= 3) {
+>                         fractValue = parseInt(text, fractPos, 3);
+1166c1181,1186
+<                         setFieldValue(period, SECONDS, 0);
+---
+>                         fractValue = parseInt(text, fractPos, fractLen);
+>                         if (fractLen == 1) {
+>                             fractValue *= 100;
+>                         } else {
+>                             fractValue *= 10;
+>                         }
+1168,1176c1188,1189
+<                     position++; 
+<                     int millisLength = length - 1 - dp;
+<                     if (millisLength > 3) {
+<                         position = parseField(period, text, position, false, 3, MILLIS);
+<                         position += (millisLength - 3);
+<                     } else if (millisLength == 0) {
+<                         setFieldValue(period, MILLIS, 0);
+<                     } else {
+<                         position = parseField(period, text, position, false, millisLength, MILLIS);
+---
+>                     if (wholeValue < 0) {
+>                         fractValue = -fractValue;
+1179,1180c1192,1193
+<             } else {
+<                 position = parseField(period, text, position, negative, length, iFieldType);
+---
+> 
+>                 setFieldValue(period, MILLIS, fractValue);
+1182a1196,1197
+>             position += length;
+> 
+1190,1196c1205,1212
+<         private int parseField(
+<                 ReadWritablePeriod period, String text, int position,
+<                 boolean negative, int length, int type) {
+<             
+<             int value;
+<             if (length >= 9) {
+<                 
+---
+>         
+> 
+> 
+> 
+> 
+> 
+>         private int parseInt(String text, int position, int length) {
+>             if (length >= 10) {
+1198,1211c1214,1224
+<                 value = Integer.parseInt
+<                     (text.substring(position, position += length));
+<             } else {
+<                 int i = position;
+<                 if (negative) {
+<                     i++;
+<                 }
+<                 value = text.charAt(i++) - '0';
+<                 position += length;
+<                 while (i < position) {
+<                     value = ((value << 3) + (value << 1)) + text.charAt(i++) - '0';
+<                 }
+<                 if (negative) {
+<                     value = -value;
+---
+>                 return Integer.parseInt(text.substring(position, position + length));
+>             }
+>             if (length <= 0) {
+>                 return 0;
+>             }
+>             int value = text.charAt(position++);
+>             length--;
+>             boolean negative;
+>             if (value == '-') {
+>                 if (--length < 0) {
+>                     return 0;
+1212a1226,1229
+>                 negative = true;
+>                 value = text.charAt(position++);
+>             } else {
+>                 negative = false;
+1214,1216c1231,1235
+<             
+<             setFieldValue(period, type, value);
+<             return position;
+---
+>             value -= '0';
+>             while (length-- > 0) {
+>                 value = ((value << 3) + (value << 1)) + text.charAt(position++) - '0';
+>             }
+>             return negative ? -value : value;
+1233c1252
+<             int value;
+---
+>             long value;
+1266c1285
+<                 value = seconds * DateTimeConstants.MILLIS_PER_SECOND + millis;
+---
+>                 value = (seconds * (long) DateTimeConstants.MILLIS_PER_SECOND) + millis;

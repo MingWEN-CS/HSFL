@@ -1,0 +1,259 @@
+23a24,25
+> import org.apache.commons.math.ode.EquationsMapper;
+> 
+59a62,73
+>   protected double[] interpolatedPrimaryState;
+> 
+>   
+>   protected double[] interpolatedPrimaryDerivatives;
+> 
+>   
+>   protected double[][] interpolatedSecondaryState;
+> 
+>   
+>   protected double[][] interpolatedSecondaryDerivatives;
+> 
+>   
+79a94,98
+>   
+>   private EquationsMapper primaryMapper;
+> 
+>   
+>   private EquationsMapper[] secondaryMappers;
+93,104c112,124
+<     globalPreviousTime      = Double.NaN;
+<     globalCurrentTime       = Double.NaN;
+<     softPreviousTime        = Double.NaN;
+<     softCurrentTime         = Double.NaN;
+<     h                       = Double.NaN;
+<     interpolatedTime        = Double.NaN;
+<     currentState            = null;
+<     interpolatedState       = null;
+<     interpolatedDerivatives = null;
+<     finalized               = false;
+<     this.forward            = true;
+<     this.dirtyState         = true;
+---
+>     globalPreviousTime = Double.NaN;
+>     globalCurrentTime  = Double.NaN;
+>     softPreviousTime   = Double.NaN;
+>     softCurrentTime    = Double.NaN;
+>     h                  = Double.NaN;
+>     interpolatedTime   = Double.NaN;
+>     currentState       = null;
+>     finalized          = false;
+>     this.forward       = true;
+>     this.dirtyState    = true;
+>     primaryMapper      = null;
+>     secondaryMappers   = null;
+>     allocateInterpolatedArrays(-1, null, null);
+112d131
+<   protected AbstractStepInterpolator(final double[] y, final boolean forward) {
+114,119d132
+<     globalPreviousTime = Double.NaN;
+<     globalCurrentTime  = Double.NaN;
+<     softPreviousTime   = Double.NaN;
+<     softCurrentTime    = Double.NaN;
+<     h                  = Double.NaN;
+<     interpolatedTime   = Double.NaN;
+121,127c134,150
+<     currentState            = y;
+<     interpolatedState       = new double[y.length];
+<     interpolatedDerivatives = new double[y.length];
+< 
+<     finalized         = false;
+<     this.forward      = forward;
+<     this.dirtyState   = true;
+---
+>   protected AbstractStepInterpolator(final double[] y, final boolean forward,
+>                                      final EquationsMapper primaryMapper,
+>                                      final EquationsMapper[] secondaryMappers) {
+> 
+>     globalPreviousTime    = Double.NaN;
+>     globalCurrentTime     = Double.NaN;
+>     softPreviousTime      = Double.NaN;
+>     softCurrentTime       = Double.NaN;
+>     h                     = Double.NaN;
+>     interpolatedTime      = Double.NaN;
+>     currentState          = y;
+>     finalized             = false;
+>     this.forward          = forward;
+>     this.dirtyState       = true;
+>     this.primaryMapper    = primaryMapper;
+>     this.secondaryMappers = (secondaryMappers == null) ? null : secondaryMappers.clone();
+>     allocateInterpolatedArrays(y.length, primaryMapper, secondaryMappers);
+157,160c180,182
+<     if (interpolator.currentState != null) {
+<       currentState            = interpolator.currentState.clone();
+<       interpolatedState       = interpolator.interpolatedState.clone();
+<       interpolatedDerivatives = interpolator.interpolatedDerivatives.clone();
+---
+>     if (interpolator.currentState == null) {
+>         currentState = null;
+>         allocateInterpolatedArrays(-1, null, null);
+162,164c184,194
+<       currentState            = null;
+<       interpolatedState       = null;
+<       interpolatedDerivatives = null;
+---
+>       currentState                     = interpolator.currentState.clone();
+>       interpolatedState                = interpolator.interpolatedState.clone();
+>       interpolatedDerivatives          = interpolator.interpolatedDerivatives.clone();
+>       interpolatedPrimaryState         = interpolator.interpolatedPrimaryState.clone();
+>       interpolatedPrimaryDerivatives   = interpolator.interpolatedPrimaryDerivatives.clone();
+>       interpolatedSecondaryState       = new double[interpolator.interpolatedSecondaryState.length][];
+>       interpolatedSecondaryDerivatives = new double[interpolator.interpolatedSecondaryDerivatives.length][];
+>       for (int i = 0; i < interpolatedSecondaryState.length; ++i) {
+>           interpolatedSecondaryState[i]       = interpolator.interpolatedSecondaryState[i].clone();
+>           interpolatedSecondaryDerivatives[i] = interpolator.interpolatedSecondaryDerivatives[i].clone();
+>       }
+167,169c197,202
+<     finalized  = interpolator.finalized;
+<     forward    = interpolator.forward;
+<     dirtyState = interpolator.dirtyState;
+---
+>     finalized        = interpolator.finalized;
+>     forward          = interpolator.forward;
+>     dirtyState       = interpolator.dirtyState;
+>     primaryMapper    = interpolator.primaryMapper;
+>     secondaryMappers = (interpolator.secondaryMappers == null) ?
+>                        null : interpolator.secondaryMappers.clone();
+178c211,241
+<   protected void reinitialize(final double[] y, final boolean isForward) {
+---
+>   private void allocateInterpolatedArrays(final int dimension,
+>                                           final EquationsMapper primaryMapper,
+>                                           final EquationsMapper[] secondaryMappers) {
+>       if (dimension < 0) {
+>           interpolatedState                = null;
+>           interpolatedDerivatives          = null;
+>           interpolatedPrimaryState         = null;
+>           interpolatedPrimaryDerivatives   = null;
+>           interpolatedSecondaryState       = null;
+>           interpolatedSecondaryDerivatives = null;
+>       } else {
+>           interpolatedState                = new double[dimension];
+>           interpolatedDerivatives          = new double[dimension];
+>           interpolatedPrimaryState         = new double[primaryMapper.getDimension()];
+>           interpolatedPrimaryDerivatives   = new double[primaryMapper.getDimension()];
+>           if (secondaryMappers == null) {
+>               interpolatedSecondaryState       = null;
+>               interpolatedSecondaryDerivatives = null;
+>           } else {
+>               interpolatedSecondaryState       = new double[secondaryMappers.length][];
+>               interpolatedSecondaryDerivatives = new double[secondaryMappers.length][];
+>               for (int i = 0; i < secondaryMappers.length; ++i) {
+>                   interpolatedSecondaryState[i]       = new double[secondaryMappers[i].getDimension()];
+>                   interpolatedSecondaryDerivatives[i] = new double[secondaryMappers[i].getDimension()];
+>               }
+>           }
+>       }
+>   }
+> 
+>   
+> 
+180,185d242
+<     globalPreviousTime = Double.NaN;
+<     globalCurrentTime  = Double.NaN;
+<     softPreviousTime   = Double.NaN;
+<     softCurrentTime    = Double.NaN;
+<     h                  = Double.NaN;
+<     interpolatedTime   = Double.NaN;
+187,193c244,262
+<     currentState            = y;
+<     interpolatedState       = new double[y.length];
+<     interpolatedDerivatives = new double[y.length];
+< 
+<     finalized         = false;
+<     this.forward      = isForward;
+<     this.dirtyState   = true;
+---
+> 
+> 
+>   protected void reinitialize(final double[] y, final boolean isForward,
+>                               final EquationsMapper primaryMapper,
+>                               final EquationsMapper[] secondaryMappers) {
+> 
+>     globalPreviousTime    = Double.NaN;
+>     globalCurrentTime     = Double.NaN;
+>     softPreviousTime      = Double.NaN;
+>     softCurrentTime       = Double.NaN;
+>     h                     = Double.NaN;
+>     interpolatedTime      = Double.NaN;
+>     currentState          = y;
+>     finalized             = false;
+>     this.forward          = isForward;
+>     this.dirtyState       = true;
+>     this.primaryMapper    = primaryMapper;
+>     this.secondaryMappers = secondaryMappers.clone();
+>     allocateInterpolatedArrays(y.length, primaryMapper, secondaryMappers);
+332d400
+<   public double[] getInterpolatedState() {
+333a402
+>   private void evaluateCompleteInterpolatedState() {
+340a410
+>   }
+342,343c412,417
+<       return interpolatedState;
+< 
+---
+>   
+>   public double[] getInterpolatedState() {
+>       evaluateCompleteInterpolatedState();
+>       primaryMapper.extractEquationData(interpolatedState,
+>                                         interpolatedPrimaryState);
+>       return interpolatedPrimaryState;
+347a422,426
+>       evaluateCompleteInterpolatedState();
+>       primaryMapper.extractEquationData(interpolatedDerivatives,
+>                                         interpolatedPrimaryDerivatives);
+>       return interpolatedPrimaryDerivatives;
+>   }
+349,357c428,434
+<       
+<       if (dirtyState) {
+<           final double oneMinusThetaH = globalCurrentTime - interpolatedTime;
+<           final double theta = (h == 0) ? 0 : (h - oneMinusThetaH) / h;
+<           computeInterpolatedStateAndDerivatives(theta, oneMinusThetaH);
+<           dirtyState = false;
+<       }
+< 
+<       return interpolatedDerivatives;
+---
+>   
+>   public double[] getInterpolatedSecondaryState(final int index) {
+>       evaluateCompleteInterpolatedState();
+>       secondaryMappers[index].extractEquationData(interpolatedState,
+>                                                   interpolatedSecondaryState[index]);
+>       return interpolatedSecondaryState[index];
+>   }
+358a436,441
+>   
+>   public double[] getInterpolatedSecondaryDerivatives(final int index) {
+>       evaluateCompleteInterpolatedState();
+>       secondaryMappers[index].extractEquationData(interpolatedDerivatives,
+>                                                   interpolatedSecondaryDerivatives[index]);
+>       return interpolatedSecondaryDerivatives[index];
+441a525,529
+>     out.writeObject(primaryMapper);
+>     out.write(secondaryMappers.length);
+>     for (final EquationsMapper  mapper : secondaryMappers) {
+>         out.writeObject(mapper);
+>     }
+475c563
+<     throws IOException {
+---
+>     throws IOException, ClassNotFoundException {
+483a572,576
+>     primaryMapper       = (EquationsMapper) in.readObject();
+>     secondaryMappers    = new EquationsMapper[in.read()];
+>     for (int i = 0; i < secondaryMappers.length; ++i) {
+>         secondaryMappers[i] = (EquationsMapper) in.readObject();
+>     }
+496,498c589,590
+<     interpolatedTime        = Double.NaN;
+<     interpolatedState       = (dimension < 0) ? null : new double[dimension];
+<     interpolatedDerivatives = (dimension < 0) ? null : new double[dimension];
+---
+>     interpolatedTime = Double.NaN;
+>     allocateInterpolatedArrays(dimension, primaryMapper, secondaryMappers);

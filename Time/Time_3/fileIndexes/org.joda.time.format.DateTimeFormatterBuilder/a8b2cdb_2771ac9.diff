@@ -1,0 +1,247 @@
+66a67
+> import org.joda.time.partial.ReadablePartial;
+976a978,989
+> 
+>         protected void appendUnknownString(StringBuffer buf, int len) {
+>             for (int i = len; --i >= 0;) {
+>                 buf.append('\ufffd');
+>             }
+>         }
+> 
+>         protected void printUnknownString(Writer out, int len) throws IOException {
+>             for (int i = len; --i >= 0;) {
+>                 out.write('\ufffd');
+>             }
+>         }
+1002a1016,1023
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             buf.append(iValue);
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             out.write(iValue);
+>         }
+> 
+1006a1028,1031
+>         public String print(ReadablePartial partial) {
+>             return String.valueOf(iValue);
+>         }
+> 
+1058a1084,1091
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             buf.append(iValue);
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             out.write(iValue);
+>         }
+> 
+1062a1096,1099
+>         public String print(ReadablePartial partial) {
+>             return iValue;
+>         }
+> 
+1177a1215,1238
+> 
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             if (partial.isSupported(iField)) {
+>                 try {
+>                     FormatUtils.appendUnpaddedInteger(buf, partial.get(iField));
+>                 } catch (RuntimeException e) {
+>                     buf.append('\ufffd');
+>                 }
+>             } else {
+>                 buf.append('\ufffd');
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             if (partial.isSupported(iField)) {
+>                 try {
+>                     FormatUtils.writeUnpaddedInteger(out, partial.get(iField));
+>                 } catch (RuntimeException e) {
+>                     out.write('\ufffd');
+>                 }
+>             } else {
+>                 out.write('\ufffd');
+>             }
+>         }
+1198,1199c1259
+<                 FormatUtils.appendPaddedInteger
+<                     (buf, iField.get(instantLocal), iMinPrintedDigits);
+---
+>                 FormatUtils.appendPaddedInteger(buf, iField.get(instantLocal), iMinPrintedDigits);
+1201,1203c1261
+<                 for (int i=iMinPrintedDigits; --i>=0; ) {
+<                     buf.append('\ufffd');
+<                 }
+---
+>                 appendUnknownString(buf, iMinPrintedDigits);
+1210,1211c1268
+<                 FormatUtils.writePaddedInteger
+<                     (out, iField.get(instantLocal), iMinPrintedDigits);
+---
+>                 FormatUtils.writePaddedInteger(out, iField.get(instantLocal), iMinPrintedDigits);
+1213,1214c1270,1291
+<                 for (int i=iMinPrintedDigits; --i>=0; ) {
+<                     out.write('\ufffd');
+---
+>                 printUnknownString(out, iMinPrintedDigits);
+>             }
+>         }
+> 
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             if (partial.isSupported(iField)) {
+>                 try {
+>                     FormatUtils.appendPaddedInteger(buf, partial.get(iField), iMinPrintedDigits);
+>                 } catch (RuntimeException e) {
+>                     appendUnknownString(buf, iMinPrintedDigits);
+>                 }
+>             } else {
+>                 appendUnknownString(buf, iMinPrintedDigits);
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             if (partial.isSupported(iField)) {
+>                 try {
+>                     FormatUtils.writePaddedInteger(out, partial.get(iField), iMinPrintedDigits);
+>                 } catch (RuntimeException e) {
+>                     printUnknownString(out, iMinPrintedDigits);
+1215a1293,1294
+>             } else {
+>                 printUnknownString(out, iMinPrintedDigits);
+1305a1385,1417
+> 
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             int year = getTwoDigitYear(partial);
+>             if (year < 0) {
+>                 buf.append('\ufffd');
+>                 buf.append('\ufffd');
+>             } else {
+>                 FormatUtils.appendPaddedInteger(buf, year, 2);
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             int year = getTwoDigitYear(partial);
+>             if (year < 0) {
+>                 out.write('\ufffd');
+>                 out.write('\ufffd');
+>             } else {
+>                 FormatUtils.writePaddedInteger(out, year, 2);
+>             }
+>         }
+> 
+>         private int getTwoDigitYear(ReadablePartial partial) {
+>             if (partial.isSupported(iField)) {
+>                 try {
+>                     int year = partial.get(iField);
+>                     if (year < 0) {
+>                         year = -year;
+>                     }
+>                     return year % 100;
+>                 } catch (RuntimeException e) {}
+>             } 
+>             return -1;
+>         }
+1352a1465,1480
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             try {
+>                 buf.append(print(partial));
+>             } catch (RuntimeException e) {
+>                 buf.append('\ufffd');
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             try {
+>                 out.write(print(partial));
+>             } catch (RuntimeException e) {
+>                 out.write('\ufffd');
+>             }
+>         }
+> 
+1360a1489,1500
+>         public final String print(ReadablePartial partial) {
+>             if (partial.isSupported(iField)) {
+>                 if (iShort) {
+>                     return iField.getAsShortText(partial, iLocale);
+>                 } else {
+>                     return iField.getAsText(partial, iLocale);
+>                 }
+>             } else {
+>                 return "\ufffd";
+>             }
+>         }
+> 
+1465a1606,1627
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             if (partial.isSupported(iField)) {
+>                 long millis = partial.resolve(0L, DateTimeZone.UTC);
+>                 try {
+>                     printTo(buf, null, millis);
+>                 } catch (IOException e) {
+>                     
+>                 }
+>             } else {
+>                 buf.append('\ufffd');
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             if (partial.isSupported(iField)) {
+>                 long millis = partial.resolve(0L, DateTimeZone.UTC);
+>                 printTo(null, out, millis);
+>             } else {
+>                 out.write('\ufffd');
+>             }
+>         }
+> 
+1744a1907,1914
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             
+>         }
+> 
+1988a2159,2166
+> 
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             
+>         }
+2053d2230
+< 
+2067d2243
+< 
+2074a2251,2274
+>             }
+>         }
+> 
+>         public void printTo(StringBuffer buf, ReadablePartial partial) {
+>             DateTimePrinter[] elements = iPrinters;
+>             if (elements == null) {
+>                 throw new UnsupportedOperationException();
+>             }
+> 
+>             int len = elements.length;
+>             for (int i=0; i<len; i++) {
+>                 elements[i].printTo(buf, partial);
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePartial partial) throws IOException {
+>             DateTimePrinter[] elements = iPrinters;
+>             if (elements == null) {
+>                 throw new UnsupportedOperationException();
+>             }
+> 
+>             int len = elements.length;
+>             for (int i=0; i<len; i++) {
+>                 elements[i].printTo(out, partial);

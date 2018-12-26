@@ -1,0 +1,124 @@
+92,98d91
+<     public static byte indicator(final byte x) {
+<         return (x >= ZB) ? PB : NB;
+<     }
+< 
+<     
+< 
+< 
+104,109d96
+<     public static double indicator(final double x) {
+<         if (Double.isNaN(x)) {
+<             return Double.NaN;
+<         }
+<         return (x >= 0.0) ? 1.0 : -1.0;
+<     }
+111d97
+<     
+118,123c104,106
+<     public static float indicator(final float x) {
+<         if (Float.isNaN(x)) {
+<             return Float.NaN;
+<         }
+<         return (x >= 0.0F) ? 1.0F : -1.0F;
+<     }
+---
+>      public static double normalizeAngle(double a, double center) {
+>          return a - TWO_PI * FastMath.floor((a + FastMath.PI - center) / TWO_PI);
+>      }
+131,133d113
+<     public static int indicator(final int x) {
+<         return (x >= 0) ? 1 : -1;
+<     }
+135d114
+<     
+141,146d119
+<     public static long indicator(final long x) {
+<         return (x >= 0L) ? 1L : -1L;
+<     }
+< 
+<     
+< 
+151,153c124,128
+< 
+<     public static short indicator(final short x) {
+<         return (x >= ZS) ? PS : NS;
+---
+>     public static double reduce(double a,
+>                                 double period,
+>                                 double offset) {
+>         final double p = FastMath.abs(period);
+>         return a - p * FastMath.floor((a - offset) / p) - offset;
+165a141,143
+>     public static byte sign(final byte x) {
+>         return (x == ZB) ? ZB : (x > ZB) ? PB : NB;
+>     }
+166a145
+>     
+175,183d153
+<      public static double normalizeAngle(double a, double center) {
+<          return a - TWO_PI * FastMath.floor((a + FastMath.PI - center) / TWO_PI);
+<      }
+< 
+<     
+< 
+< 
+< 
+< 
+184a155,165
+>     public static byte copySign(byte magnitude, byte sign) {
+>         if ((magnitude >= 0 && sign >= 0) ||
+>             (magnitude < 0 && sign < 0)) { 
+>             return magnitude;
+>         } else if (sign >= 0 &&
+>                    magnitude == Byte.MIN_VALUE) {
+>             throw new MathArithmeticException(LocalizedFormats.OVERFLOW);
+>         } else {
+>             return (byte) -magnitude; 
+>         }
+>     }
+185a167
+>     
+195,199c177,186
+<     public static double reduce(double a,
+<                                 double period,
+<                                 double offset) {
+<         final double p = FastMath.abs(period);
+<         return a - p * FastMath.floor((a - offset) / p) - offset;
+---
+>     public static short copySign(short magnitude, short sign) {
+>         if ((magnitude >= 0 && sign >= 0) ||
+>             (magnitude < 0 && sign < 0)) { 
+>             return magnitude;
+>         } else if (sign >= 0 &&
+>                    magnitude == Short.MIN_VALUE) {
+>             throw new MathArithmeticException(LocalizedFormats.OVERFLOW);
+>         } else {
+>             return (short) -magnitude; 
+>         }
+212,213c199,208
+<     public static byte sign(final byte x) {
+<         return (x == ZB) ? ZB : (x > ZB) ? PB : NB;
+---
+>     public static int copySign(int magnitude, int sign) {
+>         if ((magnitude >= 0 && sign >= 0) ||
+>             (magnitude < 0 && sign < 0)) { 
+>             return magnitude;
+>         } else if (sign >= 0 &&
+>                    magnitude == Integer.MIN_VALUE) {
+>             throw new MathArithmeticException(LocalizedFormats.OVERFLOW);
+>         } else {
+>             return (int) -magnitude; 
+>         }
+226c221
+<     public static byte copySign(byte magnitude, byte sign) {
+---
+>     public static long copySign(long magnitude, long sign) {
+231c226
+<                    magnitude == Byte.MIN_VALUE) {
+---
+>                    magnitude == Long.MIN_VALUE) {
+234c229
+<             return (byte) -magnitude; 
+---
+>             return (long) -magnitude; 

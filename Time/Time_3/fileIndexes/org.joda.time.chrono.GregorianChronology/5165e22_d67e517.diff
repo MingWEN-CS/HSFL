@@ -1,0 +1,59 @@
+22d21
+< import org.joda.time.ChronologyType;
+46c45
+< public final class GregorianChronology extends CommonGJChronology {
+---
+> public final class GregorianChronology extends BasicGJChronology {
+63,66c62
+<     
+<     
+<     
+<     private static final int MAX_YEAR = 292277023;
+---
+>     private static final int MAX_YEAR = 292278993;
+72c68
+<     private static final Map cCache = new HashMap();
+---
+>     private static final Map<DateTimeZone, GregorianChronology[]> cCache = new HashMap<DateTimeZone, GregorianChronology[]>();
+120c116
+<             GregorianChronology[] chronos = (GregorianChronology[]) cCache.get(zone);
+---
+>             GregorianChronology[] chronos = cCache.get(zone);
+160,171c156,160
+<         return base == null ? getInstanceUTC() : getInstance(base.getZone());
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+<     public ChronologyType getType() {
+<         return ChronologyType.gregorian();
+---
+>         int minDays = getMinimumDaysInFirstWeek();
+>         minDays = (minDays == 0 ? 4 : minDays);  
+>         return base == null ?
+>                 getInstance(DateTimeZone.UTC, minDays) :
+>                     getInstance(base.getZone(), minDays);
+212,218d200
+<         if (year > MAX_YEAR) {
+<             throw new ArithmeticException("Year is too large: " + year + " > " + MAX_YEAR);
+<         }
+<         if (year < MIN_YEAR) {
+<             throw new ArithmeticException("Year is too small: " + year + " < " + MIN_YEAR);
+<         }
+< 
+249a232,235
+>     long getAverageMillisPerYearDividedByTwo() {
+>         return MILLIS_PER_YEAR / 2;
+>     }
+> 
+254,255c240,241
+<     long getApproxMillisAtEpoch() {
+<         return 1970L * MILLIS_PER_YEAR;
+---
+>     long getApproxMillisAtEpochDividedByTwo() {
+>         return (1970L * MILLIS_PER_YEAR) / 2;

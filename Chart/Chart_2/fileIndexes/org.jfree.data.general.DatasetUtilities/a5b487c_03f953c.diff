@@ -1,0 +1,239 @@
+114a115,117
+> 
+> 
+> 
+691,692c694,699
+<                     minimum = Math.min(minimum, lvalue);
+<                     maximum = Math.max(maximum, uvalue);
+---
+>                     if (!Double.isNaN(lvalue)) {
+>                         minimum = Math.min(minimum, lvalue);
+>                     }
+>                     if (!Double.isNaN(uvalue)) {
+>                         maximum = Math.max(maximum, uvalue);
+>                     }
+702,703c709,712
+<                     minimum = Math.min(minimum, lvalue);
+<                     maximum = Math.max(maximum, uvalue);
+---
+>                     if (!Double.isNaN(lvalue)) {
+>                         minimum = Math.min(minimum, lvalue);
+>                         maximum = Math.max(maximum, uvalue);
+>                     }
+831c840
+<                     if (lvalue != null) {
+---
+>                     if (lvalue != null && !Double.isNaN(lvalue.doubleValue())) {
+834c843
+<                     if (uvalue != null) {
+---
+>                     if (uvalue != null && !Double.isNaN(uvalue.doubleValue())) {
+847,848c856,859
+<                         minimum = Math.min(minimum, v);
+<                         maximum = Math.max(maximum, v);
+---
+>                         if (!Double.isNaN(v)) {
+>                             minimum = Math.min(minimum, v);
+>                             maximum = Math.max(maximum, v);
+>                         }
+1367c1378,1381
+< 
+---
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         boolean hasValidData = false;
+1369d1382
+<         if (dataset != null) {
+1371,1377c1384,1389
+<             
+<             int[] groupIndex = new int[dataset.getRowCount()];
+<             for (int i = 0; i < dataset.getRowCount(); i++) {
+<                 groupIndex[i] = map.getGroupIndex(
+<                     map.getGroup(dataset.getRowKey(i))
+<                 );
+<             }
+---
+>         
+>         int[] groupIndex = new int[dataset.getRowCount()];
+>         for (int i = 0; i < dataset.getRowCount(); i++) {
+>             groupIndex[i] = map.getGroupIndex(map.getGroup(
+>                     dataset.getRowKey(i)));
+>         }
+1379,1394c1391,1407
+<             
+<             int groupCount = map.getGroupCount();
+<             double[] minimum = new double[groupCount];
+<             double[] maximum = new double[groupCount];
+< 
+<             int categoryCount = dataset.getColumnCount();
+<             for (int item = 0; item < categoryCount; item++) {
+<                 double[] positive = new double[groupCount];
+<                 double[] negative = new double[groupCount];
+<                 int seriesCount = dataset.getRowCount();
+<                 for (int series = 0; series < seriesCount; series++) {
+<                     Number number = dataset.getValue(series, item);
+<                     if (number != null) {
+<                         double value = number.doubleValue();
+<                         if (value > 0.0) {
+<                             positive[groupIndex[series]]
+---
+>         
+>         int groupCount = map.getGroupCount();
+>         double[] minimum = new double[groupCount];
+>         double[] maximum = new double[groupCount];
+> 
+>         int categoryCount = dataset.getColumnCount();
+>         for (int item = 0; item < categoryCount; item++) {
+>             double[] positive = new double[groupCount];
+>             double[] negative = new double[groupCount];
+>             int seriesCount = dataset.getRowCount();
+>             for (int series = 0; series < seriesCount; series++) {
+>                 Number number = dataset.getValue(series, item);
+>                 if (number != null) {
+>                     hasValidData = true;
+>                     double value = number.doubleValue();
+>                     if (value > 0.0) {
+>                         positive[groupIndex[series]]
+1396,1398c1409,1411
+<                         }
+<                         if (value < 0.0) {
+<                             negative[groupIndex[series]]
+---
+>                     }
+>                     if (value < 0.0) {
+>                         negative[groupIndex[series]]
+1401d1413
+<                         }
+1404,1407d1415
+<                 for (int g = 0; g < groupCount; g++) {
+<                     minimum[g] = Math.min(minimum[g], negative[g]);
+<                     maximum[g] = Math.max(maximum[g], positive[g]);
+<                 }
+1408a1417,1422
+>             for (int g = 0; g < groupCount; g++) {
+>                 minimum[g] = Math.min(minimum[g], negative[g]);
+>                 maximum[g] = Math.max(maximum[g], positive[g]);
+>             }
+>         }
+>         if (hasValidData) {
+1410,1412c1424,1425
+<                 result = Range.combine(
+<                     result, new Range(minimum[j], maximum[j])
+<                 );
+---
+>                 result = Range.combine(result, new Range(minimum[j],
+>                         maximum[j]));
+1416d1428
+< 
+1427d1438
+<     public static Number findMinimumStackedRangeValue(CategoryDataset dataset) {
+1428a1440,1444
+> 
+>     public static Number findMinimumStackedRangeValue(CategoryDataset dataset) {
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+1430,1444c1446,1459
+<         if (dataset != null) {
+<             double minimum = 0.0;
+<             int categoryCount = dataset.getRowCount();
+<             for (int item = 0; item < categoryCount; item++) {
+<                 double total = 0.0;
+< 
+<                 int seriesCount = dataset.getColumnCount();
+<                 for (int series = 0; series < seriesCount; series++) {
+<                     Number number = dataset.getValue(series, item);
+<                     if (number != null) {
+<                         double value = number.doubleValue();
+<                         if (value < 0.0) {
+<                             total = total + value;
+<                             
+<                         }
+---
+>         boolean hasValidData = false;
+>         double minimum = 0.0;
+>         int categoryCount = dataset.getColumnCount();
+>         for (int item = 0; item < categoryCount; item++) {
+>             double total = 0.0;
+>             int seriesCount = dataset.getRowCount();
+>             for (int series = 0; series < seriesCount; series++) {
+>                 Number number = dataset.getValue(series, item);
+>                 if (number != null) {
+>                     hasValidData = true;
+>                     double value = number.doubleValue();
+>                     if (value < 0.0) {
+>                         total = total + value;
+>                         
+1447,1448d1461
+<                 minimum = Math.min(minimum, total);
+< 
+1449a1463,1465
+>             minimum = Math.min(minimum, total);
+>         }
+>         if (hasValidData) {
+1453d1468
+< 
+1464d1478
+<     public static Number findMaximumStackedRangeValue(CategoryDataset dataset) {
+1466d1479
+<         Number result = null;
+1468,1480c1481,1498
+<         if (dataset != null) {
+<             double maximum = 0.0;
+<             int categoryCount = dataset.getColumnCount();
+<             for (int item = 0; item < categoryCount; item++) {
+<                 double total = 0.0;
+<                 int seriesCount = dataset.getRowCount();
+<                 for (int series = 0; series < seriesCount; series++) {
+<                     Number number = dataset.getValue(series, item);
+<                     if (number != null) {
+<                         double value = number.doubleValue();
+<                         if (value > 0.0) {
+<                             total = total + value;
+<                         }
+---
+>     public static Number findMaximumStackedRangeValue(CategoryDataset dataset) {
+>         if (dataset == null) {
+>             throw new IllegalArgumentException("Null 'dataset' argument.");
+>         }
+>         Number result = null;
+>         boolean hasValidData = false;
+>         double maximum = 0.0;
+>         int categoryCount = dataset.getColumnCount();
+>         for (int item = 0; item < categoryCount; item++) {
+>             double total = 0.0;
+>             int seriesCount = dataset.getRowCount();
+>             for (int series = 0; series < seriesCount; series++) {
+>                 Number number = dataset.getValue(series, item);
+>                 if (number != null) {
+>                     hasValidData = true;
+>                     double value = number.doubleValue();
+>                     if (value > 0.0) {
+>                         total = total + value;
+1483d1500
+<                 maximum = Math.max(maximum, total);
+1484a1502,1504
+>             maximum = Math.max(maximum, total);
+>         }
+>         if (hasValidData) {
+1487d1506
+< 
+1489d1507
+< 
+1584d1601
+< 
+1588d1604
+< 
+1601,1603c1617,1621
+<                     runningTotal = runningTotal + value;
+<                     minimum = Math.min(minimum, runningTotal);
+<                     maximum = Math.max(maximum, runningTotal);
+---
+>                     if (!Double.isNaN(value)) {
+>                         runningTotal = runningTotal + value;
+>                         minimum = Math.min(minimum, runningTotal);
+>                         maximum = Math.max(maximum, runningTotal);
+>                     }
+1613d1630
+< 

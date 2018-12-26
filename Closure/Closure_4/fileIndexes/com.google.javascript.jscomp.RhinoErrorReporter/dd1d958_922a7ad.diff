@@ -1,0 +1,63 @@
+61c61
+<   private final AbstractCompiler compiler;
+---
+>   final AbstractCompiler compiler;
+112c112
+<   public void warning(String message, String sourceName, int line,
+---
+>   void warningAtLine(String message, String sourceName, int line,
+118c118
+<   public void error(String message, String sourceName, int line,
+---
+>   void errorAtLine(String message, String sourceName, int line,
+145a146,157
+> 
+>     @Override
+>     public void error(String message, String sourceName, int line,
+>         int lineOffset) {
+>       super.errorAtLine(message, sourceName, line, lineOffset);
+>     }
+> 
+>     @Override
+>     public void warning(String message, String sourceName, int line,
+>         int lineOffset) {
+>       super.warningAtLine(message, sourceName, line, lineOffset);
+>     }
+149c161
+<       implements com.google.javascript.rhino.head.ErrorReporter {
+---
+>       implements com.google.javascript.rhino.head.ast.IdeErrorReporter {
+166c178,191
+<       super.error(message, sourceName, line, lineOffset);
+---
+>       super.errorAtLine(message, sourceName, line, lineOffset);
+>     }
+> 
+>     @Override
+>     public void error(String message, String sourceName,
+>         int offset, int length) {
+>       int line = 1;
+>       int column = 0;
+>       SourceFile file = this.compiler.getSourceFileByName(sourceName);
+>       if (file != null) {
+>         line = file.getLineOfOffset(offset);
+>         column = file.getColumnOfOffset(offset);
+>       }
+>       super.errorAtLine(message, sourceName, line, column);
+172c197,210
+<       super.warning(message, sourceName, line, lineOffset);
+---
+>       super.warningAtLine(message, sourceName, line, lineOffset);
+>     }
+> 
+>     @Override
+>     public void warning(String message, String sourceName,
+>         int offset, int length) {
+>       int line = 1;
+>       int column = 0;
+>       SourceFile file = this.compiler.getSourceFileByName(sourceName);
+>       if (file != null) {
+>         line = file.getLineOfOffset(offset);
+>         column = file.getColumnOfOffset(offset);
+>       }
+>       super.errorAtLine(message, sourceName, line, column);

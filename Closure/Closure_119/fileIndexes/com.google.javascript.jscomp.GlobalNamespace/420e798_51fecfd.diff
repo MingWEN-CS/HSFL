@@ -1,0 +1,212 @@
+60d59
+<   private Scope globalScope;
+177a177,180
+>   static class AstChange {
+>     final JSModule module;
+>     final Scope scope;
+>     final Node node;
+179,187c182,186
+< 
+<   void scanNewNodes(Scope scope, Set<Node> newNodes) {
+<     NodeTraversal t = new NodeTraversal(compiler,
+<         new BuildGlobalNamespace(new NodeFilter(newNodes)));
+<     t.traverseAtScope(scope);
+<   }
+< 
+<   void scanNewNodes(Set<Node> newNodes) {
+<     scanNewNodes(globalScope, newNodes);
+---
+>     AstChange(JSModule module, Scope scope, Node node) {
+>       this.module = module;
+>       this.scope = scope;
+>       this.node = node;
+>     }
+194,205d192
+<   private static class NodeFilter implements Predicate<Node> {
+<     private final Set<Node> newNodes;
+< 
+<     NodeFilter(Set<Node> newNodes) {
+<       this.newNodes = newNodes;
+<     }
+< 
+<     @Override
+<     public boolean apply(Node n) {
+<       if (NodeUtil.isObjectLitKey(n)) {
+<         return newNodes.contains(n);
+<       }
+207,209c194,195
+<       if (!n.isQualifiedName()) {
+<         return false;
+<       }
+---
+>   void scanNewNodes(List<AstChange> newNodes) {
+>     BuildGlobalNamespace builder = new BuildGlobalNamespace();
+211,217c197,199
+<       Node current;
+<       for (current = n;
+<            current.isGetProp();
+<            current = current.getFirstChild()) {
+<         if (newNodes.contains(current)) {
+<           return true;
+<         }
+---
+>     for (AstChange info : newNodes) {
+>       if (!info.node.isQualifiedName() && !NodeUtil.isObjectLitKey(info.node)) {
+>         continue;
+218a201,203
+>       scanFromNode(builder, info.module, info.scope, info.node);
+>     }
+>   }
+220c205,209
+<       return current.isName() && newNodes.contains(current);
+---
+>   private void scanFromNode(
+>     BuildGlobalNamespace builder, JSModule module, Scope scope, Node n) {
+>     
+>     if (n.isName() || n.isGetProp()) {
+>       scanFromNode(builder, module, scope, n.getParent());
+221a211
+>     builder.collect(module, scope, n);
+295,296d284
+<     private final Predicate<Node> nodeFilter;
+< 
+298,306d285
+<       this(null);
+<     }
+< 
+<     
+< 
+< 
+< 
+<     BuildGlobalNamespace(Predicate<Node> nodeFilter) {
+<       this.nodeFilter = nodeFilter;
+315,323d293
+<       collect(t, n, parent);
+<       return true;
+<     }
+< 
+<     public void collect(NodeTraversal t, Node n, Node parent) {
+<       if (nodeFilter != null && !nodeFilter.apply(n)) {
+<         return;
+<       }
+< 
+330,332c300
+<       if (root != null && n == root) {
+<         globalScope = t.getScope();
+<       }
+---
+>       collect(t.getModule(), t.getScope(), n);
+333a302,306
+>       return true;
+>     }
+> 
+>     public void collect(JSModule module, Scope scope, Node n) {
+>       Node parent = n.getParent();
+443d415
+<       Scope scope = t.getScope();
+450c422
+<           handleSetFromGlobal(t, n, parent, name, isPropAssign, type);
+---
+>           handleSetFromGlobal(module, scope, n, parent, name, isPropAssign, type);
+452c424
+<           handleSetFromLocal(t, n, parent, name);
+---
+>           handleSetFromLocal(module, scope, n, parent, name);
+455c427
+<         handleGet(t, n, parent, name);
+---
+>         handleGet(module, scope, n, parent, name);
+573,575c545,549
+<     void handleSetFromGlobal(NodeTraversal t, Node n, Node parent, String name,
+<                              boolean isPropAssign, Name.Type type) {
+<       if (maybeHandlePrototypePrefix(t, n, parent, name)) {
+---
+> 
+>     void handleSetFromGlobal(JSModule module, Scope scope,
+>         Node n, Node parent, String name,
+>         boolean isPropAssign, Name.Type type) {
+>       if (maybeHandlePrototypePrefix(module, scope, n, parent, name)) {
+582c556
+<       Ref set = new Ref(t, n, nameObj, Ref.Type.SET_FROM_GLOBAL,
+---
+>       Ref set = new Ref(module, scope, n, nameObj, Ref.Type.SET_FROM_GLOBAL,
+588c562
+<         Ref get = new Ref(t, n, nameObj, Ref.Type.ALIASING_GET,
+---
+>         Ref get = new Ref(module, scope, n, nameObj, Ref.Type.ALIASING_GET,
+627c601,602
+<     void handleSetFromLocal(NodeTraversal t, Node n, Node parent,
+---
+> 
+>     void handleSetFromLocal(JSModule module, Scope scope, Node n, Node parent,
+629c604
+<       if (maybeHandlePrototypePrefix(t, n, parent, name)) {
+---
+>       if (maybeHandlePrototypePrefix(module, scope, n, parent, name)) {
+634c609
+<       Ref set = new Ref(t, n, nameObj,
+---
+>       Ref set = new Ref(module, scope, n, nameObj,
+640c615
+<         Ref get = new Ref(t, n, nameObj,
+---
+>         Ref get = new Ref(module, scope, n, nameObj,
+656,657c631,634
+<     void handleGet(NodeTraversal t, Node n, Node parent, String name) {
+<       if (maybeHandlePrototypePrefix(t, n, parent, name)) {
+---
+> 
+>     void handleGet(JSModule module, Scope scope,
+>         Node n, Node parent, String name) {
+>       if (maybeHandlePrototypePrefix(module, scope, n, parent, name)) {
+688c665
+<             type = determineGetTypeForHookOrBooleanExpr(t, parent, name);
+---
+>             type = determineGetTypeForHookOrBooleanExpr(module, scope, parent, name);
+695c672
+<               type = determineGetTypeForHookOrBooleanExpr(t, parent, name);
+---
+>               type = determineGetTypeForHookOrBooleanExpr(module, scope, parent, name);
+707c684
+<       handleGet(t, n, parent, name, type);
+---
+>       handleGet(module, scope, n, parent, name, type);
+721a699
+> 
+723c701
+<         NodeTraversal t, Node parent, String name) {
+---
+>         JSModule module, Scope scope, Node parent, String name) {
+777c755,756
+<     void handleGet(NodeTraversal t, Node n, Node parent,
+---
+> 
+>     void handleGet(JSModule module, Scope scope, Node n, Node parent,
+782c761,762
+<       nameObj.addRef(new Ref(t, n, nameObj, type, currentPreOrderIndex++));
+---
+>       nameObj.addRef(
+>           new Ref(module, scope, n, nameObj, type, currentPreOrderIndex++));
+796,797c776,778
+<     boolean maybeHandlePrototypePrefix(NodeTraversal t, Node n, Node parent,
+<         String name) {
+---
+> 
+>     boolean maybeHandlePrototypePrefix(JSModule module, Scope scope,
+>         Node n, Node parent, String name) {
+832c813
+<       handleGet(t, n, parent, prefix, Ref.Type.PROTOTYPE_GET);
+---
+>       handleGet(module, scope, n, parent, prefix, Ref.Type.PROTOTYPE_GET);
+1225c1206
+<     Ref(NodeTraversal t, Node node, Name name, Type type, int index) {
+---
+>     Ref(JSModule module, Scope scope, Node node, Name name, Type type, int index) {
+1228c1209
+<       this.module = t.getInput() == null ? null : t.getInput().getModule();
+---
+>       this.module = module;
+1231c1212
+<       this.scope = t.getScope();
+---
+>       this.scope = scope;

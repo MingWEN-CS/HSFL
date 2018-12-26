@@ -1,0 +1,50 @@
+22a23
+> import com.google.javascript.jscomp.CodingConvention.Bind;
+140c141,145
+<         return tryFoldLiteralConstructor(node);
+---
+>         Node result =  tryFoldLiteralConstructor(node);
+>         if (result == node) {
+>           result = tryFoldImmediateCallToBoundFunction(node);
+>         }
+>         return result;
+155a161,199
+>     }
+>   }
+> 
+>   private Node tryFoldImmediateCallToBoundFunction(Node n) {
+>     
+>     Preconditions.checkState(n.getType() == Token.CALL);
+>     Node callTarget = n.getFirstChild();
+>     Bind bind = getCodingConvention().describeFunctionBind(callTarget);
+>     if (bind != null) {
+>       
+>       bind.target.detachFromParent();
+>       n.replaceChild(callTarget, bind.target);
+>       callTarget = bind.target;
+> 
+>       
+>       addParameterAfter(bind.parameters, callTarget);
+> 
+>       
+>       if (bind.thisValue != null && !NodeUtil.isUndefined(bind.thisValue)) {
+>         
+>         Node newCallTarget = new Node(Token.GETPROP,
+>             callTarget.cloneTree(),
+>             Node.newString("call").copyInformationFrom(callTarget));
+>         n.replaceChild(callTarget, newCallTarget);
+>         n.addChildAfter(bind.thisValue.cloneTree(), newCallTarget);
+>         n.putBooleanProp(Node.FREE_CALL, false);
+>       } else {
+>         n.putBooleanProp(Node.FREE_CALL, true);
+>       }
+>       reportCodeChange();
+>     }
+>     return n;
+>   }
+> 
+>   private void addParameterAfter(Node parameterList, Node after) {
+>     if (parameterList != null) {
+>       
+>       addParameterAfter(parameterList.getNext(), after);
+>       after.getParent().addChildAfter(parameterList.cloneTree(), after);

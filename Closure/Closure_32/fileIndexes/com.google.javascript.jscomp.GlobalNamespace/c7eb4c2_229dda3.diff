@@ -1,0 +1,23 @@
+907,908c907,925
+<       return (type == Type.FUNCTION || aliasingGets == 0) &&
+<           (parent == null || parent.canCollapseUnannotatedChildNames());
+---
+> 
+>       
+>       
+>       if (parent != null && parent.shouldKeepKeys()) {
+>         return false;
+>       }
+> 
+>       
+>       
+>       if (type != Type.FUNCTION && aliasingGets > 0) {
+>         return false;
+>       }
+> 
+>       return (parent == null || parent.canCollapseUnannotatedChildNames());
+>     }
+> 
+>     
+>     boolean shouldKeepKeys() {
+>       return type == Type.OBJECTLIT && aliasingGets > 0;

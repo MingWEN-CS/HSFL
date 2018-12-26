@@ -1,0 +1,471 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
+import com.google.javascript.jscomp.ControlFlowGraph.AbstractCfgNodeTraversalCallback;
+import com.google.javascript.jscomp.ControlFlowGraph.Branch;
+import com.google.javascript.jscomp.DataFlowAnalysis.FlowState;
+import com.google.javascript.jscomp.MustBeReachingVariableDef.MustDef;
+import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+import com.google.javascript.jscomp.NodeTraversal.AbstractShallowCallback;
+import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.Collection;
+import java.util.List;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class FlowSensitiveInlineVariables extends AbstractPostOrderCallback
+    implements CompilerPass, ScopedCallback {
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  private final AbstractCompiler compiler;
+
+  
+  
+  private ControlFlowGraph<Node> cfg;
+  private List<Candidate> candidates;
+  private MustBeReachingVariableDef reachingDef;
+  private MaybeReachingVariableUse reachingUses;
+
+  private static final Predicate<Node> SIDE_EFFECT_PREDICATE =
+    new Predicate<Node>() {
+      @Override
+      public boolean apply(Node n) {
+        
+        
+        if (n == null) {
+          return false;
+        }
+
+        
+        
+        
+        if (NodeUtil.isCall(n) && NodeUtil.functionCallHasSideEffects(n)) {
+          return true;
+        }
+
+        if (NodeUtil.isNew(n) && NodeUtil.constructorCallHasSideEffects(n)) {
+          return true;
+        }
+
+        for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+          if (!ControlFlowGraph.isEnteringNewCfgNode(c) && apply(c)) {
+            return true;
+          }
+        }
+        return false;
+      }
+  };
+
+  public FlowSensitiveInlineVariables(AbstractCompiler compiler) {
+    this.compiler = compiler;
+  }
+
+  @Override
+  public void enterScope(NodeTraversal t) {
+
+    if (t.inGlobalScope()) {
+      return; 
+    }
+
+    
+    ControlFlowAnalysis cfa = new ControlFlowAnalysis(compiler, false);
+    
+    Preconditions.checkState(NodeUtil.isFunction(t.getScopeRoot()));
+    cfa.process(null, t.getScopeRoot().getLastChild());
+    cfg = cfa.getCfg();
+    reachingDef = new MustBeReachingVariableDef(cfg, t.getScope(), compiler);
+    reachingDef.analyze();
+    candidates = Lists.newLinkedList();
+
+    
+    
+    new NodeTraversal(compiler, new GatherCandiates()).traverse(
+        t.getScopeRoot().getLastChild());
+
+    
+    reachingUses = new MaybeReachingVariableUse(cfg, t.getScope(), compiler);
+    reachingUses.analyze();
+    for (Candidate c : candidates) {
+      if (c.canInline()) {
+        c.inlineVariable();
+      }
+    }
+  }
+
+  @Override
+  public void exitScope(NodeTraversal t) {}
+
+  @Override
+  public void process(Node externs, Node root) {
+    (new NodeTraversal(compiler, this)).traverse(root);
+  }
+
+  @Override
+  public void visit(NodeTraversal t, Node n, Node parent) {
+    
+    
+    
+    
+    
+  }
+
+  
+
+
+
+
+
+
+  private class GatherCandiates extends AbstractShallowCallback {
+    @Override
+    public void visit(NodeTraversal t, Node n, Node parent) {
+      DiGraphNode<Node, Branch> graphNode = cfg.getDirectedGraphNode(n);
+      if (graphNode == null) {
+        
+        return;
+      }
+      FlowState<MustDef> state = graphNode.getAnnotation();
+      final MustDef defs = state.getIn();
+      final Node cfgNode = n;
+      AbstractCfgNodeTraversalCallback gatherCb =
+          new AbstractCfgNodeTraversalCallback() {
+
+        @Override
+        public void visit(NodeTraversal t, Node n, Node parent) {
+          if (NodeUtil.isName(n)) {
+
+            
+            if ((NodeUtil.isAssignmentOp(parent) && parent.getFirstChild() == n)
+                || NodeUtil.isVar(parent) || parent.getType() == Token.INC ||
+                parent.getType() == Token.DEC || parent.getType() == Token.LP ||
+                parent.getType() == Token.CATCH) {
+              return;
+            }
+
+            String name = n.getString();
+            if (compiler.getCodingConvention().isExported(name)) {
+              return;
+            }
+
+            Node defNode = reachingDef.getDef(name, cfgNode);
+            if (defNode != null &&
+                !reachingDef.dependsOnOuterScopeVars(name, cfgNode)) {
+              candidates.add(new Candidate(name, defNode, n, cfgNode));
+            }
+          }
+        }
+      };
+
+      NodeTraversal.traverse(compiler, cfgNode, gatherCb);
+    }
+  }
+
+  
+
+
+  private class Candidate {
+
+    
+    private final String varName;
+
+    
+    private Node def;
+    private final Node defCfgNode;
+
+    
+    private final Node use;
+    private final Node useCfgNode;
+
+    
+    
+    private int numUseWithinUseCfgNode;
+
+    Candidate(String varName, Node defCfgNode, Node use, Node useCfgNode) {
+      Preconditions.checkArgument(NodeUtil.isName(use));
+      this.varName = varName;
+      this.defCfgNode = defCfgNode;
+      this.use = use;
+      this.useCfgNode = useCfgNode;
+    }
+
+    private boolean canInline() {
+
+      
+      if (NodeUtil.isFunction(defCfgNode)) {
+        return false;
+      }
+
+      getDefinition(defCfgNode, null);
+      getNumUseInUseCfgNode(useCfgNode, null);
+
+      
+      if (def == null) {
+        return false;
+      }
+
+      
+      
+      if (NodeUtil.isAssign(def) && !NodeUtil.isExprAssign(def.getParent())) {
+        return false;
+      }
+
+
+      
+      
+      
+      if (checkRightOf(def, defCfgNode, SIDE_EFFECT_PREDICATE)) {
+        return false;
+      }
+
+      
+      
+      
+      if (checkLeftOf(use, useCfgNode, SIDE_EFFECT_PREDICATE)) {
+        return false;
+      }
+
+      
+      
+      
+      CheckPathsBetweenNodes<Node, ControlFlowGraph.Branch>
+        pathCheck = new CheckPathsBetweenNodes<Node, ControlFlowGraph.Branch>(
+               cfg,
+               cfg.getDirectedGraphNode(defCfgNode),
+               cfg.getDirectedGraphNode(useCfgNode),
+               SIDE_EFFECT_PREDICATE,
+               Predicates.
+                   <DiGraphEdge<Node, ControlFlowGraph.Branch>>alwaysTrue(),
+               false);
+      if (pathCheck.somePathsSatisfyPredicate()) {
+        return false;
+      }
+
+      
+      
+      
+      if (NodeUtil.mayHaveSideEffects(def.getLastChild())) {
+        return false;
+      }
+
+      
+
+      
+      
+      
+      if (numUseWithinUseCfgNode != 1) {
+        return false;
+      }
+
+      
+      
+      
+      
+      
+      
+      
+      if (NodeUtil.has(def.getLastChild(),
+          new Predicate<Node>() {
+              @Override
+              public boolean apply(Node input) {
+                switch (input.getType()) {
+                  case Token.GETELEM:
+                  case Token.GETPROP:
+                  case Token.ARRAYLIT:
+                  case Token.OBJECTLIT:
+                  case Token.REGEXP:
+                  case Token.NEW:
+                    return true;
+                }
+                return false;
+              }
+          },
+          new Predicate<Node>() {
+              @Override
+              public boolean apply(Node input) {
+                
+                return !NodeUtil.isFunction(input);
+              }
+          })) {
+        return false;
+      }
+
+      Collection<Node> uses = reachingUses.getUses(varName, defCfgNode);
+
+      if (uses.size() != 1) {
+        return false;
+      }
+
+      return true;
+    }
+
+    
+
+
+    private void inlineVariable() {
+      Node defParent = def.getParent();
+      Node useParent = use.getParent();
+      if (NodeUtil.isAssign(def)) {
+        Node rhs = def.getLastChild();
+        rhs.detachFromParent();
+        
+        Preconditions.checkState(NodeUtil.isExpressionNode(defParent));
+        while (defParent.getParent().getType() == Token.LABEL) {
+          defParent = defParent.getParent();
+        }
+        defParent.detachFromParent();
+        useParent.replaceChild(use, rhs);
+      } else if (NodeUtil.isVar(defParent)) {
+        Node rhs = def.getLastChild();
+        def.removeChild(rhs);
+        useParent.replaceChild(use, rhs);
+      } else {
+        Preconditions.checkState(false, "No other definitions can be inlined.");
+      }
+      compiler.reportCodeChange();
+    }
+
+    
+
+
+
+
+    private void getDefinition(Node n, Node parent) {
+      AbstractCfgNodeTraversalCallback gatherCb =
+        new AbstractCfgNodeTraversalCallback() {
+
+        @Override
+        public void visit(NodeTraversal t, Node n, Node parent) {
+          switch (n.getType()) {
+            case Token.NAME:
+              if (n.getString().equals(varName) && n.hasChildren()) {
+                def = n;
+              }
+              return;
+
+            case Token.ASSIGN:
+              Node lhs = n.getFirstChild();
+              if (NodeUtil.isName(lhs) && lhs.getString().equals(varName)) {
+                def = n;
+              }
+              return;
+          }
+        }
+      };
+      NodeTraversal.traverse(compiler, n, gatherCb);
+    }
+
+    
+
+
+
+    private void getNumUseInUseCfgNode(Node n, Node parant) {
+
+      AbstractCfgNodeTraversalCallback gatherCb =
+          new AbstractCfgNodeTraversalCallback() {
+
+        @Override
+        public void visit(NodeTraversal t, Node n, Node parent) {
+          if (NodeUtil.isName(n) && n.getString().equals(varName)) {
+            numUseWithinUseCfgNode++;
+          }
+        }
+      };
+
+      NodeTraversal.traverse(compiler, n, gatherCb);
+    }
+  }
+
+  
+
+
+
+
+
+
+
+  private static boolean checkRightOf(
+      Node n, Node expressionRoot, Predicate<Node> predicate) {
+    for (Node p = n; p != expressionRoot; p = p.getParent()) {
+      for (Node cur = p.getNext(); cur != null; cur = cur.getNext()) {
+        if (predicate.apply(cur)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+  private static boolean checkLeftOf(
+      Node n, Node expressionRoot, Predicate<Node> predicate) {
+    for (Node p = n.getParent(); p != expressionRoot; p = p.getParent()) {
+      for (Node cur = p.getParent().getFirstChild(); cur != p;
+          cur = cur.getNext()) {
+        if (predicate.apply(cur)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}

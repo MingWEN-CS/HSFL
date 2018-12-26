@@ -1,0 +1,101 @@
+37c37
+<     
+---
+> 
+55,91d54
+< 
+< 
+< 
+<     private static String translate(String s, Locale locale) {
+<         try {
+<             ResourceBundle bundle =
+<                     ResourceBundle.getBundle("org.apache.commons.math.MessagesResources", locale);
+<             if (bundle.getLocale().getLanguage().equals(locale.getLanguage())) {
+<                 
+<                 return bundle.getString(s);
+<             }
+<             
+<         } catch (MissingResourceException mre) {
+<             
+<         }
+< 
+<         
+<         
+<         return s;
+< 
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     private static String buildMessage(Locale locale, String pattern, Object ... arguments) {
+<         return (pattern == null) ? "" : new MessageFormat(translate(pattern, locale), locale).format(arguments);        
+<     }
+< 
+<     
+< 
+< 
+< 
+93d55
+<         super();
+97c59
+<     
+---
+> 
+106d67
+<       super(buildMessage(Locale.US, pattern, arguments));
+123c84
+<     
+---
+> 
+135c96
+<       super(buildMessage(Locale.US, pattern, arguments), rootCause);
+---
+>       super(rootCause);
+144a106,131
+> 
+> 
+>     private static String translate(String s, Locale locale) {
+>         try {
+>             ResourceBundle bundle =
+>                     ResourceBundle.getBundle("org.apache.commons.math.MessagesResources", locale);
+>             if (bundle.getLocale().getLanguage().equals(locale.getLanguage())) {
+>                 
+>                 return bundle.getString(s);
+>             }
+> 
+>         } catch (MissingResourceException mre) {
+>             
+>         }
+> 
+>         
+>         
+>         return s;
+> 
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+165,166c152,159
+<     public String getMessage(Locale locale) {
+<         return buildMessage(locale, pattern, arguments);
+---
+>     public String getMessage(final Locale locale) {
+>         return (pattern == null) ? "" : new MessageFormat(translate(pattern, locale), locale).format(arguments);
+>     }
+> 
+>     
+>     @Override
+>     public String getMessage() {
+>         return getMessage(Locale.US);
+182c175
+<     
+---
+> 

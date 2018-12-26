@@ -1,0 +1,33 @@
+18a19
+> import com.google.common.base.Preconditions;
+168,170c169,171
+<     private final Node aliasReference;
+< 
+<     private final String correctedType;
+---
+>     private final Node typeReference;
+>     private final Node aliasDefinition;
+>     private final String aliasName;
+172,174c173,177
+<     AliasedTypeNode(Node aliasReference, String correctedType) {
+<       this.aliasReference = aliasReference;
+<       this.correctedType = correctedType;
+---
+>     AliasedTypeNode(Node typeReference, Node aliasDefinition,
+>         String aliasName) {
+>       this.typeReference = typeReference;
+>       this.aliasDefinition = aliasDefinition;
+>       this.aliasName = aliasName;
+179c182,186
+<       aliasReference.setString(correctedType);
+---
+>       String typeName = typeReference.getString();
+>       String aliasExpanded =
+>           Preconditions.checkNotNull(aliasDefinition.getQualifiedName());
+>       Preconditions.checkState(typeName.startsWith(aliasName));
+>       typeReference.setString(typeName.replaceFirst(aliasName, aliasExpanded));
+467,468c474
+<           aliasUsages.add(new AliasedTypeNode(typeNode,
+<               aliasedNode.getQualifiedName() + name.substring(endIndex)));
+---
+>           aliasUsages.add(new AliasedTypeNode(typeNode, aliasedNode, baseName));

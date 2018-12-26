@@ -1,0 +1,27 @@
+649,650c649,656
+<         node.addChildToBack(transformAsString(el.getLeft()));
+<         node.addChildToBack(transform(el.getRight()));
+---
+>         if (el.isGetter()) {
+>           reportGetter(el);
+>         } else if (el.isSetter()) {
+>           reportSetter(el);
+>         } else {
+>           node.addChildToBack(transformAsString(el.getLeft()));
+>           node.addChildToBack(transform(el.getRight()));
+>         }
+840a847,860
+>           sourceName,
+>           node.getLineno(), "", 0);
+>     }
+> 
+>     void reportGetter(AstNode node) {
+>       errorReporter.error(
+>           "getters are not supported in Internet Explorer",
+>           sourceName,
+>           node.getLineno(), "", 0);
+>     }
+> 
+>     void reportSetter(AstNode node) {
+>       errorReporter.error(
+>           "setters are not supported in Internet Explorer",

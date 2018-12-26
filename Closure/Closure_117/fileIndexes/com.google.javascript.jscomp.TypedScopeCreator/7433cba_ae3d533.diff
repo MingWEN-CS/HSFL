@@ -1,0 +1,67 @@
+151a152,154
+>   private final ObjectType unknownType;
+> 
+>   
+185a189
+>     this.unknownType = typeRegistry.getNativeObjectType(UNKNOWN_TYPE);
+199a204,212
+>       JSType globalThis =
+>           typeRegistry.getNativeObjectType(JSTypeNative.GLOBAL_THIS);
+> 
+>       
+>       
+>       root.setJSType(globalThis);
+>       root.getFirstChild().setJSType(globalThis);
+>       root.getLastChild().setJSType(globalThis);
+> 
+301c314
+<     Scope s = new Scope(root, compiler);
+---
+>     Scope s = Scope.createGlobalScope(root);
+616c629
+<             type = typeRegistry.getNativeType(UNKNOWN_TYPE);
+---
+>             type = unknownType;
+794,795c807
+<         type = name.isFromExterns() ?
+<             getNativeType(UNKNOWN_TYPE) : null;
+---
+>         type = name.isFromExterns() ? unknownType : null;
+903c915
+<           FunctionType overriddenPropType = null;
+---
+>           FunctionType overriddenType = null;
+905,906c917
+<             overriddenPropType =
+<                 findOverriddenFunction(ownerType, propName);
+---
+>             overriddenType = findOverriddenFunction(ownerType, propName);
+913c924
+<               .inferFromOverriddenFunction(overriddenPropType, parametersNode)
+---
+>               .inferFromOverriddenFunction(overriddenType, parametersNode)
+1689d1699
+<         ObjectType unknownType = typeRegistry.getNativeObjectType(UNKNOWN_TYPE);
+1835c1845
+<       typeRegistry.declareType(typedef, getNativeType(UNKNOWN_TYPE));
+---
+>       typeRegistry.declareType(typedef, unknownType);
+1937,1938d1946
+<       boolean isFnTypeInferred = functionNode.getBooleanProp(
+<           Node.INFERRED_FUNCTION);
+1945a1954,1962
+>             JSType paramType = jsDocParameter == null ?
+>                 unknownType : jsDocParameter.getJSType();
+>             if (paramType == null) {
+>               paramType = unknownType;
+>             }
+> 
+>             defineSlot(astParameter, functionNode, paramType,
+>                 
+>                 unknownType == paramType);
+1947,1948d1963
+<               defineSlot(astParameter, functionNode,
+<                   jsDocParameter.getJSType(), isFnTypeInferred);
+1950,1951d1964
+<             } else {
+<               defineSlot(astParameter, functionNode, null, true);

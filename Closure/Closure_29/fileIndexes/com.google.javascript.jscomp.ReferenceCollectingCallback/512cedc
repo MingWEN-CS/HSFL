@@ -1,0 +1,445 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+class ReferenceCollectingCallback implements ScopedCallback, CompilerPass {
+
+  
+
+
+
+
+  private final Map<Var, ReferenceCollection> referenceMap =
+      Maps.newHashMap();
+
+  
+
+
+  private final Deque<BasicBlock> blockStack = new ArrayDeque<BasicBlock>();
+
+  
+
+
+  private final Behavior behavior;
+
+  
+
+
+  private final AbstractCompiler compiler;
+
+  
+
+
+  private final Predicate<Var> varFilter;
+
+  
+
+
+  ReferenceCollectingCallback(AbstractCompiler compiler, Behavior behavior) {
+    this(compiler, behavior, Predicates.<Var>alwaysTrue());
+  }
+
+  
+
+
+
+
+
+  ReferenceCollectingCallback(AbstractCompiler compiler, Behavior behavior,
+      Predicate<Var> varFilter) {
+    this.compiler = compiler;
+    this.behavior = behavior;
+    this.varFilter = varFilter;
+  }
+
+  
+
+
+
+  public void process(Node externs, Node root) {
+    NodeTraversal.traverse(compiler, root, this);
+  }
+
+  
+
+
+  public ReferenceCollection getReferenceCollection(Var v) {
+    return referenceMap.get(v);
+  }
+
+  
+
+
+
+  public void visit(NodeTraversal t, Node n, Node parent) {
+    if (n.getType() == Token.NAME) {
+      Var v = t.getScope().getVar(n.getString());
+      if (v != null && varFilter.apply(v)) {
+        addReference(t, v,
+            new Reference(n, parent, t, blockStack.peek()));
+      }
+    }
+
+    if (isBlockBoundary(n, parent)) {
+      blockStack.pop();
+    }
+  }
+
+  
+
+
+  public void enterScope(NodeTraversal t) {
+    Node n = t.getScope().getRootNode();
+    BasicBlock parent = blockStack.isEmpty() ? null : blockStack.peek();
+    blockStack.push(new BasicBlock(parent, n));
+
+    
+    
+    
+    
+    
+    
+    if (n.getType() == Token.FUNCTION) {
+      String fnName = n.getFirstChild().getString();
+      Scope s = t.getScope();
+      if (!fnName.isEmpty() && s.getVar(fnName).scope == s) {
+        addReference(t, s.getVar(fnName),
+            Reference.newBleedingFunction(t, parent, n));
+      }
+    }
+  }
+
+  
+
+
+  public void exitScope(NodeTraversal t) {
+    blockStack.pop();
+    behavior.afterExitScope(t, referenceMap);
+  }
+
+  
+
+
+  public boolean shouldTraverse(NodeTraversal nodeTraversal, Node n,
+      Node parent) {
+    
+    if (isBlockBoundary(n, parent)) {
+      blockStack.push(new BasicBlock(blockStack.peek(), n));
+    }
+    return true;
+  }
+
+  
+
+
+  private static boolean isBlockBoundary(Node n, Node parent) {
+    if (parent != null) {
+      switch (parent.getType()) {
+        case Token.DO:
+        case Token.FOR:
+        case Token.TRY:
+        case Token.WHILE:
+        case Token.WITH:
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          return true;
+        case Token.AND:
+        case Token.HOOK:
+        case Token.IF:
+        case Token.OR:
+          
+          
+          return n != parent.getFirstChild();
+
+      }
+    }
+
+    return n.getType() == Token.CASE;
+  }
+
+  private void addReference(NodeTraversal t, Var v, Reference reference) {
+    
+    ReferenceCollection referenceInfo = referenceMap.get(v);
+    if (referenceInfo == null) {
+      referenceInfo = new ReferenceCollection();
+      referenceMap.put(v, referenceInfo);
+    }
+
+    
+    referenceInfo.add(reference, t, v);
+  }
+
+  
+
+
+
+  interface Behavior {
+    
+
+
+    void afterExitScope(NodeTraversal t,
+        Map<Var, ReferenceCollection> referenceMap);
+  }
+
+  static Behavior DO_NOTHING_BEHAVIOR = new Behavior() {
+    @Override
+    public void afterExitScope(NodeTraversal t,
+        Map<Var, ReferenceCollection> referenceMap) {}
+  };
+
+  
+
+
+
+  static class ReferenceCollection {
+
+    List<Reference> references = Lists.newArrayList();
+
+    void add(Reference reference, NodeTraversal t, Var v) {
+      references.add(reference);
+    }
+
+    
+
+
+
+
+
+
+
+
+    protected boolean isWellDefined() {
+      int size = references.size();
+      if (size == 0) {
+        return false;
+      }
+
+      
+      
+      Reference decl = references.get(0);
+      if (!decl.isInitializingDeclaration()) {
+        return false;
+      }
+
+      BasicBlock declBlock = decl.getBasicBlock();
+      for (int i = 1; i < size; i++) {
+        if (!declBlock.provablyExecutesBefore(
+                references.get(i).getBasicBlock())) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    boolean isNeverReassigned() {
+      int size = references.size();
+      for (int i = 1; i < size; i++) {
+        if (references.get(i).isLvalue()) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  }
+
+  
+
+
+  static final class Reference {
+
+    private static final Set<Integer> DECLARATION_PARENTS =
+        ImmutableSet.of(Token.VAR, Token.FUNCTION, Token.CATCH);
+
+    private final Node nameNode;
+    private final Node parent;
+    private final Node grandparent;
+    private final BasicBlock basicBlock;
+    private final Scope scope;
+    private final String sourceName;
+
+    Reference(Node nameNode, Node parent, NodeTraversal t,
+        BasicBlock basicBlock) {
+      this(nameNode, parent, parent.getParent(), basicBlock, t.getScope(),
+           t.getSourceName());
+    }
+
+    
+    
+    static Reference newBleedingFunction(NodeTraversal t,
+        BasicBlock basicBlock, Node func) {
+      return new Reference(func.getFirstChild(), func, func.getParent(),
+          basicBlock, t.getScope(), t.getSourceName());
+    }
+
+    private Reference(Node nameNode, Node parent, Node grandparent,
+        BasicBlock basicBlock, Scope scope, String sourceName) {
+      this.nameNode = nameNode;
+      this.parent = parent;
+      this.grandparent = grandparent;
+      this.basicBlock = basicBlock;
+      this.scope = scope;
+      this.sourceName = sourceName;
+    }
+
+    boolean isDeclaration() {
+      return DECLARATION_PARENTS.contains(parent.getType()) ||
+          parent.getType() == Token.LP &&
+          grandparent.getType() == Token.FUNCTION;
+    }
+
+    
+
+
+    boolean isInitializingDeclaration() {
+      
+      
+      return isDeclaration() &&
+          (parent.getType() != Token.VAR || nameNode.getFirstChild() != null);
+    }
+
+    BasicBlock getBasicBlock() {
+      return basicBlock;
+    }
+
+    Node getParent() {
+      return parent;
+    }
+
+    Node getNameNode() {
+      return nameNode;
+    }
+
+    Node getGrandparent() {
+      return grandparent;
+    }
+
+    private static boolean isForIn(Node n) {
+      return n.getType() == Token.FOR && n.getChildCount() == 3;
+    }
+    
+    private static boolean isLhsOfForInExpression(Node n) {
+      Node parent = n.getParent();
+      if (parent.getType() == Token.VAR) {
+        return isLhsOfForInExpression(parent);
+      } 
+      return isForIn(parent) && parent.getFirstChild() == n;
+    }
+    
+    boolean isLvalue() {
+      int parentType = parent.getType();
+      return parentType == Token.VAR 
+          || parentType == Token.INC
+          || parentType == Token.DEC
+          || (NodeUtil.isAssignmentOp(parent)
+              && parent.getFirstChild() == nameNode)
+          || isLhsOfForInExpression(nameNode);
+    }
+
+    Scope getScope() {
+      return scope;
+    }
+
+    public String getSourceName() {
+      return sourceName;
+    }
+  }
+
+  
+
+
+
+  static final class BasicBlock {
+
+    private final BasicBlock parent;
+
+    
+
+
+
+    private final boolean mayBeHoisted;
+
+    
+
+
+
+
+    BasicBlock(BasicBlock parent, Node root) {
+      this.parent = parent;
+
+      
+      this.mayBeHoisted = (root.getType() == Token.FUNCTION) &&
+          !NodeUtil.isFunctionAnonymous(root);
+    }
+
+    BasicBlock getParent() {
+      return parent;
+    }
+
+    
+
+
+
+    boolean provablyExecutesBefore(BasicBlock thatBlock) {
+      
+      
+      BasicBlock currentBlock;
+      for (currentBlock = thatBlock;
+           currentBlock != null && currentBlock != this;
+           currentBlock = currentBlock.getParent()) {
+        if (currentBlock.mayBeHoisted) {
+          return false;
+        }
+      }
+
+      return currentBlock == this;
+    }
+  }
+}

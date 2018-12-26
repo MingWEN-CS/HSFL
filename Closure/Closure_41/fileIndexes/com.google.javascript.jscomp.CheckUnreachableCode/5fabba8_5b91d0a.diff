@@ -1,0 +1,41 @@
+24a25
+> import com.google.javascript.rhino.JSDocInfo;
+41a43
+>   private boolean scopeNeedsInit = true;
+50,52c52
+<     new GraphReachability<Node, ControlFlowGraph.Branch>(
+<         t.getControlFlowGraph(), new ReachablePredicate()).compute(
+<             t.getControlFlowGraph().getEntry().getValue());
+---
+>     scopeNeedsInit = true;
+56a57,65
+>     if (!shouldCheck(n)) {
+>       return false;
+>     }
+> 
+>     if (scopeNeedsInit) {
+>       initScope(t.getControlFlowGraph());
+>       scopeNeedsInit = false;
+>     }
+> 
+76a86,105
+>     return true;
+>   }
+> 
+>   private void initScope(ControlFlowGraph<Node> controlFlowGraph) {
+>     new GraphReachability<Node, ControlFlowGraph.Branch>(
+>         controlFlowGraph, new ReachablePredicate()).compute(
+>             controlFlowGraph.getEntry().getValue());
+>   }
+> 
+>   private boolean shouldCheck(Node n) {
+>     switch (n.getType()) {
+>       case Token.SCRIPT:
+>       case Token.BLOCK:
+>       case Token.FUNCTION:
+>         JSDocInfo info = n.getJSDocInfo();
+>         if (info != null && info.getSuppressions().contains("unreachable")) {
+>           return false;
+>         }
+>     }
+> 

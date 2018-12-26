@@ -1,0 +1,727 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.CodingConvention.SubclassRelationship;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.Behavior;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.Reference;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.ReferenceCollection;
+import com.google.javascript.jscomp.ReferenceCollectingCallback.ReferenceMap;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.rhino.Node;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class InlineVariables implements CompilerPass {
+
+  private final AbstractCompiler compiler;
+
+  enum Mode {
+    
+    CONSTANTS_ONLY,
+    
+    LOCALS_ONLY,
+    ALL
+  }
+
+  private final Mode mode;
+
+  
+  private final boolean inlineAllStrings;
+
+  private final IdentifyConstants identifyConstants = new IdentifyConstants();
+
+  InlineVariables(
+      AbstractCompiler compiler,
+      Mode mode,
+      boolean inlineAllStrings) {
+    this.compiler = compiler;
+    this.mode = mode;
+    this.inlineAllStrings = inlineAllStrings;
+  }
+
+  @Override
+  public void process(Node externs, Node root) {
+    ReferenceCollectingCallback callback = new ReferenceCollectingCallback(
+        compiler, new InliningBehavior(), getFilterForMode());
+    callback.process(externs, root);
+  }
+
+  private Predicate<Var> getFilterForMode() {
+    switch (mode) {
+      case ALL:
+        return Predicates.<Var>alwaysTrue();
+      case LOCALS_ONLY:
+        return new IdentifyLocals();
+      case CONSTANTS_ONLY:
+        return new IdentifyConstants();
+      default:
+        throw new IllegalStateException();
+    }
+  }
+
+  
+
+
+
+
+
+
+
+  private class IdentifyConstants implements Predicate<Var> {
+    @Override
+    public boolean apply(Var var) {
+      return var.isConst();
+    }
+  }
+
+  
+
+
+  private class IdentifyLocals implements Predicate<Var> {
+    @Override
+    public boolean apply(Var var) {
+      return var.scope.isLocal();
+    }
+  }
+
+  private static class AliasCandidate {
+    private final Var alias;
+    private final ReferenceCollection refInfo;
+
+    AliasCandidate(Var alias, ReferenceCollection refInfo) {
+      this.alias = alias;
+      this.refInfo = refInfo;
+    }
+  }
+
+  
+
+
+
+
+  private class InliningBehavior implements Behavior {
+
+    
+
+
+
+    private final Set<Var> staleVars = Sets.newHashSet();
+
+    
+
+
+
+
+    final Map<Node, AliasCandidate> aliasCandidates = Maps.newHashMap();
+
+    @Override
+    public void afterExitScope(NodeTraversal t, ReferenceMap referenceMap) {
+      collectAliasCandidates(t, referenceMap);
+      doInlinesForScope(t, referenceMap);
+    }
+
+    
+
+
+
+    private void collectAliasCandidates(NodeTraversal t,
+        ReferenceMap referenceMap) {
+      if (mode != Mode.CONSTANTS_ONLY) {
+        for (Iterator<Var> it = t.getScope().getVars(); it.hasNext();) {
+          Var v = it.next();
+          ReferenceCollection referenceInfo = referenceMap.getReferences(v);
+
+          
+          
+          
+          if (referenceInfo != null && referenceInfo.references.size() >= 2 &&
+              referenceInfo.isWellDefined() &&
+              referenceInfo.isAssignedOnceInLifetime()) {
+            Reference init = referenceInfo.getInitializingReference();
+            Node value = init.getAssignedValue();
+            if (value != null && value.isName()) {
+              aliasCandidates.put(value, new AliasCandidate(v, referenceInfo));
+            }
+          }
+        }
+      }
+    }
+
+    
+
+
+
+    private void doInlinesForScope(NodeTraversal t, ReferenceMap referenceMap) {
+
+      boolean maybeModifiedArguments =
+          maybeEscapedOrModifiedArguments(t.getScope(), referenceMap);
+      for (Iterator<Var> it = t.getScope().getVars(); it.hasNext();) {
+        Var v = it.next();
+
+        ReferenceCollection referenceInfo = referenceMap.getReferences(v);
+
+        
+        
+        if (referenceInfo == null || isVarInlineForbidden(v)) {
+          
+          
+          continue;
+        } else if (isInlineableDeclaredConstant(v, referenceInfo)) {
+          Reference init = referenceInfo.getInitializingReferenceForConstants();
+          Node value = init.getAssignedValue();
+          inlineDeclaredConstant(v, value, referenceInfo.references);
+          staleVars.add(v);
+        } else if (mode == Mode.CONSTANTS_ONLY) {
+          
+          
+          continue;
+        } else {
+          inlineNonConstants(v, referenceInfo, maybeModifiedArguments);
+        }
+      }
+    }
+
+    private boolean maybeEscapedOrModifiedArguments(
+        Scope scope, ReferenceMap referenceMap) {
+      if (scope.isLocal()) {
+        Var arguments = scope.getArgumentsVar();
+        ReferenceCollection refs = referenceMap.getReferences(arguments);
+        if (refs != null && !refs.references.isEmpty()) {
+          for (Reference ref : refs.references) {
+            Node refNode = ref.getNode();
+            Node refParent = ref.getParent();
+            
+            
+            if (!(NodeUtil.isGet(refParent)
+                && refNode == ref.getParent().getFirstChild()
+                && !isLValue(refParent))) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    private boolean isLValue(Node n) {
+      Node parent = n.getParent();
+      return (parent.isInc()
+          || parent.isDec()
+          || (NodeUtil.isAssignmentOp(parent)
+          && parent.getFirstChild() == n));
+    }
+
+    private void inlineNonConstants(
+        Var v, ReferenceCollection referenceInfo,
+        boolean maybeModifiedArguments) {
+      int refCount = referenceInfo.references.size();
+      Reference declaration = referenceInfo.references.get(0);
+      Reference init = referenceInfo.getInitializingReference();
+      int firstRefAfterInit = (declaration == init) ? 2 : 3;
+
+      if (refCount > 1 &&
+          isImmutableAndWellDefinedVariable(v, referenceInfo)) {
+        
+        
+        Node value;
+        if (init != null) {
+          value = init.getAssignedValue();
+        } else {
+          
+          Node srcLocation = declaration.getNode();
+          value = NodeUtil.newUndefinedNode(srcLocation);
+        }
+        Preconditions.checkNotNull(value);
+        inlineWellDefinedVariable(v, value, referenceInfo.references);
+        staleVars.add(v);
+      } else if (refCount == firstRefAfterInit) {
+        
+        
+        Reference reference = referenceInfo.references.get(
+            firstRefAfterInit - 1);
+        if (canInline(declaration, init, reference)) {
+          inline(v, declaration, init, reference);
+          staleVars.add(v);
+        }
+      } else if (declaration != init && refCount == 2) {
+        if (isValidDeclaration(declaration) && isValidInitialization(init)) {
+          
+          
+          Node value = init.getAssignedValue();
+          Preconditions.checkNotNull(value);
+          inlineWellDefinedVariable(v, value, referenceInfo.references);
+          staleVars.add(v);
+        }
+      }
+
+      
+      
+      
+      
+      if (!maybeModifiedArguments &&
+          !staleVars.contains(v) && referenceInfo.isWellDefined() &&
+          referenceInfo.isAssignedOnceInLifetime()) {
+        List<Reference> refs = referenceInfo.references;
+        for (int i = 1 ; i < refs.size(); i++) {
+          Node nameNode = refs.get(i).getNode();
+          if (aliasCandidates.containsKey(nameNode)) {
+            AliasCandidate candidate = aliasCandidates.get(nameNode);
+            if (!staleVars.contains(candidate.alias) &&
+                !isVarInlineForbidden(candidate.alias)) {
+              Reference aliasInit;
+              aliasInit = candidate.refInfo.getInitializingReference();
+              Node value = aliasInit.getAssignedValue();
+              Preconditions.checkNotNull(value);
+              inlineWellDefinedVariable(candidate.alias,
+                  value,
+                  candidate.refInfo.references);
+              staleVars.add(candidate.alias);
+            }
+          }
+        }
+      }
+    }
+
+    
+
+
+
+    private void blacklistVarReferencesInTree(Node root, Scope scope) {
+      for (Node c = root.getFirstChild(); c != null; c = c.getNext()) {
+        blacklistVarReferencesInTree(c, scope);
+      }
+
+      if (root.isName()) {
+        staleVars.add(scope.getVar(root.getString()));
+      }
+    }
+
+    
+
+
+    private boolean isVarInlineForbidden(Var var) {
+      
+      
+      
+      
+      
+      
+      return var.isExtern()
+          || compiler.getCodingConvention().isExported(var.name)
+          || RenameProperties.RENAME_PROPERTY_FUNCTION_NAME.equals(var.name)
+          || staleVars.contains(var);
+    }
+
+    
+
+
+
+    private void inline(Var v, Reference declaration,
+                        Reference init, Reference reference) {
+      Node value = init.getAssignedValue();
+      Preconditions.checkState(value != null);
+      
+      boolean isFunctionDeclaration = NodeUtil.isFunctionDeclaration(value);
+
+      inlineValue(v, reference, value.detachFromParent());
+      if (declaration != init) {
+        Node expressRoot = init.getGrandparent();
+        Preconditions.checkState(expressRoot.isExprResult());
+        NodeUtil.removeChild(expressRoot.getParent(), expressRoot);
+      }
+
+      
+      if (!isFunctionDeclaration) {
+        removeDeclaration(declaration);
+      } else {
+        compiler.reportCodeChange();
+      }
+    }
+
+    
+
+
+    private void inlineWellDefinedVariable(Var v, Node value,
+        List<Reference> refSet) {
+      Reference decl = refSet.get(0);
+      for (int i = 1; i < refSet.size(); i++) {
+        inlineValue(v, refSet.get(i), value.cloneTree());
+      }
+      removeDeclaration(decl);
+    }
+
+    
+
+
+    private void inlineDeclaredConstant(Var v, Node value,
+        List<Reference> refSet) {
+      
+      Reference decl = null;
+
+      for (Reference r : refSet) {
+        if (r.getNode() == v.getNameNode()) {
+          decl = r;
+        } else {
+          inlineValue(v, r, value.cloneTree());
+        }
+      }
+
+      removeDeclaration(decl);
+    }
+
+    
+
+
+    private void removeDeclaration(Reference declaration) {
+      Node varNode = declaration.getParent();
+      Node grandparent = declaration.getGrandparent();
+
+      varNode.removeChild(declaration.getNode());
+
+      
+      if (!varNode.hasChildren()) {
+        Preconditions.checkState(varNode.isVar());
+        NodeUtil.removeChild(grandparent, varNode);
+      }
+
+      compiler.reportCodeChange();
+    }
+
+    
+
+
+
+
+
+
+
+    private void inlineValue(Var v, Reference ref, Node value) {
+      if (ref.isSimpleAssignmentToName()) {
+        
+        ref.getGrandparent().replaceChild(ref.getParent(), value);
+      } else {
+        ref.getParent().replaceChild(ref.getNode(), value);
+      }
+
+      blacklistVarReferencesInTree(value, v.scope);
+      compiler.reportCodeChange();
+    }
+
+    
+
+
+
+    private boolean isInlineableDeclaredConstant(Var var,
+        ReferenceCollection refInfo) {
+      if (!identifyConstants.apply(var)) {
+        return false;
+      }
+
+      if (!refInfo.isAssignedOnceInLifetime()) {
+        return false;
+      }
+
+      Reference init = refInfo.getInitializingReferenceForConstants();
+      if (init == null) {
+        return false;
+      }
+
+      Node value = init.getAssignedValue();
+      if (value == null) {
+        
+        
+        
+        return false;
+      }
+
+      
+      if (!NodeUtil.isImmutableValue(value)) {
+        return false;
+      }
+
+      
+      return !value.isString() ||
+          isStringWorthInlining(var, refInfo.references);
+    }
+
+    
+
+
+    private boolean isStringWorthInlining(Var var, List<Reference> refs) {
+      if (!inlineAllStrings && !var.isDefine()) {
+        int len = var.getInitialValue().getString().length() + "''".length();
+
+        
+        
+        
+        
+        int noInlineBytes = "var xx=;".length() + len +
+                            4 * (refs.size() - 1);
+
+        
+        
+        
+        
+        int inlineBytes = (len - 1) * (refs.size() - 1);
+
+        
+        
+        return noInlineBytes >= inlineBytes;
+      }
+
+      return true;
+    }
+
+    
+
+
+
+    private boolean canInline(
+        Reference declaration,
+        Reference initialization,
+        Reference reference) {
+      if (!isValidDeclaration(declaration)
+          || !isValidInitialization(initialization)
+          || !isValidReference(reference)) {
+        return false;
+      }
+
+      
+      
+      
+      if (declaration != initialization &&
+          !initialization.getGrandparent().isExprResult()) {
+        return false;
+      }
+
+      
+      
+      if (declaration.getBasicBlock() != initialization.getBasicBlock()
+          || declaration.getBasicBlock() != reference.getBasicBlock()) {
+        return false;
+      }
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      Node value = initialization.getAssignedValue();
+      Preconditions.checkState(value != null);
+      if (value.isGetProp()
+          && reference.getParent().isCall()
+          && reference.getParent().getFirstChild() == reference.getNode()) {
+        return false;
+      }
+
+      if (value.isFunction()) {
+        Node callNode = reference.getParent();
+        if (reference.getParent().isCall()) {
+          CodingConvention convention = compiler.getCodingConvention();
+          
+          
+          SubclassRelationship relationship =
+              convention.getClassesDefinedByCall(callNode);
+          if (relationship != null) {
+            return false;
+          }
+
+          
+          
+          if (convention.getSingletonGetterClassName(callNode) != null) {
+            return false;
+          }
+        }
+      }
+
+      return canMoveAggressively(value) ||
+          canMoveModerately(initialization, reference);
+    }
+
+    
+
+
+    private boolean canMoveAggressively(Node value) {
+      
+      
+      return NodeUtil.isLiteralValue(value, true)
+          || value.isFunction();
+    }
+
+    
+
+
+
+
+    private boolean canMoveModerately(
+        Reference initialization,
+        Reference reference) {
+      
+      
+      Iterator<Node> it;
+      if (initialization.getParent().isVar()) {
+        it = NodeIterators.LocalVarMotion.forVar(
+            initialization.getNode(),     
+            initialization.getParent(),       
+            initialization.getGrandparent()); 
+      } else if (initialization.getParent().isAssign()) {
+        Preconditions.checkState(
+            initialization.getGrandparent().isExprResult());
+        it = NodeIterators.LocalVarMotion.forAssign(
+            initialization.getNode(),     
+            initialization.getParent(),       
+            initialization.getGrandparent(),  
+            initialization.getGrandparent().getParent()); 
+      } else {
+        throw new IllegalStateException("Unexpected initialization parent " +
+            initialization.getParent().toStringTree());
+      }
+      Node targetName = reference.getNode();
+      while (it.hasNext()) {
+        Node curNode = it.next();
+        if (curNode == targetName) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    
+
+
+    private boolean isValidDeclaration(Reference declaration) {
+      return (declaration.getParent().isVar()
+          && !declaration.getGrandparent().isFor())
+          || NodeUtil.isFunctionDeclaration(declaration.getParent());
+    }
+
+    
+
+
+    private boolean isValidInitialization(Reference initialization) {
+      if (initialization == null) {
+        return false;
+      } else if (initialization.isDeclaration()) {
+        
+        
+        return NodeUtil.isFunctionDeclaration(initialization.getParent())
+            || initialization.getNode().getFirstChild() != null;
+      } else {
+        Node parent = initialization.getParent();
+        Preconditions.checkState(
+            parent.isAssign()
+            && parent.getFirstChild() == initialization.getNode());
+        return true;
+      }
+    }
+
+    
+
+
+    private boolean isValidReference(Reference reference) {
+      return !reference.isDeclaration() && !reference.isLvalue();
+    }
+
+    
+
+
+
+
+    private boolean isImmutableAndWellDefinedVariable(Var v,
+        ReferenceCollection refInfo) {
+      List<Reference> refSet = refInfo.references;
+      int startingReadRef = 1;
+      Reference refDecl = refSet.get(0);
+      if (!isValidDeclaration(refDecl)) {
+        return false;
+      }
+
+      boolean isNeverAssigned = refInfo.isNeverAssigned();
+      
+      
+      if (!isNeverAssigned) {
+        Reference refInit = refInfo.getInitializingReference();
+        if (!isValidInitialization(refInit)) {
+          return false;
+        }
+
+        if (refDecl != refInit) {
+          Preconditions.checkState(refInit == refSet.get(1));
+          startingReadRef = 2;
+        }
+
+        if (!refInfo.isWellDefined()) {
+          return false;
+        }
+
+        Node value = refInit.getAssignedValue();
+        Preconditions.checkNotNull(value);
+
+        boolean isImmutableValueWorthInlining =
+            NodeUtil.isImmutableValue(value) &&
+            (!value.isString() ||
+                isStringWorthInlining(v, refInfo.references));
+        boolean isInlinableThisAlias =
+            value.isThis() &&
+            !refInfo.isEscaped();
+        if (!isImmutableValueWorthInlining && !isInlinableThisAlias) {
+          return false;
+        }
+      }
+
+      for (int i = startingReadRef; i < refSet.size(); i++) {
+        Reference ref = refSet.get(i);
+        if (!isValidReference(ref)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  }
+}

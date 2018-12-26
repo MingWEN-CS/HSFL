@@ -1,0 +1,66 @@
+19a20,22
+> import java.io.IOException;
+> import java.io.ObjectInputStream;
+> import java.io.ObjectOutputStream;
+21a25
+> import org.apache.commons.math.linear.MatrixUtils;
+53c57
+<     private final RealVector coefficients;
+---
+>     private final transient RealVector coefficients;
+180a185,239
+>     }
+> 
+>     
+>     @Override
+>     public boolean equals(Object other) {
+> 
+>       if (this == other) { 
+>         return true;
+>       }
+> 
+>       if (other == null) {
+>         return false;
+>       }
+> 
+>       try {
+> 
+>           LinearConstraint rhs = (LinearConstraint) other;
+>           return (relationship == rhs.relationship) &&
+>                  (value        == rhs.value) &&
+>                  coefficients.equals(rhs.coefficients);
+> 
+>       } catch (ClassCastException ex) {
+>           
+>           return false;
+>       }
+> 
+>     }
+>     
+>     
+>     @Override
+>     public int hashCode() {
+>         return relationship.hashCode() ^
+>                Double.valueOf(value).hashCode() ^
+>                coefficients.hashCode();
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private void writeObject(ObjectOutputStream oos)
+>         throws IOException {
+>         oos.defaultWriteObject();
+>         MatrixUtils.serializeRealVector(coefficients, oos);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     private void readObject(ObjectInputStream ois)
+>       throws ClassNotFoundException, IOException {
+>         ois.defaultReadObject();
+>         MatrixUtils.deserializeRealVector(this, "coefficients", ois);

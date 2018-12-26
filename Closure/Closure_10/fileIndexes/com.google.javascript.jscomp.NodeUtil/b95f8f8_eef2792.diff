@@ -1,0 +1,53 @@
+1261c1261
+<   static boolean valueCheck(Node n, Predicate<Node> p) {
+---
+>   static boolean allResultsMatch(Node n, Predicate<Node> p) {
+1265c1265
+<         return valueCheck(n.getLastChild(), p);
+---
+>         return allResultsMatch(n.getLastChild(), p);
+1268,1269c1268,1269
+<         return valueCheck(n.getFirstChild(), p)
+<             && valueCheck(n.getLastChild(), p);
+---
+>         return allResultsMatch(n.getFirstChild(), p)
+>             && allResultsMatch(n.getLastChild(), p);
+1271,1272c1271,1293
+<         return valueCheck(n.getFirstChild().getNext(), p)
+<             && valueCheck(n.getLastChild(), p);
+---
+>         return allResultsMatch(n.getFirstChild().getNext(), p)
+>             && allResultsMatch(n.getLastChild(), p);
+>       default:
+>         return p.apply(n);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static boolean anyResultsMatch(Node n, Predicate<Node> p) {
+>     switch (n.getType()) {
+>       case Token.ASSIGN:
+>       case Token.COMMA:
+>         return anyResultsMatch(n.getLastChild(), p);
+>       case Token.AND:
+>       case Token.OR:
+>         return anyResultsMatch(n.getFirstChild(), p)
+>             || anyResultsMatch(n.getLastChild(), p);
+>       case Token.HOOK:
+>         return anyResultsMatch(n.getFirstChild().getNext(), p)
+>             || anyResultsMatch(n.getLastChild(), p);
+1292c1313
+<     return valueCheck(n, NUMBERIC_RESULT_PREDICATE);
+---
+>     return allResultsMatch(n, NUMBERIC_RESULT_PREDICATE);
+1345c1366
+<     return valueCheck(n, BOOLEAN_RESULT_PREDICATE);
+---
+>     return allResultsMatch(n, BOOLEAN_RESULT_PREDICATE);
+1396c1417
+<       return valueCheck(n, MAY_BE_STRING_PREDICATE);
+---
+>       return allResultsMatch(n, MAY_BE_STRING_PREDICATE);

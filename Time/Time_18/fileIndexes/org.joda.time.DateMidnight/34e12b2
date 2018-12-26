@@ -1,0 +1,731 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.Serializable;
+import java.util.Locale;
+
+import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.property.AbstractReadableInstantFieldProperty;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class DateMidnight extends AbstractDateTime
+        implements ReadableDateTime, Serializable {
+    
+    
+    private static final long serialVersionUID = 156371964018738L;
+
+    
+    
+    
+
+
+
+
+    public DateMidnight() {
+        super();
+    }
+
+    
+
+
+
+
+
+
+
+
+    public DateMidnight(DateTimeZone zone) {
+        super(zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public DateMidnight(Chronology chronology) {
+        super(chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+    public DateMidnight(long instant) {
+        super(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public DateMidnight(long instant, DateTimeZone zone) {
+        super(instant, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public DateMidnight(long instant, Chronology chronology) {
+        super(instant, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateMidnight(Object instant) {
+        super(instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateMidnight(Object instant, DateTimeZone zone) {
+        super(instant, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateMidnight(Object instant, Chronology chronology) {
+        super(instant, chronology);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public DateMidnight(int year, int monthOfYear, int dayOfMonth) {
+        super(year, monthOfYear, dayOfMonth, 0, 0, 0, 0);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public DateMidnight(int year, int monthOfYear, int dayOfMonth, DateTimeZone zone) {
+        super(year, monthOfYear, dayOfMonth, 0, 0, 0, 0, zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public DateMidnight(int year, int monthOfYear, int dayOfMonth, Chronology chronology) {
+        super(year, monthOfYear, dayOfMonth, 0, 0, 0, 0, chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+    protected long round(long instant, Chronology chronology) {
+        return chronology.dayOfMonth().roundFloor(instant);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public final DateMidnight withMillis(long newMillis) {
+        Chronology chrono = getChronology();
+        newMillis = round(newMillis, chrono);
+        return (newMillis == getMillis() ? this : new DateMidnight(newMillis, chrono));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public final DateMidnight withChronology(Chronology newChronology) {
+        return (newChronology == getChronology() ? this : new DateMidnight(getMillis(), newChronology));
+    }
+
+    
+
+
+
+
+
+
+
+    public final DateMidnight withZoneRetainFields(DateTimeZone newDateTimeZone) {
+        final long originalMillis = getMillis();
+        final Chronology originalChrono = getChronology();
+        final DateTimeZone originalZone;
+        if (originalChrono == null || (originalZone = originalChrono.getZone()) == null) {
+            
+            
+            
+            return withMillis(originalMillis);
+        }
+        if (newDateTimeZone == null) {
+            newDateTimeZone = DateTimeZone.getDefault();
+        }
+
+        long newMillis = originalMillis + originalZone.getOffset(originalMillis);
+        newMillis -= newDateTimeZone.getOffsetFromLocal(newMillis);
+
+        return new DateMidnight(newMillis, originalChrono.withZone(newDateTimeZone));
+    }
+
+    
+    
+    
+
+
+
+
+    public final Property era() {
+        return new Property(this, getChronology().era());
+    }
+
+    
+
+
+
+
+    public final Property centuryOfEra() {
+        return new Property(this, getChronology().centuryOfEra());
+    }
+
+    
+
+
+
+
+    public final Property yearOfCentury() {
+        return new Property(this, getChronology().yearOfCentury());
+    }
+
+    
+
+
+
+
+    public final Property yearOfEra() {
+        return new Property(this, getChronology().yearOfEra());
+    }
+
+    
+
+
+
+
+    public final Property year() {
+        return new Property(this, getChronology().year());
+    }
+
+    
+
+
+
+
+    public final Property weekyear() {
+        return new Property(this, getChronology().weekyear());
+    }
+
+    
+
+
+
+
+    public final Property monthOfYear() {
+        return new Property(this, getChronology().monthOfYear());
+    }
+
+    
+
+
+
+
+    public final Property weekOfWeekyear() {
+        return new Property(this, getChronology().weekOfWeekyear());
+    }
+
+    
+
+
+
+
+    public final Property dayOfYear() {
+        return new Property(this, getChronology().dayOfYear());
+    }
+
+    
+
+
+
+
+    public final Property dayOfMonth() {
+        return new Property(this, getChronology().dayOfMonth());
+    }
+
+    
+
+
+
+
+    public final Property dayOfWeek() {
+        return new Property(this, getChronology().dayOfWeek());
+    }
+
+    
+    
+    
+
+
+
+
+    public final String toString() {
+        return ISODateTimeFormat.getInstance(getChronology()).dateTime().print(this);
+    }
+
+    
+
+
+
+    protected final void setMillis(long millis) {
+    }
+
+    
+
+
+
+    protected final void setChronology(Chronology chronology) {
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static class Property extends AbstractReadableInstantFieldProperty {
+    
+        
+        private static final long serialVersionUID = 257629620L;
+        
+        
+        private final DateMidnight iInstant;
+        
+        private final DateTimeField iField;
+
+        
+
+
+
+
+
+        public Property(DateMidnight instant, DateTimeField field) {
+            super();
+            iInstant = instant;
+            iField = field;
+        }
+
+        
+        
+
+
+
+
+        public DateTimeField getField() {
+            return iField;
+        }
+
+        
+
+
+
+
+        public ReadableInstant getReadableInstant() {
+            return iInstant;
+        }
+
+        
+
+
+
+
+        public DateMidnight getDateMidnight() {
+            return iInstant;
+        }
+
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+        public DateMidnight addToCopy(int value) {
+            return iInstant.withMillis(iField.add(iInstant.getMillis(), value));
+        }
+
+        
+
+
+
+
+
+
+
+
+
+
+
+        public DateMidnight addToCopy(long value) {
+            return iInstant.withMillis(iField.add(iInstant.getMillis(), value));
+        }
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public DateMidnight addWrapFieldToCopy(int value) {
+            return iInstant.withMillis(iField.addWrapField(iInstant.getMillis(), value));
+        }
+
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+        public DateMidnight setCopy(int value) {
+            return iInstant.withMillis(iField.set(iInstant.getMillis(), value));
+        }
+    
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        public DateMidnight setCopy(String text, Locale locale) {
+            return iInstant.withMillis(iField.set(iInstant.getMillis(), text, locale));
+        }
+
+        
+
+
+
+
+
+
+
+
+
+
+
+        public final DateMidnight setCopy(String text) {
+            return setCopy(text, null);
+        }
+
+        
+        
+
+
+
+
+        public DateMidnight roundFloorCopy() {
+            return iInstant.withMillis(iField.roundFloor(iInstant.getMillis()));
+        }
+
+        
+
+
+
+
+        public DateMidnight roundCeilingCopy() {
+            return iInstant.withMillis(iField.roundCeiling(iInstant.getMillis()));
+        }
+
+        
+
+
+
+
+
+        public DateMidnight roundHalfFloorCopy() {
+            return iInstant.withMillis(iField.roundHalfFloor(iInstant.getMillis()));
+        }
+
+        
+
+
+
+
+
+        public DateMidnight roundHalfCeilingCopy() {
+            return iInstant.withMillis(iField.roundHalfCeiling(iInstant.getMillis()));
+        }
+
+        
+
+
+
+
+
+        public DateMidnight roundHalfEvenCopy() {
+            return iInstant.withMillis(iField.roundHalfEven(iInstant.getMillis()));
+        }
+
+    }
+}

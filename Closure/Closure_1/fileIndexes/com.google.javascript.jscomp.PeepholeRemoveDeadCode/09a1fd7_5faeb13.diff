@@ -1,0 +1,24 @@
+79,82c79,87
+<     if (subtree.getParent().getType() != Token.LABEL) {
+<       Node result = trySimpilifyUnusedResult(subtree.getFirstChild());
+<       if (result == null) {
+<         
+---
+>     Node result = trySimpilifyUnusedResult(subtree.getFirstChild());
+>     if (result == null) {
+>       Node parent = subtree.getParent();
+>       
+>       if (parent.getType() == Token.LABEL) {
+>         Node replacement = new Node(Token.BLOCK).copyInformationFrom(subtree);
+>         parent.replaceChild(subtree, replacement);
+>         subtree = replacement;
+>       } else {
+385c390
+<     left = trySimpilifyUnusedResult(left, false);
+---
+>     left = trySimpilifyUnusedResult(left);
+393c398,399
+<       if (parent.getType() == Token.EXPR_RESULT) {
+---
+>       if (parent.getType() == Token.EXPR_RESULT
+>           && parent.getParent().getType() != Token.LABEL) {

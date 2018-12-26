@@ -1,0 +1,59 @@
+23a24
+> import org.apache.commons.math.MaxEvaluationsExceededException;
+42a44,52
+>     private int maxEvaluations;
+> 
+>     
+>     private int evaluations;
+> 
+>     
+>     private transient FirstOrderDifferentialEquations equations;
+> 
+>     
+62a73,74
+>         setMaxEvaluations(-1);
+>         resetEvaluations();
+123a136,178
+>     }
+> 
+>     
+>     public void setMaxEvaluations(int maxEvaluations) {
+>         this.maxEvaluations = (maxEvaluations < 0) ? Integer.MAX_VALUE : maxEvaluations;
+>     }
+> 
+>     
+>     public int getMaxEvaluations() {
+>         return maxEvaluations;
+>     }
+> 
+>     
+>     public int getEvaluations() {
+>         return evaluations;
+>     }
+> 
+>     
+> 
+>     protected void resetEvaluations() {
+>         evaluations = 0;
+>     }
+> 
+>     
+> 
+> 
+>     protected void setEquations(final FirstOrderDifferentialEquations equations) {
+>         this.equations = equations;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void computeDerivatives(final double t, final double[] y, final double[] yDot)
+>         throws DerivativeException {
+>         if (++evaluations > maxEvaluations) {
+>             throw new DerivativeException(new MaxEvaluationsExceededException(maxEvaluations));
+>         }
+>         equations.computeDerivatives(t, y, yDot);

@@ -1,0 +1,60 @@
+21a22
+> import static com.google.javascript.rhino.jstype.JSTypeNative.VOID_TYPE;
+72a74
+>   private boolean returnTypeInferred = false;
+199,200c201
+<         info.getReturnType().evaluate(scope, typeRegistry) :
+<         typeRegistry.getNativeType(UNKNOWN_TYPE);
+---
+>         info.getReturnType().evaluate(scope, typeRegistry) : null;
+201a203
+>         returnType != null &&
+211a214,249
+>   FunctionTypeBuilder inferReturnStatements(@Nullable Node functionBlock) {
+>     if (functionBlock == null || compiler.getInput(sourceName).isExtern()) {
+>       return this;
+>     }
+>     Preconditions.checkArgument(functionBlock.getType() == Token.BLOCK);
+>     if (returnType == null) {
+>       boolean hasNonEmptyReturns = false;
+>       List<Node> worklist = Lists.newArrayList(functionBlock);
+>       while (!worklist.isEmpty()) {
+>         Node current = worklist.remove(worklist.size() - 1);
+>         int cType = current.getType();
+>         if (cType == Token.RETURN && current.getFirstChild() != null ||
+>             cType == Token.THROW) {
+>           hasNonEmptyReturns = true;
+>           break;
+>         } else if (NodeUtil.isStatementBlock(current) ||
+>             NodeUtil.isControlStructure(current)) {
+>           for (Node child = current.getFirstChild();
+>                child != null; child = child.getNext()) {
+>             worklist.add(child);
+>           }
+>         }
+>       }
+> 
+>       if (!hasNonEmptyReturns) {
+>         returnType = typeRegistry.getNativeType(VOID_TYPE);
+>         returnTypeInferred = true;
+>       }
+>     }
+>     return this;
+>   }
+> 
+>   
+> 
+> 
+> 
+466c504,508
+<     if (returnType == null || parametersNode == null) {
+---
+>     if (returnType == null) {
+>       returnType = typeRegistry.getNativeType(UNKNOWN_TYPE);
+>     }
+> 
+>     if (parametersNode == null) {
+485c527
+<           .withReturnType(returnType)
+---
+>           .withReturnType(returnType, returnTypeInferred)

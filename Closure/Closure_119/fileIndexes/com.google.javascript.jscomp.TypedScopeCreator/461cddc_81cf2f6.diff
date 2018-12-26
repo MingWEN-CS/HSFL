@@ -1,0 +1,81 @@
+1302,1330c1302,1330
+<         } else {
+<           
+<           if (info.isConstant()) {
+<             JSType knownType = null;
+<             if (rValue != null) {
+<               JSDocInfo rValueInfo = rValue.getJSDocInfo();
+<               if (rValueInfo != null && rValueInfo.hasType()) {
+<                 
+<                 return rValueInfo.getType().evaluate(scope, typeRegistry);
+<               } else if (rValue.getJSType() != null
+<                   && !rValue.getJSType().isUnknownType()) {
+<                 
+<                 
+<                 return rValue.getJSType();
+<               } else if (rValue.isOr()) {
+<                 
+<                 
+<                 
+<                 
+<                 Node firstClause = rValue.getFirstChild();
+<                 Node secondClause = firstClause.getNext();
+<                 boolean namesMatch = firstClause.isName()
+<                     && lValue.isName()
+<                     && firstClause.getString().equals(lValue.getString());
+<                 if (namesMatch && secondClause.getJSType() != null
+<                     && !secondClause.getJSType().isUnknownType()) {
+<                   return secondClause.getJSType();
+<                 }
+<               }
+---
+>         }
+>       }
+> 
+>       
+>       if (isConstantSymbol(info, lValue)) {
+>         JSType knownType = null;
+>         if (rValue != null) {
+>           JSDocInfo rValueInfo = rValue.getJSDocInfo();
+>           if (rValueInfo != null && rValueInfo.hasType()) {
+>             
+>             return rValueInfo.getType().evaluate(scope, typeRegistry);
+>           } else if (rValue.getJSType() != null
+>               && !rValue.getJSType().isUnknownType()) {
+>             
+>             
+>             return rValue.getJSType();
+>           } else if (rValue.isOr()) {
+>             
+>             
+>             
+>             
+>             Node firstClause = rValue.getFirstChild();
+>             Node secondClause = firstClause.getNext();
+>             boolean namesMatch = firstClause.isName()
+>                 && lValue.isName()
+>                 && firstClause.getString().equals(lValue.getString());
+>             if (namesMatch && secondClause.getJSType() != null
+>                 && !secondClause.getJSType().isUnknownType()) {
+>               return secondClause.getJSType();
+1631c1631
+<             || (info.isConstant() && valueType != null
+---
+>             || (isConstantSymbol(info, n) && valueType != null
+1662a1663,1678
+>     }
+> 
+>     private boolean isConstantSymbol(JSDocInfo info, Node node) {
+>       if (info != null && info.isConstant()) {
+>         return true;
+>       }
+> 
+>       switch (node.getType()) {
+>         case Token.NAME:
+>           return NodeUtil.isConstantByConvention(
+>               compiler.getCodingConvention(), node, node.getParent());
+>         case Token.GETPROP:
+>           return node.isQualifiedName() && NodeUtil.isConstantByConvention(
+>               compiler.getCodingConvention(), node.getLastChild(), node);
+>       }
+>       return false;

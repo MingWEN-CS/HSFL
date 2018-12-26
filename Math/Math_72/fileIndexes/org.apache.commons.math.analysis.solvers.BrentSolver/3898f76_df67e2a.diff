@@ -1,0 +1,21 @@
+20a21
+> import org.apache.commons.math.MathRuntimeException;
+96,100c97,98
+<         if (((initial - min) * (max -initial)) < 0) {
+<             throw new IllegalArgumentException("Initial guess is not in search" +
+<                       " interval." + "  Initial: " + initial +
+<                       "  Endpoints: [" + min + "," + max + "]");
+<         }
+---
+>         clearResult();
+>         verifySequence(min, initial, max);
+180,183c178,181
+<                 throw new IllegalArgumentException
+<                 ("Function values at endpoints do not have different signs." +
+<                         "  Endpoints: [" + min + "," + max + "]" + 
+<                         "  Values: [" + yMin + "," + yMax + "]");
+---
+>                 throw MathRuntimeException.createIllegalArgumentException(
+>                         "function values at endpoints do not have different signs.  " +
+>                         "Endpoints: [{0}, {1}], Values: [{2}, {3}]",
+>                         new Object[] { min, max, yMin, yMax });       

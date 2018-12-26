@@ -1,0 +1,42 @@
+20d19
+< import com.google.javascript.jscomp.CheckLevel;
+134c133,136
+<         if (isDeclaration) {
+---
+>         boolean allowDupe =
+>             SyntacticScopeCreator.hasDuplicateDeclarationSuppression(
+>                 reference.getNode(), v);
+>         if (isDeclaration && !allowDupe) {
+165,169c167,173
+<           Node grandparent = reference.getGrandparent();
+<           if (grandparent.getType() == Token.NAME
+<               && grandparent.getString() == v.name) {
+<             continue;
+<           }
+---
+>           if (!reference.getSourceFile().isExtern()) {
+>             
+>             Node grandparent = reference.getGrandparent();
+>             if (grandparent.getType() == Token.NAME
+>                 && grandparent.getString() == v.name) {
+>               continue;
+>             }
+171,178c175,183
+<           
+<           
+<           if (reference.getScope() == v.scope) {
+<             compiler.report(
+<                 JSError.make(reference.getSourceFile().getName(),
+<                              reference.getNode(),
+<                              checkLevel,
+<                              UNDECLARED_REFERENCE, v.name));
+---
+>             
+>             
+>             if (reference.getScope() == v.scope) {
+>               compiler.report(
+>                   JSError.make(reference.getSourceFile().getName(),
+>                                reference.getNode(),
+>                                checkLevel,
+>                                UNDECLARED_REFERENCE, v.name));
+>             }

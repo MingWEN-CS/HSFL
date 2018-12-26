@@ -1,0 +1,82 @@
+56d55
+< import java.util.ArrayList;
+79c78,82
+<     ArrayList iSavedFields = new ArrayList();
+---
+>     SavedField[] iSavedFields = new SavedField[8];
+>     int iSavedFieldsCount;
+>     boolean iSavedFieldsShared;
+> 
+>     private Object iSavedState;
+102a106
+>         iSavedState = null;
+119a124
+>         iSavedState = null;
+128c133
+<         iSavedFields.add(new SavedField(field, value));
+---
+>         saveField(new SavedField(field, value));
+135c140,159
+<         iSavedFields.add(new SavedField(field, text, locale));
+---
+>         saveField(new SavedField(field, text, locale));
+>     }
+> 
+>     private void saveField(SavedField field) {
+>         SavedField[] savedFields = iSavedFields;
+>         int savedFieldsCount = iSavedFieldsCount;
+> 
+>         if (savedFieldsCount == savedFields.length) {
+>             SavedField[] newArray = new SavedField[savedFieldsCount * 2];
+>             System.arraycopy(savedFields, 0, newArray, 0, savedFieldsCount);
+>             iSavedFields = savedFields = newArray;
+>             iSavedFieldsShared = false;
+>         } else if (iSavedFieldsShared) {
+>             iSavedFields = savedFields = (SavedField[])savedFields.clone();
+>             iSavedFieldsShared = false;
+>         }
+> 
+>         iSavedState = null;
+>         savedFields[savedFieldsCount] = field;
+>         iSavedFieldsCount = savedFieldsCount + 1;
+146,148c170,173
+<         Object state = new SavedState();
+<         iSavedFields = (ArrayList)iSavedFields.clone();
+<         return state;
+---
+>         if (iSavedState == null) {
+>             iSavedState = new SavedState();
+>         }
+>         return iSavedState;
+164c189,192
+<             return ((SavedState)savedState).revertState(this);
+---
+>             if (((SavedState)savedState).revertState(this)) {
+>                 iSavedState = savedState;
+>                 return true;
+>             }
+177,181c205,207
+<         int length = iSavedFields.size();
+<         SavedField[] savedFields = new SavedField[length];
+<         iSavedFields.toArray(savedFields);
+< 
+<         Arrays.sort(savedFields);
+---
+>         SavedField[] savedFields = iSavedFields;
+>         int count = iSavedFieldsCount;
+>         Arrays.sort(savedFields, 0, count);
+184c210
+<         for (int i=0; i<length; i++) {
+---
+>         for (int i=0; i<count; i++) {
+266c292,293
+<         final ArrayList iSavedFields;
+---
+>         final SavedField[] iSavedFields;
+>         final int iSavedFieldsCount;
+271a299,300
+>             this.iSavedFieldsCount = DateTimeParserBucket.this.iSavedFieldsCount;
+>             DateTimeParserBucket.this.iSavedFieldsShared = true;
+280a310,311
+>             DateTimeParserBucket.this.iSavedFieldsCount = this.iSavedFieldsCount;
+>             DateTimeParserBucket.this.iSavedFieldsShared = true;

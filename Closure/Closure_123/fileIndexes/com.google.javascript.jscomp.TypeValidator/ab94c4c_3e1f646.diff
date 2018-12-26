@@ -1,0 +1,143 @@
+32a33
+> import com.google.javascript.jscomp.DisambiguateProperties.Warnings;
+63a65
+>   private final boolean recordErrors;
+133a136,137
+>     this.recordErrors = compiler.getErrorLevel(
+>         JSError.make("", 0, 0, Warnings.INVALIDATION)) != CheckLevel.OFF;
+352c356
+<         registerMismatch(rightType, leftType);
+---
+>         registerMismatch(rightType, leftType, null);
+381c385
+<         registerMismatch(rightType, leftType);
+---
+>         registerMismatch(rightType, leftType, null);
+433,439c437,440
+<       registerMismatch(overridingType, hiddenType);
+<       if (shouldReport) {
+<         compiler.report(
+<             t.makeError(n, HIDDEN_PROPERTY_MISMATCH,
+<                 propertyName, ownerType.toString(),
+<                 hiddenType.toString(), overridingType.toString()));
+<       }
+---
+>       registerMismatch(overridingType, hiddenType,
+>           report(t.makeError(n, HIDDEN_PROPERTY_MISMATCH, propertyName,
+>             ownerType.toString(), hiddenType.toString(),
+>             overridingType.toString())));
+458,463c459,460
+<         if (shouldReport) {
+<           compiler.report(
+<               t.makeError(n, MISSING_EXTENDS_TAG_WARNING,
+<                   subObject.toString()));
+<         }
+<         registerMismatch(superObject, declaredSuper);
+---
+>         registerMismatch(superObject, declaredSuper, report(
+>             t.makeError(n, MISSING_EXTENDS_TAG_WARNING, subObject.toString())));
+491,496c488,489
+<       if (shouldReport) {
+<         compiler.report(
+<             t.makeError(n, INVALID_CAST,
+<                 castType.toString(), type.toString()));
+<       }
+<       registerMismatch(type, castType);
+---
+>       registerMismatch(type, castType, report(t.makeError(n, INVALID_CAST,
+>           castType.toString(), type.toString())));
+557,563c550,553
+<           if (shouldReport) {
+<             compiler.report(
+<                 JSError.make(sourceName, n, DUP_VAR_DECLARATION,
+<                     variableName, newType.toString(), var.getInputName(),
+<                     String.valueOf(var.nameNode.getLineno()),
+<                     varType.toString()));
+<           }
+---
+>           report(JSError.make(sourceName, n, DUP_VAR_DECLARATION,
+>               variableName, newType.toString(), var.getInputName(),
+>               String.valueOf(var.nameNode.getLineno()),
+>               varType.toString()));
+596,601c586,589
+<       if (shouldReport) {
+<         compiler.report(JSError.make(sourceName, n,
+<             INTERFACE_METHOD_NOT_IMPLEMENTED,
+<             prop, implementedInterface.toString(), instance.toString()));
+<       }
+<       registerMismatch(instance, implementedInterface);
+---
+>       registerMismatch(instance, implementedInterface,
+>           report(JSError.make(sourceName, n,
+>           INTERFACE_METHOD_NOT_IMPLEMENTED,
+>           prop, implementedInterface.toString(), instance.toString())));
+610,618c598,603
+<         if (shouldReport) {
+<           FunctionType constructor
+<             = implementedInterface.toObjectType().getConstructor();
+<           compiler.report(t.makeError(n,
+<               HIDDEN_INTERFACE_PROPERTY_MISMATCH, prop,
+<               constructor.getTopMostDefiningType(prop).toString(),
+<               required.toString(), found.toString()));
+<         }
+<         registerMismatch(found, required);
+---
+>         FunctionType constructor
+>           = implementedInterface.toObjectType().getConstructor();
+>         registerMismatch(found, required, report(t.makeError(n,
+>             HIDDEN_INTERFACE_PROPERTY_MISMATCH, prop,
+>             constructor.getTopMostDefiningType(prop).toString(),
+>             required.toString(), found.toString())));
+638,643c623,625
+<     registerMismatch(found, required);
+<     if (shouldReport) {
+<       compiler.report(
+<           JSError.make(sourceName, n, TYPE_MISMATCH_WARNING,
+<                        formatFoundRequired(msg, found, required)));
+<     }
+---
+>     registerMismatch(found, required, report(
+>         JSError.make(sourceName, n, TYPE_MISMATCH_WARNING,
+>                      formatFoundRequired(msg, found, required))));
+646c628
+<   private void registerMismatch(JSType found, JSType required) {
+---
+>   private void registerMismatch(JSType found, JSType required, JSError error) {
+655c637
+<     mismatches.add(new TypeMismatch(found, required));
+---
+>     mismatches.add(new TypeMismatch(found, required, error));
+664c646
+<             paramItB.next().getJSType());
+---
+>             paramItB.next().getJSType(), error);
+667c649,650
+<       registerIfMismatch(fnTypeA.getReturnType(), fnTypeB.getReturnType());
+---
+>       registerIfMismatch(
+>         fnTypeA.getReturnType(), fnTypeB.getReturnType(), error);
+671c654,655
+<   private void registerIfMismatch(JSType found, JSType required) {
+---
+>   private void registerIfMismatch(
+>       JSType found, JSType required, JSError error) {
+674c658
+<       registerMismatch(found, required);
+---
+>       registerMismatch(found, required, error);
+769a754,760
+>   private JSError report(JSError error) {
+>     if (shouldReport) {
+>       compiler.report(error);
+>     }
+>     return recordErrors ? error : null;
+>   }
+> 
+779a771
+>     final JSError src;
+786c778
+<     TypeMismatch(JSType a, JSType b) {
+---
+>     TypeMismatch(JSType a, JSType b, JSError src) {
+788a781
+>       this.src = src;

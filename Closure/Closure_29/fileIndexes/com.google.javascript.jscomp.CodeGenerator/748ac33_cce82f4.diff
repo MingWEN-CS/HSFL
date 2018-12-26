@@ -1,0 +1,62 @@
+278,279c278,279
+<           throw new Error("Unexpected Node subclass."); 
+<         }        
+---
+>           throw new Error("Unexpected Node subclass.");
+>         }
+301c301
+<           throw new Error("Unexpected Node subclass."); 
+---
+>           throw new Error("Unexpected Node subclass.");
+661c661
+<       int count = getNonEmptyChildCount(n);
+---
+>       int count = getNonEmptyChildCount(n, 2);
+678,680c678
+<         if (alwaysWrapInBlock ||
+<             firstAndOnlyChild.getType() == Token.FUNCTION ||
+<             firstAndOnlyChild.getType() == Token.DO) {
+---
+>         if (alwaysWrapInBlock || isOneExactlyFunctionOrDo(firstAndOnlyChild)) {
+709a708,733
+>   private boolean isOneExactlyFunctionOrDo(Node n) {
+>     if (n.getType() == Token.LABEL) {
+>       Node labeledStatement = n.getLastChild();
+>       if (labeledStatement.getType() != Token.BLOCK) {
+>         return isOneExactlyFunctionOrDo(labeledStatement);
+>       } else {
+>         
+>         
+>         
+>         if (getNonEmptyChildCount(n, 2) == 1) { 
+>           return isOneExactlyFunctionOrDo(getFirstNonEmptyChild(n));
+>         } else {
+>           
+>           
+>           return false;
+>         }
+>       }
+>     } else {
+>       return (n.getType() == Token.FUNCTION || n.getType() == Token.DO);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+933d956
+< 
+935c958,962
+<   private static int getNonEmptyChildCount(Node n) {
+---
+> 
+> 
+> 
+> 
+>   private static int getNonEmptyChildCount(Node n, int maxCount) {
+937c964,965
+<     for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+---
+>     Node c = n.getFirstChild();
+>     for (; c != null && i < maxCount; c = c.getNext()) {

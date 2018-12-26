@@ -1,0 +1,71 @@
+20a21,22
+> import com.google.common.collect.ImmutableList;
+> import com.google.common.collect.Lists;
+29d30
+< import java.util.LinkedList;
+39d39
+< 
+777a778,779
+> 
+>     
+779c781,784
+<     List<Ref> refs;
+---
+> 
+>     
+>     private List<Ref> refs;
+> 
+814,815d818
+<           } else {
+<             addRefInternal(ref);
+816a820
+>           addRefInternal(ref);
+844,845c848
+<       if (ref == declaration ||
+<           (refs != null && refs.remove(ref))) {
+---
+>       if (refs != null && refs.remove(ref)) {
+852d854
+<                 refs.remove(declaration);
+883a886,889
+>     List<Ref> getRefs() {
+>       return refs == null ? ImmutableList.<Ref>of() : refs;
+>     }
+> 
+886c892
+<         refs = new LinkedList<Ref>();
+---
+>         refs = Lists.newArrayList();
+1033c1039
+<     final String sourceName;
+---
+>     final CompilerInput source;
+1035d1040
+<     final JSModule module;
+1051c1056
+<       this.sourceName = t.getSourceName();
+---
+>       this.source = t.getInput();
+1054d1058
+<       this.module = t.getModule();
+1059c1063
+<       this.sourceName = original.sourceName;
+---
+>       this.source = original.source;
+1062d1065
+<       this.module = original.module;
+1067c1070
+<       this.sourceName = "source";
+---
+>       this.source = null;
+1069c1072,1079
+<       this.module = null;
+---
+>     }
+> 
+>     JSModule getModule() {
+>       return source == null ? null : source.getModule();
+>     }
+> 
+>     String getSourceName() {
+>       return source == null ? "" : source.getName();

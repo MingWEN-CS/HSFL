@@ -1,0 +1,347 @@
+20d19
+< import com.google.common.collect.ImmutableSet;
+24c23
+< import com.google.javascript.jscomp.NodeTraversal.AbstractNodeTypePruningCallback;
+---
+> import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+43c42
+< class ProcessClosurePrimitives extends AbstractNodeTypePruningCallback
+---
+> class ProcessClosurePrimitives extends AbstractPostOrderCallback
+87a87,90
+>   static final DiagnosticType BASE_CLASS_ERROR = DiagnosticType.error(
+>       "JSC_BASE_CLASS_ERROR",
+>       "incorrect use of goog.base: {0}");
+> 
+98,109d100
+<   private static final Set<Integer> TRAVERSAL_NODE_TYPES = ImmutableSet.of(
+<     Token.SCRIPT,
+<     Token.BLOCK,
+<     Token.EXPR_RESULT,
+<     Token.CALL,
+<     Token.ASSIGN,
+<     Token.IF,
+<     Token.VAR,
+<     Token.NAME,
+<     Token.NEW,
+<     Token.FUNCTION);
+< 
+113,114d103
+<     super(TRAVERSAL_NODE_TYPES);
+< 
+163,169c152,164
+<         if (parent.getType() == Token.EXPR_RESULT) {
+<           Node left = n.getFirstChild();
+<           if (left.getType() == Token.GETPROP) {
+<             Node name = left.getFirstChild();
+<             if (name.getType() == Token.NAME &&
+<                 GOOG.equals(name.getString())) {
+<               
+---
+>         boolean isExpr = parent.getType() == Token.EXPR_RESULT;
+>         Node left = n.getFirstChild();
+>         if (left.getType() == Token.GETPROP) {
+>           Node name = left.getFirstChild();
+>           if (name.getType() == Token.NAME &&
+>               GOOG.equals(name.getString())) {
+>             
+>             
+>             
+>             String methodName = name.getNext().getString();
+>             if ("base".equals(methodName)) {
+>               processBaseClassCall(t, n);
+>             } else if (!isExpr) {
+171,208c166,179
+<               
+<               String methodName = name.getNext().getString();
+<               if ("require".equals(methodName)) {
+<                 Node arg = left.getNext();
+<                 if (verifyArgument(t, left, arg)) {
+<                   String ns = arg.getString();
+<                   ProvidedNode provided = providedNodes.get(ns);
+<                   if (provided == null) {
+<                     unrecognizedRequires.add(
+<                         new UnrecognizedRequire(n, ns, t.getSourceName()));
+<                   } else {
+<                     JSModule module = t.getModule();
+<                     if (module != provided.module  &&
+<                         !compiler.getModuleGraph().dependsOn(module,
+<                             provided.module)) {
+<                       compiler.report(
+<                           JSError.make(t, n, XMODULE_REQUIRE_ERROR, ns,
+<                               provided.module.getName(),
+<                               module.getName()));
+<                     }
+<                   }
+< 
+<                   
+<                   
+<                   
+<                   
+<                   
+<                   
+<                   if (provided != null || requiresLevel.isOn()) {
+<                     parent.getParent().removeChild(parent);
+<                     compiler.reportCodeChange();
+<                   }
+<                 }
+<               } else if ("provide".equals(methodName)) {
+<                 Node arg = left.getNext();
+<                 if (verifyProvide(t, left, arg)) {
+<                   String ns = arg.getString();
+<                   if (providedNodes.get(ns) != null) {
+---
+>               break;
+>             } else if ("require".equals(methodName)) {
+>               Node arg = left.getNext();
+>               if (verifyArgument(t, left, arg)) {
+>                 String ns = arg.getString();
+>                 ProvidedNode provided = providedNodes.get(ns);
+>                 if (provided == null) {
+>                   unrecognizedRequires.add(
+>                       new UnrecognizedRequire(n, ns, t.getSourceName()));
+>                 } else {
+>                   JSModule module = t.getModule();
+>                   if (module != provided.module  &&
+>                       !compiler.getModuleGraph().dependsOn(module,
+>                           provided.module)) {
+210,237c181,183
+<                         JSError.make(t, n, DUPLICATE_NAMESPACE_ERROR, ns));
+<                   } else if (!providedNodes.containsKey(ns)) {
+<                     replaceProvide(t, parent, parent.getParent(), ns);
+<                   } else {
+<                     
+<                     parent.getParent().removeChild(parent);
+<                     providedNodes.put(ns,
+<                         new ProvidedNode(null, null, t.getModule()));
+<                   }
+<                   compiler.reportCodeChange();
+<                 }
+<               } else if ("exportSymbol".equals(methodName)) {
+<                 Node arg = left.getNext();
+<                 if (arg.getType() == Token.STRING) {
+<                   int dot = arg.getString().indexOf('.');
+<                   if (dot == -1) {
+<                     exportedVariables.add(arg.getString());
+<                   } else {
+<                     exportedVariables.add(arg.getString().substring(0, dot));
+<                   }
+<                 }
+<               } else if ("addDependency".equals(methodName)) {
+<                 CodingConvention convention = compiler.getCodingConvention();
+<                 List<String> typeDecls =
+<                     convention.identifyTypeDeclarationCall(n);
+<                 if (typeDecls != null) {
+<                   for (String typeDecl : typeDecls) {
+<                     compiler.getTypeRegistry().forwardDeclareType(typeDecl);
+---
+>                         JSError.make(t, n, XMODULE_REQUIRE_ERROR, ns,
+>                             provided.module.getName(),
+>                             module.getName()));
+243c189,212
+<                 parent.replaceChild(n, Node.newNumber(0));
+---
+>                 
+>                 
+>                 
+>                 
+>                 if (provided != null || requiresLevel.isOn()) {
+>                   parent.getParent().removeChild(parent);
+>                   compiler.reportCodeChange();
+>                 }
+>               }
+>             } else if ("provide".equals(methodName)) {
+>               Node arg = left.getNext();
+>               if (verifyProvide(t, left, arg)) {
+>                 String ns = arg.getString();
+>                 if (providedNodes.get(ns) != null) {
+>                   compiler.report(
+>                       JSError.make(t, n, DUPLICATE_NAMESPACE_ERROR, ns));
+>                 } else if (!providedNodes.containsKey(ns)) {
+>                   replaceProvide(t, parent, parent.getParent(), ns);
+>                 } else {
+>                   
+>                   parent.getParent().removeChild(parent);
+>                   providedNodes.put(ns,
+>                       new ProvidedNode(null, null, t.getModule()));
+>                 }
+245,246d213
+<               } else if ("setCssNameMapping".equals(methodName)) {
+<                 processSetCssNameMapping(t, n, parent);
+247a215,240
+>             } else if ("exportSymbol".equals(methodName)) {
+>               Node arg = left.getNext();
+>               if (arg.getType() == Token.STRING) {
+>                 int dot = arg.getString().indexOf('.');
+>                 if (dot == -1) {
+>                   exportedVariables.add(arg.getString());
+>                 } else {
+>                   exportedVariables.add(arg.getString().substring(0, dot));
+>                 }
+>               }
+>             } else if ("addDependency".equals(methodName)) {
+>               CodingConvention convention = compiler.getCodingConvention();
+>               List<String> typeDecls =
+>                   convention.identifyTypeDeclarationCall(n);
+>               if (typeDecls != null) {
+>                 for (String typeDecl : typeDecls) {
+>                   compiler.getTypeRegistry().forwardDeclareType(typeDecl);
+>                 }
+>               }
+> 
+>               
+>               
+>               parent.replaceChild(n, Node.newNumber(0));
+>               compiler.reportCodeChange();
+>             } else if ("setCssNameMapping".equals(methodName)) {
+>               processSetCssNameMapping(t, n, parent);
+302a296,410
+> 
+>       case Token.GETPROP:
+>         if (n.getFirstChild().getType() == Token.NAME &&
+>             parent.getType() != Token.CALL &&
+>             parent.getType() != Token.ASSIGN &&
+>             "goog.base".equals(n.getQualifiedName())) {
+>           reportBadBaseClassUse(t, n, "May only be called directly.");
+>         }
+>         break;
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private void processBaseClassCall(NodeTraversal t, Node n) {
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+> 
+>     Node callee = n.getFirstChild();
+>     Node thisArg = callee.getNext();
+>     if (thisArg == null || thisArg.getType() != Token.THIS) {
+>       reportBadBaseClassUse(t, n, "First argument must be 'this'.");
+>       return;
+>     }
+> 
+>     Node enclosingFnNameNode = getEnclosingDeclNameNode(t);
+>     if (enclosingFnNameNode == null) {
+>       reportBadBaseClassUse(t, n, "Could not find enclosing method.");
+>       return;
+>     }
+> 
+>     String enclosingQname = enclosingFnNameNode.getQualifiedName();
+>     if (enclosingQname.indexOf(".prototype.") == -1) {
+>       
+>       Node enclosingParent = enclosingFnNameNode.getParent();
+>       Node maybeInheritsExpr = (enclosingParent.getType() == Token.ASSIGN ?
+>           enclosingParent.getParent() : enclosingParent).getNext();
+>       Node baseClassNode = null;
+>       if (maybeInheritsExpr != null &&
+>           maybeInheritsExpr.getType() == Token.EXPR_RESULT &&
+>           maybeInheritsExpr.getFirstChild().getType() == Token.CALL) {
+>         Node callNode = maybeInheritsExpr.getFirstChild();
+>         if ("goog.inherits".equals(
+>                 callNode.getFirstChild().getQualifiedName()) &&
+>             callNode.getLastChild().isQualifiedName()) {
+>           baseClassNode = callNode.getLastChild();
+>         }
+>       }
+> 
+>       if (baseClassNode == null) {
+>         reportBadBaseClassUse(
+>             t, n, "Could not find goog.inherits for base class");
+>         return;
+>       }
+> 
+>       
+>       n.replaceChild(
+>           callee,
+>           NodeUtil.newQualifiedNameNode(
+>             String.format("%s.call", baseClassNode.getQualifiedName()),
+>             callee, "goog.base"));
+>       compiler.reportCodeChange();
+>     } else {
+>       
+>       Node methodNameNode = thisArg.getNext();
+>       if (methodNameNode == null || methodNameNode.getType() != Token.STRING) {
+>         reportBadBaseClassUse(t, n, "Second argument must name a method.");
+>         return;
+>       }
+> 
+>       String methodName = methodNameNode.getString();
+>       String ending = ".prototype." + methodName;
+>       if (enclosingQname == null ||
+>           !enclosingQname.endsWith(ending)) {
+>         reportBadBaseClassUse(
+>             t, n, "Enclosing method does not match " + methodName);
+>         return;
+>       }
+> 
+>       
+>       Node className =
+>           enclosingFnNameNode.getFirstChild().getFirstChild();
+>       n.replaceChild(
+>           callee,
+>           NodeUtil.newQualifiedNameNode(
+>             String.format("%s.superClass_.%s.call",
+>                 className.getQualifiedName(), methodName),
+>             callee, "goog.base"));
+>       n.removeChild(methodNameNode);
+>       compiler.reportCodeChange();
+303a412,444
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private Node getEnclosingDeclNameNode(NodeTraversal t) {
+>     Node scopeRoot = t.getScopeRoot();
+>     if (NodeUtil.isFunctionDeclaration(scopeRoot)) {
+>       
+>       return scopeRoot.getFirstChild();
+>     } else {
+>       Node parent = scopeRoot.getParent();
+>       if (parent != null) {
+>         if (parent.getType() == Token.ASSIGN ||
+>             parent.getLastChild() == scopeRoot &&
+>             parent.getFirstChild().isQualifiedName()) {
+>           
+>           return parent.getFirstChild();
+>         } else if (parent.getType() == Token.NAME) {
+>           
+>           return parent;
+>         }
+>       }
+>     }
+> 
+>     return null;
+>   }
+> 
+>   
+>   private void reportBadBaseClassUse(
+>       NodeTraversal t, Node n, String extraMessage) {
+>     compiler.report(JSError.make(t, n, BASE_CLASS_ERROR, extraMessage));

@@ -1,0 +1,438 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.linear;
+
+import org.apache.commons.math.MathRuntimeException;
+import org.apache.commons.math.util.MathUtils;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class SingularValueDecompositionImpl implements SingularValueDecomposition {
+
+    
+    private int m;
+
+    
+    private int n;
+
+    
+    private BiDiagonalTransformer transformer;
+
+    
+    private double[] mainBidiagonal;
+
+    
+    private double[] secondaryBidiagonal;
+
+    
+    private double[] mainTridiagonal;
+
+    
+    private double[] secondaryTridiagonal;
+
+    
+    private EigenDecomposition eigenDecomposition;
+
+    
+    private double[] singularValues;
+
+    
+    private RealMatrix cachedU;
+
+    
+    private RealMatrix cachedUt;
+
+    
+    private RealMatrix cachedS;
+
+    
+    private RealMatrix cachedV;
+
+    
+    private RealMatrix cachedVt;
+
+    
+
+
+
+
+
+    public SingularValueDecompositionImpl(final RealMatrix matrix)
+        throws InvalidMatrixException {
+        this(matrix, Math.min(matrix.getRowDimension(), matrix.getColumnDimension()));
+    }
+
+    
+
+
+
+
+
+
+    public SingularValueDecompositionImpl(final RealMatrix matrix, final int max)
+        throws InvalidMatrixException {
+
+        m = matrix.getRowDimension();
+        n = matrix.getColumnDimension();
+
+        cachedU  = null;
+        cachedS  = null;
+        cachedV  = null;
+        cachedVt = null;
+
+        
+        transformer         = new BiDiagonalTransformer(matrix);
+        mainBidiagonal      = transformer.getMainDiagonalRef();
+        secondaryBidiagonal = transformer.getSecondaryDiagonalRef();
+
+        
+        mainTridiagonal      = new double[mainBidiagonal.length];
+        secondaryTridiagonal = new double[mainBidiagonal.length - 1];
+        double a = mainBidiagonal[0];
+        mainTridiagonal[0] = a * a;
+        for (int i = 1; i < mainBidiagonal.length; ++i) {
+            final double b  = secondaryBidiagonal[i - 1];
+            secondaryTridiagonal[i - 1] = a * b;
+            a = mainBidiagonal[i];
+            mainTridiagonal[i] = a * a + b * b;
+        }
+
+        
+        eigenDecomposition =
+            new EigenDecompositionImpl(mainTridiagonal, secondaryTridiagonal,
+                                       MathUtils.SAFE_MIN);
+        final double[] eigenValues = eigenDecomposition.getRealEigenvalues();
+        int p = Math.min(max, eigenValues.length);
+        while ((p > 0) && (eigenValues[p - 1] <= 0)) {
+            --p;
+        }
+        singularValues = new double[p];
+        for (int i = 0; i < p; ++i) {
+            singularValues[i] = Math.sqrt(eigenValues[i]);
+        }
+
+    }
+
+    
+    public RealMatrix getU()
+        throws InvalidMatrixException {
+
+        if (cachedU == null) {
+
+            final int p = singularValues.length;
+            if (m >= n) {
+                
+                final RealMatrix e =
+                    eigenDecomposition.getV().getSubMatrix(0, p - 1, 0, p - 1);
+                final double[][] eData = e.getData();
+                final double[][] wData = new double[m][p];
+                double[] ei1 = eData[0];
+                for (int i = 0; i < p - 1; ++i) {
+                    
+                    final double mi = mainBidiagonal[i];
+                    final double[] ei0 = ei1;
+                    final double[] wi  = wData[i];
+                        ei1 = eData[i + 1];
+                        final double si = secondaryBidiagonal[i];
+                        for (int j = 0; j < p; ++j) {
+                            wi[j] = (mi * ei0[j] + si * ei1[j]) / singularValues[j];
+                        }
+                }
+                        for (int j = 0; j < p; ++j) {
+                            wData[p - 1][j] = ei1[j] * mainBidiagonal[p - 1] / singularValues[j];
+                        }
+
+                for (int i = p; i < m; ++i) {
+                    wData[i] = new double[p];
+                }
+                cachedU =
+                    transformer.getU().multiply(MatrixUtils.createRealMatrix(wData));
+            } else {
+                
+                final RealMatrix e =
+                    eigenDecomposition.getV().getSubMatrix(0, m - 1, 0, p - 1);
+                cachedU = transformer.getU().multiply(e);
+            }
+
+        }
+
+        
+        return cachedU;
+
+    }
+
+    
+    public RealMatrix getUT()
+        throws InvalidMatrixException {
+
+        if (cachedUt == null) {
+            cachedUt = getU().transpose();
+        }
+
+        
+        return cachedUt;
+
+    }
+
+    
+    public RealMatrix getS()
+        throws InvalidMatrixException {
+
+        if (cachedS == null) {
+
+            
+            cachedS = MatrixUtils.createRealDiagonalMatrix(singularValues);
+
+        }
+        return cachedS;
+    }
+
+    
+    public double[] getSingularValues()
+        throws InvalidMatrixException {
+        return singularValues.clone();
+    }
+
+    
+    public RealMatrix getV()
+        throws InvalidMatrixException {
+
+        if (cachedV == null) {
+
+            final int p = singularValues.length;
+            if (m >= n) {
+                
+                final RealMatrix e =
+                    eigenDecomposition.getV().getSubMatrix(0, n - 1, 0, p - 1);
+                cachedV = transformer.getV().multiply(e);
+            } else {
+                
+                
+                final RealMatrix e =
+                    eigenDecomposition.getV().getSubMatrix(0, p - 1, 0, p - 1);
+                final double[][] eData = e.getData();
+                final double[][] wData = new double[n][p];
+                double[] ei1 = eData[0];
+                for (int i = 0; i < p - 1; ++i) {
+                    final double mi = mainBidiagonal[i];
+                    final double[] ei0 = ei1;
+                    final double[] wi  = wData[i];
+                        ei1 = eData[i + 1];
+                        final double si = secondaryBidiagonal[i];
+                        for (int j = 0; j < p; ++j) {
+                            wi[j] = (mi * ei0[j] + si * ei1[j]) / singularValues[j];
+                        }
+                }
+                        for (int j = 0; j < p; ++j) {
+                            wData[p - 1][j] = ei1[j] * mainBidiagonal[p - 1] / singularValues[j];
+                        }
+                for (int i = p; i < n; ++i) {
+                    wData[i] = new double[p];
+                }
+                cachedV =
+                    transformer.getV().multiply(MatrixUtils.createRealMatrix(wData));
+            }
+
+        }
+
+        
+        return cachedV;
+
+    }
+
+    
+    public RealMatrix getVT()
+        throws InvalidMatrixException {
+
+        if (cachedVt == null) {
+            cachedVt = getV().transpose();
+        }
+
+        
+        return cachedVt;
+
+    }
+
+    
+    public RealMatrix getCovariance(final double minSingularValue) {
+
+        
+        final int p = singularValues.length;
+        int dimension = 0;
+        while ((dimension < p) && (singularValues[dimension] >= minSingularValue)) {
+            ++dimension;
+        }
+
+        if (dimension == 0) {
+            throw MathRuntimeException.createIllegalArgumentException(
+                  "cutoff singular value is {0}, should be at most {1}",
+                  minSingularValue, singularValues[0]);
+        }
+
+        final double[][] data = new double[dimension][p];
+        getVT().walkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {
+            
+            @Override
+            public void visit(final int row, final int column, final double value) {
+                data[row][column] = value / singularValues[row];
+            }
+        }, 0, dimension - 1, 0, p - 1);
+
+        RealMatrix jv = new Array2DRowRealMatrix(data, false);
+        return jv.transpose().multiply(jv);
+
+    }
+
+    
+    public double getNorm()
+        throws InvalidMatrixException {
+        return singularValues[0];
+    }
+
+    
+    public double getConditionNumber()
+        throws InvalidMatrixException {
+        return singularValues[0] / singularValues[singularValues.length - 1];
+    }
+
+    
+    public int getRank()
+        throws IllegalStateException {
+
+        final double threshold = Math.max(m, n) * Math.ulp(singularValues[0]);
+
+        for (int i = singularValues.length - 1; i >= 0; --i) {
+           if (singularValues[i] > threshold) {
+              return i + 1;
+           }
+        }
+        return 0;
+
+    }
+
+    
+    public DecompositionSolver getSolver() {
+        return new Solver(singularValues, getUT(), getV(),
+                          getRank() == Math.max(m, n));
+    }
+
+    
+    private static class Solver implements DecompositionSolver {
+
+        
+        private final RealMatrix pseudoInverse;
+
+        
+        private boolean nonSingular;
+
+        
+
+
+
+
+
+
+        private Solver(final double[] singularValues, final RealMatrix uT, final RealMatrix v,
+                       final boolean nonSingular) {
+            double[][] suT      = uT.getData();
+            for (int i = 0; i < singularValues.length; ++i) {
+                final double a      = 1.0 / singularValues[i];
+                final double[] suTi = suT[i];
+                for (int j = 0; j < suTi.length; ++j) {
+                    suTi[j] *= a;
+                }
+            }
+            pseudoInverse    = v.multiply(new Array2DRowRealMatrix(suT, false));
+            this.nonSingular = nonSingular;
+        }
+
+        
+
+
+
+
+
+
+        public double[] solve(final double[] b)
+            throws IllegalArgumentException {
+            return pseudoInverse.operate(b);
+        }
+
+        
+
+
+
+
+
+
+        public RealVector solve(final RealVector b)
+            throws IllegalArgumentException {
+            return pseudoInverse.operate(b);
+        }
+
+        
+
+
+
+
+
+
+        public RealMatrix solve(final RealMatrix b)
+            throws IllegalArgumentException {
+            return pseudoInverse.multiply(b);
+        }
+
+        
+
+
+
+        public boolean isNonSingular() {
+            return nonSingular;
+        }
+
+        
+
+
+        public RealMatrix getInverse() {
+            return pseudoInverse;
+        }
+
+    }
+
+}

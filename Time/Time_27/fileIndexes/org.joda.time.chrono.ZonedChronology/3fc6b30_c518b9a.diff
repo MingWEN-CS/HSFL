@@ -1,0 +1,28 @@
+521,523c521,529
+<             long localInstant = iZone.convertUTCToLocal(instant);
+<             localInstant = iField.roundFloor(localInstant);
+<             return iZone.convertLocalToUTC(localInstant, false);
+---
+>             if (iTimeField) {
+>                 int offset = getOffsetToAdd(instant);
+>                 instant = iField.roundFloor(instant + offset);
+>                 return instant - offset;
+>             } else {
+>                 long localInstant = iZone.convertUTCToLocal(instant);
+>                 localInstant = iField.roundFloor(localInstant);
+>                 return iZone.convertLocalToUTC(localInstant, false);
+>             }
+527,529c533,541
+<             long localInstant = iZone.convertUTCToLocal(instant);
+<             localInstant = iField.roundCeiling(localInstant);
+<             return iZone.convertLocalToUTC(localInstant, false);
+---
+>             if (iTimeField) {
+>                 int offset = getOffsetToAdd(instant);
+>                 instant = iField.roundCeiling(instant + offset);
+>                 return instant - offset;
+>             } else {
+>                 long localInstant = iZone.convertUTCToLocal(instant);
+>                 localInstant = iField.roundCeiling(localInstant);
+>                 return iZone.convertLocalToUTC(localInstant, false);
+>             }

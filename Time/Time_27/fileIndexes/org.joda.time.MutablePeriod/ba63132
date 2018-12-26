@@ -1,0 +1,940 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.Serializable;
+
+import org.joda.time.base.BasePeriod;
+import org.joda.time.field.FieldUtils;
+
+
+
+
+
+
+
+
+
+
+
+
+public class MutablePeriod
+        extends BasePeriod
+        implements ReadWritablePeriod, Cloneable, Serializable {
+
+    
+    private static final long serialVersionUID = 3436451121567212165L;
+
+    
+
+
+    public MutablePeriod() {
+        super(0L, null, null);
+    }
+
+    
+
+
+
+
+    public MutablePeriod(PeriodType type) {
+        super(0L, type, null);
+    }
+
+    
+
+
+
+
+
+
+
+    public MutablePeriod(int hours, int minutes, int seconds, int millis) {
+        super(0, 0, 0, 0, hours, minutes, seconds, millis, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public MutablePeriod(int years, int months, int weeks, int days,
+                  int hours, int minutes, int seconds, int millis) {
+        super(years, months, weeks, days, hours, minutes, seconds, millis, PeriodType.standard());
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutablePeriod(int years, int months, int weeks, int days,
+                    int hours, int minutes, int seconds, int millis, PeriodType type) {
+        super(years, months, weeks, days, hours, minutes, seconds, millis, type);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutablePeriod(long duration) {
+        super(duration, null, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutablePeriod(long duration, PeriodType type) {
+        super(duration, type, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutablePeriod(long duration, Chronology chronology) {
+        super(duration, null, chronology);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public MutablePeriod(long duration, PeriodType type, Chronology chronology) {
+        super(duration, type, chronology);
+    }
+
+    
+
+
+
+
+
+
+    public MutablePeriod(long startInstant, long endInstant) {
+        super(startInstant, endInstant, null, null);
+    }
+
+    
+
+
+
+
+
+
+    public MutablePeriod(long startInstant, long endInstant, PeriodType type) {
+        super(startInstant, endInstant, type, null);
+    }
+
+    
+
+
+
+
+
+
+
+    public MutablePeriod(long startInstant, long endInstant, Chronology chrono) {
+        super(startInstant, endInstant, null, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+    public MutablePeriod(long startInstant, long endInstant, PeriodType type, Chronology chrono) {
+        super(startInstant, endInstant, type, chrono);
+    }
+
+    
+
+
+
+
+
+
+    public MutablePeriod(ReadableInstant startInstant, ReadableInstant endInstant) {
+        super(startInstant, endInstant, null);
+    }
+
+    
+
+
+
+
+
+
+    public MutablePeriod(ReadableInstant startInstant, ReadableInstant endInstant, PeriodType type) {
+        super(startInstant, endInstant, type);
+    }
+
+    
+
+
+
+
+
+    public MutablePeriod(ReadableInstant startInstant, ReadableDuration duration) {
+        super(startInstant, duration, null);
+    }
+
+    
+
+
+
+
+
+
+    public MutablePeriod(ReadableInstant startInstant, ReadableDuration duration, PeriodType type) {
+        super(startInstant, duration, type);
+    }
+
+    
+
+
+
+
+
+
+
+    public MutablePeriod(Object period) {
+        super(period, null, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public MutablePeriod(Object period, PeriodType type) {
+        super(period, type, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public MutablePeriod(Object period, Chronology chrono) {
+        super(period, null, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public MutablePeriod(Object period, PeriodType type, Chronology chrono) {
+        super(period, type, chrono);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public void set(DurationFieldType field, int value) {
+        super.setField(field, value);
+    }
+
+    
+
+
+
+
+
+    public void setPeriod(ReadablePeriod period) {
+        super.setPeriod(period);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void setPeriod(int years, int months, int weeks, int days,
+                          int hours, int minutes, int seconds, int millis) {
+        super.setPeriod(years, months, weeks, days, hours, minutes, seconds, millis);
+    }
+
+    
+
+
+
+
+
+    public void setPeriod(ReadableInterval interval) {
+        setPeriod(interval, null);
+    }
+
+    
+
+
+
+
+
+
+    public void setPeriod(ReadableInterval interval, Chronology chrono) {
+        if (interval == null) {
+            setPeriod(0L);
+        } else {
+            setPeriod(interval.getStartMillis(), interval.getEndMillis(), chrono);
+        }
+    }
+
+    
+
+
+
+
+
+
+    public void setPeriod(ReadableInstant start, ReadableInstant end) {
+        setPeriod(start, end, null);
+    }
+
+    
+
+
+
+
+
+
+
+    public void setPeriod(ReadableInstant start, ReadableInstant end, Chronology chrono) {
+        if (start == end) {
+            setPeriod(0L);
+        } else {
+            long startMillis = DateTimeUtils.getInstantMillis(start);
+            long endMillis = DateTimeUtils.getInstantMillis(end);
+            setPeriod(start, end, chrono);
+        }
+    }
+
+    
+
+
+
+
+
+
+    public void setPeriod(long startInstant, long endInstant) {
+        setPeriod(startInstant, endInstant, null);
+    }
+
+    
+
+
+
+
+
+
+
+    public void setPeriod(long startInstant, long endInstant, Chronology chrono) {
+        super.setPeriod(startInstant, endInstant, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setPeriod(ReadableDuration duration) {
+        setPeriod(duration, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public void setPeriod(ReadableDuration duration, Chronology chrono) {
+        long durationMillis = DateTimeUtils.getDurationMillis(duration);
+        setPeriod(durationMillis, chrono);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public void setPeriod(long duration) {
+        setPeriod(duration, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public void setPeriod(long duration, Chronology chrono) {
+        super.setPeriod(duration, chrono);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public void add(DurationFieldType field, int value) {
+        if (value != 0) {
+            set(field, FieldUtils.safeAdd(get(field), value));
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    public void add(ReadablePeriod period) {
+        if (period != null) {
+            addPeriod(period);
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void add(int years, int months, int weeks, int days,
+                       int hours, int minutes, int seconds, int millis) {
+        setPeriod(
+            FieldUtils.safeAdd(getYears(), years),
+            FieldUtils.safeAdd(getMonths(), months),
+            FieldUtils.safeAdd(getWeeks(), weeks),
+            FieldUtils.safeAdd(getDays(), days),
+            FieldUtils.safeAdd(getHours(), hours),
+            FieldUtils.safeAdd(getMinutes(), minutes),
+            FieldUtils.safeAdd(getSeconds(), seconds),
+            FieldUtils.safeAdd(getMillis(), millis)
+        );
+    }
+
+    
+
+
+
+
+
+
+    public void add(ReadableInterval interval) {
+        if (interval != null) {
+            add(interval.toPeriod(getPeriodType()));
+        }
+    }
+
+    
+
+
+
+
+
+
+    public void add(ReadableDuration duration) {
+        if (duration != null) {
+            add(new Period(duration.getMillis(), getPeriodType()));
+        }
+    }
+
+    
+
+
+
+
+
+
+    public void add(long duration) {
+        add(new Period(duration, getPeriodType()));
+    }
+
+    
+    
+
+
+
+
+    public int getYears() {
+        return getPeriodType().getIndexedField(this, PeriodType.YEAR_INDEX);
+    }
+
+    
+
+
+
+
+    public int getMonths() {
+        return getPeriodType().getIndexedField(this, PeriodType.MONTH_INDEX);
+    }
+
+    
+
+
+
+
+    public int getWeeks() {
+        return getPeriodType().getIndexedField(this, PeriodType.WEEK_INDEX);
+    }
+
+    
+
+
+
+
+    public int getDays() {
+        return getPeriodType().getIndexedField(this, PeriodType.DAY_INDEX);
+    }
+
+    
+    
+
+
+
+
+    public int getHours() {
+        return getPeriodType().getIndexedField(this, PeriodType.HOUR_INDEX);
+    }
+
+    
+
+
+
+
+    public int getMinutes() {
+        return getPeriodType().getIndexedField(this, PeriodType.MINUTE_INDEX);
+    }
+
+    
+
+
+
+
+    public int getSeconds() {
+        return getPeriodType().getIndexedField(this, PeriodType.SECOND_INDEX);
+    }
+
+    
+
+
+
+
+    public int getMillis() {
+        return getPeriodType().getIndexedField(this, PeriodType.MILLI_INDEX);
+    }
+
+    
+    
+
+
+
+
+
+    public void setYears(int years) {
+        super.setField(DurationFieldType.years(), years);
+    }
+
+    
+
+
+
+
+
+
+    public void addYears(int years) {
+        if (years != 0) {
+            setYears(FieldUtils.safeAdd(getYears(), years));
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public void setMonths(int months) {
+        super.setField(DurationFieldType.months(), months);
+    }
+
+    
+
+
+
+
+
+
+    public void addMonths(int months) {
+        if (months != 0) {
+            setMonths(FieldUtils.safeAdd(getMonths(), months));
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public void setWeeks(int weeks) {
+        super.setField(DurationFieldType.weeks(), weeks);
+    }
+
+    
+
+
+
+
+
+
+    public void addWeeks(int weeks) {
+        if (weeks != 0) {
+            setWeeks(FieldUtils.safeAdd(getWeeks(), weeks));
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public void setDays(int days) {
+        super.setField(DurationFieldType.days(), days);
+    }
+
+    
+
+
+
+
+
+
+    public void addDays(int days) {
+        if (days != 0) {
+            setDays(FieldUtils.safeAdd(getDays(), days));
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public void setHours(int hours) {
+        super.setField(DurationFieldType.hours(), hours);
+    }
+
+    
+
+
+
+
+
+
+    public void addHours(int hours) {
+        if (hours != 0) {
+            setHours(FieldUtils.safeAdd(getHours(), hours));
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public void setMinutes(int minutes) {
+        super.setField(DurationFieldType.minutes(), minutes);
+    }
+
+    
+
+
+
+
+
+
+    public void addMinutes(int minutes) {
+        if (minutes != 0) {
+            setMinutes(FieldUtils.safeAdd(getMinutes(), minutes));
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public void setSeconds(int seconds) {
+        super.setField(DurationFieldType.seconds(), seconds);
+    }
+
+    
+
+
+
+
+
+
+    public void addSeconds(int seconds) {
+        if (seconds != 0) {
+            setSeconds(FieldUtils.safeAdd(getSeconds(), seconds));
+        }
+    }
+
+    
+    
+
+
+
+
+
+    public void setMillis(int millis) {
+        super.setField(DurationFieldType.millis(), millis);
+    }
+
+    
+
+
+
+
+
+
+    public void addMillis(int millis) {
+        if (millis != 0) {
+            setMillis(FieldUtils.safeAdd(getMillis(), millis));
+        }
+    }
+
+    
+    
+    
+
+
+
+
+    public MutablePeriod copy() {
+        return (MutablePeriod)clone();
+    }
+
+    
+
+
+
+
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new InternalError("Clone error");
+        }
+    }
+
+}

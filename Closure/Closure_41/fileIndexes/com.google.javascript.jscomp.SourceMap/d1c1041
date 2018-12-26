@@ -1,0 +1,662 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Lists;
+import com.google.javascript.rhino.Node;
+
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+
+
+
+
+
+
+
+
+
+
+
+
+public class SourceMap {
+
+  private final static int UNMAPPED = -1;
+
+  
+
+
+  public enum DetailLevel implements Predicate<Node> {
+    
+    
+    ALL {
+      @Override public boolean apply(Node node) {
+        return true;
+      }
+    },
+    
+    
+    SYMBOLS {
+      @Override public boolean apply(Node node) {
+        return NodeUtil.isCall(node)
+            || NodeUtil.isNew(node)
+            || NodeUtil.isFunction(node)
+            || NodeUtil.isName(node)
+            || (NodeUtil.isString(node) && NodeUtil.isGet(node.getParent()));
+      }
+    };
+  }
+
+  
+
+
+
+  static class Mapping {
+    
+
+
+    int id = UNMAPPED;
+
+    
+
+
+    String sourceFile;
+
+    
+
+
+
+
+    Position originalPosition;
+
+    
+
+
+
+    Position startPosition;
+
+    
+
+
+
+    Position endPosition;
+
+    
+
+
+
+    String originalName;
+
+    
+
+
+    boolean used = false;
+  }
+
+  private class MappingWriter {
+    
+
+
+    private String lastSourceFile = null;
+    private String lastSourceFileEscaped = null;
+    private int lastLine = 0;
+    private String lastLineString = String.valueOf(0);
+
+    
+
+
+    private void appendMappingTo(
+        Mapping m, Appendable out) throws IOException {
+      out.append("[");
+
+      String sourceFile = m.sourceFile;
+      
+      String escapedSourceFile;
+      if (lastSourceFile != sourceFile) { 
+        lastSourceFile = sourceFile;
+        lastSourceFileEscaped = escapeString(sourceFile);
+      }
+      escapedSourceFile = lastSourceFileEscaped;
+
+      out.append(escapedSourceFile);
+      out.append(",");
+
+      int line = m.originalPosition.getLineNumber();
+      if (line != lastLine) {
+        lastLineString = String.valueOf(line);
+      }
+      String lineValue = lastLineString;
+
+      out.append(lineValue);
+
+      out.append(",");
+      out.append(String.valueOf(
+          m.originalPosition.getCharacterIndex()));
+
+      if (m.originalName != null) {
+        out.append(",");
+        out.append(escapeString(m.originalName));
+      }
+
+      out.append("]\n");
+    }
+
+    
+
+
+    void appendMappings(Appendable out) throws IOException {
+      for (Mapping m : mappings) {
+        if (m.used) {
+          appendMappingTo(m, out);
+        }
+      }
+    }
+  }
+
+  
+
+
+  private List<Mapping> mappings = Lists.newArrayList();
+
+  
+
+
+  private Mapping lastMapping;
+
+  
+
+
+
+  private Position offsetPosition = new Position(0, 0);
+
+  
+
+
+
+
+  private Position prefixPosition = new Position(0, 0);
+
+  
+
+
+  private static String escapeString(String value) {
+    return CodeGenerator.escapeToDoubleQuotedJsString(value);
+  }
+
+  
+
+
+
+
+
+
+  void addMapping(Node node, Position startPosition, Position endPosition) {
+    String sourceFile = (String)node.getProp(Node.SOURCENAME_PROP);
+
+    
+    
+    
+    if (sourceFile == null || node.getLineno() < 0) {
+      return;
+    }
+
+    
+    Mapping mapping = new Mapping();
+    mapping.sourceFile = sourceFile;
+    mapping.originalPosition = new Position(node.getLineno(), node.getCharno());
+
+    String originalName = (String)node.getProp(Node.ORIGINALNAME_PROP);
+    if (originalName != null) {
+      mapping.originalName = originalName;
+    }
+
+    if (offsetPosition.getLineNumber() == 0
+        && offsetPosition.getCharacterIndex() == 0) {
+      mapping.startPosition = startPosition;
+      mapping.endPosition = endPosition;
+    } else {
+      
+      
+      
+      
+      int offsetLine = offsetPosition.getLineNumber();
+      int startOffsetPosition = offsetPosition.getCharacterIndex();
+      int endOffsetPosition = offsetPosition.getCharacterIndex();
+
+      if (startPosition.getLineNumber() > 0) {
+        startOffsetPosition = 0;
+      }
+
+      if (endPosition.getLineNumber() > 0) {
+        endOffsetPosition = 0;
+      }
+
+      mapping.startPosition =
+          new Position(startPosition.getLineNumber() + offsetLine,
+                       startPosition.getCharacterIndex() + startOffsetPosition);
+
+      mapping.endPosition =
+          new Position(endPosition.getLineNumber() + offsetLine,
+                       endPosition.getCharacterIndex() + endOffsetPosition);
+    }
+
+    
+    if (lastMapping != null) {
+      int lastLine = lastMapping.startPosition.getLineNumber();
+      int lastColumn = lastMapping.startPosition.getCharacterIndex();
+      int nextLine = mapping.startPosition.getLineNumber();
+      int nextColumn = mapping.startPosition.getCharacterIndex();
+      Preconditions.checkState(nextLine > lastLine
+          || (nextLine == lastLine && nextColumn >= lastColumn),
+          "Incorrect source mappings order, previous : (%s,%s)\n"
+          + "new : (%s,%s)\nnode : %s",
+          lastLine, lastColumn, nextLine, nextColumn, node);
+    }
+
+    lastMapping = mapping;
+    mappings.add(mapping);
+  }
+
+  
+
+
+
+
+
+
+  void setWrapperPrefix(String prefix) {
+    
+    int prefixLine = 0;
+    int prefixIndex = 0;
+
+    for (int i = 0; i < prefix.length(); ++i) {
+      if (prefix.charAt(i) == '\n') {
+        prefixLine++;
+        prefixIndex = 0;
+      } else {
+        prefixIndex++;
+      }
+    }
+
+    prefixPosition = new Position(prefixLine, prefixIndex);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  void setStartingPosition(int offsetLine, int offsetIndex) {
+    Preconditions.checkState(offsetLine >= 0);
+    Preconditions.checkState(offsetIndex >= 0);
+    offsetPosition = new Position(offsetLine, offsetIndex);
+  }
+
+  
+
+
+  public void reset() {
+    mappings = Lists.newArrayList();
+    lastMapping = null;
+    offsetPosition = new Position(0, 0);
+    prefixPosition = new Position(0, 0);
+  }
+
+  
+
+
+
+
+
+
+  public void appendTo(Appendable out, String name) throws IOException {
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    int maxLine = prepMappings();
+
+    
+    out.append("{ \"file\" : ");
+    out.append(escapeString(name));
+    out.append(", \"count\": ");
+    out.append(String.valueOf(maxLine + 1));
+    out.append(" }\n");
+    (new LineMapper(out)).appendLineMappings();
+
+    
+    out.append("\n");
+
+    
+    
+    for (int i = 0; i <= maxLine; ++i) {
+      out.append("[]\n");
+    }
+
+    
+    out.append("\n");
+
+    (new MappingWriter()).appendMappings(out);
+  }
+
+  
+
+
+  private int prepMappings() throws IOException {
+    
+    (new MappingTraversal()).traverse(new UsedMappingCheck());
+
+    
+    int id = 0;
+    int maxLine = 0;
+    for (Mapping m : mappings) {
+      if (m.used) {
+        m.id = id++;
+        int endPositionLine = m.endPosition.getLineNumber();
+        maxLine = Math.max(maxLine, endPositionLine);
+      }
+    }
+
+    
+    return maxLine + prefixPosition.getLineNumber();
+  }
+
+  private class LineMapper implements MappingVisitor {
+    
+    private final Appendable out;
+
+    
+    private boolean firstChar = true;
+
+    private final static String UNMAPPED_STRING = "-1";
+
+    private int lastId = UNMAPPED;
+    private String lastIdString = UNMAPPED_STRING;
+
+    LineMapper(Appendable out) {
+      this.out = out;
+    }
+
+    
+
+
+    public void visit(Mapping m, int line, int col, int nextLine, int nextCol)
+      throws IOException {
+
+      int id = (m != null) ? m.id : UNMAPPED;
+      if (lastId != id) {
+        
+        
+        lastIdString = (id == UNMAPPED) ? UNMAPPED_STRING : String.valueOf(id);
+        lastId = id;
+      }
+      String idString = lastIdString;
+
+      for (int i = line; i <= nextLine; i++) {
+        if (i == nextLine) {
+          for (int j = col; j < nextCol; j++) {
+            addCharEntry(idString);
+          }
+          break;
+        }
+
+        closeLine();
+        openLine();
+
+        
+        col = 0;
+      }
+    }
+
+    
+    void appendLineMappings() throws IOException {
+      
+      openLine();
+
+      (new MappingTraversal()).traverse(this);
+
+      
+      closeLine();
+    }
+
+    
+
+
+    private void openLine() throws IOException {
+      if (out != null) {
+        out.append("[");
+        this.firstChar = true;
+      }
+    }
+
+    
+
+
+    private void closeLine() throws IOException {
+      if (out != null) {
+        out.append("]\n");
+      }
+    }
+
+    
+
+
+
+    private void addCharEntry(String id) throws IOException {
+      if (out != null) {
+        if (firstChar) {
+          firstChar = false;
+        } else {
+          out.append(",");
+        }
+        out.append(id);
+      }
+    }
+  }
+
+  
+
+
+  private class UsedMappingCheck implements MappingVisitor {
+    
+
+
+    @Override
+    public void visit(Mapping m, int line, int col, int nextLine, int nextCol)
+        throws IOException {
+      if (m != null) {
+        m.used = true;
+      }
+    }
+  }
+
+  private interface MappingVisitor {
+    
+
+
+
+
+
+
+
+
+    void visit(Mapping m, int line, int col, int endLine, int endCol)
+        throws IOException;
+  }
+
+  
+
+
+
+  private class MappingTraversal {
+    
+    private int line;
+    private int col;
+
+    MappingTraversal() {
+    }
+
+    
+    void traverse(MappingVisitor v) throws IOException {
+      
+      
+      
+      Deque<Mapping> stack = new ArrayDeque<Mapping>();
+      for (Mapping m : mappings) {
+        
+        
+        
+        
+        while (!stack.isEmpty() && !isOverlapped(stack.peek(), m)) {
+          Mapping previous = stack.pop();
+          maybeVisit(v, previous);
+        }
+
+        
+        
+        Mapping parent = stack.peek();
+        maybeVisitParent(v, parent, m);
+
+        stack.push(m);
+      }
+
+      
+      
+      while (!stack.isEmpty()) {
+        Mapping m = stack.pop();
+        maybeVisit(v, m);
+      }
+    }
+
+    
+
+
+    private int getAdjustedLine(Position p) {
+      return p.getLineNumber() + prefixPosition.getLineNumber();
+    }
+
+    
+
+
+    private int getAdjustedCol(Position p) {
+      int rawLine = p.getLineNumber();
+      int rawCol = p.getCharacterIndex();
+      
+      return (rawLine != 0)
+          ? rawCol : rawCol + prefixPosition.getCharacterIndex();
+    }
+
+    
+
+
+    private boolean isOverlapped(Mapping m1, Mapping m2) {
+      
+      int l1 = m1.endPosition.getLineNumber();
+      int l2 = m2.startPosition.getLineNumber();
+      int c1 = m1.endPosition.getCharacterIndex();
+      int c2 = m2.startPosition.getCharacterIndex();
+
+      return (l1 == l2 && c1 >= c2) || l1 > l2;
+    }
+
+    
+
+
+
+    private void maybeVisit(MappingVisitor v, Mapping m) throws IOException {
+      int nextLine = getAdjustedLine(m.endPosition);
+      int nextCol = getAdjustedCol(m.endPosition);
+      
+      
+      if (line < nextLine || (line == nextLine && col < nextCol)) {
+        visit(v, m, nextLine, nextCol);
+      }
+    }
+
+    
+
+
+    private void maybeVisitParent(MappingVisitor v, Mapping parent, Mapping m)
+        throws IOException {
+      int nextLine = getAdjustedLine(m.startPosition);
+      int nextCol = getAdjustedCol(m.startPosition);
+      
+      Preconditions.checkState(line < nextLine || col <= nextCol);
+      if (line < nextLine || (line == nextLine && col < nextCol)) {
+        visit(v, parent, nextLine, nextCol);
+      }
+    }
+
+    
+
+
+
+    private void visit(MappingVisitor v, Mapping m,
+        int nextLine, int nextCol)
+        throws IOException {
+      Preconditions.checkState(line <= nextLine);
+      Preconditions.checkState(line < nextLine || col < nextCol);
+
+      if (line == nextLine && col == nextCol) {
+        
+        Preconditions.checkState(false);
+        return;
+      }
+
+      v.visit(m, line, col, nextLine, nextCol);
+
+      line = nextLine;
+      col = nextCol;
+    }
+  }
+}

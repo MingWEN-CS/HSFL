@@ -1,0 +1,107 @@
+709c709,731
+<         return append0(new TwoDigitYear(pivot));
+---
+>         return append0(new TwoDigitYear(DateTimeFieldType.year(), pivot));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendTwoDigitWeekyear(int pivot) {
+>         return append0(new TwoDigitYear(DateTimeFieldType.weekyear(), pivot));
+818c840
+<         return append0(new TimeZonePrinter(false), null);
+---
+>         return append0(new TimeZoneName(TimeZoneName.LONG_NAME), null);
+829c851,861
+<         return append0(new TimeZonePrinter(true), null);
+---
+>         return append0(new TimeZoneName(TimeZoneName.SHORT_NAME), null);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatterBuilder appendTimeZoneId() {
+>         return append0(new TimeZoneName(TimeZoneName.ID), null);
+1248a1281
+>         private final DateTimeFieldType iType;
+1251c1284
+<         TwoDigitYear(int pivot) {
+---
+>         TwoDigitYear(DateTimeFieldType type, int pivot) {
+1252a1286
+>             iType = type;
+1289c1323
+<             bucket.saveField(DateTimeFieldType.year(), year);
+---
+>             bucket.saveField(iType, year);
+1323c1357
+<                 int year = chrono.year().get(instant);
+---
+>                 int year = iType.getField(chrono).get(instant);
+1354c1388
+<             if (partial.isSupported(DateTimeFieldType.year())) {
+---
+>             if (partial.isSupported(iType)) {
+1356c1390
+<                     int year = partial.get(DateTimeFieldType.year());
+---
+>                     int year = partial.get(iType);
+2055c2089
+<     static class TimeZonePrinter
+---
+>     static class TimeZoneName
+2058c2092,2096
+<         private final boolean iShortFormat;
+---
+>         static final int LONG_NAME = 0;
+>         static final int SHORT_NAME = 1;
+>         static final int ID = 2;
+> 
+>         private final int iType;
+2060c2098
+<         TimeZonePrinter(boolean shortFormat) {
+---
+>         TimeZoneName(int type) {
+2062c2100
+<             iShortFormat = shortFormat;
+---
+>             iType = type;
+2066c2104
+<             return iShortFormat ? 4 : 20;
+---
+>             return (iType == SHORT_NAME ? 4 : 20);
+2085,2088c2123,2129
+<             if (iShortFormat) {
+<                 return displayZone.getShortName(instant, locale);
+<             } else {
+<                 return displayZone.getName(instant, locale);
+---
+>             switch (iType) {
+>                 case LONG_NAME:
+>                     return displayZone.getName(instant, locale);
+>                 case SHORT_NAME:
+>                     return displayZone.getShortName(instant, locale);
+>                 case ID:
+>                     return displayZone.getID();
+2089a2131
+>             return "";

@@ -1,0 +1,88 @@
+155a156,157
+> 
+> 
+221,225c223,225
+< public class CategoryPlot extends Plot 
+<                           implements ValueAxisPlot, 
+<                                      Zoomable,
+<                                      RendererChangeListener,
+<                                      Cloneable, PublicCloneable, Serializable {
+---
+> public class CategoryPlot extends Plot implements ValueAxisPlot, 
+>         Zoomable, RendererChangeListener, Cloneable, PublicCloneable, 
+>         Serializable {
+244,245c244,245
+<             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f,
+<             new float[] {2.0f, 2.0f}, 0.0f);
+---
+>             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[] 
+>             {2.0f, 2.0f}, 0.0f);
+251,252c251,252
+<     public static final Font DEFAULT_VALUE_LABEL_FONT 
+<             = new Font("SansSerif", Font.PLAIN, 10);
+---
+>     public static final Font DEFAULT_VALUE_LABEL_FONT = new Font("SansSerif", 
+>             Font.PLAIN, 10);
+278c278,279
+<         = ResourceBundle.getBundle("org.jfree.chart.plot.LocalizationBundle");
+---
+>             = ResourceBundle.getBundle(
+>             "org.jfree.chart.plot.LocalizationBundle");
+3414a3416,3433
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void zoomDomainAxes(double factor, PlotRenderingInfo info,
+>                                Point2D source, boolean useAnchor) {
+>         
+>     }
+3424a3444,3464
+>         
+>         zoomRangeAxes(factor, state, source, false);    
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void zoomRangeAxes(double factor, PlotRenderingInfo info,
+>                               Point2D source, boolean useAnchor) {
+>                 
+>         
+3428c3468,3481
+<                 rangeAxis.resizeRange(factor);
+---
+>                 if (useAnchor) {
+>                     
+>                     
+>                     double sourceY = source.getY();
+>                     if (this.orientation == PlotOrientation.HORIZONTAL) {
+>                         sourceY = source.getX();
+>                     }
+>                     double anchorY = rangeAxis.java2DToValue(sourceY, 
+>                             info.getDataArea(), getRangeAxisEdge());
+>                     rangeAxis.resizeRange(factor, anchorY);
+>                 }
+>                 else {
+>                     rangeAxis.resizeRange(factor);
+>                 }

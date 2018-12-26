@@ -1,0 +1,36 @@
+72a73,77
+>     
+>     rewriteFunctionDeclarations(newFnNode.getLastChild());
+> 
+>     
+>     
+110a116,144
+> 
+>   
+> 
+> 
+>   private void rewriteFunctionDeclarations(Node n) {
+>     if (n.getType() == Token.FUNCTION) {
+>       if (NodeUtil.isFunctionDeclaration(n)) {
+>         
+>         Node fnNameNode = n.getFirstChild();
+> 
+>         Node var = new Node(Token.VAR).copyInformationFrom(n);
+>         Node name = Node.newString(Token.NAME, fnNameNode.getString())
+>             .copyInformationFrom(fnNameNode);
+> 
+>         fnNameNode.setString("");
+>         
+>         n.getParent().replaceChild(n, var);
+>         var.addChildToFront(name);
+>         
+>         name.addChildToFront(n);
+>       }
+>       return;
+>     }
+> 
+>     for (Node c = n.getFirstChild(), next; c != null; c = next) {
+>       next = c.getNext(); 
+>       rewriteFunctionDeclarations(c);
+>     }
+>   }

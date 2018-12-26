@@ -1,0 +1,28 @@
+87a88,89
+>   private boolean makesStructs = false;
+>   private boolean makesDicts = false;
+108a111,114
+>   static final DiagnosticType CONSTRUCTOR_REQUIRED =
+>       DiagnosticType.warning("JSC_CONSTRUCTOR_REQUIRED",
+>                              "{0} used without @constructor for {1}");
+> 
+324a331,332
+>       makesStructs = info.makesStructs();
+>       makesDicts = info.makesDicts();
+326a335,340
+>       if (makesStructs && !isConstructor) {
+>         reportWarning(CONSTRUCTOR_REQUIRED, "@struct", fnName);
+>       } else if (makesDicts && !isConstructor) {
+>         reportWarning(CONSTRUCTOR_REQUIRED, "@dict", fnName);
+>       }
+> 
+352c366
+<         reportWarning(IMPLEMENTS_WITHOUT_CONSTRUCTOR, fnName);
+---
+>         reportWarning(CONSTRUCTOR_REQUIRED, "@implements", fnName);
+666a681,685
+>     if (makesStructs) {
+>       fnType.setStruct();
+>     } else if (makesDicts) {
+>       fnType.setDict();
+>     }

@@ -1,0 +1,1522 @@
+1a2,1522
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.joda.time.format;
+> 
+> import java.io.IOException;
+> import java.io.Writer;
+> import java.util.ArrayList;
+> import java.util.List;
+> 
+> import org.joda.time.PeriodType;
+> import org.joda.time.ReadWritablePeriod;
+> import org.joda.time.ReadablePeriod;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class PeriodFormatterBuilder {
+>     private static final int PRINT_ZERO_RARELY = 1;
+>     private static final int PRINT_ZERO_IF_SUPPORTED = 2;
+>     private static final int PRINT_ZERO_ALWAYS = 3;
+> 
+>     private boolean iFavorFirstFieldForZero;
+> 
+>     private int iMinPrintedDigits;
+>     private int iPrintZeroSetting;
+>     private int iMaxParsedDigits;
+>     private boolean iRejectSignedValues;
+> 
+>     private DurationFieldAffix iPrefix;
+> 
+>     
+>     private List iFormatters;
+> 
+>     
+>     
+>     private List iAlternateFormatters;
+> 
+>     public PeriodFormatterBuilder() {
+>         clear();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodPrinter toPrinter() {
+>         return toFormatter();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodParser toParser() {
+>         return toFormatter();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatter toFormatter() {
+>         PeriodFormatter formatter = toFormatter(iFormatters);
+>         List altFormatters = iAlternateFormatters;
+>         if (altFormatters.size() > 0) {
+>             
+>             
+>             for (int i=altFormatters.size(); --i>=0; ) {
+>                 if (altFormatters.get(i) instanceof FieldFormatter) {
+>                     formatter = new AlternateSelector
+>                         (formatter, altFormatters, iFavorFirstFieldForZero);
+>                     break;
+>                 }
+>             }
+>         }
+>         return formatter;
+>     }
+> 
+>     private static PeriodFormatter toFormatter(List formatters) {
+>         int size = formatters.size();
+>         if (size >= 2 && formatters.get(1) instanceof Separator) {
+>             PeriodFormatter before = (PeriodFormatter) formatters.get(0);
+>             if (size == 2) {
+>                 
+>                 return before;
+>             }
+>             return ((Separator) formatters.get(1)).finish
+>                 (before, toFormatter(formatters.subList(2, size)));
+>         }
+>         return createComposite(formatters);
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public void clear() {
+>         iFavorFirstFieldForZero = false;
+>         iMinPrintedDigits = 1;
+>         iPrintZeroSetting = PRINT_ZERO_RARELY;
+>         iMaxParsedDigits = 10;
+>         iRejectSignedValues = false;
+>         iPrefix = null;
+>         if (iFormatters == null) {
+>             iFormatters = new ArrayList();
+>         } else {
+>             iFormatters.clear();
+>         }
+>         if (iAlternateFormatters == null) {
+>             iAlternateFormatters = new ArrayList();
+>         } else {
+>             iAlternateFormatters.clear();
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder append(PeriodFormatter formatter)
+>         throws IllegalArgumentException
+>     {
+>         if (formatter == null) {
+>             throw new IllegalArgumentException("No formatter supplied");
+>         }
+>         clearPrefix();
+>         iFormatters.add(formatter);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendLiteral(String text) {
+>         if (text == null) {
+>             throw new IllegalArgumentException("Literal must not be null");
+>         }
+>         clearPrefix();
+>         Literal literal = new Literal(text);
+>         iFormatters.add(literal);
+>         iAlternateFormatters.add(literal);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder minimumPrintedDigits(int minDigits) {
+>         iMinPrintedDigits = minDigits;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder maximumParsedDigits(int maxDigits) {
+>         iMaxParsedDigits = maxDigits;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder rejectSignedValues(boolean v) {
+>         iRejectSignedValues = v;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder printZeroRarely() {
+>         iPrintZeroSetting = PRINT_ZERO_RARELY;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder printZeroIfSupported() {
+>         iPrintZeroSetting = PRINT_ZERO_IF_SUPPORTED;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder printZeroAlways() {
+>         iPrintZeroSetting = PRINT_ZERO_ALWAYS;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendPrefix(String text) {
+>         if (text == null) {
+>             throw new IllegalArgumentException();
+>         }
+>         return appendPrefix(new SingularAffix(text));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendPrefix(String singularText,
+>                                                  String pluralText) {
+>         if (singularText == null || pluralText == null) {
+>             throw new IllegalArgumentException();
+>         }
+>         return appendPrefix(new PluralAffix(singularText, pluralText));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private PeriodFormatterBuilder appendPrefix(DurationFieldAffix prefix) {
+>         if (prefix == null) {
+>             throw new IllegalArgumentException();
+>         }
+>         if (iPrefix != null) {
+>             prefix = new CompositeAffix(iPrefix, prefix);
+>         }
+>         iPrefix = prefix;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendYears() {
+>         appendField(1);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendMonths() {
+>         appendField(2);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendWeeks() {
+>         appendField(3);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendDays() {
+>         appendField(4);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendHours() {
+>         appendField(5);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendMinutes() {
+>         appendField(6);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSeconds() {
+>         appendField(7);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendMillis() {
+>         appendField(8);
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendMillis3Digit() {
+>         appendField(8, 3);
+>         return this;
+>     }
+> 
+>     private void appendField(int type) {
+>         appendField(type, iMinPrintedDigits);
+>     }
+> 
+>     private void appendField(int type, int minPrinted) {
+>         FieldFormatter field = new FieldFormatter(minPrinted, iPrintZeroSetting,
+>             iMaxParsedDigits, iRejectSignedValues, type, iPrefix, null);
+>         iFormatters.add(field);
+>         if (iPrintZeroSetting == PRINT_ZERO_RARELY) {
+>             iAlternateFormatters.add(field);
+>         }
+>         iPrefix = null;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSuffix(String text) {
+>         if (text == null) {
+>             throw new IllegalArgumentException();
+>         }
+>         return appendSuffix(new SingularAffix(text));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSuffix(String singularText,
+>                                                  String pluralText) {
+>         if (singularText == null || pluralText == null) {
+>             throw new IllegalArgumentException();
+>         }
+>         return appendSuffix(new PluralAffix(singularText, pluralText));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private PeriodFormatterBuilder appendSuffix(DurationFieldAffix suffix) {
+>         final Object originalField;
+>         if (iFormatters.size() > 0) {
+>             originalField = iFormatters.get(iFormatters.size() - 1);
+>         } else {
+>             originalField = null;
+>         }
+> 
+>         if (originalField == null || !(originalField instanceof FieldFormatter)) {
+>             throw new IllegalStateException("No field to apply suffix to");
+>         }
+> 
+>         clearPrefix();
+>         Object newField = new FieldFormatter((FieldFormatter) originalField, suffix);
+>         iFormatters.set(iFormatters.size() - 1, newField);
+> 
+>         int index = iAlternateFormatters.lastIndexOf(originalField);
+>         if (index >= 0) {
+>             iAlternateFormatters.set(index, newField);
+>         }
+> 
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSeparator(String text) {
+>         return appendSeparator(text, text);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder appendSeparator(String text,
+>                                                     String finalText) {
+>         if (text == null || finalText == null) {
+>             throw new IllegalArgumentException();
+>         }
+> 
+>         clearPrefix();
+> 
+>         List formatters = iFormatters;
+> 
+>         if (formatters.size() == 0) {
+>             
+>             return this;
+>         }
+> 
+>         
+>         int i;
+>         Separator lastSeparator = null;
+>         for (i=formatters.size(); --i>=0; ) {
+>             if (formatters.get(i) instanceof Separator) {
+>                 lastSeparator = (Separator) formatters.get(i);
+>                 formatters = formatters.subList(i + 1, formatters.size());
+>                 break;
+>             }
+>         }
+> 
+>         if (lastSeparator != null && formatters.size() == 0) {
+>             
+>             iFormatters.set(i, lastSeparator.merge(text, finalText));
+>         } else {
+>             PeriodFormatter composite = createComposite(formatters);
+>             formatters.clear();
+>             formatters.add(composite);
+>             
+>             
+>             formatters.add(new Separator(text, finalText));
+>         }
+>             
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder favorLastFieldForZero() {
+>         iFavorFirstFieldForZero = false;
+>         return this;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public PeriodFormatterBuilder favorFirstFieldForZero() {
+>         iFavorFirstFieldForZero = true;
+>         return this;
+>     }
+> 
+>     private void clearPrefix() throws IllegalStateException {
+>         if (iPrefix != null) {
+>             throw new IllegalStateException("Prefix not followed by field");
+>         }
+>         iPrefix = null;
+>     }
+> 
+>     private static PeriodFormatter createComposite(List formatters) {
+>         if (formatters.size() == 1) {
+>             return (PeriodFormatter)formatters.get(0);
+>         } else {
+>             return new Composite(formatters);
+>         }
+>     }
+> 
+>     
+> 
+> 
+>     private static interface DurationFieldAffix {
+>         int calculatePrintedLength(int value);
+>         
+>         void printTo(StringBuffer buf, int value);
+>         
+>         void printTo(Writer out, int value) throws IOException;
+>         
+>         
+> 
+> 
+>         int parse(String durationStr, int position);
+> 
+>         
+> 
+> 
+>         int scan(String durationStr, int position);
+>     }
+> 
+>     private static final class SingularAffix implements DurationFieldAffix {
+>         private final String iText;
+> 
+>         SingularAffix(String text) {
+>             iText = text;
+>         }
+> 
+>         public int calculatePrintedLength(int value) {
+>             return iText.length();
+>         }
+> 
+>         public void printTo(StringBuffer buf, int value) {
+>             buf.append(iText);
+>         }
+> 
+>         public void printTo(Writer out, int value) throws IOException {
+>             out.write(iText);
+>         }
+> 
+>         public int parse(String durationStr, int position) {
+>             String text = iText;
+>             int textLength = text.length();
+>             if (durationStr.regionMatches(true, position, text, 0, textLength)) {
+>                 return position + textLength;
+>             }
+>             return ~position;
+>         }
+> 
+>         public int scan(String durationStr, final int position) {
+>             String text = iText;
+>             int textLength = text.length();
+>             int sourceLength = durationStr.length();
+>             for (int pos = position; pos < sourceLength; pos++) {
+>                 if (durationStr.regionMatches(true, pos, text, 0, textLength)) {
+>                     return pos;
+>                 }
+>             }
+>             return ~position;
+>         }
+>     }
+> 
+>     private static final class PluralAffix implements DurationFieldAffix {
+>         private final String iSingularText;
+>         private final String iPluralText;
+> 
+>         PluralAffix(String singularText, String pluralText) {
+>             iSingularText = singularText;
+>             iPluralText = pluralText;
+>         }
+> 
+>         public int calculatePrintedLength(int value) {
+>             return (value == 1 ? iSingularText : iPluralText).length();
+>         }
+> 
+>         public void printTo(StringBuffer buf, int value) {
+>             buf.append(value == 1 ? iSingularText : iPluralText);
+>         }
+> 
+>         public void printTo(Writer out, int value) throws IOException {
+>             out.write(value == 1 ? iSingularText : iPluralText);
+>         }
+> 
+>         public int parse(String durationStr, int position) {
+>             String text1 = iPluralText;
+>             String text2 = iSingularText; 
+> 
+>             if (text1.length() < text2.length()) {
+>                 
+>                 String temp = text1;
+>                 text1 = text2;
+>                 text2 = temp;
+>             }
+> 
+>             if (durationStr.regionMatches
+>                 (true, position, text1, 0, text1.length())) {
+>                 return position + text1.length();
+>             }
+>             if (durationStr.regionMatches
+>                 (true, position, text2, 0, text2.length())) {
+>                 return position + text2.length();
+>             }
+> 
+>             return ~position;
+>         }
+> 
+>         public int scan(String durationStr, final int position) {
+>             String text1 = iPluralText;
+>             String text2 = iSingularText; 
+> 
+>             if (text1.length() < text2.length()) {
+>                 
+>                 String temp = text1;
+>                 text1 = text2;
+>                 text2 = temp;
+>             }
+> 
+>             int textLength1 = text1.length();
+>             int textLength2 = text2.length();
+> 
+>             int sourceLength = durationStr.length();
+>             for (int pos = position; pos < sourceLength; pos++) {
+>                 if (durationStr.regionMatches(true, pos, text1, 0, textLength1)) {
+>                     return pos;
+>                 }
+>                 if (durationStr.regionMatches(true, pos, text2, 0, textLength2)) {
+>                     return pos;
+>                 }
+>             }
+>             return ~position;
+>         }
+>     }
+> 
+>     private static final class CompositeAffix implements DurationFieldAffix {
+>         private final DurationFieldAffix iLeft;
+>         private final DurationFieldAffix iRight;
+> 
+>         CompositeAffix(DurationFieldAffix left, DurationFieldAffix right) {
+>             iLeft = left;
+>             iRight = right;
+>         }
+> 
+>         public int calculatePrintedLength(int value) {
+>             return iLeft.calculatePrintedLength(value)
+>                 + iRight.calculatePrintedLength(value);
+>         }
+> 
+>         public void printTo(StringBuffer buf, int value) {
+>             iLeft.printTo(buf, value);
+>             iRight.printTo(buf, value);
+>         }
+> 
+>         public void printTo(Writer out, int value) throws IOException {
+>             iLeft.printTo(out, value);
+>             iRight.printTo(out, value);
+>         }
+> 
+>         public int parse(String durationStr, int position) {
+>             position = iLeft.parse(durationStr, position);
+>             if (position >= 0) {
+>                 position = iRight.parse(durationStr, position);
+>             }
+>             return position;
+>         }
+> 
+>         public int scan(String durationStr, final int position) {
+>             int pos = iLeft.scan(durationStr, position);
+>             if (pos >= 0) {
+>                 return iRight.scan(durationStr, pos);
+>             }
+>             return ~position;
+>         }
+>     }
+> 
+>     private static final class FieldFormatter extends AbstractPeriodFormatter
+>         implements PeriodFormatter
+>     {
+>         private final int iMinPrintedDigits;
+>         private final int iPrintZeroSetting;
+>         private final int iMaxParsedDigits;
+>         private final boolean iRejectSignedValues;
+> 
+>         private final int iFieldType;
+> 
+>         private final DurationFieldAffix iPrefix;
+>         private final DurationFieldAffix iSuffix;
+> 
+>         FieldFormatter(int minPrintedDigits, int printZeroSetting,
+>                        int maxParsedDigits, boolean rejectSignedValues,
+>                        int fieldType, DurationFieldAffix prefix, DurationFieldAffix suffix) {
+>             iMinPrintedDigits = minPrintedDigits;
+>             iPrintZeroSetting = printZeroSetting;
+>             iMaxParsedDigits = maxParsedDigits;
+>             iRejectSignedValues = rejectSignedValues;
+>             iFieldType = fieldType;
+>             iPrefix = prefix;
+>             iSuffix = suffix;
+>         }
+> 
+>         FieldFormatter(FieldFormatter field, DurationFieldAffix suffix) {
+>             iMinPrintedDigits = field.iMinPrintedDigits;
+>             iPrintZeroSetting = field.iPrintZeroSetting;
+>             iMaxParsedDigits = field.iMaxParsedDigits;
+>             iRejectSignedValues = field.iRejectSignedValues;
+>             iFieldType = field.iFieldType;
+>             iPrefix = field.iPrefix;
+>             if (field.iSuffix != null) {
+>                 suffix = new CompositeAffix(field.iSuffix, suffix);
+>             }
+>             iSuffix = suffix;
+>         }
+> 
+>         FieldFormatter(FieldFormatter field, int printZeroSetting) {
+>             iMinPrintedDigits = field.iMinPrintedDigits;
+>             iPrintZeroSetting = printZeroSetting;
+>             iMaxParsedDigits = field.iMaxParsedDigits;
+>             iRejectSignedValues = field.iRejectSignedValues;
+>             iFieldType = field.iFieldType;
+>             iPrefix = field.iPrefix;
+>             iSuffix = field.iSuffix;
+>         }
+> 
+>         public int countFieldsToPrint(ReadablePeriod period) {
+>             if (iPrintZeroSetting == PRINT_ZERO_ALWAYS || getFieldValue(period) >= 0) {
+>                 return 1;
+>             }
+>             return 0;
+>         }
+> 
+>         public int countFieldsToPrint(ReadablePeriod period, int stopAt) {
+>             return stopAt <= 0 ? 0 : countFieldsToPrint(period);
+>         }
+> 
+>         public int calculatePrintedLength(ReadablePeriod period) {
+>             long valueLong = getFieldValue(period);
+>             if (valueLong < 0) {
+>                 return 0;
+>             }
+> 
+>             int value = (int)valueLong;
+> 
+>             int sum = Math.max
+>                 (FormatUtils.calculateDigitCount(value), iMinPrintedDigits);
+>             if (value < 0) {
+>                 
+>                 sum++;
+>             }
+> 
+>             DurationFieldAffix affix;
+>             if ((affix = iPrefix) != null) {
+>                 sum += affix.calculatePrintedLength(value);
+>             }
+>             if ((affix = iSuffix) != null) {
+>                 sum += affix.calculatePrintedLength(value);
+>             }
+> 
+>             return sum;
+>         }
+>         
+>         public void printTo(StringBuffer buf, ReadablePeriod period) {
+>             long valueLong = getFieldValue(period);
+>             if (valueLong < 0) {
+>                 return;
+>             }
+>             int value = (int)valueLong;
+> 
+>             DurationFieldAffix affix;
+>             if ((affix = iPrefix) != null) {
+>                 affix.printTo(buf, value);
+>             }
+>             int minDigits = iMinPrintedDigits;
+>             if (minDigits <= 1) {
+>                 FormatUtils.appendUnpaddedInteger(buf, value);
+>             } else {
+>                 FormatUtils.appendPaddedInteger(buf, value, minDigits);
+>             }
+>             if ((affix = iSuffix) != null) {
+>                 affix.printTo(buf, value);
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePeriod period) throws IOException {
+>             long valueLong = getFieldValue(period);
+>             if (valueLong < 0) {
+>                 return;
+>             }
+>             int value = (int)valueLong;
+> 
+>             DurationFieldAffix affix;
+>             if ((affix = iPrefix) != null) {
+>                 affix.printTo(out, value);
+>             }
+>             int minDigits = iMinPrintedDigits;
+>             if (minDigits <= 1) {
+>                 FormatUtils.writeUnpaddedInteger(out, value);
+>             } else {
+>                 FormatUtils.writePaddedInteger(out, value, minDigits);
+>             }
+>             if ((affix = iSuffix) != null) {
+>                 affix.printTo(out, value);
+>             }
+>         }
+> 
+>         public int parseInto(ReadWritablePeriod period,
+>                              String text, int position) {
+> 
+>             boolean mustParse = (iPrintZeroSetting == PRINT_ZERO_ALWAYS);
+> 
+>             
+>             if (position >= text.length()) {
+>                 return mustParse ? ~position : position;
+>             }
+> 
+>             if (iPrefix != null) {
+>                 position = iPrefix.parse(text, position);
+>                 if (position >= 0) {
+>                     
+>                     mustParse = true;
+>                 } else {
+>                     
+>                     if (!mustParse) {
+>                         
+>                         
+>                         
+>                         return ~position;
+>                     }
+>                     return position;
+>                 }
+>             }
+> 
+>             int suffixPos = -1;
+>             if (iSuffix != null && !mustParse) {
+>                 
+>                 
+>                 suffixPos = iSuffix.scan(text, position);
+>                 if (suffixPos >= 0) {
+>                     
+>                     mustParse = true;
+>                 } else {
+>                     
+>                     if (!mustParse) {
+>                         
+>                         
+>                         
+>                         return ~suffixPos;
+>                     }
+>                     return suffixPos;
+>                 }
+>             }
+> 
+>             if (!mustParse && !isSupported(period.getPeriodType())) {
+>                 
+>                 
+>                 return position;
+>             }
+> 
+>             int limit;
+>             if (suffixPos > 0) {
+>                 limit = Math.min(iMaxParsedDigits, suffixPos - position);
+>             } else {
+>                 limit = Math.min(iMaxParsedDigits, text.length() - position);
+>             }
+> 
+>             boolean negative = false;
+>             int length = 0;
+>             while (length < limit) {
+>                 char c = text.charAt(position + length);
+>                 if (length == 0 && (c == '-' || c == '+') && !iRejectSignedValues) {
+>                     negative = c == '-';
+>                     if (negative) {
+>                         length++;
+>                     } else {
+>                         
+>                         position++;
+>                     }
+>                     
+>                     limit = Math.min(limit + 1, text.length() - position);
+>                     continue;
+>                 }
+>                 if (c < '0' || c > '9') {
+>                     break;
+>                 }
+>                 length++;
+>             }
+> 
+>             if (length == 0) {
+>                 return ~position;
+>             }
+> 
+>             int value;
+>             if (length >= 9) {
+>                 
+>                 
+>                 value = Integer.parseInt
+>                     (text.substring(position, position += length));
+>             } else {
+>                 int i = position;
+>                 if (negative) {
+>                     i++;
+>                 }
+>                 value = text.charAt(i++) - '0';
+>                 position += length;
+>                 while (i < position) {
+>                     value = ((value << 3) + (value << 1)) + text.charAt(i++) - '0';
+>                 }
+>                 if (negative) {
+>                     value = -value;
+>                 }
+>             }
+>             
+>             setFieldValue(period, value);
+>                 
+>             if (position >= 0 && iSuffix != null) {
+>                 position = iSuffix.parse(text, position);
+>             }
+>                 
+>             return position;
+>         }
+> 
+>         
+> 
+> 
+> 
+>         long getFieldValue(ReadablePeriod period) {
+>             PeriodType type;
+>             if (iPrintZeroSetting == PRINT_ZERO_ALWAYS) {
+>                 type = null; 
+>             } else {
+>                 type = period.getPeriodType();
+>             }
+> 
+>             int value;
+> 
+>             switch (iFieldType) {
+>             default:
+>                 return -1;
+>             case 1:
+>                 if (type != null && type.years().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getYears();
+>                 break;
+>             case 2:
+>                 if (type != null && type.months().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getMonths();
+>                 break;
+>             case 3:
+>                 if (type != null && type.weeks().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getWeeks();
+>                 break;
+>             case 4:
+>                 if (type != null && type.days().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getDays();
+>                 break;
+>             case 5:
+>                 if (type != null && type.hours().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getHours();
+>                 break;
+>             case 6:
+>                 if (type != null && type.minutes().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getMinutes();
+>                 break;
+>             case 7:
+>                 if (type != null && type.seconds().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getSeconds();
+>                 break;
+>             case 8:
+>                 if (type != null && type.millis().isSupported() == false) {
+>                     return -1;
+>                 }
+>                 value = period.getMillis();
+>                 break;
+>             }
+> 
+>             if (value == 0 && iPrintZeroSetting == PRINT_ZERO_RARELY) {
+>                 return -1;
+>             }
+> 
+>             return value & 0xffffffffL;
+>         }
+> 
+>         boolean isSupported(PeriodType type) {
+>             switch (iFieldType) {
+>             default:
+>                 return false;
+>             case 1:
+>                 return type.years().isSupported();
+>             case 2:
+>                 return type.months().isSupported();
+>             case 3:
+>                 return type.weeks().isSupported();
+>             case 4:
+>                 return type.days().isSupported();
+>             case 5:
+>                 return type.hours().isSupported();
+>             case 6:
+>                 return type.minutes().isSupported();
+>             case 7:
+>                 return type.seconds().isSupported();
+>             case 8:
+>                 return type.millis().isSupported();
+>             }
+>         }
+> 
+>         void setFieldValue(ReadWritablePeriod period, int value) {
+>             switch (iFieldType) {
+>             default:
+>                 break;
+>             case 1:
+>                 period.setYears(value);
+>                 break;
+>             case 2:
+>                 period.setMonths(value);
+>                 break;
+>             case 3:
+>                 period.setWeeks(value);
+>                 break;
+>             case 4:
+>                 period.setDays(value);
+>                 break;
+>             case 5:
+>                 period.setHours(value);
+>                 break;
+>             case 6:
+>                 period.setMinutes(value);
+>                 break;
+>             case 7:
+>                 period.setSeconds(value);
+>                 break;
+>             case 8:
+>                 period.setMillis(value);
+>                 break;
+>             }
+>         }
+> 
+>         int getPrintZeroSetting() {
+>             return iPrintZeroSetting;
+>         }
+>     }
+> 
+>     private static final class Literal extends AbstractPeriodFormatter
+>         implements PeriodFormatter
+>     {
+>         private final String iText;
+> 
+>         Literal(String text) {
+>             iText = text;
+>         }
+> 
+>         public int countFieldsToPrint(ReadablePeriod period, int stopAt) {
+>             return 0;
+>         }
+> 
+>         public int calculatePrintedLength(ReadablePeriod period) {
+>             return iText.length();
+>         }
+> 
+>         public void printTo(StringBuffer buf, ReadablePeriod period) {
+>             buf.append(iText);
+>         }
+> 
+>         public void printTo(Writer out, ReadablePeriod period) throws IOException {
+>             out.write(iText);
+>         }
+> 
+>         public int parseInto(ReadWritablePeriod period,
+>                              String periodStr, int position) {
+>             if (periodStr.regionMatches(true, position, iText, 0, iText.length())) {
+>                 return position + iText.length();
+>             }
+>             return ~position;
+>         }
+>     }
+> 
+>     private static final class Separator extends AbstractPeriodFormatter
+>         implements PeriodFormatter
+>     {
+>         private final String iText;
+>         private final String iFinalText;
+> 
+>         private final PeriodFormatter iBefore;
+>         private final PeriodFormatter iAfter;
+> 
+>         Separator(String text, String finalText) {
+>             this(text, finalText, null, null);
+>         }
+> 
+>         Separator(String text, String finalText,
+>                   PeriodFormatter before, PeriodFormatter after) {
+>             iText = text;
+>             iFinalText = finalText;
+>             iBefore = before;
+>             iAfter = after;
+>         }
+> 
+>         public int countFieldsToPrint(ReadablePeriod period, int stopAt) {
+>             int sum = iBefore.countFieldsToPrint(period, stopAt);
+>             if (sum < stopAt) {
+>                 sum += iAfter.countFieldsToPrint(period, stopAt);
+>             }
+>             return sum;
+>         }
+> 
+>         public int calculatePrintedLength(ReadablePeriod period) {
+>             int sum = iBefore.calculatePrintedLength(period)
+>                 + iAfter.calculatePrintedLength(period);
+> 
+>             if (iBefore.countFieldsToPrint(period, 1) > 0) {
+>                 int afterCount = iAfter.countFieldsToPrint(period, 2);
+>                 if (afterCount > 0) {
+>                     sum += (afterCount > 1 ? iText : iFinalText).length();
+>                 }
+>             }
+> 
+>             return sum;
+>         }
+> 
+>         public void printTo(StringBuffer buf, ReadablePeriod period) {
+>             PeriodPrinter before = iBefore;
+>             PeriodPrinter after = iAfter;
+> 
+>             before.printTo(buf, period);
+> 
+>             if (before.countFieldsToPrint(period, 1) > 0) {
+>                 int afterCount = after.countFieldsToPrint(period, 2);
+>                 if (afterCount > 0) {
+>                     buf.append(afterCount > 1 ? iText : iFinalText);
+>                 }
+>             }
+> 
+>             after.printTo(buf, period);
+>         }
+> 
+>         public void printTo(Writer out, ReadablePeriod period) throws IOException {
+>             PeriodPrinter before = iBefore;
+>             PeriodPrinter after = iAfter;
+> 
+>             before.printTo(out, period);
+> 
+>             if (before.countFieldsToPrint(period, 1) > 0) {
+>                 int afterCount = after.countFieldsToPrint(period, 2);
+>                 if (afterCount > 0) {
+>                     out.write(afterCount > 1 ? iText : iFinalText);
+>                 }
+>             }
+> 
+>             after.printTo(out, period);
+>         }
+> 
+>         public int parseInto(ReadWritablePeriod period,
+>                              String periodStr, int position) {
+>             final int oldPos = position;
+> 
+>             position = iBefore.parseInto(period, periodStr, position);
+> 
+>             if (position < 0) {
+>                 return position;
+>             }
+> 
+>             if (position > oldPos) {
+>                 
+>                 
+>                 if (periodStr.regionMatches(true, position, iText, 0, iText.length())) {
+>                     position += iText.length();
+>                 } else if (iText != iFinalText && periodStr.regionMatches
+>                            (true, position, iFinalText, 0, iFinalText.length())) {
+>                     position += iFinalText.length();
+>                 }
+>             }
+> 
+>             return iAfter.parseInto(period, periodStr, position);
+>         }
+> 
+>         Separator merge(String text, String finalText) {
+>             return new Separator(iText + text, iFinalText + finalText, iBefore, iAfter);
+>         }
+> 
+>         Separator finish(PeriodFormatter before, PeriodFormatter after) {
+>             return new Separator(iText, iFinalText, before, after);
+>         }
+>     }
+> 
+>     private static final class Composite extends AbstractPeriodFormatter
+>         implements PeriodFormatter
+>     {
+>         private final PeriodFormatter[] iFormatters;
+> 
+>         Composite(List formatters) {
+>             iFormatters = (PeriodFormatter[])formatters.toArray
+>                 (new PeriodFormatter[formatters.size()]);
+>         }
+> 
+>         public int countFieldsToPrint(ReadablePeriod period, int stopAt) {
+>             int sum = 0;
+>             PeriodPrinter[] printers = iFormatters;
+>             for (int i=printers.length; sum < stopAt && --i>=0; ) {
+>                 sum += printers[i].countFieldsToPrint(period);
+>             }
+>             return sum;
+>         }
+> 
+>         public int calculatePrintedLength(ReadablePeriod period) {
+>             int sum = 0;
+>             PeriodPrinter[] printers = iFormatters;
+>             for (int i=printers.length; --i>=0; ) {
+>                 sum += printers[i].calculatePrintedLength(period);
+>             }
+>             return sum;
+>         }
+> 
+>         public void printTo(StringBuffer buf, ReadablePeriod period) {
+>             PeriodPrinter[] printers = iFormatters;
+>             int len = printers.length;
+>             for (int i=0; i<len; i++) {
+>                 printers[i].printTo(buf, period);
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePeriod period) throws IOException {
+>             PeriodPrinter[] printers = iFormatters;
+>             int len = printers.length;
+>             for (int i=0; i<len; i++) {
+>                 printers[i].printTo(out, period);
+>             }
+>         }
+> 
+>         public int parseInto(ReadWritablePeriod period,
+>                              String periodStr, int position) {
+>             PeriodParser[] parsers = iFormatters;
+> 
+>             if (parsers == null) {
+>                 throw new UnsupportedOperationException();
+>             }
+> 
+>             int len = parsers.length;
+>             for (int i=0; i<len && position >= 0; i++) {
+>                 position = parsers[i].parseInto(period, periodStr, position);
+>             }
+>             return position;
+>         }
+>     }
+> 
+>     private static final class AlternateSelector extends AbstractPeriodFormatter
+>         implements PeriodFormatter
+>     {
+>         private final PeriodFormatter iPrimaryFormatter;
+>         private final PeriodPrinter[] iAlternatePrinters;
+>         private final boolean iFavorFirstFieldForZero;
+> 
+>         AlternateSelector(PeriodFormatter primaryFormatter,
+>                           List alternatePrinters,
+>                           boolean favorFirstFieldForZero) {
+>             iPrimaryFormatter = primaryFormatter;
+>             iAlternatePrinters = (PeriodPrinter[])alternatePrinters.toArray
+>                 (new PeriodPrinter[alternatePrinters.size()]);
+>             iFavorFirstFieldForZero = favorFirstFieldForZero;
+>         }
+> 
+>         public int countFieldsToPrint(ReadablePeriod period, int stopAt) {
+>             int count = iPrimaryFormatter.countFieldsToPrint(period, stopAt);
+>             if (count < 1 && stopAt >= 1) {
+>                 if (chooseFieldToPrint(period) != null) {
+>                     return 1;
+>                 }
+>             }
+>             return count;
+>         }
+> 
+>         public int calculatePrintedLength(ReadablePeriod period) {
+>             if (iPrimaryFormatter.countFieldsToPrint(period, 1) > 0) {
+>                 return iPrimaryFormatter.calculatePrintedLength(period);
+>             }
+> 
+>             Object chosenOne = chooseFieldToPrint(period);
+> 
+>             int sum = 0;
+>             PeriodPrinter[] printers = iAlternatePrinters;
+>             for (int i=printers.length; --i>=0; ) {
+>                 PeriodPrinter dp = printers[i];
+>                 if (dp == chosenOne || !(dp instanceof FieldFormatter)) {
+>                     sum += dp.calculatePrintedLength(period);
+>                 }
+>             }
+>             return sum;
+>         }
+> 
+>         public void printTo(StringBuffer buf, ReadablePeriod period) {
+>             if (iPrimaryFormatter.countFieldsToPrint(period, 1) > 0) {
+>                 iPrimaryFormatter.printTo(buf, period);
+>                 return;
+>             }
+> 
+>             Object chosenOne = chooseFieldToPrint(period);
+>             
+>             PeriodPrinter[] printers = iAlternatePrinters;
+>             int len = printers.length;
+>             for (int i=0; i<len; i++) {
+>                 PeriodPrinter dp = printers[i];
+>                 if (dp == chosenOne || !(dp instanceof FieldFormatter)) {
+>                     dp.printTo(buf, period);
+>                 }
+>             }
+>         }
+> 
+>         public void printTo(Writer out, ReadablePeriod period) throws IOException {
+>             if (iPrimaryFormatter.countFieldsToPrint(period, 1) > 0) {
+>                 iPrimaryFormatter.printTo(out, period);
+>                 return;
+>             }
+>             
+>             Object chosenOne = chooseFieldToPrint(period);
+> 
+>             PeriodPrinter[] printers = iAlternatePrinters;
+>             int len = printers.length;
+>             for (int i=0; i<len; i++) {
+>                 PeriodPrinter dp = printers[i];
+>                 if (dp == chosenOne || !(dp instanceof FieldFormatter)) {
+>                     dp.printTo(out, period);
+>                 }
+>             }
+>         }
+> 
+>         public int parseInto(ReadWritablePeriod period,
+>                              String periodStr, int position) {
+>             return iPrimaryFormatter.parseInto(period, periodStr, position);
+>         }
+> 
+>         private FieldFormatter chooseFieldToPrint(ReadablePeriod period) {
+>             PeriodType type = period.getPeriodType();
+>             PeriodPrinter[] printers = iAlternatePrinters;
+>             if (iFavorFirstFieldForZero) {
+>                 int len = printers.length;
+>                 for (int i=0; i<len; i++) {
+>                     PeriodPrinter dp = printers[i];
+>                     if (dp instanceof FieldFormatter) {
+>                         FieldFormatter ff = (FieldFormatter) dp;
+>                         if (ff.isSupported(type)) {
+>                             if (ff.getPrintZeroSetting() == PRINT_ZERO_RARELY) {
+>                                 ff = new FieldFormatter(ff, PRINT_ZERO_IF_SUPPORTED);
+>                                 printers[i] = ff;
+>                             }
+>                             return ff;
+>                         }
+>                     }
+>                 }
+>             } else {
+>                 for (int i=printers.length; --i>=0; ) {
+>                     PeriodPrinter dp = printers[i];
+>                     if (dp instanceof FieldFormatter) {
+>                         FieldFormatter ff = (FieldFormatter) dp;
+>                         if (ff.isSupported(type)) {
+>                             if (ff.getPrintZeroSetting() == PRINT_ZERO_RARELY) {
+>                                 ff = new FieldFormatter(ff, PRINT_ZERO_IF_SUPPORTED);
+>                                 printers[i] = ff;
+>                             }
+>                             return ff;
+>                         }
+>                     }
+>                 }
+>             }
+>             return null;
+>         }
+>     }
+> 
+> }

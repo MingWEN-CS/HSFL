@@ -1,0 +1,72 @@
+212,213c212,213
+<       if (type != null && type instanceof FunctionType) {
+<         FunctionType fnType = (FunctionType) type;
+---
+>       if (type != null && type.isFunctionType()) {
+>         FunctionType fnType = type.toMaybeFunctionType();
+806,807c806,808
+<         if (var != null && var.getType() instanceof FunctionType) {
+<           FunctionType aliasedType  = (FunctionType) var.getType();
+---
+>         if (var != null && var.getType() != null &&
+>             var.getType().isFunctionType()) {
+>           FunctionType aliasedType  = var.getType().toMaybeFunctionType();
+834c835
+<             functionType = (FunctionType) type;
+---
+>             functionType = type.toMaybeFunctionType();
+904,905c905,906
+<       if (propType instanceof FunctionType) {
+<         return (FunctionType) propType;
+---
+>       if (propType != null && propType.isFunctionType()) {
+>         return propType.toMaybeFunctionType();
+912,913c913,914
+<           if (propType instanceof FunctionType) {
+<             return (FunctionType) propType;
+---
+>           if (propType != null && propType.isFunctionType()) {
+>             return propType.toMaybeFunctionType();
+1107c1108,1109
+<         if (type instanceof FunctionType &&
+---
+>         FunctionType fnType = JSType.toMaybeFunctionType(type);
+>         if (fnType != null &&
+1110d1111
+<           FunctionType fnType = (FunctionType) type;
+1145c1146,1147
+<           && type instanceof FunctionType
+---
+>           && type != null
+>           && type.isFunctionType()
+1152c1154
+<             .setPrototypeBasedOn(((FunctionType) type).getInstanceType());
+---
+>             .setPrototypeBasedOn((type.toMaybeFunctionType()).getInstanceType());
+1185c1187
+<               (FunctionType) rValue.getJSType(), info, lValue)) {
+---
+>               JSType.toMaybeFunctionType(rValue.getJSType()), info, lValue)) {
+1232c1234
+<       return o instanceof FunctionType ? ((FunctionType) o) : null;
+---
+>       return JSType.toMaybeFunctionType(o);
+1464,1466c1466,1469
+<         ObjectType ownerType = getObjectSlot(ownerName);
+<         if (ownerType instanceof FunctionType) {
+<           JSType ownerTypeOfThis = ((FunctionType) ownerType).getTypeOfThis();
+---
+>         FunctionType ownerType =
+>             JSType.toMaybeFunctionType(getObjectSlot(ownerName));
+>         if (ownerType != null) {
+>           JSType ownerTypeOfThis = ownerType.getTypeOfThis();
+1472,1473c1475
+<             defineSlot(n, parent, getNativeType(BOOLEAN_TYPE),
+<                 true);
+---
+>             defineSlot(n, parent, getNativeType(BOOLEAN_TYPE), true);
+1743c1745,1746
+<       FunctionType functionType = (FunctionType) functionNode.getJSType();
+---
+>       FunctionType functionType =
+>           JSType.toMaybeFunctionType(functionNode.getJSType());

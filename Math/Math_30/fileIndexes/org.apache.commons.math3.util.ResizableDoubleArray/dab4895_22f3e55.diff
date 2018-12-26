@@ -1,0 +1,142 @@
+19a20
+> import java.util.Arrays;
+245a247,258
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public ResizableDoubleArray(ResizableDoubleArray original) {
+>         copy(original, this);
+>     }
+297c310
+< 
+---
+>        
+300,301c313,314
+<         	throw MathRuntimeException.createArrayIndexOutOfBoundsException("cannot substitute an element from an empty array",
+<         	                                                                null);
+---
+>             throw MathRuntimeException.createArrayIndexOutOfBoundsException(
+>                     "cannot substitute an element from an empty array", null);
+306c319
+<     	internalArray[startIndex + (numElements - 1)] = value;
+---
+>         internalArray[startIndex + (numElements - 1)] = value;
+308c321
+<     	return discarded;
+---
+>         return discarded;
+311a325
+>     
+389,390c403,404
+<     	discardExtremeElements(i,true);
+<     	
+---
+>         discardExtremeElements(i,true);
+>         
+405,406c419,420
+<     	discardExtremeElements(i,false);
+<     	
+---
+>         discardExtremeElements(i,false);
+>         
+408c422
+< 
+---
+>     
+741a756,830
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static void copy(ResizableDoubleArray source, ResizableDoubleArray dest) {
+>        synchronized(source) {
+>            synchronized(dest) {
+>                dest.initialCapacity = source.initialCapacity;
+>                dest.contractionCriteria = source.contractionCriteria;
+>                dest.expansionFactor = source.expansionFactor;
+>                dest.expansionMode = source.expansionMode;
+>                dest.internalArray = new double[source.internalArray.length];
+>                System.arraycopy(source.internalArray, 0, dest.internalArray,
+>                        0, dest.internalArray.length);
+>                dest.numElements = source.numElements;
+>                dest.startIndex = source.startIndex;
+>            }
+>        }
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public synchronized ResizableDoubleArray copy() {
+>         ResizableDoubleArray result = new ResizableDoubleArray();
+>         copy(this, result);
+>         return result;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public boolean equals(Object object) {
+>         if (object == this ) {
+>             return true;
+>         }
+>        if (object instanceof ResizableDoubleArray == false) {
+>             return false;
+>         }
+>        boolean result = true;
+>        ResizableDoubleArray other = (ResizableDoubleArray) object;
+>        result = result && (other.initialCapacity == initialCapacity);
+>        result = result && (other.contractionCriteria == contractionCriteria);
+>        result = result && (other.expansionFactor == expansionFactor);
+>        result = result && (other.expansionMode == expansionMode);
+>        result = result && (other.numElements == numElements);
+>        result = result && (other.startIndex == startIndex);
+>        if (!result) { 
+>            return false;
+>        } else {
+>            return Arrays.equals(internalArray, other.internalArray);
+>        }
+>     }
+>     
+>     
+> 
+742a832,845
+> 
+> 
+>     public int hashCode() {
+>         int[] hashData = new int[7];
+>         hashData[0] = Arrays.hashCode(internalArray);
+>         hashData[1] = new Float(expansionFactor).hashCode();
+>         hashData[2] = new Float(contractionCriteria).hashCode();
+>         hashData[3] = initialCapacity;
+>         hashData[4] = expansionMode;
+>         hashData[5] = numElements;
+>         hashData[6] = startIndex;
+>         return Arrays.hashCode(hashData);
+>     }
+>          

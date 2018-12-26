@@ -1,0 +1,50 @@
+231c231
+<               redeclare(informed, item.getString(), iterKeyType);
+---
+>               redeclareSimpleVar(informed, item, iterKeyType);
+473c473
+<     redeclare(scope, name.getString(), type);
+---
+>     redeclareSimpleVar(scope, name, type);
+517c517
+<           redeclare(scope, varName, resultType);
+---
+>           redeclareSimpleVar(scope, left, resultType);
+838,839c838
+<           scope = scope.createChildFlowScope();
+<           redeclare(scope, assertedNodeName, narrowed);
+---
+>           scope = narrowScope(scope, assertedNode, narrowed);
+855,856c854
+<         scope = scope.createChildFlowScope();
+<         redeclare(scope, assertedNodeName, narrowed);
+---
+>         scope = narrowScope(scope, assertedNode, narrowed);
+862a861,871
+>   private FlowScope narrowScope(FlowScope scope, Node node, JSType narrowed) {
+>     scope = scope.createChildFlowScope();
+>     if (node.getType() == Token.GETPROP) {
+>       scope.inferQualifiedSlot(
+>           node.getQualifiedName(), getNativeType(UNKNOWN_TYPE), narrowed);
+>     } else {
+>       redeclareSimpleVar(scope, node, narrowed);
+>     }
+>     return scope;
+>   }
+> 
+1091c1100
+<     if (n.getType() == Token.NAME) {
+---
+>     if (n.isQualifiedName()) {
+1095,1096c1104
+<         scope = scope.createChildFlowScope();
+<         redeclare(scope, n.getString(), narrowed);
+---
+>         scope = narrowScope(scope, n, narrowed);
+1322c1330,1333
+<   private void redeclare(FlowScope scope, String varName, JSType varType) {
+---
+>   private void redeclareSimpleVar(
+>       FlowScope scope, Node nameNode, JSType varType) {
+>     Preconditions.checkState(nameNode.getType() == Token.NAME);
+>     String varName = nameNode.getString();

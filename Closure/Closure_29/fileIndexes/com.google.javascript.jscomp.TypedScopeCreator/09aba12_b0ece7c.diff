@@ -1,0 +1,32 @@
+643,651d642
+<         if (keyType != null) {
+<           
+<           
+<           String qualifiedName = NodeUtil.getBestLValueName(keyNode);
+<           if (qualifiedName != null) {
+<             defineSlot(keyNode, objLit, qualifiedName, keyType, false);
+<           } else {
+<             setDeferredType(keyNode, keyType);
+<           }
+653,657c644,656
+<           if (objLitType != null && declareOnOwner) {
+<             
+<             boolean isExtern = t.getInput() != null && t.getInput().isExtern();
+<             objLitType.defineDeclaredProperty(memberName, keyType, keyNode);
+<           }
+---
+>         
+>         
+>         String qualifiedName = NodeUtil.getBestLValueName(keyNode);
+>         if (qualifiedName != null) {
+>           defineSlot(keyNode, objLit, qualifiedName, keyType, keyType == null);
+>         } else if (keyType != null) {
+>           setDeferredType(keyNode, keyType);
+>         }
+> 
+>         if (keyType != null && objLitType != null && declareOnOwner) {
+>           
+>           boolean isExtern = t.getInput() != null && t.getInput().isExtern();
+>           objLitType.defineDeclaredProperty(memberName, keyType, keyNode);
+1442a1442
+> 

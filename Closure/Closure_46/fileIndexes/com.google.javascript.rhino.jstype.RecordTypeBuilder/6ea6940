@@ -1,0 +1,81 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+package com.google.javascript.rhino.jstype;
+
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+
+
+
+
+
+
+public class RecordTypeBuilder {
+  private JSTypeRegistry registry;
+  private final Map<String, JSType> properties = Maps.newHashMap();
+
+  public RecordTypeBuilder(JSTypeRegistry registry) {
+    this.registry = registry;
+  }
+
+  
+
+
+
+
+  public RecordTypeBuilder addProperty(String name, JSType type) {
+    properties.put(name, type);
+    return this;
+  }
+
+  
+
+
+
+  public JSType build() {
+     
+    if (properties.size() == 0) {
+       return registry.getNativeObjectType(JSTypeNative.OBJECT_TYPE);
+    }
+
+    return registry.createRecordType(properties);
+  }
+}

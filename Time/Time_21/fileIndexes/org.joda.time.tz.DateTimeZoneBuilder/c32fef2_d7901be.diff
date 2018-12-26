@@ -1,0 +1,33 @@
+1388c1388,1389
+<         static PrecalculatedZone create(String id, boolean outputID, ArrayList transitions, DSTZone tailZone) {
+---
+>         static PrecalculatedZone create(String id, boolean outputID, ArrayList transitions,
+>                                         DSTZone tailZone) {
+1424a1426,1428
+> 
+>             Chronology chrono = ISOChronology.getInstanceUTC();
+> 
+1432c1436
+<                 Period p = new Period(trans[i], trans[i + 1], PeriodType.yearMonthDay());
+---
+>                 Period p = new Period(trans[i], trans[i + 1], PeriodType.yearMonthDay(), chrono);
+1441c1445,1446
+<                     System.out.println("     - " + new DateTime(trans[i]) + " - " + new DateTime(trans[i + 1]));
+---
+>                     System.out.println("     - " + new DateTime(trans[i], chrono) +
+>                                        " - " + new DateTime(trans[i + 1], chrono));
+1449a1455
+> 
+1451,1452c1457,1460
+<                 if (tailZone.iStartRecurrence.getNameKey().equals(tailZone.iEndRecurrence.getNameKey())) {
+<                     System.out.println("Fixing duplicate recurrent name key - " + tailZone.iStartRecurrence.getNameKey());
+---
+>                 if (tailZone.iStartRecurrence.getNameKey()
+>                     .equals(tailZone.iEndRecurrence.getNameKey())) {
+>                     System.out.println("Fixing duplicate recurrent name key - " +
+>                                        tailZone.iStartRecurrence.getNameKey());
+1469c1477,1478
+<             return new PrecalculatedZone((outputID ? id : ""), trans, wallOffsets, standardOffsets, nameKeys, tailZone);
+---
+>             return new PrecalculatedZone
+>                 ((outputID ? id : ""), trans, wallOffsets, standardOffsets, nameKeys, tailZone);

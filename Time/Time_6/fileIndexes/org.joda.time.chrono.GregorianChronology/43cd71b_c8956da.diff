@@ -1,0 +1,65 @@
+55a56,66
+>     private static final int DAYS_0000_TO_1970 = 719527;
+> 
+>     
+>     private static final int MIN_YEAR = -292275054;
+> 
+>     
+>     
+>     
+>     
+>     private static final int MAX_YEAR = 292277023;
+> 
+188a200,206
+>         if (year > MAX_YEAR) {
+>             throw new ArithmeticException("Year is too large: " + year + " > " + MAX_YEAR);
+>         }
+>         if (year < MIN_YEAR) {
+>             throw new ArithmeticException("Year is too small: " + year + " < " + MIN_YEAR);
+>         }
+> 
+190,194c208,209
+<         
+<         int relativeYear = year - 2000;
+<         
+<         int leapYears = relativeYear / 100;
+<         if (relativeYear <= 0) {
+---
+>         int leapYears = year / 100;
+>         if (year < 0) {
+200c215
+<             leapYears = ((relativeYear + 3) >> 2) - leapYears + ((leapYears + 3) >> 2);
+---
+>             leapYears = ((year + 3) >> 2) - leapYears + ((leapYears + 3) >> 2) - 1;
+202,205c217,219
+<             leapYears = (relativeYear >> 2) - leapYears + (leapYears >> 2);
+<             
+<             if (!isLeapYear(year)) {
+<                 leapYears++;
+---
+>             leapYears = (year >> 2) - leapYears + (leapYears >> 2);
+>             if (isLeapYear(year)) {
+>                 leapYears--;
+208,216c222,223
+<         
+<         long millis = (relativeYear * 365L + leapYears)
+<             * (long)DateTimeConstants.MILLIS_PER_DAY;
+<         
+<         
+<         
+<         
+<         
+<         return millis + MILLIS_1970_TO_2000;
+---
+> 
+>         return (year * 365L + (leapYears - DAYS_0000_TO_1970)) * DateTimeConstants.MILLIS_PER_DAY;
+220,221c227
+<         
+<         return -292275054;
+---
+>         return MIN_YEAR;
+225,226c231
+<         
+<         return 292277023;
+---
+>         return MAX_YEAR;

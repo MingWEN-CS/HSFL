@@ -1,0 +1,21 @@
+20a21
+> import com.google.javascript.rhino.IR;
+22,23d22
+< import com.google.javascript.rhino.Token;
+< 
+78,79c77
+<         Node objNode = new Node(Token.OBJECTLIT)
+<             .copyInformationFrom(callNode);
+---
+>         Node objNode = IR.objectlit().srcref(callNode);
+89,90c87,88
+<             keyNode = Node.newString(NodeUtil.getStringValue(keyNode))
+<                 .copyInformationFrom(keyNode);
+---
+>             keyNode = IR.string(NodeUtil.getStringValue(keyNode))
+>                 .srcref(keyNode);
+93,94c91
+<           keyNode.addChildToBack(valueNode);
+<           objNode.addChildToBack(keyNode);
+---
+>           objNode.addChildToBack(IR.propdef(keyNode, valueNode));

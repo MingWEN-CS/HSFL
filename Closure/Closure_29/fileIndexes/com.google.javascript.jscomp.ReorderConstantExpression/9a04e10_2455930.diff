@@ -1,0 +1,55 @@
+28c28
+< class ReorderConstantExpression implements CompilerPass {
+---
+> class ReorderConstantExpression extends AbstractPeepholeOptimization {
+31a32,33
+>   
+>   
+37c39
+<   public void process(Node externs, Node node) {
+---
+>   Node optimizeSubtree(Node subtree) {
+39,40c41,42
+<     if (NodeUtil.isSymmetricOperation(node)
+<         || NodeUtil.isRelationalOperation(node)) {
+---
+>     if (NodeUtil.isSymmetricOperation(subtree)
+>         || NodeUtil.isRelationalOperation(subtree)) {
+42,43c44,45
+<       if (NodeUtil.isImmutableValue(node.getLastChild())
+<           && !NodeUtil.isImmutableValue(node.getFirstChild())) {
+---
+>       if (NodeUtil.isImmutableValue(subtree.getLastChild())
+>           && !NodeUtil.isImmutableValue(subtree.getFirstChild())) {
+46,48c48,50
+<         if (NodeUtil.isRelationalOperation(node)){
+<           int inverseOperator = NodeUtil.getInverseOperator(node.getType());
+<           node.setType(inverseOperator);
+---
+>         if (NodeUtil.isRelationalOperation(subtree)){
+>           int inverseOperator = NodeUtil.getInverseOperator(subtree.getType());
+>           subtree.setType(inverseOperator);
+52,53c54,55
+<         Node firstNode = node.getFirstChild().detachFromParent();
+<         Node lastNode = node.getLastChild().detachFromParent();
+---
+>         Node firstNode = subtree.getFirstChild().detachFromParent();
+>         Node lastNode = subtree.getLastChild().detachFromParent();
+55,56c57,58
+<         node.addChildrenToFront(lastNode);
+<         node.addChildrenToBack(firstNode);
+---
+>         subtree.addChildrenToFront(lastNode);
+>         subtree.addChildrenToBack(firstNode);
+60,68c62
+< 
+<     
+<     if (node.hasChildren()) {
+<       Node child = node.getFirstChild();
+<       while (child != null) {
+<         process(externs, child);
+<         child = child.getNext();
+<       }
+<     }
+---
+>     return subtree;

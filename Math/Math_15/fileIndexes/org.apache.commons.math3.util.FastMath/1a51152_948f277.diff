@@ -1,0 +1,105 @@
+3423,3424c3423,3426
+<         if (Double.isNaN(d)) {
+<             return d;
+---
+>         if (Double.isNaN(d) || Double.isNaN(direction)) {
+>             return Double.NaN;
+>         } else if (d == direction) {
+>             return direction;
+3426,3432c3428
+<             if (d < direction) {
+<                 return -Double.MAX_VALUE;
+<             } else if (direction < d) {
+<                 return Double.MAX_VALUE;
+<             } else {
+<                 return d;
+<             }
+---
+>             return (d < 0) ? -Double.MAX_VALUE : Double.MAX_VALUE;
+3439,3453c3435,3438
+<         
+<         long bits     = Double.doubleToLongBits(d);
+<         long sign     = bits & 0x8000000000000000L;
+<         long exponent = bits & 0x7ff0000000000000L;
+<         long mantissa = bits & 0x000fffffffffffffL;
+< 
+<         if (d * (direction - d) >= 0) {
+<             
+<             if (mantissa == 0x000fffffffffffffL) {
+<                 return Double.longBitsToDouble(sign |
+<                                                (exponent + 0x0010000000000000L));
+<             } else {
+<                 return Double.longBitsToDouble(sign |
+<                                                exponent | (mantissa + 1));
+<             }
+---
+>         final long bits = Double.doubleToLongBits(d);
+>         final long sign = bits & 0x8000000000000000L;
+>         if ((direction < d) ^ (sign == 0L)) {
+>             return Double.longBitsToDouble(sign | ((bits & 0x7fffffffffffffffL) + 1));
+3455,3463c3440
+<             
+<             if (mantissa == 0L) {
+<                 return Double.longBitsToDouble(sign |
+<                                                (exponent - 0x0010000000000000L) |
+<                                                0x000fffffffffffffL);
+<             } else {
+<                 return Double.longBitsToDouble(sign |
+<                                                exponent | (mantissa - 1));
+<             }
+---
+>             return Double.longBitsToDouble(sign | ((bits & 0x7fffffffffffffffL) - 1));
+3485c3462
+<     public static float nextAfter(float f, float direction) {
+---
+>     public static float nextAfter(final float f, final double direction) {
+3488,3489c3465,3468
+<         if (Float.isNaN(f)) {
+<             return f;
+---
+>         if (Double.isNaN(f) || Double.isNaN(direction)) {
+>             return Float.NaN;
+>         } else if (f == direction) {
+>             return (float) direction;
+3491,3497c3470
+<             if (f < direction) {
+<                 return -Float.MAX_VALUE;
+<             } else if (direction < f) {
+<                 return Float.MAX_VALUE;
+<             } else {
+<                 return f;
+<             }
+---
+>             return (f < 0f) ? -Float.MAX_VALUE : Float.MAX_VALUE;
+3499c3472
+<             return (direction < 0f) ? -Float.MIN_VALUE : Float.MIN_VALUE;
+---
+>             return (direction < 0) ? -Float.MIN_VALUE : Float.MIN_VALUE;
+3504,3516c3477,3480
+<         
+<         int bits     = Float.floatToIntBits(f);
+<         int sign     = bits & 0x80000000;
+<         int exponent = bits & 0x7f800000;
+<         int mantissa = bits & 0x007fffff;
+< 
+<         if (f * (direction - f) >= 0f) {
+<             
+<             if (mantissa == 0x000fffff) {
+<                 return Float.intBitsToFloat(sign | (exponent + 0x00800000));
+<             } else {
+<                 return Float.intBitsToFloat(sign | exponent | (mantissa + 1));
+<             }
+---
+>         final int bits = Float.floatToIntBits(f);
+>         final int sign = bits & 0x80000000;
+>         if ((direction < f) ^ (sign == 0)) {
+>             return Float.intBitsToFloat(sign | ((bits & 0x7fffffff) + 1));
+3518,3523c3482
+<             
+<             if (mantissa == 0) {
+<                 return Float.intBitsToFloat(sign | (exponent - 0x00800000) | 0x007fffff);
+<             } else {
+<                 return Float.intBitsToFloat(sign | exponent | (mantissa - 1));
+<             }
+---
+>             return Float.intBitsToFloat(sign | ((bits & 0x7fffffff) - 1));

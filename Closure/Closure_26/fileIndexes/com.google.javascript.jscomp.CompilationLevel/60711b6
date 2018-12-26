@@ -1,0 +1,162 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+
+
+
+
+
+
+public enum CompilationLevel {
+
+  
+
+
+  WHITESPACE_ONLY,
+
+  
+
+
+
+
+
+
+
+  SIMPLE_OPTIMIZATIONS,
+
+  
+
+
+
+  ADVANCED_OPTIMIZATIONS,
+  ;
+
+  private CompilationLevel() {}
+
+  public void setOptionsForCompilationLevel(CompilerOptions options) {
+    switch (this) {
+      case WHITESPACE_ONLY:
+        applyBasicCompilationOptions(options);
+        break;
+      case SIMPLE_OPTIMIZATIONS:
+        applySafeCompilationOptions(options);
+        break;
+      case ADVANCED_OPTIMIZATIONS:
+        applyFullCompilationOptions(options);
+        break;
+      default:
+        throw new RuntimeException("Unknown compilation level.");
+    }
+  }
+
+  public void setDebugOptionsForCompilationLevel(CompilerOptions options) {
+    options.anonymousFunctionNaming = AnonymousFunctionNamingPolicy.UNMAPPED;
+    options.generatePseudoNames = true;
+  }
+
+  
+
+
+
+  private static void applyBasicCompilationOptions(CompilerOptions options) {
+    options.skipAllCompilerPasses();
+    options.checkGlobalThisLevel = CheckLevel.OFF;
+
+    
+    options.setWarningLevel(DiagnosticGroups.NON_STANDARD_JSDOC,
+        CheckLevel.OFF);
+  }
+
+  
+
+
+
+
+
+  private static void applySafeCompilationOptions(CompilerOptions options) {
+    
+    
+    options.closurePass = true;
+    options.variableRenaming = VariableRenamingPolicy.LOCAL;
+    options.inlineLocalVariables = true;
+    options.checkGlobalThisLevel = CheckLevel.OFF;
+    options.foldConstants = true;
+    options.removeConstantExpressions = true;
+    options.coalesceVariableNames = true;
+    options.deadAssignmentElimination = true;
+    options.extractPrototypeMemberDeclarations = true;
+    options.collapseVariableDeclarations = true;
+    options.convertToDottedProperties = true;
+    options.labelRenaming = true;
+    options.removeDeadCode = true;
+    options.optimizeArgumentsArray = true;
+    options.removeUnusedVars = true;
+    options.removeUnusedVarsInGlobalScope = false;
+
+    
+    options.setWarningLevel(DiagnosticGroups.NON_STANDARD_JSDOC,
+        CheckLevel.OFF);
+  }
+
+  
+
+
+
+
+  private static void applyFullCompilationOptions(CompilerOptions options) {
+    
+    
+
+    
+    options.closurePass = true;
+    options.checkGlobalThisLevel = CheckLevel.OFF;
+    options.foldConstants = true;
+    options.removeConstantExpressions = true;
+    options.coalesceVariableNames = true;
+    options.deadAssignmentElimination = true;
+    options.extractPrototypeMemberDeclarations = true;
+    options.collapseVariableDeclarations = true;
+    options.convertToDottedProperties = true;
+    options.rewriteFunctionExpressions = true;
+    options.labelRenaming = true;
+    options.removeDeadCode = true;
+    options.optimizeArgumentsArray = true;
+
+    
+    options.variableRenaming = VariableRenamingPolicy.ALL;
+    options.propertyRenaming = PropertyRenamingPolicy.ALL_UNQUOTED;
+    options.removeUnusedPrototypeProperties = true;
+    options.removeUnusedPrototypePropertiesInExterns = true;
+    options.collapseAnonymousFunctions = true;
+    options.collapseProperties = true;
+    options.rewriteFunctionExpressions = true;
+    options.devirtualizePrototypeMethods = true;
+    options.smartNameRemoval = true;
+    options.inlineConstantVars = true;
+    options.inlineFunctions = true;
+    options.inlineGetters = true;
+    options.inlineVariables = true;
+    
+    options.removeUnusedVars = true;
+    options.removeUnusedVarsInGlobalScope = true;
+
+    
+    options.setWarningLevel(DiagnosticGroups.NON_STANDARD_JSDOC,
+        CheckLevel.WARNING);
+  }
+}

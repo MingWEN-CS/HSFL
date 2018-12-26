@@ -1,0 +1,125 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang3.reflect;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+
+import org.apache.commons.lang3.Validate;
+
+
+
+
+
+
+
+
+
+public class TypeUtils {
+
+    
+
+
+
+
+
+
+
+
+
+    
+    public static Class<?> getRawType(Type enclosingType, Type type) {
+        if (type instanceof Class<?>) {
+            
+            return (Class<?>) type;
+        }
+        if (type instanceof ParameterizedType) {
+            
+            return (Class<?>) ((ParameterizedType) type).getRawType();
+        }
+        if (type instanceof TypeVariable<?>) {
+            Validate.notNull(enclosingType,
+                    "Cannot get raw type of TypeVariable without enclosing type");
+            
+            return (Class<?>) resolveVariable(enclosingType, (TypeVariable<?>) type);
+        }
+        if (type instanceof GenericArrayType) {
+            Validate.notNull(enclosingType,
+                    "Cannot get raw type of GenericArrayType without enclosing type");
+            
+            Class<?> rawComponentType = getRawType(enclosingType, ((GenericArrayType) type)
+                    .getGenericComponentType());
+            
+            return Array.newInstance(rawComponentType, 0).getClass();
+        }
+        throw new IllegalArgumentException(String.valueOf(type));
+    }
+
+    
+
+
+
+
+
+
+
+    
+    private static Type resolveVariable(Type enclosingType, TypeVariable<?> typeVar) {
+        if (enclosingType instanceof ParameterizedType) {
+            ParameterizedType parameterizedEnclosingType = (ParameterizedType) enclosingType;
+            TypeVariable<?>[] typeVariables = getRawType(null,
+                    parameterizedEnclosingType.getRawType()).getTypeParameters();
+            
+            for (int i = 0; i < typeVariables.length; i++) {
+                if (typeVariables[i].equals(typeVar)) {
+                    return parameterizedEnclosingType.getActualTypeArguments()[i];
+                }
+            }
+            
+            Type result = resolveVariable(parameterizedEnclosingType.getRawType(), typeVar);
+            
+            if (result instanceof TypeVariable<?>) {
+                return resolveVariable(enclosingType, (TypeVariable<?>) result);
+            }
+            return result;
+        }
+        if (enclosingType instanceof Class<?>) {
+            Class<?> enclosingClass = (Class<?>) enclosingType;
+            Type result = null;
+            Type genericSuperclass = enclosingClass.getGenericSuperclass();
+            if (genericSuperclass != null && !Object.class.equals(genericSuperclass)) {
+                result = resolveVariable(genericSuperclass, typeVar);
+            }
+            if (result == null) {
+                for (Type genericInterface : enclosingClass.getGenericInterfaces()) {
+                    result = resolveVariable(genericInterface, typeVar);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            }
+            if (result != null) {
+                return result;
+            }
+        }
+        throw new IllegalArgumentException(String.valueOf(typeVar));
+    }
+
+}

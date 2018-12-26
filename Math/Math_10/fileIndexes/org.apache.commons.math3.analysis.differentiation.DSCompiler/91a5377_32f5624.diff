@@ -1,0 +1,18 @@
+1356,1358c1356,1368
+<     public double taylor(final double[] ds, final int dsOffset, final double ... offsets) {
+<         
+<         return Double.NaN;
+---
+>     public double taylor(final double[] ds, final int dsOffset, final double ... delta) {
+>         double value = 0;
+>         for (int i = getSize() - 1; i >= 0; --i) {
+>             final int[] orders = getPartialDerivativeOrders(i);
+>             double term = ds[dsOffset + i];
+>             for (int k = 0; k < orders.length; ++k) {
+>                 if (orders[k] > 0) {
+>                     term *= FastMath.pow(delta[k], orders[k]) / ArithmeticUtils.factorial(orders[k]);
+>                 }
+>             }
+>             value += term;
+>         }
+>         return value;

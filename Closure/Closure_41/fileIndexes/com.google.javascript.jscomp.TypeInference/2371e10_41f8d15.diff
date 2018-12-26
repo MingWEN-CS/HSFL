@@ -1,0 +1,61 @@
+806c806
+<         updateTypeOfParametersOnClosure(n, fnType);
+---
+>         updateTypeOfParameters(n, fnType);
+867c867
+<   private void updateTypeOfParametersOnClosure(Node n, FunctionType fnType) {
+---
+>   private void updateTypeOfParameters(Node n, FunctionType fnType) {
+870a871,875
+>       if (i + 1 >= childCount) {
+>         
+>         return;
+>       }
+> 
+871a877,880
+>       Node iArgument = n.getChildAtIndex(i + 1);
+>       JSType iArgumentType = getJSType(iArgument);
+>       inferPropertyTypesToMatchConstraint(iArgumentType, iParameterType);
+> 
+875,880d883
+<         if (i + 1 >= childCount) {
+<           
+<           return;
+<         }
+<         Node iArgument = n.getChildAtIndex(i + 1);
+<         JSType iArgumentType = getJSType(iArgument);
+1044a1048,1081
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void inferPropertyTypesToMatchConstraint(
+>       JSType type, JSType constraint) {
+>     ObjectType constraintObj =
+>         ObjectType.cast(constraint.restrictByNotNullOrUndefined());
+>     if (constraintObj != null && constraintObj.isRecordType()) {
+>       ObjectType objType = ObjectType.cast(type.restrictByNotNullOrUndefined());
+>       for (String prop : constraintObj.getOwnPropertyNames()) {
+>         JSType propType = constraintObj.getPropertyType(prop);
+>         if (objType != null && !objType.isPropertyTypeDeclared(prop)) {
+>           JSType typeToInfer = propType;
+>           if (!objType.hasProperty(prop)) {
+>             typeToInfer = registry.createUnionType(
+>                 getNativeType(VOID_TYPE), propType);
+>           }
+>           objType.defineInferredProperty(prop, typeToInfer, false, null);
+>         }
+>       }
+>     }

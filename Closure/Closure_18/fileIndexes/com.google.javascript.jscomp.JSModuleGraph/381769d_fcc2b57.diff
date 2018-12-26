@@ -1,0 +1,58 @@
+29a30
+> import com.google.javascript.jscomp.deps.SortedDependencies.MissingProvideException;
+286,287c287,296
+<   List<CompilerInput> manageDependencies(List<CompilerInput> inputs)
+<       throws CircularDependencyException {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>   List<CompilerInput> manageDependencies(
+>       List<String> entryPoints,
+>       List<CompilerInput> inputs)
+>       throws CircularDependencyException, MissingProvideException {
+290,291c299,303
+<     List<CompilerInput> inputsWithoutProvides =
+<         sorter.getInputsWithoutProvides();
+---
+>     Set<CompilerInput> entryPointInputs =
+>         Sets.newLinkedHashSet(sorter.getInputsWithoutProvides());
+>     for (String entryPoint : entryPoints) {
+>       entryPointInputs.add(sorter.getInputProviding(entryPoint));
+>     }
+297c309
+<     ListMultimap<JSModule, CompilerInput> inputsWithoutProvidesPerModule =
+---
+>     ListMultimap<JSModule, CompilerInput> entryPointInputsPerModule =
+299c311
+<     for (CompilerInput input : inputsWithoutProvides) {
+---
+>     for (CompilerInput input : entryPointInputs) {
+302c314
+<       inputsWithoutProvidesPerModule.put(module, input);
+---
+>       entryPointInputsPerModule.put(module, input);
+313c325
+<     for (JSModule module : inputsWithoutProvidesPerModule.keySet()) {
+---
+>     for (JSModule module : entryPointInputsPerModule.keySet()) {
+316c328
+<               inputsWithoutProvidesPerModule.get(module));
+---
+>               entryPointInputsPerModule.get(module));
+319,322c331,337
+<         input.setModule(
+<             oldModule == null ?
+<                 module :
+<                 getDeepestCommonDependencyInclusive(oldModule, module));
+---
+>         if (oldModule == null) {
+>           input.setModule(module);
+>         } else {
+>           input.setModule(null);
+>           input.setModule(
+>               getDeepestCommonDependencyInclusive(oldModule, module));
+>         }

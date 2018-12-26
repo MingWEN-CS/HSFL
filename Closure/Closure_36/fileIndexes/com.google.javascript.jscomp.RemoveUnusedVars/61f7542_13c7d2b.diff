@@ -1,0 +1,58 @@
+473c473,474
+<           Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex);
+---
+>           Node arg = NodeUtil.getArgumentForCallOrNew(
+>               site.node.getParent(), argIndex);
+497c498,499
+<           Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex);
+---
+>           Node arg = NodeUtil.getArgumentForCallOrNew(
+>               site.node.getParent(), argIndex);
+531c533,535
+<         Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex);
+---
+> 
+>         Node arg = NodeUtil.getArgumentForCallOrNew(
+>             site.node.getParent(), argIndex);
+548,561d551
+<     private static Node getArgumentForCallOrNewOrDotCall(UseSite site,
+<         final int argIndex) {
+<       int adjustedArgIndex = argIndex;
+<       Node parent = site.node.getParent();
+<       if (NodeUtil.isFunctionObjectCall(parent)) {
+<         adjustedArgIndex++;
+<       }
+<       return NodeUtil.getArgumentForCallOrNew(parent, adjustedArgIndex);
+<     }
+< 
+<     
+< 
+< 
+< 
+609c599
+<           && !NodeUtil.isFunctionObjectApply(site.node.getParent());
+---
+>           && !NodeUtil.isFunctionObjectCallOrApply(site.node.getParent());
+618d607
+<       CodingConvention convention = compiler.getCodingConvention();
+624,631d612
+<         Node parent = site.node.getParent();
+< 
+<         
+<         if (NodeUtil.isCall(parent) &&
+<             convention.getClassesDefinedByCall(parent) != null) {
+<           continue;
+<         }
+< 
+634,637c615
+<           if (!(NodeUtil.isGetProp(parent) &&
+<               NodeUtil.isFunctionObjectCall(parent.getParent()))) {
+<             return false;
+<           }
+---
+>           return false;
+640c618,619
+<         if (NodeUtil.isFunctionObjectApply(parent)) {
+---
+>         
+>         if (NodeUtil.isFunctionObjectCallOrApply(site.node.getParent())) {

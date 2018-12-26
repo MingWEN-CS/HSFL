@@ -1,0 +1,116 @@
+91a92
+>     
+96c97
+<     int count;                          
+---
+>     int count; 
+128a130
+> 
+130a133,134
+>   private final boolean shouldShadow;
+> 
+135c139,140
+<   private static final String LOCAL_VAR_PREFIX = "L ";
+---
+>   
+>   public static final String LOCAL_VAR_PREFIX = "L ";
+137,141c142,144
+<   RenameVars(AbstractCompiler compiler,
+<       String prefix,
+<       boolean localRenamingOnly,
+<       boolean preserveFunctionExpressionNames,
+<       boolean generatePseudoNames,
+---
+>   RenameVars(AbstractCompiler compiler, String prefix,
+>       boolean localRenamingOnly, boolean preserveFunctionExpressionNames,
+>       boolean generatePseudoNames, boolean shouldShadow,
+155a159
+>     this.shouldShadow = shouldShadow;
+241,242c245
+<       if (preserveFunctionExpressionNames
+<           && var != null
+---
+>       if (preserveFunctionExpressionNames && var != null
+252,254c255,256
+<           String newName =
+<             MakeDeclaredNamesUnique.ContextualRenameInverter.getOrginalName(
+<                 name);
+---
+>           String newName = MakeDeclaredNamesUnique.ContextualRenameInverter
+>               .getOrginalName(name);
+280c282
+<       } else if (var != null) {  
+---
+>       } else if (var != null) { 
+302d303
+< 
+304,311c305,308
+<     new Comparator<Assignment>() {
+<       public int compare(Assignment a1, Assignment a2) {
+<         if (a1.count != a2.count) {
+<           return a2.count - a1.count;
+<         }
+<         
+<         
+<         return ORDER_OF_OCCURRENCE_COMPARATOR.compare(a1, a2);
+---
+>       new Comparator<Assignment>() {
+>     public int compare(Assignment a1, Assignment a2) {
+>       if (a1.count != a2.count) {
+>         return a2.count - a1.count;
+313c310,314
+<     };
+---
+>       
+>       
+>       return ORDER_OF_OCCURRENCE_COMPARATOR.compare(a1, a2);
+>     }
+>   };
+320,324c321,325
+<     new Comparator<Assignment>() {
+<       public int compare(Assignment a1, Assignment a2) {
+<         return a1.orderOfOccurrence - a2.orderOfOccurrence;
+<       }
+<     };
+---
+>       new Comparator<Assignment>() {
+>         public int compare(Assignment a1, Assignment a2) {
+>           return a1.orderOfOccurrence - a2.orderOfOccurrence;
+>         }
+>       };
+341a343,348
+>     if (shouldShadow) {
+>       new ShadowVariables(
+>           compiler, assignments, varsByFrequency, pseudoNameMap).process(
+>               externs, root);
+>     }
+> 
+425,427c432,434
+<       if (a.oldName.startsWith(LOCAL_VAR_PREFIX) ||
+<           (!externNames.contains(a.oldName) &&
+<            prevNewName.startsWith(prefix))) {
+---
+>       if (a.oldName.startsWith(LOCAL_VAR_PREFIX)
+>           || (!externNames.contains(a.oldName)
+>               && prevNewName.startsWith(prefix))) {
+442,444c449,451
+<     NameGenerator localNameGenerator = prefix.isEmpty() ?
+<         globalNameGenerator : new NameGenerator(reservedNames, "",
+<         reservedCharacters);
+---
+>     NameGenerator localNameGenerator =
+>         prefix.isEmpty() ? globalNameGenerator : new NameGenerator(
+>             reservedNames, "", reservedCharacters);
+496,499c503,504
+<       for (int j = i;
+<            j < numPendingAssignments &&
+<                generatedNamesForAssignments.get(j).length() == len;
+<            j++) {
+---
+>       for (int j = i; j < numPendingAssignments
+>           && generatedNamesForAssignments.get(j).length() == len; j++) {
+521,522c526
+<     assignmentLog.append(a.oldName).append(" => ").append(newName).
+<         append('\n');
+---
+>     assignmentLog.append(a.oldName).append(" => ").append(newName).append('\n');

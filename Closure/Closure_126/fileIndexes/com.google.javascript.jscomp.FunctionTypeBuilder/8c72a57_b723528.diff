@@ -1,0 +1,24 @@
+43a44
+> import com.google.javascript.rhino.jstype.TemplateType;
+91c92
+<   private ImmutableList<String> templateTypeNames = ImmutableList.of();
+---
+>   private ImmutableList<TemplateType> templateTypeNames = ImmutableList.of();
+552,555c553,562
+<   FunctionTypeBuilder inferTemplateTypeName(@Nullable JSDocInfo info) {
+<     if (info != null) {
+<       templateTypeNames = info.getTemplateTypeNames();
+<       typeRegistry.setTemplateTypeNames(templateTypeNames);
+---
+>   FunctionTypeBuilder inferTemplateTypeName(
+>       @Nullable JSDocInfo info) {
+>     if (info != null &&  !info.getTemplateTypeNames().isEmpty()) {
+>       ImmutableList.Builder<TemplateType> builder = ImmutableList.builder();
+>       for (String key : info.getTemplateTypeNames()) {
+>         builder.add(typeRegistry.createTemplateType(key));
+>       }
+>       templateTypeNames = builder.build();
+>     } else {
+>       templateTypeNames = ImmutableList.of();
+556a564
+>     typeRegistry.setTemplateTypeNames(templateTypeNames);

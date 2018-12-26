@@ -1,0 +1,61 @@
+75a76
+> import com.google.javascript.rhino.jstype.TemplateType;
+706a708,728
+> 
+>           ImmutableList<TemplateType> ownerTypeKeys = ImmutableList.of();
+>           Node ownerNode = NodeUtil.getBestLValueOwner(node);
+>           String ownerName = NodeUtil.getBestLValueName(ownerNode);
+>           ObjectType ownerType = null;
+>           if (ownerName != null) {
+>             Var ownerVar = scope.getVar(ownerName);
+>             if (ownerVar != null) {
+>               ownerType = getPrototypeOwnerType(
+>                   ObjectType.cast(ownerVar.getType()));
+>               if (ownerType != null) {
+>                 ownerTypeKeys =
+>                     ownerType.getTemplateTypeMap().getTemplateKeys();
+>               }
+>             }
+>           }
+> 
+>           if (!ownerTypeKeys.isEmpty()) {
+>             typeRegistry.setTemplateTypeNames(ownerTypeKeys);
+>           }
+> 
+707a730,733
+> 
+>           if (!ownerTypeKeys.isEmpty()) {
+>             typeRegistry.clearTemplateTypeNames();
+>           }
+908a935,936
+>           ObjectType prototypeOwner = getPrototypeOwnerType(ownerType);
+> 
+914c942
+<               .inferTemplateTypeName(info)
+---
+>               .inferTemplateTypeName(info, prototypeOwner)
+951a980,986
+>     private ObjectType getPrototypeOwnerType(ObjectType ownerType) {
+>       if (ownerType != null && ownerType.isFunctionPrototypeType()) {
+>         return ownerType.getOwnerFunction();
+>       }
+>       return null;
+>     }
+> 
+1757a1793,1802
+> 
+>         
+>         
+>         JSType thisObjectType = thisType.toObjectType();
+>         if (thisObjectType != null) {
+>           ImmutableList<TemplateType> keys =
+>               thisObjectType.getTemplateTypeMap().getTemplateKeys();
+>           typeRegistry.setTemplateTypeNames(keys);
+>         }
+> 
+1758a1804,1808
+> 
+>         if (thisObjectType != null) {
+>           typeRegistry.clearTemplateTypeNames();
+>         }
+> 

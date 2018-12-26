@@ -1,0 +1,60 @@
+18a19,21
+> import com.google.common.base.Preconditions;
+> import com.google.common.collect.HashMultimap;
+> import com.google.common.collect.Multimap;
+23c26,27
+< import com.google.javascript.rhino.jstype.JSType;
+---
+> import com.google.javascript.rhino.Node;
+> import com.google.javascript.rhino.Token;
+25a30
+> import com.google.javascript.rhino.jstype.JSType;
+27,31d31
+< import com.google.javascript.rhino.Node;
+< import com.google.javascript.rhino.Token;
+< 
+< import com.google.common.collect.Multimap;
+< import com.google.common.collect.HashMultimap;
+362a363,364
+>     boolean isConstant = isPropertyDeclaredConstant(objectType, propertyName);
+> 
+364c366
+<     if (objectType != null) {
+---
+>     if (isConstant) {
+379,384c381,383
+<       JSDocInfo info = objectType.getOwnPropertyJSDocInfo(propertyName);
+<       if (info != null && info.isConstant()
+<           && objectType.hasReferenceName()) {
+<         initializedConstantProperties.put(objectType.getReferenceName(),
+<             propertyName);
+<       }
+---
+>       Preconditions.checkState(objectType.hasReferenceName());
+>       initializedConstantProperties.put(objectType.getReferenceName(),
+>           propertyName);
+390,392c389
+<           JSDocInfo prototypeInfo
+<             = prototype.getOwnPropertyJSDocInfo(propertyName);
+<           if (prototypeInfo != null && prototypeInfo.isConstant()
+---
+>           if (prototype.hasProperty(propertyName)
+611a609,626
+>   }
+> 
+>   
+> 
+> 
+>   private static boolean isPropertyDeclaredConstant(
+>       ObjectType objectType, String prop) {
+>     for (;
+>          
+>          objectType != null && objectType.hasReferenceName();
+> 
+>          objectType = objectType.getImplicitPrototype()) {
+>       JSDocInfo docInfo = objectType.getOwnPropertyJSDocInfo(prop);
+>       if (docInfo != null && docInfo.isConstant()) {
+>         return true;
+>       }
+>     }
+>     return false;

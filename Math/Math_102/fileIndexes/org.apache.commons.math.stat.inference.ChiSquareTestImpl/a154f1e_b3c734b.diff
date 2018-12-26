@@ -1,0 +1,60 @@
+20d19
+< import org.apache.commons.math.distribution.DistributionFactory;
+21a21,22
+> import org.apache.commons.math.distribution.ChiSquaredDistributionImpl;
+> import org.apache.commons.math.distribution.DistributionFactory;
+28a30
+> 
+30,31c32
+<     
+<     private DistributionFactory distributionFactory = null;
+---
+>     private ChiSquaredDistribution distribution;
+37c38
+<         super();
+---
+>         this(new ChiSquaredDistributionImpl(1.0));
+39a41,50
+>     
+> 
+> 
+> 
+> 
+> 
+>     public ChiSquareTestImpl(ChiSquaredDistribution x) {
+>         super();
+>         setDistribution(x);
+>     }
+75,79c86,88
+<         ChiSquaredDistribution chiSquaredDistribution =
+<             getDistributionFactory().createChiSquareDistribution(
+<                     (double) expected.length - 1);
+<         return 1 - chiSquaredDistribution.cumulativeProbability(
+<                 chiSquare(expected, observed));
+---
+>         distribution.setDegreesOfFreedom(expected.length - 1.0);
+>         return 1.0 - distribution.cumulativeProbability(
+>             chiSquare(expected, observed));
+146,148c155,156
+<         ChiSquaredDistribution chiSquaredDistribution =
+<             getDistributionFactory().createChiSquareDistribution(df);
+<         return 1 - chiSquaredDistribution.cumulativeProbability(chiSquare(counts));
+---
+>         distribution.setDegreesOfFreedom(df);
+>         return 1 - distribution.cumulativeProbability(chiSquare(counts));
+202,205c210
+<         if (distributionFactory == null) {
+<             distributionFactory = DistributionFactory.newInstance();
+<         }
+<         return distributionFactory;
+---
+>         return DistributionFactory.newInstance();
+279a285,292
+>     
+> 
+> 
+> 
+> 
+>     public void setDistribution(ChiSquaredDistribution value) {
+>         distribution = value;
+>     }

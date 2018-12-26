@@ -1,0 +1,77 @@
+23d22
+< import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+49a49,55
+> 
+> 
+> 
+> 
+>   private int currentPreOrderIndex = 0;
+> 
+>   
+214c220
+<   private class BuildGlobalNamespace extends AbstractPostOrderCallback {
+---
+>   private class BuildGlobalNamespace implements NodeTraversal.Callback {
+231c237,246
+<     public void visit(NodeTraversal t, Node n, Node parent) {
+---
+>     public void visit(NodeTraversal t, Node n, Node parent) {}
+> 
+>     
+>     @Override
+>     public boolean shouldTraverse(NodeTraversal t, Node n, Node parent) {
+>       collect(t, n, parent);
+>       return true;
+>     }
+> 
+>     public void collect(NodeTraversal t, Node n, Node parent) {
+459c474,475
+<       Ref set = new Ref(t, n, Ref.Type.SET_FROM_GLOBAL);
+---
+>       Ref set = new Ref(t, n, Ref.Type.SET_FROM_GLOBAL,
+>           currentPreOrderIndex++);
+464c480,481
+<         Ref get = new Ref(t, n, Ref.Type.ALIASING_GET);
+---
+>         Ref get = new Ref(t, n, Ref.Type.ALIASING_GET,
+>             currentPreOrderIndex++);
+527c544
+<       Ref set = new Ref(t, n, Ref.Type.SET_FROM_LOCAL);
+---
+>       Ref set = new Ref(t, n, Ref.Type.SET_FROM_LOCAL, currentPreOrderIndex++);
+532c549
+<         Ref get = new Ref(t, n, Ref.Type.ALIASING_GET);
+---
+>         Ref get = new Ref(t, n, Ref.Type.ALIASING_GET, currentPreOrderIndex++);
+666c683
+<       node.addRef(new Ref(t, n, type));
+---
+>       node.addRef(new Ref(t, n, type, currentPreOrderIndex++));
+1040a1058
+>     final int preOrderIndex;
+1054c1072
+<     Ref(NodeTraversal t, Node name, Type type) {
+---
+>     Ref(NodeTraversal t, Node name, Type type, int index) {
+1058a1077
+>       this.preOrderIndex = index;
+1061c1080
+<     private Ref(Ref original, Type type) {
+---
+>     private Ref(Ref original, Type type, int index) {
+1065a1085
+>       this.preOrderIndex = index;
+1068c1088
+<     private Ref(Type type) {
+---
+>     private Ref(Type type, int index) {
+1071a1092
+>       this.preOrderIndex = index;
+1104c1125
+<       return new Ref(this, type);
+---
+>       return new Ref(this, type, this.preOrderIndex);
+1108c1129
+<       return new Ref(type);
+---
+>       return new Ref(type, -1);

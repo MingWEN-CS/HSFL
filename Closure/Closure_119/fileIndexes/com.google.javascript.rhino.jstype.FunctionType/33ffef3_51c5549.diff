@@ -1,0 +1,95 @@
+520,552c520
+<         
+<         
+<         
+<         FunctionBuilder builder = new FunctionBuilder(registry)
+<             .withReturnType(
+<                 isCall ?
+<                 getReturnType() :
+<                 (new FunctionBuilder(registry)
+<                     .withReturnType(getReturnType()).build()));
+< 
+<         Node origParams = getParametersNode();
+<         if (origParams != null) {
+<           Node params = origParams.cloneTree();
+< 
+<           Node thisTypeNode = Node.newString(Token.NAME, "thisType");
+<           thisTypeNode.setJSType(
+<               registry.createOptionalNullableType(getTypeOfThis()));
+<           params.addChildToFront(thisTypeNode);
+<           thisTypeNode.setOptionalArg(isCall);
+< 
+<           if (isBind) {
+<             
+<             
+<             for (Node current = thisTypeNode.getNext();
+<                  current != null; current = current.getNext()) {
+<               current.setOptionalArg(true);
+<             }
+<           }
+< 
+<           builder.withParamsNode(params);
+<         }
+< 
+<         defineDeclaredProperty(name, builder.build(), source);
+---
+>         defineDeclaredProperty(name, getCallOrBindSignature(isCall), source);
+575a544,601
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   public FunctionType getBindReturnType(int argsToBind) {
+>     FunctionBuilder builder = new FunctionBuilder(registry)
+>         .withReturnType(getReturnType());
+>     if (argsToBind >= 0) {
+>       Node origParams = getParametersNode();
+>       if (origParams != null) {
+>         Node params = origParams.cloneTree();
+>         for (int i = 1; i < argsToBind && params.getFirstChild() != null; i++) {
+>           params.removeFirstChild();
+>         }
+>         builder.withParamsNode(params);
+>       }
+>     }
+>     return builder.build();
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private FunctionType getCallOrBindSignature(boolean isCall) {
+>     boolean isBind = !isCall;
+>     FunctionBuilder builder = new FunctionBuilder(registry)
+>         .withReturnType(isCall ? getReturnType() : getBindReturnType(-1));
+> 
+>     Node origParams = getParametersNode();
+>     if (origParams != null) {
+>       Node params = origParams.cloneTree();
+> 
+>       Node thisTypeNode = Node.newString(Token.NAME, "thisType");
+>       thisTypeNode.setJSType(
+>           registry.createOptionalNullableType(getTypeOfThis()));
+>       params.addChildToFront(thisTypeNode);
+>       thisTypeNode.setOptionalArg(isCall);
+> 
+>       if (isBind) {
+>         
+>         
+>         for (Node current = thisTypeNode.getNext();
+>              current != null; current = current.getNext()) {
+>           current.setOptionalArg(true);
+>         }
+>       }
+> 
+>       builder.withParamsNode(params);
+>     }
+> 
+>     return builder.build();

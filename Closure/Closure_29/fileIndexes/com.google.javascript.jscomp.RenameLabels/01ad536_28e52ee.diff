@@ -1,0 +1,40 @@
+19a20
+> import com.google.common.base.Supplier;
+71a73,74
+>   private final Supplier<String> nameSupplier;
+>   private final boolean removeUnused;
+73a77,83
+>     this(compiler, new DefaultNameSupplier(), true);
+>   }
+> 
+>   RenameLabels(
+>       AbstractCompiler compiler,
+>       Supplier<String> supplier,
+>       boolean removeUnused) {
+74a85,97
+>     this.nameSupplier = supplier;
+>     this.removeUnused = removeUnused;
+>   }
+> 
+>   static class DefaultNameSupplier implements Supplier<String> {
+>     
+>     final NameGenerator nameGenerator =
+>         new NameGenerator(new HashSet<String>(), "", null);
+> 
+>     @Override
+>     public String get() {
+>       return nameGenerator.generateNextName();
+>     }
+92,95d114
+<     final NameGenerator nameGenerator =
+<         new NameGenerator(new HashSet<String>(), "", null);
+< 
+<     
+132c151
+<           names.add(nameGenerator.generateNextName());
+---
+>           names.add(nameSupplier.get());
+196c215
+<       if (li.referenced) {
+---
+>       if (li.referenced || !removeUnused) {

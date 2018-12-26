@@ -1,0 +1,135 @@
+62a63,67
+>   static final DiagnosticType INVALID_MODIFIES_ANNOTATION =
+>     DiagnosticType.error(
+>         "JSC_INVALID_MODIFIES_ANNOTATION",
+>         "@modifies may only appear in externs files.");
+> 
+653c658,690
+<       if (hasNoSideEffectsAnnotation(node, parent, gramp)) {
+---
+>       JSDocInfo info = getJSDocInfoForFunction(node, parent, gramp);
+>       if (info != null) {
+>         boolean hasSpecificSideEffects = false;
+>         if (hasSideEffectsThisAnnotation(info)) {
+>           if (inExterns) {
+>             hasSpecificSideEffects = true;
+>             sideEffectInfo.setTaintsThis();
+>           } else {
+>             traversal.report(node, INVALID_MODIFIES_ANNOTATION);
+>           }
+>         }
+> 
+>         if (hasSideEffectsArgumentsAnnotation(info)) {
+>           if (inExterns) {
+>             hasSpecificSideEffects = true;
+>             sideEffectInfo.setTaintsArguments();
+>           } else {
+>             traversal.report(node, INVALID_MODIFIES_ANNOTATION);
+>           }
+>         }
+> 
+>         if (!hasSpecificSideEffects) {
+>           if (hasNoSideEffectsAnnotation(info)) {
+>             if (inExterns) {
+>               sideEffectInfo.setIsPure();
+>             } else {
+>               traversal.report(node, INVALID_NO_SIDE_EFFECT_ANNOTATION);
+>             }
+>           } else if (inExterns) {
+>             sideEffectInfo.setTaintsGlobalState();
+>           }
+>         }
+>       } else {
+655,657c692
+<           sideEffectInfo.setIsPure();
+<         } else {
+<           traversal.report(node, INVALID_NO_SIDE_EFFECT_ANNOTATION);
+---
+>           sideEffectInfo.setTaintsGlobalState();
+659,660d693
+<       } else if (inExterns) {
+<         sideEffectInfo.setTaintsGlobalState();
+674,689c707,713
+< 
+<     private boolean hasNoSideEffectsAnnotation(Node node,
+<                                                Node parent,
+<                                                Node gramp) {
+<       {
+<         JSDocInfo docInfo = node.getJSDocInfo();
+<         if (docInfo != null && docInfo.isNoSideEffects()) {
+<           return true;
+<         }
+<       }
+< 
+<       if (NodeUtil.isName(parent)) {
+<         JSDocInfo docInfo = gramp.getJSDocInfo();
+<         return gramp.hasOneChild() &&
+<             docInfo != null &&
+<             docInfo.isNoSideEffects();
+---
+>     private JSDocInfo getJSDocInfoForFunction(
+>         Node node, Node parent, Node gramp) {
+>       JSDocInfo info = node.getJSDocInfo();
+>       if (info != null) {
+>         return info;
+>       } else if (NodeUtil.isName(parent)) {
+>         return gramp.hasOneChild() ? gramp.getJSDocInfo() : null;
+691,692c715
+<         JSDocInfo docInfo = parent.getJSDocInfo();
+<         return docInfo != null && docInfo.isNoSideEffects();
+---
+>         return parent.getJSDocInfo();
+694c717
+<         return false;
+---
+>         return null;
+696a720,750
+> 
+>     
+> 
+> 
+> 
+>     private boolean hasNoSideEffectsAnnotation(JSDocInfo docInfo) {
+>       Preconditions.checkNotNull(docInfo);
+>       return docInfo.isNoSideEffects();
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private boolean hasSideEffectsThisAnnotation(JSDocInfo docInfo) {
+>       Preconditions.checkNotNull(docInfo);
+>       return (docInfo.getModifies().contains("this"));
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private boolean hasSideEffectsArgumentsAnnotation(JSDocInfo docInfo) {
+>       Preconditions.checkNotNull(docInfo);
+>       Set<String> modifies = docInfo.getModifies();
+>       
+>       
+>       return (modifies.size() > 1
+>           || (modifies.size() == 1 && !modifies.contains("this")));
+>     }
+885a940
+>     private boolean taintsArguments = false;
+927a983
+>                taintsArguments ||
+964a1021,1028
+>     void setTaintsArguments() {
+>       taintsArguments = true;
+>       checkInvariant();
+>     }
+> 
+>     
+> 
+> 
+992c1056,1057
+<       return taintsGlobalState || taintsUnknown;
+---
+>       
+>       return taintsGlobalState || taintsArguments || taintsUnknown;

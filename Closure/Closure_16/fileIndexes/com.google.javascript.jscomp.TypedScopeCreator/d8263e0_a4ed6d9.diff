@@ -1,0 +1,41 @@
+19d18
+< import static com.google.javascript.jscomp.TypeCheck.ENUM_DUP;
+622,625c621,622
+<       if (!createdEnumType) {
+<         processObjectLitProperties(
+<             t, objectLit, ObjectType.cast(objectLit.getJSType()));
+<       }
+---
+>       processObjectLitProperties(
+>           t, objectLit, ObjectType.cast(objectLit.getJSType()), !createdEnumType);
+633a631,632
+> 
+> 
+635c634,635
+<         NodeTraversal t, Node objLit, ObjectType objLitType) {
+---
+>         NodeTraversal t, Node objLit, ObjectType objLitType,
+>         boolean declareOnOwner) {
+641,644c641,645
+<         JSType valueType = getDeclaredType(
+<             t.getSourceName(), info, keyNode, value);
+<         JSType keyType = NodeUtil.getObjectLitKeyTypeFromValueType(
+<             keyNode, valueType);
+---
+>         JSType valueType =
+>             getDeclaredType(t.getSourceName(), info, keyNode, value);
+>         JSType keyType =  objLitType.isEnumType() ?
+>             objLitType.toMaybeEnumType().getElementsType() :
+>             NodeUtil.getObjectLitKeyTypeFromValueType(keyNode, valueType);
+655c656
+<           if (objLitType != null) {
+---
+>           if (objLitType != null && declareOnOwner) {
+658,659c659
+<             objLitType.defineDeclaredProperty(
+<                 memberName, keyType, keyNode);
+---
+>             objLitType.defineDeclaredProperty(memberName, keyType, keyNode);
+990,991d989
+<             } else if (enumType.hasOwnProperty(keyName)) {
+<               compiler.report(JSError.make(sourceName, key, ENUM_DUP, keyName));

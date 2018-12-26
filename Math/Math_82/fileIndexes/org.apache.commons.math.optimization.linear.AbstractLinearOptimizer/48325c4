@@ -1,0 +1,118 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.optimization.linear;
+
+import java.util.Collection;
+
+import org.apache.commons.math.MaxIterationsExceededException;
+import org.apache.commons.math.optimization.GoalType;
+import org.apache.commons.math.optimization.OptimizationException;
+import org.apache.commons.math.optimization.RealPointValuePair;
+
+
+
+
+
+
+
+
+
+public abstract class AbstractLinearOptimizer implements LinearOptimizer {
+
+    
+    public static final int DEFAULT_MAX_ITERATIONS = 100;
+
+    
+    private int maxIterations;
+
+    
+    private int iterations;
+
+    
+    protected LinearObjectiveFunction f;
+
+    
+    protected Collection<LinearConstraint> constraints;
+
+    
+    protected GoalType goalType;
+
+    
+    protected boolean restrictToNonNegative;
+
+    
+
+
+    protected AbstractLinearOptimizer() {
+        setMaxIterations(DEFAULT_MAX_ITERATIONS);
+    }
+
+    
+    public void setMaxIterations(int maxIterations) {
+        this.maxIterations = maxIterations;
+    }
+
+    
+    public int getMaxIterations() {
+        return maxIterations;
+    }
+
+    
+    public int getIterations() {
+        return iterations;
+    }
+
+    
+
+
+
+    protected void incrementIterationsCounter()
+        throws OptimizationException {
+        if (++iterations > maxIterations) {
+            throw new OptimizationException(new MaxIterationsExceededException(maxIterations));
+        }
+    }
+
+    
+    public RealPointValuePair optimize(final LinearObjectiveFunction f,
+                                       final Collection<LinearConstraint> constraints,
+                                       final GoalType goalType, final boolean restrictToNonNegative)
+         throws OptimizationException {
+
+        
+        this.f                     = f;
+        this.constraints           = constraints;
+        this.goalType              = goalType;
+        this.restrictToNonNegative = restrictToNonNegative;
+
+        iterations  = 0;
+
+        
+        return doOptimize();
+
+    }
+
+    
+
+
+
+
+    abstract protected RealPointValuePair doOptimize()
+        throws OptimizationException;
+
+}

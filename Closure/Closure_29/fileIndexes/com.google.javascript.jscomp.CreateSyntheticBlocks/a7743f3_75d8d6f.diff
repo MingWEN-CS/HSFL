@@ -1,0 +1,231 @@
+18a19
+> import com.google.common.collect.Lists;
+24a26,29
+> import java.util.List;
+> 
+> import javax.annotation.Nullable;
+> 
+39,61c44,46
+<   private static class StartMarker {
+<     
+<     final String sourceName;
+< 
+<     
+<     final Node node;
+< 
+<     
+< 
+< 
+<     final Node ancestorBlockChild;
+< 
+<     
+<     final Node ancestorBlock;
+< 
+<     private StartMarker(String sourceName, Node n, Node ancestorBlockChild,
+<         Node ancestorBlock) {
+<       this.sourceName = sourceName;
+<       node = n;
+<       this.ancestorBlockChild = ancestorBlockChild;
+<       this.ancestorBlock = ancestorBlock;
+<     }
+<   }
+---
+>   static final DiagnosticType INVALID_MARKER_USAGE = DiagnosticType.warning(
+>       "JSC_INVALID_MARKER_USAGE", "Marker {0} can only be used in a simple "
+>            + "call expression");
+74c59,70
+<   private Deque<StartMarker> startMarkerStack;
+---
+>   private final Deque<Node> markerStack = new ArrayDeque<Node>();
+> 
+>   private final List<Marker> validMarkers = Lists.newArrayList();
+> 
+>   private class Marker {
+>     final Node startMarker;
+>     final Node endMarker;
+>     public Marker(Node startMarker, Node endMarker) {
+>       this.startMarker = startMarker;
+>       this.endMarker = endMarker;
+>     }
+>   }
+81d76
+<     startMarkerStack = new ArrayDeque<StartMarker>();
+85a81
+>     
+88,89c84,88
+<     for (StartMarker startMarker : startMarkerStack) {
+<       compiler.report(JSError.make(startMarker.sourceName, startMarker.node,
+---
+>     
+>     for (Node node : markerStack) {
+>       compiler.report(
+>           JSError.make(NodeUtil.getSourceName(node),
+>           node,
+91a91,168
+> 
+>     
+>     for (Marker marker : validMarkers) {
+>       addBlocks(marker);
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private void addBlocks(Marker marker) {
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+> 
+> 
+>     Node originalParent = marker.endMarker.getParent();
+>     Node outerBlock = new Node(Token.BLOCK);
+>     outerBlock.setIsSyntheticBlock(true);
+>     originalParent.addChildBefore(outerBlock, marker.startMarker);
+> 
+>     Node innerBlock = new Node(Token.BLOCK);
+>     innerBlock.setIsSyntheticBlock(true);
+>     
+>     
+>     moveSiblingExclusive(originalParent, innerBlock,
+>         marker.startMarker,
+>         marker.endMarker);
+> 
+>     
+>     outerBlock.addChildToBack(originalParent.removeChildAfter(outerBlock));
+>     
+>     outerBlock.addChildToBack(innerBlock);
+>     
+>     outerBlock.addChildToBack(originalParent.removeChildAfter(outerBlock));
+> 
+>     compiler.reportCodeChange();
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private void moveSiblingExclusive(
+>       Node src, Node dest, @Nullable Node start, @Nullable Node end) {
+>     while (childAfter(src, start) != end) {
+>       Node child = removeChildAfter(src, start);
+>       dest.addChildToBack(child);
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private Node childAfter(Node parent, @Nullable Node siblingBefore) {
+>     if (siblingBefore == null) {
+>       return parent.getFirstChild();
+>     } else {
+>       return siblingBefore.getNext();
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private Node removeChildAfter(Node parent, @Nullable Node siblingBefore) {
+>     if (siblingBefore == null) {
+>       return parent.removeFirstChild();
+>     } else {
+>       return parent.removeChildAfter(siblingBefore);
+>     }
+97c174,175
+<       if (n.getType() != Token.NAME || parent.getType() != Token.CALL) {
+---
+>       if (n.getType() != Token.CALL
+>           || n.getFirstChild().getType() != Token.NAME) {
+101,112c179,186
+<       if (startMarkerName.equals(n.getString())) {
+<         
+<         
+<         Node ancestorBlockChild = n;
+<         Node ancestorBlock = null;
+<         for (Node ancestor : n.getAncestors()) {
+<           int type = ancestor.getType();
+<           if (type == Token.SCRIPT || type == Token.BLOCK) {
+<             ancestorBlock = ancestor;
+<             break;
+<           }
+<           ancestorBlockChild = ancestor;
+---
+>       Node callTarget = n.getFirstChild();
+>       String callName = callTarget.getString();
+> 
+>       if (startMarkerName.equals(callName)) {
+>         if (parent.getType() != Token.EXPR_RESULT) {
+>           compiler.report(
+>               t.makeError(n, INVALID_MARKER_USAGE, startMarkerName));
+>           return;
+113a188,190
+>         markerStack.push(parent);
+>         return;
+>       }
+115,116c192,193
+<         startMarkerStack.push(new StartMarker(t.getSourceName(), n,
+<             ancestorBlockChild, ancestorBlock));
+---
+>       if (!endMarkerName.equals(callName)) {
+>         return;
+119c196,199
+<       if (!endMarkerName.equals(n.getString())) {
+---
+>       Node endMarkerNode = parent;
+>       if (endMarkerNode.getType() != Token.EXPR_RESULT) {
+>         compiler.report(
+>             t.makeError(n, INVALID_MARKER_USAGE, endMarkerName));
+123c203
+<       if (startMarkerStack.isEmpty()) {
+---
+>       if (markerStack.isEmpty()) {
+129,151c209,210
+<       StartMarker startMarker = startMarkerStack.pop();
+< 
+<       Node endMarkerAncestorBlockChild = n;
+<       for (Node ancestor : n.getAncestors()) {
+<         int type = ancestor.getType();
+<         if (type == Token.SCRIPT || type == Token.BLOCK) {
+<           if (ancestor != startMarker.ancestorBlock) {
+<             
+<             compiler.report(t.makeError(n, UNMATCHED_END_MARKER,
+<                 startMarkerName, endMarkerName));
+<             return;
+<           }
+<           break;
+<         }
+<         endMarkerAncestorBlockChild = ancestor;
+<       }
+< 
+<       Node block = new Node(Token.BLOCK);
+<       block.setIsSyntheticBlock(true);
+<       startMarker.ancestorBlock.addChildAfter(block,
+<           startMarker.ancestorBlockChild);
+<       Node removedNode = null;
+<       do {
+---
+>       Node startMarkerNode = markerStack.pop();
+>       if (endMarkerNode.getParent() != startMarkerNode.getParent()) {
+153,155c212,215
+<         removedNode = startMarker.ancestorBlock.removeChildAfter(block);
+<         block.addChildToBack(removedNode);
+<       } while (removedNode != endMarkerAncestorBlockChild);
+---
+>         compiler.report(t.makeError(n, UNMATCHED_END_MARKER,
+>             startMarkerName, endMarkerName));
+>         return;
+>       }
+157c217,218
+<       compiler.reportCodeChange();
+---
+>       
+>       validMarkers.add(new Marker(startMarkerNode, endMarkerNode));

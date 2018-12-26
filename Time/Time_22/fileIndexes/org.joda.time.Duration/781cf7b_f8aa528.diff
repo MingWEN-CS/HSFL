@@ -1,0 +1,75 @@
+160,161c160,168
+<     public Duration withDurationAdded(long durationToAdd) {
+<         return withDurationAdded(durationToAdd, 1);
+---
+> 
+> 
+>     public Duration withDurationAdded(long durationToAdd, int scalar) {
+>         if (durationToAdd == 0 || scalar == 0) {
+>             return this;
+>         }
+>         long add = FieldUtils.safeMultiply(durationToAdd, scalar);
+>         long duration = FieldUtils.safeAdd(getMillis(), add);
+>         return new Duration(duration);
+173,174c180,182
+<     public Duration withDurationAdded(long durationToAdd, int scalar) {
+<         if (durationToAdd == 0 || scalar == 0) {
+---
+> 
+>     public Duration withDurationAdded(ReadableDuration durationToAdd, int scalar) {
+>         if (durationToAdd == null || scalar == 0) {
+177,179c185
+<         long add = FieldUtils.safeMultiply(durationToAdd, scalar);
+<         long duration = FieldUtils.safeAdd(getMillis(), add);
+<         return new Duration(duration);
+---
+>         return withDurationAdded(durationToAdd.getMillis(), scalar);
+182a189,190
+>     
+> 
+190,191c198,212
+<     public Duration withDurationAdded(ReadableDuration durationToAdd) {
+<         if (durationToAdd == null) {
+---
+>     public Duration plus(long amount) {
+>         return withDurationAdded(amount, 1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Duration plus(ReadableDuration amount) {
+>         if (amount == null) {
+194c215
+<         return withDurationAdded(durationToAdd.getMillis(), 1);
+---
+>         return withDurationAdded(amount.getMillis(), 1);
+206,207c227,241
+<     public Duration withDurationAdded(ReadableDuration durationToAdd, int scalar) {
+<         if (durationToAdd == null || scalar == 0) {
+---
+>     public Duration minus(long amount) {
+>         return withDurationAdded(amount, -1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Duration minus(ReadableDuration amount) {
+>         if (amount == null) {
+210c244
+<         return withDurationAdded(durationToAdd.getMillis(), scalar);
+---
+>         return withDurationAdded(amount.getMillis(), -1);

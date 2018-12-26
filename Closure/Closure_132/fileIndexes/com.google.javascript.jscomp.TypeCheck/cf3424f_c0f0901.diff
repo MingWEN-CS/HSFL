@@ -1,0 +1,76 @@
+235a236,240
+>   static final DiagnosticType ILLEGAL_PROPERTY_CREATION =
+>       DiagnosticType.warning("JSC_ILLEGAL_PROPERTY_CREATION",
+>                              "Cannot add a property to a struct instance " +
+>                              "after it is constructed.");
+> 
+265a271
+>       ILLEGAL_PROPERTY_CREATION,
+559,560c565,566
+<         validator.expectNumber(
+<             t, left, getJSType(left), "increment/decrement");
+---
+>         checkPropCreation(t, left);
+>         validator.expectNumber(t, left, getJSType(left), "increment/decrement");
+714a721,723
+>         checkPropCreation(t, n.getFirstChild());
+>         
+> 
+870c879,880
+<       String property = lvalue.getLastChild().getString();
+---
+>       Node property = lvalue.getLastChild();
+>       String pname = property.getString();
+878c888
+<           visitInterfaceGetprop(t, assign, object, property, lvalue, rvalue);
+---
+>           visitInterfaceGetprop(t, assign, object, pname, lvalue, rvalue);
+882a893
+>       checkPropCreation(t, lvalue);
+888c899
+<       if (property.equals("prototype")) {
+---
+>       if (pname.equals("prototype")) {
+906,909c917,920
+<         if (type.hasProperty(property) &&
+<             !type.isPropertyTypeInferred(property) &&
+<             !propertyIsImplicitCast(type, property)) {
+<           JSType expectedType = type.getPropertyType(property);
+---
+>         if (type.hasProperty(pname) &&
+>             !type.isPropertyTypeInferred(pname) &&
+>             !propertyIsImplicitCast(type, pname)) {
+>           JSType expectedType = type.getPropertyType(pname);
+913c924
+<                 expectedType, object, property);
+---
+>                 expectedType, object, pname);
+915c926
+<                 t, assign, object, property, info, expectedType);
+---
+>                 t, assign, object, pname, info, expectedType);
+924c935
+<           t, assign, object, property, info, getNativeType(UNKNOWN_TYPE));
+---
+>           t, assign, object, pname, info, getNativeType(UNKNOWN_TYPE));
+964a976,991
+>   
+>   private void checkPropCreation(NodeTraversal t, Node lvalue) {
+>     if (lvalue.isGetProp()) {
+>       Node obj = lvalue.getFirstChild();
+>       Node prop = lvalue.getLastChild();
+>       JSType objType = getJSType(obj);
+>       String pname = prop.getString();
+>       if (objType.isStruct() && !objType.hasProperty(pname)) {
+>         if (!(obj.isThis() &&
+>               getJSType(t.getScope().getRootNode()).isConstructor())) {
+>           report(t, prop, ILLEGAL_PROPERTY_CREATION);
+>         }
+>       }
+>     }
+>   }
+> 
+1542c1569
+<           baseConstructor.isInterface() && functionType.isConstructor()) {
+---
+>           baseConstructor.isInterface()) {

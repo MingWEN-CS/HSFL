@@ -1,0 +1,105 @@
+18,22d17
+< import java.util.Calendar;
+< import java.util.Date;
+< import java.util.GregorianCalendar;
+< import java.util.TimeZone;
+< 
+333,430d327
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static GregorianCalendar toGregorianCalendar(ReadableInstant instant) {
+<         if (instant == null) {
+<             throw new IllegalArgumentException("The zone must not be null");
+<         }
+<         Chronology chrono = instant.getChronology();
+<         DateTimeZone zone = instant.getZone();
+<         long millis = instant.getMillis();
+<         TimeZone jdkZone = zone.toTimeZone();
+<         GregorianCalendar cal = new GregorianCalendar(jdkZone);
+<         cal.clear();
+<         cal.set(Calendar.YEAR, chrono.year().get(millis));
+<         cal.set(Calendar.DAY_OF_YEAR, chrono.dayOfYear().get(millis));
+<         cal.set(Calendar.MILLISECOND, chrono.millisOfDay().get(millis));
+<         cal.get(Calendar.ERA);  
+<         return cal;
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static DateTime toDateTime(Calendar calendar) {
+<         if (calendar == null) {
+<             throw new IllegalArgumentException("The calendar must not be null");
+<         }
+<         long millisLocal = calendar.getTime().getTime() +
+<             calendar.get(Calendar.ZONE_OFFSET) + calendar.get(Calendar.DST_OFFSET);
+<         DateTimeZone zone = DateTimeZone.forTimeZone(calendar.getTimeZone());
+<         long millis = millisLocal - zone.getOffsetFromLocal(millisLocal);
+<         return new DateTime(millis, zone);
+<     }
+< 
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static DateTime toDateTime(Date date) {
+<         if (date == null) {
+<             throw new IllegalArgumentException("The date must not be null");
+<         }
+<         long millisLocal = date.getTime() - date.getTimezoneOffset() * 60000;
+<         DateTimeZone zone = DateTimeZone.forTimeZone(TimeZone.getDefault());
+<         long millis = millisLocal - zone.getOffsetFromLocal(millisLocal);
+<         return new DateTime(millis, zone);

@@ -1,0 +1,41 @@
+19c19
+< import org.apache.commons.math.exception.MathArithmeticException;
+---
+> import org.apache.commons.math.exception.MathIllegalArgumentException;
+22a23
+> import org.apache.commons.math.geometry.euclidean.oned.IntervalsSet;
+53,54c54,55
+<     public Line(final Vector3D p, final Vector3D direction) {
+<         reset(p, direction);
+---
+>     public Line(final Vector3D p1, final Vector3D p2) {
+>         reset(p1, p2);
+72,75c73,77
+<     public void reset(final Vector3D p, final Vector3D dir) {
+<         final double norm = dir.getNorm();
+<         if (norm == 0.0) {
+<             throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+---
+>     public void reset(final Vector3D p1, final Vector3D p2) {
+>         final Vector3D delta = p2.subtract(p1);
+>         final double norm2 = delta.getNormSq();
+>         if (norm2 == 0.0) {
+>             throw new MathIllegalArgumentException(LocalizedFormats.ZERO_NORM);
+77,78c79,80
+<         this.direction = new Vector3D(1.0 / norm, dir);
+<         zero = new Vector3D(1.0, p, -p.dotProduct(this.direction), this.direction);
+---
+>         this.direction = new Vector3D(1.0 / FastMath.sqrt(norm2), delta);
+>         zero = new Vector3D(1.0, p1, -p1.dotProduct(delta) / norm2, delta);
+85c87
+<         return new Line(zero, direction.negate());
+---
+>         return new Line(zero, zero.subtract(direction));
+213a216,222
+>     }
+> 
+>     
+> 
+> 
+>     public SubLine wholeLine() {
+>         return new SubLine(this, new IntervalsSet());

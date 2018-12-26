@@ -1,0 +1,30 @@
+17a18,20
+> import java.io.IOException;
+> import java.io.ObjectInputStream;
+> import java.io.ObjectOutputStream;
+1155c1158
+<         private final MutableDateTime iInstant;
+---
+>         private MutableDateTime iInstant;
+1157c1160
+<         private final DateTimeField iField;
+---
+>         private DateTimeField iField;
+1170a1174,1190
+>         
+> 
+> 
+>         private void writeObject(ObjectOutputStream oos) throws IOException {
+>             oos.writeObject(iInstant);
+>             oos.writeObject(iField.getType());
+>         }
+> 
+>         
+> 
+> 
+>         private void readObject(ObjectInputStream oos) throws IOException, ClassNotFoundException {
+>             iInstant = (MutableDateTime) oos.readObject();
+>             DateTimeFieldType type = (DateTimeFieldType) oos.readObject();
+>             iField = type.getField(iInstant.getChronology());
+>         }
+> 

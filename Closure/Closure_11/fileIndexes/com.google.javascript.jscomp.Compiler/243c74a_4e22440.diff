@@ -1,0 +1,39 @@
+180a181,182
+>   private volatile double progress = 0.0;
+> 
+645a648
+>     setProgress(0.0);
+646a650,652
+>     
+>     
+>     setProgress(0.15);
+684a691
+>     setProgress(1.0);
+738c745,748
+<     PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker);
+---
+>     
+>     
+>     PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker,
+>         new PhaseOptimizer.ProgressRange(getProgress(), 1.0));
+1757c1767
+<     PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker);
+---
+>     PhaseOptimizer phaseOptimizer = new PhaseOptimizer(this, tracker, null);
+2239a2250,2265
+>   }
+> 
+>   @Override
+>   public double getProgress() {
+>     return progress;
+>   }
+> 
+>   @Override
+>   void setProgress(double newProgress) {
+>     if (newProgress > 1.0) {
+>       progress = 1.0;
+>     } else if (newProgress < 0.0) {
+>       progress = 0.0;
+>     } else {
+>       progress = newProgress;
+>     }

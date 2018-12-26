@@ -1,0 +1,135 @@
+34a35
+> import com.google.javascript.rhino.InputId;
+107c108
+<   private Map<String, CompilerInput> inputsByName;
+---
+>   private Map<InputId, CompilerInput> inputsById;
+357c358
+<     initInputsByNameMap();
+---
+>     initInputsByIdMap();
+421c422
+<     initInputsByNameMap();
+---
+>     initInputsByIdMap();
+456,457c457,458
+<   void initInputsByNameMap() {
+<     inputsByName = new HashMap<String, CompilerInput>();
+---
+>   void initInputsByIdMap() {
+>     inputsById = new HashMap<InputId, CompilerInput>();
+459,463c460,463
+<       String name = input.getName();
+<       if (!inputsByName.containsKey(name)) {
+<         inputsByName.put(name, input);
+<       } else {
+<         report(JSError.make(DUPLICATE_EXTERN_INPUT, name));
+---
+>       InputId id = input.getInputId();
+>       CompilerInput previous = inputsById.put(id, input);
+>       if (previous != null) {
+>         report(JSError.make(DUPLICATE_EXTERN_INPUT, input.getName()));
+467,471c467,470
+<       String name = input.getName();
+<       if (!inputsByName.containsKey(name)) {
+<         inputsByName.put(name, input);
+<       } else {
+<         report(JSError.make(DUPLICATE_INPUT, name));
+---
+>       InputId id = input.getInputId();
+>       CompilerInput previous = inputsById.put(id, input);
+>       if (previous != null) {
+>         report(JSError.make(DUPLICATE_INPUT, input.getName()));
+966,967c965,966
+<   public CompilerInput getInput(String name) {
+<     return inputsByName.get(name);
+---
+>   public CompilerInput getInput(InputId id) {
+>     return inputsById.get(id);
+974,975c973,974
+<   protected void removeExternInput(String name) {
+<     CompilerInput input = getInput(name);
+---
+>   protected void removeExternInput(InputId id) {
+>     CompilerInput input = getInput(id);
+981c980
+<     inputsByName.remove(name);
+---
+>     inputsById.remove(id);
+991c990,991
+<     if (inputsByName.containsKey(name)) {
+---
+>     SourceAst ast = new SyntheticAst(name);
+>     if (inputsById.containsKey(ast.getInputId())) {
+994,996c994,995
+<     SourceAst ast = new SyntheticAst(name);
+<     CompilerInput input = new CompilerInput(ast, name, true);
+<     inputsByName.put(name, input);
+---
+>     CompilerInput input = new CompilerInput(ast, true);
+>     inputsById.put(input.getInputId(), input);
+1004c1003
+<     String intputName = ast.getSourceFile().getName();
+---
+>     InputId id = ast.getInputId();
+1006,1008c1005,1007
+<         getInput(intputName) == null,
+<         "Duplicate input of name " + intputName);
+<     inputsByName.put(intputName, new CompilerInput(ast));
+---
+>         getInput(id) == null,
+>         "Duplicate input " + id.getIdName());
+>     inputsById.put(id, new CompilerInput(ast));
+1021,1025c1020,1023
+<     String inputName = ast.getSourceFile().getName();
+<     CompilerInput oldInput =
+<         Preconditions.checkNotNull(
+<             getInput(inputName),
+<             "No input to replace: " + inputName);
+---
+>     CompilerInput oldInput = getInput(ast.getInputId());
+>     Preconditions.checkNotNull(
+>         oldInput,
+>         "No input to replace: " + ast.getInputId().getIdName());
+1039c1037
+<     inputsByName.put(inputName, newInput);
+---
+>     inputsById.put(ast.getInputId(), newInput);
+1045a1044,1050
+> 
+>     
+>     Preconditions.checkState(
+>         newInput.getInputId().equals(oldInput.getInputId()));
+>     InputId inputIdOnAst = newInput.getAstRoot(this).getInputId();
+>     Preconditions.checkState(newInput.getInputId().equals(inputIdOnAst));
+> 
+1284a1290,1291
+>   private int syntheticCodeId = 0;
+> 
+1288,1289c1295,1296
+<         JSSourceFile.fromCode(" [synthetic] ", js));
+<     inputsByName.put(input.getName(), input);
+---
+>         JSSourceFile.fromCode(" [synthetic:" + (++syntheticCodeId) + "] ", js));
+>     inputsById.put(input.getInputId(), input);
+1312,1313c1319,1320
+<     if (inputsByName == null) {
+<       inputsByName = Maps.newHashMap();
+---
+>     if (inputsById == null) {
+>       inputsById = Maps.newHashMap();
+1315c1322
+<     inputsByName.put(input.getName(), input);
+---
+>     inputsById.put(input.getInputId(), input);
+1870,1871c1877,1883
+<     if (inputsByName.containsKey(sourceName)) {
+<       return inputsByName.get(sourceName).getSourceFile();
+---
+>     
+>     
+>     if (sourceName != null) {
+>       CompilerInput input = inputsById.get(new InputId(sourceName));
+>       if (input != null) {
+>         return input.getSourceFile();
+>       }

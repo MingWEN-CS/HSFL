@@ -1,0 +1,81 @@
+112a113,192
+> 
+>     boolean possibleException = result != null &&
+>         ControlFlowAnalysis.mayThrowException(result);
+> 
+>     
+> 
+>     
+>     Node breakTarget = n;
+>     boolean safe = true;
+> 
+>     for (;!ControlFlowAnalysis.isBreakTarget(breakTarget, null );
+>         breakTarget = breakTarget.getParent()) {
+>       if (NodeUtil.isFunction(breakTarget) ||
+>           breakTarget.getType() == Token.SCRIPT) {
+> 
+>           
+>           
+> 
+>           
+>           
+>           
+>           
+>         safe = false;
+>         break;
+>       }
+>     }
+> 
+>     Node follow = ControlFlowAnalysis.computeFollowNode(breakTarget);
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     
+>     while (follow != null &&
+>         NodeUtil.isTryFinallyNode(follow.getParent(), follow)) {
+>       if (result != null &&
+>           
+>           (NodeUtil.canBeSideEffected(result) ||
+>            NodeUtil.mayHaveSideEffects(result))) {
+>         safe = false;
+>         break;
+>       }
+>       follow = ControlFlowAnalysis.computeFollowNode(follow);
+>     }
+> 
+>     if (safe) {
+>       if (follow == null) {
+>         
+>         
+>         if (result == null) {
+>           n.setType(Token.BREAK);
+>           reportCodeChange();
+>           return n;
+>         }
+> 
+>       } else if (follow.getType() == Token.RETURN &&
+>           (result == follow.getFirstChild() ||
+>            (result != null && follow.hasChildren() &&
+>             result.checkTreeEqualsSilent(follow.getFirstChild())) &&
+>             ControlFlowAnalysis.getExceptionHandler(n) ==
+>             ControlFlowAnalysis.getExceptionHandler(follow)
+>            )) {
+>         
+>         
+>         
+>         n.removeChildren();
+>         n.setType(Token.BREAK);
+>         reportCodeChange();
+>         return n;
+>       }
+>       
+>       
+>     }
+> 
+>     
+> 

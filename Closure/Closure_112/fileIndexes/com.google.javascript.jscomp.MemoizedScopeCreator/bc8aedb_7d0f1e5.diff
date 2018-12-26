@@ -1,0 +1,35 @@
+19a20,22
+> import com.google.common.collect.ImmutableList;
+> import com.google.common.collect.Iterables;
+> import com.google.common.collect.Lists;
+20a24
+> import com.google.javascript.jscomp.Scope.Var;
+21a26
+> import com.google.javascript.rhino.jstype.StaticSymbolTable;
+22a28
+> import java.util.List;
+37c43,44
+< class MemoizedScopeCreator implements ScopeCreator {
+---
+> class MemoizedScopeCreator
+>     implements ScopeCreator, StaticSymbolTable<Var, Var> {
+46a54,72
+>   }
+> 
+>   @Override
+>   public Iterable<Var> getReferences(Var var) {
+>     return ImmutableList.of(var);
+>   }
+> 
+>   @Override
+>   public Scope getScope(Var var) {
+>     return var.scope;
+>   }
+> 
+>   @Override
+>   public Iterable<Var> getAllSymbols() {
+>     List<Var> vars = Lists.newArrayList();
+>     for (Scope s : scopes.values()) {
+>       Iterables.addAll(vars, s.getAllSymbols());
+>     }
+>     return vars;

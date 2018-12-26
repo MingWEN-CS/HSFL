@@ -1,0 +1,43 @@
+19a20,21
+> import java.io.IOException;
+> import java.io.ObjectInputStream;
+49,50d50
+< 
+<     
+81c81
+<     private final boolean isNaN;
+---
+>     private final transient boolean isNaN;
+86c86
+<     private final boolean isInfinite;
+---
+>     private final transient boolean isInfinite;
+972a973,1000
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>      private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+>         ois.defaultReadObject();
+> 
+>         try {
+>             final java.lang.reflect.Field fNaN = getClass().getDeclaredField("isNaN");
+>             fNaN.setAccessible(true);
+>             fNaN.set(this, Double.isNaN(real) || Double.isNaN(imaginary));
+>             final java.lang.reflect.Field fInf = getClass().getDeclaredField("isInfinite");
+>             fInf.setAccessible(true);
+>             fInf.set(this, !isNaN && (Double.isInfinite(real) || Double.isInfinite(imaginary)));
+>         } catch (IllegalAccessException iae) {
+>             IOException ioe = new IOException();
+>             ioe.initCause(iae);
+>             throw ioe;
+>         } catch (NoSuchFieldException nsfe) {
+>             IOException ioe = new IOException();
+>             ioe.initCause(nsfe);
+>             throw ioe;
+>         }
+> 

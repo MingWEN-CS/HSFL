@@ -1,0 +1,104 @@
+338,339c338,341
+<             
+<             return append(printer, parsers[0]);
+---
+>             if (parsers[0] == null) {
+>                 throw new IllegalArgumentException("No parser supplied");
+>             }
+>             return append0(printer, parsers[0]);
+2002c2004
+<         public int parseInto(DateTimeParserBucket bucket, String text, int position) {
+---
+>         public int parseInto(final DateTimeParserBucket bucket, final String text, final int position) {
+2006,2009c2008,2010
+<             Object state = bucket.saveState();
+<             
+<             int bestInvalidPos = position;
+<             int bestInvalidParser = 0;
+---
+>             final Object originalState = bucket.saveState();
+>             boolean isOptional = false;
+> 
+2011c2012
+<             int bestValidParser = 0;
+---
+>             Object bestValidState = null;
+2013,2016c2014
+<             for (int i=0; i<length; i++) {
+<                 if (i != 0) {
+<                     bucket.undoChanges(state);
+<                 }
+---
+>             int bestInvalidPos = position;
+2017a2016
+>             for (int i=0; i<length; i++) {
+2021,2022c2020,2021
+<                     if (bestValidPos > position) {
+<                         break;
+---
+>                     if (bestValidPos <= position) {
+>                         return position;
+2024c2023,2024
+<                     return position;
+---
+>                     isOptional = true;
+>                     break;
+2026d2025
+< 
+2029,2031d2027
+<                     if (parsePos >= text.length()) {
+<                         return parsePos;
+<                     }
+2032a2029,2035
+>                         if (parsePos >= text.length() ||
+>                             (i + 1) >= length || parsers[i + 1] == null) {
+> 
+>                             
+>                             
+>                             return parsePos;
+>                         }
+2034c2037
+<                         bestValidParser = i;
+---
+>                         bestValidState = bucket.saveState();
+2037,2040c2040,2045
+<                     parsePos = ~parsePos;
+<                     if (parsePos > bestInvalidPos) {
+<                         bestInvalidPos = parsePos;
+<                         bestInvalidParser = i;
+---
+>                     bucket.undoChanges(originalState);
+>                     if (parsePos < 0) {
+>                         parsePos = ~parsePos;
+>                         if (parsePos > bestInvalidPos) {
+>                             bestInvalidPos = parsePos;
+>                         }
+2045,2051c2050
+<             if (bestValidPos > position) {
+<                 if (bestValidParser == length - 1) {
+<                     
+<                     
+<                     return bestValidPos;
+<                 }
+<                 bucket.undoChanges(state);
+---
+>             if (bestValidPos > position || (bestValidPos == position && isOptional)) {
+2053,2059c2052,2055
+<                 return parsers[bestValidParser].parseInto(bucket, text, position);
+<             }
+< 
+<             if (bestInvalidParser == length - 1) {
+<                 
+<                 
+<                 return ~bestInvalidPos;
+---
+>                 if (bestValidState != null) {
+>                     bucket.undoChanges(bestValidState);
+>                 }
+>                 return bestValidPos;
+2062,2064c2058
+<             bucket.undoChanges(state);
+<             
+<             return parsers[bestInvalidParser].parseInto(bucket, text, position);
+---
+>             return ~bestInvalidPos;

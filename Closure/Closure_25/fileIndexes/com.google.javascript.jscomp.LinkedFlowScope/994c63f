@@ -1,0 +1,498 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.javascript.jscomp.DataFlowAnalysis.BinaryJoinOp;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.rhino.jstype.JSType;
+import com.google.javascript.rhino.jstype.SimpleSlot;
+import com.google.javascript.rhino.jstype.StaticScope;
+import com.google.javascript.rhino.jstype.StaticSlot;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+class LinkedFlowScope implements FlowScope {
+  
+  private final FlatFlowScopeCache cache;
+
+  
+  private final LinkedFlowScope parent;
+
+  
+  private int depth;
+
+  static final int MAX_DEPTH = 250;
+
+  
+  private FlatFlowScopeCache flattened;
+
+  
+  
+  private boolean frozen = false;
+
+  
+  
+  private LinkedFlowSlot lastSlot;
+
+  private LinkedFlowScope(FlatFlowScopeCache cache,
+      LinkedFlowScope directParent) {
+    this.cache = cache;
+    if (directParent == null) {
+      this.lastSlot = null;
+      this.depth = 0;
+      this.parent = cache.linkedEquivalent;
+    } else {
+      this.lastSlot = directParent.lastSlot;
+      this.depth = directParent.depth + 1;
+      this.parent = directParent;
+    }
+  }
+
+  LinkedFlowScope(FlatFlowScopeCache cache) {
+    this(cache, null);
+  }
+
+  LinkedFlowScope(LinkedFlowScope directParent) {
+    this(directParent.cache, directParent);
+  }
+
+  
+  private Scope getFunctionScope() {
+    return cache.functionScope;
+  }
+
+  
+  private boolean flowsFromBottom() {
+    return getFunctionScope().isBottom();
+  }
+
+  
+
+
+  public static LinkedFlowScope createEntryLattice(Scope scope) {
+    return new LinkedFlowScope(new FlatFlowScopeCache(scope));
+  }
+
+  @Override
+  public void inferSlotType(String symbol, JSType type) {
+    Preconditions.checkState(!frozen);
+    lastSlot = new LinkedFlowSlot(symbol, type, lastSlot);
+    depth++;
+    cache.dirtySymbols.add(symbol);
+  }
+
+  @Override
+  public void inferQualifiedSlot(String symbol, JSType bottomType,
+      JSType inferredType) {
+    Scope functionScope = getFunctionScope();
+    if (functionScope.isLocal()) {
+      if (functionScope.getVar(symbol) == null && !functionScope.isBottom()) {
+        
+        
+        
+        
+        functionScope.declare(symbol, null, bottomType, null);
+      }
+
+      inferSlotType(symbol, inferredType);
+    }
+  }
+
+  @Override
+  public JSType getTypeOfThis() {
+    return cache.functionScope.getTypeOfThis();
+  }
+
+  @Override
+  public StaticScope<JSType> getParentScope() {
+    return getFunctionScope().getParentScope();
+  }
+
+  
+
+
+  public StaticSlot<JSType> getSlot(String name) {
+    if (cache.dirtySymbols.contains(name)) {
+      for (LinkedFlowSlot slot = lastSlot;
+           slot != null; slot = slot.parent) {
+        if (slot.getName().equals(name)) {
+          return slot;
+        }
+      }
+    }
+    return cache.getSlot(name);
+  }
+
+  
+  @Override
+  public StaticSlot<JSType> getOwnSlot(String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public FlowScope createChildFlowScope() {
+    frozen = true;
+
+    if (depth > MAX_DEPTH) {
+      if (flattened == null) {
+        flattened = new FlatFlowScopeCache(this);
+      }
+      return new LinkedFlowScope(flattened);
+    }
+
+    return new LinkedFlowScope(this);
+  }
+
+  
+
+
+
+
+  @Override
+  public StaticSlot<JSType> findUniqueRefinedSlot(FlowScope blindScope) {
+    StaticSlot<JSType> result = null;
+
+    for (LinkedFlowScope currentScope = this;
+         currentScope != blindScope;
+         currentScope = currentScope.parent) {
+      for (LinkedFlowSlot currentSlot = currentScope.lastSlot;
+           currentSlot != null &&
+           (currentScope.parent == null ||
+            currentScope.parent.lastSlot != currentSlot);
+           currentSlot = currentSlot.parent) {
+        if (result == null) {
+          result = currentSlot;
+        } else if (!currentSlot.getName().equals(result.getName())) {
+          return null;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  
+
+
+
+
+  public void completeScope(Scope scope) {
+    for (Iterator<Var> it = scope.getVars(); it.hasNext();) {
+      Var var = it.next();
+      if (var.isTypeInferred()) {
+        JSType type = var.getType();
+        if (type == null || type.isUnknownType()) {
+          JSType flowType = getSlot(var.getName()).getType();
+          var.setType(flowType);
+        }
+      }
+    }
+  }
+
+  
+
+
+  
+  
+  
+  
+  
+  
+  @Override
+  public LinkedFlowScope optimize() {
+    LinkedFlowScope current;
+    for (current = this;
+         current.parent != null &&
+             current.lastSlot == current.parent.lastSlot;
+         current = current.parent) {}
+    return current;
+  }
+
+  
+  static class FlowScopeJoinOp extends BinaryJoinOp<FlowScope> {
+    @SuppressWarnings("unchecked")
+    @Override
+    public FlowScope apply(FlowScope a, FlowScope b) {
+      
+      LinkedFlowScope linkedA = (LinkedFlowScope) a;
+      LinkedFlowScope linkedB = (LinkedFlowScope) b;
+      linkedA.frozen = true;
+      linkedB.frozen = true;
+      if (linkedA.optimize() == linkedB.optimize()) {
+        return linkedA.createChildFlowScope();
+      }
+      return new LinkedFlowScope(new FlatFlowScopeCache(linkedA, linkedB));
+    }
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other instanceof LinkedFlowScope) {
+      LinkedFlowScope that = (LinkedFlowScope) other;
+      if (this.optimize() == that.optimize()) {
+        return true;
+      }
+
+      
+      
+      
+      
+      
+      
+      
+      
+      if (this.getFunctionScope() != that.getFunctionScope()) {
+        return false;
+      }
+
+      if (cache == that.cache) {
+        
+        
+        
+        for (String name : cache.dirtySymbols) {
+          if (diffSlots(getSlot(name), that.getSlot(name))) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      Map<String, StaticSlot<JSType>> myFlowSlots = allFlowSlots();
+      Map<String, StaticSlot<JSType>> otherFlowSlots = that.allFlowSlots();
+
+      for (StaticSlot<JSType> slot : myFlowSlots.values()) {
+        if (diffSlots(slot, otherFlowSlots.get(slot.getName()))) {
+          return false;
+        }
+        otherFlowSlots.remove(slot.getName());
+      }
+      for (StaticSlot<JSType> slot : otherFlowSlots.values()) {
+        if (diffSlots(slot, myFlowSlots.get(slot.getName()))) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  
+
+
+
+  private boolean diffSlots(StaticSlot<JSType> slotA,
+                            StaticSlot<JSType> slotB) {
+    boolean aIsNull = slotA == null || slotA.getType() == null;
+    boolean bIsNull = slotB == null || slotB.getType() == null;
+    if (aIsNull && bIsNull) {
+      return false;
+    } else if (aIsNull ^ bIsNull) {
+      return true;
+    }
+
+    
+    JSType aType = slotA.getType();
+    JSType bType = slotB.getType();
+    if (aType.isNoType() || bType.isNoType()) {
+      return false;
+    }
+
+    
+    return aType.differsFrom(bType);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private Map<String, StaticSlot<JSType>> allFlowSlots() {
+    Map<String, StaticSlot<JSType>> slots = Maps.newHashMap();
+    for (LinkedFlowSlot slot = lastSlot;
+         slot != null; slot = slot.parent) {
+      if (!slots.containsKey(slot.getName())) {
+        slots.put(slot.getName(), slot);
+      }
+    }
+
+    for (String key : cache.symbols.keySet()) {
+      if (!slots.containsKey(key)) {
+        slots.put(key, cache.symbols.get(key));
+      }
+    }
+
+    return slots;
+  }
+
+  
+
+
+  private static class LinkedFlowSlot extends SimpleSlot {
+    final LinkedFlowSlot parent;
+
+    LinkedFlowSlot(String name, JSType type, LinkedFlowSlot parent) {
+      super(name, type, true);
+      this.parent = parent;
+    }
+  }
+
+  
+
+
+
+  private static class FlatFlowScopeCache {
+    
+    private final Scope functionScope;
+
+    
+    private final LinkedFlowScope linkedEquivalent;
+
+    
+    
+    private Map<String, StaticSlot<JSType>> symbols = Maps.newHashMap();
+
+    
+    
+    
+    
+    
+    
+    
+    
+    final Set<String> dirtySymbols = Sets.newHashSet();
+
+    
+    FlatFlowScopeCache(Scope functionScope) {
+      this.functionScope = functionScope;
+      symbols = ImmutableMap.of();
+      linkedEquivalent = null;
+    }
+
+    
+    FlatFlowScopeCache(LinkedFlowScope directParent) {
+      FlatFlowScopeCache cache = directParent.cache;
+
+      functionScope = cache.functionScope;
+      symbols = directParent.allFlowSlots();
+      linkedEquivalent = directParent;
+    }
+
+    
+    FlatFlowScopeCache(LinkedFlowScope joinedScopeA,
+        LinkedFlowScope joinedScopeB) {
+      linkedEquivalent = null;
+
+      
+      
+      functionScope = joinedScopeA.flowsFromBottom() ?
+          joinedScopeB.getFunctionScope() : joinedScopeA.getFunctionScope();
+
+      Map<String, StaticSlot<JSType>> slotsA = joinedScopeA.allFlowSlots();
+      Map<String, StaticSlot<JSType>> slotsB = joinedScopeB.allFlowSlots();
+
+      symbols = slotsA;
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      Set<String> symbolNames = Sets.newHashSet(symbols.keySet());
+      symbolNames.addAll(slotsB.keySet());
+
+      for (String name : symbolNames) {
+        StaticSlot<JSType> slotA = slotsA.get(name);
+        StaticSlot<JSType> slotB = slotsB.get(name);
+
+        JSType joinedType = null;
+        if (slotB == null || slotB.getType() == null) {
+          StaticSlot<JSType> fnSlot
+              = joinedScopeB.getFunctionScope().getSlot(name);
+          JSType fnSlotType = fnSlot == null ? null : fnSlot.getType();
+          if (fnSlotType == null) {
+            
+          } else {
+            
+            joinedType = slotA.getType().getLeastSupertype(fnSlotType);
+          }
+        } else if (slotA == null || slotA.getType() == null) {
+          StaticSlot<JSType> fnSlot
+              = joinedScopeA.getFunctionScope().getSlot(name);
+          JSType fnSlotType = fnSlot == null ? null : fnSlot.getType();
+          if (fnSlotType == null) {
+            
+            symbols.put(name, slotB);
+          } else {
+            
+            joinedType = slotB.getType().getLeastSupertype(fnSlotType);
+          }
+        } else {
+          
+          joinedType =
+              slotA.getType().getLeastSupertype(slotB.getType());
+        }
+
+        if (joinedType != null) {
+          symbols.put(name, new SimpleSlot(name, joinedType, true));
+        }
+      }
+    }
+
+    
+
+
+    public StaticSlot<JSType> getSlot(String name) {
+      if (symbols.containsKey(name)) {
+        return symbols.get(name);
+      } else {
+        return functionScope.getSlot(name);
+      }
+    }
+  }
+}

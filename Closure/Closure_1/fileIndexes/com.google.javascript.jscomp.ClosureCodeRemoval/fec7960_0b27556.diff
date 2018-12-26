@@ -1,0 +1,10 @@
+221,222c221,226
+<         parent.replaceChild(
+<             call, call.getFirstChild().getNext().detachFromParent());
+---
+>         Node firstArg = call.getFirstChild().getNext();
+>         if (firstArg == null) {
+>           parent.replaceChild(call, NodeUtil.newUndefinedNode(call));
+>         } else {
+>           parent.replaceChild(call, firstArg.detachFromParent());
+>         }

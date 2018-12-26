@@ -1,0 +1,274 @@
+1a2,274
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp;
+> 
+> import com.google.javascript.jscomp.CheckLevel;
+> import com.google.javascript.jscomp.NodeTraversal;
+> import com.google.javascript.rhino.Node;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> public class JSError {
+>   
+>   private final DiagnosticType type;
+> 
+>   
+>   public final String description;
+> 
+>   
+>   public final String sourceName;
+> 
+>   
+>   public final int lineNumber;
+> 
+>   
+>   public final CheckLevel level;
+> 
+>   
+>   private final int charno;
+> 
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+>   
+> 
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   public static JSError make(DiagnosticType type, String... arguments) {
+>     return new JSError(null, -1, -1, type, null, arguments);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public static JSError make(String sourceName, int lineno, int charno,
+>                              DiagnosticType type, String... arguments) {
+>     return new JSError(sourceName, lineno, charno, type, null, arguments);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public static JSError make(String sourceName, int lineno, int charno,
+>       CheckLevel level, DiagnosticType type, String... arguments) {
+>     return new JSError(sourceName, lineno, charno, type, level, arguments);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public static JSError make(String sourceName, Node n,
+>                              DiagnosticType type, String... arguments) {
+>     return new JSError(sourceName, n, type, arguments);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public static JSError make(String sourceName, Node n, CheckLevel level,
+>       DiagnosticType type, String... arguments) {
+> 
+>     return new JSError(sourceName, n.getLineno(), n.getCharno(), type, level,
+>         arguments);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public static JSError make(NodeTraversal t, Node n,
+>       CheckLevel level, DiagnosticType type, String... arguments) {
+>     return new JSError(t.getSourceName(), n.getLineno(), n.getCharno(), type,
+>         level, arguments);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public static JSError make(NodeTraversal t, Node n,
+>                              DiagnosticType type, String... arguments) {
+>     return new JSError(t.getSourceName(), n, type, arguments);
+>   }
+> 
+>   
+>   
+>   
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   private JSError(String sourceName, int lineno, int charno,
+>       DiagnosticType type, CheckLevel level, String... arguments) {
+>     this.type = type;
+>     this.description = type.format.format(arguments);
+>     this.lineNumber = lineno;
+>     this.charno = charno;
+>     this.sourceName = sourceName;
+>     this.level = level == null ? type.level : level;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+>   private JSError(String sourceName, Node node,
+>                   DiagnosticType type, String... arguments) {
+>     this(sourceName,
+>          (node != null) ? node.getLineno() : -1,
+>          (node != null) ? node.getCharno() : -1,
+>          type, null, arguments);
+>   }
+> 
+>   public DiagnosticType getType() {
+>     return type;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   public String format(CheckLevel level, MessageFormatter formatter) {
+>     switch (level) {
+>       case ERROR:
+>         return formatter.formatError(this);
+> 
+>       case WARNING:
+>         return formatter.formatWarning(this);
+> 
+>       default:
+>         return null;
+>     }
+>   }
+> 
+>   @Override
+>   public String toString() {
+>     
+>     return type.key + ". " + description + " at " +
+>       (sourceName != null && sourceName.length() > 0 ?
+>        sourceName : "(unknown source)") + " line " +
+>       (lineNumber != -1 ? String.valueOf(lineNumber) : "(unknown line)");
+>   }
+> 
+>   
+> 
+> 
+>   public int getCharno() {
+>     return charno;
+>   }
+> 
+>   @Override
+>   public boolean equals(Object o) {
+>     
+>     if (this == o) {
+>       return true;
+>     }
+>     if (o == null || getClass() != o.getClass()) {
+>       return false;
+>     }
+> 
+>     JSError jsError = (JSError) o;
+> 
+>     if (charno != jsError.charno) {
+>       return false;
+>     }
+>     if (lineNumber != jsError.lineNumber) {
+>       return false;
+>     }
+>     if (!description.equals(jsError.description)) {
+>       return false;
+>     }
+>     if (level != jsError.level) {
+>       return false;
+>     }
+>     if (sourceName != null ? !sourceName.equals(jsError.sourceName)
+>         : jsError.sourceName != null) {
+>       return false;
+>     }
+>     if (!type.equals(jsError.type)) {
+>       return false;
+>     }
+> 
+>     return true;
+>   }
+> 
+>   @Override
+>   public int hashCode() {
+>     
+>     int result = type.hashCode();
+>     result = 31 * result + description.hashCode();
+>     result = 31 * result + (sourceName != null ? sourceName.hashCode() : 0);
+>     result = 31 * result + lineNumber;
+>     result = 31 * result + level.hashCode();
+>     result = 31 * result + charno;
+>     return result;
+>   }
+> }

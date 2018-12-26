@@ -1,0 +1,78 @@
+20a21
+> import com.google.common.collect.Sets;
+24a26
+> import java.util.Set;
+71a74,78
+>   
+>   
+>   
+>   private Set<String> varsToDeclareInExterns = Sets.newHashSet();
+> 
+95a103,105
+>     for (String varName : varsToDeclareInExterns) {
+>       createSynthesizedExternVar(varName);
+>     }
+118a129,138
+>     
+>     if ((parent.getType() == Token.VAR ||
+>          NodeUtil.isFunctionDeclaration(parent)) &&
+>         varsToDeclareInExterns.contains(varName)) {
+>       createSynthesizedExternVar(varName);
+> 
+>       parent.addSuppression("duplicate");
+>     }
+> 
+>     
+134,150c154,155
+<           
+<           
+<           Node nameNode = Node.newString(Token.NAME, varName);
+< 
+<           
+<           
+<           
+<           
+<           
+<           
+<           if (compiler.getCodingConvention().isConstant(varName)) {
+<             nameNode.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+<           }
+< 
+<           getSynthesizedExternsRoot().addChildToBack(
+<               new Node(Token.VAR, nameNode));
+<           scope.getGlobalScope().declare(varName, nameNode,
+---
+>           createSynthesizedExternVar(varName);
+>           scope.getGlobalScope().declare(varName, n,
+195a201,222
+>   private void createSynthesizedExternVar(String varName) {
+>     Node nameNode = Node.newString(Token.NAME, varName);
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+>     if (compiler.getCodingConvention().isConstant(varName)) {
+>       nameNode.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>     }
+> 
+>     getSynthesizedExternsRoot().addChildToBack(
+>         new Node(Token.VAR, nameNode));
+>     varsToDeclareInExterns.remove(varName);
+>   }
+> 
+>   
+> 
+> 
+> 
+210a238
+>                 varsToDeclareInExterns.add(n.getString());
+215a244,249
+> 
+>             Scope scope = t.getScope();
+>             Scope.Var var = scope.getVar(n.getString());
+>             if (var == null) {
+>               varsToDeclareInExterns.add(n.getString());
+>             }

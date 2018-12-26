@@ -1,0 +1,49 @@
+29a30
+> import java.io.BufferedOutputStream;
+501,502c502,504
+<     if (!options.jsOutputFile.isEmpty()) {
+<       out = new PrintStream(options.jsOutputFile, inputCharset.name());
+---
+>     boolean writeOutputToFile = !options.jsOutputFile.isEmpty();
+>     if (writeOutputToFile) {
+>       out = toPrintStream(options.jsOutputFile, inputCharset.name());
+517c519,524
+<     return processResults(result, modules, options);
+---
+>     int errCode = processResults(result, modules, options);
+>     
+>     if (writeOutputToFile) {
+>       out.close();
+>     }
+>     return errCode;
+588,590c595,596
+<           PrintStream ps =
+<               new PrintStream(new FileOutputStream(moduleFilePrefix
+<                   + m.getName() + ".js"));
+---
+>           PrintStream ps = toPrintStream(
+>               moduleFilePrefix + m.getName() + ".js");
+689c695
+<     return new PrintStream(new FileOutputStream(exPath));
+---
+>     return toPrintStream(exPath);
+745c751,767
+<     return new PrintStream(new FileOutputStream(fileName));
+---
+>     return new PrintStream(
+>         new BufferedOutputStream(
+>             new FileOutputStream(fileName)), false);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private PrintStream toPrintStream(String fileName, String charSet)
+>       throws IOException {
+>     if (fileName == null) {
+>       return null;
+>     }
+>     return new PrintStream(
+>         new BufferedOutputStream(
+>             new FileOutputStream(fileName)), false, charSet);

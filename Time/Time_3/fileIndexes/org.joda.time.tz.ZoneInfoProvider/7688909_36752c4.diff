@@ -1,0 +1,193 @@
+16,53d15
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+62d23
+< import java.util.Collections;
+65c26,27
+< import java.util.TreeMap;
+---
+> import java.util.TreeSet;
+> import java.util.concurrent.ConcurrentHashMap;
+79,92d40
+<     private static Map loadZoneInfoMap(InputStream in) throws IOException {
+<         Map map = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+<         DataInputStream din = new DataInputStream(in);
+<         try {
+<             ZoneInfoCompiler.readZoneInfoMap(din, map);
+<         } finally {
+<             try {
+<                 din.close();
+<             } catch (IOException e) {
+<             }
+<         }
+<         map.put("UTC", new SoftReference(DateTimeZone.UTC));
+<         return map;
+<     }
+93a42
+>     
+94a44
+>     
+95a46
+>     
+97d47
+< 
+99c49
+<     private final Map iZoneInfoMap;
+---
+>     private final Map<String, Object> iZoneInfoMap;
+176a127,130
+>     
+> 
+> 
+> 
+181c135
+<     public synchronized DateTimeZone getZone(String id) {
+---
+>     public DateTimeZone getZone(String id) {
+196,197c150,153
+<         if (obj instanceof SoftReference) {
+<             DateTimeZone tz = (DateTimeZone)((SoftReference)obj).get();
+---
+>         if (obj instanceof SoftReference<?>) {
+>             @SuppressWarnings("unchecked")
+>             SoftReference<DateTimeZone> ref = (SoftReference<DateTimeZone>) obj;
+>             DateTimeZone tz = ref.get();
+209,210c165,174
+<     public synchronized Set getAvailableIDs() {
+<         return Collections.unmodifiableSet(iZoneInfoMap.keySet());
+---
+>     
+> 
+> 
+> 
+> 
+>     public Set<String> getAvailableIDs() {
+>         
+>         
+>         
+>         return new TreeSet<String>(iZoneInfoMap.keySet());
+217c181,182
+<     protected void uncaughtException(Exception e) {
+---
+> 
+>     protected void uncaughtException(Exception ex) {
+219c184
+<         t.getThreadGroup().uncaughtException(t, e);
+---
+>         t.getThreadGroup().uncaughtException(t, ex);
+221a187,193
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+234,238c206,210
+<                 StringBuffer buf = new StringBuffer(40);
+<                 buf.append("Resource not found: \"");
+<                 buf.append(path);
+<                 buf.append("\" ClassLoader: ");
+<                 buf.append(iLoader != null ? iLoader.toString() : "system");
+---
+>                 StringBuffer buf = new StringBuffer(40)
+>                     .append("Resource not found: \"")
+>                     .append(path)
+>                     .append("\" ClassLoader: ")
+>                     .append(iLoader != null ? iLoader.toString() : "system");
+244a217,222
+>     
+> 
+> 
+> 
+> 
+> 
+250c228
+<             iZoneInfoMap.put(id, new SoftReference(tz));
+---
+>             iZoneInfoMap.put(id, new SoftReference<DateTimeZone>(tz));
+264a243,290
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+>     private static Map<String, Object> loadZoneInfoMap(InputStream in) throws IOException {
+>         Map<String, Object> map = new ConcurrentHashMap<String, Object>();
+>         DataInputStream din = new DataInputStream(in);
+>         try {
+>             readZoneInfoMap(din, map);
+>         } finally {
+>             try {
+>                 din.close();
+>             } catch (IOException e) {
+>             }
+>         }
+>         map.put("UTC", new SoftReference<DateTimeZone>(DateTimeZone.UTC));
+>         return map;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private static void readZoneInfoMap(DataInputStream din, Map<String, Object> zimap) throws IOException {
+>         
+>         int size = din.readUnsignedShort();
+>         String[] pool = new String[size];
+>         for (int i=0; i<size; i++) {
+>             pool[i] = din.readUTF().intern();
+>         }
+> 
+>         
+>         size = din.readUnsignedShort();
+>         for (int i=0; i<size; i++) {
+>             try {
+>                 zimap.put(pool[din.readUnsignedShort()], pool[din.readUnsignedShort()]);
+>             } catch (ArrayIndexOutOfBoundsException e) {
+>                 throw new IOException("Corrupt zone info map");
+>             }
+>         }
+>     }
+> 

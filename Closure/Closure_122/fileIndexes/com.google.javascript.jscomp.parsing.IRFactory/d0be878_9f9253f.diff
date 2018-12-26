@@ -1,0 +1,27 @@
+637a638,648
+>         if (!config.acceptES5) {
+>           if (el.isGetter()) {
+>             reportGetter(el);
+>             continue;
+>           } else if (el.isSetter()) {
+>             reportSetter(el);
+>             continue;
+>           }
+>         }
+> 
+>         Node key = transformAsString(el.getLeft());
+639c650
+<           reportGetter(el);
+---
+>           key.setType(Token.GET);
+641,645c652
+<           reportSetter(el);
+<         } else {
+<           Node key = transformAsString(el.getLeft());
+<           key.addChildToFront(transform(el.getRight()));
+<           node.addChildToBack(key);
+---
+>           key.setType(Token.SET);
+646a654,655
+>         key.addChildToFront(transform(el.getRight()));
+>         node.addChildToBack(key);

@@ -1,0 +1,35 @@
+118a119,121
+>   
+>   private VariableMap stringMap = null;
+> 
+130c133
+<         anonymousFunctionNameMap, functionNames);
+---
+>         anonymousFunctionNameMap, stringMap, functionNames);
+142a146
+>     this.stringMap = state.stringMap;
+299a304,307
+>     if (!options.replaceStringsFunctionDescriptions.isEmpty()) {
+>       passes.add(replaceStrings);
+>     }
+> 
+1080a1089,1107
+>     }
+>   };
+> 
+>   
+>   private final PassFactory replaceStrings =
+>       new PassFactory("replaceStrings", true) {
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       VariableMap map = null;
+>       return new CompilerPass() {
+>         @Override public void process(Node externs, Node root) {
+>           ReplaceStrings pass = new ReplaceStrings(
+>               compiler,
+>               options.replaceStringsPlaceholderToken,
+>               options.replaceStringsFunctionDescriptions);
+>           pass.process(externs, root);
+>           stringMap = pass.getStringMap();
+>         }
+>       };

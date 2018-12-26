@@ -1,0 +1,58 @@
+177c177,178
+<     List<Definition> result = Lists.newArrayList();
+---
+>     if (NodeUtil.isGetProp(name) || NodeUtil.isName(name)) {
+>       List<Definition> result = Lists.newArrayList();
+179,181c180,184
+<     if (!NodeUtil.isGetProp(name) && !NodeUtil.isName(name)) {
+<       return null;
+<     }
+---
+>       Collection<Definition> decls =
+>           definitionProvider.getDefinitionsReferencedAt(name);
+>       if (decls == null) {
+>         return null;
+>       }
+183,187c186,202
+<     Collection<Definition> decls =
+<         definitionProvider.getDefinitionsReferencedAt(name);
+<     if (decls == null) {
+<       return null;
+<     }
+---
+>       for (Definition current : decls) {
+>         Node rValue = current.getRValue();
+>         if ((rValue != null) && NodeUtil.isFunction(rValue)) {
+>           result.add(current);
+>         } else {
+>           return null;
+>         }
+>       }
+> 
+>       return result;
+>     } else if (name.getType() == Token.OR || name.getType() == Token.HOOK) {
+>       Node firstVal;
+>       if (name.getType() == Token.HOOK) {
+>         firstVal = name.getFirstChild().getNext();
+>       } else {
+>         firstVal = name.getFirstChild();
+>       }
+189,192c204,210
+<     for (Definition current : decls) {
+<       Node rValue = current.getRValue();
+<       if ((rValue != null) && NodeUtil.isFunction(rValue)) {
+<         result.add(current);
+---
+>       Collection<Definition> defs1 = getCallableDefinitions(definitionProvider,
+>                                                             firstVal);
+>       Collection<Definition> defs2 = getCallableDefinitions(definitionProvider,
+>                                                             firstVal.getNext());
+>       if (defs1 != null && defs2 != null) {
+>         defs1.addAll(defs2);
+>         return defs1;
+195a214,215
+>     } else {
+>       return null;
+197,198d216
+< 
+<     return result;

@@ -1,0 +1,80 @@
+32a33,34
+> import javax.annotation.Nullable;
+> 
+118a121
+>   private final PreprocessorSymbolTable preprocessorSymbolTable;
+121,122c124,126
+<                            CheckLevel requiresLevel,
+<                            boolean rewriteNewDateGoogNow) {
+---
+>       @Nullable PreprocessorSymbolTable preprocessorSymbolTable,
+>       CheckLevel requiresLevel,
+>       boolean rewriteNewDateGoogNow) {
+123a128
+>     this.preprocessorSymbolTable = preprocessorSymbolTable;
+297a303,304
+>         maybeAddToSymbolTable(left);
+>         maybeAddStringNodeToSymbolTable(arg);
+311a319,322
+> 
+>       maybeAddToSymbolTable(left);
+>       maybeAddStringNodeToSymbolTable(arg);
+> 
+1027,1028c1038,1039
+<         newNode.setSourcePositionForTree(
+<             newNode.getSourcePosition() + offset);
+---
+>         newNode.setSourceEncodedPositionForTree(
+>             sourceInfoNode.getSourcePosition() + offset);
+1076a1088,1138
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private void maybeAddStringNodeToSymbolTable(Node n) {
+>     if (preprocessorSymbolTable == null) {
+>       return;
+>     }
+> 
+>     String name = n.getString();
+>     Node syntheticRef = NodeUtil.newQualifiedNameNode(
+>         compiler.getCodingConvention(), name,
+>         n ,
+>         name);
+> 
+>     
+>     final int FOR_QUOTE = 1;
+>     final int FOR_DOT = 1;
+> 
+>     Node current = null;
+>     for (current = syntheticRef;
+>          current.getType() == Token.GETPROP;
+>          current = current.getFirstChild()) {
+>       int fullLen = current.getQualifiedName().length();
+>       int namespaceLen = current.getFirstChild().getQualifiedName().length();
+> 
+>       current.setSourceEncodedPosition(n.getSourcePosition() + FOR_QUOTE);
+>       current.setLength(fullLen);
+> 
+>       current.getLastChild().setSourceEncodedPosition(
+>           n.getSourcePosition() + namespaceLen + FOR_QUOTE + FOR_DOT);
+>       current.getLastChild().setLength(
+>           current.getLastChild().getString().length());
+>     }
+> 
+>     current.setSourceEncodedPosition(n.getSourcePosition() + FOR_QUOTE);
+>     current.setLength(current.getString().length());
+> 
+>     maybeAddToSymbolTable(syntheticRef);
+>   }
+> 
+>   
+> 
+> 
+>   private void maybeAddToSymbolTable(Node n) {
+>     if (preprocessorSymbolTable != null) {
+>       preprocessorSymbolTable.addReference(n);
+>     }

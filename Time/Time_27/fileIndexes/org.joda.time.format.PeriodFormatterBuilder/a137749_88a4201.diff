@@ -1,0 +1,78 @@
+91a92,95
+>     
+>     private boolean iNotPrinter;
+>     
+>     private boolean iNotParser;
+115a120
+> 
+117c122
+<         PeriodFormatter formatter = toFormatter(iElementPairs);
+---
+>         PeriodFormatter formatter = toFormatter(iElementPairs, iNotPrinter, iNotParser);
+134a140,142
+>         if (iNotPrinter) {
+>             return null;
+>         }
+151,160c159,160
+<         return toFormatter().getParser();
+<     }
+< 
+<     private static PeriodFormatter toFormatter(List elementPairs) {
+<         int size = elementPairs.size();
+<         if (size >= 2 && elementPairs.get(0) instanceof Separator) {
+<             Separator sep = (Separator) elementPairs.get(0);
+<             PeriodFormatter f = toFormatter(elementPairs.subList(2, size));
+<             sep = sep.finish(f.getPrinter(), f.getParser());
+<             return new PeriodFormatter(sep, sep);
+---
+>         if (iNotParser) {
+>             return null;
+162,163c162
+<         Object[] comp = createComposite(elementPairs);
+<         return new PeriodFormatter((PeriodPrinter) comp[0], (PeriodParser) comp[1]);
+---
+>         return toFormatter().getParser();
+180a180,181
+>         iNotPrinter = false;
+>         iNotParser = false;
+197a199
+>     
+208,210c210,217
+< 
+< 
+< 
+---
+>     public PeriodFormatterBuilder append(PeriodPrinter printer, PeriodParser parser) {
+>         if (printer == null && parser == null) {
+>             throw new IllegalArgumentException("No printer or parser supplied");
+>         }
+>         clearPrefix();
+>         append0(printer, parser);
+>         return this;
+>     }
+748a756,757
+>         iNotPrinter |= (printer == null);
+>         iNotParser |= (parser == null);
+749a759,780
+>     }
+> 
+>     
+>     private static PeriodFormatter toFormatter(List elementPairs, boolean notPrinter, boolean notParser) {
+>         if (notPrinter && notParser) {
+>             throw new IllegalStateException("Builder has created neither a printer nor a parser");
+>         }
+>         int size = elementPairs.size();
+>         if (size >= 2 && elementPairs.get(0) instanceof Separator) {
+>             Separator sep = (Separator) elementPairs.get(0);
+>             PeriodFormatter f = toFormatter(elementPairs.subList(2, size), notPrinter, notParser);
+>             sep = sep.finish(f.getPrinter(), f.getParser());
+>             return new PeriodFormatter(sep, sep);
+>         }
+>         Object[] comp = createComposite(elementPairs);
+>         if (notPrinter) {
+>             return new PeriodFormatter(null, (PeriodParser) comp[1]);
+>         } else if (notParser) {
+>             return new PeriodFormatter((PeriodPrinter) comp[0], null);
+>         } else {
+>             return new PeriodFormatter((PeriodPrinter) comp[0], (PeriodParser) comp[1]);
+>         }

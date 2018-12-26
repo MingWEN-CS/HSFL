@@ -1,0 +1,73 @@
+5668,5669c5668,5669
+<     public static String abbreviate(String str, int maxWidth) {
+<         return abbreviate(str, 0, maxWidth);
+---
+>     public static String abbreviate(CharSequence seq, int maxWidth) {
+>         return abbreviate(seq, 0, maxWidth);
+5707,5708c5707,5708
+<     public static String abbreviate(String str, int offset, int maxWidth) {
+<         if (str == null) {
+---
+>     public static String abbreviate(CharSequence seq, int offset, int maxWidth) {
+>         if (seq == null) {
+5714,5715c5714,5715
+<         if (str.length() <= maxWidth) {
+<             return str;
+---
+>         if (seq.length() <= maxWidth) {
+>             return seq.toString();
+5717,5718c5717,5718
+<         if (offset > str.length()) {
+<             offset = str.length();
+---
+>         if (offset > seq.length()) {
+>             offset = seq.length();
+5720,5721c5720,5721
+<         if ((str.length() - offset) < (maxWidth - 3)) {
+<             offset = str.length() - (maxWidth - 3);
+---
+>         if ((seq.length() - offset) < (maxWidth - 3)) {
+>             offset = seq.length() - (maxWidth - 3);
+5725c5725
+<             return str.substring(0, maxWidth - 3) + abrevMarker;
+---
+>             return seq.subSequence(0, maxWidth - 3) + abrevMarker;
+5730,5731c5730,5731
+<         if ((offset + (maxWidth - 3)) < str.length()) {
+<             return abrevMarker + abbreviate(str.substring(offset), maxWidth - 3);
+---
+>         if ((offset + (maxWidth - 3)) < seq.length()) {
+>             return abrevMarker + abbreviate(StringUtils.subSequence(seq, offset), maxWidth - 3);
+5733c5733
+<         return abrevMarker + str.substring(str.length() - (maxWidth - 3));
+---
+>         return abrevMarker + StringUtils.subSequence(seq, seq.length() - (maxWidth - 3));
+5765,5767c5765,5770
+<     public static String abbreviateMiddle(String str, String middle, int length) {
+<         if (isEmpty(str) || isEmpty(middle)) {
+<             return str;
+---
+>     public static String abbreviateMiddle(CharSequence seq, CharSequence middle, int length) {
+>         if (seq == null) {
+>             return null;
+>         }
+>         if (isEmpty(seq) || isEmpty(middle)) {
+>             return seq.toString();
+5770,5771c5773,5774
+<         if (length >= str.length() || length < (middle.length()+2)) {
+<             return str;
+---
+>         if (length >= seq.length() || length < (middle.length()+2)) {
+>             return seq.toString();
+5776c5779
+<         int endOffset = str.length()-targetSting/2;
+---
+>         int endOffset = seq.length()-targetSting/2;
+5779c5782
+<         builder.append(str.substring(0,startOffset));
+---
+>         builder.append(seq.subSequence(0,startOffset));
+5781c5784
+<         builder.append(str.substring(endOffset));
+---
+>         builder.append(StringUtils.subSequence(seq, endOffset));

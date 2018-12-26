@@ -1,0 +1,75 @@
+70a71
+> import org.joda.time.format.FormatUtils;
+231c232,233
+<                 id = offsetFormatter().print(0, UTC, offset);
+---
+>                 StringBuffer buf = new StringBuffer();
+>                 id = printTimeZone(offset);
+246a249
+> 
+262a266
+> 
+282c286
+<         String id = offsetFormatter().print(0, UTC, offset);
+---
+>         String id = printTimeZone(offset);
+329c333
+<                     convId = offsetFormatter().print(0, UTC, offset);
+---
+>                     convId = printTimeZone(offset);
+594c598
+<             cOffsetFormatter = new DateTimeFormatterBuilder((Chronology)null, null)
+---
+>             cOffsetFormatter = new DateTimeFormatterBuilder()
+601a606,648
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String printTimeZone(int offset) {
+>         StringBuffer buf = new StringBuffer();
+>         if (offset >= 0) {
+>             buf.append('+');
+>         } else {
+>             buf.append('-');
+>             offset = -offset;
+>         }
+> 
+>         int hours = offset / DateTimeConstants.MILLIS_PER_HOUR;
+>         FormatUtils.appendPaddedInteger(buf, hours, 2);
+>         offset -= hours * (int)DateTimeConstants.MILLIS_PER_HOUR;
+> 
+>         int minutes = offset / DateTimeConstants.MILLIS_PER_MINUTE;
+>         buf.append(':');
+>         FormatUtils.appendPaddedInteger(buf, minutes, 2);
+>         offset -= minutes * DateTimeConstants.MILLIS_PER_MINUTE;
+>         if (offset == 0) {
+>             return buf.toString();
+>         }
+> 
+>         int seconds = offset / DateTimeConstants.MILLIS_PER_SECOND;
+>         buf.append(':');
+>         FormatUtils.appendPaddedInteger(buf, seconds, 2);
+>         offset -= seconds * DateTimeConstants.MILLIS_PER_SECOND;
+>         if (offset == 0) {
+>             return buf.toString();
+>         }
+> 
+>         buf.append('.');
+>         FormatUtils.appendPaddedInteger(buf, offset, 3);
+>         return buf.toString();
+>     }
+> 
+>     
+676c723
+<         return offsetFormatter().print(instant, this);
+---
+>         return printTimeZone(getOffset(instant));
+715c762
+<         return offsetFormatter().print(instant, this);
+---
+>         return printTimeZone(getOffset(instant));

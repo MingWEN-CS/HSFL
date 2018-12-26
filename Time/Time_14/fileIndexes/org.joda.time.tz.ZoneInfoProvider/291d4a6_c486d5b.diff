@@ -1,0 +1,119 @@
+41,54d40
+<     private static Map loadZoneInfoMap(InputStream in) throws IOException {
+<         Map map = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+<         DataInputStream din = new DataInputStream(in);
+<         try {
+<             ZoneInfoCompiler.readZoneInfoMap(din, map);
+<         } finally {
+<             try {
+<                 din.close();
+<             } catch (IOException e) {
+<             }
+<         }
+<         map.put("UTC", new SoftReference(DateTimeZone.UTC));
+<         return map;
+<     }
+55a42
+>     
+56a44
+>     
+57a46
+>     
+59d47
+< 
+138a127,130
+>     
+> 
+> 
+> 
+170a163,167
+>     
+> 
+> 
+> 
+> 
+179c176,177
+<     protected void uncaughtException(Exception e) {
+---
+> 
+>     protected void uncaughtException(Exception ex) {
+181c179
+<         t.getThreadGroup().uncaughtException(t, e);
+---
+>         t.getThreadGroup().uncaughtException(t, ex);
+183a182,188
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+196,200c201,205
+<                 StringBuffer buf = new StringBuffer(40);
+<                 buf.append("Resource not found: \"");
+<                 buf.append(path);
+<                 buf.append("\" ClassLoader: ");
+<                 buf.append(iLoader != null ? iLoader.toString() : "system");
+---
+>                 StringBuffer buf = new StringBuffer(40)
+>                     .append("Resource not found: \"")
+>                     .append(path)
+>                     .append("\" ClassLoader: ")
+>                     .append(iLoader != null ? iLoader.toString() : "system");
+206a212,217
+>     
+> 
+> 
+> 
+> 
+> 
+226a238,285
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+>     private static Map loadZoneInfoMap(InputStream in) throws IOException {
+>         Map map = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+>         DataInputStream din = new DataInputStream(in);
+>         try {
+>             readZoneInfoMap(din, map);
+>         } finally {
+>             try {
+>                 din.close();
+>             } catch (IOException e) {
+>             }
+>         }
+>         map.put("UTC", new SoftReference(DateTimeZone.UTC));
+>         return map;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private static void readZoneInfoMap(DataInputStream din, Map zimap) throws IOException {
+>         
+>         int size = din.readUnsignedShort();
+>         String[] pool = new String[size];
+>         for (int i=0; i<size; i++) {
+>             pool[i] = din.readUTF().intern();
+>         }
+> 
+>         
+>         size = din.readUnsignedShort();
+>         for (int i=0; i<size; i++) {
+>             try {
+>                 zimap.put(pool[din.readUnsignedShort()], pool[din.readUnsignedShort()]);
+>             } catch (ArrayIndexOutOfBoundsException e) {
+>                 throw new IOException("Corrupt zone info map");
+>             }
+>         }
+>     }
+> 

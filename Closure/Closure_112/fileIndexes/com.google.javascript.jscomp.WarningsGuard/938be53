@@ -1,0 +1,108 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.jscomp.CheckLevel;
+
+import java.io.Serializable;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class WarningsGuard implements Serializable {
+
+  public static enum Priority {
+    MAX(1),
+    MIN(100),
+    STRICT(100),
+    DEFAULT(50),
+    SUPPRESS_BY_WHITELIST(40),
+    SUPPRESS_DOC(20),
+    FILTER_BY_PATH(1);
+
+    final int value;
+
+    Priority(int value) {
+      this.value = value;
+    }
+
+    public int getValue() {
+      return value;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  public abstract CheckLevel level(JSError error);
+
+  
+
+
+
+  protected int getPriority() {
+    return Priority.DEFAULT.value;
+  }
+
+  
+
+
+
+
+
+
+  protected boolean disables(DiagnosticGroup group) {
+    return false;
+  }
+
+  
+
+
+
+
+
+
+  protected boolean enables(DiagnosticGroup group) {
+    return false;
+  }
+}

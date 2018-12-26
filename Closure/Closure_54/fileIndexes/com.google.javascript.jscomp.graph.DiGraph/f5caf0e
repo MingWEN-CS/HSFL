@@ -1,0 +1,132 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp.graph;
+
+import java.util.List;
+
+
+
+
+
+
+
+
+public abstract class DiGraph<N, E> extends Graph<N, E> {
+
+  
+
+
+  public abstract Iterable<DiGraphNode<N, E>> getDirectedGraphNodes();
+
+  
+
+
+  public abstract List<DiGraphEdge<N, E>> getOutEdges(N nodeValue);
+
+  
+
+
+  public abstract List<DiGraphEdge<N, E>> getInEdges(N nodeValue);
+
+  public abstract List<DiGraphNode<N, E>> getDirectedPredNodes(
+      DiGraphNode<N, E> n);
+
+  public abstract List<DiGraphNode<N, E>> getDirectedSuccNodes(
+      DiGraphNode<N, E> n);
+
+  public abstract List<DiGraphNode<N, E>>
+      getDirectedPredNodes(N nodeValue);
+
+  public abstract List<DiGraphNode<N, E>>
+      getDirectedSuccNodes(N nodeValue);
+
+  public abstract DiGraphNode<N, E> createDirectedGraphNode(N nodeValue);
+
+  public abstract DiGraphNode<N, E> getDirectedGraphNode(N nodeValue);
+
+  public abstract List<DiGraphEdge<N, E>>
+      getDirectedGraphEdges(N n1, N n2);
+
+  
+
+
+
+
+
+  public abstract void disconnectInDirection(N n1, N n2);
+
+  
+
+
+
+
+
+
+  public abstract boolean isConnectedInDirection(N n1, N n2);
+
+  
+
+
+
+
+
+
+
+
+  public abstract boolean isConnectedInDirection(N n1, E edgeValue, N n2);
+
+  @Override
+  public boolean isConnected(N n1, N n2) {
+    return isConnectedInDirection(n1, n2) || isConnectedInDirection(n2, n1);
+  }
+
+  @Override
+  public boolean isConnected(N n1, E e, N n2) {
+    return isConnectedInDirection(n1, e, n2) ||
+        isConnectedInDirection(n2, e, n1);
+  }
+
+  
+
+
+
+
+
+  public static interface DiGraphNode<N, E> extends GraphNode<N, E> {
+
+    public List<DiGraphEdge<N, E>> getOutEdges();
+
+    public List<DiGraphEdge<N, E>> getInEdges();
+  }
+
+  
+
+
+
+
+
+  public static interface DiGraphEdge<N, E> extends GraphEdge<N, E> {
+
+    public DiGraphNode<N, E> getSource();
+
+    public DiGraphNode<N, E> getDestination();
+
+    public void setSource(DiGraphNode<N, E> node);
+
+    public void setDestination(DiGraphNode<N, E> node);
+  }
+}

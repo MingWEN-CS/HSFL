@@ -1,0 +1,25 @@
+712,714c712,716
+<         RealVector copy = copy();
+<         copy.unitize();
+<         return copy;
+---
+>         final double norm = getNorm();
+>         if (norm == 0) {
+>             throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+>         }
+>         return mapDivide(norm);
+724a727,730
+>         final double norm = getNorm();
+>         if (norm == 0) {
+>             throw new MathArithmeticException(LocalizedFormats.ZERO_NORM);
+>         }
+774,775c780,785
+<                 e.setIndex(i++);
+<                 return e;
+---
+>                 if (i < dim) {
+>                     e.setIndex(i++);
+>                     return e;
+>                 } else {
+>                     throw new NoSuchElementException();
+>                 }

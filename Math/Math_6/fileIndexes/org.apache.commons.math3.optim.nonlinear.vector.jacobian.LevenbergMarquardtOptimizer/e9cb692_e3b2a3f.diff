@@ -1,0 +1,23 @@
+20d19
+< 
+23,24d21
+< import org.apache.commons.math3.linear.RealMatrix;
+< import org.apache.commons.math3.optim.ConvergenceChecker;
+26c23,24
+< import org.apache.commons.math3.util.FastMath;
+---
+> import org.apache.commons.math3.optim.ConvergenceChecker;
+> import org.apache.commons.math3.linear.RealMatrix;
+27a26
+> import org.apache.commons.math3.util.FastMath;
+304c303
+<         final double[] weight = getNonCorrelatedWeight();
+---
+>         final RealMatrix weightMatrixSqrt = getWeightSquareRoot();
+324,327c323
+<             weightedResidual = new double[currentResiduals.length];
+<             for (int i = 0; i < weightedResidual.length; ++i) {
+<                 weightedResidual[i] = FastMath.sqrt(weight[i]) * currentResiduals[i];
+<             }
+---
+>             weightedResidual = weightMatrixSqrt.operate(currentResiduals);

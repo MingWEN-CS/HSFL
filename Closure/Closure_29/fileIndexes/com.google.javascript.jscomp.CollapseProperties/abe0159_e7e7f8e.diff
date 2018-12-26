@@ -1,0 +1,87 @@
+174c174
+<         List<Ref> refs = Lists.newArrayList(name.refs);
+---
+>         List<Ref> refs = Lists.newArrayList(name.getRefs());
+250c250
+<       if (name.isNamespace() && name.refs != null &&
+---
+>       if (name.isNamespace() &&
+253c253,257
+<         for (Ref ref : name.refs) {
+---
+>         for (Ref ref : name.getRefs()) {
+>           if (ref == name.declaration) {
+>             continue;
+>           }
+> 
+277c281
+<         JSError.make(ref.sourceName, ref.node,
+---
+>         JSError.make(ref.getSourceName(), ref.node,
+289c293
+<         JSError.make(ref.sourceName, ref.node,
+---
+>         JSError.make(ref.getSourceName(), ref.node,
+323,331c327,329
+<     if (n.refs != null) {
+<       String originalName = n.fullName();
+<       for (Ref r : n.refs) {
+<         Node rParent = r.node.getParent();
+< 
+<         
+<         
+<         
+<         
+---
+>     String originalName = n.fullName();
+>     for (Ref r : n.getRefs()) {
+>       if (r == n.declaration) {
+333,336c331,343
+<         if (!NodeUtil.isObjectLitKey(r.node, rParent) &&
+<             (r.getTwin() == null || r.isSet())) {
+<           flattenNameRef(alias, r.node, rParent, originalName);
+<         }
+---
+>         continue;
+>       }
+> 
+>       Node rParent = r.node.getParent();
+> 
+>       
+>       
+>       
+>       
+>       
+>       if (!NodeUtil.isObjectLitKey(r.node, rParent) &&
+>           (r.getTwin() == null || r.isSet())) {
+>         flattenNameRef(alias, r.node, rParent, originalName);
+368,371c375,376
+<     if (n.refs != null) {
+<       for (Ref r : n.refs) {
+< 
+<         
+---
+>     for (Ref r : n.getRefs()) {
+>       if (r == n.declaration) {
+373,375c378,384
+<         if (r.getTwin() == null || r.isSet()) {
+<           flattenNameRefAtDepth(alias, r.node, depth, originalName);
+<         }
+---
+>         continue;
+>       }
+> 
+>       
+>       
+>       if (r.getTwin() == null || r.isSet()) {
+>         flattenNameRefAtDepth(alias, r.node, depth, originalName);
+688c697
+<                     JSError.make(name.declaration.sourceName, n,
+---
+>                     JSError.make(name.declaration.getSourceName(), n,
+893,894c902,903
+<           if (p.refs.get(0).node.getLastChild().getBooleanProp(
+<                 Node.IS_CONSTANT_NAME)) {
+---
+>           if (p.getRefs().get(0).node.getLastChild().getBooleanProp(
+>                   Node.IS_CONSTANT_NAME)) {

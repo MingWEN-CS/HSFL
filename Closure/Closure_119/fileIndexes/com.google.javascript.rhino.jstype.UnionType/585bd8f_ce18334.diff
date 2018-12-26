@@ -1,0 +1,42 @@
+74c74
+<   private final int hashcode;
+---
+>   private int hashcode;
+92c92,98
+<   public Iterable<JSType> getAlternates() {
+---
+>   public Collection<JSType> getAlternates() {
+>     for (JSType t : alternates) {
+>       if (t.isUnionType()) {
+>         rebuildAlternates();
+>         break;
+>       }
+>     }
+99a106,118
+>   private void rebuildAlternates() {
+>     UnionTypeBuilder builder = new UnionTypeBuilder(registry);
+>     for (JSType alternate : alternates) {
+>       builder.addAlternate(alternate);
+>     }
+>     alternates = builder.getAlternates();
+>     hashcode = alternates.hashCode();
+>   }
+> 
+>   
+> 
+> 
+> 
+322a342
+>     Collection<JSType> thatAlternates = that.getAlternates();
+324c344
+<         && alternates.size() != that.alternates.size()) {
+---
+>         && getAlternates().size() != thatAlternates.size()) {
+327c347
+<     for (JSType alternate : that.alternates) {
+---
+>     for (JSType alternate : thatAlternates) {
+336c356
+<     for (JSType alternate : alternates) {
+---
+>     for (JSType alternate : getAlternates()) {

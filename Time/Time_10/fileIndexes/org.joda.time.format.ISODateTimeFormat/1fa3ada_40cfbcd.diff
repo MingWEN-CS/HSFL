@@ -1,0 +1,64 @@
+18a19,20
+> import java.util.HashSet;
+> import java.util.Set;
+214a217,226
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+223c235,236
+<         int inputSize = fields.size();
+---
+>         Set workingFields = new HashSet(fields);
+>         int inputSize = workingFields.size();
+227,237c240,250
+<         if (fields.contains(DateTimeFieldType.monthOfYear())) {
+<             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.dayOfYear())) {
+<             reducedPrec = dateByOrdinal(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.weekOfWeekyear())) {
+<             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.dayOfMonth())) {
+<             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+<         } else if (fields.contains(DateTimeFieldType.dayOfWeek())) {
+<             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+<         } else if (fields.remove(DateTimeFieldType.year())) {
+---
+>         if (workingFields.contains(DateTimeFieldType.monthOfYear())) {
+>             reducedPrec = dateByMonth(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.dayOfYear())) {
+>             reducedPrec = dateByOrdinal(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.weekOfWeekyear())) {
+>             reducedPrec = dateByWeek(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.dayOfMonth())) {
+>             reducedPrec = dateByMonth(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.contains(DateTimeFieldType.dayOfWeek())) {
+>             reducedPrec = dateByWeek(bld, workingFields, extended, strictISO);
+>         } else if (workingFields.remove(DateTimeFieldType.year())) {
+240c253
+<         } else if (fields.remove(DateTimeFieldType.weekyear())) {
+---
+>         } else if (workingFields.remove(DateTimeFieldType.weekyear())) {
+244c257
+<         boolean datePresent = (fields.size() < inputSize);
+---
+>         boolean datePresent = (workingFields.size() < inputSize);
+247c260
+<         time(bld, fields, extended, strictISO, reducedPrec, datePresent);
+---
+>         time(bld, workingFields, extended, strictISO, reducedPrec, datePresent);
+251a265,272
+>         }
+>         
+>         
+>         
+>         try {
+>             fields.retainAll(workingFields);
+>         } catch (UnsupportedOperationException ex) {
+>             

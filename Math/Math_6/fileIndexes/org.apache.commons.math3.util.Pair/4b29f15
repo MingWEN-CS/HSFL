@@ -1,0 +1,159 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.util;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Pair<K, V> {
+    
+    private final K key;
+    
+    private final V value;
+    
+    private final boolean isImmutable;
+    
+    private final int cachedHashCode;
+
+    
+
+
+
+
+
+
+
+
+
+
+    public Pair(K k, V v, boolean assumeImmutable) {
+        key = k;
+        value = v;
+        isImmutable = assumeImmutable;
+        cachedHashCode = computeHashCode();
+    }
+
+    
+
+
+
+
+
+
+    public Pair(K k, V v) {
+        this(k, v, false);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public Pair(Pair<? extends K, ? extends V> entry, boolean assumeImmutable) {
+        this(entry.getKey(), entry.getValue(), assumeImmutable);
+    }
+
+    
+
+
+
+
+    public Pair(Pair<? extends K, ? extends V> entry) {
+        this(entry, false);
+    }
+
+    
+
+
+
+
+    public K getKey() {
+        return key;
+    }
+
+    
+
+
+
+
+    public V getValue() {
+        return value;
+    }
+
+    
+
+
+
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (!(o instanceof Pair)) {
+            return false;
+        } else {
+            Pair<?, ?> oP = (Pair<?, ?>) o;
+            return (key == null ?
+                    oP.getKey() == null :
+                    key.equals(oP.getKey())) &&
+                (value == null ?
+                 oP.getValue() == null :
+                 value.equals(oP.getValue()));
+        }
+    }
+
+    
+
+
+
+
+    @Override
+    public int hashCode() {
+        return isImmutable ? cachedHashCode : computeHashCode();
+    }
+
+    
+
+
+
+
+    private final int computeHashCode() {
+        int result = key == null ? 0 : key.hashCode();
+
+        final int h = value == null ? 0 : value.hashCode();
+        result = 37 * result + h ^ (h >>> 16);
+
+        return result;
+    }
+}

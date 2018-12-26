@@ -1,0 +1,1683 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import static com.google.javascript.rhino.jstype.JSTypeNative.ARRAY_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.BOOLEAN_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.NULL_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.NUMBER_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.OBJECT_FUNCTION_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.OBJECT_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.REGEXP_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.STRING_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.U2U_CONSTRUCTOR_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.UNKNOWN_TYPE;
+import static com.google.javascript.rhino.jstype.JSTypeNative.VOID_TYPE;
+
+import com.google.common.base.Preconditions;
+import com.google.javascript.jscomp.CheckLevel;
+import com.google.javascript.jscomp.Scope.Var;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.jstype.EnumType;
+import com.google.javascript.rhino.jstype.FunctionType;
+import com.google.javascript.rhino.jstype.JSType;
+import com.google.javascript.rhino.jstype.JSTypeNative;
+import com.google.javascript.rhino.jstype.JSTypeRegistry;
+import com.google.javascript.rhino.jstype.ObjectType;
+import com.google.javascript.rhino.jstype.TernaryValue;
+
+import java.util.Iterator;
+
+
+
+
+
+
+
+
+
+public class TypeCheck implements NodeTraversal.Callback, CompilerPass {
+
+  
+  
+  
+  static final DiagnosticType UNEXPECTED_TOKEN = DiagnosticType.error(
+      "JSC_INTERNAL_ERROR_UNEXPECTED_TOKEN",
+      "Internal Error: Don't know how to handle {0}");
+
+
+  
+  
+  
+  static final DiagnosticType BAD_DELETE =
+      
+      DiagnosticType.warning(
+          "JSC_BAD_DELETE_OPERAND",
+          "delete operator needs a reference operand");
+
+
+  
+  
+  
+
+  protected static final String OVERRIDING_PROTOTYPE_WITH_NON_OBJECT =
+      "overriding prototype with non-object";
+
+  
+  
+  static final DiagnosticType DETERMINISTIC_TEST =
+      DiagnosticType.warning(
+          "JSC_DETERMINISTIC_TEST",
+          "condition always evaluates to {2}\n" +
+          "left : {0}\n" +
+          "right: {1}");
+
+  static final DiagnosticType DETERMINISTIC_TEST_NO_RESULT =
+      DiagnosticType.warning(
+          "JSC_DETERMINISTIC_TEST_NO_RESULT",
+          "condition always evaluates to the same value\n" +
+          "left : {0}\n" +
+          "right: {1}");
+
+  static final DiagnosticType INEXISTENT_ENUM_ELEMENT =
+      DiagnosticType.warning(
+          "JSC_INEXISTENT_ENUM_ELEMENT",
+          "element {0} does not exist on this enum");
+
+  
+  
+  static final DiagnosticType INEXISTENT_PROPERTY =
+      DiagnosticType.disabled(
+          "JSC_INEXISTENT_PROPERTY",
+          "Property {0} never defined on {1}");
+
+  protected static final DiagnosticType NOT_A_CONSTRUCTOR =
+      DiagnosticType.warning(
+          "JSC_NOT_A_CONSTRUCTOR",
+          "cannot instantiate non-constructor");
+
+  static final DiagnosticType BIT_OPERATION =
+      DiagnosticType.warning(
+          "JSC_BAD_TYPE_FOR_BIT_OPERATION",
+          "operator {0} cannot be applied to {1}");
+
+  static final DiagnosticType NOT_CALLABLE =
+      DiagnosticType.warning(
+          "JSC_NOT_FUNCTION_TYPE",
+          "{0} expressions are not callable");
+
+  static final DiagnosticType CONSTRUCTOR_NOT_CALLABLE =
+      DiagnosticType.warning(
+          "JSC_CONSTRUCTOR_NOT_CALLABLE",
+          "Constructor {0} should be called with the \"new\" keyword");
+
+  static final DiagnosticType FUNCTION_MASKS_VARIABLE =
+      DiagnosticType.warning(
+          "JSC_FUNCTION_MASKS_VARIABLE",
+          "function {0} masks variable (IE bug)");
+
+  static final DiagnosticType MULTIPLE_VAR_DEF = DiagnosticType.warning(
+      "JSC_MULTIPLE_VAR_DEF",
+      "declaration of multiple variables with shared type information");
+
+  static final DiagnosticType ENUM_DUP = DiagnosticType.error("JSC_ENUM_DUP",
+      "enum element {0} already defined");
+
+  static final DiagnosticType ENUM_NOT_CONSTANT =
+      DiagnosticType.warning("JSC_ENUM_NOT_CONSTANT",
+          "enum key {0} must be a syntactic constant");
+
+  static final DiagnosticType INTERFACE_FUNCTION_MEMBERS_ONLY =
+      DiagnosticType.warning(
+          "JSC_INTERFACE_FUNCTION_MEMBERS_ONLY",
+          "interface members can only be plain functions or {0}");
+
+  static final DiagnosticType INTERFACE_FUNCTION_NOT_EMPTY =
+      DiagnosticType.warning(
+          "JSC_INTERFACE_FUNCTION_NOT_EMPTY",
+          "interface member functions must have an empty body");
+
+  static final DiagnosticType CONFLICTING_EXTENDED_TYPE =
+      DiagnosticType.warning(
+          "JSC_CONFLICTING_EXTENDED_TYPE",
+          "{0} cannot extend this type; " +
+          "a constructor can only extend objects " +
+          "and an interface can only extend interfaces");
+
+  static final DiagnosticType BAD_IMPLEMENTED_TYPE =
+      DiagnosticType.warning(
+          "JSC_IMPLEMENTS_NON_INTERFACE",
+          "can only implement interfaces");
+
+  static final DiagnosticType HIDDEN_SUPERCLASS_PROPERTY =
+      DiagnosticType.warning(
+          "JSC_HIDDEN_SUPERCLASS_PROPERTY",
+          "property {0} already defined on superclass {1}; " +
+          "use @override to override it");
+
+  static final DiagnosticType HIDDEN_INTERFACE_PROPERTY =
+      DiagnosticType.warning(
+          "JSC_HIDDEN_INTERFACE_PROPERTY",
+          "property {0} already defined on interface {1}; " +
+          "use @override to override it");
+
+  static final DiagnosticType HIDDEN_SUPERCLASS_PROPERTY_MISMATCH =
+      DiagnosticType.warning("JSC_HIDDEN_SUPERCLASS_PROPERTY_MISMATCH",
+          "mismatch of the {0} property type and the type " +
+          "of the property it overrides from superclass {1}\n" +
+          "original: {2}\n" +
+          "override: {3}");
+
+  static final DiagnosticType HIDDEN_INTERFACE_PROPERTY_MISMATCH =
+      DiagnosticType.warning(
+          "JSC_HIDDEN_INTERFACE_PROPERTY_MISMATCH",
+          "mismatch of the {0} property type and the type " +
+          "of the property it overrides from interface {1}\n" +
+          "original: {2}\n" +
+          "override: {3}");
+
+  static final DiagnosticType UNKNOWN_OVERRIDE =
+      DiagnosticType.warning(
+          "JSC_UNKNOWN_OVERRIDE",
+          "property {0} not defined on any superclass of {1}");
+
+  static final DiagnosticType INTERFACE_METHOD_OVERRIDE =
+      DiagnosticType.warning(
+          "JSC_INTERFACE_METHOD_OVERRIDE",
+          "property {0} is already defined by the {1} extended interface");
+
+  static final DiagnosticType UNKNOWN_EXPR_TYPE =
+      DiagnosticType.warning("JSC_UNKNOWN_EXPR_TYPE",
+          "could not determine the type of this expression");
+
+  static final DiagnosticType UNRESOLVED_TYPE =
+      DiagnosticType.warning("JSC_UNRESOLVED_TYPE",
+          "could not resolve the name {0} to a type");
+
+  static final DiagnosticType WRONG_ARGUMENT_COUNT =
+      DiagnosticType.warning(
+          "JSC_WRONG_ARGUMENT_COUNT",
+          "Function {0}: called with {1} argument(s). " +
+          "Function requires at least {2} argument(s){3}.");
+
+  static final DiagnosticType ILLEGAL_IMPLICIT_CAST =
+      DiagnosticType.warning(
+          "JSC_ILLEGAL_IMPLICIT_CAST",
+          "Illegal annotation on {0}. @implicitCast may only be used in " +
+          "externs.");
+
+  static final DiagnosticGroup ALL_DIAGNOSTICS = new DiagnosticGroup(
+      DETERMINISTIC_TEST,
+      DETERMINISTIC_TEST_NO_RESULT,
+      INEXISTENT_ENUM_ELEMENT,
+      INEXISTENT_PROPERTY,
+      NOT_A_CONSTRUCTOR,
+      BIT_OPERATION,
+      NOT_CALLABLE,
+      CONSTRUCTOR_NOT_CALLABLE,
+      FUNCTION_MASKS_VARIABLE,
+      MULTIPLE_VAR_DEF,
+      ENUM_DUP,
+      ENUM_NOT_CONSTANT,
+      INTERFACE_FUNCTION_MEMBERS_ONLY,
+      INTERFACE_FUNCTION_NOT_EMPTY,
+      CONFLICTING_EXTENDED_TYPE,
+      BAD_IMPLEMENTED_TYPE,
+      HIDDEN_SUPERCLASS_PROPERTY,
+      HIDDEN_INTERFACE_PROPERTY,
+      HIDDEN_SUPERCLASS_PROPERTY_MISMATCH,
+      HIDDEN_INTERFACE_PROPERTY_MISMATCH,
+      UNKNOWN_OVERRIDE,
+      INTERFACE_METHOD_OVERRIDE,
+      UNKNOWN_EXPR_TYPE,
+      UNRESOLVED_TYPE,
+      WRONG_ARGUMENT_COUNT,
+      ILLEGAL_IMPLICIT_CAST);
+
+  private final AbstractCompiler compiler;
+  private final TypeValidator validator;
+
+  private final ReverseAbstractInterpreter reverseInterpreter;
+
+  private final JSTypeRegistry typeRegistry;
+  private Scope topScope;
+
+  private ScopeCreator scopeCreator;
+
+  private final CheckLevel reportMissingOverride;
+  private final CheckLevel reportUnknownTypes;
+
+  
+  
+  private boolean reportMissingProperties = true;
+
+  private InferJSDocInfo inferJSDocInfo = null;
+
+  
+  private int typedCount = 0;
+  private int nullCount = 0;
+  private int unknownCount = 0;
+  private boolean inExterns;
+
+  public TypeCheck(AbstractCompiler compiler,
+      ReverseAbstractInterpreter reverseInterpreter,
+      JSTypeRegistry typeRegistry,
+      Scope topScope,
+      ScopeCreator scopeCreator,
+      CheckLevel reportMissingOverride,
+      CheckLevel reportUnknownTypes) {
+    this.compiler = compiler;
+    this.validator = compiler.getTypeValidator();
+    this.reverseInterpreter = reverseInterpreter;
+    this.typeRegistry = typeRegistry;
+    this.topScope = topScope;
+    this.scopeCreator = scopeCreator;
+    this.reportMissingOverride = reportMissingOverride;
+    this.reportUnknownTypes = reportUnknownTypes;
+    this.inferJSDocInfo = new InferJSDocInfo(compiler);
+  }
+
+  public TypeCheck(AbstractCompiler compiler,
+      ReverseAbstractInterpreter reverseInterpreter,
+      JSTypeRegistry typeRegistry,
+      CheckLevel reportMissingOverride,
+      CheckLevel reportUnknownTypes) {
+    this(compiler, reverseInterpreter, typeRegistry, null, null,
+        reportMissingOverride, reportUnknownTypes);
+  }
+
+  TypeCheck(AbstractCompiler compiler,
+      ReverseAbstractInterpreter reverseInterpreter,
+      JSTypeRegistry typeRegistry) {
+    this(compiler, reverseInterpreter, typeRegistry, null, null,
+         CheckLevel.WARNING, CheckLevel.OFF);
+  }
+
+  
+  TypeCheck reportMissingProperties(boolean report) {
+    reportMissingProperties = report;
+    return this;
+  }
+
+  
+
+
+
+
+
+
+  public void process(Node externsRoot, Node jsRoot) {
+    Preconditions.checkNotNull(scopeCreator);
+    Preconditions.checkNotNull(topScope);
+
+    Node externsAndJs = jsRoot.getParent();
+    Preconditions.checkState(externsAndJs != null);
+    Preconditions.checkState(
+        externsRoot == null || externsAndJs.hasChild(externsRoot));
+
+    if (externsRoot != null) {
+      check(externsRoot, true);
+    }
+    check(jsRoot, false);
+  }
+
+  
+  public Scope processForTesting(Node externsRoot, Node jsRoot) {
+    Preconditions.checkState(scopeCreator == null);
+    Preconditions.checkState(topScope == null);
+
+    Preconditions.checkState(jsRoot.getParent() != null);
+    Node externsAndJsRoot = jsRoot.getParent();
+
+    scopeCreator = new MemoizedScopeCreator(new TypedScopeCreator(compiler));
+    topScope = scopeCreator.createScope(externsAndJsRoot, null);
+
+    TypeInferencePass inference = new TypeInferencePass(compiler,
+        reverseInterpreter, topScope, scopeCreator);
+
+    inference.process(externsRoot, jsRoot);
+    process(externsRoot, jsRoot);
+
+    return topScope;
+  }
+
+
+  public void check(Node node, boolean externs) {
+    Preconditions.checkNotNull(node);
+
+    NodeTraversal t = new NodeTraversal(compiler, this, scopeCreator);
+    inExterns = externs;
+    t.traverseWithScope(node, topScope);
+    if (externs) {
+      inferJSDocInfo.process(node, null);
+    } else {
+      inferJSDocInfo.process(null, node);
+    }
+  }
+
+
+  public boolean shouldTraverse(
+      NodeTraversal t, Node n, Node parent) {
+    JSDocInfo info;
+    switch (n.getType()) {
+      case Token.SCRIPT:
+      case Token.VAR:
+        
+        info = n.getJSDocInfo();
+        if (info != null && info.isNoTypeCheck()) {
+          return false;
+        }
+        break;
+
+      case Token.FUNCTION:
+        
+        info = n.getJSDocInfo();
+        info = (info == null) ? parent.getJSDocInfo() : info;
+        if (info != null && info.isNoTypeCheck()) {
+          return false;
+        }
+
+        
+        final TypeCheck outerThis = this;
+        final Scope outerScope = t.getScope();
+        final FunctionType functionType = (FunctionType) n.getJSType();
+        final String functionPrivateName = n.getFirstChild().getString();
+        if (functionPrivateName != null && functionPrivateName.length() > 0 &&
+            outerScope.isDeclared(functionPrivateName, false) &&
+            
+            
+            
+            !(outerScope.getVar(
+                functionPrivateName).getType() instanceof FunctionType)) {
+          t.report(n, FUNCTION_MASKS_VARIABLE, functionPrivateName);
+        }
+
+        
+        
+        
+        break;
+    }
+    return true;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  public void visit(NodeTraversal t, Node n, Node parent) {
+    JSType childType;
+    JSType leftType, rightType;
+    Node left, right;
+    
+    boolean typeable = true;
+
+    switch (n.getType()) {
+      case Token.NAME:
+        typeable = visitName(t, n, parent);
+        break;
+
+      case Token.LP:
+        
+        
+        if (parent.getType() != Token.FUNCTION) {
+          ensureTyped(t, n, getJSType(n.getFirstChild()));
+        } else {
+          typeable = false;
+        }
+        break;
+
+      case Token.COMMA:
+        ensureTyped(t, n, getJSType(n.getLastChild()));
+        break;
+
+      case Token.TRUE:
+      case Token.FALSE:
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+
+      case Token.THIS:
+        ensureTyped(t, n, t.getScope().getTypeOfThis());
+        break;
+
+      case Token.REF_SPECIAL:
+        ensureTyped(t, n);
+        break;
+
+      case Token.GET_REF:
+        ensureTyped(t, n, getJSType(n.getFirstChild()));
+        break;
+
+      case Token.NULL:
+        ensureTyped(t, n, NULL_TYPE);
+        break;
+
+      case Token.NUMBER:
+        if (n.getParent().getType() != Token.OBJECTLIT) {
+          ensureTyped(t, n, NUMBER_TYPE);
+        } else {
+          typeable = false;
+        }
+        break;
+
+      case Token.ARRAYLIT:
+        ensureTyped(t, n, ARRAY_TYPE);
+        break;
+
+      case Token.STRING:
+        if (n.getParent().getType() != Token.OBJECTLIT) {
+          ensureTyped(t, n, STRING_TYPE);
+        } else {
+          typeable = false;
+        }
+        break;
+
+      case Token.REGEXP:
+        ensureTyped(t, n, REGEXP_TYPE);
+        break;
+
+      case Token.GETPROP:
+        visitGetProp(t, n, parent);
+        typeable = !(parent.getType() == Token.ASSIGN &&
+                     parent.getFirstChild() == n);
+        break;
+
+      case Token.GETELEM:
+        visitGetElem(t, n);
+        
+        
+        
+        typeable = false;
+        break;
+
+      case Token.VAR:
+        visitVar(t, n);
+        typeable = false;
+        break;
+
+      case Token.NEW:
+        visitNew(t, n);
+        typeable = true;
+        break;
+
+      case Token.CALL:
+        visitCall(t, n);
+        typeable = !NodeUtil.isExpressionNode(parent);
+        break;
+
+      case Token.RETURN:
+        visitReturn(t, n);
+        typeable = false;
+        break;
+
+      case Token.DEC:
+      case Token.INC:
+        left = n.getFirstChild();
+        validator.expectNumber(
+            t, left, getJSType(left), "increment/decrement");
+        ensureTyped(t, n, NUMBER_TYPE);
+        break;
+
+      case Token.NOT:
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+
+      case Token.VOID:
+        ensureTyped(t, n, VOID_TYPE);
+        break;
+
+      case Token.TYPEOF:
+        ensureTyped(t, n, STRING_TYPE);
+        break;
+
+      case Token.BITNOT:
+        childType = getJSType(n.getFirstChild());
+        if (!childType.matchesInt32Context()) {
+          t.report(n, BIT_OPERATION, NodeUtil.opToStr(n.getType()),
+              childType.toString());
+        }
+        ensureTyped(t, n, NUMBER_TYPE);
+        break;
+
+      case Token.POS:
+      case Token.NEG:
+        left = n.getFirstChild();
+        validator.expectNumber(t, left, getJSType(left), "sign operator");
+        ensureTyped(t, n, NUMBER_TYPE);
+        break;
+
+      case Token.EQ:
+      case Token.NE: {
+        leftType = getJSType(n.getFirstChild());
+        rightType = getJSType(n.getLastChild());
+
+        JSType leftTypeRestricted = leftType.restrictByNotNullOrUndefined();
+        JSType rightTypeRestricted = rightType.restrictByNotNullOrUndefined();
+        TernaryValue result =
+            leftTypeRestricted.testForEquality(rightTypeRestricted);
+        if (result != TernaryValue.UNKNOWN) {
+          if (n.getType() == Token.NE) {
+            result = result.not();
+          }
+          t.report(n, DETERMINISTIC_TEST, leftType.toString(),
+              rightType.toString(), result.toString());
+        }
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+      }
+
+      case Token.SHEQ:
+      case Token.SHNE: {
+        leftType = getJSType(n.getFirstChild());
+        rightType = getJSType(n.getLastChild());
+
+        JSType leftTypeRestricted = leftType.restrictByNotNullOrUndefined();
+        JSType rightTypeRestricted = rightType.restrictByNotNullOrUndefined();
+        if (!leftTypeRestricted.canTestForShallowEqualityWith(
+                rightTypeRestricted)) {
+          t.report(n, DETERMINISTIC_TEST_NO_RESULT, leftType.toString(),
+              rightType.toString());
+        }
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+      }
+
+      case Token.LT:
+      case Token.LE:
+      case Token.GT:
+      case Token.GE:
+        leftType = getJSType(n.getFirstChild());
+        rightType = getJSType(n.getLastChild());
+        if (rightType.isNumber()) {
+          validator.expectNumber(
+              t, n, leftType, "left side of numeric comparison");
+        } else if (leftType.isNumber()) {
+          validator.expectNumber(
+              t, n, rightType, "right side of numeric comparison");
+        } else if (leftType.matchesNumberContext() &&
+                   rightType.matchesNumberContext()) {
+          
+        } else {
+          
+          
+          
+          String message = "left side of comparison";
+          validator.expectString(t, n, leftType, message);
+          validator.expectNotVoid(
+              t, n, leftType, message, getNativeType(STRING_TYPE));
+          message = "right side of comparison";
+          validator.expectString(t, n, rightType, message);
+          validator.expectNotVoid(
+              t, n, rightType, message, getNativeType(STRING_TYPE));
+        }
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+
+      case Token.IN:
+        left = n.getFirstChild();
+        right = n.getLastChild();
+        leftType = getJSType(left);
+        rightType = getJSType(right);
+        validator.expectObject(t, n, rightType, "'in' requires an object");
+        validator.expectString(t, left, leftType, "left side of 'in'");
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+
+      case Token.INSTANCEOF:
+        left = n.getFirstChild();
+        right = n.getLastChild();
+        leftType = getJSType(left);
+        rightType = getJSType(right).restrictByNotNullOrUndefined();
+
+        validator.expectAnyObject(
+            t, left, leftType, "deterministic instanceof yields false");
+        validator.expectActualObject(
+            t, right, rightType, "instanceof requires an object");
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+
+      case Token.ASSIGN:
+        visitAssign(t, n);
+        typeable = false;
+        break;
+
+      case Token.ASSIGN_LSH:
+      case Token.ASSIGN_RSH:
+      case Token.ASSIGN_URSH:
+      case Token.ASSIGN_DIV:
+      case Token.ASSIGN_MOD:
+      case Token.ASSIGN_BITOR:
+      case Token.ASSIGN_BITXOR:
+      case Token.ASSIGN_BITAND:
+      case Token.ASSIGN_SUB:
+      case Token.ASSIGN_ADD:
+      case Token.ASSIGN_MUL:
+      case Token.LSH:
+      case Token.RSH:
+      case Token.URSH:
+      case Token.DIV:
+      case Token.MOD:
+      case Token.BITOR:
+      case Token.BITXOR:
+      case Token.BITAND:
+      case Token.SUB:
+      case Token.ADD:
+      case Token.MUL:
+        visitBinaryOperator(n.getType(), t, n);
+        break;
+
+      case Token.DELPROP:
+        if (!isReference(n.getFirstChild())) {
+          t.report(n, BAD_DELETE);
+        }
+        ensureTyped(t, n, BOOLEAN_TYPE);
+        break;
+
+      case Token.CASE:
+        JSType switchType = getJSType(parent.getFirstChild());
+        JSType caseType = getJSType(n.getFirstChild());
+        validator.expectSwitchMatchesCase(t, n, switchType, caseType);
+        typeable = false;
+        break;
+
+      case Token.WITH: {
+        Node child = n.getFirstChild();
+        childType = getJSType(child);
+        validator.expectObject(
+            t, child, childType, "with requires an object");
+        typeable = false;
+        break;
+      }
+
+      case Token.FUNCTION:
+        visitFunction(t, n);
+        break;
+
+      
+      case Token.LABEL:
+      case Token.LABEL_NAME:
+      case Token.SWITCH:
+      case Token.BREAK:
+      case Token.CATCH:
+      case Token.TRY:
+      case Token.SCRIPT:
+      case Token.EXPR_RESULT:
+      case Token.BLOCK:
+      case Token.EMPTY:
+      case Token.DEFAULT:
+      case Token.CONTINUE:
+      case Token.DEBUGGER:
+      case Token.THROW:
+        typeable = false;
+        break;
+
+      
+      case Token.DO:
+      case Token.FOR:
+      case Token.IF:
+      case Token.WHILE:
+        typeable = false;
+        break;
+
+      
+      case Token.AND:
+      case Token.HOOK:
+      case Token.OBJECTLIT:
+      case Token.OR:
+        if (n.getJSType() != null) { 
+          ensureTyped(t, n);
+        } else {
+          
+          if ((n.getType() == Token.OBJECTLIT)
+              && (parent.getJSType() instanceof EnumType)) {
+            ensureTyped(t, n, parent.getJSType());
+          } else {
+            ensureTyped(t, n);
+          }
+        }
+        break;
+
+      default:
+        t.report(n, UNEXPECTED_TOKEN, Token.name(n.getType()));
+        ensureTyped(t, n);
+        break;
+    }
+
+    
+    typeable = typeable && !inExterns;
+
+    if (typeable) {
+      doPercentTypedAccounting(t, n);
+    }
+  }
+
+  
+
+
+
+  private void doPercentTypedAccounting(NodeTraversal t, Node n) {
+    JSType type = n.getJSType();
+    if (type == null) {
+      nullCount++;
+    } else if (type.isUnknownType()) {
+      if (reportUnknownTypes.isOn()) {
+        compiler.report(
+            t.makeError(n, reportUnknownTypes, UNKNOWN_EXPR_TYPE));
+      }
+      unknownCount++;
+    } else {
+      typedCount++;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+  private void visitAssign(NodeTraversal t, Node assign) {
+    JSDocInfo info = assign.getJSDocInfo();
+    Node lvalue = assign.getFirstChild();
+    Node rvalue = assign.getLastChild();
+
+    if (lvalue.getType() == Token.GETPROP) {
+      Node object = lvalue.getFirstChild();
+      JSType objectJsType = getJSType(object);
+      String property = lvalue.getLastChild().getString();
+
+      
+      
+      if (object.getType() == Token.GETPROP) {
+        JSType jsType = getJSType(object.getFirstChild());
+        if (jsType.isInterface() &&
+            object.getLastChild().getString().equals("prototype")) {
+          visitInterfaceGetprop(t, assign, object, property, lvalue, rvalue);
+        }
+      }
+
+      
+      if (info != null && info.hasType()) {
+        visitAnnotatedAssignGetprop(t, assign,
+            info.getType().evaluate(t.getScope(), typeRegistry), object,
+            property, rvalue);
+        return;
+      }
+
+      
+      if (info != null && info.hasEnumParameterType()) {
+        checkEnumInitializer(
+            t, rvalue, info.getEnumParameterType().evaluate(
+                t.getScope(), typeRegistry));
+        return;
+      }
+
+      
+      if (property.equals("prototype")) {
+        if (objectJsType instanceof FunctionType) {
+          FunctionType functionType = (FunctionType) objectJsType;
+          if (functionType.isConstructor()) {
+            JSType rvalueType = rvalue.getJSType();
+            validator.expectObject(t, rvalue, rvalueType,
+                OVERRIDING_PROTOTYPE_WITH_NON_OBJECT);
+          }
+        } else {
+          
+        }
+        return;
+      }
+
+      
+      if (object.getType() == Token.GETPROP) {
+        Node object2 = object.getFirstChild();
+        String property2 = NodeUtil.getStringValue(object.getLastChild());
+
+        if ("prototype".equals(property2)) {
+          JSType jsType = object2.getJSType();
+          if (jsType instanceof FunctionType) {
+            FunctionType functionType = (FunctionType) jsType;
+            if (functionType.isConstructor() || functionType.isInterface()) {
+              checkDeclaredPropertyInheritance(
+                  t, assign, functionType, property, info, getJSType(rvalue));
+            }
+          } else {
+            
+          }
+          return;
+        }
+      }
+
+      
+      ObjectType type = ObjectType.cast(
+          objectJsType.restrictByNotNullOrUndefined());
+      if (type != null) {
+        if (type.hasProperty(property) &&
+            !type.isPropertyTypeInferred(property) &&
+            !propertyIsImplicitCast(type, property)) {
+          validator.expectCanAssignToPropertyOf(
+              t, assign, getJSType(rvalue),
+              type.getPropertyType(property), object, property);
+        }
+        return;
+      }
+    } else if (lvalue.getType() == Token.NAME) {
+      
+      JSType rvalueType = getJSType(assign.getLastChild());
+      Var var = t.getScope().getVar(lvalue.getString());
+      if (var != null) {
+        if (var.isTypeInferred()) {
+          return;
+        }
+      }
+    }
+
+    
+    JSType leftType = getJSType(lvalue);
+    Node rightChild = assign.getLastChild();
+    JSType rightType = getJSType(rightChild);
+    if (validator.expectCanAssignTo(
+            t, assign, rightType, leftType, "assignment")) {
+      ensureTyped(t, assign, rightType);
+    } else {
+      ensureTyped(t, assign);
+    }
+  }
+
+  
+
+
+
+  private boolean propertyIsImplicitCast(ObjectType type, String prop) {
+    for (; type != null; type = type.getImplicitPrototype()) {
+      JSDocInfo docInfo = type.getOwnPropertyJSDocInfo(prop);
+      if (docInfo != null && docInfo.isImplicitCast()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+  private void checkDeclaredPropertyInheritance(
+      NodeTraversal t, Node n, FunctionType ctorType, String propertyName,
+      JSDocInfo info, JSType propertyType) {
+    
+    
+    
+    
+    
+    if (ctorType.hasUnknownSupertype()) {
+      return;
+    }
+
+    FunctionType superClass = ctorType.getSuperClassConstructor();
+    boolean superClassHasProperty = superClass != null &&
+        superClass.getPrototype().hasProperty(propertyName);
+    boolean declaredOverride = info != null && info.isOverride();
+
+    boolean foundInterfaceProperty = false;
+    if (ctorType.isConstructor()) {
+      for (JSType implementedInterface : ctorType.getImplementedInterfaces()) {
+        if (implementedInterface.isUnknownType()) {
+          continue;
+        }
+        FunctionType interfaceType =
+            implementedInterface.toObjectType().getConstructor();
+        boolean interfaceHasProperty =
+            interfaceType.getPrototype().hasProperty(propertyName);
+        foundInterfaceProperty = foundInterfaceProperty || interfaceHasProperty;
+        if (reportMissingOverride.isOn() && !declaredOverride &&
+            interfaceHasProperty) {
+          
+          
+          compiler.report(t.makeError(n, reportMissingOverride,
+              HIDDEN_INTERFACE_PROPERTY, propertyName,
+              interfaceType.getTopMostDefiningType(propertyName).toString()));
+        }
+        if (!declaredOverride) {
+          continue;
+        }
+        
+        if (interfaceHasProperty) {
+          JSType interfacePropType =
+              interfaceType.getPrototype().getPropertyType(propertyName);
+          if (!propertyType.canAssignTo(interfacePropType)) {
+            compiler.report(t.makeError(n,
+                HIDDEN_INTERFACE_PROPERTY_MISMATCH, propertyName,
+                interfaceType.getTopMostDefiningType(propertyName).toString(),
+                interfacePropType.toString(), propertyType.toString()));
+          }
+        }
+      }
+    }
+
+    if (!declaredOverride && !superClassHasProperty) {
+      
+      return;
+    }
+
+    JSType topInstanceType = superClassHasProperty ?
+        superClass.getTopMostDefiningType(propertyName) : null;
+    if (reportMissingOverride.isOn() && ctorType.isConstructor() &&
+        !declaredOverride && superClassHasProperty) {
+      
+      
+      compiler.report(t.makeError(n, reportMissingOverride,
+          HIDDEN_SUPERCLASS_PROPERTY, propertyName,
+          topInstanceType.toString()));
+    }
+    if (!declaredOverride) {
+      
+      return;
+    }
+    
+    if (superClassHasProperty) {
+      
+      JSType superClassPropType =
+          superClass.getPrototype().getPropertyType(propertyName);
+      if (!propertyType.canAssignTo(superClassPropType)) {
+        compiler.report(
+            t.makeError(n, HIDDEN_SUPERCLASS_PROPERTY_MISMATCH,
+                propertyName, topInstanceType.toString(),
+                superClassPropType.toString(), propertyType.toString()));
+      }
+    } else if (!foundInterfaceProperty) {
+      
+      compiler.report(
+          t.makeError(n, UNKNOWN_OVERRIDE,
+              propertyName, ctorType.getInstanceType().toString()));
+    }
+  }
+
+  
+
+
+
+
+
+  private void visitInterfaceGetprop(NodeTraversal t, Node assign, Node object,
+      String property, Node lvalue, Node rvalue) {
+
+    JSType rvalueType = getJSType(rvalue);
+    String abstractMethodName =
+        compiler.getCodingConvention().getAbstractMethodName();
+    if (!rvalueType.isOrdinaryFunction() &&
+        !(rvalue.isQualifiedName() &&
+          rvalue.getQualifiedName().equals(abstractMethodName))) {
+      compiler.report(
+          t.makeError(object, INTERFACE_FUNCTION_MEMBERS_ONLY,
+              abstractMethodName));
+    }
+
+    if (assign.getLastChild().getType() == Token.FUNCTION
+        && !NodeUtil.isEmptyBlock(assign.getLastChild().getLastChild())) {
+      compiler.report(
+          t.makeError(object, INTERFACE_FUNCTION_NOT_EMPTY,
+              abstractMethodName));
+    }
+  }
+
+  
+
+
+
+
+
+
+  private void visitAnnotatedAssignGetprop(NodeTraversal t,
+      Node assign, JSType type, Node object, String property, Node rvalue) {
+    
+    validator.expectCanAssignToPropertyOf(t, assign, getJSType(rvalue), type,
+        object, property);
+  }
+
+  
+
+
+
+
+
+
+
+
+  boolean visitName(NodeTraversal t, Node n, Node parent) {
+    
+    
+    
+    
+    
+    
+    
+    int parentNodeType = parent.getType();
+    if (parentNodeType == Token.FUNCTION ||
+        parentNodeType == Token.CATCH ||
+        parentNodeType == Token.LP ||
+        parentNodeType == Token.VAR) {
+      return false;
+    }
+
+    JSType type = n.getJSType();
+    if (type == null) {
+      type = getNativeType(UNKNOWN_TYPE);
+      Var var = t.getScope().getVar(n.getString());
+      if (var != null) {
+        JSType varType = var.getType();
+        if (varType != null) {
+          type = varType;
+        }
+      }
+    }
+    ensureTyped(t, n, type);
+    return true;
+  }
+
+  
+
+
+
+
+
+
+
+  private void visitGetProp(NodeTraversal t, Node n, Node parent) {
+    
+    
+    
+    if (n.getJSType() != null && parent.getType() == Token.ASSIGN) {
+      return;
+    }
+
+    
+    
+    
+    
+    Node property = n.getLastChild();
+    Node objNode = n.getFirstChild();
+    JSType childType = getJSType(objNode);
+
+    
+    
+    if (!validator.expectNotVoid(t, n, childType,
+            "undefined has no properties", getNativeType(OBJECT_TYPE))) {
+      ensureTyped(t, n);
+      return;
+    }
+
+    checkPropertyAccess(childType, property.getString(), t, n);
+    ensureTyped(t, n);
+  }
+
+  
+
+
+  private void checkPropertyAccess(JSType childType, String propName,
+      NodeTraversal t, Node n) {
+    ObjectType objectType = childType.dereference();
+    if (objectType != null) {
+      JSType propType = getJSType(n);
+      if ((!objectType.hasProperty(propName) ||
+           objectType.equals(typeRegistry.getNativeType(UNKNOWN_TYPE))) &&
+          propType.equals(typeRegistry.getNativeType(UNKNOWN_TYPE))) {
+        if (objectType instanceof EnumType) {
+          t.report(n, INEXISTENT_ENUM_ELEMENT, propName);
+        } else if (!objectType.isEmptyType() &&
+            reportMissingProperties && !isPropertyTest(n)) {
+          if (!typeRegistry.canPropertyBeDefined(objectType, propName)) {
+            t.report(n, INEXISTENT_PROPERTY, propName,
+                validator.getReadableJSTypeName(n.getFirstChild(), true));
+          }
+        }
+      }
+    } else {
+      
+      
+    }
+  }
+
+  
+
+
+
+
+
+  private boolean isPropertyTest(Node getProp) {
+    Node parent = getProp.getParent();
+    switch (parent.getType()) {
+      case Token.CALL:
+        return parent.getFirstChild() != getProp &&
+            compiler.getCodingConvention().isPropertyTestFunction(parent);
+
+      case Token.IF:
+      case Token.WHILE:
+      case Token.DO:
+      case Token.FOR:
+        return NodeUtil.getConditionExpression(parent) == getProp;
+
+      case Token.INSTANCEOF:
+      case Token.TYPEOF:
+        return true;
+
+      case Token.AND:
+      case Token.HOOK:
+        return parent.getFirstChild() == getProp;
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+
+  private void visitGetElem(NodeTraversal t, Node n) {
+    Node left = n.getFirstChild();
+    Node right = n.getLastChild();
+    validator.expectIndexMatch(t, n, getJSType(left), getJSType(right));
+    ensureTyped(t, n);
+  }
+
+  
+
+
+
+
+
+
+  private void visitVar(NodeTraversal t, Node n) {
+    
+    
+    
+    JSDocInfo varInfo = n.hasOneChild() ? n.getJSDocInfo() : null;
+    for (Node name : n.children()) {
+      Node value = name.getFirstChild();
+      
+      Var var = t.getScope().getVar(name.getString());
+
+      if (value != null) {
+        JSType valueType = getJSType(value);
+        JSType nameType = var.getType();
+        nameType = (nameType == null) ? getNativeType(UNKNOWN_TYPE) : nameType;
+
+        JSDocInfo info = name.getJSDocInfo();
+        if (info == null) {
+          info = varInfo;
+        }
+        if (info != null && info.hasEnumParameterType()) {
+          
+          
+          checkEnumInitializer(
+              t, value,
+              info.getEnumParameterType().evaluate(t.getScope(), typeRegistry));
+        } else if (var.isTypeInferred()) {
+          ensureTyped(t, name, valueType);
+        } else {
+          validator.expectCanAssignTo(
+              t, value, valueType, nameType, "initializing variable");
+        }
+      }
+    }
+  }
+
+  
+
+
+  private void visitNew(NodeTraversal t, Node n) {
+    Node constructor = n.getFirstChild();
+    FunctionType type = getFunctionType(constructor);
+    if (type != null && type.isConstructor()) {
+      visitParameterList(t, n, type);
+      ensureTyped(t, n, type.getInstanceType());
+    } else {
+      
+      if (constructor.getType() != Token.GETPROP) {
+        
+        
+        
+        Node line;
+        if (constructor.getLineno() < 0 || constructor.getCharno() < 0) {
+          line = n;
+        } else {
+          line = constructor;
+        }
+        t.report(line, NOT_A_CONSTRUCTOR);
+      }
+      ensureTyped(t, n);
+    }
+  }
+
+  
+
+
+
+
+
+
+  private void visitFunction(NodeTraversal t, Node n) {
+    JSDocInfo info = n.getJSDocInfo();
+
+    FunctionType functionType = (FunctionType) n.getJSType();
+    String functionPrivateName = n.getFirstChild().getString();
+    if (functionType.isInterface() || functionType.isConstructor()) {
+      FunctionType baseConstructor = functionType.
+          getPrototype().getImplicitPrototype().getConstructor();
+      if (baseConstructor != null &&
+          baseConstructor != getNativeType(OBJECT_FUNCTION_TYPE) &&
+          (baseConstructor.isConstructor() && functionType.isInterface() ||
+           baseConstructor.isInterface() && functionType.isConstructor())) {
+        compiler.report(
+            t.makeError(n, CONFLICTING_EXTENDED_TYPE, functionPrivateName));
+      }
+
+      for (JSType baseInterface : functionType.getImplementedInterfaces()) {
+        boolean badImplementedType = false;
+        ObjectType baseInterfaceObj = ObjectType.cast(baseInterface);
+        if (baseInterfaceObj != null) {
+          FunctionType interfaceConstructor =
+              baseInterfaceObj.getConstructor();
+          if (interfaceConstructor != null &&
+              !interfaceConstructor.isInterface()) {
+            badImplementedType = true;
+          }
+        } else {
+          badImplementedType = true;
+        }
+        if (badImplementedType) {
+          t.report(n, BAD_IMPLEMENTED_TYPE, functionPrivateName);
+        }
+      }
+      if (functionType.isConstructor()) {
+        validator.expectAllInterfacePropertiesImplemented(functionType);
+      }
+    }
+  }
+
+  
+
+
+
+
+
+
+  private void visitCall(NodeTraversal t, Node n) {
+    Node child = n.getFirstChild();
+    JSType childType = getJSType(child).restrictByNotNullOrUndefined();
+
+    if (!childType.canBeCalled()) {
+      t.report(n, NOT_CALLABLE, childType.toString());
+      ensureTyped(t, n);
+      return;
+    }
+
+    
+    
+    if (childType instanceof FunctionType) {
+      FunctionType functionType = (FunctionType) childType;
+
+      
+      if (functionType.isConstructor() &&
+          !functionType.isNativeObjectType()) {
+        t.report(n, CONSTRUCTOR_NOT_CALLABLE, childType.toString());
+      }
+
+      visitParameterList(t, n, functionType);
+      ensureTyped(t, n, functionType.getReturnType());
+    } else {
+      ensureTyped(t, n);
+    }
+
+    
+    
+    
+  }
+
+  
+
+
+  private void visitParameterList(NodeTraversal t, Node call,
+      FunctionType functionType) {
+    Iterator<Node> arguments = call.children().iterator();
+    arguments.next(); 
+
+    Iterator<Node> parameters = functionType.getParameters().iterator();
+    int ordinal = 0;
+    while (arguments.hasNext() && parameters.hasNext()) {
+      Node parameter = parameters.next();
+      Node argument = arguments.next();
+      ordinal++;
+
+      validator.expectArgumentMatchesParameter(t, argument,
+          getJSType(argument), getJSType(parameter), call, ordinal);
+    }
+
+    int numArgs = call.getChildCount() - 1;
+    int minArgs = functionType.getMinArguments();
+    int maxArgs = functionType.getMaxArguments();
+    if (minArgs > numArgs || maxArgs < numArgs) {
+      t.getCompiler().report(
+          t.makeError(call, WRONG_ARGUMENT_COUNT,
+              validator.getReadableJSTypeName(call.getFirstChild(), false),
+              String.valueOf(numArgs), String.valueOf(minArgs),
+              maxArgs != Integer.MAX_VALUE ?
+              " and no more than " + maxArgs + " argument(s)" : ""));
+    }
+  }
+
+  
+
+
+
+
+
+
+  private void visitReturn(NodeTraversal t, Node n) {
+    Node function = t.getEnclosingFunction();
+
+    
+    
+    if (function == null) {
+      return;
+    }
+    JSType jsType = getJSType(function);
+
+    if (jsType instanceof FunctionType) {
+      FunctionType functionType = (FunctionType) jsType;
+
+      JSType returnType = functionType.getReturnType();
+
+      
+      
+      if (returnType == null) {
+        returnType = getNativeType(VOID_TYPE);
+      }
+
+      
+      Node valueNode = n.getFirstChild();
+      JSType actualReturnType;
+      if (valueNode == null) {
+        actualReturnType = getNativeType(VOID_TYPE);
+        valueNode = n;
+      } else {
+        actualReturnType = getJSType(valueNode);
+      }
+
+      
+      validator.expectCanAssignTo(t, valueNode, actualReturnType, returnType,
+          "inconsistent return type");
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  private void visitBinaryOperator(int op, NodeTraversal t, Node n) {
+    Node left = n.getFirstChild();
+    JSType leftType = getJSType(left);
+    Node right = n.getLastChild();
+    JSType rightType = getJSType(right);
+    switch (op) {
+      case Token.ASSIGN_LSH:
+      case Token.ASSIGN_RSH:
+      case Token.LSH:
+      case Token.RSH:
+      case Token.ASSIGN_URSH:
+      case Token.URSH:
+        if (!leftType.matchesInt32Context()) {
+          t.report(left, BIT_OPERATION,
+                   NodeUtil.opToStr(n.getType()), leftType.toString());
+        }
+        if (!rightType.matchesUint32Context()) {
+          t.report(right, BIT_OPERATION,
+                   NodeUtil.opToStr(n.getType()), rightType.toString());
+        }
+        break;
+
+      case Token.ASSIGN_DIV:
+      case Token.ASSIGN_MOD:
+      case Token.ASSIGN_MUL:
+      case Token.ASSIGN_SUB:
+      case Token.DIV:
+      case Token.MOD:
+      case Token.MUL:
+      case Token.SUB:
+        validator.expectNumber(t, left, leftType, "left operand");
+        validator.expectNumber(t, right, rightType, "right operand");
+        break;
+
+      case Token.ASSIGN_BITAND:
+      case Token.ASSIGN_BITXOR:
+      case Token.ASSIGN_BITOR:
+      case Token.BITAND:
+      case Token.BITXOR:
+      case Token.BITOR:
+        validator.expectBitwiseable(t, left, leftType,
+            "bad left operand to bitwise operator");
+        validator.expectBitwiseable(t, right, rightType,
+            "bad right operand to bitwise operator");
+        break;
+
+      case Token.ASSIGN_ADD:
+      case Token.ADD:
+        break;
+
+      default:
+        t.report(n, UNEXPECTED_TOKEN, Node.tokenToName(op));
+    }
+    ensureTyped(t, n);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private void checkEnumInitializer(
+      NodeTraversal t, Node value, JSType primitiveType) {
+    if (value.getType() == Token.OBJECTLIT) {
+      
+      value = value.getFirstChild();
+      value = (value == null) ? null : value.getNext();
+      while (value != null) {
+        
+        validator.expectCanAssignTo(t, value, getJSType(value), primitiveType,
+            "element type must match enum's type");
+
+        
+        value = value.getNext();
+        value = (value == null) ? null : value.getNext();
+      }
+    } else if (value.getJSType() instanceof EnumType) {
+      
+      
+      
+      
+      
+      EnumType valueEnumType = (EnumType) value.getJSType();
+      JSType valueEnumPrimitiveType =
+          valueEnumType.getElementsType().getPrimitiveType();
+      validator.expectCanAssignTo(t, value, valueEnumPrimitiveType,
+          primitiveType, "incompatible enum element types");
+    } else {
+      
+    }
+  }
+
+
+  
+
+
+
+
+
+
+  private static boolean isReference(Node n) {
+    switch (n.getType()) {
+      case Token.GETELEM:
+      case Token.GETPROP:
+      case Token.NAME:
+        return true;
+
+      default:
+        return false;
+    }
+
+  }
+
+  
+
+
+
+  private JSType getJSType(Node n) {
+    JSType jsType = n.getJSType();
+    if (jsType == null) {
+      
+      
+      
+      
+      return getNativeType(UNKNOWN_TYPE);
+    } else {
+      return jsType;
+    }
+  }
+
+  
+
+
+
+  private FunctionType getFunctionType(Node n) {
+    JSType type = getJSType(n).restrictByNotNullOrUndefined();
+    if (type.isUnknownType()) {
+      return typeRegistry.getNativeFunctionType(U2U_CONSTRUCTOR_TYPE);
+    } else if (type instanceof FunctionType) {
+      return (FunctionType) type;
+    } else {
+      return null;
+    }
+  }
+
+  
+  
+  
+  
+  
+
+  
+
+
+
+  private void ensureTyped(NodeTraversal t, Node n) {
+    ensureTyped(t, n, getNativeType(UNKNOWN_TYPE));
+  }
+
+  private void ensureTyped(NodeTraversal t, Node n, JSTypeNative type) {
+    ensureTyped(t, n, getNativeType(type));
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private void ensureTyped(NodeTraversal t, Node n, JSType type) {
+    
+    Preconditions.checkState(n.getType() != Token.FUNCTION ||
+            type instanceof FunctionType ||
+            type.isUnknownType());
+    JSDocInfo info = n.getJSDocInfo();
+    if (info != null) {
+      if (info.hasType()) {
+        JSType infoType = info.getType().evaluate(t.getScope(), typeRegistry);
+        validator.expectCanCast(t, n, infoType, type);
+        type = infoType;
+      }
+
+      if (info.isImplicitCast() && !inExterns) {
+        String propName = n.getType() == Token.GETPROP ?
+            n.getLastChild().getString() : "(missing)";
+        compiler.report(
+            t.makeError(n, ILLEGAL_IMPLICIT_CAST, propName));
+      }
+    }
+
+    if (n.getJSType() == null) {
+      n.setJSType(type);
+    }
+  }
+
+  
+
+
+
+  double getTypedPercent() {
+    int total = nullCount + unknownCount + typedCount;
+    if (total == 0) {
+      return 0.0;
+    } else {
+      return (100.0 * typedCount) / total;
+    }
+  }
+
+  private JSType getNativeType(JSTypeNative typeId) {
+    return typeRegistry.getNativeType(typeId);
+  }
+}

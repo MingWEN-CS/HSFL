@@ -1,0 +1,54 @@
+28a29
+> import static com.google.javascript.rhino.jstype.JSTypeNative.GLOBAL_THIS;
+1006a1008
+>       boolean isGlobalVar = n.getType() == Token.NAME && scope.isGlobal();
+1008c1010
+<           n.getType() == Token.NAME && scope.isGlobal() &&
+---
+>           isGlobalVar &&
+1043c1045
+<               typeRegistry.getNativeObjectType(JSTypeNative.GLOBAL_THIS);
+---
+>               typeRegistry.getNativeObjectType(GLOBAL_THIS);
+1101a1104,1113
+> 
+>       if (isGlobalVar && "Window".equals(variableName)
+>           && type instanceof FunctionType) {
+>         FunctionType globalThisCtor =
+>             typeRegistry.getNativeObjectType(GLOBAL_THIS).getConstructor();
+>         globalThisCtor.getInstanceType().clearCachedValues();
+>         globalThisCtor.getPrototype().clearCachedValues();
+>         globalThisCtor
+>             .setPrototypeBasedOn(((FunctionType) type).getInstanceType());
+>       }
+1146,1149c1158,1182
+<         } else if (info.isConstant() && rValue != null
+<             && rValue.getJSType() != null
+<             && !rValue.getJSType().isUnknownType()) {
+<           return rValue.getJSType();
+---
+>         } else {
+>           
+>           if (info.isConstant()) {
+>             JSType knownType = null;
+>             if (rValue != null) {
+>               if (rValue.getJSType() != null
+>                   && !rValue.getJSType().isUnknownType()) {
+>                 return rValue.getJSType();
+>               } else if (rValue.getType() == Token.OR) {
+>                 
+>                 
+>                 
+>                 
+>                 Node firstClause = rValue.getFirstChild();
+>                 Node secondClause = firstClause.getNext();
+>                 boolean namesMatch = firstClause.getType() == Token.NAME
+>                     && lValue.getType() == Token.NAME
+>                     && firstClause.getString().equals(lValue.getString());
+>                 if (namesMatch && secondClause.getJSType() != null
+>                     && !secondClause.getJSType().isUnknownType()) {
+>                   return secondClause.getJSType();
+>                 }
+>               }
+>             }
+>           }

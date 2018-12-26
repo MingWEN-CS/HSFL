@@ -1,0 +1,276 @@
+62d61
+< import java.text.ParseException;
+70a70
+> import org.joda.time.tz.DateTimeZonePermission;
+117a118,119
+> 
+> 
+119a122,123
+>     static final long serialVersionUID = 5546345482340108586L;
+> 
+137,182c141,142
+<         Provider provider = null;
+< 
+<         String providerClass = System.getProperty("org.joda.time.DateTimeZone.Provider");
+<         if (providerClass != null) {
+<             try {
+<                 provider = (Provider)Class.forName(providerClass).newInstance();
+<             }
+<             catch (Exception e) {
+<                 Thread t = Thread.currentThread();
+<                 t.getThreadGroup().uncaughtException(t, e);
+<             }
+<         }
+< 
+<         if (provider == null) {
+<             try {
+<                 provider = new ZoneInfoProvider("org/joda/time/tz/data");
+<             } catch (Exception e) {
+<                 Thread t = Thread.currentThread();
+<                 t.getThreadGroup().uncaughtException(t, e);
+<             }
+<         }
+< 
+<         if (provider == null) {
+<             provider = new UTCProvider();
+<         }
+< 
+<         setProvider(provider);
+< 
+<         NameProvider nameProvider = null;
+< 
+<         providerClass = System.getProperty("org.joda.time.DateTimeZone.NameProvider");
+<         if (providerClass != null) {
+<             try {
+<                 nameProvider = (NameProvider)Class.forName(providerClass).newInstance();
+<             }
+<             catch (Exception e) {
+<                 Thread t = Thread.currentThread();
+<                 t.getThreadGroup().uncaughtException(t, e);
+<             }
+<         }
+< 
+<         if (nameProvider == null) {
+<             nameProvider = new DefaultNameProvider();
+<         }
+< 
+<         setNameProvider(nameProvider);
+---
+>         setProvider0(null);
+>         setNameProvider0(null);
+214c174,177
+<         
+---
+>         SecurityManager sm = System.getSecurityManager();
+>         if (sm != null) {
+>             sm.checkPermission(new DateTimeZonePermission("setDefault"));
+>         }
+248,255c211,214
+<             try {
+<                 int offset = -(int)offsetFormatter().parseMillis(id);
+<                 
+<                 id = offsetFormatter().print(0, UTC, offset);
+<                 return new FixedDateTimeZone(id, null, offset, offset);
+<             } catch (ParseException e) {
+<                 throw new IllegalArgumentException(e.getMessage());
+<             }
+---
+>             int offset = -(int)offsetFormatter().parseMillis(id);
+>             
+>             id = offsetFormatter().print(0, UTC, offset);
+>             return new FixedDateTimeZone(id, null, offset, offset);
+296,303c255,258
+<                 try {
+<                     int offset = -(int)offsetFormatter().parseMillis(convId);
+<                     
+<                     convId = offsetFormatter().print(0, UTC, offset);
+<                     return new FixedDateTimeZone(convId, null, offset, offset);
+<                 } catch (ParseException e) {
+<                     throw new IllegalArgumentException(e.getMessage());
+<                 }
+---
+>                 int offset = -(int)offsetFormatter().parseMillis(convId);
+>                 
+>                 convId = offsetFormatter().print(0, UTC, offset);
+>                 return new FixedDateTimeZone(convId, null, offset, offset);
+345a301,303
+>     
+> 
+> 
+347c305,315
+<         
+---
+>         SecurityManager sm = System.getSecurityManager();
+>         if (sm != null) {
+>             sm.checkPermission(new DateTimeZonePermission("setProvider"));
+>         }
+>         setProvider0(provider);
+>     }
+> 
+>     
+> 
+> 
+>     private static void setProvider0(Provider provider) {
+349c317
+<             throw new IllegalArgumentException("The provider must not be null");
+---
+>             provider = getDefaultProvider();
+369a338,340
+>     
+> 
+> 
+371c342,352
+<         
+---
+>         SecurityManager sm = System.getSecurityManager();
+>         if (sm != null) {
+>             sm.checkPermission(new DateTimeZonePermission("setNameProvider"));
+>         }
+>         setNameProvider0(nameProvider);
+>     }
+> 
+>     
+> 
+> 
+>     private static void setNameProvider0(NameProvider nameProvider) {
+373c354
+<             throw new IllegalArgumentException("The provider must not be null");
+---
+>             nameProvider = getDefaultNameProvider();
+428a410,468
+>     private static Provider getDefaultProvider() {
+>         Provider provider = null;
+> 
+>         try {
+>             String providerClass =
+>                 System.getProperty("org.joda.time.DateTimeZone.Provider");
+>             if (providerClass != null) {
+>                 try {
+>                     provider = (Provider)Class.forName(providerClass).newInstance();
+>                 }
+>                 catch (Exception e) {
+>                     Thread t = Thread.currentThread();
+>                     t.getThreadGroup().uncaughtException(t, e);
+>                 }
+>             }
+>         } catch (SecurityException e) {
+>         }
+> 
+>         if (provider == null) {
+>             try {
+>                 provider = new ZoneInfoProvider("org/joda/time/tz/data");
+>             } catch (Exception e) {
+>                 Thread t = Thread.currentThread();
+>                 t.getThreadGroup().uncaughtException(t, e);
+>             }
+>         }
+> 
+>         if (provider == null) {
+>             provider = new UTCProvider();
+>         }
+> 
+>         return provider;
+>     }
+> 
+>     private static NameProvider getDefaultNameProvider() {
+>         NameProvider nameProvider = null;
+> 
+>         try {
+>             String providerClass =
+>                 System.getProperty("org.joda.time.DateTimeZone.NameProvider");
+>             if (providerClass != null) {
+>                 try {
+>                     nameProvider = (NameProvider)Class.forName(providerClass).newInstance();
+>                 }
+>                 catch (Exception e) {
+>                     Thread t = Thread.currentThread();
+>                     t.getThreadGroup().uncaughtException(t, e);
+>                 }
+>             }
+>         } catch (SecurityException e) {
+>         }
+> 
+>         if (nameProvider == null) {
+>             nameProvider = new DefaultNameProvider();
+>         }
+> 
+>         return nameProvider;
+>     }
+> 
+460c500
+<     public abstract String getNameKey(long millis);
+---
+>     public abstract String getNameKey(long instant);
+472,473c512,513
+<     public final String getShortName(long millis) {
+<         return getShortName(millis, null);
+---
+>     public final String getShortName(long instant) {
+>         return getShortName(instant, null);
+486c526
+<     public String getShortName(long millis, Locale locale) {
+---
+>     public String getShortName(long instant, Locale locale) {
+490c530
+<         String nameKey = getNameKey(millis);
+---
+>         String nameKey = getNameKey(instant);
+498c538
+<         return offsetFormatter().print(millis, this);
+---
+>         return offsetFormatter().print(instant, this);
+511,512c551,552
+<     public final String getName(long millis) {
+<         return getName(millis, null);
+---
+>     public final String getName(long instant) {
+>         return getName(instant, null);
+525c565
+<     public String getName(long millis, Locale locale) {
+---
+>     public String getName(long instant, Locale locale) {
+529c569
+<         String nameKey = getNameKey(millis);
+---
+>         String nameKey = getNameKey(instant);
+537c577
+<         return offsetFormatter().print(millis, this);
+---
+>         return offsetFormatter().print(instant, this);
+546c586
+<     public abstract int getOffset(long millis);
+---
+>     public abstract int getOffset(long instant);
+569c609
+<     public abstract int getStandardOffset(long millis);
+---
+>     public abstract int getStandardOffset(long instant);
+588,589c628,629
+<     public int getOffsetFromLocal(long millisLocal) {
+<         return getOffset(millisLocal - getOffset(millisLocal));
+---
+>     public int getOffsetFromLocal(long instantLocal) {
+>         return getOffset(instantLocal - getOffset(instantLocal));
+596a637,641
+>     public abstract boolean isFixed();
+> 
+>     
+> 
+> 
+600c645,647
+<     public abstract long nextTransition(long millis);
+---
+> 
+> 
+>     public abstract long nextTransition(long instant);
+610c657
+<     public abstract long previousTransition(long millis);
+---
+>     public abstract long previousTransition(long instant);
+630c677
+<     public abstract boolean equals(Object obj);
+---
+>     public abstract boolean equals(Object object);
+673a721,722
+>         static final long serialVersionUID = -6471952376487863581L;
+> 

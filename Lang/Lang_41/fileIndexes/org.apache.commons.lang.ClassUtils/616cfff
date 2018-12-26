@@ -1,0 +1,504 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.lang;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+
+
+
+
+
+
+public class ClassUtils {
+
+    
+
+
+
+
+
+
+
+    public ClassUtils() {
+    }
+
+    
+    
+    
+
+
+
+
+
+
+    public static String getShortClassName(Object object, String valueIfNull) {
+        if (object == null) {
+            return valueIfNull;
+        }
+        return getShortClassName(object.getClass().getName());
+    }
+    
+    
+
+
+
+
+
+
+
+    public static String getShortClassName(Class cls) {
+        if (cls == null) {
+            throw new IllegalArgumentException("The class must not be null");
+        }
+        return getShortClassName(cls.getName());
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static String getShortClassName(String className) {
+        if (StringUtils.isEmpty(className)) {
+            throw new IllegalArgumentException("The class name must not be empty");
+        }
+        char[] chars = className.toCharArray();
+        int lastDot = 0;
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == '.') {
+                lastDot = i + 1;
+            } else if (chars[i] == '$') {  
+                chars[i] = '.';
+            }
+        }
+        return new String(chars, lastDot, chars.length - lastDot);
+    }
+    
+    
+    
+    
+
+
+
+
+
+
+    public static String getPackageName(Object object, String valueIfNull) {
+        if (object == null) {
+            return valueIfNull;
+        }
+        return getPackageName(object.getClass().getName());
+    }
+    
+    
+
+
+
+
+
+
+
+    public static String getPackageName(Class cls) {
+        if (cls == null) {
+            throw new IllegalArgumentException("The class must not be null");
+        }
+        return getPackageName(cls.getName());
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public static String getPackageName(String className) {
+        if (StringUtils.isEmpty(className)) {
+            throw new IllegalArgumentException("The class name must not be empty");
+        }
+        int i = className.lastIndexOf('.');
+        if (i == -1) {
+            return "";
+        }
+        return className.substring(0, i);
+    }
+    
+    
+    
+    
+
+
+
+
+
+
+    public static List getAllSuperclasses(Class cls) {
+        if (cls == null) {
+            throw new IllegalArgumentException("The class must not be null");
+        }
+        List classes = new ArrayList();
+        Class superclass = cls.getSuperclass();
+        while (superclass != null) {
+            classes.add(superclass);
+            superclass = superclass.getSuperclass();
+        }
+        return classes;
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public static List getAllInterfaces(Class cls) {
+        if (cls == null) {
+            throw new IllegalArgumentException("The class must not be null");
+        }
+        List list = new ArrayList();
+        while (cls != null) {
+            Class[] interfaces = cls.getInterfaces();
+            for (int i = 0; i < interfaces.length; i++) {
+                if (list.contains(interfaces[i]) == false) {
+                    list.add(interfaces[i]);
+                }
+                List superInterfaces = getAllInterfaces(interfaces[i]);
+                for (Iterator it = superInterfaces.iterator(); it.hasNext();) {
+                    Class intface = (Class) it.next();
+                    if (list.contains(intface) == false) {
+                        list.add(intface);
+                    }
+                }
+            }
+            cls = cls.getSuperclass();
+        }
+        return list;
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public static List convertClassNamesToClasses(List classNames) {
+        if (classNames == null) {
+            throw new IllegalArgumentException("The class names must not be null");
+        }
+        List classes = new ArrayList(classNames.size());
+        for (Iterator it = classNames.iterator(); it.hasNext();) {
+            String className = (String) it.next();
+            try {
+                classes.add(Class.forName(className));
+            } catch (Exception ex) {
+                classes.add(null);
+            }
+        }
+        return classes;
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public static List convertClassesToClassNames(List classes) {
+        if (classes == null) {
+            throw new IllegalArgumentException("The classes list must not be null");
+        }
+        List classNames = new ArrayList(classes.size());
+        for (Iterator it = classes.iterator(); it.hasNext();) {
+            Class cls = (Class) it.next();
+            if (cls == null) {
+                classNames.add(null);
+            } else {
+                classNames.add(cls.getName());
+            }
+        }
+        return classNames;
+    }
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static boolean isAssignable(Class[] classArray, Class[] toClassArray) {
+        if (ArrayUtils.isSameLength(classArray, toClassArray) == false) {
+            return false;
+        }
+        if (classArray == null) {
+            classArray = ArrayUtils.EMPTY_CLASS_ARRAY;
+        }
+        if (toClassArray == null) {
+            toClassArray = ArrayUtils.EMPTY_CLASS_ARRAY;
+        }
+        for (int i = 0; i < classArray.length; i++) {
+            if (isAssignable(classArray[i], toClassArray[i]) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static boolean isAssignable(Class cls, Class toClass) {
+        if (toClass == null) {
+            throw new IllegalArgumentException("The class must not be null");
+        }
+        
+        if (cls == null) {
+            return !(toClass.isPrimitive());
+        }
+        if (cls.equals(toClass)) {
+            return true;
+        }
+        if (cls.isPrimitive()) {
+            if (toClass.isPrimitive() == false) {
+                return false;
+            }
+            if (Integer.TYPE.equals(cls)) {
+                return Long.TYPE.equals(toClass) 
+                    || Float.TYPE.equals(toClass) 
+                    || Double.TYPE.equals(toClass);
+            }
+            if (Long.TYPE.equals(cls)) {
+                return Float.TYPE.equals(toClass) 
+                    || Double.TYPE.equals(toClass);
+            }
+            if (Boolean.TYPE.equals(cls)) {
+                return false;
+            }
+            if (Double.TYPE.equals(cls)) {
+                return false;
+            }
+            if (Float.TYPE.equals(cls)) {
+                return Double.TYPE.equals(toClass);
+            }
+            if (Character.TYPE.equals(cls)) {
+                return Integer.TYPE.equals(toClass) 
+                    || Long.TYPE.equals(toClass) 
+                    || Float.TYPE.equals(toClass) 
+                    || Double.TYPE.equals(toClass);
+            }
+            if (Short.TYPE.equals(cls)) {
+                return Integer.TYPE.equals(toClass) 
+                    || Long.TYPE.equals(toClass) 
+                    || Float.TYPE.equals(toClass) 
+                    || Double.TYPE.equals(toClass);
+            }
+            if (Byte.TYPE.equals(cls)) {
+                return Short.TYPE.equals(toClass) 
+                    || Integer.TYPE.equals(toClass) 
+                    || Long.TYPE.equals(toClass) 
+                    || Float.TYPE.equals(toClass) 
+                    || Double.TYPE.equals(toClass);
+            }
+            
+            return false;
+        }
+        return toClass.isAssignableFrom(cls);
+    }
+    
+    
+
+
+
+
+
+
+    public static boolean isInnerClass(Class cls) {
+        if (cls == null) {
+            throw new IllegalArgumentException("The class must not be null");
+        }
+        return (cls.getDeclaringClass() != null);
+    }
+    
+}

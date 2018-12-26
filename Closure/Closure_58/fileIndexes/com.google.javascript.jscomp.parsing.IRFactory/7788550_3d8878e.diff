@@ -1,0 +1,22 @@
+922c922,932
+<         if (type == Token.INC || type == Token.DEC) {
+---
+>         if (type == Token.DELPROP &&
+>             !(operand.getType() == Token.GETPROP ||
+>               operand.getType() == Token.GETELEM ||
+>               operand.getType() == Token.NAME)) {
+>           String msg =
+>               "Invalid delete operand. Only properties can be deleted.";;
+>           errorReporter.error(
+>               msg,
+>               sourceName,
+>               operand.getLineno(), "", 0);
+>         } else  if (type == Token.INC || type == Token.DEC) {
+928,930c938,940
+<               msg,
+<               sourceName,
+<               operand.getLineno(), "", 0);
+---
+>                 msg,
+>                 sourceName,
+>                 operand.getLineno(), "", 0);

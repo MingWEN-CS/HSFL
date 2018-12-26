@@ -1,0 +1,452 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optimization.general;
+
+import org.apache.commons.math3.analysis.DifferentiableMultivariateVectorFunction;
+import org.apache.commons.math3.analysis.FunctionUtils;
+import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import org.apache.commons.math3.analysis.differentiation.MultivariateDifferentiableVectorFunction;
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.NumberIsTooSmallException;
+import org.apache.commons.math3.exception.util.LocalizedFormats;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.QRDecomposition;
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.optimization.OptimizationData;
+import org.apache.commons.math3.optimization.InitialGuess;
+import org.apache.commons.math3.optimization.Target;
+import org.apache.commons.math3.optimization.Weight;
+import org.apache.commons.math3.optimization.ConvergenceChecker;
+import org.apache.commons.math3.optimization.DifferentiableMultivariateVectorOptimizer;
+import org.apache.commons.math3.optimization.PointVectorValuePair;
+import org.apache.commons.math3.optimization.direct.BaseAbstractMultivariateVectorOptimizer;
+import org.apache.commons.math3.util.FastMath;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class AbstractLeastSquaresOptimizer
+    extends BaseAbstractMultivariateVectorOptimizer<DifferentiableMultivariateVectorFunction>
+    implements DifferentiableMultivariateVectorOptimizer {
+    
+    private static final double DEFAULT_SINGULARITY_THRESHOLD = 1e-14;
+    
+
+
+
+
+
+
+    protected double[][] weightedResidualJacobian;
+    
+    protected int cols;
+    
+    protected int rows;
+    
+    protected double[] point;
+    
+    protected double[] objective;
+    
+    protected double[] weightedResiduals;
+    
+    protected double cost;
+    
+    private MultivariateDifferentiableVectorFunction jF;
+    
+    private int jacobianEvaluations;
+    
+    private RealMatrix weightMatrixSqrt;
+
+    
+
+
+
+
+
+    @Deprecated
+    protected AbstractLeastSquaresOptimizer() {}
+
+    
+
+
+    protected AbstractLeastSquaresOptimizer(ConvergenceChecker<PointVectorValuePair> checker) {
+        super(checker);
+    }
+
+    
+
+
+    public int getJacobianEvaluations() {
+        return jacobianEvaluations;
+    }
+
+    
+
+
+
+
+
+    protected void updateJacobian() {
+        ++jacobianEvaluations;
+
+        DerivativeStructure[] dsPoint = new DerivativeStructure[point.length];
+        for (int i = 0; i < point.length; ++i) {
+            dsPoint[i] = new DerivativeStructure(point.length, 1, i, point[i]);
+        }
+        DerivativeStructure[] dsValue = jF.value(dsPoint);
+        if (dsValue.length != rows) {
+            throw new DimensionMismatchException(dsValue.length, rows);
+        }
+        final int nR = getTarget().length;
+        final int nC = point.length;
+        final double[][] jacobianData = new double[nR][nC];
+        for (int i = 0; i < nR; ++i) {
+            int[] orders = new int[point.length];
+            for (int j = 0; j < nC; ++j) {
+                orders[j] = 1;
+                jacobianData[i][j] = dsValue[i].getPartialDerivative(orders);
+                orders[j] = 0;
+            }
+        }
+
+        weightedResidualJacobian
+            = weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(jacobianData)).scalarMultiply(-1).getData();
+    }
+
+    
+
+
+
+
+
+
+    protected void updateResidualsAndCost() {
+        final double[] res = computeResidual(point);
+        final ArrayRealVector residuals = new ArrayRealVector(res);
+        final RealMatrix weight = getWeight();
+
+        
+        cost = FastMath.sqrt(residuals.dotProduct(weight.operate(residuals)));
+        
+        weightedResiduals = weightMatrixSqrt.operate(residuals).toArray();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public double getRMS() {
+        return FastMath.sqrt(getChiSquare() / rows);
+    }
+
+    
+
+
+
+
+
+    public double getChiSquare() {
+        return cost * cost;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public double[][] getCovariances() {
+        return getCovariances(DEFAULT_SINGULARITY_THRESHOLD);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double[][] getCovariances(double threshold) {
+        
+        updateJacobian();
+
+        
+        final RealMatrix wrj = new Array2DRowRealMatrix(weightedResidualJacobian);
+        final RealMatrix jTj = wrj.transpose().multiply(wrj);
+
+        
+        final DecompositionSolver solver
+            = new QRDecomposition(jTj, threshold).getSolver();
+        return solver.getInverse().getData();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Deprecated
+    public double[] guessParametersErrors() {
+        if (rows <= cols) {
+            throw new NumberIsTooSmallException(LocalizedFormats.NO_DEGREES_OF_FREEDOM,
+                                                rows, cols, false);
+        }
+        double[] errors = new double[cols];
+        final double c = FastMath.sqrt(getChiSquare() / (rows - cols));
+        double[][] covar = getCovariances();
+        for (int i = 0; i < errors.length; ++i) {
+            errors[i] = FastMath.sqrt(covar[i][i]) * c;
+        }
+        return errors;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public double[] getSigma() {
+        final double[] sig = new double[cols];
+        final double[][] cov = getCovariances();
+        for (int i = 0; i < sig.length; ++i) {
+            sig[i] = FastMath.sqrt(cov[i][i]);
+        }
+        return sig;
+    }
+
+    
+
+
+
+
+
+    @Override
+    @Deprecated
+    public PointVectorValuePair optimize(int maxEval,
+                                         final DifferentiableMultivariateVectorFunction f,
+                                         final double[] target, final double[] weights,
+                                         final double[] startPoint) {
+        return optimizeInternal(maxEval,
+                                FunctionUtils.toMultivariateDifferentiableVectorFunction(f),
+                                new Target(target),
+                                new Weight(weights),
+                                new InitialGuess(startPoint));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Deprecated
+    public PointVectorValuePair optimize(final int maxEval,
+                                         final MultivariateDifferentiableVectorFunction f,
+                                         final double[] target, final double[] weights,
+                                         final double[] startPoint) {
+        return optimizeInternal(maxEval, f,
+                                new Target(target),
+                                new Weight(weights),
+                                new InitialGuess(startPoint));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Deprecated
+    protected PointVectorValuePair optimizeInternal(final int maxEval,
+                                                    final MultivariateDifferentiableVectorFunction f,
+                                                    OptimizationData... optData) {
+        
+        
+        return super.optimizeInternal(maxEval, FunctionUtils.toDifferentiableMultivariateVectorFunction(f), optData);
+    }
+
+    
+    @Override
+    protected void setUp() {
+        super.setUp();
+
+        
+        jacobianEvaluations = 0;
+
+        
+        weightMatrixSqrt = squareRoot(getWeight());
+
+        
+        
+        
+        
+        
+        
+        jF = FunctionUtils.toMultivariateDifferentiableVectorFunction((DifferentiableMultivariateVectorFunction) getObjectiveFunction());
+
+        
+        point = getStartPoint();
+        rows = getTarget().length;
+        cols = point.length;
+    }
+
+    
+
+
+
+
+
+    private RealMatrix squareRoot(RealMatrix m) {
+        final EigenDecomposition dec = new EigenDecomposition(m);
+        return dec.getSquareRoot();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    private double[] computeResidual(double[] params) {
+        if (params.length != getStartPoint().length) {
+            throw new DimensionMismatchException(params.length,
+                                                 getStartPoint().length);
+        }
+
+        objective = computeObjectiveValue(params);
+        final double[] target = getTarget();
+
+        final double[] residuals = new double[target.length];
+        for (int i = 0; i < target.length; i++) {
+            residuals[i] = target[i] - objective[i];
+        }
+
+        return residuals;
+    }
+}

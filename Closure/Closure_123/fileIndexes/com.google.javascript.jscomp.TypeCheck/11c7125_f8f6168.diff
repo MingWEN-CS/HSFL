@@ -1,0 +1,44 @@
+197c197
+<       DiagnosticType.warning("JSC_UNKNOWN_EXPR_TYPE",
+---
+>       DiagnosticType.disabled("JSC_UNKNOWN_EXPR_TYPE",
+240a241,243
+>   
+>   
+>   
+265d267
+<       UNKNOWN_EXPR_TYPE,
+292c294
+<   private final CheckLevel reportUnknownTypes;
+---
+>   private final boolean reportUnknownTypes;
+315,316c317
+<       CheckLevel reportMissingOverride,
+<       CheckLevel reportUnknownTypes) {
+---
+>       CheckLevel reportMissingOverride) {
+324c325,326
+<     this.reportUnknownTypes = reportUnknownTypes;
+---
+>     this.reportUnknownTypes = ((Compiler) compiler).getOptions().enables(
+>         DiagnosticGroups.REPORT_UNKNOWN_TYPES);
+331,332c333
+<       CheckLevel reportMissingOverride,
+<       CheckLevel reportUnknownTypes) {
+---
+>       CheckLevel reportMissingOverride) {
+334c335
+<         reportMissingOverride, reportUnknownTypes);
+---
+>         reportMissingOverride);
+341c342
+<          CheckLevel.WARNING, CheckLevel.OFF);
+---
+>          CheckLevel.WARNING);
+872,874c873,874
+<       if (reportUnknownTypes.isOn()) {
+<         compiler.report(
+<             t.makeError(n, reportUnknownTypes, UNKNOWN_EXPR_TYPE));
+---
+>       if (reportUnknownTypes) {
+>         compiler.report(t.makeError(n, UNKNOWN_EXPR_TYPE));

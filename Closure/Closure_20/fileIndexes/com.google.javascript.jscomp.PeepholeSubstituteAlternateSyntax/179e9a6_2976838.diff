@@ -1,0 +1,60 @@
+18a19
+> import com.google.common.base.Joiner;
+42a44,45
+>   private final int STRING_SPLIT_OVERHEAD = ".split('.')".length();
+> 
+140a144,146
+>       case Token.ARRAYLIT:
+>         return tryMinimizeArrayLiteral(node);
+> 
+1337a1344,1393
+>   }
+> 
+>   private Node tryMinimizeArrayLiteral(Node n) {
+>     boolean allStrings = true;
+>     for (Node cur = n.getFirstChild(); cur != null; cur = cur.getNext()) {
+>       if (cur.getType() != Token.STRING) {
+>         allStrings = false;
+>       }
+>     }
+> 
+>     if (allStrings) {
+>       return tryMinimizeStringArrayLiteral(n);
+>     } else {
+>       return n;
+>     }
+>   }
+> 
+>   private Node tryMinimizeStringArrayLiteral(Node n) {
+>     int numElements = n.getChildCount();
+>     
+>     int saving = numElements * 2 - STRING_SPLIT_OVERHEAD;
+>     if (saving <= 0) {
+>       return n;
+>     }
+> 
+>     String[] strings = new String[n.getChildCount()];
+>     int idx = 0;
+>     for (Node cur = n.getFirstChild(); cur != null; cur = cur.getNext()) {
+>       strings[idx++] = cur.getString();
+>     }
+> 
+>     
+>     
+>     NEXT_DELIMITER: for (char delimiter : new char[]{',', ' ', ';', '{', '}'}) {
+>       for (String cur : strings) {
+>         if (cur.indexOf(delimiter) != -1) {
+>           continue NEXT_DELIMITER;
+>         }
+>       }
+>       String template = Joiner.on(delimiter).join(strings);
+>       Node call = new Node(Token.CALL,
+>         new Node(Token.GETPROP, Node.newString(Token.STRING,template),
+>             Node.newString(Token.STRING, "split")),
+>         Node.newString(Token.STRING, "" + delimiter));
+>       call.copyInformationFromForTree(n);
+>       n.getParent().replaceChild(n, call);
+>       reportCodeChange();
+>       return call;
+>     }
+>     return n;

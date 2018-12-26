@@ -1,0 +1,23 @@
+79,81c79,96
+<     if (nextSibling != null
+<         && nextSibling.getType() == Token.FOR
+<         && !NodeUtil.isForIn(nextSibling)
+---
+>     if (nextSibling == null) {
+>       return;
+>     } else if (NodeUtil.isForIn(nextSibling)) {
+>       Node forNode = nextSibling;
+>       Node forVar = forNode.getFirstChild();
+>       if (NodeUtil.isName(forVar)
+>           && NodeUtil.isVar(n) && n.hasOneChild()) {
+>         Node name = n.getFirstChild();
+>         if (!name.hasChildren()
+>             && forVar.getString().equals(name.getString())) {
+>           
+>           
+>           parent.removeChild(n);
+>           forNode.replaceChild(forVar, n);
+>           compiler.reportCodeChange();
+>         }
+>       }
+>     } else if (nextSibling.getType() == Token.FOR

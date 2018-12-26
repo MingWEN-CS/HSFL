@@ -1,0 +1,85 @@
+89c89,96
+<     public DateTimePrinter toPrinter() {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public DateTimeFormatter toFormatter() {
+90a98
+>         DateTimePrinter printer = null;
+92c100
+<             return (DateTimePrinter) f;
+---
+>             printer = (DateTimePrinter) f;
+94c102,109
+<         throw new UnsupportedOperationException("Printing is not supported");
+---
+>         DateTimeParser parser = null;
+>         if (isParser(f)) {
+>             parser = (DateTimeParser) f;
+>         }
+>         if (printer != null || parser != null) {
+>             return new DateTimeFormatter(printer, parser);
+>         }
+>         throw new UnsupportedOperationException("Both printing and parsing not supported");
+105c120,124
+<     public DateTimeParser toParser() {
+---
+> 
+> 
+> 
+> 
+>     public DateTimePrinter toPrinter() {
+107,108c126,127
+<         if (isParser(f)) {
+<             return (DateTimeParser) f;
+---
+>         if (isPrinter(f)) {
+>             return (DateTimePrinter) f;
+110c129
+<         throw new UnsupportedOperationException("Parsing is not supported");
+---
+>         throw new UnsupportedOperationException("Printing is not supported");
+125c144
+<     public DateTimeFormatter toFormatter() {
+---
+>     public DateTimeParser toParser() {
+127,131d145
+<         DateTimePrinter printer = null;
+<         if (isPrinter(f)) {
+<             printer = (DateTimePrinter) f;
+<         }
+<         DateTimeParser parser = null;
+133,136c147
+<             parser = (DateTimeParser) f;
+<         }
+<         if (printer != null || parser != null) {
+<             return new DateTimeFormatter(printer, parser);
+---
+>             return (DateTimeParser) f;
+138c149
+<         throw new UnsupportedOperationException("Both printing and parsing not supported");
+---
+>         throw new UnsupportedOperationException("Parsing is not supported");
+148,149c159,160
+<     public boolean canBuildPrinter() {
+<         return isPrinter(getFormatter());
+---
+>     public boolean canBuildFormatter() {
+>         return isFormatter(getFormatter());
+158,159c169,170
+<     public boolean canBuildParser() {
+<         return isParser(getFormatter());
+---
+>     public boolean canBuildPrinter() {
+>         return isPrinter(getFormatter());
+168,169c179,180
+<     public boolean canBuildFormatter() {
+<         return isFormatter(getFormatter());
+---
+>     public boolean canBuildParser() {
+>         return isParser(getFormatter());

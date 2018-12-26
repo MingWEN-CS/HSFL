@@ -1,0 +1,220 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat.descriptive.summary;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.stat.descriptive.AbstractStorelessUnivariateStatistic;
+import org.apache.commons.math.stat.descriptive.WeightedEvaluation;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Sum extends AbstractStorelessUnivariateStatistic implements Serializable {
+
+    
+    private static final long serialVersionUID = -8231831954703408316L;
+
+    
+    private long n;
+
+    
+
+
+    private double value;
+
+    
+
+
+    public Sum() {
+        n = 0;
+        value = Double.NaN;
+    }
+
+    
+
+
+
+
+
+    public Sum(Sum original) {
+        copy(original, this);
+    }
+
+    
+
+
+    @Override
+    public void increment(final double d) {
+        if (n == 0) {
+            value = d;
+        } else {
+            value += d;
+        }
+        n++;
+    }
+
+    
+
+
+    @Override
+    public double getResult() {
+        return value;
+    }
+
+    
+
+
+    public long getN() {
+        return n;
+    }
+
+    
+
+
+    @Override
+    public void clear() {
+        value = Double.NaN;
+        n = 0;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public double evaluate(final double[] values, final int begin, final int length) {
+        double sum = Double.NaN;
+        if (test(values, begin, length)) {
+            sum = 0.0;
+            for (int i = begin; i < begin + length; i++) {
+                sum += values[i];
+            }
+        }
+        return sum;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double[] weights,
+                           final int begin, final int length) {
+        double sum = Double.NaN;
+        if (test(values, weights, begin, length)) {
+            sum = 0.0;
+            for (int i = begin; i < begin + length; i++) {
+                sum += values[i] * weights[i];
+            }
+        }
+        return sum;
+    }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public double evaluate(final double[] values, final double[] weights) {
+        return evaluate(values, weights, 0, values.length);
+    }
+
+    
+
+
+    @Override
+    public Sum copy() {
+        Sum result = new Sum();
+        copy(this, result);
+        return result;
+    }
+
+    
+
+
+
+
+
+
+
+    public static void copy(Sum source, Sum dest) {
+        dest.n = source.n;
+        dest.value = source.value;
+    }
+
+}

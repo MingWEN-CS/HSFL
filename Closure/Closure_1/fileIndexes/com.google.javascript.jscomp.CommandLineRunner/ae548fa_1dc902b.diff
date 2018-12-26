@@ -1,0 +1,29 @@
+689a690,698
+>       CodingConvention conv;
+>       if (flags.third_party) {
+>         conv = CodingConventions.getDefault();
+>       } else if (flags.process_jquery_primitives) {
+>         conv = new JqueryCodingConvention();
+>       } else {
+>         conv = new ClosureCodingConvention();
+>       }
+>       
+705,707c714
+<           .setCodingConvention(flags.third_party ?
+<                CodingConventions.getDefault() :
+<                new ClosureCodingConvention())
+---
+>           .setCodingConvention(conv)
+732c739,743
+<     options.setCodingConvention(new ClosureCodingConvention());
+---
+>     if (flags.process_jquery_primitives) {
+>       options.setCodingConvention(new JqueryCodingConvention());
+>     } else {
+>       options.setCodingConvention(new ClosureCodingConvention());
+>     }
+753,756d763
+< 
+<     if (flags.process_jquery_primitives) {
+<       options.setCodingConvention(new JqueryCodingConvention());
+<     }

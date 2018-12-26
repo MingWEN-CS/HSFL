@@ -1,0 +1,24 @@
+428c428
+<       passes.add(devirtualizePrototypeMethods);
+---
+>       passes.add(optimizeCalls);
+1295a1296,1314
+>     }
+>   };
+> 
+>   
+> 
+> 
+> 
+>   private final PassFactory optimizeCalls =
+>       new PassFactory("optimizeCalls", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       OptimizeCallGraph passes = new OptimizeCallGraph(compiler);
+>       if (options.optimizeReturns) {
+>         passes.addPass(new OptimizeReturns(compiler));
+>       }
+>       
+>       
+>       passes.addPass(new DevirtualizePrototypeMethods(compiler));
+>       return passes;

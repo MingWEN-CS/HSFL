@@ -1,0 +1,315 @@
+21a22
+> import com.google.javascript.jscomp.NodeTraversal.AbstractShallowCallback;
+29,30d29
+< import java.util.Deque;
+< import java.util.LinkedList;
+55,59d53
+<   Deque<ControlFlowGraph<Node>> cfgStack =
+<       new LinkedList<ControlFlowGraph<Node>>();
+< 
+<   ControlFlowGraph<Node> curCfg = null;
+< 
+67c61
+<   public void enterScope(NodeTraversal t) {
+---
+>   public void exitScope(NodeTraversal t) {
+73,74c67
+<     cfgStack.push(curCfg);
+<     curCfg = cfa.getCfg();
+---
+>     ControlFlowGraph<Node> cfg = cfa.getCfg();
+76,78c69,70
+<     new GraphReachability<Node, ControlFlowGraph.Branch>(curCfg)
+<         .compute(curCfg.getEntry().getValue());
+<   }
+---
+>     new GraphReachability<Node, ControlFlowGraph.Branch>(cfg)
+>         .compute(cfg.getEntry().getValue());
+80,82c72,77
+<   @Override
+<   public void exitScope(NodeTraversal t) {
+<     curCfg = cfgStack.pop();
+---
+>     Node root = scope.getRootNode();
+>     if (scope.isLocal()) {
+>       root = root.getLastChild();
+>     }
+>     NodeTraversal.traverse(
+>         compiler, root, new EliminationPass(cfg));
+90,96c85,88
+<   @Override
+<   public void visit(NodeTraversal t, Node n, Node parent) {
+<     if (parent == null) {
+<       return;
+<     }
+<     if (n.isFunction() || n.isScript()) {
+<       return;
+---
+>   private class EliminationPass extends AbstractShallowCallback {
+>     private final ControlFlowGraph<Node> cfg;
+>     private EliminationPass(ControlFlowGraph<Node> cfg) {
+>       this.cfg = cfg;
+99,107c91,98
+<     DiGraphNode<Node, Branch> gNode = curCfg.getDirectedGraphNode(n);
+<     if (gNode == null) { 
+<       return;
+<     }
+<     if (gNode.getAnnotation() != GraphReachability.REACHABLE ||
+<         (removeNoOpStatements && !NodeUtil.mayHaveSideEffects(n, compiler))) {
+<       removeDeadExprStatementSafely(n);
+<       return;
+<     }
+---
+>     @Override
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       if (parent == null) {
+>         return;
+>       }
+>       if (n.isFunction() || n.isScript()) {
+>         return;
+>       }
+109,110c100,108
+<     tryRemoveUnconditionalBranching(n);
+<   }
+---
+>       DiGraphNode<Node, Branch> gNode = cfg.getDirectedGraphNode(n);
+>       if (gNode == null) { 
+>         return;
+>       }
+>       if (gNode.getAnnotation() != GraphReachability.REACHABLE ||
+>           (removeNoOpStatements && !NodeUtil.mayHaveSideEffects(n, compiler))) {
+>         removeDeadExprStatementSafely(n);
+>         return;
+>       }
+112c110,111
+<   
+---
+>       tryRemoveUnconditionalBranching(n);
+>     }
+113a113
+>     
+130,133d129
+<   @SuppressWarnings("fallthrough")
+<   private Node tryRemoveUnconditionalBranching(Node n) {
+<     
+< 
+134a131,133
+>     @SuppressWarnings("fallthrough")
+>     private Node tryRemoveUnconditionalBranching(Node n) {
+>       
+142,145d140
+<     
+<     if (n == null) {
+<        return n;
+<     }
+147d141
+<     DiGraphNode<Node, Branch> gNode = curCfg.getDirectedGraphNode(n);
+149,151c143,146
+<     if (gNode == null) {
+<       return n;
+<     }
+---
+>       
+>       if (n == null) {
+>          return n;
+>       }
+153,159c148
+<     switch (n.getType()) {
+<       case Token.RETURN:
+<         if (n.hasChildren()) {
+<           break;
+<         }
+<       case Token.BREAK:
+<       case Token.CONTINUE:
+---
+>       DiGraphNode<Node, Branch> gNode = cfg.getDirectedGraphNode(n);
+161,167c150,152
+<         
+<         
+<         
+<         List<DiGraphEdge<Node,Branch>> outEdges = gNode.getOutEdges();
+<         if (outEdges.size() == 1 &&
+<             
+<             (n.getNext() == null || n.getNext().isFunction())) {
+---
+>       if (gNode == null) {
+>         return n;
+>       }
+169,174c154,157
+<           Preconditions.checkState(outEdges.get(0).getValue() == Branch.UNCOND);
+<           Node fallThrough = computeFollowing(n);
+<           Node nextCfgNode = outEdges.get(0).getDestination().getValue();
+<           if (nextCfgNode == fallThrough) {
+<             removeDeadExprStatementSafely(n);
+<             return fallThrough;
+---
+>       switch (n.getType()) {
+>         case Token.RETURN:
+>           if (n.hasChildren()) {
+>             break;
+176,179c159,160
+<         }
+<     }
+<     return n;
+<   }
+---
+>         case Token.BREAK:
+>         case Token.CONTINUE:
+181,187c162,177
+<   private Node computeFollowing(Node n) {
+<     Node next = ControlFlowAnalysis.computeFollowNode(n);
+<     while (next != null && next.isBlock()) {
+<       if (next.hasChildren()) {
+<         next = next.getFirstChild();
+<       } else {
+<         next = computeFollowing(next);
+---
+>           
+>           
+>           
+>           List<DiGraphEdge<Node,Branch>> outEdges = gNode.getOutEdges();
+>           if (outEdges.size() == 1 &&
+>               
+>               (n.getNext() == null || n.getNext().isFunction())) {
+> 
+>             Preconditions.checkState(outEdges.get(0).getValue() == Branch.UNCOND);
+>             Node fallThrough = computeFollowing(n);
+>             Node nextCfgNode = outEdges.get(0).getDestination().getValue();
+>             if (nextCfgNode == fallThrough) {
+>               removeDeadExprStatementSafely(n);
+>               return fallThrough;
+>             }
+>           }
+188a179
+>       return n;
+190,191d180
+<     return next;
+<   }
+193,198c182,191
+<   private void removeDeadExprStatementSafely(Node n) {
+<     Node parent = n.getParent();
+<     if (n.isEmpty() ||
+<         (n.isBlock() && !n.hasChildren())) {
+<       
+<       return;
+---
+>     private Node computeFollowing(Node n) {
+>       Node next = ControlFlowAnalysis.computeFollowNode(n);
+>       while (next != null && next.isBlock()) {
+>         if (next.hasChildren()) {
+>           next = next.getFirstChild();
+>         } else {
+>           next = computeFollowing(next);
+>         }
+>       }
+>       return next;
+201,205c194,200
+<     
+<     
+<     if (NodeUtil.isForIn(parent)) {
+<       return;
+<     }
+---
+>     private void removeDeadExprStatementSafely(Node n) {
+>       Node parent = n.getParent();
+>       if (n.isEmpty() ||
+>           (n.isBlock() && !n.hasChildren())) {
+>         
+>         return;
+>       }
+207,208d201
+<     switch (n.getType()) {
+<       
+211c204
+<       case Token.DO:
+---
+>       if (NodeUtil.isForIn(parent)) {
+212a206
+>       }
+214c208
+<       case Token.BLOCK:
+---
+>       switch (n.getType()) {
+217,219c211,221
+<         if (parent.isTry()) {
+<           if (NodeUtil.isTryCatchNodeContainer(n)) {
+<             return;
+---
+>         
+>         case Token.DO:
+>           return;
+> 
+>         case Token.BLOCK:
+>           
+>           
+>           if (parent.isTry()) {
+>             if (NodeUtil.isTryCatchNodeContainer(n)) {
+>               return;
+>             }
+221,222c223
+<         }
+<         break;
+---
+>           break;
+224,228c225,229
+<       case Token.CATCH:
+<         Node tryNode = parent.getParent();
+<         NodeUtil.maybeAddFinally(tryNode);
+<         break;
+<     }
+---
+>         case Token.CATCH:
+>           Node tryNode = parent.getParent();
+>           NodeUtil.maybeAddFinally(tryNode);
+>           break;
+>       }
+231,242c232,243
+<     if (n.isVar() && !n.getFirstChild().hasChildren()) {
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       
+<       return;
+<     }
+---
+>       if (n.isVar() && !n.getFirstChild().hasChildren()) {
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         
+>         return;
+>       }
+244,248c245,249
+<     NodeUtil.redeclareVarsInsideBranch(n);
+<     compiler.reportCodeChange();
+<     if (logger.isLoggable(Level.FINE)) {
+<       logger.fine("Removing " + n.toString());
+<     }
+---
+>       NodeUtil.redeclareVarsInsideBranch(n);
+>       compiler.reportCodeChange();
+>       if (logger.isLoggable(Level.FINE)) {
+>         logger.fine("Removing " + n.toString());
+>       }
+250c251,252
+<     NodeUtil.removeChild(n.getParent(), n);
+---
+>       NodeUtil.removeChild(n.getParent(), n);
+>     }
+251a254,259
+> 
+>   @Override
+>   public void visit(NodeTraversal t, Node n, Node parent) {}
+> 
+>   @Override
+>   public void enterScope(NodeTraversal t) {}

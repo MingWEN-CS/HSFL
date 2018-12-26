@@ -1,0 +1,33 @@
+2928,2947d2927
+< 
+<   static JSDocInfo getInfoForNameNode(Node nameNode) {
+<     JSDocInfo info = null;
+<     Node parent = null;
+<     if (nameNode != null) {
+<       info = nameNode.getJSDocInfo();
+<       parent = nameNode.getParent();
+<     }
+< 
+<     if (info == null && parent != null &&
+<         ((parent.getType() == Token.VAR && parent.hasOneChild()) ||
+<           parent.getType() == Token.FUNCTION)) {
+<       info = parent.getJSDocInfo();
+<     }
+<     return info;
+<   }
+< 
+<   
+< 
+< 
+3149,3152c3129
+<         info = parent.getJSDocInfo();
+<         if (info == null && parent.getParent().hasOneChild()) {
+<           info = parent.getParent().getJSDocInfo();
+<         }
+---
+>         return getBestJSDocInfo(parent);
+3155a3133,3136
+>         info = parent.getJSDocInfo();
+>       } else if (parentType == Token.FUNCTION) {
+>         info = parent.getJSDocInfo();
+>       } else if (parentType == Token.VAR && parent.hasOneChild()) {

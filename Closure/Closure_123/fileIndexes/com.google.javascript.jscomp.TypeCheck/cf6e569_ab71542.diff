@@ -1,0 +1,108 @@
+45a46
+> import com.google.javascript.rhino.jstype.UnionType;
+46a48
+> import java.lang.reflect.Method;
+93a96,100
+>   static final DiagnosticType INEXISTENT_PROPERTY_WITH_SUGGESTION =
+>       DiagnosticType.disabled(
+>           "JSC_INEXISTENT_PROPERTY",
+>           "Property {0} never defined on {1}. Did you mean {2}?");
+> 
+305a313,323
+>   private Method editDistance;
+> 
+>   private static final class SuggestionPair {
+>     private final String suggestion;
+>     final int distance;
+>     private SuggestionPair(String suggestion, int distance) {
+>       this.suggestion = suggestion;
+>       this.distance = distance;
+>     }
+>   }
+> 
+321a340,349
+> 
+>     ClassLoader classLoader = TypeCheck.class.getClassLoader();
+>     try {
+>       Class<?> c = classLoader.loadClass(
+>           "com.google.common.string.EditDistance");
+>       editDistance = c.getDeclaredMethod(
+>           "getEditDistance", String.class, String.class, boolean.class);
+>     } catch (Exception ignored) {
+>       editDistance = null;
+>     }
+1465c1493,1494
+<         reportMissingProperties && (!isPropertyTest(n) || objectType.isStruct())) {
+---
+>         reportMissingProperties &&
+>         (!isPropertyTest(n) || objectType.isStruct())) {
+1467,1468c1496,1554
+<         report(t, n, INEXISTENT_PROPERTY, propName,
+<             validator.getReadableJSTypeName(n.getFirstChild(), true));
+---
+>         SuggestionPair pair =
+>             getClosestPropertySuggestion(objectType, propName);
+>         if (pair != null && pair.distance * 4 < propName.length()) {
+>           report(t, n, INEXISTENT_PROPERTY_WITH_SUGGESTION, propName,
+>               validator.getReadableJSTypeName(n.getFirstChild(), true),
+>               pair.suggestion);
+>         } else {
+>           report(t, n, INEXISTENT_PROPERTY, propName,
+>               validator.getReadableJSTypeName(n.getFirstChild(), true));
+>         }
+>       }
+>     }
+>   }
+> 
+>   private SuggestionPair getClosestPropertySuggestion(
+>       JSType objectType, String propName) {
+>     if (editDistance == null) {
+>       return null;
+>     }
+> 
+>     String bestSoFar = null;
+>     int shortest = Integer.MAX_VALUE;
+>     if (objectType instanceof ObjectType) {
+>       ObjectType type = (ObjectType) objectType;
+>       for (String alt : type.getPropertyNames()) {
+>         int distance;
+>         try {
+>           distance = (Integer) editDistance.invoke(null, propName, alt, false);
+>         } catch (Exception e) {
+>           return null;
+>         }
+>         if (distance <= shortest) {
+>           if (distance == shortest) {
+>             
+>             
+>             if (bestSoFar != null && alt.compareToIgnoreCase(bestSoFar) > 0) {
+>               continue;
+>             }
+>           }
+>           shortest = distance;
+>           bestSoFar = alt;
+>         }
+>       }
+>     } else if (objectType.isUnionType()) {
+>       UnionType type = (UnionType) objectType;
+>       for (JSType alt : type.getAlternates()) {
+>         SuggestionPair pair = getClosestPropertySuggestion(alt, propName);
+>         if (pair != null) {
+>           if (pair.distance <= shortest) {
+>             if (pair.distance  == shortest) {
+>               if (bestSoFar != null &&
+>                   pair.suggestion.compareToIgnoreCase(bestSoFar) > 0) {
+>                 continue;
+>               }
+>             }
+>             shortest = pair.distance;
+>             bestSoFar = pair.suggestion;
+>           }
+>         }
+1470a1557,1562
+> 
+>     if (bestSoFar != null) {
+>       return new SuggestionPair(bestSoFar, shortest);
+>     }
+> 
+>     return null;

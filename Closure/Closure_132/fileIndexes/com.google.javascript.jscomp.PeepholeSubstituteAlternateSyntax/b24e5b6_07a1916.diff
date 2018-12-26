@@ -1,0 +1,26 @@
+128d127
+< 
+266a266,269
+>         } else if (elseBranch != null && statementMustExitParent(thenBranch)) {
+>           child.removeChild(elseBranch);
+>           n.addChildAfter(elseBranch, child);
+>           reportCodeChange();
+270a274,291
+>   }
+> 
+>   private boolean statementMustExitParent(Node n) {
+>     switch (n.getType()) {
+>       case Token.THROW:
+>       case Token.RETURN:
+>         return true;
+>       case Token.BLOCK:
+>         if (n.hasChildren()) {
+>           Node child = n.getLastChild();
+>           return statementMustExitParent(child);
+>         }
+>         return false;
+>       
+>       case Token.FUNCTION:
+>       default:
+>         return false;
+>     }

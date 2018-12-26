@@ -1,0 +1,47 @@
+783d782
+<                   skipEOLs();
+787,788d785
+<                   token = next();
+< 
+790,791c787,788
+<                   if (annotation == Annotation.RETURN &&
+<                       token != JsDocToken.LC) {
+---
+>                   if (!lookAheadForTypeAnnotation() &&
+>                       annotation == Annotation.RETURN) {
+795a793,794
+>                     skipEOLs();
+>                     token = next();
+827,829d825
+<                         token = current();
+< 
+<                         
+1284d1279
+< 
+2245a2241,2266
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private boolean lookAheadForTypeAnnotation() {
+>     boolean matchedLc = false;
+>     int c;
+>     while (true) {
+>       c = stream.getChar();
+>       if (c == ' ') {
+>         continue;
+>       } else if (c == '{') {
+>         matchedLc = true;
+>         break;
+>       } else {
+>         break;
+>       }
+>     }
+>     stream.ungetChar(c);
+>     return matchedLc;

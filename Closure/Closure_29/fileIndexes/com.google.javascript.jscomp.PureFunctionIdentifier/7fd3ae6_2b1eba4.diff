@@ -1,0 +1,598 @@
+26a27,30
+> import com.google.javascript.jscomp.FunctionSideEffectData.CallValueEntry;
+> import com.google.javascript.jscomp.FunctionSideEffectData.KeywordValueEntry;
+> import com.google.javascript.jscomp.FunctionSideEffectData.ValueEntry;
+> import com.google.javascript.jscomp.FunctionSideEffectData.NameValueEntry;
+43d46
+< import java.util.Collections;
+79c82
+<   private final Map<Node, FunctionInformation> functionSideEffectMap;
+---
+>   private final Map<Node, FunctionSideEffectData> functionSideEffectMap;
+135c138
+<     for (Map.Entry<Node, FunctionInformation> entry :
+---
+>     for (Map.Entry<Node, FunctionSideEffectData> entry :
+138c141
+<       FunctionInformation functionInfo = entry.getValue();
+---
+>       FunctionSideEffectData functionInfo = entry.getValue();
+148c151
+<     for (Map.Entry<Node, FunctionInformation> entry :
+---
+>     for (Map.Entry<Node, FunctionSideEffectData> entry :
+151c154
+<       FunctionInformation functionInfo = entry.getValue();
+---
+>       FunctionSideEffectData functionInfo = entry.getValue();
+254,255c257,258
+<     DiGraph<FunctionInformation, Node> sideEffectGraph =
+<         new LinkedDirectedGraph<FunctionInformation, Node>();
+---
+>     DiGraph<FunctionSideEffectData, Node> sideEffectGraph =
+>         new LinkedDirectedGraph<FunctionSideEffectData, Node>();
+258c261
+<     for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+---
+>     for (FunctionSideEffectData functionInfo : functionSideEffectMap.values()) {
+263c266
+<     for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+---
+>     for (FunctionSideEffectData functionInfo : functionSideEffectMap.values()) {
+285c288
+<           FunctionInformation dep = functionSideEffectMap.get(defValue);
+---
+>           FunctionSideEffectData dep = functionSideEffectMap.get(defValue);
+297c300
+<     for (FunctionInformation functionInfo : functionSideEffectMap.values()) {
+---
+>     for (FunctionSideEffectData functionInfo : functionSideEffectMap.values()) {
+321c324
+<           FunctionInformation functionInfo =
+---
+>           FunctionSideEffectData functionInfo =
+330c333
+<           if (functionInfo.functionThrows) {
+---
+>           if (functionInfo.functionThrows()) {
+335c338
+<             if (functionInfo.taintsThis) {
+---
+>             if (functionInfo.mutatesThis()) {
+340c343
+<           if (functionInfo.taintsReturn) {
+---
+>           if (functionInfo.hasNonLocalReturnValue()) {
+384,391c387
+<       
+<       
+<       
+<       
+<       if (NodeUtil.isFunction(node)) {
+<         Node gramp = parent.getParent();
+<         visitFunction(traversal, node, parent, gramp);
+<       }
+---
+> 
+414c410
+<         FunctionInformation sideEffectInfo =
+---
+>         FunctionSideEffectData sideEffectInfo =
+445c441,442
+<               if (value != null && !NodeUtil.evaluatesToLocalValue(value)) {
+---
+>               if (value != null && !analyzeSet(
+>                       new NameValueEntry(node), value, sideEffectInfo)) {
+448c445
+<                 sideEffectInfo.blacklistLocal(var);
+---
+>                 sideEffectInfo.addNonLocalValue(var);
+455,456c452,454
+<               if (node.hasChildren()
+<                   && !NodeUtil.evaluatesToLocalValue(node.getFirstChild())) {
+---
+>               if (node.hasChildren() && !analyzeSet(
+>                       KeywordValueEntry.RETURN, node.getFirstChild(),
+>                       sideEffectInfo)) {
+470,471c468,476
+<     public void enterScope(NodeTraversal t) {
+<       
+---
+>     public void enterScope(NodeTraversal traversal) {
+>       Node enclosingFunction = traversal.getEnclosingFunction();
+>       if (enclosingFunction != null) {
+>         
+>         
+>         
+>         
+>         visitFunction(traversal, enclosingFunction);
+>       }
+476c481
+<       if (t.inGlobalScope()) {
+---
+>       if (t.inGlobalScope() || inExterns) {
+480,497c485,486
+<       
+<       
+<       FunctionInformation sideEffectInfo =
+<         functionSideEffectMap.get(t.getScopeRoot());
+<       if (sideEffectInfo.mutatesGlobalState()){
+<         sideEffectInfo.resetLocalVars();
+<         return;
+<       }
+< 
+<       for (Iterator<Var> i = t.getScope().getVars(); i.hasNext();) {
+<         Var v = i.next();
+<         boolean localVar = false;
+<         
+<         if (v.getParentNode().getType() == Token.VAR) {
+<           
+<           sideEffectInfo.knownLocals.add(v.getName());
+<           localVar = true;
+<         }
+---
+>       FunctionSideEffectData sideEffectInfo =
+>           functionSideEffectMap.get(t.getScopeRoot());
+499,512c488
+<         
+<         if (!localVar || sideEffectInfo.blacklisted.contains(v)) {
+<           if (sideEffectInfo.taintedLocals.contains(v)) {
+<             
+<             
+<             sideEffectInfo.setTaintsUnknown();
+<             sideEffectInfo.resetLocalVars();
+<             break;
+<           }
+<         }
+<       }
+< 
+<       sideEffectInfo.taintedLocals = null;
+<       sideEffectInfo.blacklisted = null;
+---
+>       sideEffectInfo.normalizeValueMaps();
+515d490
+< 
+527c502
+<         FunctionInformation sideEffectInfo,
+---
+>         FunctionSideEffectData sideEffectInfo,
+545,546c520,522
+<               && !NodeUtil.evaluatesToLocalValue(rhs)) {
+<             sideEffectInfo.blacklistLocal(var);
+---
+>               && !analyzeSet(
+>                 new NameValueEntry(lhs), rhs, sideEffectInfo)) {
+>             sideEffectInfo.addNonLocalValue(var);
+564c540
+<             sideEffectInfo.addTaintedLocalObject(var);
+---
+>             sideEffectInfo.addModified(var);
+582c558
+<     private void visitCall(FunctionInformation sideEffectInfo, Node node) {
+---
+>     private void visitCall(FunctionSideEffectData sideEffectInfo, Node node) {
+601,604c577
+<     private void visitFunction(NodeTraversal traversal,
+<                                Node node,
+<                                Node parent,
+<                                Node gramp) {
+---
+>     private void visitFunction(NodeTraversal traversal, Node node) {
+607c580,581
+<       FunctionInformation sideEffectInfo = new FunctionInformation(inExterns);
+---
+>       FunctionSideEffectData sideEffectInfo = new FunctionSideEffectData(
+>           inExterns, traversal.getScope());
+609a584,612
+>       if (!inExterns) {
+>         Scope localScope = traversal.getScope();
+> 
+>         
+>         
+>         
+>         Iterator<Var> i = localScope.getVars();
+>         while (i.hasNext()) {
+>           Var v = i.next();
+>           Node parent = v.getParentNode();
+>           if (parent.getType() == Token.LP
+>               || parent.getType() == Token.CATCH) {
+>             
+>             sideEffectInfo.addNonLocalValue(v);
+>           }
+>         }
+>       }
+> 
+>       processFunctionAnnotations(sideEffectInfo, traversal, node);
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private void processFunctionAnnotations(
+>         FunctionSideEffectData sideEffectInfo,
+>         NodeTraversal traversal, Node function) {
+>       
+611c614
+<         JSType jstype = node.getJSType();
+---
+>         JSType jstype = function.getJSType();
+625c628
+<       JSDocInfo info = getJSDocInfoForFunction(node, parent, gramp);
+---
+>       JSDocInfo info = getJSDocInfoForFunction(function);
+633c636
+<             traversal.report(node, INVALID_MODIFIES_ANNOTATION);
+---
+>             traversal.report(function, INVALID_MODIFIES_ANNOTATION);
+642c645
+<             traversal.report(node, INVALID_MODIFIES_ANNOTATION);
+---
+>             traversal.report(function, INVALID_MODIFIES_ANNOTATION);
+651c654
+<               traversal.report(node, INVALID_NO_SIDE_EFFECT_ANNOTATION);
+---
+>               traversal.report(function, INVALID_NO_SIDE_EFFECT_ANNOTATION);
+679c682
+<     private void visitThrow(FunctionInformation sideEffectInfo) {
+---
+>     private void visitThrow(FunctionSideEffectData sideEffectInfo) {
+686,687c689,690
+<     private JSDocInfo getJSDocInfoForFunction(
+<         Node node, Node parent, Node gramp) {
+---
+>     private JSDocInfo getJSDocInfoForFunction(Node node) {
+>       Node parent = node.getParent();
+691a695
+>         Node gramp = parent.getParent();
+741,742c745,756
+<   private static boolean isKnownLocalValue(final Node value) {
+<     Predicate<Node> taintingPredicate = new Predicate<Node>() {
+---
+> 
+> 
+> 
+>   private static boolean analyzeSet(
+>       final ValueEntry lValue,
+>       Node rValue,
+>       final FunctionSideEffectData info) {
+> 
+>     final boolean isReturnResult = lValue.equals(KeywordValueEntry.RETURN);
+> 
+>     
+>     final Predicate<Node> taintingPredicate = new Predicate<Node>() {
+747a762,775
+>             
+>             
+> 
+>             
+>             
+>             Preconditions.checkState(
+>                 !NodeUtil.isImmutableValue(value.getLastChild()));
+>             Node lhs = value.getFirstChild();
+>             if (NodeUtil.isName(lhs)
+>                 && info.getScope().isDeclared(lhs.getString(), false)) {
+>               addValue(lhs);
+>               return true;
+>             }
+>             
+751,752d778
+<             return false;
+<           case Token.NAME:
+753a780,782
+>             addValue(KeywordValueEntry.THIS);
+>             return true;
+>           case Token.NAME:
+755,757d783
+<             return false;
+<           case Token.GETELEM:
+<           case Token.GETPROP:
+758a785,788
+>             if (info.getScope().isDeclared(value.getString(), false)) {
+>               addValue(value);
+>               return true;
+>             }
+761a792,795
+>             addCall(value);
+>             return true;
+>           case Token.GETELEM:
+>           case Token.GETPROP:
+763a798,817
+>           default:
+>             throw new IllegalStateException("unexpected");
+>         }
+>       }
+> 
+>       private void addCall(Node callNode) {
+>         Preconditions.checkState(callNode.getType() == Token.CALL);
+>         info.addInfluence(new CallValueEntry(callNode), lValue);
+>       }
+> 
+>       private void addValue(Node name) {
+>         ValueEntry value = new NameValueEntry(name);
+>         addValue(value);
+>       }
+> 
+>       private void addValue(ValueEntry value) {
+>         
+>         info.addInfluence(value, lValue);
+>         if (!isReturnResult) {
+>           info.addInfluence(lValue, value);
+765d818
+<         return false;
+769c822,833
+<     return NodeUtil.evaluatesToLocalValue(value, taintingPredicate);
+---
+>     
+>     return NodeUtil.evaluatesToLocalValue(rValue, taintingPredicate);
+>   }
+> 
+>   private static Predicate<Node> getLocalPredicate(
+>       final FunctionSideEffectData caller) {
+>     return new Predicate<Node>() {
+>       @Override
+>       public boolean apply(Node value) {
+>         return caller.isLocalValue(value);
+>       }
+>     };
+776,779c840,843
+<       implements EdgeCallback<FunctionInformation, Node> {
+<     public boolean traverseEdge(FunctionInformation callee,
+<                                 Node callSite,
+<                                 FunctionInformation caller) {
+---
+>       implements EdgeCallback<FunctionSideEffectData, Node> {
+>     public boolean traverseEdge(final FunctionSideEffectData callee,
+>                                 final Node callSite,
+>                                 final FunctionSideEffectData caller) {
+783a848,852
+>       if (caller.isInformationStable()) {
+>         
+>         return false;
+>       }
+> 
+793a863,869
+>       Predicate<Node> locals = getLocalPredicate(caller);
+>       if (callee.hasNonLocalReturnValue()) {
+>         if (caller.maybePropagateNonLocal(new CallValueEntry(callSite))) {
+>           changed = true;
+>         }
+>       }
+> 
+799,800c875,880
+<           if (objectNode != null && NodeUtil.isName(objectNode)
+<               && !isCallOrApply(callSite)) {
+---
+>           if (objectNode != null && NodeUtil.isThis(objectNode)) {
+>             if (!caller.mutatesThis()) {
+>               caller.setTaintsThis();
+>               changed = true;
+>             }
+>           } else if (objectNode != null && !isCallOrApply(callSite)) {
+805,806d884
+<             String name = objectNode.getString();
+< 
+808a887,888
+> 
+>             
+809a890
+>             if (!NodeUtil.evaluatesToLocalValue(objectNode, locals)) {
+814,818d894
+<             
+<           } else if (objectNode != null && NodeUtil.isThis(objectNode)) {
+<             if (!caller.mutatesThis()) {
+<               caller.setTaintsThis();
+<               changed = true;
+820,826d895
+<           } else if (objectNode != null
+<               && NodeUtil.evaluatesToLocalValue(objectNode)
+<               && !isCallOrApply(callSite)) {
+<             
+<             
+<             
+<             
+833a903,908
+>       if (caller.isInformationStable()) {
+>         
+>         
+>         caller.clearLocalityState();
+>       }
+> 
+872,1068d946
+<   }
+< 
+<   
+< 
+< 
+< 
+<   private static class FunctionInformation {
+<     private final boolean extern;
+<     private final List<Node> callsInFunctionBody = Lists.newArrayList();
+<     private Set<Var> blacklisted = Sets.newHashSet();
+<     private Set<Var> taintedLocals = Sets.newHashSet();
+<     private Set<String> knownLocals = Sets.newHashSet();
+<     private boolean pureFunction = false;
+<     private boolean functionThrows = false;
+<     private boolean taintsGlobalState = false;
+<     private boolean taintsThis = false;
+<     private boolean taintsArguments = false;
+<     private boolean taintsUnknown = false;
+<     private boolean taintsReturn = false;
+< 
+<     FunctionInformation(boolean extern) {
+<       this.extern = extern;
+<       checkInvariant();
+<     }
+< 
+<     
+< 
+< 
+<     void addTaintedLocalObject(Var var) {
+<       taintedLocals.add(var);
+<     }
+< 
+<     void resetLocalVars() {
+<       blacklisted = null;
+<       taintedLocals = null;
+<       knownLocals = Collections.emptySet();
+<     }
+< 
+<     
+< 
+< 
+<     public void blacklistLocal(Var var) {
+<       blacklisted.add(var);
+<     }
+< 
+<     
+< 
+< 
+<     boolean mayBePure() {
+<       return !(functionThrows ||
+<                taintsGlobalState ||
+<                taintsThis ||
+<                taintsArguments ||
+<                taintsUnknown);
+<     }
+< 
+<     
+< 
+< 
+<     boolean mayHaveSideEffects() {
+<       return !pureFunction;
+<     }
+< 
+<     
+< 
+< 
+<     void setIsPure() {
+<       pureFunction = true;
+<       checkInvariant();
+<     }
+< 
+<     
+< 
+< 
+<     void setTaintsGlobalState() {
+<       taintsGlobalState = true;
+<       checkInvariant();
+<     }
+< 
+<     
+< 
+< 
+<     void setTaintsThis() {
+<       taintsThis = true;
+<       checkInvariant();
+<     }
+< 
+<     
+< 
+< 
+<     void setTaintsArguments() {
+<       taintsArguments = true;
+<       checkInvariant();
+<     }
+< 
+<     
+< 
+< 
+<     void setFunctionThrows() {
+<       functionThrows = true;
+<       checkInvariant();
+<     }
+< 
+<     
+< 
+< 
+< 
+<     void setTaintsUnknown() {
+<       taintsUnknown = true;
+<       checkInvariant();
+<     }
+< 
+<     
+< 
+< 
+<     void setTaintsReturn() {
+<       taintsReturn = true;
+<       checkInvariant();
+<     }
+< 
+< 
+<     
+< 
+< 
+<     boolean mutatesGlobalState() {
+<       
+<       return taintsGlobalState || taintsArguments || taintsUnknown;
+<     }
+< 
+<     
+< 
+< 
+<     boolean mutatesThis() {
+<       return taintsThis;
+<     }
+< 
+<     
+< 
+< 
+<     boolean functionThrows() {
+<       return functionThrows;
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private void checkInvariant() {
+<       boolean invariant = mayBePure() || mayHaveSideEffects();
+<       if (!invariant) {
+<         throw new IllegalStateException("Invariant failed.  " + toString());
+<       }
+<     }
+< 
+<     
+< 
+< 
+<     void appendCall(Node callNode) {
+<       callsInFunctionBody.add(callNode);
+<     }
+< 
+<     
+< 
+< 
+<     List<Node> getCallsInFunctionBody() {
+<       return callsInFunctionBody;
+<     }
+< 
+<     @Override
+<     public String toString() {
+<       List<String> status = Lists.newArrayList();
+<       if (extern) {
+<         status.add("extern");
+<       }
+< 
+<       if (pureFunction) {
+<         status.add("pure");
+<       }
+< 
+<       if (taintsThis) {
+<         status.add("this");
+<       }
+< 
+<       if (taintsGlobalState) {
+<         status.add("global");
+<       }
+< 
+<       if (functionThrows) {
+<         status.add("throw");
+<       }
+< 
+<       if (taintsUnknown) {
+<         status.add("complex");
+<       }
+< 
+<       return "Side effects: " + status.toString();
+<     }

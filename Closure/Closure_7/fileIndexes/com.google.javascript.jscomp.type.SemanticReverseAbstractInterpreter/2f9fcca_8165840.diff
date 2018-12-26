@@ -1,0 +1,132 @@
+298,308c298,302
+<     if (merged != null &&
+<         ((leftIsRefineable && merged.typeA != null) ||
+<          (rightIsRefineable && merged.typeB != null))) {
+<       FlowScope informed = blindScope.createChildFlowScope();
+<       if (leftIsRefineable && merged.typeA != null) {
+<         declareNameInScope(informed, left, merged.typeA);
+<       }
+<       if (rightIsRefineable && merged.typeB != null) {
+<         declareNameInScope(informed, right, merged.typeB);
+<       }
+<       return informed;
+---
+>     if (merged != null) {
+>       return maybeRestrictTwoNames(
+>           blindScope,
+>           left, leftType, leftIsRefineable ? merged.typeA : null,
+>           right, rightType, rightIsRefineable ? merged.typeB : null);
+328c322
+<     leftType = (leftType == null) ? null :
+---
+>     JSType restrictedLeftType = (leftType == null) ? null :
+330c324
+<     if (leftType == null) {
+---
+>     if (restrictedLeftType == null) {
+348c342
+<       rightType = (rightType == null) ? null :
+---
+>       JSType restrictedRightType = (rightType == null) ? null :
+352,362c346,349
+<       if ((leftType != null && leftIsRefineable) ||
+<           (rightType != null && rightIsRefineable)) {
+<         FlowScope informed = blindScope.createChildFlowScope();
+<         if (leftIsRefineable && leftType != null) {
+<           declareNameInScope(informed, left, leftType);
+<         }
+<         if (rightIsRefineable && rightType != null) {
+<           declareNameInScope(informed, right, rightType);
+<         }
+<         return informed;
+<       }
+---
+>       return maybeRestrictTwoNames(
+>           blindScope,
+>           left, leftType, leftIsRefineable ? restrictedLeftType : null,
+>           right, rightType, rightIsRefineable ? restrictedRightType : null);
+388a376,425
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private FlowScope maybeRestrictName(
+>       FlowScope blindScope, Node node, JSType originalType, JSType restrictedType) {
+>     if (restrictedType != null && restrictedType != originalType) {
+>       FlowScope informed = blindScope.createChildFlowScope();
+>       declareNameInScope(informed, node, restrictedType);
+>       return informed;
+>     }
+>     return blindScope;
+>   }
+> 
+>   
+> 
+> 
+>   private FlowScope maybeRestrictTwoNames(
+>       FlowScope blindScope,
+>       Node left, JSType originalLeftType, JSType restrictedLeftType,
+>       Node right, JSType originalRightType, JSType restrictedRightType) {
+>     boolean shouldRefineLeft =
+>         restrictedLeftType != null && restrictedLeftType != originalLeftType;
+>     boolean shouldRefineRight =
+>         restrictedRightType != null && restrictedRightType != originalRightType;
+>     if (shouldRefineLeft || shouldRefineRight) {
+>       FlowScope informed = blindScope.createChildFlowScope();
+>       if (shouldRefineLeft) {
+>         declareNameInScope(informed, left, restrictedLeftType);
+>       }
+>       if (shouldRefineRight) {
+>         declareNameInScope(informed, right, restrictedRightType);
+>       }
+>       return informed;
+>     }
+>     return blindScope;
+>   }
+> 
+393,397c430,432
+<       JSType restrictedType =
+<           type.getRestrictedTypeGivenToBooleanOutcome(outcome);
+<       FlowScope informed = blindScope.createChildFlowScope();
+<       declareNameInScope(informed, name, restrictedType);
+<       return informed;
+---
+>       return maybeRestrictName(
+>           blindScope, name, type,
+>           type.getRestrictedTypeGivenToBooleanOutcome(outcome));
+404,411c439,441
+<     JSType restrictedType =
+<         getRestrictedByTypeOfResult(type, value, resultEqualsValue);
+<     if (restrictedType == null) {
+<       return blindScope;
+<     }
+<     FlowScope informed = blindScope.createChildFlowScope();
+<     declareNameInScope(informed, node, restrictedType);
+<     return informed;
+---
+>     return maybeRestrictName(
+>         blindScope, node, type,
+>         getRestrictedByTypeOfResult(type, value, resultEqualsValue));
+432,438c462,463
+<     JSType restrictedLeftType = leftType.visit(visitor);
+<     if (restrictedLeftType != null && !restrictedLeftType.equals(leftType)) {
+<       FlowScope informed = blindScope.createChildFlowScope();
+<       declareNameInScope(informed, left, restrictedLeftType);
+<       return informed;
+<     }
+<     return blindScope;
+---
+>     return maybeRestrictName(
+>         blindScope, left, leftType, leftType.visit(visitor));

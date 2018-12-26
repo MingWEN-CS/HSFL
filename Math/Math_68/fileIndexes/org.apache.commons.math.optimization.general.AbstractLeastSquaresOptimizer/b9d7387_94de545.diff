@@ -1,0 +1,92 @@
+20a21
+> import org.apache.commons.math.MaxEvaluationsExceededException;
+45,47d45
+<     private static final long serialVersionUID = 5413193243329026789L;
+< 
+<     
+56a55,57
+>     private int maxEvaluations;
+> 
+>     
+81c82
+<     private DifferentiableMultivariateVectorialFunction f;
+---
+>     private DifferentiableMultivariateVectorialFunction function;
+87c88
+<     protected double[] target;
+---
+>     protected double[] targetValues;
+90c91
+<     protected double[] weights;
+---
+>     protected double[] residualsWeights;
+110a112
+>         setMaxEvaluations(Integer.MAX_VALUE);
+128a131,140
+>     public void setMaxEvaluations(int maxEvaluations) {
+>         this.maxEvaluations = maxEvaluations;
+>     }
+> 
+>     
+>     public int getMaxEvaluations() {
+>         return maxEvaluations;
+>     }
+> 
+>     
+139,140c151,152
+<     public void setConvergenceChecker(VectorialConvergenceChecker checker) {
+<         this.checker = checker;
+---
+>     public void setConvergenceChecker(VectorialConvergenceChecker convergenceChecker) {
+>         this.checker = convergenceChecker;
+155,157c167
+<             if (++iterations > maxIterations) {
+<                 throw new OptimizationException(new MaxIterationsExceededException(maxIterations));
+<             }
+---
+>             throw new OptimizationException(new MaxIterationsExceededException(maxIterations));
+175c185
+<             final double factor = -Math.sqrt(weights[i]);
+---
+>             final double factor = -Math.sqrt(residualsWeights[i]);
+186a197
+> 
+190,191c201,205
+<         ++objectiveEvaluations;
+<         objective = f.value(point);
+---
+>         if (++objectiveEvaluations > maxEvaluations) {
+>             throw new FunctionEvaluationException(new MaxEvaluationsExceededException(maxEvaluations),
+>                                                   point);
+>         }
+>         objective = function.value(point);
+198c212
+<             final double residual = target[i] - objective[i];
+---
+>             final double residual = targetValues[i] - objective[i];
+200c214
+<             cost += weights[i] * residual * residual;
+---
+>             cost += residualsWeights[i] * residual * residual;
+220c234
+<             criterion += weights[i] * residual * residual;
+---
+>             criterion += residualsWeights[i] * residual * residual;
+233c247
+<             chiSquare += residual * residual / weights[i];
+---
+>             chiSquare += residual * residual / residualsWeights[i];
+318,323c332,337
+<         this.f         = f;
+<         jF             = f.jacobian();
+<         this.target    = target.clone();
+<         this.weights   = weights.clone();
+<         this.point     = startPoint.clone();
+<         this.residuals = new double[target.length];
+---
+>         function         = f;
+>         jF               = f.jacobian();
+>         targetValues     = target.clone();
+>         residualsWeights = weights.clone();
+>         this.point       = startPoint.clone();
+>         this.residuals   = new double[target.length];

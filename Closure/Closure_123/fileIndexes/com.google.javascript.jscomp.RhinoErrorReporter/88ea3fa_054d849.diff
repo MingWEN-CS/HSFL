@@ -1,0 +1,81 @@
+59a60,63
+>   static final DiagnosticType PARSE_TREE_TOO_DEEP =
+>       DiagnosticType.error("PARSE_TREE_TOO_DEEP",
+>           "Parse tree too deep.");
+> 
+77c81
+<     typeMap = ImmutableMap.of(
+---
+>     typeMap = ImmutableMap.<Pattern,DiagnosticType>builder()
+79,82c83,86
+<         replacePlaceHolders(
+<             com.google.javascript.rhino.head.ScriptRuntime
+<               .getMessage0("msg.extra.trailing.comma")),
+<         TRAILING_COMMA,
+---
+>         .put(replacePlaceHolders(
+>             com.google.javascript.rhino.head.ScriptRuntime.getMessage0(
+>                 "msg.extra.trailing.comma")),
+>             TRAILING_COMMA)
+85,88c89,92
+<         replacePlaceHolders(
+<             com.google.javascript.rhino.head.ScriptRuntime
+<               .getMessage0("msg.dup.parms")),
+<         DUPLICATE_PARAM,
+---
+>         .put(replacePlaceHolders(
+>             com.google.javascript.rhino.head.ScriptRuntime.getMessage0(
+>                 "msg.dup.parms")),
+>             DUPLICATE_PARAM)
+91,92c95,99
+<         replacePlaceHolders(ScriptRuntime.getMessage0("msg.bad.jsdoc.tag")),
+<         BAD_JSDOC_ANNOTATION,
+---
+>         .put(replacePlaceHolders(ScriptRuntime.getMessage0("msg.bad.jsdoc.tag")),
+>             BAD_JSDOC_ANNOTATION)
+> 
+>         .put(Pattern.compile("^Type annotations are not allowed here.*"),
+>             MISPLACED_TYPE_ANNOTATION)
+94,95c101,103
+<         Pattern.compile("^Type annotations are not allowed here.*"),
+<         MISPLACED_TYPE_ANNOTATION,
+---
+>         
+>         .put(Pattern.compile("^Bad type annotation.*"),
+>             TYPE_PARSE_ERROR)
+98,100c106,110
+<         Pattern.compile("^Bad type annotation.*"),
+<         TYPE_PARSE_ERROR
+<         );
+---
+>         .put(replacePlaceHolders(
+>             com.google.javascript.rhino.head.ScriptRuntime.getMessage0(
+>                 "msg.too.deep.parser.recursion")),
+>             PARSE_TREE_TOO_DEEP)
+>         .build();
+123a134,142
+>   protected DiagnosticType mapError(String message) {
+>     for (Entry<Pattern, DiagnosticType> entry : typeMap.entrySet()) {
+>       if (entry.getKey().matcher(message).matches()) {
+>         return entry.getValue();
+>       }
+>     }
+>     return null;
+>   }
+> 
+129,133c148,151
+<     for (Entry<Pattern, DiagnosticType> entry : typeMap.entrySet()) {
+<       if (entry.getKey().matcher(message).matches()) {
+<         return JSError.make(
+<             sourceName, line, lineOffset, entry.getValue(), message);
+<       }
+---
+>     DiagnosticType type = mapError(message);
+>     if (type != null) {
+>       return JSError.make(
+>           sourceName, line, lineOffset, type, message);
+170a189,192
+>       DiagnosticType type = mapError(message);
+>       if (type != null) {
+>         super.errorAtLine(message, sourceName, line, lineOffset);
+>       }

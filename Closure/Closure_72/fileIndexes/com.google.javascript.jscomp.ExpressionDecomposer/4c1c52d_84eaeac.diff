@@ -1,0 +1,97 @@
+402a403,408
+>   private boolean isConstantName(Node n, Set<String> knownConstants) {
+>     
+>     return NodeUtil.isName(n) && (NodeUtil.isConstantName(n)
+>         || knownConstants.contains(n.getString()));
+>   }
+> 
+410a417,423
+> 
+>     boolean isLhsOfAssignOp = NodeUtil.isAssignmentOp(parent)
+>         && !NodeUtil.isAssign(parent)
+>         && parent.getFirstChild() == expr;
+> 
+>     Node firstExtractedNode = null;
+> 
+412c425,439
+<     String tempName = getTempConstantValueName();
+---
+>     
+>     
+>     
+>     
+>     
+>     if (isLhsOfAssignOp && NodeUtil.isGet(expr)) {
+>       for (Node n : expr.children()) {
+>         if (n.getType() != Token.STRING && !isConstantName(n, knownConstants)) {
+>           Node extractedNode = extractExpression(n, injectionPoint);
+>           if (firstExtractedNode == null) {
+>             firstExtractedNode = extractedNode;
+>           }
+>         }
+>       }
+>     }
+414a442
+>     String tempName = getTempConstantValueName();
+416c444,471
+<     parent.replaceChild(expr, replacementValueNode);
+---
+> 
+>     Node tempNameValue;
+> 
+>     
+>     
+>     if (isLhsOfAssignOp) {
+>       Preconditions.checkState(NodeUtil.isName(expr) || NodeUtil.isGet(expr));
+>       
+>       Node opNode = new Node(NodeUtil.getOpFromAssignmentOp(parent))
+>           .copyInformationFrom(parent);
+> 
+>       Node rightOperand = parent.getLastChild();
+> 
+>       parent.setType(Token.ASSIGN);
+>       parent.replaceChild(rightOperand, opNode);
+>       opNode.addChildToFront(replacementValueNode);
+>       opNode.addChildToBack(rightOperand);
+> 
+>       
+>       tempNameValue = expr.cloneTree();
+>     } else {
+>       
+>       parent.replaceChild(expr, replacementValueNode);
+> 
+>       
+>       
+>       tempNameValue = expr;
+>     }
+420c475
+<     tempNameNode.addChildrenToBack(expr);
+---
+>     tempNameNode.addChildToBack(tempNameValue);
+426,444c481,482
+<     
+<     
+<     
+<     if (NodeUtil.isAssignmentOp(parent) && !NodeUtil.isAssign(parent)) {
+<       Node gParent = parent.getParent();
+<       Node assignBack = new Node(Token.ASSIGN,
+<           expr.cloneTree(),
+<           tempNameNode.cloneNode());
+<       if (NodeUtil.isExpressionNode(gParent)) {
+<         gParent.getParent().addChildAfter(
+<             NodeUtil.newExpr(assignBack), gParent);
+<       } else {
+<         
+<         
+<         Node comma = new Node(Token.COMMA);
+<         gParent.replaceChild(parent, comma);
+<         comma.addChildrenToFront(assignBack);
+<         comma.addChildrenToFront(parent);
+<       }
+---
+>     if (firstExtractedNode == null) {
+>       firstExtractedNode = tempVarNode;
+446c484
+<     return tempVarNode;
+---
+>     return firstExtractedNode;

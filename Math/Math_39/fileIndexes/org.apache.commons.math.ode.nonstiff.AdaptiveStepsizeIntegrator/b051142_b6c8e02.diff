@@ -1,0 +1,39 @@
+19a20,22
+> import org.apache.commons.math.exception.DimensionMismatchException;
+> import org.apache.commons.math.exception.MathIllegalArgumentException;
+> import org.apache.commons.math.exception.MathIllegalStateException;
+20a24
+> import org.apache.commons.math.exception.NumberIsTooSmallException;
+25d28
+< import org.apache.commons.math.ode.IntegratorException;
+222a226
+> 
+227c231
+<       throws IntegratorException {
+---
+>       throws DimensionMismatchException, NumberIsTooSmallException {
+238,239c242
+<           throw new IntegratorException(
+<                   LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, mainSetDimension, vecAbsoluteTolerance.length);
+---
+>           throw new DimensionMismatchException(mainSetDimension, vecAbsoluteTolerance.length);
+243,244c246
+<           throw new IntegratorException(
+<                   LocalizedFormats.DIMENSIONS_MISMATCH_SIMPLE, mainSetDimension, vecRelativeTolerance.length);
+---
+>           throw new DimensionMismatchException(mainSetDimension, vecRelativeTolerance.length);
+338c340
+<     throws IntegratorException {
+---
+>     throws MathIllegalArgumentException {
+345,347c347,348
+<               throw new IntegratorException(
+<                       LocalizedFormats.MINIMAL_STEPSIZE_REACHED_DURING_INTEGRATION,
+<                       minStep, FastMath.abs(h));
+---
+>               throw new NumberIsTooSmallException(LocalizedFormats.MINIMAL_STEPSIZE_REACHED_DURING_INTEGRATION,
+>                                                   minStep, FastMath.abs(h), true);
+365c366
+<     throws MathUserException, IntegratorException;
+---
+>     throws MathIllegalStateException, MathIllegalArgumentException;

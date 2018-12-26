@@ -1,0 +1,167 @@
+15a16
+> 
+19a21,24
+> import java.text.MessageFormat;
+> import java.util.Locale;
+> import java.util.MissingResourceException;
+> import java.util.ResourceBundle;
+34c39,43
+<     private static final long serialVersionUID = -8594613561393443827L;
+---
+>     private static final long serialVersionUID = 5924076008552401454L;
+> 
+>     
+>     private static ResourceBundle cachedResources = null;
+>  
+35a45,48
+> 
+> 
+>     private final String pattern;
+> 
+39c52,53
+<     private static final boolean JDK_SUPPORTS_NESTED;
+---
+>     private final Object[] arguments;
+> 
+41,42c55,61
+<     static {
+<         boolean flag = false;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static String translate(String s, Locale locale) {
+44,47c63,75
+<             Throwable.class.getDeclaredMethod("getCause", new Class[0]);
+<             flag = true;
+<         } catch (NoSuchMethodException ex) {
+<             flag = false;
+---
+>             if ((cachedResources == null) || (! cachedResources.getLocale().equals(locale))) {
+>                 
+>                 cachedResources =
+>                     ResourceBundle.getBundle("org.apache.commons.math.MessagesResources", locale);
+>             }
+> 
+>             if (cachedResources.getLocale().getLanguage().equals(locale.getLanguage())) {
+>                 
+>                 return cachedResources.getString(s);
+>             }
+>             
+>         } catch (MissingResourceException mre) {
+>             
+49c77,81
+<         JDK_SUPPORTS_NESTED = flag;
+---
+> 
+>         
+>         
+>         return s;
+> 
+51c83
+<     
+---
+> 
+55,56c87,94
+<     private final Throwable rootCause;
+<     
+---
+> 
+> 
+> 
+> 
+>     private static String buildMessage(String pattern, Object[] arguments, Locale locale) {
+>         return (pattern == null) ? "" : new MessageFormat(translate(pattern, locale), locale).format(arguments);        
+>     }
+> 
+63c101,102
+<         this.rootCause = null;
+---
+>         this.pattern   = null;
+>         this.arguments = new Object[0];
+72,74c111,115
+<     public MathException(String msg) {
+<         super(msg);
+<         this.rootCause = null;
+---
+> 
+>     public MathException(String pattern, Object[] arguments) {
+>       super(buildMessage(pattern, arguments, Locale.US));
+>       this.pattern   = pattern;
+>       this.arguments = (arguments == null) ? new Object[0] : arguments.clone();
+76c117
+<     
+---
+> 
+85,86c126,128
+<         super((rootCause == null ? null : rootCause.getMessage()));
+<         this.rootCause = rootCause;
+---
+>         super(rootCause);
+>         this.pattern   = getMessage();
+>         this.arguments = new Object[0];
+97,99c139,144
+<     public MathException(String msg, Throwable rootCause) {
+<         super(msg);
+<         this.rootCause = rootCause;
+---
+> 
+> 
+>     public MathException(String pattern, Object[] arguments, Throwable rootCause) {
+>       super(buildMessage(pattern, arguments, Locale.US), rootCause);
+>       this.pattern   = pattern;
+>       this.arguments = (arguments == null) ? new Object[0] : arguments.clone();
+100a146
+> 
+101a148,155
+> 
+> 
+> 
+> 
+>     public String getPattern() {
+>         return pattern;
+>     }
+> 
+107,108c161,162
+<     public Throwable getCause() {
+<         return rootCause;
+---
+>     public Object[] getArguments() {
+>         return arguments.clone();
+109a164
+> 
+110a166,180
+> 
+> 
+> 
+> 
+> 
+> 
+>     public String getMessage(Locale locale) {
+>         return buildMessage(pattern, arguments, locale);
+>     }
+> 
+>     
+>     public String getLocalizedMessage() {
+>         return getMessage(Locale.getDefault());
+>     }
+> 
+129,143d198
+<         }
+<     }
+<     
+<     
+< 
+< 
+< 
+< 
+<     public void printStackTrace(PrintWriter out) {
+<         synchronized (out) {
+<             super.printStackTrace(out);
+<             if (rootCause != null && JDK_SUPPORTS_NESTED == false) {
+<                 out.print("Caused by: ");
+<                 rootCause.printStackTrace(out);
+<             }

@@ -1,0 +1,123 @@
+35c35
+< import java.util.Set;
+---
+> import java.util.Map.Entry;
+57c57,58
+<           "Id generator can only be one of consistent, inconsistent, or stable.");
+---
+>           "Id generator can only be one of " +
+>           "consistent, inconsistent, mapped or stable.");
+63a65,69
+>   static final DiagnosticType MISSING_NAME_MAP_FOR_GENERATOR =
+>       DiagnosticType.warning(
+>           "JSC_MISSING_NAME_MAP_FOR_GENERATOR",
+>           "The mapped id generator, does not have a renaming map supplied.");
+> 
+72a79,81
+>   public static final RenamingMap UNIQUE = new RenamingMap() {
+>     @Override public String get(String value) { return null; }};
+> 
+74c83
+<       AbstractCompiler compiler, Set<String> idGens,
+---
+>       AbstractCompiler compiler, Map<String, RenamingMap> idGens,
+88,91c97,109
+<       for (String gen : idGens) {
+<         nameGenerators.put(
+<             gen, createNameSupplier(RenameStrategy.INCONSISTENT, previousMap.get(gen)));
+<         idGeneratorMaps.put(gen, Maps.<String, String>newLinkedHashMap());
+---
+>       for (Entry<String, RenamingMap> gen : idGens.entrySet()) {
+>         String name = gen.getKey();
+>         RenamingMap map = gen.getValue();
+>         if (map == ReplaceIdGenerators.UNIQUE) {
+>           nameGenerators.put(name,
+>               createNameSupplier(
+>                   RenameStrategy.INCONSISTENT, previousMap.get(name)));
+>         } else {
+>           nameGenerators.put(name,
+>               createNameSupplier(
+>                   RenameStrategy.MAPPED, map));
+>         }
+>         idGeneratorMaps.put(name, Maps.<String, String>newLinkedHashMap());
+96c114
+<   private enum RenameStrategy {
+---
+>   enum RenameStrategy {
+98a117
+>     MAPPED,
+167a187,204
+>   private static class MappedNameSupplier implements NameSupplier {
+>     private final RenamingMap map;
+> 
+>     MappedNameSupplier(RenamingMap map) {
+>       this.map = map;
+>     }
+> 
+>     @Override
+>     public String getName(String id, String name) {
+>       return map.get(name);
+>     }
+> 
+>     @Override
+>     public RenameStrategy getRenameStrategy() {
+>       return RenameStrategy.MAPPED;
+>     }
+>   }
+> 
+181a219,224
+>   private NameSupplier createNameSupplier(
+>       RenameStrategy renameStrategy, RenamingMap mappings) {
+>     Preconditions.checkState(renameStrategy == RenameStrategy.MAPPED);
+>     return new MappedNameSupplier(mappings);
+>   }
+> 
+194c237,238
+<           (doc.isStableIdGenerator() ? 1 : 0);
+---
+>           (doc.isStableIdGenerator() ? 1 : 0) +
+>           (doc.isMappedIdGenerator() ? 1 : 0);
+216c260,261
+<             name, createNameSupplier(RenameStrategy.CONSISTENT, previousMap.get(name)));
+---
+>             name, createNameSupplier(
+>                 RenameStrategy.CONSISTENT, previousMap.get(name)));
+219,220c264,266
+<             name, createNameSupplier(RenameStrategy.STABLE, previousMap.get(name)));
+<       } else {
+---
+>             name, createNameSupplier(
+>                 RenameStrategy.STABLE, previousMap.get(name)));
+>       } else if (doc.isIdGenerator()) {
+222c268,280
+<             name, createNameSupplier(RenameStrategy.INCONSISTENT, previousMap.get(name)));
+---
+>             name, createNameSupplier(
+>                 RenameStrategy.INCONSISTENT, previousMap.get(name)));
+>       } else if (doc.isMappedIdGenerator()) {
+>         NameSupplier supplier = nameGenerators.get(name);
+>         if (supplier == null
+>             || supplier.getRenameStrategy() != RenameStrategy.MAPPED) {
+>           compiler.report(t.makeError(n, MISSING_NAME_MAP_FOR_GENERATOR));
+>           
+>           
+>           return;
+>         }
+>       } else {
+>         throw new IllegalStateException("unexpected");
+269c327,328
+<         String rename = getObfuscatedName(arg, callName, nameGenerator, arg.getString());
+---
+>         String rename = getObfuscatedName(
+>             arg, callName, nameGenerator, arg.getString());
+274c333,334
+<           String rename = getObfuscatedName(key, callName, nameGenerator, key.getString());
+---
+>           String rename = getObfuscatedName(
+>               key, callName, nameGenerator, key.getString());
+286,287c346,347
+<     private String getObfuscatedName(Node id, String callName, NameSupplier nameGenerator,
+<         String name) {
+---
+>     private String getObfuscatedName(
+>         Node id, String callName, NameSupplier nameGenerator, String name) {

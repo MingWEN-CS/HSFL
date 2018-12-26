@@ -1,0 +1,951 @@
+17a18,23
+> import java.util.Collection;
+> 
+> import org.joda.time.DateTimeFieldType;
+> import org.joda.time.DateTimeZone;
+> 
+> 
+45d50
+< public class ISODateTimeFormat {
+47,48d51
+<     
+<     private static final ISODateTimeFormat INSTANCE = new ISODateTimeFormat();
+50d52
+<     
+55,57c57,58
+<     public static ISODateTimeFormat getInstance() {
+<         return INSTANCE;
+<     }
+---
+> 
+> public class ISODateTimeFormat {
+60c61
+<     private transient DateTimeFormatter
+---
+>     private static DateTimeFormatter
+107a109,112
+>         od,  
+>         odt, 
+>         odtx, 
+> 
+115a121,124
+>         bod,  
+>         bodt, 
+>         bodtx, 
+> 
+118c127
+<         bwdtx; 
+---
+>         bwdtx, 
+120d128
+<     private transient DateTimeParser
+123a132
+>         ldp, 
+125c134,519
+<         dtp; 
+---
+>         ltp, 
+>         dtp, 
+>         dotp, 
+>         ldotp; 
+> 
+>     
+> 
+> 
+> 
+> 
+>     protected ISODateTimeFormat() {
+>         super();
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter forFields(
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         if (fields == null || fields.size() == 0) {
+>             throw new IllegalArgumentException("The fields must not be null or empty");
+>         }
+>         int inputSize = fields.size();
+>         boolean reducedPrec = false;
+>         DateTimeFormatterBuilder bld = new DateTimeFormatterBuilder();
+>         
+>         if (fields.contains(DateTimeFieldType.monthOfYear())) {
+>             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.dayOfYear())) {
+>             reducedPrec = dateByOrdinal(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.weekOfWeekyear())) {
+>             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.dayOfMonth())) {
+>             reducedPrec = dateByMonth(bld, fields, extended, strictISO);
+>         } else if (fields.contains(DateTimeFieldType.dayOfWeek())) {
+>             reducedPrec = dateByWeek(bld, fields, extended, strictISO);
+>         } else if (fields.remove(DateTimeFieldType.year())) {
+>             bld.append(yearElement());
+>             reducedPrec = true;
+>         } else if (fields.remove(DateTimeFieldType.weekyear())) {
+>             bld.append(weekyearElement());
+>             reducedPrec = true;
+>         }
+>         boolean datePresent = (fields.size() < inputSize);
+>         
+>         
+>         time(bld, fields, extended, strictISO, reducedPrec, datePresent);
+>         
+>         
+>         if (bld.canBuildFormatter() == false) {
+>             throw new IllegalArgumentException("No valid format for fields: " + fields);
+>         }
+>         return bld.toFormatter();
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static boolean dateByMonth(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         boolean reducedPrec = false;
+>         if (fields.remove(DateTimeFieldType.year())) {
+>             bld.append(yearElement());
+>             if (fields.remove(DateTimeFieldType.monthOfYear())) {
+>                 if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>                     
+>                     appendSeparator(bld, extended);
+>                     bld.appendMonthOfYear(2);
+>                     appendSeparator(bld, extended);
+>                     bld.appendDayOfMonth(2);
+>                 } else {
+>                     
+>                     bld.appendLiteral('-');
+>                     bld.appendMonthOfYear(2);
+>                     reducedPrec = true;
+>                 }
+>             } else {
+>                 if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>                     
+>                     checkNotStrictISO(fields, strictISO);
+>                     bld.appendLiteral('-');
+>                     bld.appendLiteral('-');
+>                     bld.appendDayOfMonth(2);
+>                 } else {
+>                     
+>                     reducedPrec = true;
+>                 }
+>             }
+>             
+>         } else if (fields.remove(DateTimeFieldType.monthOfYear())) {
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('-');
+>             bld.appendMonthOfYear(2);
+>             if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>                 
+>                 appendSeparator(bld, extended);
+>                 bld.appendDayOfMonth(2);
+>             } else {
+>                 
+>                 reducedPrec = true;
+>             }
+>         } else if (fields.remove(DateTimeFieldType.dayOfMonth())) {
+>             
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('-');
+>             bld.appendDayOfMonth(2);
+>         }
+>         return reducedPrec;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static boolean dateByOrdinal(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         boolean reducedPrec = false;
+>         if (fields.remove(DateTimeFieldType.year())) {
+>             bld.append(yearElement());
+>             if (fields.remove(DateTimeFieldType.dayOfYear())) {
+>                 
+>                 appendSeparator(bld, extended);
+>                 bld.appendDayOfYear(3);
+>             } else {
+>                 
+>                 reducedPrec = true;
+>             }
+>             
+>         } else if (fields.remove(DateTimeFieldType.dayOfYear())) {
+>             
+>             bld.appendLiteral('-');
+>             bld.appendDayOfYear(3);
+>         }
+>         return reducedPrec;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static boolean dateByWeek(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO) {
+>         
+>         boolean reducedPrec = false;
+>         if (fields.remove(DateTimeFieldType.weekyear())) {
+>             bld.append(weekyearElement());
+>             if (fields.remove(DateTimeFieldType.weekOfWeekyear())) {
+>                 appendSeparator(bld, extended);
+>                 bld.appendLiteral('W');
+>                 bld.appendWeekOfWeekyear(2);
+>                 if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>                     
+>                     appendSeparator(bld, extended);
+>                     bld.appendDayOfWeek(1);
+>                 } else {
+>                     
+>                     reducedPrec = true;
+>                 }
+>             } else {
+>                 if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>                     
+>                     checkNotStrictISO(fields, strictISO);
+>                     appendSeparator(bld, extended);
+>                     bld.appendLiteral('W');
+>                     bld.appendLiteral('-');
+>                     bld.appendDayOfWeek(1);
+>                 } else {
+>                     
+>                     reducedPrec = true;
+>                 }
+>             }
+>             
+>         } else if (fields.remove(DateTimeFieldType.weekOfWeekyear())) {
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('W');
+>             bld.appendWeekOfWeekyear(2);
+>             if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>                 
+>                 appendSeparator(bld, extended);
+>                 bld.appendDayOfWeek(1);
+>             } else {
+>                 
+>                 reducedPrec = true;
+>             }
+>         } else if (fields.remove(DateTimeFieldType.dayOfWeek())) {
+>             
+>             bld.appendLiteral('-');
+>             bld.appendLiteral('W');
+>             bld.appendLiteral('-');
+>             bld.appendDayOfWeek(1);
+>         }
+>         return reducedPrec;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void time(
+>         DateTimeFormatterBuilder bld,
+>         Collection fields,
+>         boolean extended,
+>         boolean strictISO,
+>         boolean reducedPrec,
+>         boolean datePresent) {
+>         
+>         boolean hour = fields.remove(DateTimeFieldType.hourOfDay());
+>         boolean minute = fields.remove(DateTimeFieldType.minuteOfHour());
+>         boolean second = fields.remove(DateTimeFieldType.secondOfMinute());
+>         boolean milli = fields.remove(DateTimeFieldType.millisOfSecond());
+>         if (!hour && !minute && !second && !milli) {
+>             return;
+>         }
+>         if (hour || minute || second || milli) {
+>             if (strictISO && reducedPrec) {
+>                 throw new IllegalArgumentException("No valid ISO8601 format for fields because Date was reduced precision: " + fields);
+>             }
+>             if (datePresent) {
+>                 bld.appendLiteral('T');
+>             }
+>         }
+>         if (hour && minute && second || (hour && !second && !milli)) {
+>             
+>         } else {
+>             if (strictISO && datePresent) {
+>                 throw new IllegalArgumentException("No valid ISO8601 format for fields because Time was truncated: " + fields);
+>             }
+>             if (!hour && (minute && second || (minute && !milli) || second)) {
+>                 
+>             } else {
+>                 if (strictISO) {
+>                     throw new IllegalArgumentException("No valid ISO8601 format for fields: " + fields);
+>                 }
+>             }
+>         }
+>         if (hour) {
+>             bld.appendHourOfDay(2);
+>         } else if (minute || second || milli) {
+>             bld.appendLiteral('-');
+>         }
+>         if (extended && hour && minute) {
+>             bld.appendLiteral(':');
+>         }
+>         if (minute) {
+>             bld.appendMinuteOfHour(2);
+>         } else if (second || milli) {
+>             bld.appendLiteral('-');
+>         }
+>         if (extended && minute && second) {
+>             bld.appendLiteral(':');
+>         }
+>         if (second) {
+>             bld.appendSecondOfMinute(2);
+>         } else if (milli) {
+>             bld.appendLiteral('-');
+>         }
+>         if (milli) {
+>             bld.appendLiteral('.');
+>             bld.appendMillisOfSecond(3);
+>         }
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private static void checkNotStrictISO(Collection fields, boolean strictISO) {
+>         if (strictISO) {
+>             throw new IllegalArgumentException("No valid ISO8601 format for fields: " + fields);
+>         }
+>     }
+132c526,532
+<     private ISODateTimeFormat() {
+---
+> 
+> 
+> 
+>     private static void appendSeparator(DateTimeFormatterBuilder bld, boolean extended) {
+>         if (extended) {
+>             bld.appendLiteral('-');
+>         }
+148c548
+<     public DateTimeParser dateParser() {
+---
+>     public static DateTimeFormatter dateParser() {
+149a550,552
+>             DateTimeParser tOffset = new DateTimeFormatterBuilder()
+>                 .appendLiteral('T')
+>                 .append(offsetElement()).toParser();
+152,157c555,556
+<                 .appendOptional
+<                 (new DateTimeFormatterBuilder()
+<                  .appendLiteral('T')
+<                  .append(offsetElement())
+<                  .toParser())
+<                 .toParser();
+---
+>                 .appendOptional(tOffset)
+>                 .toFormatter();
+172c571,591
+<     public DateTimeParser dateElementParser() {
+---
+> 
+> 
+> 
+>     public static DateTimeFormatter localDateParser() {
+>         if (ldp == null) {
+>             ldp = dateElementParser().withZone(DateTimeZone.UTC);
+>         }
+>         return ldp;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter dateElementParser() {
+181c600
+<                      .appendOptional(dayOfMonthElement())
+---
+>                      .appendOptional(dayOfMonthElement().getParser())
+187c606
+<                     .appendOptional(dayOfWeekElement())
+---
+>                     .appendOptional(dayOfWeekElement().getParser())
+194c613
+<                 .toParser();
+---
+>                 .toFormatter();
+211c630
+<     public DateTimeParser timeParser() {
+---
+>     public static DateTimeFormatter timeParser() {
+214,217c633
+<                 .appendOptional
+<                 (new DateTimeFormatterBuilder()
+<                  .appendLiteral('T')
+<                  .toParser())
+---
+>                 .appendOptional(literalTElement().getParser())
+219,220c635,636
+<                 .appendOptional(offsetElement())
+<                 .toParser();
+---
+>                 .appendOptional(offsetElement().getParser())
+>                 .toFormatter();
+235c651,675
+<     public DateTimeParser timeElementParser() {
+---
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter localTimeParser() {
+>         if (ltp == null) {
+>             ltp = new DateTimeFormatterBuilder()
+>                 .appendOptional(literalTElement().getParser())
+>                 .append(timeElementParser())
+>                 .toFormatter().withZone(DateTimeZone.UTC);
+>         }
+>         return ltp;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter timeElementParser() {
+283c723
+<                 .toParser();
+---
+>                 .toFormatter();
+305c745,746
+<     public DateTimeParser dateTimeParser() {
+---
+> 
+>     public static DateTimeFormatter dateTimeParser() {
+312c753
+<                 .appendOptional(offsetElement())
+---
+>                 .appendOptional(offsetElement().getParser())
+314d754
+< 
+316,330c756,757
+<                 .append(null, new DateTimeParser[] {
+<                     time,
+<                     new DateTimeFormatterBuilder()
+<                     .append(dateElementParser())
+<                     .append(null, new DateTimeParser[] {
+<                         time,
+<                         new DateTimeFormatterBuilder()
+<                         .appendLiteral('T')
+<                         .append(offsetElement())
+<                         .toParser(),
+<                         null
+<                     })
+<                     .toParser()
+<                 })
+<                 .toParser();
+---
+>                 .append(null, new DateTimeParser[] {time, dateOptionalTimeParser().getParser()})
+>                 .toFormatter();
+335a763,827
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter dateOptionalTimeParser() {
+>         if (dotp == null) {
+>             DateTimeParser timeOrOffset = new DateTimeFormatterBuilder()
+>                 .appendLiteral('T')
+>                 .appendOptional(timeElementParser().getParser())
+>                 .appendOptional(offsetElement().getParser())
+>                 .toParser();
+>             dotp = new DateTimeFormatterBuilder()
+>                 .append(dateElementParser())
+>                 .appendOptional(timeOrOffset)
+>                 .toFormatter();
+>         }
+>         return dotp;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter localDateOptionalTimeParser() {
+>         if (ldotp == null) {
+>             DateTimeParser time = new DateTimeFormatterBuilder()
+>                 .appendLiteral('T')
+>                 .append(timeElementParser())
+>                 .toParser();
+>             ldotp = new DateTimeFormatterBuilder()
+>                 .append(dateElementParser())
+>                 .appendOptional(time)
+>                 .toFormatter().withZone(DateTimeZone.UTC);
+>         }
+>         return ldotp;
+>     }
+> 
+>     
+342c834
+<     public DateTimeFormatter date() {
+---
+>     public static DateTimeFormatter date() {
+354c846
+<     public DateTimeFormatter time() {
+---
+>     public static DateTimeFormatter time() {
+371c863
+<     public DateTimeFormatter timeNoMillis() {
+---
+>     public static DateTimeFormatter timeNoMillis() {
+389c881
+<     public DateTimeFormatter tTime() {
+---
+>     public static DateTimeFormatter tTime() {
+407c899
+<     public DateTimeFormatter tTimeNoMillis() {
+---
+>     public static DateTimeFormatter tTimeNoMillis() {
+424c916
+<     public DateTimeFormatter dateTime() {
+---
+>     public static DateTimeFormatter dateTime() {
+441c933
+<     public DateTimeFormatter dateTimeNoMillis() {
+---
+>     public static DateTimeFormatter dateTimeNoMillis() {
+457c949,1002
+<     public DateTimeFormatter weekDate() {
+---
+> 
+>     public static DateTimeFormatter ordinalDate() {
+>         if (od == null) {
+>             od = new DateTimeFormatterBuilder()
+>                 .append(yearElement())
+>                 .append(dayOfYearElement())
+>                 .toFormatter();
+>         }
+>         return od;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter ordinalDateTime() {
+>         if (odt == null) {
+>             odt = new DateTimeFormatterBuilder()
+>                 .append(ordinalDate())
+>                 .append(tTime())
+>                 .toFormatter();
+>         }
+>         return odt;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter ordinalDateTimeNoMillis() {
+>         if (odtx == null) {
+>             odtx = new DateTimeFormatterBuilder()
+>                 .append(ordinalDate())
+>                 .append(tTimeNoMillis())
+>                 .toFormatter();
+>         }
+>         return odtx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter weekDate() {
+468c1013
+<     public DateTimeFormatter weekDateTime() {
+---
+>     public static DateTimeFormatter weekDateTime() {
+485c1030
+<     public DateTimeFormatter weekDateTimeNoMillis() {
+---
+>     public static DateTimeFormatter weekDateTimeNoMillis() {
+502c1047
+<     public DateTimeFormatter basicDate() {
+---
+>     public static DateTimeFormatter basicDate() {
+521c1066
+<     public DateTimeFormatter basicTime() {
+---
+>     public static DateTimeFormatter basicTime() {
+542c1087
+<     public DateTimeFormatter basicTimeNoMillis() {
+---
+>     public static DateTimeFormatter basicTimeNoMillis() {
+562c1107
+<     public DateTimeFormatter basicTTime() {
+---
+>     public static DateTimeFormatter basicTTime() {
+580c1125
+<     public DateTimeFormatter basicTTimeNoMillis() {
+---
+>     public static DateTimeFormatter basicTTimeNoMillis() {
+597c1142
+<     public DateTimeFormatter basicDateTime() {
+---
+>     public static DateTimeFormatter basicDateTime() {
+614c1159
+<     public DateTimeFormatter basicDateTimeNoMillis() {
+---
+>     public static DateTimeFormatter basicDateTimeNoMillis() {
+630c1175,1228
+<     public DateTimeFormatter basicWeekDate() {
+---
+> 
+>     public static DateTimeFormatter basicOrdinalDate() {
+>         if (bod == null) {
+>             bod = new DateTimeFormatterBuilder()
+>                 .appendYear(4, 4)
+>                 .appendDayOfYear(3)
+>                 .toFormatter();
+>         }
+>         return bod;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter basicOrdinalDateTime() {
+>         if (bodt == null) {
+>             bodt = new DateTimeFormatterBuilder()
+>                 .append(basicOrdinalDate())
+>                 .append(basicTTime())
+>                 .toFormatter();
+>         }
+>         return bodt;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter basicOrdinalDateTimeNoMillis() {
+>         if (bodtx == null) {
+>             bodtx = new DateTimeFormatterBuilder()
+>                 .append(basicOrdinalDate())
+>                 .append(basicTTimeNoMillis())
+>                 .toFormatter();
+>         }
+>         return bodtx;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     public static DateTimeFormatter basicWeekDate() {
+649c1247
+<     public DateTimeFormatter basicWeekDateTime() {
+---
+>     public static DateTimeFormatter basicWeekDateTime() {
+666c1264
+<     public DateTimeFormatter basicWeekDateTimeNoMillis() {
+---
+>     public static DateTimeFormatter basicWeekDateTimeNoMillis() {
+682c1280
+<     public DateTimeFormatter year() {
+---
+>     public static DateTimeFormatter year() {
+692c1290
+<     public DateTimeFormatter yearMonth() {
+---
+>     public static DateTimeFormatter yearMonth() {
+708c1306
+<     public DateTimeFormatter yearMonthDay() {
+---
+>     public static DateTimeFormatter yearMonthDay() {
+724c1322
+<     public DateTimeFormatter weekyear() {
+---
+>     public static DateTimeFormatter weekyear() {
+734c1332
+<     public DateTimeFormatter weekyearWeek() {
+---
+>     public static DateTimeFormatter weekyearWeek() {
+750c1348
+<     public DateTimeFormatter weekyearWeekDay() {
+---
+>     public static DateTimeFormatter weekyearWeekDay() {
+766c1364
+<     public DateTimeFormatter hour() {
+---
+>     public static DateTimeFormatter hour() {
+776c1374
+<     public DateTimeFormatter hourMinute() {
+---
+>     public static DateTimeFormatter hourMinute() {
+792c1390
+<     public DateTimeFormatter hourMinuteSecond() {
+---
+>     public static DateTimeFormatter hourMinuteSecond() {
+810c1408
+<     public DateTimeFormatter hourMinuteSecondMillis() {
+---
+>     public static DateTimeFormatter hourMinuteSecondMillis() {
+829c1427
+<     public DateTimeFormatter hourMinuteSecondFraction() {
+---
+>     public static DateTimeFormatter hourMinuteSecondFraction() {
+847c1445
+<     public DateTimeFormatter dateHour() {
+---
+>     public static DateTimeFormatter dateHour() {
+864c1462
+<     public DateTimeFormatter dateHourMinute() {
+---
+>     public static DateTimeFormatter dateHourMinute() {
+882c1480
+<     public DateTimeFormatter dateHourMinuteSecond() {
+---
+>     public static DateTimeFormatter dateHourMinuteSecond() {
+900c1498
+<     public DateTimeFormatter dateHourMinuteSecondMillis() {
+---
+>     public static DateTimeFormatter dateHourMinuteSecondMillis() {
+918c1516
+<     public DateTimeFormatter dateHourMinuteSecondFraction() {
+---
+>     public static DateTimeFormatter dateHourMinuteSecondFraction() {
+930c1528
+<     private DateTimeFormatter yearElement() {
+---
+>     private static DateTimeFormatter yearElement() {
+939c1537
+<     private DateTimeFormatter monthElement() {
+---
+>     private static DateTimeFormatter monthElement() {
+949c1547
+<     private DateTimeFormatter dayOfMonthElement() {
+---
+>     private static DateTimeFormatter dayOfMonthElement() {
+959c1557
+<     private DateTimeFormatter weekyearElement() {
+---
+>     private static DateTimeFormatter weekyearElement() {
+968c1566
+<     private DateTimeFormatter weekElement() {
+---
+>     private static DateTimeFormatter weekElement() {
+978c1576
+<     private DateTimeFormatter dayOfWeekElement() {
+---
+>     private static DateTimeFormatter dayOfWeekElement() {
+988c1586
+<     private DateTimeFormatter dayOfYearElement() {
+---
+>     private static DateTimeFormatter dayOfYearElement() {
+998c1596
+<     private DateTimeFormatter literalTElement() {
+---
+>     private static DateTimeFormatter literalTElement() {
+1007c1605
+<     private DateTimeFormatter hourElement() {
+---
+>     private static DateTimeFormatter hourElement() {
+1016c1614
+<     private DateTimeFormatter minuteElement() {
+---
+>     private static DateTimeFormatter minuteElement() {
+1026c1624
+<     private DateTimeFormatter secondElement() {
+---
+>     private static DateTimeFormatter secondElement() {
+1036c1634
+<     private DateTimeFormatter millisElement() {
+---
+>     private static DateTimeFormatter millisElement() {
+1046c1644
+<     private DateTimeFormatter fractionElement() {
+---
+>     private static DateTimeFormatter fractionElement() {
+1058c1656
+<     private DateTimeFormatter offsetElement() {
+---
+>     private static DateTimeFormatter offsetElement() {
+1066c1664
+<     
+---
+> 

@@ -1,0 +1,84 @@
+25c25
+< import com.google.javascript.jscomp.NodeTraversal.AbstractShallowStatementCallback;
+---
+> import com.google.javascript.jscomp.NodeTraversal.Callback;
+72a73,74
+>   private final boolean inlineGlobalFunctions;
+>   private final boolean inlineLocalFunctions;
+75a78,80
+>       boolean inlineGlobalFunctions,
+>       boolean inlineLocalFunctions,
+>       boolean inlineAnonymousFunctionExpressions,
+77,78c82
+<       boolean enableExpressionDecomposition,
+<       boolean inlineAnonymousFunctionExpressions) {
+---
+>       boolean enableExpressionDecomposition) {
+82c86,88
+<     this.blockFunctionInliningEnabled = blockFunctionInliningEnabled;
+---
+> 
+>     this.inlineGlobalFunctions = inlineGlobalFunctions;
+>     this.inlineLocalFunctions = inlineLocalFunctions;
+84c90,92
+<         inlineAnonymousFunctionExpressions;
+---
+>       inlineAnonymousFunctionExpressions;
+>     this.blockFunctionInliningEnabled = blockFunctionInliningEnabled;
+> 
+105,109d112
+<     
+<     
+<     if (inlineAnonymousFunctionExpressions) {
+<       NodeTraversal.traverse(compiler, root, new FindAnonymousFunctionCalls());
+<     }
+146,147c149,161
+<   private class FindCandidateFunctions
+<       extends AbstractShallowStatementCallback {
+---
+>   private class FindCandidateFunctions implements Callback {
+>     private int callsSeen = 0;
+> 
+>     @Override
+>     public boolean shouldTraverse(
+>         NodeTraversal nodeTraversal, Node n, Node parent) {
+>       
+>       
+>       return inlineLocalFunctions || inlineAnonymousFunctionExpressions
+>          || parent == null || NodeUtil.isControlStructure(parent)
+>          || NodeUtil.isStatementBlock(parent);
+>     }
+> 
+149c163,177
+<       switch (n.getType()) {
+---
+>       if ((t.inGlobalScope() && inlineGlobalFunctions)
+>           || (!t.inGlobalScope() && inlineLocalFunctions)) {
+>         findNamedFunctions(t, n, parent);
+>       } 
+>       
+>       if (inlineAnonymousFunctionExpressions) {
+>         findAnonymousFunctionExpressions(t, n);
+>       }
+>     }
+> 
+>     public void findNamedFunctions(NodeTraversal t, Node n, Node parent) {
+>       if (!NodeUtil.isStatement(n)) {
+>         
+>         return;
+>       }
+150a179
+>       switch (n.getType()) {
+179d207
+<   }
+181c209
+<   
+---
+>     
+187,190c215
+<   private class FindAnonymousFunctionCalls
+<       extends AbstractPostOrderCallback {
+<     private int callsSeen = 0;
+<     public void visit(NodeTraversal t, Node n, Node parent) {
+---
+>     public void findAnonymousFunctionExpressions(NodeTraversal t, Node n) {

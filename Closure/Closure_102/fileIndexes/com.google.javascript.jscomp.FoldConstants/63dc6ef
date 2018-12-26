@@ -1,0 +1,2023 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
+import com.google.javascript.jscomp.NodeTraversal.AbstractPostOrderCallback;
+import com.google.javascript.jscomp.NodeTraversal.AbstractShallowCallback;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.util.List;
+import java.util.regex.Pattern;
+
+
+
+
+
+
+
+
+class FoldConstants extends AbstractPostOrderCallback
+    implements CompilerPass {
+
+  static final DiagnosticType DIVIDE_BY_0_ERROR = DiagnosticType.error(
+      "JSC_DIVIDE_BY_0_ERROR",
+      "Divide by 0");
+
+  static final DiagnosticType INVALID_GETELEM_INDEX_ERROR =
+      DiagnosticType.error(
+          "JSC_INVALID_GETELEM_INDEX_ERROR",
+          "Array index not integer: {0}");
+
+  static final DiagnosticType INDEX_OUT_OF_BOUNDS_ERROR =
+      DiagnosticType.error(
+          "JSC_INDEX_OUT_OF_BOUNDS_ERROR",
+          "Array index out of bounds: {0}");
+
+  static final DiagnosticType NEGATING_A_NON_NUMBER_ERROR =
+      DiagnosticType.error(
+          "JSC_NEGATING_A_NON_NUMBER_ERROR",
+          "Can't negate non-numeric value: {0}");
+
+  static final DiagnosticType INVALID_REGULAR_EXPRESSION_FLAGS =
+      DiagnosticType.error(
+          "JSC_INVALID_REGULAR_EXPRESSION_FLAGS",
+          "Invalid flags to RegExp constructor: {0}");
+
+  static final DiagnosticType BITWISE_OPERAND_OUT_OF_RANGE =
+      DiagnosticType.error(
+          "JSC_BITWISE_OPERAND_OUT_OF_RANGE",
+          "Operand out of range, bitwise operation will lose information: {0}");
+
+  static final DiagnosticType SHIFT_AMOUNT_OUT_OF_BOUNDS = DiagnosticType.error(
+      "JSC_SHIFT_AMOUNT_OUT_OF_BOUNDS",
+      "Shift amount out of bounds: {0}");
+
+  static final DiagnosticType FRACTIONAL_BITWISE_OPERAND = DiagnosticType.error(
+      "JSC_FRACTIONAL_BITWISE_OPERAND",
+      "Fractional bitwise operand: {0}");
+
+  private static final int AND_PRECEDENCE = NodeUtil.precedence(Token.AND);
+  private static final int OR_PRECEDENCE = NodeUtil.precedence(Token.OR);
+
+  private final AbstractCompiler compiler;
+
+  FoldConstants(AbstractCompiler compiler) {
+    this.compiler = compiler;
+  }
+
+  public void process(Node externs, Node jsRoot) {
+    NodeTraversal.traverse(compiler, jsRoot, this);
+  }
+
+  public void visit(NodeTraversal t, Node n, Node parent) {
+    int type = n.getType();
+
+    if (type == Token.BLOCK) {
+      tryFoldBlock(t, n, parent);
+      return;
+    }
+
+    Node left = n.getFirstChild();
+    if (left == null) {
+      return;
+    }
+
+    if (type == Token.TYPEOF && NodeUtil.isLiteralValue(left)) {
+      String newValue = null;
+
+      switch (left.getType()) {
+        case Token.STRING:
+          newValue = "string";
+          break;
+        case Token.NUMBER:
+          newValue = "number";
+          break;
+        case Token.TRUE:
+        case Token.FALSE:
+          newValue = "boolean";
+          break;
+        case Token.NULL:
+        case Token.OBJECTLIT:
+        case Token.ARRAYLIT:
+          newValue = "object";
+          break;
+        case Token.NAME:
+          
+          
+          if ("undefined".equals(left.getString())) {
+            newValue = "undefined";
+          }
+          break;
+      }
+
+      if (newValue != null) {
+        parent.replaceChild(n, Node.newString(newValue));
+        t.getCompiler().reportCodeChange();
+      }
+
+      return;
+    }
+
+    if (type == Token.NOT ||
+        type == Token.NEG ||
+        type == Token.BITNOT) {
+        Preconditions.checkState(n.hasOneChild());
+
+        if (NodeUtil.isExpressionNode(parent)) {
+          
+          
+          parent.replaceChild(n, n.removeFirstChild());
+          t.getCompiler().reportCodeChange();
+          return;
+        }
+
+        
+        if (type == Token.NOT && tryMinimizeNot(t, n, parent)) {
+          return;
+        }
+
+        if (!NodeUtil.isLiteralValue(left)) {
+          return;
+        }
+
+        switch (type) {
+          case Token.NOT:
+            int result = NodeUtil.getBooleanValue(left) ? Token.FALSE :
+                         Token.TRUE;
+            parent.replaceChild(n, new Node(result));
+            t.getCompiler().reportCodeChange();
+            break;
+
+          case Token.NEG:
+            try {
+              if (left.getType() == Token.NAME) {
+                if (left.getString().equals("Infinity")) {
+                  
+                  return;
+                } else if (left.getString().equals("NaN")) {
+                  
+                  n.removeChild(left);
+                  parent.replaceChild(n, left);
+                  t.getCompiler().reportCodeChange();
+                  return;
+                }
+              }
+
+              double negNum = -left.getDouble();
+              parent.replaceChild(n, Node.newNumber(negNum));
+              t.getCompiler().reportCodeChange();
+            } catch (UnsupportedOperationException ex) {
+              
+              
+              error(t, NEGATING_A_NON_NUMBER_ERROR, left);
+            }
+            break;
+
+          case Token.BITNOT:
+            try {
+              double val = left.getDouble();
+              if (val >= Integer.MIN_VALUE && val <= Integer.MAX_VALUE) {
+                int intVal = (int) val;
+                if (intVal == val) {
+                  parent.replaceChild(n, Node.newNumber(~intVal));
+                  t.getCompiler().reportCodeChange();
+                } else {
+                  error(t, FRACTIONAL_BITWISE_OPERAND, left);
+                }
+              } else {
+                error(t, BITWISE_OPERAND_OUT_OF_RANGE, left);
+              }
+            } catch (UnsupportedOperationException ex) {
+              
+              
+              error(t, NEGATING_A_NON_NUMBER_ERROR, left);
+            }
+            break;
+        }
+        return;
+    } else if (type == Token.NEW) {
+      if (Token.NAME == left.getType()) {
+        String className = left.getString();
+        if ("RegExp".equals(className)) {
+          tryFoldRegularExpressionConstructor(t, n, parent);
+        } else if (left.getNext() == null) {
+          if ("Array".equals(className)) {
+            tryFoldLiteralConstructor(
+                t, n, parent, className, Token.ARRAYLIT);
+          } else if ("Object".equals(className)) {
+            tryFoldLiteralConstructor(
+                t, n, parent, className, Token.OBJECTLIT);
+          }
+        }
+      }
+    }
+
+    if (type == Token.EXPR_RESULT) {
+      tryMinimizeCondition(t, left, n);
+      return;
+    }
+
+    if (type == Token.RETURN) {
+      tryReduceReturn(t, n);
+      return;
+    }
+
+    Node right = left.getNext();
+    if (right == null) {
+      return;
+    }
+
+    
+    
+    if (type == Token.INSTANCEOF
+        && NodeUtil.isLiteralValue(left)
+        && !NodeUtil.mayHaveSideEffects(right)) {
+      if (NodeUtil.isImmutableValue(left)) {
+        
+        parent.replaceChild(n, new Node(Token.FALSE));
+        t.getCompiler().reportCodeChange();
+        return;
+      }
+
+      if (right.getType() == Token.NAME
+          && "Object".equals(right.getString())) {
+        parent.replaceChild(n, new Node(Token.TRUE));
+        t.getCompiler().reportCodeChange();
+        return;
+      }
+    }
+
+    if (type == Token.IF || type == Token.HOOK) {
+      tryMinimizeCondition(t, n.getFirstChild(), n);
+      boolean changes = tryFoldHookIf(t, n, parent);
+
+      
+      
+      if (type == Token.IF && !changes) {
+        tryMinimizeIf(t, n, parent);
+      }
+      return;
+    }
+
+    if (type == Token.DO) {
+      tryMinimizeCondition(t, NodeUtil.getConditionExpression(n), n);
+      tryFoldDo(t, n, parent);
+      return;
+    }
+
+    if (type == Token.WHILE) {
+      tryMinimizeCondition(t, NodeUtil.getConditionExpression(n), n);
+      tryFoldWhile(t, n, parent);
+      return;
+    }
+
+    if (type == Token.FOR) {
+      Node condition = NodeUtil.getConditionExpression(n);
+      if (condition != null) {
+        tryMinimizeCondition(t, condition, n);
+        
+        condition = NodeUtil.getConditionExpression(n);
+        this.tryFoldForCondition(condition, n);
+      }
+        
+      tryFoldFor(t, n, parent);
+      return;
+    }
+
+    if (type == Token.AND ||
+        type == Token.OR) {
+      tryFoldAndOr(t, n, left, right, parent);
+      return;
+    }
+
+    if (type == Token.BITOR ||
+        type == Token.BITAND) {
+      tryFoldBitAndOr(t, n, left, right, parent);
+      return;
+    }
+
+    if (type == Token.LSH ||
+        type == Token.RSH ||
+        type == Token.URSH) {
+      tryFoldShift(t, n, left, right, parent);
+      return;
+    }
+
+    if (type == Token.GETPROP) {
+      tryFoldGetProp(t, n, left, right, parent);
+      return;
+    }
+
+    if (type == Token.CALL) {
+      tryFoldStringJoin(t, n, left, right, parent);
+      tryFoldStringIndexOf(t, n, left, right, parent);
+      return;
+    }
+
+    if (type == Token.ASSIGN) {
+      tryFoldAssign(t, n, left, right);
+    }
+
+    if (!NodeUtil.isLiteralValue(left) ||
+        !NodeUtil.isLiteralValue(right)) {
+
+      if (type == Token.ADD)
+        tryFoldLeftChildAdd(t, n, left, right, parent);
+
+      if (type == Token.LT ||
+          type == Token.GT) {
+        tryFoldComparison(t, n, left, right, parent);
+      }
+
+      return; 
+    }
+
+    if (type == Token.ADD) {
+      tryFoldAdd(t, n, left, right, parent);
+      return;
+    }
+    if (type == Token.SUB ||
+        type == Token.MUL ||
+        type == Token.DIV) {
+      tryFoldArithmetic(t, n, left, right, parent);
+      return;
+    }
+
+    if (type == Token.LT ||
+        type == Token.GT ||
+        type == Token.LE ||
+        type == Token.GE ||
+        type == Token.EQ ||
+        type == Token.NE ||
+        type == Token.SHEQ ||
+        type == Token.SHNE) {
+      tryFoldComparison(t, n, left, right, parent);
+      return;
+    }
+
+    if (type == Token.GETELEM) {
+      tryFoldGetElem(t, n, left, right, parent);
+      return;
+    }
+
+    
+  }
+
+  private void error(NodeTraversal t, DiagnosticType diagnostic, Node n) {
+    t.getCompiler().report(JSError.make(t, n, diagnostic, n.toString()));
+  }
+
+  
+
+
+
+
+  private boolean consumesDanglingElse(Node n) {
+    while (true) {
+      switch (n.getType()) {
+        case Token.IF:
+          if (n.getChildCount() < 3) return true;
+          
+          n = n.getLastChild();
+          continue;
+        case Token.WITH:
+        case Token.WHILE:
+        case Token.FOR:
+          n = n.getLastChild();
+          continue;
+        default:
+          return false;
+      }
+    }
+  }
+
+  private void tryFoldAssign(NodeTraversal t, Node n, Node left, Node right) {
+    Preconditions.checkArgument(n.getType() == Token.ASSIGN);
+
+    
+    if (!right.hasChildren() ||
+        right.getFirstChild().getNext() != right.getLastChild()) {
+      
+      return;
+    }
+
+    if (NodeUtil.mayHaveSideEffects(left)) {
+      return;
+    }
+
+    Node leftChild = right.getFirstChild();
+    if (!left.checkTreeEqualsSilent(leftChild)) {
+      return;
+    }
+
+    int newType = -1;
+    switch (right.getType()) {
+      case Token.ADD:
+        newType = Token.ASSIGN_ADD;
+        break;
+      case Token.BITAND:
+        newType = Token.ASSIGN_BITAND;
+        break;
+      case Token.BITOR:
+        newType = Token.ASSIGN_BITOR;
+        break;
+      case Token.BITXOR:
+        newType = Token.ASSIGN_BITXOR;
+        break;
+      case Token.DIV:
+        newType = Token.ASSIGN_DIV;
+        break;
+      case Token.LSH:
+        newType = Token.ASSIGN_LSH;
+        break;
+      case Token.MOD:
+        newType = Token.ASSIGN_MOD;
+        break;
+      case Token.MUL:
+        newType = Token.ASSIGN_MUL;
+        break;
+      case Token.RSH:
+        newType = Token.ASSIGN_RSH;
+        break;
+      case Token.SUB:
+        newType = Token.ASSIGN_SUB;
+        break;
+      case Token.URSH:
+        newType = Token.ASSIGN_URSH;
+        break;
+      default:
+        return;
+    }
+
+    n.getParent().replaceChild(n, new Node(newType,
+        left.detachFromParent(), right.getLastChild().detachFromParent()));
+    t.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+  void tryFoldBlock(NodeTraversal t, Node n, Node parent) {
+    
+    for (Node c = n.getFirstChild(); c != null; ) {
+      Node next = c.getNext();  
+      if (!NodeUtil.mayHaveSideEffects(c)) {
+        n.removeChild(c);  
+        t.getCompiler().reportCodeChange();
+      }
+      c = next;
+    }
+
+    if (n.isSyntheticBlock() || parent == null) {
+      return;
+    }
+
+    
+    if (NodeUtil.tryMergeBlock(n)) {
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+
+  boolean tryFoldHookIf(NodeTraversal t, Node n, Node parent) {
+    int type = n.getType();
+    Node cond = n.getFirstChild();
+    Node thenBody = cond.getNext();
+    Node elseBody = thenBody.getNext();
+
+    boolean changes = false;
+
+    if (type == Token.IF) {
+      
+      if (elseBody != null && !NodeUtil.mayHaveSideEffects(elseBody)) {
+        n.removeChild(elseBody);
+        elseBody = null;
+        t.getCompiler().reportCodeChange();
+        changes = true;
+      }
+
+      
+      if (!NodeUtil.mayHaveSideEffects(thenBody) && elseBody != null) {
+        n.removeChild(elseBody);
+        n.replaceChild(thenBody, elseBody);
+        Node notCond = new Node(Token.NOT);
+        n.replaceChild(cond, notCond);
+        notCond.addChildToFront(cond);
+        cond = notCond;
+        thenBody = cond.getNext();
+        elseBody = null;
+        t.getCompiler().reportCodeChange();
+        changes = true;
+      }
+
+      
+      if (!NodeUtil.mayHaveSideEffects(thenBody) && elseBody == null) {
+        if (NodeUtil.mayHaveSideEffects(cond)) {
+          
+          n.removeChild(cond);
+          parent.replaceChild(n, NodeUtil.newExpr(cond));
+        } else {
+          
+          NodeUtil.removeChild(parent, n);
+        }
+        t.getCompiler().reportCodeChange();
+        return true; 
+      }
+    } else {
+      Preconditions.checkState(type == Token.HOOK);
+      if (NodeUtil.isExpressionNode(parent)) {
+        
+        if (!NodeUtil.mayHaveSideEffects(thenBody)) {
+          
+          Node ifNode = new Node(Token.IF);
+          if (cond.getType() == Token.NOT) {
+            Node expr = cond.getFirstChild();
+            cond.removeChild(expr);
+            ifNode.addChildToBack(expr);
+          } else {
+            Node not = new Node(Token.NOT);
+            n.removeChild(cond);
+            not.addChildToBack(cond);
+            ifNode.addChildToBack(not);
+          }
+
+          n.removeChild(elseBody);
+          ifNode.addChildToBack(
+              new Node(Token.BLOCK, NodeUtil.newExpr(elseBody)));
+          parent.getParent().replaceChild(parent, ifNode);
+          t.getCompiler().reportCodeChange();
+          return true;
+        } else if (!NodeUtil.mayHaveSideEffects(elseBody)) {
+          
+          Node ifNode = new Node(Token.IF);
+          n.removeChild(cond);
+          ifNode.addChildToBack(cond);
+          n.removeChild(thenBody);
+
+          ifNode.addChildToBack(
+              new Node(Token.BLOCK, NodeUtil.newExpr(thenBody)));
+          parent.getParent().replaceChild(parent, ifNode);
+          t.getCompiler().reportCodeChange();
+          return true;
+        }
+      }
+    }
+
+    
+    if (!NodeUtil.isLiteralValue(cond)) {
+      return changes;  
+    }
+
+    boolean condTrue = NodeUtil.getBooleanValue(cond);
+
+    if (n.getChildCount() == 2) {
+      Preconditions.checkState(type == Token.IF);
+
+      if (condTrue) {
+        
+        Node thenStmt = n.getFirstChild().getNext();
+        n.removeChild(thenStmt);
+        parent.replaceChild(n, thenStmt);
+        t.getCompiler().reportCodeChange();
+      } else {
+        
+        NodeUtil.redeclareVarsInsideBranch(n);
+        NodeUtil.removeChild(parent, n);
+        t.getCompiler().reportCodeChange();
+      }
+    } else {
+      
+      
+      Node firstBranch = n.getFirstChild().getNext();
+      Node secondBranch = firstBranch.getNext();
+      Node branch = condTrue ? firstBranch : secondBranch;
+      Node notBranch = condTrue ? secondBranch : firstBranch;
+      NodeUtil.redeclareVarsInsideBranch(notBranch);
+      n.removeChild(branch);
+      parent.replaceChild(n, branch);
+      t.getCompiler().reportCodeChange();
+    }
+    return true;
+  }
+
+  
+
+
+  private boolean tryMinimizeNot(NodeTraversal t, Node n, Node parent) {
+    Node notChild = n.getFirstChild();
+    
+    int complementOperator;
+    switch (notChild.getType()) {
+      case Token.EQ:
+        complementOperator = Token.NE;
+        break;
+      case Token.NE:
+        complementOperator = Token.EQ;
+        break;
+      case Token.SHEQ:
+        complementOperator = Token.SHNE;
+        break;
+      case Token.SHNE:
+        complementOperator = Token.SHEQ;
+        break;
+      
+      default:
+        return false;
+    }
+    Node newOperator = n.removeFirstChild();
+    newOperator.setType(complementOperator);
+    parent.replaceChild(n, newOperator);
+    t.getCompiler().reportCodeChange();
+    return true;
+  }
+
+  
+
+
+  void tryMinimizeIf(NodeTraversal t, Node n, Node parent) {
+    Node cond = n.getFirstChild();
+    Node thenBranch = cond.getNext();
+    Node elseBranch = thenBranch.getNext();
+
+    if (elseBranch == null) {
+      if (isExpressBlock(thenBranch)) {
+        Node expr = getBlockExpression(thenBranch);
+        if (isPropertyAssignmentInExpression(t, expr)) {
+          
+          
+          return;
+        }
+
+        if (cond.getType() == Token.NOT) {
+          
+          if (isLowerPrecedenceInExpression(t, cond, OR_PRECEDENCE) &&
+              isLowerPrecedenceInExpression(t, expr.getFirstChild(),
+                  OR_PRECEDENCE)) {
+            
+            return;
+          }
+
+          Node or = new Node(Token.OR, cond.removeFirstChild(),
+              expr.removeFirstChild());
+          Node newExpr = NodeUtil.newExpr(or);
+          parent.replaceChild(n, newExpr);
+          t.getCompiler().reportCodeChange();
+
+          return;
+        }
+
+        
+        if (isLowerPrecedenceInExpression(t, cond, AND_PRECEDENCE) ||
+            isLowerPrecedenceInExpression(t, expr.getFirstChild(),
+                AND_PRECEDENCE)) {
+          
+          return;
+        }
+
+        n.removeChild(cond);
+        Node and = new Node(Token.AND, cond, expr.removeFirstChild());
+        Node newExpr = NodeUtil.newExpr(and);
+        parent.replaceChild(n, newExpr);
+        t.getCompiler().reportCodeChange();
+      }
+
+      return;
+    }
+
+    tryRemoveRepeatedStatements(t, n);
+
+    
+    
+    if (cond.getType() == Token.NOT && !consumesDanglingElse(elseBranch)) {
+      n.replaceChild(cond, cond.removeFirstChild());
+      n.removeChild(thenBranch);
+      n.addChildToBack(thenBranch);
+      t.getCompiler().reportCodeChange();
+      return;
+    }
+
+    
+    if (isReturnExpressBlock(thenBranch) && isReturnExpressBlock(elseBranch)) {
+      Node thenExpr = getBlockReturnExpression(thenBranch);
+      Node elseExpr = getBlockReturnExpression(elseBranch);
+      n.removeChild(cond);
+      thenExpr.detachFromParent();
+      elseExpr.detachFromParent();
+
+      
+      
+      
+      Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr);
+      Node returnNode = new Node(Token.RETURN, hookNode);
+      parent.replaceChild(n, returnNode);
+      t.getCompiler().reportCodeChange();
+      return;
+    }
+
+    boolean thenBranchIsExpressionBlock = isExpressBlock(thenBranch);
+    boolean elseBranchIsExpressionBlock = isExpressBlock(elseBranch);
+
+    if (thenBranchIsExpressionBlock && elseBranchIsExpressionBlock) {
+      Node thenOp = getBlockExpression(thenBranch).getFirstChild();
+      Node elseOp = getBlockExpression(elseBranch).getFirstChild();
+      if (thenOp.getType() == elseOp.getType()) {
+        
+        if (NodeUtil.isAssignmentOp(thenOp)) {
+          Node lhs = thenOp.getFirstChild();
+          if (lhs.checkTreeEqualsSilent(elseOp.getFirstChild()) &&
+              
+              
+              
+              
+              !NodeUtil.mayEffectMutableState(lhs)) {
+
+            n.removeChild(cond);
+            Node assignName = thenOp.removeFirstChild();
+            Node thenExpr = thenOp.removeFirstChild();
+            Node elseExpr = elseOp.getLastChild();
+            elseOp.removeChild(elseExpr);
+
+            Node hookNode = new Node(Token.HOOK, cond, thenExpr,
+                elseExpr);
+            Node assign = new Node(thenOp.getType(), assignName,
+                hookNode);
+            Node expr = NodeUtil.newExpr(assign);
+            parent.replaceChild(n, expr);
+            t.getCompiler().reportCodeChange();
+          }
+        } else if (NodeUtil.isCall(thenOp)) {
+          
+          n.removeChild(cond);
+          thenOp.detachFromParent();
+          elseOp.detachFromParent();
+          Node hookNode = new Node(Token.HOOK, cond, thenOp, elseOp);
+          Node expr = NodeUtil.newExpr(hookNode);
+          parent.replaceChild(n, expr);
+          t.getCompiler().reportCodeChange();
+        }
+      }
+      return;
+    }
+
+    boolean thenBranchIsVar = isVarBlock(thenBranch);
+    boolean elseBranchIsVar = isVarBlock(elseBranch);
+
+    
+    if (thenBranchIsVar && elseBranchIsExpressionBlock &&
+        NodeUtil.isAssign(getBlockExpression(elseBranch).getFirstChild())) {
+
+      Node var = getBlockVar(thenBranch);
+      Node elseAssign = getBlockExpression(elseBranch).getFirstChild();
+
+      Node name1 = var.getFirstChild();
+      Node maybeName2 = elseAssign.getFirstChild();
+
+      if (name1.hasChildren()
+          && maybeName2.getType() == Token.NAME
+          && name1.getString().equals(maybeName2.getString())) {
+        Node thenExpr = name1.removeChildren();
+        Node elseExpr = elseAssign.getLastChild().detachFromParent();
+        cond.detachFromParent();
+        Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr);
+        var.detachFromParent();
+        name1.addChildrenToBack(hookNode);
+        parent.replaceChild(n, var);
+        t.getCompiler().reportCodeChange();
+      }
+
+    
+    } else if (elseBranchIsVar && thenBranchIsExpressionBlock &&
+        NodeUtil.isAssign(getBlockExpression(thenBranch).getFirstChild())) {
+
+      Node var = getBlockVar(elseBranch);
+      Node thenAssign = getBlockExpression(thenBranch).getFirstChild();
+
+      Node maybeName1 = thenAssign.getFirstChild();
+      Node name2 = var.getFirstChild();
+
+      if (name2.hasChildren()
+          && maybeName1.getType() == Token.NAME
+          && maybeName1.getString().equals(name2.getString())) {
+        Node thenExpr = thenAssign.getLastChild().detachFromParent();
+        Node elseExpr = name2.removeChildren();
+        cond.detachFromParent();
+        Node hookNode = new Node(Token.HOOK, cond, thenExpr, elseExpr);
+        var.detachFromParent();
+        name2.addChildrenToBack(hookNode);
+        parent.replaceChild(n, var);
+        t.getCompiler().reportCodeChange();
+      }
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private void tryRemoveRepeatedStatements(NodeTraversal t, Node n) {
+    Preconditions.checkState(n.getType() == Token.IF);
+
+    Node parent = n.getParent();
+    if (!NodeUtil.isStatementBlock(parent)) {
+      
+      
+      return;
+    }
+
+    Node cond = n.getFirstChild();
+    Node trueBranch = cond.getNext();
+    Node falseBranch = trueBranch.getNext();
+    Preconditions.checkNotNull(trueBranch);
+    Preconditions.checkNotNull(falseBranch);
+
+    while (true) {
+      Node lastTrue = trueBranch.getLastChild();
+      Node lastFalse = falseBranch.getLastChild();
+      if (lastTrue == null || lastFalse == null
+          || !lastTrue.checkTreeEqualsSilent(lastFalse)) {
+        break;
+      }
+      lastTrue.detachFromParent();
+      lastFalse.detachFromParent();
+      parent.addChildAfter(lastTrue, n);
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+  private void tryReduceReturn(NodeTraversal t, Node n) {
+    Node result = n.getFirstChild();
+    if (result != null) {
+      switch (result.getType()) {
+        case Token.VOID:
+          Node operand = result.getFirstChild();
+          if (!NodeUtil.mayHaveSideEffects(operand)) {
+            n.removeFirstChild();
+            t.getCompiler().reportCodeChange();
+          }
+          return;
+        case Token.NAME:
+          String name = result.getString();
+          if (name.equals("undefined")) {
+            n.removeFirstChild();
+            t.getCompiler().reportCodeChange();
+          }
+          return;
+      }
+    }
+  }
+
+  
+
+
+  private boolean isPropertyAssignmentInExpression(NodeTraversal t, Node n) {
+    final boolean[] found = { false };
+    new NodeTraversal(t.getCompiler(), new AbstractShallowCallback() {
+      public void visit(NodeTraversal t, Node n, Node parent) {
+        found[0] |= (n.getType() == Token.GETPROP &&
+                     parent.getType() == Token.ASSIGN);
+      }
+    }).traverse(n);
+    return found[0];
+  }
+
+  
+
+
+
+  private boolean isLowerPrecedenceInExpression(NodeTraversal t, Node n,
+      final int precedence) {
+    final boolean[] lower = { false };
+    new NodeTraversal(t.getCompiler(), new AbstractShallowCallback() {
+      public void visit(NodeTraversal t, Node n, Node parent) {
+        lower[0] |= NodeUtil.precedence(n.getType()) < precedence;
+      }
+    }).traverse(n);
+    return lower[0];
+  }
+
+  
+
+
+  void tryFoldAndOr(NodeTraversal t, Node n, Node left, Node right,
+                    Node parent) {
+    Node result = null;
+
+    int type = n.getType();
+    if (NodeUtil.isLiteralValue(left)) {
+      boolean lval = NodeUtil.getBooleanValue(left);
+
+      
+      
+      if (lval && type == Token.OR ||
+          !lval && type == Token.AND) {
+        result = left;
+
+      } else {
+        
+        
+        result = right;
+      }
+    } else if (NodeUtil.isLiteralValue(right)) {
+      
+      
+      
+      
+      
+      
+      
+      
+      int pt = parent.getType();
+      if (pt == Token.IF || pt == Token.WHILE || pt == Token.DO ||
+          (pt == Token.FOR && NodeUtil.getConditionExpression(parent) == n) ||
+          (pt == Token.HOOK && parent.getFirstChild() == n)) {
+        boolean rval = NodeUtil.getBooleanValue(right);
+
+        
+        
+        if (type == Token.OR && !rval ||
+            type == Token.AND && rval) {
+          result = left;
+        } else {
+          
+          
+          
+          if (!NodeUtil.mayHaveSideEffects(left)) {
+            result = right;
+          }
+        }
+      }
+    }
+
+    
+    
+    
+
+    if (result != null) {
+      
+      n.removeChild(result);
+      parent.replaceChild(n, result);
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  void tryFoldLeftChildAdd(NodeTraversal t, Node n, Node left, Node right,
+                           Node parent) {
+
+    if (NodeUtil.isLiteralValue(right) &&
+        left.getType() == Token.ADD &&
+        left.getChildCount() == 2) {
+
+      Node ll = left.getFirstChild();
+      Node lr = ll.getNext();
+
+      
+      
+      
+      if (lr.getType() != Token.STRING)
+        return;
+
+      String leftString = NodeUtil.getStringValue(lr);
+      String rightString = NodeUtil.getStringValue(right);
+      if (leftString != null && rightString != null) {
+        left.removeChild(ll);
+        String result = leftString + rightString;
+        n.replaceChild(left, ll);
+        n.replaceChild(right, Node.newString(result));
+        t.getCompiler().reportCodeChange();
+      }
+    }
+  }
+
+  
+
+
+  void tryFoldAdd(NodeTraversal t, Node n, Node left, Node right,
+                  Node parent) {
+    if (left.getType() == Token.STRING ||
+        right.getType() == Token.STRING) {
+
+      
+      String leftString = NodeUtil.getStringValue(left);
+      String rightString = NodeUtil.getStringValue(right);
+      if (leftString != null && rightString != null) {
+        parent.replaceChild(n, Node.newString(leftString + rightString));
+        t.getCompiler().reportCodeChange();
+      }
+    } else {
+      
+      tryFoldArithmetic(t, n, left, right, parent);
+    }
+  }
+
+  
+
+
+  void tryFoldArithmetic(NodeTraversal t, Node n, Node left, Node right,
+                         Node parent) {
+
+    if (left.getType() == Token.NUMBER &&
+        right.getType() == Token.NUMBER) {
+      double result;
+      double lval = left.getDouble();
+      double rval = right.getDouble();
+
+      switch (n.getType()) {
+        case Token.ADD:
+          result = lval + rval;
+          break;
+        case Token.SUB:
+          result = lval - rval;
+          break;
+        case Token.MUL:
+          result = lval * rval;
+          break;
+        case Token.DIV:
+          if (rval == 0) {
+            error(t, DIVIDE_BY_0_ERROR, right);
+            return;
+          }
+          result = lval / rval;
+          break;
+        default:
+          throw new Error("Unknown arithmetic operator");
+      }
+
+      
+      if (String.valueOf(result).length() <=
+          String.valueOf(lval).length() + String.valueOf(rval).length() + 1) {
+        parent.replaceChild(n, Node.newNumber(result));
+        t.getCompiler().reportCodeChange();
+      }
+   }
+  }
+
+  
+
+
+  void tryFoldBitAndOr(NodeTraversal t, Node n, Node left, Node right,
+                       Node parent) {
+
+    if (left.getType() == Token.NUMBER &&
+        right.getType() == Token.NUMBER) {
+      double result;
+      double lval = left.getDouble();
+      double rval = right.getDouble();
+
+      
+      
+      if (lval < Integer.MIN_VALUE || lval > Integer.MAX_VALUE ||
+          rval < Integer.MIN_VALUE || rval > Integer.MAX_VALUE) {
+
+        
+        return;
+      }
+
+      
+      int lvalInt = (int) lval;
+      if (lvalInt != lval) {
+        return;
+      }
+
+      int rvalInt = (int) rval;
+      if (rvalInt != rval) {
+        return;
+      }
+
+      switch (n.getType()) {
+        case Token.BITAND:
+          result = lvalInt & rvalInt;
+          break;
+        case Token.BITOR:
+          result = lvalInt | rvalInt;
+          break;
+        default:
+          throw new Error("Unknown bitwise operator");
+      }
+      parent.replaceChild(n, Node.newNumber(result));
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+  void tryFoldShift(NodeTraversal t, Node n, Node left, Node right,
+                    Node parent) {
+
+    if (left.getType() == Token.NUMBER &&
+        right.getType() == Token.NUMBER) {
+
+      double result;
+      double lval = left.getDouble();
+      double rval = right.getDouble();
+
+      
+      
+      if (!(lval >= Integer.MIN_VALUE && lval <= Integer.MAX_VALUE)) {
+        error(t, BITWISE_OPERAND_OUT_OF_RANGE, left);
+        return;
+      }
+
+      
+      
+      if (!(rval >= 0 && rval < 32)) {
+        error(t, SHIFT_AMOUNT_OUT_OF_BOUNDS, right);
+        return;
+      }
+
+      
+      int lvalInt = (int) lval;
+      if (lvalInt != lval) {
+        error(t, FRACTIONAL_BITWISE_OPERAND, left);
+        return;
+      }
+
+      int rvalInt = (int) rval;
+      if (rvalInt != rval) {
+        error(t, FRACTIONAL_BITWISE_OPERAND, right);
+        return;
+      }
+
+      switch (n.getType()) {
+        case Token.LSH:
+          result = lvalInt << rvalInt;
+          break;
+        case Token.RSH:
+          result = lvalInt >> rvalInt;
+          break;
+        case Token.URSH:
+          result = lvalInt >>> rvalInt;
+          break;
+        default:
+          throw new AssertionError("Unknown shift operator: " +
+              Node.tokenToName(n.getType()));
+      }
+      parent.replaceChild(n, Node.newNumber(result));
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+  @SuppressWarnings("fallthrough")
+  void tryFoldComparison(NodeTraversal t, Node n, Node left, Node right,
+                         Node parent) {
+
+    int op = n.getType();
+    boolean result;
+
+    
+
+    boolean rightLiteral = NodeUtil.isLiteralValue(right);
+    boolean undefinedRight = ((Token.NAME == right.getType()
+          && right.getString().equals("undefined"))
+          || (Token.VOID == right.getType()
+              && NodeUtil.isLiteralValue(right.getFirstChild())));
+
+    switch (left.getType()) {
+      case Token.VOID:
+        if (!NodeUtil.isLiteralValue(left.getFirstChild())) {
+          return;
+        } else if (!rightLiteral) {
+          return;
+        } else {
+          boolean nullRight = (Token.NULL == right.getType());
+          boolean equivalent = undefinedRight || nullRight;
+          switch (op) {
+            case Token.EQ:
+              
+              result = equivalent;
+              break;
+            case Token.NE:
+              result = !equivalent;
+              break;
+            case Token.SHEQ:
+              result = undefinedRight;
+              break;
+            case Token.SHNE:
+              result = !undefinedRight;
+              break;
+            case Token.LT:
+            case Token.GT:
+            case Token.LE:
+            case Token.GE:
+              result = false;
+              break;
+            default:
+              return;
+          }
+        }
+        break;
+
+      case Token.NULL:
+        if (undefinedRight) {
+          result = (op == Token.EQ);
+          break;
+        }
+        
+      case Token.TRUE:
+      case Token.FALSE:
+        if (undefinedRight) {
+          result = false;
+          break;
+        }
+        
+      case Token.THIS:
+        int tt = right.getType();
+        if (tt != Token.THIS &&
+            tt != Token.TRUE &&
+            tt != Token.FALSE &&
+            tt != Token.NULL)
+          return;
+        switch (op) {
+          case Token.EQ:
+            result = left.getType() == right.getType();
+            break;
+
+          case Token.NE:
+            result = left.getType() != right.getType();
+            break;
+
+          default:
+            return;  
+        }
+        break;
+
+      case Token.STRING:
+        if (undefinedRight) {
+          result = false;
+          break;
+        }
+        if (Token.STRING != right.getType()) {
+          return;  
+        }
+        switch (op) {
+          case Token.EQ:
+            result = left.getString().equals(right.getString());
+            break;
+
+          case Token.NE:
+            result = !left.getString().equals(right.getString());
+            break;
+
+          default:
+            return;  
+        }
+        break;
+
+      case Token.NUMBER:
+        if (undefinedRight) {
+          result = false;
+          break;
+        }
+        if (Token.NUMBER != right.getType()) {
+          return;  
+        }
+        double lv = left.getDouble();
+        double rv = right.getDouble();
+
+        switch (op) {
+          case Token.EQ: result = lv == rv; break;
+          case Token.NE: result = lv != rv; break;
+          case Token.LE: result = lv <= rv; break;
+          case Token.LT: result = lv <  rv; break;
+          case Token.GE: result = lv >= rv; break;
+          case Token.GT: result = lv >  rv; break;
+          default:
+            return;  
+        }
+        break;
+
+      case Token.NAME:
+        if (rightLiteral) {
+          boolean undefinedLeft = (left.getString().equals("undefined"));
+          if (undefinedLeft) {
+            boolean nullRight = (Token.NULL == right.getType());
+            boolean equivalent = undefinedRight || nullRight;
+            switch (op) {
+              case Token.EQ:
+                
+                result = equivalent;
+                break;
+              case Token.NE:
+                result = !equivalent;
+                break;
+              case Token.SHEQ:
+                result = undefinedRight;
+                break;
+              case Token.SHNE:
+                result = !undefinedRight;
+                break;
+              case Token.LT:
+              case Token.GT:
+              case Token.LE:
+              case Token.GE:
+                result = false;
+                break;
+              default:
+                return;
+            }
+            break;
+          }
+        }
+
+        if (Token.NAME != right.getType()) {
+          return;  
+        }
+        String ln = left.getString();
+        String rn = right.getString();
+        if (!ln.equals(rn)) {
+          return;  
+        }
+
+        switch (op) {
+          
+          
+          case Token.LT:
+          case Token.GT:
+            result = false;
+            break;
+          default:
+            return;  
+        }
+        break;
+
+      default:
+        
+        return;
+    }
+
+    parent.replaceChild(n, new Node(result ? Token.TRUE :
+                                    Token.FALSE));
+    t.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+
+
+  void tryFoldStringIndexOf(NodeTraversal t, Node n, Node left, Node right,
+                            Node parent) {
+    if (!NodeUtil.isGetProp(left) || !NodeUtil.isImmutableValue(right)) {
+      return;
+    }
+
+    Node lstringNode = left.getFirstChild();
+    Node functionName = lstringNode.getNext();
+
+    if ((lstringNode.getType() != Token.STRING) ||
+        (!functionName.getString().equals("indexOf") &&
+        !functionName.getString().equals("lastIndexOf"))) {
+      return;
+    }
+
+    String lstring = NodeUtil.getStringValue(lstringNode);
+    boolean isIndexOf = functionName.getString().equals("indexOf");
+    Node firstArg = right;
+    Node secondArg = right.getNext();
+    String searchValue = NodeUtil.getStringValue(firstArg);
+    
+    if (searchValue == null) {
+      return;
+    }
+    int fromIndex = isIndexOf ? 0 : lstring.length();
+    if (secondArg != null) {
+      
+      if ((secondArg.getNext() != null) ||
+          (secondArg.getType() != Token.NUMBER)) {
+        return;
+      } else {
+        fromIndex = (int) secondArg.getDouble();
+      }
+    }
+    int indexVal = isIndexOf ? lstring.indexOf(searchValue, fromIndex)
+                             : lstring.lastIndexOf(searchValue, fromIndex);
+    Node newNode = Node.newNumber(indexVal);
+    parent.replaceChild(n, newNode);
+
+    t.getCompiler().reportCodeChange();
+  }
+
+
+  
+
+
+  void tryFoldStringJoin(NodeTraversal t, Node n, Node left, Node right,
+                         Node parent) {
+    if (!NodeUtil.isGetProp(left) || !NodeUtil.isImmutableValue(right)) {
+      return;
+    }
+
+    Node arrayNode = left.getFirstChild();
+    Node functionName = arrayNode.getNext();
+
+    if ((arrayNode.getType() != Token.ARRAYLIT) ||
+        !functionName.getString().equals("join")) {
+      return;
+    }
+
+    String joinString = NodeUtil.getStringValue(right);
+    List<Node> arrayFoldedChildren = Lists.newLinkedList();
+    StringBuilder sb = new StringBuilder();
+    int foldedSize = 0;
+    Node elem = arrayNode.getFirstChild();
+    
+    while (elem != null) {
+      if (NodeUtil.isImmutableValue(elem)) {
+        if (sb.length() > 0) {
+          sb.append(joinString);
+        }
+        sb.append(NodeUtil.getStringValue(elem));
+      } else {
+        if (sb.length() > 0) {
+          
+          foldedSize += sb.length() + 2;
+          arrayFoldedChildren.add(Node.newString(sb.toString()));
+          sb = new StringBuilder();
+        }
+        foldedSize += InlineCostEstimator.getCost(elem);
+        arrayFoldedChildren.add(elem);
+      }
+      elem = elem.getNext();
+    }
+
+    if (sb.length() > 0) {
+      
+      foldedSize += sb.length() + 2;
+      arrayFoldedChildren.add(Node.newString(sb.toString()));
+    }
+    
+    foldedSize += arrayFoldedChildren.size() - 1;
+
+    int originalSize = InlineCostEstimator.getCost(n);
+    switch (arrayFoldedChildren.size()) {
+      case 0:
+        Node emptyStringNode = Node.newString("");
+        parent.replaceChild(n, emptyStringNode);
+        break;
+
+      case 1:
+        Node foldedStringNode = arrayFoldedChildren.remove(0);
+        if (foldedSize > originalSize) {
+          return;
+        }
+        arrayNode.detachChildren();
+        if (foldedStringNode.getType() != Token.STRING) {
+          
+          
+          Node replacement = new Node(Token.ADD,
+              Node.newString(""), foldedStringNode);
+          foldedStringNode = replacement;
+        }
+        parent.replaceChild(n, foldedStringNode);
+        break;
+
+      default:
+        
+        if (arrayFoldedChildren.size() == arrayNode.getChildCount()) {
+          return;
+        }
+        int kJoinOverhead = "[].join()".length();
+        foldedSize += kJoinOverhead;
+        foldedSize += InlineCostEstimator.getCost(right);
+        if (foldedSize > originalSize) {
+          return;
+        }
+        arrayNode.detachChildren();
+        for (Node node : arrayFoldedChildren) {
+          arrayNode.addChildToBack(node);
+        }
+        break;
+    }
+    t.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+  void tryFoldGetElem(NodeTraversal t, Node n, Node left, Node right,
+                      Node parent) {
+    if (left.getType() == Token.ARRAYLIT) {
+
+      if (right.getType() != Token.NUMBER) {
+        
+        
+        return;
+      }
+
+      double index = right.getDouble();
+      int intIndex = (int) index;
+      if (intIndex != index) {
+        t.getCompiler().report(JSError.make(t, right,
+            INVALID_GETELEM_INDEX_ERROR, String.valueOf(index)));
+        return;
+      }
+
+      if (intIndex < 0) {
+        t.getCompiler().report(JSError.make(t, n, INDEX_OUT_OF_BOUNDS_ERROR,
+            String.valueOf(intIndex)));
+        return;
+      }
+
+      Node elem = left.getFirstChild();
+      for (int i = 0; elem != null && i < intIndex; i++) {
+        elem = elem.getNext();
+      }
+
+      if (elem == null) {
+        t.getCompiler().report(JSError.make(t, n, INDEX_OUT_OF_BOUNDS_ERROR,
+            String.valueOf(intIndex)));
+        return;
+      }
+
+      
+      left.removeChild(elem);
+      parent.replaceChild(n, elem);
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+  void tryFoldGetProp(NodeTraversal t, Node n, Node left, Node right,
+                      Node parent) {
+    if (right.getType() == Token.STRING &&
+        right.getString().equals("length")) {
+      int knownLength = -1;
+      switch (left.getType()) {
+        case Token.ARRAYLIT:
+          if (NodeUtil.mayHaveSideEffects(left)) {
+            
+            return;
+          }
+          knownLength = left.getChildCount();
+          break;
+        case Token.STRING:
+          knownLength = left.getString().length();
+          break;
+        default:
+          
+          return;
+      }
+
+      Preconditions.checkState(knownLength != -1);
+      Node lengthNode = Node.newNumber(knownLength);
+      parent.replaceChild(n, lengthNode);
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+  void tryFoldRegularExpressionConstructor(
+      NodeTraversal t, Node n, Node parent) {
+    Node constructor = n.getFirstChild();
+    Node pattern = constructor.getNext();  
+    Node flags = null != pattern ? pattern.getNext() : null;  
+
+    if (null == pattern || (null != flags && null != flags.getNext())) {
+      
+      return;
+    }
+
+    if (
+        pattern.getType() == Token.STRING
+        
+        && !"".equals(pattern.getString())
+
+        
+        
+        && pattern.getString().length() < 100
+
+        && (null == flags || flags.getType() == Token.STRING)
+        
+        
+        && !containsUnicodeEscape(pattern.getString())) {
+
+      
+      
+      pattern = makeForwardSlashBracketSafe(pattern);
+
+      Node regexLiteral;
+      if (null == flags || "".equals(flags.getString())) {
+        
+        regexLiteral = new Node(Token.REGEXP, pattern);
+      } else {
+        
+        if (!areValidRegexpFlags(flags.getString())) {
+          error(t, INVALID_REGULAR_EXPRESSION_FLAGS, flags);
+          return;
+        }
+        if (!areSafeFlagsToFold(flags.getString())) {
+          return;
+        }
+        n.removeChild(flags);
+        regexLiteral = new Node(Token.REGEXP, pattern, flags);
+      }
+
+      parent.replaceChild(n, regexLiteral);
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  private static final Pattern REGEXP_FLAGS_RE = Pattern.compile("^[gmi]*$");
+
+  
+
+
+
+
+
+
+  private static boolean areValidRegexpFlags(String flags) {
+    return REGEXP_FLAGS_RE.matcher(flags).matches();
+  }
+
+  
+
+
+
+
+
+
+
+  private static boolean areSafeFlagsToFold(String flags) {
+    return flags.indexOf('g') < 0;
+  }
+
+  
+
+
+  private static Node makeForwardSlashBracketSafe(Node n) {
+    String s = n.getString();
+    
+    StringBuilder sb = null;
+    int pos = 0;
+    for (int i = 0; i < s.length(); ++i) {
+      switch (s.charAt(i)) {
+        case '\\':  
+          ++i;
+          break;
+        case '/':  
+          if (null == sb) { sb = new StringBuilder(s.length() + 16); }
+          sb.append(s, pos, i).append('\\');
+          pos = i;
+          break;
+      }
+    }
+
+    
+    if (null == sb) { return n.cloneTree(); }
+
+    sb.append(s, pos, s.length());
+    return Node.newString(sb.toString());
+  }
+
+  
+
+
+
+
+
+
+
+
+  void tryFoldLiteralConstructor(
+      NodeTraversal t, Node n, Node parent, String className, int type) {
+    
+    Scope.Var var = t.getScope().getVar(className);
+    if (var != null && var.isLocal()) {
+      return;
+    }
+
+    Node literalNode = new Node(type);
+    parent.replaceChild(n, literalNode);
+    t.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+
+  static boolean containsUnicodeEscape(String s) {
+    String esc = CodeGenerator.regexpEscape(s);
+    for (int i = -1; (i = esc.indexOf("\\u", i + 1)) >= 0;) {
+      int nSlashes = 0;
+      while (i - nSlashes > 0 && '\\' == esc.charAt(i - nSlashes - 1)) {
+        ++nSlashes;
+      }
+      
+      
+      if (0 == (nSlashes & 1)) { return true; }
+    }
+    return false;
+  }
+
+  
+
+
+  void tryFoldWhile(NodeTraversal t, Node n, Node parent) {
+    Preconditions.checkArgument(n.getType() == Token.WHILE);
+    Node cond = NodeUtil.getConditionExpression(n);
+    if (!NodeUtil.isLiteralValue(cond) || NodeUtil.getBooleanValue(cond)) {
+      return;
+    }
+    NodeUtil.redeclareVarsInsideBranch(n);
+    NodeUtil.removeChild(parent, n);
+    t.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+  void tryFoldFor(NodeTraversal t, Node n, Node parent) {
+    Preconditions.checkArgument(n.getType() == Token.FOR);
+    
+    if (n.getChildCount() != 4) return;
+    
+    if (n.getFirstChild().getType() != Token.EMPTY) return;
+
+    Node cond = NodeUtil.getConditionExpression(n);
+    if (!NodeUtil.isLiteralValue(cond) || NodeUtil.getBooleanValue(cond)) {
+      return;
+    }
+    NodeUtil.redeclareVarsInsideBranch(n);
+    NodeUtil.removeChild(parent, n);
+    t.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+
+
+  void tryFoldDo(NodeTraversal t, Node n, Node parent) {
+    Preconditions.checkArgument(n.getType() == Token.DO);
+
+    Node cond = NodeUtil.getConditionExpression(n);
+    if (!NodeUtil.isLiteralValue(cond) || NodeUtil.getBooleanValue(cond)) {
+      return;
+    }
+
+    
+    
+    if (hasBreakOrContinue(n)) {
+      return;
+    }
+
+    Preconditions.checkState(
+        NodeUtil.isControlStructureCodeBlock(n, n.getFirstChild()));
+    Node block = n.removeFirstChild();
+
+    parent.replaceChild(n, block);
+    t.getCompiler().reportCodeChange();
+  }
+
+  
+
+
+  boolean hasBreakOrContinue(Node n) {
+    
+    
+    
+    return NodeUtil.has(
+        n,
+        Predicates.<Node>or(
+            new NodeUtil.MatchNodeType(Token.BREAK),
+            new NodeUtil.MatchNodeType(Token.CONTINUE)),
+        Predicates.<Node>not(new NodeUtil.MatchNodeType(Token.FUNCTION)));
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  void tryMinimizeCondition(NodeTraversal t, Node n, Node parent) {
+
+    switch (n.getType()) {
+      case Token.NOT:
+        Node first = n.getFirstChild();
+        switch (first.getType()) {
+          case Token.NOT: {
+              Node newRoot = first.removeFirstChild();
+              parent.replaceChild(n, newRoot);
+              n = newRoot; 
+              t.getCompiler().reportCodeChange();
+
+              
+              tryMinimizeCondition(t, n, parent);
+              return;
+            }
+          case Token.AND:
+          case Token.OR: {
+              Node leftParent = first.getFirstChild();
+              Node rightParent = first.getLastChild();
+              if (leftParent.getType() != Token.NOT
+                  || rightParent.getType() != Token.NOT) {
+                
+                break;
+              }
+              Node left = leftParent.removeFirstChild();
+              Node right = rightParent.removeFirstChild();
+
+              int newOp = (first.getType() == Token.AND) ? Token.OR : Token.AND;
+              Node newRoot = new Node(newOp, left, right);
+              parent.replaceChild(n, newRoot);
+              n = newRoot; 
+              t.getCompiler().reportCodeChange();
+
+              
+              
+              
+            }
+            break;
+        }
+        break;
+
+      case Token.OR:
+      case Token.AND:
+        
+        break;
+
+      default:
+        
+        if (NodeUtil.isLiteralValue(n)) {
+          boolean result = NodeUtil.getBooleanValue(n);
+          int equivalentResult = result ? 1 : 0;
+          maybeReplaceChildWithNumber(t, n, parent, equivalentResult);
+        }
+        
+        return;
+    }
+
+    for (Node c = n.getFirstChild(); c != null; ) {
+      Node next = c.getNext();  
+      tryMinimizeCondition(t, c, n);
+      c = next;
+    }
+  }
+
+  
+
+
+  private void tryFoldForCondition(Node n, Node parent) {
+    if (NodeUtil.isLiteralValue(n)) {
+      boolean result = NodeUtil.getBooleanValue(n);
+      if (result) {
+        parent.replaceChild(n, new Node(Token.EMPTY));
+        compiler.reportCodeChange();
+      }
+    }
+  }
+  
+  
+
+
+
+  private void maybeReplaceChildWithNumber(NodeTraversal t, Node n, Node parent,
+      int num) {
+    Node newNode = Node.newNumber(num);
+    if(!newNode.isEquivalentTo(n)) {
+      parent.replaceChild(n, newNode);
+      t.getCompiler().reportCodeChange();
+    }
+  }
+
+  
+
+
+
+  private boolean isExpressBlock(Node n) {
+    if (n.getType() == Token.BLOCK) {
+      if (n.hasOneChild()) {
+        return NodeUtil.isExpressionNode(n.getFirstChild());
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+  private Node getBlockExpression(Node n) {
+    Preconditions.checkState(isExpressBlock(n));
+    return n.getFirstChild();
+  }
+
+  
+
+
+
+  private boolean isReturnExpressBlock(Node n) {
+    if (n.getType() == Token.BLOCK) {
+      if (n.hasOneChild()) {
+        Node first = n.getFirstChild();
+        if (first.getType() == Token.RETURN) {
+          return first.hasOneChild();
+        }
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+  private Node getBlockReturnExpression(Node n) {
+    Preconditions.checkState(isReturnExpressBlock(n));
+    return n.getFirstChild().getFirstChild();
+  }
+
+  
+
+
+
+  private boolean isVarBlock(Node n) {
+    if (n.getType() == Token.BLOCK) {
+      if (n.hasOneChild()) {
+        Node first = n.getFirstChild();
+        if (first.getType() == Token.VAR) {
+          return first.hasOneChild();
+        }
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+  private Node getBlockVar(Node n) {
+    Preconditions.checkState(isVarBlock(n));
+    return n.getFirstChild();
+  }
+}

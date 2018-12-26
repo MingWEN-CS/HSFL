@@ -1,0 +1,193 @@
+22c22
+< import java.util.HashSet;
+---
+> import java.util.Collections;
+24a25
+> import java.util.WeakHashMap;
+82c83
+<     
+---
+> 
+96c97
+<     
+---
+> 
+107c108
+<     
+---
+> 
+129c130
+<     
+---
+> 
+136,143c137
+<     private static final ThreadLocal<Set<Object>> registry = new ThreadLocal<Set<Object>>() {
+<         @Override
+<         protected Set<Object> initialValue() {
+<             
+<             
+<             return new HashSet<Object>();
+<         }
+<     };
+---
+>     private static final ThreadLocal<WeakHashMap<Object, Object>> REGISTRY = new ThreadLocal<WeakHashMap<Object,Object>>();
+154c148,149
+<         return registry.get();
+---
+>         WeakHashMap<Object, Object> m = REGISTRY.get();
+>         return m == null ? Collections.<Object> emptySet() : m.keySet();
+183c178,186
+<             getRegistry().add(value);
+---
+>             WeakHashMap<Object, Object> m;
+>             synchronized (ToStringStyle.class) {
+>                 m = REGISTRY.get();
+>                 if (m == null) {
+>                     m = new WeakHashMap<Object, Object>();
+>                     REGISTRY.set(m);
+>                 }
+>             }
+>             m.put(value, null);
+200c203,214
+<         getRegistry().remove(value);
+---
+>         if (value != null) {
+>             WeakHashMap<Object, Object> m;
+>             synchronized (ToStringStyle.class) {
+>                 m = REGISTRY.get();
+>                 if (m != null) {
+>                     m.remove(value);
+>                     if (m.isEmpty()) {
+>                         REGISTRY.remove();
+>                     }
+>                 }
+>             }
+>         }
+207c221
+<     
+---
+> 
+212c226
+<     
+---
+> 
+217c231
+<     
+---
+> 
+227c241
+<     
+---
+> 
+232c246
+<     
+---
+> 
+237c251
+<     
+---
+> 
+242c256
+<     
+---
+> 
+247c261
+<     
+---
+> 
+252c266
+<     
+---
+> 
+257c271
+<     
+---
+> 
+262c276
+<     
+---
+> 
+267c281
+<     
+---
+> 
+272c286
+<     
+---
+> 
+278c292
+<     
+---
+> 
+283c297
+<     
+---
+> 
+288c302
+<     
+---
+> 
+293c307
+<     
+---
+> 
+298c312
+<     
+---
+> 
+459c473
+<         }   
+---
+>         }
+470c484
+<     
+---
+> 
+477c491
+<     
+---
+> 
+484c498
+<     
+---
+> 
+491c505
+<     
+---
+> 
+498c512
+<     
+---
+> 
+505c519
+<     
+---
+> 
+512c526
+<     
+---
+> 
+519c533
+<     
+---
+> 
+526c540
+<     
+---
+> 
+533c547
+<     
+---
+> 
+540c554
+<     
+---
+> 
+552c566
+<     
+---
+> 
+2160c2174
+<     
+---
+> 

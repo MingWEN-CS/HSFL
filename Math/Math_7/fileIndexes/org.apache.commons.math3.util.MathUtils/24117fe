@@ -1,0 +1,329 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.util;
+
+import java.util.Arrays;
+
+import org.apache.commons.math.exception.MathArithmeticException;
+import org.apache.commons.math.exception.NotFiniteNumberException;
+import org.apache.commons.math.exception.NullArgumentException;
+import org.apache.commons.math.exception.util.Localizable;
+import org.apache.commons.math.exception.util.LocalizedFormats;
+
+
+
+
+
+public final class MathUtils {
+    
+
+
+
+    public static final double TWO_PI = 2 * FastMath.PI;
+
+    
+    private static final byte  NB = (byte)-1;
+
+    
+    private static final short NS = (short)-1;
+
+    
+    private static final byte  PB = (byte)1;
+
+    
+    private static final short PS = (short)1;
+
+    
+    private static final byte  ZB = (byte)0;
+
+    
+    private static final short ZS = (short)0;
+
+    
+
+
+    private MathUtils() {
+        super();
+    }
+
+    
+
+
+
+
+
+    public static int hash(double value) {
+        return new Double(value).hashCode();
+    }
+
+    
+
+
+
+
+
+
+    public static int hash(double[] value) {
+        return Arrays.hashCode(value);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     public static double normalizeAngle(double a, double center) {
+         return a - TWO_PI * FastMath.floor((a + FastMath.PI - center) / TWO_PI);
+     }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static double reduce(double a,
+                                double period,
+                                double offset) {
+        final double p = FastMath.abs(period);
+        return a - p * FastMath.floor((a - offset) / p) - offset;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static byte sign(final byte x) {
+        return (x == ZB) ? ZB : (x > ZB) ? PB : NB;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static byte copySign(byte magnitude, byte sign) {
+        if ((magnitude >= 0 && sign >= 0) ||
+            (magnitude < 0 && sign < 0)) { 
+            return magnitude;
+        } else if (sign >= 0 &&
+                   magnitude == Byte.MIN_VALUE) {
+            throw new MathArithmeticException(LocalizedFormats.OVERFLOW);
+        } else {
+            return (byte) -magnitude; 
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static short copySign(short magnitude, short sign) {
+        if ((magnitude >= 0 && sign >= 0) ||
+            (magnitude < 0 && sign < 0)) { 
+            return magnitude;
+        } else if (sign >= 0 &&
+                   magnitude == Short.MIN_VALUE) {
+            throw new MathArithmeticException(LocalizedFormats.OVERFLOW);
+        } else {
+            return (short) -magnitude; 
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static int copySign(int magnitude, int sign) {
+        if ((magnitude >= 0 && sign >= 0) ||
+            (magnitude < 0 && sign < 0)) { 
+            return magnitude;
+        } else if (sign >= 0 &&
+                   magnitude == Integer.MIN_VALUE) {
+            throw new MathArithmeticException(LocalizedFormats.OVERFLOW);
+        } else {
+            return (int) -magnitude; 
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static long copySign(long magnitude, long sign) {
+        if ((magnitude >= 0 && sign >= 0) ||
+            (magnitude < 0 && sign < 0)) { 
+            return magnitude;
+        } else if (sign >= 0 &&
+                   magnitude == Long.MIN_VALUE) {
+            throw new MathArithmeticException(LocalizedFormats.OVERFLOW);
+        } else {
+            return (long) -magnitude; 
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static int sign(final int x) {
+        return (x == 0) ? 0 : (x > 0) ? 1 : -1;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static long sign(final long x) {
+        return (x == 0L) ? 0L : (x > 0L) ? 1L : -1L;
+    }
+
+    
+
+
+
+
+
+
+    public static short sign(final short x) {
+        return (x == ZS) ? ZS : (x > ZS) ? PS : NS;
+    }
+
+    
+
+
+
+
+
+
+    public static void checkFinite(final double x) {
+        if (Double.isInfinite(x) || Double.isNaN(x)) {
+            throw new NotFiniteNumberException(x);
+        }
+    }
+
+    
+
+
+
+
+
+
+    public static void checkFinite(final double[] val) {
+        for (int i = 0; i < val.length; i++) {
+            final double x = val[i];
+            if (Double.isInfinite(x) || Double.isNaN(x)) {
+                throw new NotFiniteNumberException(LocalizedFormats.ARRAY_ELEMENT, x, i);
+            }
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    public static void checkNotNull(Object o,
+                                    Localizable pattern,
+                                    Object ... args) {
+        if (o == null) {
+            throw new NullArgumentException(pattern, args);
+        }
+    }
+
+    
+
+
+
+
+
+    public static void checkNotNull(Object o)
+        throws NullArgumentException {
+        if (o == null) {
+            throw new NullArgumentException();
+        }
+    }
+}

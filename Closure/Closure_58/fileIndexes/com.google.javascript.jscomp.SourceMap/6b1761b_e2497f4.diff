@@ -1,0 +1,65 @@
+19a20
+> import com.google.common.collect.Maps;
+26a28,30
+> import java.util.Collections;
+> import java.util.List;
+> import java.util.Map;
+93c97,109
+<   final SourceMapGenerator generator;
+---
+>   public static class LocationMapping {
+>     final String prefix;
+>     final String replacement;
+>     LocationMapping(String prefix, String replacement) {
+>       this.prefix = prefix;
+>       this.replacement = replacement;
+>     }
+>   }
+> 
+>   private final SourceMapGenerator generator;
+>   private List<LocationMapping> prefixMappings = Collections.emptyList();
+>   private final Map<String, String> sourceLocationFixupCache =
+>       Maps.newHashMap();
+103a120
+> 
+110a128,129
+>     sourceFile = fixupSourceLocation(sourceFile);
+> 
+118a138,164
+>   
+> 
+> 
+> 
+>   private String fixupSourceLocation(String sourceFile) {
+>     if (prefixMappings.isEmpty()) {
+>       return sourceFile;
+>     }
+> 
+>     String fixed = sourceLocationFixupCache.get(sourceFile);
+>     if (fixed != null) {
+>       return fixed;
+>     }
+> 
+>     
+>     for (LocationMapping mapping : prefixMappings) {
+>       if (sourceFile.startsWith(mapping.prefix)) {
+>         fixed = mapping.replacement + sourceFile.substring(
+>           mapping.prefix.length());
+>         break;
+>       }
+>     }
+> 
+>     sourceLocationFixupCache.put(sourceFile, fixed);
+>     return fixed;
+>   }
+> 
+124a171
+>     sourceLocationFixupCache.clear();
+136a184,190
+>   }
+> 
+>   
+> 
+> 
+>   public void setPrefixMappings(List<LocationMapping> sourceMapLocationMappings) {
+>      this.prefixMappings = sourceMapLocationMappings;

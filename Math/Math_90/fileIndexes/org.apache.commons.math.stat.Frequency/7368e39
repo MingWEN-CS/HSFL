@@ -1,0 +1,181 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat;
+
+import java.io.Serializable;
+import java.util.Iterator;
+
+import org.apache.commons.collections.Bag;
+import org.apache.commons.collections.HashBag;
+
+
+
+
+
+
+
+
+public class Frequency implements Serializable{
+    
+    
+    private String name;
+
+    
+    private Bag freqTable = new HashBag();
+
+    
+
+
+    public Frequency() {
+        this(null);
+    }
+
+    
+
+
+
+    public Frequency(String name) {
+        super();
+        setName(name);
+    }
+
+    
+
+
+
+
+    public String toString() {
+        StringBuffer outBuffer = new StringBuffer();
+        outBuffer.append("Value \t Frequency \n");
+        Iterator iter = freqTable.uniqueSet().iterator();
+        while (iter.hasNext()) {
+            Object value = iter.next();
+            outBuffer.append(value);
+            outBuffer.append('\t');
+            outBuffer.append(freqTable.getCount(value));
+            outBuffer.append('\n');
+        }
+        return outBuffer.toString();
+    }
+
+    
+
+
+
+    public void addValue(String v) {
+        freqTable.add(v);
+    }
+
+    
+
+
+
+    public void addValue(int v) {
+        addValue((new Integer(v)).toString());
+    }
+
+    
+
+
+
+    public void addValue(long v) {
+        addValue((new Long(v)).toString());
+    }
+
+    
+
+
+
+
+    public long getCount(String v) {
+        return freqTable.getCount(v);
+    }
+
+    
+
+
+
+    public long getSumFreq() {
+        return freqTable.size();
+    }
+
+    
+
+
+
+
+    public double getPct(String v) {
+        return (double) getCount(v) / (double) getSumFreq();        
+    }
+
+    
+    public void clear() {
+        freqTable.clear();
+    }
+
+    
+
+
+    public String getName() {
+        return name;
+    }
+
+    
+
+
+    public void setName(java.lang.String name) {
+        this.name = name;
+    }
+
+}

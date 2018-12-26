@@ -1,0 +1,45 @@
+327,328c327,328
+<     Node trueExpr = new Node(Token.BLOCK);
+<     Node falseExpr = new Node(Token.BLOCK);
+---
+>     Node trueExpr = new Node(Token.BLOCK).copyInformationFrom(expr);
+>     Node falseExpr = new Node(Token.BLOCK).copyInformationFrom(expr);
+333c333
+<         trueExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+---
+>         trueExpr.addChildToFront(NodeUtil.newExpr(
+335c335
+<         falseExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+---
+>         falseExpr.addChildToFront(NodeUtil.newExpr(
+341c341
+<         trueExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+---
+>         trueExpr.addChildToFront(NodeUtil.newExpr(
+347c347
+<         falseExpr.addChildToFront(new Node(Token.EXPR_RESULT,
+---
+>         falseExpr.addChildToFront(NodeUtil.newExpr(
+360a361
+>     ifNode.copyInformationFrom(expr);
+363,364c364,365
+<       Node tempVarNode = new Node(Token.VAR,
+<           Node.newString(Token.NAME, tempName));
+---
+>       Node tempVarNode = NodeUtil.newVarNode(tempName, null)
+>           .copyInformationFromForTree(expr);
+397c398
+<           expr);
+---
+>           expr).copyInformationFromForTree(expr);
+443c444,445
+<     Node replacementValueNode = Node.newString(Token.NAME, tempName);
+---
+>     Node replacementValueNode = Node.newString(Token.NAME, tempName)
+>         .copyInformationFrom(expr);
+474,476c476
+<     Node tempNameNode = Node.newString(Token.NAME, tempName);
+<     tempNameNode.addChildToBack(tempNameValue);
+<     Node tempVarNode = new Node(Token.VAR, tempNameNode);
+---
+>     Node tempVarNode = NodeUtil.newVarNode(tempName, tempNameValue);

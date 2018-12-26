@@ -1,0 +1,127 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+package com.google.javascript.rhino.jstype;
+
+import static com.google.javascript.rhino.jstype.TernaryValue.UNKNOWN;
+
+import com.google.javascript.rhino.ErrorReporter;
+
+
+
+
+
+
+public final class AllType extends JSType {
+  private static final long serialVersionUID = 1L;
+
+  AllType(JSTypeRegistry registry) {
+    super(registry);
+  }
+
+  
+
+
+
+
+  @Override
+  public boolean isSubtype(JSType that) {
+    return that.isAllType() || that.isUnknownType();
+  }
+
+  @Override
+  public boolean isAllType() {
+    return true;
+  }
+
+  @Override
+  public boolean matchesStringContext() {
+    
+    return true;
+  }
+
+  @Override
+  public boolean matchesObjectContext() {
+    
+    return true;
+  }
+
+  @Override
+  public boolean canBeCalled() {
+    return false;
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    return UNKNOWN;
+  }
+
+  @Override
+  public JSType getLeastSupertype(JSType that) {
+    if (that.isUnknownType()) {
+      return registry.getNativeType(JSTypeNative.UNKNOWN_TYPE);
+    }
+    return this;
+  }
+
+  @Override
+  public JSType getGreatestSubtype(JSType that) {
+    return that;
+  }
+
+  @Override
+  public String toString() {
+    return "*";
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseAllType();
+  }
+
+  @Override
+  public BooleanLiteralSet getPossibleToBooleanOutcomes() {
+    return BooleanLiteralSet.BOTH;
+  }
+
+  @Override
+  JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+    return this;
+  }
+}

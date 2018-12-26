@@ -1,0 +1,71 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import java.util.Date;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeZone;
+
+
+
+
+
+
+
+
+final class DateConverter extends AbstractConverter
+        implements InstantConverter, PartialConverter {
+
+    
+
+
+    static final DateConverter INSTANCE = new DateConverter();
+
+    
+
+
+    protected DateConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, Chronology chrono) {
+        Date date = (Date) object;
+        long millisLocal = date.getTime() - date.getTimezoneOffset() * 60000;
+        return millisLocal - DateTimeZone.getDefault().getOffsetFromLocal(millisLocal);
+    }
+
+    
+    
+
+
+
+
+    public Class getSupportedType() {
+        return Date.class;
+    }
+
+}

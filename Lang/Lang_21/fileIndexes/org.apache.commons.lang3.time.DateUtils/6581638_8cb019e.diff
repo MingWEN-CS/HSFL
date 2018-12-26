@@ -1,0 +1,30 @@
+292a293,300
+> 
+>             String pattern = parsePatterns[i];
+> 
+>             
+>             if (parsePatterns[i].endsWith("ZZ")) {
+>                 pattern = pattern.substring(0, pattern.length() - 1);
+>             }
+>             
+294c302
+<                 parser = new SimpleDateFormat(parsePatterns[0]);
+---
+>                 parser = new SimpleDateFormat(pattern);
+296c304
+<                 parser.applyPattern(parsePatterns[i]); 
+---
+>                 parser.applyPattern(pattern); 
+299,300c307,315
+<             Date date = parser.parse(str, pos);
+<             if (date != null && pos.getIndex() == str.length()) {
+---
+> 
+>             String str2 = str;
+>             
+>             if (parsePatterns[i].endsWith("ZZ")) {
+>                 str2 = str.replaceAll("([-+][0-9][0-9]):([0-9][0-9])$", "$1$2"); 
+>             }
+> 
+>             Date date = parser.parse(str2, pos);
+>             if (date != null && pos.getIndex() == str2.length()) {

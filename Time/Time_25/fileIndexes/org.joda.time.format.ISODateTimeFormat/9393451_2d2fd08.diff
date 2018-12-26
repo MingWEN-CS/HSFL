@@ -1,0 +1,69 @@
+268a269,271
+> 
+> 
+> 
+289a293,295
+> 
+> 
+> 
+291a298,309
+>             
+>             DateTimeParser decimalPoint = new DateTimeFormatterBuilder(iChrono)
+>                 .append(null, new DateTimeParser[] {
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     .appendLiteral('.')
+>                     .toParser(),
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     .appendLiteral(',')
+>                     .toParser()
+>                 })
+>                 .toParser();
+> 
+292a311
+>                 
+294,302c313,343
+<                 .appendOptional
+<                 (new DateTimeFormatterBuilder(iChrono)
+<                  .append(minuteElement())
+<                  .appendOptional
+<                  (new DateTimeFormatterBuilder(iChrono)
+<                   .append(secondElement())
+<                   .appendOptional(fractionElement())
+<                   .toParser())
+<                  .toParser())
+---
+>                 .append
+>                 (null, new DateTimeParser[] {
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     
+>                     .append(minuteElement())
+>                     .append
+>                     (null, new DateTimeParser[] {
+>                         new DateTimeFormatterBuilder(iChrono)
+>                         
+>                         .append(secondElement())
+>                         
+>                         .appendOptional(new DateTimeFormatterBuilder(iChrono)
+>                                         .append(decimalPoint)
+>                                         .appendFractionOfSecond(1, 9)
+>                                         .toParser())
+>                         .toParser(),
+>                         
+>                         new DateTimeFormatterBuilder(iChrono)
+>                         .append(decimalPoint)
+>                         .appendFractionOfMinute(1, 9)
+>                         .toParser(),
+>                         null
+>                     })
+>                     .toParser(),
+>                     
+>                     new DateTimeFormatterBuilder(iChrono)
+>                     .append(decimalPoint)
+>                     .appendFractionOfHour(1, 9)
+>                     .toParser(),
+>                     null
+>                 })
+308a350,352
+> 
+> 
+> 

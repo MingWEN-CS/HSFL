@@ -1,0 +1,40 @@
+21d20
+< import static com.google.javascript.rhino.jstype.JSTypeNative.OBJECT_TYPE;
+86c85
+<   private ObjectType thisType = null;
+---
+>   private JSType thisType = null;
+193,210d191
+<   private class ThisTypeValidator implements Predicate<JSType> {
+<     @Override
+<     public boolean apply(JSType type) {
+<       
+<       
+<       
+<       
+<       
+<       
+<       if (!type.restrictByNotNullOrUndefined().isSubtype(
+<               typeRegistry.getNativeType(OBJECT_TYPE))) {
+<         reportWarning(THIS_TYPE_NON_OBJECT, type.toString());
+<         return false;
+<       }
+<       return true;
+<     }
+<   }
+< 
+414c395
+<     ObjectType maybeThisType = null;
+---
+>     JSType maybeThisType = null;
+416,417c397,401
+<       maybeThisType = ObjectType.cast(
+<           info.getThisType().evaluate(scope, typeRegistry));
+---
+>       
+>       
+>       
+>       maybeThisType = info.getThisType().evaluate(scope, typeRegistry)
+>           .restrictByNotNullOrUndefined();
+421d404
+<       thisType.setValidator(new ThisTypeValidator());

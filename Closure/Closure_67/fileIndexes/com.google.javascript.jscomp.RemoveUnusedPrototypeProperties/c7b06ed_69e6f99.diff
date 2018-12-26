@@ -1,0 +1,79 @@
+18a19,22
+> import com.google.common.base.Preconditions;
+> import com.google.javascript.jscomp.AnalyzePrototypeProperties.AssignmentProperty;
+> import com.google.javascript.jscomp.AnalyzePrototypeProperties.GlobalFunction;
+> import com.google.javascript.jscomp.AnalyzePrototypeProperties.LiteralProperty;
+32c36,37
+< class RemoveUnusedPrototypeProperties implements CompilerPass {
+---
+> class RemoveUnusedPrototypeProperties implements
+>     SpecializationAwareCompilerPass {
+39a45
+>   private SpecializeModule.SpecializationState specializationState;
+52c58,59
+<       boolean canModifyExterns, boolean anchorUnusedVars) {
+---
+>       boolean canModifyExterns,
+>       boolean anchorUnusedVars) {
+57a65,69
+>   public void enableSpecialization(SpecializeModule.SpecializationState state) {
+>     this.specializationState = state;
+>   }
+> 
+>   @Override
+75,76c87,104
+<           declaration.remove();
+<           changed = true;
+---
+>           boolean canRemove = false;
+> 
+>           if (specializationState == null) {
+>             canRemove = true;
+>           } else {
+>             Node specializableFunction =
+>               getSpecializableFunctionFromSymbol(declaration);
+> 
+>             if (specializableFunction != null) {
+>               specializationState.reportRemovedFunction(specializableFunction);
+>               canRemove = true;
+>             }
+>           }
+> 
+>           if (canRemove) {
+>             declaration.remove();
+>             changed = true;
+>           }
+84a113,145
+>     }
+>   }
+> 
+>   
+> 
+> 
+>   private Node getSpecializableFunctionFromSymbol(Symbol symbol) {
+>     Preconditions.checkNotNull(specializationState);
+> 
+>     Node specializableFunction = null;
+> 
+>     if (symbol instanceof GlobalFunction) {
+>       specializableFunction = ((GlobalFunction) symbol).getFunctionNode();
+>     } else if (symbol instanceof AssignmentProperty) {
+>       Node propertyValue = ((AssignmentProperty) symbol).getValue();
+>       if (NodeUtil.isFunction(propertyValue)) {
+>         specializableFunction = propertyValue;
+>       }
+>     } else if (symbol instanceof LiteralProperty) {
+>       
+>       
+>       
+> 
+>       return null;
+>     } else {
+>       Preconditions.checkState(false, "Should be unreachable.");
+>     }
+> 
+>     if (specializableFunction != null &&
+>         specializationState.canFixupFunction(specializableFunction)) {
+>       return specializableFunction;
+>     } else {
+>       return null;

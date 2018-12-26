@@ -1,0 +1,230 @@
+58a59
+> import org.joda.time.Chronology;
+59a61,62
+> import org.joda.time.DateTimeFieldType;
+> import org.joda.time.DateTimeUtils;
+81d83
+< public class DateTimeParserBucket {
+83d84
+<     final long iMillis;
+84a86,93
+> 
+> 
+> 
+> public class DateTimeParserBucket {
+> 
+>     private final Chronology iChrono;
+>     private final long iMillis;
+>     
+88c97
+< 
+---
+>     
+92c101
+< 
+---
+>     
+94d102
+< 
+95a104,105
+>     
+> 
+98c108,112
+<     public DateTimeParserBucket(long instantLocal) {
+---
+> 
+> 
+>     public DateTimeParserBucket(long instantLocal, Chronology chrono) {
+>         super();
+>         chrono = DateTimeUtils.getChronology(chrono);
+99a114,115
+>         iChrono = chrono.withUTC();
+>         setZone(chrono.getZone());
+100a117,120
+>     
+>     
+>     
+> 
+101a122,126
+>     public Chronology getChronology() {
+>         return iChrono;
+>     }
+>     
+>     
+109c134
+< 
+---
+>     
+121c146,147
+< 
+---
+>     
+>     
+129c155
+< 
+---
+>     
+140a167,170
+>     
+> 
+> 
+> 
+146d175
+< 
+147a177,179
+>     
+> 
+> 
+150,151c182,184
+<     public void saveField(DateTimeField field, String text, Locale locale) {
+<         saveField(new SavedField(field, text, locale));
+---
+> 
+>     public void saveField(DateTimeFieldType fieldType, int value) {
+>         saveField(new SavedField(fieldType.getField(iChrono), value));
+152a186,190
+>     
+>     
+> 
+> 
+> 
+153a192,197
+> 
+> 
+>     public void saveField(DateTimeFieldType fieldType, String text, Locale locale) {
+>         saveField(new SavedField(fieldType.getField(iChrono), text, locale));
+>     }
+>     
+157c201
+< 
+---
+>         
+166c210
+< 
+---
+>         
+171c215
+< 
+---
+>     
+185c229
+< 
+---
+>     
+196c240
+<             if (((SavedState)savedState).restoreState(this)) {
+---
+>             if (((SavedState) savedState).restoreState(this)) {
+203c247
+< 
+---
+>     
+214c258
+< 
+---
+>     
+231c275
+< 
+---
+>         
+236c280
+< 
+---
+>         
+247c291
+< 
+---
+>         
+250c294
+< 
+---
+>     
+283c327,359
+<     private static class SavedField implements Comparable {
+---
+>     class SavedState {
+>         final DateTimeZone iZone;
+>         final int iOffset;
+>         final SavedField[] iSavedFields;
+>         final int iSavedFieldsCount;
+>         
+>         SavedState() {
+>             this.iZone = DateTimeParserBucket.this.iZone;
+>             this.iOffset = DateTimeParserBucket.this.iOffset;
+>             this.iSavedFields = DateTimeParserBucket.this.iSavedFields;
+>             this.iSavedFieldsCount = DateTimeParserBucket.this.iSavedFieldsCount;
+>         }
+>         
+>         boolean restoreState(DateTimeParserBucket enclosing) {
+>             if (enclosing != DateTimeParserBucket.this) {
+>                 return false;
+>             }
+>             enclosing.iZone = this.iZone;
+>             enclosing.iOffset = this.iOffset;
+>             enclosing.iSavedFields = this.iSavedFields;
+>             if (this.iSavedFieldsCount < enclosing.iSavedFieldsCount) {
+>                 
+>                 
+>                 
+>                 
+>                 enclosing.iSavedFieldsShared = true;
+>             }
+>             enclosing.iSavedFieldsCount = this.iSavedFieldsCount;
+>             return true;
+>         }
+>     }
+>     
+>     static class SavedField implements Comparable {
+288c364
+< 
+---
+>         
+295c371
+< 
+---
+>         
+302c378
+< 
+---
+>         
+314c390
+< 
+---
+>         
+330c406
+< 
+---
+>         
+342,373d417
+<         }
+<     }
+< 
+<     private class SavedState {
+<         final DateTimeZone iZone;
+<         final int iOffset;
+<         final SavedField[] iSavedFields;
+<         final int iSavedFieldsCount;
+< 
+<         SavedState() {
+<             this.iZone = DateTimeParserBucket.this.iZone;
+<             this.iOffset = DateTimeParserBucket.this.iOffset;
+<             this.iSavedFields = DateTimeParserBucket.this.iSavedFields;
+<             this.iSavedFieldsCount = DateTimeParserBucket.this.iSavedFieldsCount;
+<         }
+< 
+<         boolean restoreState(DateTimeParserBucket enclosing) {
+<             if (enclosing != DateTimeParserBucket.this) {
+<                 return false;
+<             }
+<             enclosing.iZone = this.iZone;
+<             enclosing.iOffset = this.iOffset;
+<             enclosing.iSavedFields = this.iSavedFields;
+<             if (this.iSavedFieldsCount < enclosing.iSavedFieldsCount) {
+<                 
+<                 
+<                 
+<                 
+<                 enclosing.iSavedFieldsShared = true;
+<             }
+<             enclosing.iSavedFieldsCount = this.iSavedFieldsCount;
+<             return true;

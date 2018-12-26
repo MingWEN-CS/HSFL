@@ -1,0 +1,118 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.optim.nonlinear.scalar;
+
+import org.apache.commons.math3.analysis.MultivariateFunction;
+import org.apache.commons.math3.optim.BaseMultivariateOptimizer;
+import org.apache.commons.math3.optim.OptimizationData;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.PointValuePair;
+import org.apache.commons.math3.exception.TooManyEvaluationsException;
+
+
+
+
+
+
+
+public abstract class MultivariateOptimizer
+    extends BaseMultivariateOptimizer<PointValuePair> {
+    
+    private MultivariateFunction function;
+    
+    private GoalType goal;
+
+    
+
+
+    protected MultivariateOptimizer(ConvergenceChecker<PointValuePair> checker) {
+        super(checker);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public PointValuePair optimize(OptimizationData... optData)
+        throws TooManyEvaluationsException {
+        
+        return super.optimize(optData);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    @Override
+    protected void parseOptimizationData(OptimizationData... optData) {
+        
+        super.parseOptimizationData(optData);
+
+        
+        
+        for (OptimizationData data : optData) {
+            if (data instanceof GoalType) {
+                goal = (GoalType) data;
+                continue;
+            }
+            if (data instanceof ObjectiveFunction) {
+                function = ((ObjectiveFunction) data).getObjectiveFunction();
+                continue;
+            }
+        }
+    }
+
+    
+
+
+    public GoalType getGoalType() {
+        return goal;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected double computeObjectiveValue(double[] params) {
+        super.incrementEvaluationCount();
+        return function.value(params);
+    }
+}

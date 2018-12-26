@@ -1,0 +1,236 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.field;
+
+import org.joda.time.DurationField;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class ImpreciseDateTimeField extends BaseDateTimeField {
+
+    static final long serialVersionUID = 7190739608550251860L;
+
+    final long iUnitMillis;
+    private final DurationField iDurationField;
+
+    
+
+
+
+
+
+
+    public ImpreciseDateTimeField(String name, String durationName, long unitMillis) {
+        super(name);
+        iUnitMillis = unitMillis;
+        iDurationField = new LinkedDurationField(durationName);
+    }
+
+    public abstract int get(long instant);
+
+    public abstract long set(long instant, int value);
+
+    public abstract long add(long instant, int value);
+
+    public abstract long add(long instant, long value);
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int getDifference(long minuendInstant, long subtrahendInstant) {
+        return FieldUtils.safeToInt(getDifferenceAsLong(minuendInstant, subtrahendInstant));
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant) {
+        if (minuendInstant < subtrahendInstant) {
+            return -getDifferenceAsLong(subtrahendInstant, minuendInstant);
+        }
+        
+        long difference = (minuendInstant - subtrahendInstant) / iUnitMillis;
+        if (add(subtrahendInstant, difference) < minuendInstant) {
+            do {
+                difference++;
+            } while (add(subtrahendInstant, difference) <= minuendInstant);
+            difference--;
+        } else if (add(subtrahendInstant, difference) > minuendInstant) {
+            do {
+                difference--;
+            } while (add(subtrahendInstant, difference) > minuendInstant);
+        }
+        return difference;
+    }
+
+    public final DurationField getDurationField() {
+        return iDurationField;
+    }
+
+    public abstract DurationField getRangeDurationField();
+
+    public abstract long roundFloor(long instant);
+
+    protected final long getDurationUnitMillis() {
+        return iUnitMillis;
+    }
+
+    private final class LinkedDurationField extends BaseDurationField {
+        static final long serialVersionUID = -203813474600094134L;
+
+        LinkedDurationField(String name) {
+            super(name);
+        }
+    
+        public boolean isPrecise() {
+            return false;
+        }
+    
+        public long getUnitMillis() {
+            return iUnitMillis;
+        }
+
+        public int getValue(long duration, long instant) {
+            return ImpreciseDateTimeField.this
+                .getDifference(instant + duration, instant);
+        }
+
+        public long getValueAsLong(long duration, long instant) {
+            return ImpreciseDateTimeField.this
+                .getDifferenceAsLong(instant + duration, instant);
+        }
+        
+        public long getMillis(int value, long instant) {
+            return ImpreciseDateTimeField.this.add(instant, value) - instant;
+        }
+
+        public long getMillis(long value, long instant) {
+            return ImpreciseDateTimeField.this.add(instant, value) - instant;
+        }
+
+        public long add(long instant, int value) {
+            return ImpreciseDateTimeField.this.add(instant, value);
+        }
+        
+        public long add(long instant, long value) {
+            return ImpreciseDateTimeField.this.add(instant, value);
+        }
+        
+        public int getDifference(long minuendInstant, long subtrahendInstant) {
+            return ImpreciseDateTimeField.this
+                .getDifference(minuendInstant, subtrahendInstant);
+        }
+        
+        public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant) {
+            return ImpreciseDateTimeField.this
+                .getDifferenceAsLong(minuendInstant, subtrahendInstant);
+        }
+    }
+
+}

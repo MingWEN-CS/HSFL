@@ -1,0 +1,133 @@
+23c23
+< import org.apache.commons.math.MathRuntimeException;
+---
+> import org.apache.commons.math.exception.NotStrictlyPositiveException;
+37d36
+< 
+43d41
+< 
+46d43
+< 
+49d45
+< 
+52d47
+< 
+55d49
+< 
+76a71
+> 
+78,80c73,78
+<         super();
+<         setMeanInternal(mean);
+<         setStandardDeviationInternal(sd);
+---
+>         if (sd <= 0) {
+>             throw new NotStrictlyPositiveException(LocalizedFormats.STANDARD_DEVIATION, sd);
+>         }
+>         
+>         this.mean = mean;
+>         standardDeviation = sd;
+89c87
+<         this(0.0, 1.0);
+---
+>         this(0, 1);
+95d92
+< 
+103,120d99
+< 
+< 
+<     @Deprecated
+<     public void setMean(double mean) {
+<         setMeanInternal(mean);
+<     }
+<     
+< 
+< 
+< 
+<     private void setMeanInternal(double newMean) {
+<         this.mean = newMean;
+<     }
+< 
+<     
+< 
+< 
+< 
+128,166d106
+< 
+< 
+< 
+<     @Deprecated
+<     public void setStandardDeviation(double sd) {
+<         setStandardDeviationInternal(sd);
+<     }
+<     
+< 
+< 
+< 
+< 
+<     private void setStandardDeviationInternal(double sd) {
+<         if (sd <= 0.0) {
+<             throw MathRuntimeException.createIllegalArgumentException(
+<                   LocalizedFormats.NOT_POSITIVE_STANDARD_DEVIATION,
+<                   sd);
+<         }
+<         standardDeviation = sd;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+<     public double density(Double x) {
+<         return density(x.doubleValue());
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+168,169c108,110
+<         double x0 = x - mean;
+<         return FastMath.exp(-x0 * x0 / (2 * standardDeviation * standardDeviation)) / (standardDeviation * SQRT2PI);
+---
+>         final double x0 = x - mean;
+>         final double x1 = x0 / standardDeviation;
+>         return FastMath.exp(-0.5 * x1 * x1) / (standardDeviation * SQRT2PI);
+179a121
+> 
+186c128
+<                 return 0.0d;
+---
+>                 return 0;
+188c130
+<                 return 1.0d;
+---
+>                 return 1;
+220d161
+< 
+253d193
+< 
+258c198
+<         if (p < .5) {
+---
+>         if (p < 0.5) {
+275d214
+< 
+280c219
+<         if (p < .5) {
+---
+>         if (p < 0.5) {
+301c240
+<         if (p < .5) {
+---
+>         if (p < 0.5) {
+303c242
+<         } else if (p > .5) {
+---
+>         } else if (p > 0.5) {

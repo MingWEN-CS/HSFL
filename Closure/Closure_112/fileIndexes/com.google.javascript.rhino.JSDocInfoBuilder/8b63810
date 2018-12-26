@@ -1,0 +1,1090 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino;
+
+import com.google.javascript.rhino.JSDocInfo.Visibility;
+import com.google.javascript.rhino.jstype.StaticSourceFile;
+
+import java.util.List;
+import java.util.Set;
+
+
+
+
+
+
+
+
+
+final public class JSDocInfoBuilder {
+  
+  private JSDocInfo currentInfo;
+
+  
+  private boolean populated = false;
+
+  
+  private boolean parseDocumentation = false;
+
+  
+  private JSDocInfo.Marker currentMarker = null;
+
+  public JSDocInfoBuilder(boolean parseDocumentation) {
+    this.currentInfo = new JSDocInfo(parseDocumentation);
+    this.parseDocumentation = parseDocumentation;
+  }
+
+  
+
+
+
+  public void recordOriginalCommentString(String sourceComment) {
+    if (parseDocumentation) {
+      currentInfo.setOriginalCommentString(sourceComment);
+    }
+  }
+
+  
+
+
+  public void recordOriginalCommentPosition(int position) {
+    if (parseDocumentation) {
+      currentInfo.setOriginalCommentPosition(position);
+    }
+  }
+
+  public boolean shouldParseDocumentation() {
+    return parseDocumentation;
+  }
+
+  
+
+
+
+  public boolean isPopulated() {
+    return populated;
+  }
+
+  
+
+
+
+
+  public boolean isPopulatedWithFileOverview() {
+    return isPopulated() &&
+        (currentInfo.hasFileOverview() || currentInfo.isExterns() ||
+         currentInfo.isNoCompile());
+  }
+
+  
+
+
+  public boolean isDescriptionRecorded() {
+    return currentInfo.getDescription() != null;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  public JSDocInfo build(Node associatedNode) {
+    if (populated) {
+      JSDocInfo built = currentInfo;
+      built.setAssociatedNode(associatedNode);
+      populateDefaults(built);
+      populated = false;
+      currentInfo = new JSDocInfo(this.parseDocumentation);
+      return built;
+    } else {
+      return null;
+    }
+  }
+
+  
+  private static void populateDefaults(JSDocInfo info) {
+    if (info.getVisibility() == null) {
+      info.setVisibility(Visibility.INHERITED);
+    }
+  }
+
+  
+
+
+
+  public void markAnnotation(String annotation, int lineno, int charno) {
+    JSDocInfo.Marker marker = currentInfo.addMarker();
+
+    if (marker != null) {
+      JSDocInfo.TrimmedStringPosition position =
+          new JSDocInfo.TrimmedStringPosition();
+      position.setItem(annotation);
+      position.setPositionInformation(lineno, charno, lineno,
+          charno + annotation.length());
+      marker.setAnnotation(position);
+      populated = true;
+    }
+
+    currentMarker = marker;
+  }
+
+  
+
+
+  public void markText(String text, int startLineno, int startCharno,
+      int endLineno, int endCharno) {
+    if (currentMarker != null) {
+      JSDocInfo.StringPosition position = new JSDocInfo.StringPosition();
+      position.setItem(text);
+      position.setPositionInformation(startLineno, startCharno,
+          endLineno, endCharno);
+      currentMarker.setDescription(position);
+    }
+  }
+
+  
+
+
+  public void markTypeNode(Node typeNode, int lineno, int startCharno,
+      int endLineno, int endCharno, boolean hasLC) {
+    if (currentMarker != null) {
+      JSDocInfo.TypePosition position = new JSDocInfo.TypePosition();
+      position.setItem(typeNode);
+      position.setHasBrackets(hasLC);
+      position.setPositionInformation(lineno, startCharno,
+          endLineno, endCharno);
+      currentMarker.setType(position);
+    }
+  }
+
+  
+
+
+
+  @Deprecated
+  public void markName(String name,  int lineno, int charno) {
+    markName(name, null, lineno, charno);
+  }
+
+  
+
+
+  public void markName(String name, StaticSourceFile file,
+      int lineno, int charno) {
+    if (currentMarker != null) {
+      
+      
+      
+      
+      
+      
+      
+      JSDocInfo.TrimmedStringPosition position =
+          new JSDocInfo.TrimmedStringPosition();
+      position.setItem(name);
+      position.setPositionInformation(lineno, charno,
+          lineno, charno + name.length());
+      currentMarker.setName(position);
+
+      SourcePosition<Node> nodePos =
+          new JSDocInfo.NamePosition();
+      Node node = Node.newString(Token.NAME, name, lineno, charno);
+      node.setLength(name.length());
+      node.setStaticSourceFile(file);
+      nodePos.setItem(node);
+      nodePos.setPositionInformation(lineno, charno,
+          lineno, charno + name.length());
+      currentMarker.setNameNode(nodePos);
+    }
+  }
+
+  
+
+
+
+
+  public boolean recordBlockDescription(String description) {
+    populated = true;
+    return currentInfo.documentBlock(description);
+  }
+
+  
+
+
+
+
+
+  public boolean recordVisibility(Visibility visibility) {
+    if (currentInfo.getVisibility() == null) {
+      populated = true;
+      currentInfo.setVisibility(visibility);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordParameter(String parameterName, JSTypeExpression type) {
+    if (!hasAnySingletonTypeTags() &&
+        currentInfo.declareParam(type, parameterName)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordParameterDescription(
+      String parameterName, String description) {
+    if (currentInfo.documentParam(parameterName, description)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordTemplateTypeNames(List<String> names) {
+    if (currentInfo.declareTemplateTypeNames(names)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordClassTemplateTypeNames(List<String> names) {
+    if (currentInfo.declareClassTemplateTypeNames(names)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  
+
+
+  public boolean recordThrowType(JSTypeExpression type) {
+    if (!hasAnySingletonTypeTags()) {
+      currentInfo.declareThrows(type);
+      populated = true;
+      return true;
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+  public boolean recordThrowDescription(
+      JSTypeExpression type, String description) {
+    if (currentInfo.documentThrows(type, description)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  
+
+
+  public boolean addAuthor(String author) {
+    if (currentInfo.documentAuthor(author)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  
+
+
+  public boolean addReference(String reference) {
+    if (currentInfo.documentReference(reference)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+  public boolean recordConsistentIdGenerator() {
+    if (!currentInfo.isConsistentIdGenerator()) {
+      currentInfo.setConsistentIdGenerator(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordStableIdGenerator() {
+    if (!currentInfo.isStableIdGenerator()) {
+      currentInfo.setStableIdGenerator(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  public boolean recordVersion(String version) {
+    if (currentInfo.documentVersion(version)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  public boolean recordDeprecationReason(String reason) {
+    if (currentInfo.setDeprecationReason(reason)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  public boolean recordSuppressions(Set<String> suppressions) {
+    if (currentInfo.setSuppressions(suppressions)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  public boolean recordModifies(Set<String> modifies) {
+    if (!hasAnySingletonSideEffectTags()
+        && currentInfo.setModifies(modifies)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordType(JSTypeExpression type) {
+    if (type != null && !hasAnyTypeRelatedTags()) {
+      currentInfo.setType(type);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordTypedef(JSTypeExpression type) {
+    if (type != null && !hasAnyTypeRelatedTags()) {
+      currentInfo.setTypedefType(type);
+      populated = true;
+      return true;
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+  public boolean recordIdGenerator() {
+    if (!currentInfo.isIdGenerator()) {
+      currentInfo.setIdGenerator(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordReturnType(JSTypeExpression jsType) {
+    if (jsType != null && currentInfo.getReturnType() == null &&
+        !hasAnySingletonTypeTags()) {
+      currentInfo.setReturnType(jsType);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordReturnDescription(String description) {
+    if (currentInfo.documentReturn(description)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordDefineType(JSTypeExpression type) {
+    if (type != null &&
+        !currentInfo.isConstant() &&
+        !currentInfo.isDefine() &&
+        recordType(type)) {
+      currentInfo.setDefine(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordEnumParameterType(JSTypeExpression type) {
+    if (type != null && !hasAnyTypeRelatedTags()) {
+      currentInfo.setEnumParameterType(type);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordThisType(JSTypeExpression type) {
+    if (type != null && !hasAnySingletonTypeTags() &&
+        !currentInfo.hasThisType()) {
+      currentInfo.setThisType(type);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordBaseType(JSTypeExpression jsType) {
+    if (jsType != null && !hasAnySingletonTypeTags() &&
+        !currentInfo.hasBaseType()) {
+      currentInfo.setBaseType(jsType);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordConstancy() {
+    if (!currentInfo.isConstant()) {
+      currentInfo.setConstant(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordDescription(String description) {
+    if (description != null && currentInfo.getDescription() == null) {
+      currentInfo.setDescription(description);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordMeaning(String meaning) {
+    if (meaning != null && currentInfo.getMeaning() == null) {
+      currentInfo.setMeaning(meaning);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public boolean recordFileOverview(String description) {
+    if (currentInfo.documentFileOverview(description)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordHiddenness() {
+    if (!currentInfo.isHidden()) {
+      currentInfo.setHidden(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordNoCompile() {
+    if (!currentInfo.isNoCompile()) {
+      currentInfo.setNoCompile(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordNoTypeCheck() {
+    if (!currentInfo.isNoTypeCheck()) {
+      currentInfo.setNoCheck(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+  public boolean recordConstructor() {
+    if (!hasAnySingletonTypeTags() &&
+        !currentInfo.isConstructor() && !currentInfo.isInterface()) {
+      currentInfo.setConstructor(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean isConstructorRecorded() {
+    return currentInfo.isConstructor();
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordStruct() {
+    if (hasAnySingletonTypeTags() || currentInfo.isInterface() ||
+        currentInfo.makesDicts() || currentInfo.makesStructs()) {
+      return false;
+    }
+    currentInfo.setStruct();
+    populated = true;
+    return true;
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordDict() {
+    if (hasAnySingletonTypeTags() || currentInfo.isInterface() ||
+        currentInfo.makesDicts() || currentInfo.makesStructs()) {
+      return false;
+    }
+    currentInfo.setDict();
+    populated = true;
+    return true;
+  }
+
+  
+
+
+
+
+
+
+
+  public boolean recordJavaDispatch() {
+    if (!currentInfo.isJavaDispatch()) {
+      currentInfo.setJavaDispatch(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean isJavaDispatch() {
+    return currentInfo.isJavaDispatch();
+  }
+
+  
+
+
+
+  public boolean recordPreserveTry() {
+    if (!currentInfo.shouldPreserveTry()) {
+      currentInfo.setShouldPreserveTry(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordOverride() {
+    if (!currentInfo.isOverride()) {
+      currentInfo.setOverride(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordNoAlias() {
+    if (!currentInfo.isNoAlias()) {
+      currentInfo.setNoAlias(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordDeprecated() {
+    if (!currentInfo.isDeprecated()) {
+      currentInfo.setDeprecated(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+
+
+
+  public boolean recordInterface() {
+    if (hasAnySingletonTypeTags() ||
+        currentInfo.makesStructs() || currentInfo.makesDicts() ||
+        currentInfo.isConstructor() || currentInfo.isInterface()) {
+      return false;
+    }
+    currentInfo.setInterface(true);
+    populated = true;
+    return true;
+  }
+
+  
+
+
+
+  public boolean recordExport() {
+    if (!currentInfo.isExport()) {
+      currentInfo.setExport(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordExpose() {
+    if (!currentInfo.isExpose()) {
+      currentInfo.setExpose(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordNoShadow() {
+    if (!currentInfo.isNoShadow()) {
+      currentInfo.setNoShadow(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordImplicitCast() {
+    if (!currentInfo.isImplicitCast()) {
+      currentInfo.setImplicitCast(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordNoSideEffects() {
+    if (!hasAnySingletonSideEffectTags()
+        && !currentInfo.isNoSideEffects()) {
+      currentInfo.setNoSideEffects(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean recordExterns() {
+    if (!currentInfo.isExterns()) {
+      currentInfo.setExterns(true);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  public boolean isInterfaceRecorded() {
+    return currentInfo.isInterface();
+  }
+
+  
+
+
+  public boolean hasParameter(String name) {
+    return currentInfo.hasParameter(name);
+  }
+
+  
+
+
+  public boolean recordImplementedInterface(JSTypeExpression interfaceName) {
+    if (currentInfo.addImplementedInterface(interfaceName)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  public boolean recordExtendedInterface(JSTypeExpression interfaceType) {
+    if (currentInfo.addExtendedInterface(interfaceType)) {
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  public boolean recordLends(String name) {
+    if (!hasAnyTypeRelatedTags()) {
+      currentInfo.setLendsName(name);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  public boolean isNgInjectRecorded() {
+    return currentInfo.isNgInject();
+  }
+
+  
+
+
+
+  public boolean recordNgInject(boolean ngInject) {
+    if (!isNgInjectRecorded()) {
+      currentInfo.setNgInject(ngInject);
+      populated = true;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+
+  private boolean hasAnyTypeRelatedTags() {
+    return currentInfo.isConstructor() ||
+        currentInfo.isInterface() ||
+        currentInfo.getParameterCount() > 0 ||
+        currentInfo.hasReturnType() ||
+        currentInfo.hasBaseType() ||
+        currentInfo.getExtendedInterfacesCount() > 0 ||
+        currentInfo.getLendsName() != null ||
+        currentInfo.hasThisType() ||
+        hasAnySingletonTypeTags();
+  }
+
+  
+
+
+
+
+  private boolean hasAnySingletonTypeTags() {
+    return currentInfo.hasType() ||
+        currentInfo.hasTypedefType() ||
+        currentInfo.hasEnumParameterType();
+  }
+
+  
+
+
+
+
+  private boolean hasAnySingletonSideEffectTags() {
+    return currentInfo.isNoSideEffects() ||
+        currentInfo.hasModifies();
+  }
+}

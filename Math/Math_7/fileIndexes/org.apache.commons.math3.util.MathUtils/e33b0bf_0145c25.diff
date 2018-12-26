@@ -1,0 +1,353 @@
+29d28
+< import org.apache.commons.math.exception.NumberIsTooLargeException;
+86,293d84
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static long binomialCoefficient(final int n, final int k) {
+<         checkBinomial(n, k);
+<         if ((n == k) || (k == 0)) {
+<             return 1;
+<         }
+<         if ((k == 1) || (k == n - 1)) {
+<             return n;
+<         }
+<         
+<         if (k > n / 2) {
+<             return binomialCoefficient(n, n - k);
+<         }
+< 
+<         
+<         
+<         
+<         
+<         
+<         long result = 1;
+<         if (n <= 61) {
+<             
+<             int i = n - k + 1;
+<             for (int j = 1; j <= k; j++) {
+<                 result = result * i / j;
+<                 i++;
+<             }
+<         } else if (n <= 66) {
+<             
+<             
+<             int i = n - k + 1;
+<             for (int j = 1; j <= k; j++) {
+<                 
+<                 
+<                 
+<                 
+<                 
+<                 
+<                 final long d = ArithmeticsUtils.gcd(i, j);
+<                 result = (result / (j / d)) * (i / d);
+<                 i++;
+<             }
+<         } else {
+<             
+<             
+<             
+<             int i = n - k + 1;
+<             for (int j = 1; j <= k; j++) {
+<                 final long d = ArithmeticsUtils.gcd(i, j);
+<                 result = mulAndCheck(result / (j / d), i / d);
+<                 i++;
+<             }
+<         }
+<         return result;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static double binomialCoefficientDouble(final int n, final int k) {
+<         checkBinomial(n, k);
+<         if ((n == k) || (k == 0)) {
+<             return 1d;
+<         }
+<         if ((k == 1) || (k == n - 1)) {
+<             return n;
+<         }
+<         if (k > n/2) {
+<             return binomialCoefficientDouble(n, n - k);
+<         }
+<         if (n < 67) {
+<             return binomialCoefficient(n,k);
+<         }
+< 
+<         double result = 1d;
+<         for (int i = 1; i <= k; i++) {
+<              result *= (double)(n - k + i) / (double)i;
+<         }
+< 
+<         return FastMath.floor(result + 0.5);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static double binomialCoefficientLog(final int n, final int k) {
+<         checkBinomial(n, k);
+<         if ((n == k) || (k == 0)) {
+<             return 0;
+<         }
+<         if ((k == 1) || (k == n - 1)) {
+<             return FastMath.log(n);
+<         }
+< 
+<         
+< 
+< 
+< 
+<         if (n < 67) {
+<             return FastMath.log(binomialCoefficient(n,k));
+<         }
+< 
+<         
+< 
+< 
+< 
+<         if (n < 1030) {
+<             return FastMath.log(binomialCoefficientDouble(n, k));
+<         }
+< 
+<         if (k > n / 2) {
+<             return binomialCoefficientLog(n, n - k);
+<         }
+< 
+<         
+< 
+< 
+<         double logSum = 0;
+< 
+<         
+<         for (int i = n - k + 1; i <= n; i++) {
+<             logSum += FastMath.log(i);
+<         }
+< 
+<         
+<         for (int i = 2; i <= k; i++) {
+<             logSum -= FastMath.log(i);
+<         }
+< 
+<         return logSum;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     private static void checkBinomial(final int n, final int k) {
+<         if (n < k) {
+<             throw new NumberIsTooLargeException(LocalizedFormats.BINOMIAL_INVALID_PARAMETERS_ORDER,
+<                                                 k, n, true);
+<         }
+<         if (n < 0) {
+<             throw new NotPositiveException(LocalizedFormats.BINOMIAL_NEGATIVE_PARAMETER, n);
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+406,473d196
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static int lcm(int a, int b) {
+<         if (a == 0 || b == 0){
+<             return 0;
+<         }
+<         int lcm = FastMath.abs(mulAndCheck(a / ArithmeticsUtils.gcd(a, b), b));
+<         if (lcm == Integer.MIN_VALUE) {
+<             throw new MathArithmeticException(LocalizedFormats.LCM_OVERFLOW_32_BITS,
+<                                               a, b);
+<         }
+<         return lcm;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static long lcm(long a, long b) {
+<         if (a == 0 || b == 0){
+<             return 0;
+<         }
+<         long lcm = FastMath.abs(mulAndCheck(a / ArithmeticsUtils.gcd(a, b), b));
+<         if (lcm == Long.MIN_VALUE){
+<             throw new MathArithmeticException(LocalizedFormats.LCM_OVERFLOW_64_BITS,
+<                                               a, b);
+<         }
+<         return lcm;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+476,547d198
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static int mulAndCheck(int x, int y) {
+<         long m = ((long)x) * ((long)y);
+<         if (m < Integer.MIN_VALUE || m > Integer.MAX_VALUE) {
+<             throw new MathArithmeticException();
+<         }
+<         return (int)m;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public static long mulAndCheck(long a, long b) {
+<         long ret;
+<         if (a > b) {
+<             
+<             ret = mulAndCheck(b, a);
+<         } else {
+<             if (a < 0) {
+<                 if (b < 0) {
+<                     
+<                     if (a >= Long.MAX_VALUE / b) {
+<                         ret = a * b;
+<                     } else {
+<                         throw new MathArithmeticException();
+<                     }
+<                 } else if (b > 0) {
+<                     
+<                     if (Long.MIN_VALUE / b <= a) {
+<                         ret = a * b;
+<                     } else {
+<                         throw new MathArithmeticException();
+< 
+<                     }
+<                 } else {
+<                     
+<                     ret = 0;
+<                 }
+<             } else if (a > 0) {
+<                 
+<                 
+< 
+<                 
+<                 if (a <= Long.MAX_VALUE / b) {
+<                     ret = a * b;
+<                 } else {
+<                     throw new MathArithmeticException();
+<                 }
+<             } else {
+<                 
+<                 ret = 0;
+<             }
+<         }
+<         return ret;

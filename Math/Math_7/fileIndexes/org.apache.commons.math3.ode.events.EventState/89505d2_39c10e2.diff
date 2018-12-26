@@ -1,0 +1,132 @@
+20d19
+< import org.apache.commons.math.ConvergenceException;
+27c26
+< import org.apache.commons.math.exception.MathUserException;
+---
+> import org.apache.commons.math.exception.ConvergenceException;
+151a151
+>     public void reinitializeBegin(final StepInterpolator interpolator) {
+152a153,166
+>         t0 = interpolator.getPreviousTime();
+>         interpolator.setInterpolatedTime(t0);
+>         g0 = handler.g(t0, interpolator.getInterpolatedState());
+>         if (g0 == 0) {
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+>             
+154,184c168,174
+<     public void reinitializeBegin(final StepInterpolator interpolator)
+<         throws EventException {
+<         try {
+< 
+<             t0 = interpolator.getPreviousTime();
+<             interpolator.setInterpolatedTime(t0);
+<             g0 = handler.g(t0, interpolator.getInterpolatedState());
+<             if (g0 == 0) {
+<                 
+<                 
+<                 
+<                 
+<                 
+<                 
+<                 
+<                 
+<                 
+<                 
+< 
+<                 
+<                 
+<                 final double epsilon = FastMath.max(solver.getAbsoluteAccuracy(),
+<                                                     FastMath.abs(solver.getRelativeAccuracy() * t0));
+<                 final double tStart = t0 + 0.5 * epsilon;
+<                 interpolator.setInterpolatedTime(tStart);
+<                 g0 = handler.g(tStart, interpolator.getInterpolatedState());
+<             }
+<             g0Positive = g0 >= 0;
+< 
+<         } catch (MathUserException mue) {
+<             throw new EventException(mue);
+---
+>             
+>             
+>             final double epsilon = FastMath.max(solver.getAbsoluteAccuracy(),
+>                                                 FastMath.abs(solver.getRelativeAccuracy() * t0));
+>             final double tStart = t0 + 0.5 * epsilon;
+>             interpolator.setInterpolatedTime(tStart);
+>             g0 = handler.g(tStart, interpolator.getInterpolatedState());
+185a176,177
+>         g0Positive = g0 >= 0;
+> 
+194,197d185
+< 
+< 
+< 
+< 
+199,201c187
+<         throws MathUserException, EventException, ConvergenceException {
+< 
+<         try {
+---
+>         throws ConvergenceException {
+215,220c201,202
+<                     try {
+<                         interpolator.setInterpolatedTime(t);
+<                         return handler.g(t, interpolator.getInterpolatedState());
+<                     } catch (EventException e) {
+<                         throw new ConveyedException(e);
+<                     }
+---
+>                     interpolator.setInterpolatedTime(t);
+>                     return handler.g(t, interpolator.getInterpolatedState());
+295,298d276
+<         } catch (ConveyedException ce) {
+<             throw ce.getConveyedException();
+<         }
+< 
+317,320c295
+< 
+< 
+<     public void stepAccepted(final double t, final double[] y)
+<         throws EventException {
+---
+>     public void stepAccepted(final double t, final double[] y) {
+351,354c326
+< 
+< 
+<     public boolean reset(final double t, final double[] y)
+<         throws EventException {
+---
+>     public boolean reset(final double t, final double[] y) {
+368,392d339
+< 
+<     }
+< 
+<     
+<     private static class ConveyedException extends RuntimeException {
+< 
+<         
+<         private static final long serialVersionUID = 2668348550531980574L;
+< 
+<         
+<         private final EventException conveyedException;
+< 
+<         
+< 
+< 
+<         public ConveyedException(final EventException conveyedException) {
+<             this.conveyedException = conveyedException;
+<         }
+< 
+<         
+< 
+< 
+<         public EventException getConveyedException() {
+<             return conveyedException;
+<         }

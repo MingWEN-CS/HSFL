@@ -1,0 +1,35 @@
+89c89
+<         return (((ReadableInterval) object)).getDurationMillis();
+---
+>         return (((ReadableInterval) object)).toDurationMillis();
+101c101,102
+<         writablePeriod.setPeriod((ReadableInterval) object, chrono);
+---
+>         ReadableInterval interval = (ReadableInterval) object;
+>         writablePeriod.setPeriod(interval, chrono);
+112,114c113,117
+<     public long[] getIntervalMillis(Object object) {
+<         ReadableInterval interval = (ReadableInterval) object;
+<         return new long[] {interval.getStartMillis(), interval.getEndMillis()};
+---
+> 
+> 
+> 
+>     public boolean isReadableInterval(Object object, Chronology chrono) {
+>         return true;
+123,125c126,136
+<     public void setInto(ReadWritableInterval writableInterval, Object object) {
+<         ReadableInterval interval = (ReadableInterval) object;
+<         writableInterval.setInterval(interval);
+---
+> 
+> 
+> 
+>     public void setInto(ReadWritableInterval writableInterval, Object object, Chronology chrono) {
+>         ReadableInterval input = (ReadableInterval) object;
+>         writableInterval.setInterval(input);
+>         if (chrono != null) {
+>             writableInterval.setChronology(chrono);
+>         } else {
+>             writableInterval.setChronology(input.getChronology());
+>         }

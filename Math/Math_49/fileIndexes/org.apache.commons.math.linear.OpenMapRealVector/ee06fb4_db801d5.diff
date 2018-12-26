@@ -1,0 +1,100 @@
+45,48c45
+<     private double minusEpsilon;
+< 
+<     
+<     private double plusEpsilon;
+---
+>     private double epsilon;
+60c57
+<         this(0, DEFAULT_ZERO_TOLERANCE, 0);
+---
+>         this(0, DEFAULT_ZERO_TOLERANCE);
+68c65
+<         this(dimension, DEFAULT_ZERO_TOLERANCE, 0);
+---
+>         this(dimension, DEFAULT_ZERO_TOLERANCE);
+77c74
+<     public OpenMapRealVector(int dimension, double epsilon, double defaultValue) {
+---
+>     public OpenMapRealVector(int dimension, double epsilon) {
+79,80c76,77
+<         entries = new OpenIntToDoubleHashMap(defaultValue);
+<         setDefault(defaultValue, epsilon);
+---
+>         entries = new OpenIntToDoubleHashMap(0.0);
+>         this.epsilon = epsilon;
+91,92c88
+<         minusEpsilon = v.minusEpsilon;
+<         plusEpsilon = v.plusEpsilon;
+---
+>         epsilon = v.epsilon;
+110,111c106
+< 
+<     public OpenMapRealVector(int dimension, int expectedSize, double epsilon, double defaultValue) {
+---
+>     public OpenMapRealVector(int dimension, int expectedSize, double epsilon) {
+113,114c108,109
+<         entries = new OpenIntToDoubleHashMap(expectedSize, defaultValue);
+<         setDefault(defaultValue, epsilon);
+---
+>         entries = new OpenIntToDoubleHashMap(expectedSize, 0.0);
+>         this.epsilon = epsilon;
+135c130
+<         setDefault(0, epsilon);
+---
+>         this.epsilon = epsilon;
+150c145
+<         this(values, DEFAULT_ZERO_TOLERANCE, 0);
+---
+>         this(values, DEFAULT_ZERO_TOLERANCE);
+159,160c154
+< 
+<     public OpenMapRealVector(Double[] values, double epsilon, double defaultValue) {
+---
+>     public OpenMapRealVector(Double[] values, double epsilon) {
+162,163c156,157
+<         entries = new OpenIntToDoubleHashMap(defaultValue);
+<         setDefault(defaultValue, epsilon);
+---
+>         entries = new OpenIntToDoubleHashMap(0.0);
+>         this.epsilon = epsilon;
+179,180c173
+<         plusEpsilon = v.plusEpsilon;
+<         minusEpsilon = v.minusEpsilon;
+---
+>         epsilon = v.epsilon;
+190c183
+<         setDefault(0, DEFAULT_ZERO_TOLERANCE);
+---
+>         epsilon = DEFAULT_ZERO_TOLERANCE;
+203,214d195
+<     private void setDefault(double defaultValue, double epsilon) {
+<       if (epsilon < 0) {
+<         throw new IllegalArgumentException("default tolerance must be > 0 :" + epsilon);
+<       }
+<       plusEpsilon  = defaultValue + epsilon;
+<       minusEpsilon = defaultValue - epsilon;
+<     }
+< 
+<     
+< 
+< 
+< 
+225c206
+<         return value < plusEpsilon && value > minusEpsilon;
+---
+>         return Math.abs(value) < epsilon;
+788c769
+<         temp = Double.doubleToLongBits(plusEpsilon) + Double.doubleToLongBits(minusEpsilon);
+---
+>         temp = Double.doubleToLongBits(epsilon);
+821,826c802,803
+<         if (Double.doubleToLongBits(minusEpsilon) !=
+<             Double.doubleToLongBits(other.minusEpsilon)) {
+<             return false;
+<         }
+<         if (Double.doubleToLongBits(plusEpsilon) !=
+<             Double.doubleToLongBits(other.plusEpsilon)) {
+---
+>         if (Double.doubleToLongBits(epsilon) !=
+>             Double.doubleToLongBits(other.epsilon)) {

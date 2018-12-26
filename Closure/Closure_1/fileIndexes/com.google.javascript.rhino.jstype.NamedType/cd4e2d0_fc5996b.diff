@@ -1,0 +1,40 @@
+42a43
+> import com.google.common.base.Predicate;
+87a89,93
+>   private Predicate<JSType> validator;
+> 
+>   
+> 
+> 
+290a297,299
+>     if (validator != null) {
+>       validator.apply(type);
+>     }
+317,319c326,329
+<       boolean beForgiving = forgiving ||
+<           (ignoreForwardReferencedTypes &&
+<            registry.isForwardDeclaredType(reference));
+---
+>       boolean isForwardDeclared =
+>           ignoreForwardReferencedTypes &&
+>           registry.isForwardDeclaredType(reference);
+>       boolean beForgiving = forgiving || isForwardDeclared;
+326a337,340
+> 
+>         if (registry.isLastGeneration() && validator != null) {
+>           validator.apply(getReferencedType());
+>         }
+341a356,368
+>   }
+> 
+>   @Override
+>   public boolean setValidator(Predicate<JSType> validator) {
+>     
+>     
+>     
+>     if (this.isResolved()) {
+>       return super.setValidator(validator);
+>     } else {
+>       this.validator = validator;
+>       return true;
+>     }

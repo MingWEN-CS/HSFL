@@ -1,0 +1,109 @@
+58a59,60
+> 
+> 
+85c87,92
+<     private HashMap keyToValueMapping;
+---
+>     
+>     
+> 
+> 
+> 
+>     private HashMap indexMap; 
+93c100
+<         this.keyToValueMapping = new HashMap();
+---
+>         this.indexMap = new HashMap();
+102c109
+<         return this.keyToValueMapping.size();
+---
+>         return this.indexMap.size();
+145,148c152,154
+<         final Integer i = (Integer) keyToValueMapping.get(key);
+<         if (i == null)
+<         {
+<           return -1;  
+---
+>         final Integer i = (Integer) this.indexMap.get(key);
+>         if (i == null) {
+>             return -1;  
+159c165
+<         return (List) keys.clone();
+---
+>         return (List) this.keys.clone();
+227,228c233,234
+<             keys.set(keyIndex, key);
+<             values.set(keyIndex, value);
+---
+>             this.keys.set(keyIndex, key);
+>             this.values.set(keyIndex, value);
+231,233c237,239
+<           keys.add(key);
+<           values.add(value);
+<           keyToValueMapping.put(key, new Integer(keys.size() - 1));
+---
+>             this.keys.add(key);
+>             this.values.add(value);
+>             this.indexMap.put(key, new Integer(this.keys.size() - 1));
+270c276
+<         int pos = this.getIndex(key);
+---
+>         int pos = getIndex(key);
+292,295c298,301
+<         keyToValueMapping.clear();
+<         for (int i = 0; i < keys.size(); i++) {
+<           final Object key = keys.get(i);
+<           keyToValueMapping.put(key, new Integer(i));
+---
+>         this.indexMap.clear();
+>         for (int i = 0; i < this.keys.size(); i++) {
+>             final Object key = this.keys.get(i);
+>             this.indexMap.put(key, new Integer(i));
+313,314c319,320
+<         if (index < keys.size()) {
+<           rebuildIndex();
+---
+>         if (index < this.keys.size()) {
+>             rebuildIndex();
+342c348
+<         this.keyToValueMapping.clear();
+---
+>         this.indexMap.clear();
+351c357
+<       final int size = keys.size();
+---
+>       final int size = this.keys.size();
+355c361,362
+<         data[i] = new DefaultKeyedValue((Comparable) keys.get(i), (Number) values.get(i));
+---
+>           data[i] = new DefaultKeyedValue((Comparable) this.keys.get(i), 
+>                   (Number) this.values.get(i));
+364,365c371,372
+<         final DefaultKeyedValue value = data[i];
+<         addValue(value.getKey(), value.getValue());
+---
+>           final DefaultKeyedValue value = data[i];
+>           addValue(value.getKey(), value.getValue());
+377c384
+<         final int size = keys.size();
+---
+>         final int size = this.keys.size();
+380c387,388
+<           data[i] = new DefaultKeyedValue((Comparable) keys.get(i), (Number) values.get(i));
+---
+>             data[i] = new DefaultKeyedValue((Comparable) this.keys.get(i), 
+>                     (Number) this.values.get(i));
+389,390c397,398
+<           final DefaultKeyedValue value = data[i];
+<           addValue(value.getKey(), value.getValue());
+---
+>             final DefaultKeyedValue value = data[i];
+>             addValue(value.getKey(), value.getValue());
+457,459c465,467
+<         clone.keys = (ArrayList) keys.clone();
+<         clone.values = (ArrayList) values.clone();
+<         clone.keyToValueMapping = (HashMap) keyToValueMapping.clone();
+---
+>         clone.keys = (ArrayList) this.keys.clone();
+>         clone.values = (ArrayList) this.values.clone();
+>         clone.indexMap = (HashMap) this.indexMap.clone();

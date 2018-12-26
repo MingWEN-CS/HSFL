@@ -1,0 +1,50 @@
+24a25
+> import java.util.TimeZone;
+666a668,714
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Date toDate() {
+>         int dom = getDayOfMonth();
+>         Date date = new Date(getYear() - 1900, getMonthOfYear() - 1, dom,
+>                         getHourOfDay(), getMinuteOfHour(), getSecondOfMinute());
+>         date.setTime(date.getTime() + getMillisOfSecond());
+>         LocalDateTime check = LocalDateTime.fromDateFields(date);
+>         if (check.isBefore(this)) {
+>             
+>             
+>             while (check.isBefore(this)) {
+>                 date.setTime(date.getTime() + 60000);
+>                 check = LocalDateTime.fromDateFields(date);
+>             }
+>             
+>             while (check.isBefore(this) == false) {
+>                 date.setTime(date.getTime() - 1000);
+>                 check = LocalDateTime.fromDateFields(date);
+>             }
+>             date.setTime(date.getTime() + 1000);
+>         } else if (check.equals(this)) {
+>             
+>             Date earlier = new Date(date.getTime() - TimeZone.getDefault().getDSTSavings());
+>             check = LocalDateTime.fromDateFields(earlier);
+>             if (check.equals(this)) {
+>                 date = earlier;
+>             }
+>         }
+>         return date;

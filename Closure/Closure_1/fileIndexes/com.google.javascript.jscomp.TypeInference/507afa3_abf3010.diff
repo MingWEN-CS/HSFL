@@ -1,0 +1,52 @@
+1199a1200,1209
+>     
+>     
+>     
+>     
+>     
+>     JSType unknownType = getNativeType(UNKNOWN_TYPE);
+>     JSType propertyType = null;
+>     boolean isLocallyInferred = false;
+> 
+>     
+1205,1211c1215,1218
+<         if (varType.equals(getNativeType(UNKNOWN_TYPE)) &&
+<             var != syntacticScope.getSlot(qualifiedName)) {
+<           
+<           
+<           return getNativeType(CHECKED_UNKNOWN_TYPE);
+<         } else {
+<           return varType;
+---
+>         boolean isDeclared = !var.isTypeInferred();
+>         isLocallyInferred = (var != syntacticScope.getSlot(qualifiedName));
+>         if (isDeclared || isLocallyInferred) {
+>           propertyType = varType;
+1216,1218c1223,1227
+<     JSType propertyType = null;
+<     if (objType != null) {
+<       propertyType = objType.findPropertyType(propName);
+---
+>     if (propertyType == null && objType != null) {
+>       JSType foundType = objType.findPropertyType(propName);
+>       if (foundType != null) {
+>         propertyType = foundType;
+>       }
+1221,1222c1230,1231
+<     if ((propertyType == null || propertyType.isUnknownType()) &&
+<         qualifiedName != null) {
+---
+>     if ((propertyType == null || propertyType.isUnknownType())
+>         && qualifiedName != null) {
+1230c1239,1247
+<     return propertyType;
+---
+>     if (propertyType == null) {
+>       return getNativeType(UNKNOWN_TYPE);
+>     } else if (propertyType.equals(unknownType) && isLocallyInferred) {
+>       
+>       
+>       return getNativeType(CHECKED_UNKNOWN_TYPE);
+>     } else {
+>       return propertyType;
+>     }

@@ -1,0 +1,232 @@
+29d28
+< import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+64a64,67
+> 
+> 
+> 
+>     @Deprecated
+72a76,78
+> 
+> 
+>     @Deprecated
+74a81,83
+> 
+> 
+>     @Deprecated
+76a86,88
+> 
+> 
+>     @Deprecated
+78a91,93
+> 
+> 
+>     @Deprecated
+80a96,98
+> 
+> 
+>     @Deprecated
+82a101,103
+> 
+> 
+>     @Deprecated
+84a106,109
+> 
+> 
+> 
+>     @Deprecated
+121a147,149
+> 
+> 
+>     @Deprecated
+122a151,163
+>         computeJacobian(point);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     protected RealMatrix computeJacobian(double[] params) {
+125,131c166,169
+<         DerivativeStructure[] dsPoint = new DerivativeStructure[point.length];
+<         for (int i = 0; i < point.length; ++i) {
+<             dsPoint[i] = new DerivativeStructure(point.length, 1, i, point[i]);
+<         }
+<         DerivativeStructure[] dsValue = jF.value(dsPoint);
+<         if (dsValue.length != rows) {
+<             throw new DimensionMismatchException(dsValue.length, rows);
+---
+>         final DerivativeStructure[] dsPoint = new DerivativeStructure[params.length];
+>         final int nC = params.length;
+>         for (int i = 0; i < nC; ++i) {
+>             dsPoint[i] = new DerivativeStructure(nC, 1, i, params[i]);
+132a171
+>         final DerivativeStructure[] dsValue = jF.value(dsPoint);
+134c173,175
+<         final int nC = point.length;
+---
+>         if (dsValue.length != nR) {
+>             throw new DimensionMismatchException(dsValue.length, nR);
+>         }
+137c178
+<             int[] orders = new int[point.length];
+---
+>             int[] orders = new int[nC];
+145,146c186,194
+<         weightedResidualJacobian
+<             = weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(jacobianData)).scalarMultiply(-1).getData();
+---
+>         
+>         final RealMatrix weightedJacobian
+>             = weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(jacobianData)).scalarMultiply(-1);
+> 
+>         
+>         
+>         weightedResidualJacobian = weightedJacobian.getData();
+> 
+>         return weightedJacobian;
+155a204,207
+> 
+> 
+> 
+>     @Deprecated
+157,159c209,210
+<         final double[] res = computeResidual(point);
+<         final ArrayRealVector residuals = new ArrayRealVector(res);
+<         final RealMatrix weight = getWeight();
+---
+>         objective = computeObjectiveValue(point);
+>         final double[] res = computeResiduals(objective);
+162c213,214
+<         cost = FastMath.sqrt(residuals.dotProduct(weight.operate(residuals)));
+---
+>         cost = computeCost(res);
+> 
+163a216
+>         final ArrayRealVector residuals = new ArrayRealVector(res);
+174a228,240
+>     protected double computeCost(double[] residuals) {
+>         final ArrayRealVector r = new ArrayRealVector(residuals);
+>         return FastMath.sqrt(r.dotProduct(getWeight().operate(r)));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+196a263,268
+>     public void setCost(double cost) {
+>         this.cost = cost;
+>     }
+> 
+>     
+> 
+199a272,277
+> 
+> 
+> 
+> 
+> 
+>     @Deprecated
+218a297,299
+> 
+> 
+>     @Deprecated
+219a301,321
+>         return computeCovariances(point, threshold);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double[][] computeCovariances(double[] params,
+>                                          double threshold) {
+221c323
+<         updateJacobian();
+---
+>         final RealMatrix j = computeJacobian(params);
+224,225c326
+<         final RealMatrix wrj = new Array2DRowRealMatrix(weightedResidualJacobian);
+<         final RealMatrix jTj = wrj.transpose().multiply(wrj);
+---
+>         final RealMatrix jTj = j.transpose().multiply(j);
+270c371
+<         double[][] covar = getCovariances();
+---
+>         double[][] covar = computeCovariances(point, 1e-14);
+290,293c391,397
+<     public double[] getSigma() {
+<         final double[] sig = new double[cols];
+<         final double[][] cov = getCovariances();
+<         for (int i = 0; i < sig.length; ++i) {
+---
+> 
+>     public double[] computeSigma(double[] params,
+>                                  double covarianceSingularityThreshold) {
+>         final int nC = params.length;
+>         final double[] sig = new double[nC];
+>         final double[][] cov = computeCovariances(params, covarianceSingularityThreshold);
+>         for (int i = 0; i < nC; ++i) {
+418,426d521
+<     private RealMatrix squareRoot(RealMatrix m) {
+<         final EigenDecomposition dec = new EigenDecomposition(m);
+<         return dec.getSquareRoot();
+<     }
+< 
+<     
+< 
+< 
+< 
+436,442c531
+<     private double[] computeResidual(double[] params) {
+<         if (params.length != getStartPoint().length) {
+<             throw new DimensionMismatchException(params.length,
+<                                                  getStartPoint().length);
+<         }
+< 
+<         objective = computeObjectiveValue(params);
+---
+>     protected double[] computeResiduals(double[] objectiveValue) {
+443a533,536
+>         if (objectiveValue.length != target.length) {
+>             throw new DimensionMismatchException(target.length,
+>                                                  objectiveValue.length);
+>         }
+447c540
+<             residuals[i] = target[i] - objective[i];
+---
+>             residuals[i] = target[i] - objectiveValue[i];
+450a544,554
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private RealMatrix squareRoot(RealMatrix m) {
+>         final EigenDecomposition dec = new EigenDecomposition(m);
+>         return dec.getSquareRoot();

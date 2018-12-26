@@ -1,0 +1,68 @@
+21a22
+> import com.google.common.base.Throwables;
+1193a1195,1199
+>       if (options.transformAMDToCJSModules || options.processCommonJSModules) {
+>         processAMDAndCommonJSModules();
+>       }
+> 
+>       
+1288a1295,1353
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private void processAMDAndCommonJSModules() {
+>     Map<String, JSModule> modulesByName = Maps.newLinkedHashMap();
+>     Map<CompilerInput, JSModule> modulesByInput = Maps.newLinkedHashMap();
+>     
+>     
+>     
+>     
+>     for (CompilerInput input : inputs) {
+>       input.setCompiler(this);
+>       Node root = input.getAstRoot(this);
+>       if (root == null) {
+>         continue;
+>       }
+>       if (options.transformAMDToCJSModules) {
+>         new TransformAMDToCJSModule(this).process(null, root);
+>       }
+>       if (options.processCommonJSModules) {
+>         ProcessCommonJSModules cjs = new ProcessCommonJSModules(this,
+>             options.commonJSModulePathPrefix);
+>         cjs.process(null, root);
+>         JSModule m = cjs.getModule();
+>         if (m != null) {
+>           modulesByName.put(m.getName(), m);
+>           modulesByInput.put(input, m);
+>         }
+>       }
+>     }
+>     if (options.processCommonJSModules) {
+>       List<JSModule> modules = Lists.newArrayList(modulesByName.values());
+>       if (!modules.isEmpty()) {
+>         this.modules = modules;
+>         this.moduleGraph = new JSModuleGraph(this.modules);
+>       }
+>       for (JSModule module : modules) {
+>         for (CompilerInput input : module.getInputs()) {
+>           for (String require : input.getRequires()) {
+>             module.addDependency(modulesByName.get(require));
+>           }
+>         }
+>       }
+>       try {
+>         modules = Lists.newArrayList();
+>         for (CompilerInput input : this.moduleGraph.manageDependencies(
+>             options.dependencyOptions, inputs)) {
+>           modules.add(modulesByInput.get(input));
+>         }
+>         this.modules = modules;
+>         this.moduleGraph = new JSModuleGraph(modules);
+>       } catch (Exception e) {
+>         Throwables.propagate(e);
+>       }

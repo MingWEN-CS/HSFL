@@ -1,0 +1,1161 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+
+import org.joda.time.chrono.iso.ISOChronology;
+import org.joda.time.format.DateTimeParser;
+import org.joda.time.format.ISODateTimeFormat;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class MutableDateTime extends AbstractDateTime
+    implements ReadableDateTime, ReadWritableInstant, Cloneable
+{
+    
+    private long iMillis;
+    
+    private Chronology iChronology;
+
+    
+    
+
+    
+
+
+
+
+    public MutableDateTime() {
+        iChronology = ISOChronology.getInstance();
+        iMillis = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+
+    public MutableDateTime(DateTimeZone zone) {
+        iChronology = ISOChronology.getInstance(zone);
+        iMillis = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+
+    public MutableDateTime(Chronology chronology) {
+        iChronology = selectChronology(chronology);
+        iMillis = System.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+
+    public MutableDateTime(long millis) {
+        iChronology = ISOChronology.getInstance();
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+
+    public MutableDateTime(long millis, DateTimeZone zone) {
+        iChronology = ISOChronology.getInstance(zone);
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+
+    public MutableDateTime(long millis, Chronology chronology) {
+        iChronology = selectChronology(chronology);
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+
+    public MutableDateTime(ReadableInstant instant) {
+        iChronology = selectChronology(instant);
+        iMillis = instant.getMillis();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(ReadableInstant instant, DateTimeZone zone) {
+        iChronology = selectChronology(instant, zone);
+        iMillis = instant.getMillis();
+    }
+
+    
+
+
+
+
+
+
+
+    public MutableDateTime(ReadableInstant instant, Chronology chronology) {
+        iChronology = selectChronology(instant, chronology);
+        iMillis = instant.getMillis();
+    }
+
+    
+
+
+
+
+
+
+    public MutableDateTime(Date date) {
+        iChronology = selectChronology(date);
+        iMillis = date.getTime();
+    }
+
+    
+
+
+
+
+
+
+
+    public MutableDateTime(Date date, DateTimeZone zone) {
+        iChronology = selectChronology(date, zone);
+        iMillis = date.getTime();
+    }
+
+    
+
+
+
+
+
+
+    public MutableDateTime(Date date, Chronology chronology) {
+        iChronology = selectChronology(date, chronology);
+        iMillis = date.getTime();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(Calendar calendar) {
+        iChronology = selectChronology(calendar);
+        iMillis = calendar.getTime().getTime();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public MutableDateTime(Calendar calendar, DateTimeZone zone) {
+        iChronology = selectChronology(calendar, zone);
+        iMillis = calendar.getTime().getTime();
+    }
+
+    
+
+
+
+
+
+
+    public MutableDateTime(Calendar calendar, Chronology chronology) {
+        iChronology = selectChronology(calendar, chronology);
+        iMillis = calendar.getTime().getTime();
+    }
+
+    
+
+
+
+
+
+
+
+    public MutableDateTime(String str) throws ParseException {
+        iChronology = selectChronology(str);
+        DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+        iMillis = p.parseMillis(str);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public MutableDateTime(String str, DateTimeZone zone) throws ParseException {
+        iChronology = selectChronology(str, zone);
+        DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+        iMillis = p.parseMillis(str);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public MutableDateTime(String str, Chronology chronology) throws ParseException {
+        iChronology = selectChronology(str, chronology);
+        DateTimeParser p = ISODateTimeFormat.getInstance(iChronology).dateTimeParser();
+        iMillis = p.parseMillis(str);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected ReadableInstant create(long millis, Chronology chrono) {
+        if (chrono == null) {
+            throw new IllegalArgumentException("The Chronology must not be null");
+        }
+        return new MutableDateTime(millis, chrono);
+    }
+    
+    
+    
+
+    
+
+
+
+
+
+    public long getMillis() {
+        return iMillis;
+    }
+
+    
+
+
+
+
+
+    public void setMillis(long millis) {
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+    public void setMillis(Object object) {
+        iMillis = getDateTimeMillisFromObject(object);
+    }
+
+    
+
+
+
+
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+
+
+
+
+
+    public void add(Object object) {
+        
+
+
+
+
+
+
+        iMillis += getDurationMillisFromObject(object);
+    }
+
+    
+
+
+
+
+    public void addMillis(long millis) {
+        iMillis += millis;
+    }
+
+    
+
+
+
+
+    public Chronology getChronology() {
+        return iChronology;
+    }
+
+    
+
+
+
+
+
+    public void setChronology(Chronology chronology) {
+        if (chronology == null) {
+            throw new IllegalArgumentException("The Chronology must not be null");
+        }
+        iChronology = chronology;
+    }
+
+    
+
+
+
+
+
+    public void setDateTimeZone(DateTimeZone zone) {
+        if (zone == null) {
+            throw new IllegalArgumentException("The DateTimeZone must not be null");
+        }
+        if (iChronology.getDateTimeZone() != zone) {
+            iChronology = iChronology.withDateTimeZone(zone);
+        }
+    }
+
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void set(DateTimeField field, int value) {
+        iMillis = field.set(getMillis(), value);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void add(DateTimeField field, int value) {
+        iMillis = field.add(getMillis(), value);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    public void addWrapped(DateTimeField field, int value) {
+        iMillis = field.addWrapped(getMillis(), value);
+    }
+
+    
+    
+
+    
+
+
+
+
+    public void setDayOfWeek(int dayOfWeek) {
+        iMillis = getChronology().dayOfWeek().set(iMillis, dayOfWeek);
+    }
+
+    
+
+
+
+
+    public void setDayOfMonth(int dayOfMonth) {
+        iMillis = getChronology().dayOfMonth().set(iMillis, dayOfMonth);
+    }
+
+    
+
+
+
+
+    public void setDayOfYear(int dayOfYear) {
+        iMillis = getChronology().dayOfYear().set(iMillis, dayOfYear);
+    }
+
+    
+
+
+
+
+    public void addDays(int days) {
+        iMillis = getChronology().dayOfYear().add(iMillis, days);
+    }
+
+    
+
+
+
+
+    public void setWeekOfWeekyear(int weekOfWeekyear) {
+        iMillis = getChronology().weekOfWeekyear().set(iMillis, weekOfWeekyear);
+    }
+
+    
+
+
+
+
+    public void addWeeks(int weeks) {
+        iMillis = getChronology().weekOfWeekyear().add(iMillis, weeks);
+    }
+
+    
+
+
+
+
+    public void setWeekyear(int weekyear) {
+        iMillis = getChronology().weekyear().set(iMillis, weekyear);
+    }
+
+    
+
+
+
+
+    public void addWeekyears(int weekyears) {
+        iMillis = getChronology().weekyear().add(iMillis, weekyears);
+    }
+
+    
+
+
+
+
+    public void setMonthOfYear(int month) {
+        iMillis = getChronology().monthOfYear().set(iMillis, month);
+    }
+
+    
+
+
+
+
+    public void addMonths(int months) {
+        iMillis = getChronology().monthOfYear().add(iMillis, months);
+    }
+
+    
+
+
+
+
+    public void setYear(int year) {
+        iMillis = getChronology().year().set(iMillis, year);
+    }
+
+    
+
+
+
+
+    public void addYears(int years) {
+        iMillis = getChronology().year().add(iMillis, years);
+    }
+
+    
+    
+
+    
+
+
+
+
+    public void setMillisOfSecond(int millis) {
+        iMillis = getChronology().millisOfSecond().set(iMillis, millis);
+    }
+
+    
+
+
+
+
+    public void setMillisOfDay(int millis) {
+        iMillis = getChronology().millisOfDay().set(iMillis, millis);
+    }
+
+    
+
+
+
+
+    public void setSecondOfMinute(int second) {
+        iMillis = getChronology().secondOfMinute().set(iMillis, second);
+    }
+
+    
+
+
+
+
+    public void setSecondOfDay(int second) {
+        iMillis = getChronology().secondOfDay().set(iMillis, second);
+    }
+
+    
+
+
+
+
+    public void addSeconds(int seconds) {
+        iMillis = getChronology().secondOfDay().add(iMillis, seconds);
+    }
+
+    
+
+
+
+
+    public void setMinuteOfHour(int minute) {
+        iMillis = getChronology().minuteOfHour().set(iMillis, minute);
+    }
+
+    
+
+
+
+
+    public void setMinuteOfDay(int minute) {
+        iMillis = getChronology().minuteOfDay().set(iMillis, minute);
+    }
+
+    
+
+
+
+
+    public void addMinutes(int minutes) {
+        iMillis = getChronology().minuteOfDay().add(iMillis, minutes);
+    }
+
+    
+
+
+
+
+    public void setHourOfDay(int hour) {
+        iMillis = getChronology().hourOfDay().set(iMillis, hour);
+    }
+
+    
+
+
+
+
+    public void addHours(int hours) {
+        iMillis = getChronology().hourOfDay().add(iMillis, hours);
+    }
+
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+    public void setDate(Object date) {
+        setDate(getDateTimeMillisFromObject(date));
+    }
+
+    
+
+
+
+
+
+
+
+    public void setDate(long millis) {
+        Chronology c = getChronology();
+        iMillis = c.getDateOnlyMillis(millis) + c.getTimeOnlyMillis(iMillis);
+    }
+
+    
+
+
+
+
+
+
+
+    public void setDate(int year, int monthOfYear, int dayOfMonth) {
+        
+        Chronology c = getChronology();
+        long workVal = c.getTimeOnlyMillis( iMillis );
+        workVal = c.year().set( workVal, year );
+        workVal = c.monthOfYear().set( workVal, monthOfYear );
+        workVal = c.dayOfMonth().set( workVal, dayOfMonth );
+        iMillis = workVal;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void setTime(Object time) {
+        setTime(getDateTimeMillisFromObject(time));
+    }
+
+    
+
+
+
+
+
+
+    public void setTime(long millis) {
+        Chronology c = getChronology();
+        iMillis = c.getDateOnlyMillis(iMillis) + c.getTimeOnlyMillis(millis);
+    }
+
+    
+
+
+
+
+
+
+
+
+    public void setTime(int hour, int minuteOfHour, int secondOfMinute, int millisOfSecond) {
+        
+        Chronology c = getChronology();
+        long workVal = c.getDateOnlyMillis( iMillis );
+        workVal = c.hourOfDay().set( workVal, hour );
+        workVal = c.minuteOfHour().set( workVal, minuteOfHour );
+        workVal = c.secondOfMinute().set( workVal, secondOfMinute );
+        workVal = c.millisOfSecond().set( workVal, millisOfSecond );
+        iMillis = workVal;
+    }
+
+    
+
+
+
+
+
+
+    public void setDateTime(Object datetime) {
+        iMillis = getDateTimeMillisFromObject(datetime);
+    }
+
+    
+
+
+
+
+    public void setDateTime(long millis) {
+        iMillis = millis;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public void setDateTime(int year,
+                            int monthOfYear,
+                            int dayOfMonth,
+                            int hourOfDay,
+                            int minuteOfHour,
+                            int secondOfMinute,
+                            int millisOfSecond)
+    {
+        
+        Chronology c = getChronology();
+        long workVal = 0;
+        workVal = c.year().set( workVal, year );
+        workVal = c.monthOfYear().set( workVal, monthOfYear );
+        workVal = c.dayOfMonth().set( workVal, dayOfMonth );
+        workVal = c.hourOfDay().set( workVal, hourOfDay );
+        workVal = c.minuteOfHour().set( workVal, minuteOfHour );
+        workVal = c.secondOfMinute().set( workVal, secondOfMinute );
+        workVal = c.millisOfSecond().set( workVal, millisOfSecond );
+        iMillis = workVal;
+    }
+
+    
+    
+
+    
+
+
+
+
+
+
+    public MutableDateTimeFieldProperty dayOfWeek() {
+        return new MutableDateTimeFieldProperty(this, getChronology().dayOfWeek());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty dayOfMonth() {
+        return new MutableDateTimeFieldProperty(this, getChronology().dayOfMonth());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty dayOfYear() {
+        return new MutableDateTimeFieldProperty(this, getChronology().dayOfYear());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty weekOfWeekyear() {
+        return new MutableDateTimeFieldProperty(this, getChronology().weekOfWeekyear());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty weekyear() {
+        return new MutableDateTimeFieldProperty(this, getChronology().weekyear());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty monthOfYear() {
+        return new MutableDateTimeFieldProperty(this, getChronology().monthOfYear());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty year() {
+        return new MutableDateTimeFieldProperty(this, getChronology().year());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty yearOfEra() {
+        return new MutableDateTimeFieldProperty(this, getChronology().yearOfEra());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty yearOfCentury() {
+        return new MutableDateTimeFieldProperty(this, getChronology().yearOfCentury());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty centuryOfEra() {
+        return new MutableDateTimeFieldProperty(this, getChronology().centuryOfEra());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty era() {
+        return new MutableDateTimeFieldProperty(this, getChronology().era());
+    }
+
+    
+    
+    
+    
+
+
+
+
+    public MutableDateTimeFieldProperty millisOfSecond() {
+        return new MutableDateTimeFieldProperty(this, getChronology().millisOfSecond());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty millisOfDay() {
+        return new MutableDateTimeFieldProperty(this, getChronology().millisOfDay());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty secondOfMinute() {
+        return new MutableDateTimeFieldProperty(this, getChronology().secondOfMinute());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty secondOfDay() {
+        return new MutableDateTimeFieldProperty(this, getChronology().secondOfDay());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty minuteOfHour() {
+        return new MutableDateTimeFieldProperty(this, getChronology().minuteOfHour());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty minuteOfDay() {
+        return new MutableDateTimeFieldProperty(this, getChronology().minuteOfDay());
+    }
+
+    
+
+
+
+
+    public MutableDateTimeFieldProperty hourOfDay() {
+        return new MutableDateTimeFieldProperty(this, getChronology().hourOfDay());
+    }
+
+    
+    
+
+    
+
+
+
+
+    public String toString() {
+        return ISODateTimeFormat.getInstance(getChronology()).dateTime().print(this);
+    }
+
+    
+
+
+
+
+    public MutableDateTime copy() {
+        try {
+            return (MutableDateTime)super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new InternalError("Clone error");
+        }
+    }
+
+    
+
+
+
+
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new InternalError("Clone error");
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    protected long getDateTimeMillisFromObject(Object object) {
+        if (object instanceof ReadableInstant) {
+            return ((ReadableInstant) object).getMillis();
+
+        } else if (object instanceof Date) {
+            return ((Date) object).getTime();
+
+        } else if (object instanceof Calendar) {
+            return ((Calendar) object).getTime().getTime();
+
+        } else if (object instanceof Long) {
+            return ((Long) object).longValue();
+
+        } else if (object instanceof String) {
+            try {
+                Instant instant = new Instant((String) object);
+                return instant.getMillis();
+
+            } catch (ParseException ex) {
+                throw new IllegalArgumentException("String '" + object + "' is an invalid date format");
+            }
+        } else if (object == null) {
+            throw new IllegalArgumentException("<null> cannot be converted to a datetime");
+        } else {
+            throw new ClassCastException("Class '" + object.getClass().getName() + "' cannot be converted to a datetime");
+        }
+    }
+
+    
+
+
+
+
+
+
+    protected long getDurationMillisFromObject(Object object) {
+        if (object instanceof Long) {
+            Long other = (Long) object;
+            return other.longValue();
+        
+
+
+
+
+
+
+
+        } else {
+            String type;
+            if (object == null) {
+                type = "<null>";
+            } else {
+                type = "Object of type \"" + object.getClass().getName() + '"';
+            }
+            throw new IllegalArgumentException(type + " cannot be converted to a duration");
+        }
+    }
+    
+}

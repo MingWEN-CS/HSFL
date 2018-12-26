@@ -1,0 +1,111 @@
+23d22
+< import org.apache.commons.math.exception.MathInternalError;
+72d70
+< 
+77,84c75,78
+<         
+<         
+<         UnivariateFunction rootFindingFunction =
+<             new UnivariateFunction() {
+<             public double value(double x) {
+<                 return cumulativeProbability(x) - p;
+<             }
+<         };
+---
+>         double lowerBound = getSupportLowerBound();
+>         if (p == 0.0) {
+>             return lowerBound;
+>         }
+86,95c80,83
+<         
+<         double lowerBound = getDomainLowerBound(p);
+<         double upperBound = getDomainUpperBound(p);
+<         double[] bracket = null;
+<         try {
+<             bracket = UnivariateRealSolverUtils.bracket(
+<                     rootFindingFunction, getInitialDomain(p),
+<                     lowerBound, upperBound);
+<         } catch (NumberIsTooLargeException ex) {
+<             
+---
+>         double upperBound = getSupportUpperBound();
+>         if (p == 1.0) {
+>             return upperBound;
+>         }
+96a85,100
+>         final double mu = getNumericalMean();
+>         final double sig = FastMath.sqrt(getNumericalVariance());
+>         final boolean chebyshevApplies;
+>         chebyshevApplies = !(Double.isInfinite(mu) || Double.isNaN(mu) ||
+>                              Double.isInfinite(sig) || Double.isNaN(sig));
+> 
+>         if (lowerBound == Double.NEGATIVE_INFINITY) {
+>             if (chebyshevApplies) {
+>                 lowerBound = mu - sig * FastMath.sqrt((1. - p) / p);
+>             } else {
+>                 lowerBound = -1.0;
+>                 while (cumulativeProbability(lowerBound) >= p) {
+>                     lowerBound *= 2.0;
+>                 }
+>             }
+>         }
+97a102,111
+>         if (upperBound == Double.POSITIVE_INFINITY) {
+>             if (chebyshevApplies) {
+>                 upperBound = mu + sig * FastMath.sqrt(p / (1. - p));
+>             } else {
+>                 upperBound = 1.0;
+>                 while (cumulativeProbability(upperBound) < p) {
+>                     upperBound *= 2.0;
+>                 }
+>             }
+>         }
+98a113
+>         final UnivariateFunction toSolve = new UnivariateFunction() {
+100,104c115,116
+<             if (FastMath.abs(rootFindingFunction.value(lowerBound)) < getSolverAbsoluteAccuracy()) {
+<                 return lowerBound;
+<             }
+<             if (FastMath.abs(rootFindingFunction.value(upperBound)) < getSolverAbsoluteAccuracy()) {
+<                 return upperBound;
+---
+>             public double value(final double x) {
+>                 return cumulativeProbability(x) - p;
+105a118,125
+>         };
+> 
+>         double x = UnivariateRealSolverUtils.solve(toSolve,
+>                                                    lowerBound,
+>                                                    upperBound,
+>                                                    getSolverAbsoluteAccuracy());
+> 
+>         if (!isSupportConnected()) {
+107c127,142
+<             throw new MathInternalError(ex);
+---
+>             final double dx = getSolverAbsoluteAccuracy();
+>             if (x - dx >= getSupportLowerBound()) {
+>                 double px = cumulativeProbability(x);
+>                 if (cumulativeProbability(x - dx) == px) {
+>                     upperBound = x;
+>                     while (upperBound - lowerBound > dx) {
+>                         final double midPoint = 0.5 * (lowerBound + upperBound);
+>                         if (cumulativeProbability(midPoint) < px) {
+>                             lowerBound = midPoint;
+>                         } else {
+>                             upperBound = midPoint;
+>                         }
+>                     }
+>                     return upperBound;
+>                 }
+>             }
+109,115c144
+< 
+<         
+<         double root = UnivariateRealSolverUtils.solve(rootFindingFunction,
+<                 
+<                 
+<                 bracket[0],bracket[1], getSolverAbsoluteAccuracy());
+<         return root;
+---
+>         return x;

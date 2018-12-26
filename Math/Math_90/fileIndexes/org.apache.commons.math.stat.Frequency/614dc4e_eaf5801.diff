@@ -1,0 +1,171 @@
+18a19
+> import java.text.NumberFormat;
+21c22,27
+< import java.text.NumberFormat;
+---
+> import java.util.TreeMap;
+> 
+> 
+> 
+> 
+> 
+23,25d28
+< import org.apache.commons.collections.ComparatorUtils;
+< import org.apache.commons.collections.SortedBag;
+< import org.apache.commons.collections.bag.TreeBag;
+43c46
+<     private SortedBag freqTable = null;
+---
+>     private TreeMap freqTable = null;
+49c52
+<         freqTable = new TreeBag();
+---
+>         freqTable = new TreeMap();
+55a59
+> 
+57c61
+<         freqTable = new TreeBag(comparator);
+---
+>         freqTable = new TreeMap(comparator);
+64a69
+> 
+69c74
+<         Iterator iter = freqTable.uniqueSet().iterator();
+---
+>         Iterator iter = freqTable.keySet().iterator();
+88a94
+> 
+91c97,102
+<             freqTable.add(v);
+---
+>             Long count = (Long) freqTable.get(v);
+>             if (count == null) {
+>                 freqTable.put(v, new Long(1));
+>             } else {
+>                 freqTable.put(v, new Long(count.longValue() + 1));
+>             }
+101a113
+> 
+109a122
+> 
+117a131
+> 
+130a145
+> 
+132c147
+<         return freqTable.uniqueSet().iterator();
+---
+>         return freqTable.keySet().iterator();
+140a156
+> 
+142c158,163
+<         return freqTable.size();
+---
+>         long result = 0;
+>         Iterator iterator = freqTable.values().iterator();
+>         while (iterator.hasNext())  {
+>             result += ((Long) iterator.next()).longValue();
+>         }
+>         return result;
+149a171
+> 
+153c175,178
+<             result = freqTable.getCount(v);
+---
+>             Long count =  (Long) freqTable.get(v);
+>             if (count != null) {
+>                 result = count.longValue();
+>             }
+164a190
+> 
+166,172c192
+<         long result = 0;
+<         try { 
+<             result = freqTable.getCount(new Long(v));
+<         } catch (ClassCastException ex) {
+<             
+<         }
+<         return result;
+---
+>         return getCount(new Long(v));
+179a200
+> 
+181,187c202
+<         long result = 0;
+<         try { 
+<             result = freqTable.getCount(new Long(v));
+<         } catch (ClassCastException ex) {
+<             
+<         }
+<         return result;
+---
+>         return getCount(new Long(v));
+194a210
+> 
+196,202c212
+<         long result = 0;
+<         try { 
+<             result = freqTable.getCount(new Character(v));
+<         } catch (ClassCastException ex) {
+<             
+<         }
+<         return result;
+---
+>         return getCount(new Character(v));
+212a223
+> 
+222a234
+> 
+232a245
+> 
+242a256
+> 
+260c274
+<             c = ComparatorUtils.NATURAL_COMPARATOR;
+---
+>             c = new NaturalComparator();
+262a277
+>         
+264c279,282
+<             result = freqTable.getCount(v);
+---
+>             Long value = (Long) freqTable.get(v);
+>             if (value != null) {
+>                 result = value.longValue();
+>             }
+268c286,287
+<         if (c.compare(v, freqTable.first()) < 0) {
+---
+>         
+>         if (c.compare(v, freqTable.firstKey()) < 0) {
+271c290,291
+<         if (c.compare(v, freqTable.last()) >= 0) {
+---
+>         
+>         if (c.compare(v, freqTable.lastKey()) >= 0) {
+273a294
+>         
+373a395,417
+>     }
+>     
+>     
+> 
+> 
+> 
+>     private class NaturalComparator implements Comparator {
+>         
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>         public int compare(Object o1, Object o2) {
+>             return ((Comparable)o1).compareTo(o2);
+>         }

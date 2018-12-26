@@ -1,0 +1,105 @@
+26c26
+< import org.apache.commons.math3.exception.NoDataException;
+---
+> import org.apache.commons.math3.exception.MathUnsupportedOperationException;
+84c84
+<     extends BaseAbstractMultivariateOptimizer<MultivariateFunction>
+---
+>     extends BaseAbstractMultivariateSimpleBoundsOptimizer<MultivariateFunction>
+245c245
+<         this(lambda, null, null, DEFAULT_MAXITERATIONS, DEFAULT_STOPFITNESS,
+---
+>         this(lambda, null, DEFAULT_MAXITERATIONS, DEFAULT_STOPFITNESS,
+254,257c254,255
+< 
+<     public CMAESOptimizer(int lambda, double[] inputSigma,
+<                           double[][] boundaries) {
+<         this(lambda, inputSigma, boundaries, DEFAULT_MAXITERATIONS, DEFAULT_STOPFITNESS,
+---
+>     public CMAESOptimizer(int lambda, double[] inputSigma) {
+>         this(lambda, inputSigma, DEFAULT_MAXITERATIONS, DEFAULT_STOPFITNESS,
+276d273
+< 
+278c275
+<                           double[][] boundaries, int maxIterations, double stopFitness,
+---
+>                           int maxIterations, double stopFitness,
+281c278
+<         this(lambda, inputSigma, boundaries, maxIterations, stopFitness, isActiveCMA,
+---
+>         this(lambda, inputSigma, maxIterations, stopFitness, isActiveCMA,
+301d297
+< 
+303c299
+<                           double[][] boundaries, int maxIterations, double stopFitness,
+---
+>                           int maxIterations, double stopFitness,
+310,319d305
+<         if (boundaries == null) {
+<             this.boundaries = null;
+<         } else {
+<             final int len = boundaries.length;
+<             this.boundaries = new double[len][];
+<             for (int i = 0; i < len; i++) {
+<                 this.boundaries[i] =
+<                     boundaries[i] == null ? null : (double[]) boundaries[i].clone();
+<             }
+<         }
+509,521c495,505
+<         double[] init = getStartPoint();
+<         if (boundaries != null) {
+<             if (boundaries.length != 2) {
+<                 throw new DimensionMismatchException(boundaries.length, 2);
+<             }
+<             if (boundaries[0] == null || boundaries[1] == null) {
+<                 throw new NoDataException();
+<             }
+<             if (boundaries[0].length != init.length) {
+<                 throw new DimensionMismatchException(boundaries[0].length, init.length);
+<             }
+<             if (boundaries[1].length != init.length) {
+<                 throw new DimensionMismatchException(boundaries[1].length, init.length);
+---
+>         final double[] init = getStartPoint();
+>         final double[] lB = getLowerBound();
+>         final double[] uB = getUpperBound();
+> 
+>         
+>         boolean hasFiniteBounds = false;
+>         for (int i = 0; i < lB.length; i++) {
+>             if (!Double.isInfinite(lB[i]) ||
+>                 !Double.isInfinite(uB[i])) {
+>                 hasFiniteBounds = true;
+>                 break;
+523,526c507,515
+<             for (int i = 0; i < init.length; i++) {
+<                 if (boundaries[0][i] > init[i] || boundaries[1][i] < init[i]) {
+<                     throw new OutOfRangeException(init[i], boundaries[0][i],
+<                             boundaries[1][i]);
+---
+>         }
+>         
+>         boolean hasInfiniteBounds = false;
+>         if (hasFiniteBounds) {
+>             for (int i = 0; i < lB.length; i++) {
+>                 if (Double.isInfinite(lB[i]) ||
+>                     Double.isInfinite(uB[i])) {
+>                     hasInfiniteBounds = true;
+>                     break;
+528a518,531
+> 
+>             if (hasInfiniteBounds) {
+>                 
+>                 
+>                 throw new MathUnsupportedOperationException();
+>             } else {
+>                 
+>                 boundaries = new double[2][];
+>                 boundaries[0] = lB;
+>                 boundaries[1] = uB;
+>             }
+>         } else {
+>             
+>             boundaries = null;
+529a533
+> 

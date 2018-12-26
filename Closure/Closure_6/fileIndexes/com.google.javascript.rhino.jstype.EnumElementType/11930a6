@@ -1,0 +1,285 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.rhino.jstype;
+
+
+
+import com.google.javascript.rhino.ErrorReporter;
+import com.google.javascript.rhino.Node;
+
+import java.util.Set;
+
+
+
+
+
+public class EnumElementType extends ObjectType {
+  private static final long serialVersionUID = 1L;
+
+  
+
+
+
+
+
+  private JSType primitiveType;
+
+  
+  private ObjectType primitiveObjectType;
+
+  private final String name;
+
+  EnumElementType(JSTypeRegistry registry, JSType elementType,
+      String name) {
+    super(registry);
+    this.primitiveType = elementType;
+    this.primitiveObjectType = elementType.toObjectType();
+    this.name = name;
+  }
+
+  @Override
+  public Property getSlot(String name) {
+    if (primitiveObjectType != null) {
+      return primitiveObjectType.getSlot(name);
+    }
+    return null;
+  }
+
+  @Override
+  public EnumElementType toMaybeEnumElementType() {
+    return this;
+  }
+
+  @Override
+  public boolean matchesNumberContext() {
+    return primitiveType.matchesNumberContext();
+  }
+
+  @Override
+  public boolean matchesStringContext() {
+    return primitiveType.matchesStringContext();
+  }
+
+  @Override
+  public boolean matchesObjectContext() {
+    return primitiveType.matchesObjectContext();
+  }
+
+  @Override
+  public boolean canBeCalled() {
+    return primitiveType.canBeCalled();
+  }
+
+  @Override
+  public boolean isObject() {
+    return primitiveType.isObject();
+  }
+
+  @Override
+  public TernaryValue testForEquality(JSType that) {
+    return primitiveType.testForEquality(that);
+  }
+
+  
+
+
+
+
+
+  @Override
+  public boolean isNullable() {
+    return primitiveType.isNullable();
+  }
+
+  @Override
+  public boolean isNominalType() {
+    return hasReferenceName();
+  }
+
+  
+
+
+
+  @Override
+  public int hashCode() {
+    if (hasReferenceName()) {
+      return getReferenceName().hashCode();
+    } else {
+      return super.hashCode();
+    }
+  }
+
+  @Override
+  String toStringHelper(boolean forAnnotations) {
+    return forAnnotations ?
+        primitiveType.toString() :
+        (getReferenceName() + ".<" + primitiveType + ">");
+  }
+
+  @Override
+  public String getReferenceName() {
+    return name;
+  }
+
+  @Override
+  public boolean hasReferenceName() {
+    return true;
+  }
+
+  @Override
+  public boolean isSubtype(JSType that) {
+    if (JSType.isSubtypeHelper(this, that)) {
+      return true;
+    } else {
+      return primitiveType.isSubtype(that);
+    }
+  }
+
+  @Override
+  public <T> T visit(Visitor<T> visitor) {
+    return visitor.caseEnumElementType(this);
+  }
+
+  @Override
+  boolean defineProperty(String propertyName, JSType type,
+      boolean inferred, Node propertyNode) {
+    
+    return true;
+  }
+
+  @Override
+  public boolean isPropertyTypeDeclared(String propertyName) {
+    return primitiveObjectType == null ?
+        false : primitiveObjectType.isPropertyTypeDeclared(propertyName);
+  }
+
+  @Override
+  public boolean isPropertyTypeInferred(String propertyName) {
+    return primitiveObjectType == null ?
+        false : primitiveObjectType.isPropertyTypeInferred(propertyName);
+  }
+
+  @Override
+  public ObjectType getImplicitPrototype() {
+    return null;
+  }
+
+  @Override
+  public int getPropertiesCount() {
+    return primitiveObjectType == null ?
+        0 : primitiveObjectType.getPropertiesCount();
+  }
+
+  @Override
+  void collectPropertyNames(Set<String> props) {
+    if (primitiveObjectType != null) {
+      primitiveObjectType.collectPropertyNames(props);
+    }
+  }
+
+  @Override
+  public JSType findPropertyType(String propertyName) {
+    return primitiveType.findPropertyType(propertyName);
+  }
+
+  @Override
+  public JSType getPropertyType(String propertyName) {
+    return primitiveObjectType == null ?
+        getNativeType(JSTypeNative.UNKNOWN_TYPE) :
+        primitiveObjectType.getPropertyType(propertyName);
+  }
+
+  @Override
+  public boolean hasProperty(String propertyName) {
+    return primitiveObjectType == null ?
+        false :
+        primitiveObjectType.hasProperty(propertyName);
+  }
+
+  @Override
+  public FunctionType getConstructor() {
+    return primitiveObjectType == null ?
+        null : primitiveObjectType.getConstructor();
+  }
+
+  @Override
+  public JSType autoboxesTo() {
+    return primitiveType.autoboxesTo();
+  }
+
+  
+
+
+  public JSType getPrimitiveType() {
+    return primitiveType;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  JSType meet(JSType that) {
+    JSType meetPrimitive = primitiveType.getGreatestSubtype(that);
+    if (meetPrimitive.isEmptyType()) {
+      return null;
+    } else {
+      return new EnumElementType(registry, meetPrimitive, name);
+    }
+  }
+
+  @Override
+  JSType resolveInternal(ErrorReporter t, StaticScope<JSType> scope) {
+    primitiveType = primitiveType.resolve(t, scope);
+    primitiveObjectType = ObjectType.cast(primitiveType);
+    return this;
+  }
+}

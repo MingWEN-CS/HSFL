@@ -1,0 +1,79 @@
+1101c1101,1102
+< 
+---
+>             
+>             
+1103a1105
+>             int dp = -1;
+1105a1108
+>                 
+1107c1110
+<                     negative = c == '-';
+---
+>                     negative = (c == '-');
+1117a1121
+>                 
+1119c1123,1131
+<                     break;
+---
+>                     if (c == '.' && (iFieldType == SECONDS_MILLIS || iFieldType == SECONDS_OPTIONAL_MILLIS)) {
+>                         if (dp >= 0) {
+>                             
+>                             return position + length;
+>                         }
+>                         dp = length;
+>                     } else {
+>                         break;
+>                     }
+1123,1124c1135
+< 
+<             if (length == 0) {
+---
+>             if (length == 0 || (length == 1 && dp == 0) || (dp == -1 && iFieldType == SECONDS_MILLIS)) {
+1134a1146,1177
+>             
+>             if (iFieldType == SECONDS_MILLIS || iFieldType == SECONDS_OPTIONAL_MILLIS) {
+>                 if (dp == -1) {
+>                     position = parseField(period, text, position, negative, length, SECONDS);
+>                     setFieldValue(period, MILLIS, 0);
+>                 } else {
+>                     if (dp > 0) {
+>                         position = parseField(period, text, position, negative, dp, SECONDS);
+>                     } else {
+>                         setFieldValue(period, SECONDS, 0);
+>                     }
+>                     position++; 
+>                     int millisLength = length - 1 - dp;
+>                     if (millisLength > 3) {
+>                         position = parseField(period, text, position, false, 3, MILLIS);
+>                         position += (millisLength - 3);
+>                     } else if (millisLength == 0) {
+>                         setFieldValue(period, MILLIS, 0);
+>                     } else {
+>                         position = parseField(period, text, position, false, millisLength, MILLIS);
+>                     }
+>                 }
+>             } else {
+>                 position = parseField(period, text, position, negative, length, iFieldType);
+>             }
+>                 
+>             if (position >= 0 && iSuffix != null) {
+>                 position = iSuffix.parse(text, position);
+>             }
+>                 
+>             return position;
+>         }
+1135a1179,1182
+>         private int parseField(
+>                 ReadWritablePeriod period, String text, int position,
+>                 boolean negative, int length, int type) {
+>             
+1157,1162c1204
+<             setFieldValue(period, iFieldType, value);
+<                 
+<             if (position >= 0 && iSuffix != null) {
+<                 position = iSuffix.parse(text, position);
+<             }
+<                 
+---
+>             setFieldValue(period, type, value);

@@ -1,0 +1,18 @@
+55a56,57
+> import org.apache.commons.logging.LogFactory;
+> import org.apache.commons.math.MathException;
+107,109c109,118
+<             ret = Beta.regularizedBeta((n * x) / (m + n * x),
+<                 0.5 * n,
+<                 0.5 * m);
+---
+>             try {
+>                 ret = Beta.regularizedBeta((n * x) / (m + n * x),
+>                     0.5 * n,
+>                     0.5 * m);
+>             } catch (MathException ex) {
+>                 LogFactory.getLog(getClass()).error(
+>                     "Failed to compute cummulative probability, returning NaN.",
+>                     ex);
+>                 ret = Double.NaN;
+>             }

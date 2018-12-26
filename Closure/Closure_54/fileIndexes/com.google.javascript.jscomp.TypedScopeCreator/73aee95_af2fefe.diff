@@ -1,0 +1,43 @@
+1130,1134c1130,1139
+<       } else if (info != null && info.hasEnumParameterType()) {
+<         if (rValue != null && rValue.getType() == Token.OBJECTLIT) {
+<           return rValue.getJSType();
+<         } else {
+<           return createEnumTypeFromNodes(
+---
+>       } else if (info != null) {
+>         if (info.hasEnumParameterType()) {
+>           if (rValue != null && rValue.getType() == Token.OBJECTLIT) {
+>             return rValue.getJSType();
+>           } else {
+>             return createEnumTypeFromNodes(
+>                 rValue, lValue.getQualifiedName(), info, lValue);
+>           }
+>         } else if (info.isConstructor() || info.isInterface()) {
+>           return createFunctionTypeFromNodes(
+1135a1141,1144
+>         } else if (info.isConstant() && rValue != null
+>             && rValue.getJSType() != null
+>             && !rValue.getJSType().isUnknownType()) {
+>           return rValue.getJSType();
+1137,1142d1145
+<       } else if (info != null &&
+<                  (info.isConstructor() || info.isInterface())) {
+<         return createFunctionTypeFromNodes(
+<             rValue, lValue.getQualifiedName(), info, lValue);
+<       } else {
+<         return getDeclaredTypeInAnnotation(sourceName, lValue, info);
+1143a1147,1148
+> 
+>       return getDeclaredTypeInAnnotation(sourceName, lValue, info);
+1299a1305
+>       
+1322,1323c1328,1332
+<         inferred = !(info.hasType() || info.hasEnumParameterType() ||
+<             FunctionTypeBuilder.isFunctionTypeDeclaration(info));
+---
+>         inferred = !(info.hasType()
+>             || info.hasEnumParameterType()
+>             || (info.isConstant() && valueType != null
+>                 && !valueType.isUnknownType())
+>             || FunctionTypeBuilder.isFunctionTypeDeclaration(info));

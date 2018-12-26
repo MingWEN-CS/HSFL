@@ -1,0 +1,22 @@
+20d19
+< import com.google.common.collect.ImmutableList;
+327,333c326,336
+<     Set<CompilerInput> entryPointInputs =
+<         Sets.newLinkedHashSet(
+<             depOptions.shouldDropMoochers() ?
+<             ImmutableList.<CompilerInput>of() :
+<             sorter.getInputsWithoutProvides());
+<     for (String entryPoint : depOptions.getEntryPoints()) {
+<       entryPointInputs.add(sorter.getInputProviding(entryPoint));
+---
+>     Set<CompilerInput> entryPointInputs = Sets.newLinkedHashSet();
+>     if (depOptions.shouldPruneDependencies()) {
+>       if (!depOptions.shouldDropMoochers()) {
+>         entryPointInputs.addAll(sorter.getInputsWithoutProvides());
+>       }
+> 
+>       for (String entryPoint : depOptions.getEntryPoints()) {
+>         entryPointInputs.add(sorter.getInputProviding(entryPoint));
+>       }
+>     } else {
+>       entryPointInputs.addAll(inputs);

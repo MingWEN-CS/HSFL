@@ -1,0 +1,1930 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Maps;
+import com.google.javascript.rhino.FunctionNode;
+import com.google.javascript.rhino.JSDocInfo;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.TokenStream;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+
+public final class NodeUtil {
+
+  
+  
+
+  
+  private static final Set<String> CONSTRUCTORS_WITHOUT_SIDE_EFFECTS =
+      new HashSet<String>(Arrays.asList(
+        "Array",
+        "Date",
+        "Error",
+        "Object",
+        "RegExp",
+        "XMLHttpRequest"));
+
+  public static final String CONSTANT_MARKER = "$$constant";
+
+  
+  private NodeUtil() {}
+
+  
+
+
+
+
+
+  static boolean getBooleanValue(Node n) {
+    switch (n.getType()) {
+      case Token.STRING:
+        return n.getString().length() > 0;
+
+      case Token.NUMBER:
+        return n.getDouble() != 0;
+
+      case Token.NULL:
+      case Token.FALSE:
+      case Token.VOID:
+        return false;
+
+      case Token.NAME:
+        String name = n.getString();
+        if ("undefined".equals(name)
+            || "NaN".equals(name)) {
+          
+          
+          return false;
+        } else if ("Infinity".equals(name)) {
+          return true;
+        }
+        break;
+
+      case Token.TRUE:
+      case Token.ARRAYLIT:
+      case Token.OBJECTLIT:
+      case Token.REGEXP:
+        return true;
+    }
+    throw new IllegalArgumentException("Non-literal value: " + n);
+  }
+
+
+  
+
+
+
+
+  static String getStringValue(Node n) {
+    
+    switch (n.getType()) {
+      case Token.NAME:
+      case Token.STRING:
+        return n.getString();
+
+      case Token.NUMBER:
+        double value = n.getDouble();
+        long longValue = (long) value;
+
+        
+        if (longValue == value) {
+          return Long.toString(longValue);
+        } else {
+          return Double.toString(n.getDouble());
+        }
+
+      case Token.FALSE:
+      case Token.TRUE:
+      case Token.NULL:
+        return Node.tokenToName(n.getType());
+
+      case Token.VOID:
+        return "undefined";
+    }
+    return null;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  static String getFunctionName(Node n, Node parent) {
+    String name = n.getFirstChild().getString();
+    switch (parent.getType()) {
+      case Token.NAME:
+        
+        
+        return parent.getString();
+
+      case Token.ASSIGN:
+        
+        
+        return parent.getFirstChild().getQualifiedName();
+
+      default:
+        
+        return name != null && name.length() != 0 ? name : null;
+    }
+  }
+
+  
+
+
+  static boolean isImmutableValue(Node n) {
+    switch (n.getType()) {
+      case Token.STRING:
+      case Token.NUMBER:
+      case Token.NULL:
+      case Token.TRUE:
+      case Token.FALSE:
+      case Token.VOID:
+        return true;
+      case Token.NEG:
+        return isImmutableValue(n.getFirstChild());
+      case Token.NAME:
+        String name = n.getString();
+        
+        
+        return "undefined".equals(name)
+            || "Infinity".equals(name)
+            || "NaN".equals(name);
+    }
+
+    return false;
+  }
+
+  
+
+
+
+
+
+  static boolean isLiteralValue(Node n) {
+    
+    switch (n.getType()) {
+      case Token.ARRAYLIT:
+      case Token.OBJECTLIT:
+      case Token.REGEXP:
+        
+        for (Node child = n.getFirstChild(); child != null;
+             child = child.getNext()) {
+          if (!isLiteralValue(child)) {
+            return false;
+          }
+        }
+        return true;
+
+      default:
+        return isImmutableValue(n);
+    }
+  }
+
+  
+
+
+
+
+
+  static boolean isValidDefineValue(Node val, Set<String> defines) {
+    switch (val.getType()) {
+      case Token.STRING:
+      case Token.NUMBER:
+      case Token.TRUE:
+      case Token.FALSE:
+        return true;
+
+      
+      case Token.BITAND:
+      case Token.BITNOT:
+      case Token.BITOR:
+      case Token.BITXOR:
+      case Token.NOT:
+      case Token.NEG:
+        return isValidDefineValue(val.getFirstChild(), defines);
+
+      
+      case Token.NAME:
+      case Token.GETPROP:
+        if (val.isQualifiedName()) {
+          return defines.contains(val.getQualifiedName());
+        }
+    }
+    return false;
+  }
+
+  
+
+
+
+
+  static boolean isEmptyBlock(Node block) {
+    if (block.getType() != Token.BLOCK) {
+      return false;
+    }
+
+    for (Node n = block.getFirstChild(); n != null; n = n.getNext()) {
+      if (n.getType() != Token.EMPTY) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  
+
+
+
+
+  static boolean isSimpleOperatorType(int type) {
+    switch (type) {
+      case Token.ADD:
+      case Token.BITAND:
+      case Token.BITNOT:
+      case Token.BITOR:
+      case Token.BITXOR:
+      case Token.COMMA:
+      case Token.DIV:
+      case Token.EQ:
+      case Token.GE:
+      case Token.GETELEM:
+      case Token.GETPROP:
+      case Token.GT:
+      case Token.INSTANCEOF:
+      case Token.LE:
+      case Token.LSH:
+      case Token.LT:
+      case Token.MOD:
+      case Token.MUL:
+      case Token.NE:
+      case Token.NOT:
+      case Token.RSH:
+      case Token.SHEQ:
+      case Token.SHNE:
+      case Token.SUB:
+      case Token.TYPEOF:
+      case Token.VOID:
+      case Token.POS:
+      case Token.NEG:
+      case Token.URSH:
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  
+
+
+
+
+
+  public static Node newExpr(Node child) {
+    return new Node(Token.EXPR_RESULT, child);
+  }
+
+  
+
+
+
+
+
+  static boolean mayEffectMutableState(Node n) {
+    return checkForStateChangeHelper(n, true);
+  }
+
+  
+
+
+  static boolean mayHaveSideEffects(Node n) {
+    return checkForStateChangeHelper(n, false);
+  }
+
+  
+
+
+
+
+
+  private static boolean checkForStateChangeHelper(
+      Node n, boolean checkForNewObjects) {
+    
+    
+    switch (n.getType()) {
+      
+      case Token.AND:
+      case Token.BLOCK:
+      case Token.EXPR_RESULT:
+      case Token.HOOK:
+      case Token.IF:
+      case Token.IN:
+      case Token.LP:
+      case Token.NUMBER:
+      case Token.OR:
+      case Token.THIS:
+      case Token.TRUE:
+      case Token.FALSE:
+      case Token.NULL:
+      case Token.STRING:
+      case Token.SWITCH:
+      case Token.TRY:
+      case Token.EMPTY:
+        break;
+
+      
+      case Token.THROW:
+        return true;
+
+      case Token.OBJECTLIT:
+      case Token.ARRAYLIT:
+      case Token.REGEXP:
+        if (checkForNewObjects) {
+          return true;
+        }
+        break;
+
+      case Token.VAR:    
+      case Token.NAME:   
+        if (n.getFirstChild() != null)
+          return true;
+
+        break;
+
+      case Token.FUNCTION:
+        
+        
+        
+        
+        
+        return !isFunctionAnonymous(n);
+
+      case Token.NEW:
+        {
+          if (checkForNewObjects) {
+            return true;
+          }
+
+          
+          
+          if (n.isNoSideEffectsCall()) {
+            break;
+          }
+
+          
+          Node constructor = n.getFirstChild();
+          if (Token.NAME == constructor.getType()) {
+            String className = constructor.getString();
+            if (CONSTRUCTORS_WITHOUT_SIDE_EFFECTS.contains(className)) {
+              
+              
+              break;
+            }
+          } else {
+            
+            
+          }
+        }
+        return true;
+
+      case Token.CALL:
+        
+        
+        if (n.isNoSideEffectsCall()) {
+          
+          
+          break;
+        }
+        return true;
+
+      default:
+        if (isSimpleOperatorType(n.getType()))
+          break;
+
+        return true;
+    }
+
+    for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+      if (checkForStateChangeHelper(c, checkForNewObjects)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+
+
+  static boolean constructorCallHasSideEffects(Node callNode) {
+    Preconditions.checkArgument(
+        callNode.getType() == Token.NEW,
+        "Expected NEW node, got " + Token.name(callNode.getType()));
+
+    if (callNode.isNoSideEffectsCall()) {
+      return false;
+    }
+
+    Node nameNode = callNode.getFirstChild();
+    if (nameNode.getType() == Token.NAME &&
+        CONSTRUCTORS_WITHOUT_SIDE_EFFECTS.contains(nameNode.getString())) {
+      return false;
+    }
+
+    return true;
+  }
+
+  
+
+
+
+
+  static boolean functionCallHasSideEffects(Node callNode) {
+    Preconditions.checkArgument(
+        callNode.getType() == Token.CALL,
+        "Expected CALL node, got " + Token.name(callNode.getType()));
+
+    if (callNode.isNoSideEffectsCall()) {
+      return false;
+    }
+
+    Node nameNode = callNode.getFirstChild();
+
+    
+    if (nameNode.getType() == Token.NAME) {
+      String name = nameNode.getString();
+      if (name.equals("String")) {
+        return false;
+      }
+    }
+
+    
+    if (nameNode.getType() == Token.GETPROP &&
+        nameNode.getFirstChild().getType() == Token.NAME) {
+      String namespaceName = nameNode.getFirstChild().getString();
+      if (namespaceName.equals("Math")) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  
+
+
+
+
+
+
+  static boolean nodeTypeMayHaveSideEffects(Node n) {
+    if (NodeUtil.isAssignmentOp(n)) {
+      return true;
+    }
+
+    switch(n.getType()) {
+      case Token.CALL:
+      case Token.DELPROP:
+      case Token.NEW:
+      case Token.DEC:
+      case Token.INC:
+      case Token.THROW:
+        return true;
+      case Token.NAME:
+        
+        return n.hasChildren();
+      default:
+        return false;
+    }
+  }
+
+  
+
+
+
+  static boolean canBeSideEffected(Node n) {
+    Set<String> emptySet = Collections.emptySet();
+    return canBeSideEffected(n, emptySet);
+  }
+
+  
+
+
+
+
+
+  static boolean canBeSideEffected(Node n, Set<String> knownConstants) {
+    switch (n.getType()) {
+      case Token.CALL:
+      case Token.NEW:
+        
+        
+        
+        return true;
+      case Token.NAME:
+        
+        return !NodeUtil.isConstantName(n)
+            && !knownConstants.contains(n.getString());
+
+      
+      case Token.GETPROP:
+      case Token.GETELEM:
+        return true;
+    }
+
+    for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+      if (canBeSideEffected(c, knownConstants)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  static int precedence(int type) {
+    switch (type) {
+      case Token.COMMA:  return 0;
+      case Token.ASSIGN_BITOR:
+      case Token.ASSIGN_BITXOR:
+      case Token.ASSIGN_BITAND:
+      case Token.ASSIGN_LSH:
+      case Token.ASSIGN_RSH:
+      case Token.ASSIGN_URSH:
+      case Token.ASSIGN_ADD:
+      case Token.ASSIGN_SUB:
+      case Token.ASSIGN_MUL:
+      case Token.ASSIGN_DIV:
+      case Token.ASSIGN_MOD:
+      case Token.ASSIGN: return 1;
+      case Token.HOOK:   return 2;  
+      case Token.OR:     return 3;
+      case Token.AND:    return 4;
+      case Token.BITOR:  return 5;
+      case Token.BITXOR: return 6;
+      case Token.BITAND: return 7;
+      case Token.EQ:
+      case Token.NE:
+      case Token.SHEQ:
+      case Token.SHNE:   return 8;
+      case Token.LT:
+      case Token.GT:
+      case Token.LE:
+      case Token.GE:
+      case Token.INSTANCEOF:
+      case Token.IN:     return 9;
+      case Token.LSH:
+      case Token.RSH:
+      case Token.URSH:   return 10;
+      case Token.SUB:
+      case Token.ADD:    return 11;
+      case Token.MUL:
+      case Token.MOD:
+      case Token.DIV:    return 12;
+      case Token.INC:
+      case Token.DEC:
+      case Token.NEW:
+      case Token.DELPROP:
+      case Token.TYPEOF:
+      case Token.VOID:
+      case Token.NOT:
+      case Token.BITNOT:
+      case Token.POS:
+      case Token.NEG:    return 13;
+
+      case Token.ARRAYLIT:
+      case Token.CALL:
+      case Token.EMPTY:
+      case Token.FALSE:
+      case Token.FUNCTION:
+      case Token.GETELEM:
+      case Token.GETPROP:
+      case Token.GET_REF:
+      case Token.IF:
+      case Token.LP:
+      case Token.NAME:
+      case Token.NULL:
+      case Token.NUMBER:
+      case Token.OBJECTLIT:
+      case Token.REGEXP:
+      case Token.RETURN:
+      case Token.STRING:
+      case Token.THIS:
+      case Token.TRUE:
+        return 15;
+
+      default: throw new Error("Unknown precedence for " +
+                               Node.tokenToName(type) +
+                               " (type " + type + ")");
+    }
+  }
+
+  
+
+
+
+
+
+  static boolean isAssociative(int type) {
+    switch (type) {
+      case Token.MUL:
+      case Token.AND:
+      case Token.OR:
+      case Token.BITOR:
+      case Token.BITAND:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  static boolean isAssignmentOp(Node n) {
+    switch (n.getType()){
+      case Token.ASSIGN:
+      case Token.ASSIGN_BITOR:
+      case Token.ASSIGN_BITXOR:
+      case Token.ASSIGN_BITAND:
+      case Token.ASSIGN_LSH:
+      case Token.ASSIGN_RSH:
+      case Token.ASSIGN_URSH:
+      case Token.ASSIGN_ADD:
+      case Token.ASSIGN_SUB:
+      case Token.ASSIGN_MUL:
+      case Token.ASSIGN_DIV:
+      case Token.ASSIGN_MOD:
+        return true;
+    }
+    return false;
+  }
+
+  static int getOpFromAssignmentOp(Node n) {
+    switch (n.getType()){
+      case Token.ASSIGN_BITOR:
+        return Token.BITOR;
+      case Token.ASSIGN_BITXOR:
+        return Token.BITXOR;
+      case Token.ASSIGN_BITAND:
+        return Token.BITAND;
+      case Token.ASSIGN_LSH:
+        return Token.LSH;
+      case Token.ASSIGN_RSH:
+        return Token.RSH;
+      case Token.ASSIGN_URSH:
+        return Token.URSH;
+      case Token.ASSIGN_ADD:
+        return Token.ADD;
+      case Token.ASSIGN_SUB:
+        return Token.SUB;
+      case Token.ASSIGN_MUL:
+        return Token.MUL;
+      case Token.ASSIGN_DIV:
+        return Token.DIV;
+      case Token.ASSIGN_MOD:
+        return Token.MOD;
+    }
+    throw new IllegalArgumentException("Not an assiment op");
+  }
+
+  static boolean isExpressionNode(Node n) {
+    return n.getType() == Token.EXPR_RESULT;
+  }
+
+  
+
+
+  static boolean containsFunctionDeclaration(Node n) {
+    return containsType(n, Token.FUNCTION);
+  }
+
+  
+
+
+  static boolean referencesThis(Node n) {
+    return containsType(n, Token.THIS);
+  }
+
+  
+
+
+  static boolean isGet(Node n) {
+    return n.getType() == Token.GETPROP
+        || n.getType() == Token.GETELEM;
+  }
+
+  
+
+
+  static boolean isGetProp(Node n) {
+    return n.getType() == Token.GETPROP;
+  }
+
+  
+
+
+  static boolean isName(Node n) {
+    return n.getType() == Token.NAME;
+  }
+
+  
+
+
+  static boolean isNew(Node n) {
+    return n.getType() == Token.NEW;
+  }
+
+  
+
+
+  static boolean isVar(Node n) {
+    return n.getType() == Token.VAR;
+  }
+
+  
+
+
+
+
+
+  static boolean isVarDeclaration(Node n) {
+    
+    
+    return n.getType() == Token.NAME && n.getParent().getType() == Token.VAR;
+  }
+
+  
+
+
+
+  static Node getAssignedValue(Node n) {
+    Preconditions.checkState(isName(n));
+    Node parent = n.getParent();
+    if (isVar(parent)) {
+      return n.getFirstChild();
+    } else if (isAssign(parent) && parent.getFirstChild() == n) {
+      return n.getNext();
+    } else {
+      return null;
+    }
+  }
+
+  
+
+
+  static boolean isString(Node n) {
+    return n.getType() == Token.STRING;
+  }
+
+  
+
+
+
+
+
+
+  static boolean isExprAssign(Node n) {
+    return n.getType() == Token.EXPR_RESULT
+        && n.getFirstChild().getType() == Token.ASSIGN;
+  }
+
+  
+
+
+  static boolean isAssign(Node n) {
+    return n.getType() == Token.ASSIGN;
+  }
+
+  
+
+
+
+
+
+
+  static boolean isExprCall(Node n) {
+    return n.getType() == Token.EXPR_RESULT
+        && n.getFirstChild().getType() == Token.CALL;
+  }
+
+  
+
+
+  static boolean isForIn(Node n) {
+    return n.getType() == Token.FOR
+        && n.getChildCount() == 3;
+  }
+
+  
+
+
+  static boolean isLoopStructure(Node n) {
+    switch (n.getType()) {
+      case Token.FOR:
+      case Token.DO:
+      case Token.WHILE:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  
+
+
+
+
+  static Node getLoopCodeBlock(Node n) {
+    switch (n.getType()) {
+      case Token.FOR:
+      case Token.WHILE:
+        return n.getLastChild();
+      case Token.DO:
+        return n.getFirstChild();
+      default:
+        return null;
+    }
+  }
+
+  
+
+
+  static boolean isControlStructure(Node n) {
+    switch (n.getType()) {
+      case Token.FOR:
+      case Token.DO:
+      case Token.WHILE:
+      case Token.WITH:
+      case Token.IF:
+      case Token.LABEL:
+      case Token.TRY:
+      case Token.CATCH:
+      case Token.SWITCH:
+      case Token.CASE:
+      case Token.DEFAULT:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  
+
+
+
+  static boolean isControlStructureCodeBlock(Node parent, Node n) {
+    switch (parent.getType()) {
+      case Token.FOR:
+      case Token.WHILE:
+      case Token.LABEL:
+      case Token.WITH:
+        return parent.getLastChild() == n;
+      case Token.DO:
+        return parent.getFirstChild() == n;
+      case Token.IF:
+        return parent.getFirstChild() != n;
+      case Token.TRY:
+        return parent.getFirstChild() == n || parent.getLastChild() == n;
+      case Token.CATCH:
+        return parent.getLastChild() == n;
+      case Token.SWITCH:
+      case Token.CASE:
+        return parent.getFirstChild() != n;
+      case Token.DEFAULT:
+        return true;
+      default:
+        Preconditions.checkState(isControlStructure(parent));
+        return false;
+    }
+  }
+
+  
+
+
+
+
+  static Node getConditionExpression(Node n) {
+    switch (n.getType()) {
+      case Token.IF:
+      case Token.WHILE:
+        return n.getFirstChild();
+      case Token.DO:
+        return n.getLastChild();
+      case Token.FOR:
+        switch (n.getChildCount()) {
+          case 3:
+            return null;
+          case 4:
+            return n.getFirstChild().getNext();
+        }
+        throw new IllegalArgumentException("malformed 'for' statement " + n);
+      case Token.CASE:
+        return null;
+    }
+    throw new IllegalArgumentException(n + " does not have a condition.");
+  }
+
+  
+
+
+  static boolean isStatementBlock(Node n) {
+    return n.getType() == Token.SCRIPT || n.getType() == Token.BLOCK;
+  }
+
+  
+
+
+  static boolean isStatement(Node n) {
+    Node parent = n.getParent();
+    
+    
+    
+    
+    Preconditions.checkState(parent != null);
+    switch (parent.getType()) {
+      case Token.SCRIPT:
+      case Token.BLOCK:
+      case Token.LABEL:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  
+  static boolean isSwitchCase(Node n) {
+    return n.getType() == Token.CASE || n.getType() == Token.DEFAULT;
+  }
+
+  
+  static boolean isLabelName(Node n) {
+    if (n != null && n.getType() == Token.NAME) {
+      Node parent = n.getParent();
+      switch (parent.getType()) {
+        case Token.LABEL:
+        case Token.BREAK:
+        case Token.CONTINUE:
+          if (n == parent.getFirstChild()) {
+            return true;
+          }
+      }
+    }
+    return false;
+  }
+
+  
+  static boolean isTryFinallyNode(Node parent, Node child) {
+    return parent.getType() == Token.TRY && parent.getChildCount() == 3
+        && child == parent.getLastChild();
+  }
+
+  
+  static void removeChild(Node parent, Node node) {
+    
+    if (isStatementBlock(parent)
+        || isSwitchCase(node)
+        || isTryFinallyNode(parent, node)) {
+      
+      parent.removeChild(node);
+    } else if (parent.getType() == Token.VAR) {
+      if (parent.hasMoreThanOneChild()) {
+        parent.removeChild(node);
+      } else {
+        
+        parent.removeChild(node);
+        
+        removeChild(parent.getParent(), parent);
+      }
+    } else if (node.getType() == Token.BLOCK) {
+      
+      
+      node.detachChildren();
+    } else if (parent.getType() == Token.LABEL
+        && node == parent.getLastChild()) {
+      
+      parent.removeChild(node);
+      
+      removeChild(parent.getParent(), parent);
+    } else if (parent.getType() == Token.FOR
+        && parent.getChildCount() == 4) {
+      
+      
+      
+      parent.replaceChild(node, new Node(Token.EMPTY));
+    } else {
+      throw new IllegalStateException("Invalid attempt to remove node: " +
+          node.toString() + " of "+ parent.toString());
+    }
+  }
+
+  
+
+
+
+  static boolean tryMergeBlock(Node block) {
+    Preconditions.checkState(block.getType() == Token.BLOCK);
+    Node parent = block.getParent();
+    
+    
+    if (NodeUtil.isStatementBlock(parent)) {
+      Node previous = block;
+      while (block.hasChildren()) {
+        Node child = block.removeFirstChild();
+        parent.addChildAfter(child, previous);
+        previous = child;
+      }
+      parent.removeChild(block);
+      return true;
+    } else if (parent.getType() == Token.LABEL && block.hasOneChild()) {
+      parent.replaceChild(block, block.removeFirstChild());
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  
+
+
+  static boolean isCall(Node n) {
+    return n.getType() == Token.CALL;
+  }
+
+  
+
+
+  static boolean isFunction(Node n) {
+    return n.getType() == Token.FUNCTION;
+  }
+
+  
+
+
+  static Node getFunctionBody(Node fn) {
+    Preconditions.checkArgument(isFunction(fn));
+    return fn.getLastChild();
+  }
+
+  
+
+
+  static boolean isThis(Node node) {
+    return node.getType() == Token.THIS;
+  }
+
+  
+
+
+  static boolean containsCall(Node n) {
+    return containsType(n, Token.CALL);
+  }
+
+  
+
+
+
+
+  static boolean isFunctionDeclaration(Node n) {
+    return n.getType() == Token.FUNCTION && !isFunctionAnonymous(n);
+  }
+
+  
+
+
+
+
+  static boolean isAnonymousFunction(Node n) {
+    return n.getType() == Token.FUNCTION && isFunctionAnonymous(n);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  static boolean isFunctionAnonymous(Node n) {
+    return !isStatement(n);
+  }
+
+  
+
+
+
+  static boolean isVarArgsFunction(Node function) {
+    Preconditions.checkArgument(isFunction(function));
+    return NodeUtil.isNameReferenced(
+        function.getLastChild(),
+        "arguments",
+        Predicates.<Node>not(new NodeUtil.MatchNodeType(Token.FUNCTION)));
+  }
+
+  
+
+
+
+
+  static boolean isObjectCallMethod(Node callNode, String methodName) {
+    if (callNode.getType() == Token.CALL) {
+      Node functionIndentifyingExpression = callNode.getFirstChild();
+      if (NodeUtil.isGet(functionIndentifyingExpression)) {
+        Node last = functionIndentifyingExpression.getLastChild();
+        if (last != null && last.getType() == Token.STRING) {
+          String propName = last.getString();
+          return (propName.equals(methodName));
+        }
+      }
+    }
+    return false;
+  }
+
+
+  
+
+
+
+
+  static boolean isFunctionObjectCall(Node callNode) {
+    return isObjectCallMethod(callNode, "call");
+  }
+
+  
+
+
+
+
+  static boolean isFunctionObjectApply(Node callNode) {
+    return isObjectCallMethod(callNode, "apply");
+  }
+
+  
+
+
+
+
+
+  static boolean isSimpleFunctionObjectCall(Node callNode) {
+    if (isFunctionObjectCall(callNode)) {
+      if (callNode.getFirstChild().getFirstChild().getType() == Token.NAME) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+
+  static boolean isLhs(Node n, Node parent) {
+    return (parent.getType() == Token.ASSIGN && parent.getFirstChild() == n) ||
+           parent.getType() == Token.VAR;
+  }
+
+  
+
+
+
+
+
+
+  static boolean isObjectLitKey(Node node, Node parent) {
+    if (node.getType() == Token.STRING && parent.getType() == Token.OBJECTLIT) {
+      int index = 0;
+      for (Node current = parent.getFirstChild();
+           current != null;
+           current = current.getNext()) {
+        if (current == node) {
+          return index % 2 == 0;
+        }
+        index++;
+      }
+    }
+    return false;
+  }
+
+  
+
+
+
+
+
+
+
+  static String opToStr(int operator) {
+    switch (operator) {
+      case Token.BITOR: return "|";
+      case Token.OR: return "||";
+      case Token.BITXOR: return "^";
+      case Token.AND: return "&&";
+      case Token.BITAND: return "&";
+      case Token.SHEQ: return "===";
+      case Token.EQ: return "==";
+      case Token.NOT: return "!";
+      case Token.NE: return "!=";
+      case Token.SHNE: return "!==";
+      case Token.LSH: return "<<";
+      case Token.IN: return "in";
+      case Token.LE: return "<=";
+      case Token.LT: return "<";
+      case Token.URSH: return ">>>";
+      case Token.RSH: return ">>";
+      case Token.GE: return ">=";
+      case Token.GT: return ">";
+      case Token.MUL: return "*";
+      case Token.DIV: return "/";
+      case Token.MOD: return "%";
+      case Token.BITNOT: return "~";
+      case Token.ADD: return "+";
+      case Token.SUB: return "-";
+      case Token.POS: return "+";
+      case Token.NEG: return "-";
+      case Token.ASSIGN: return "=";
+      case Token.ASSIGN_BITOR: return "|=";
+      case Token.ASSIGN_BITXOR: return "^=";
+      case Token.ASSIGN_BITAND: return "&=";
+      case Token.ASSIGN_LSH: return "<<=";
+      case Token.ASSIGN_RSH: return ">>=";
+      case Token.ASSIGN_URSH: return ">>>=";
+      case Token.ASSIGN_ADD: return "+=";
+      case Token.ASSIGN_SUB: return "-=";
+      case Token.ASSIGN_MUL: return "*=";
+      case Token.ASSIGN_DIV: return "/=";
+      case Token.ASSIGN_MOD: return "%=";
+      case Token.VOID: return "void";
+      case Token.TYPEOF: return "typeof";
+      case Token.INSTANCEOF: return "instanceof";
+      default: return null;
+    }
+  }
+
+  
+
+
+
+
+
+
+
+  static String opToStrNoFail(int operator) {
+    String res = opToStr(operator);
+    if (res == null) {
+      throw new Error("Unknown op " + operator + ": " +
+                      Token.name(operator));
+    }
+    return res;
+  }
+
+  
+
+
+  static boolean containsType(Node node,
+                              int type,
+                              Predicate<Node> traverseChildrenPred) {
+    return has(node, new MatchNodeType(type), traverseChildrenPred);
+  }
+
+  
+
+
+  static boolean containsType(Node node, int type) {
+    return containsType(node, type, Predicates.<Node>alwaysTrue());
+  }
+
+
+  
+
+
+
+
+  static void redeclareVarsInsideBranch(Node branch) {
+    Collection<Node> vars = getVarsDeclaredInBranch(branch);
+    if (vars.isEmpty()) {
+      return;
+    }
+
+    Node parent = getAddingRoot(branch);
+    for (Node nameNode : vars) {
+      Node var = new Node(
+          Token.VAR, Node.newString(Token.NAME, nameNode.getString()));
+      copyNameAnnotations(nameNode, var.getFirstChild());
+      parent.addChildToFront(var);
+    }
+  }
+
+  
+
+
+
+
+  static void copyNameAnnotations(Node source, Node destination) {
+    if (source.getBooleanProp(Node.IS_CONSTANT_NAME)) {
+      destination.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+    }
+  }
+
+  
+
+
+
+  private static Node getAddingRoot(Node n) {
+    Node addingRoot = null;
+    Node ancestor = n;
+    while (null != (ancestor = ancestor.getParent())) {
+      int type = ancestor.getType();
+      if (type == Token.SCRIPT) {
+        addingRoot = ancestor;
+        break;
+      } else if (type == Token.FUNCTION) {
+        addingRoot = ancestor.getLastChild();
+        break;
+      }
+    }
+
+    
+    Preconditions.checkState(addingRoot.getType() == Token.BLOCK ||
+        addingRoot.getType() == Token.SCRIPT);
+    Preconditions.checkState(addingRoot.getFirstChild() == null ||
+        addingRoot.getFirstChild().getType() != Token.SCRIPT);
+    return addingRoot;
+  }
+
+  
+  public static FunctionNode newFunctionNode(String name, List<Node> params,
+      Node body, int lineno, int charno) {
+    Node parameterParen = new Node(Token.LP, lineno, charno);
+    for (Node param : params) {
+      parameterParen.addChildToBack(param);
+    }
+    FunctionNode function = new FunctionNode(name, lineno, charno);
+    function.addChildrenToBack(
+        Node.newString(Token.NAME, name, lineno, charno));
+    function.addChildToBack(parameterParen);
+    function.addChildToBack(body);
+    return function;
+  }
+
+  
+
+
+
+
+
+
+
+  public static Node newQualifiedNameNode(String name, int lineno, int charno) {
+    int endPos = name.indexOf('.');
+    if (endPos == -1) {
+      return Node.newString(Token.NAME, name, lineno, charno);
+    }
+    Node node = Node.newString(Token.NAME, name.substring(0, endPos),
+                               lineno, charno);
+    int startPos;
+    do {
+      startPos = endPos + 1;
+      endPos = name.indexOf('.', startPos);
+      String part = (endPos == -1
+                     ? name.substring(startPos)
+                     : name.substring(startPos, endPos));
+      node = new Node(Token.GETPROP, node,
+                      Node.newString(Token.STRING, part, lineno, charno),
+                      lineno, charno);
+    } while (endPos != -1);
+
+    return node;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  static Node newQualifiedNameNode(String name, Node basisNode,
+      String originalName) {
+    Node node = newQualifiedNameNode(name, -1, -1);
+    setDebugInformation(node, basisNode, originalName);
+    return node;
+  }
+
+  
+
+
+
+
+
+
+
+  static void setDebugInformation(Node node, Node basisNode,
+                                  String originalName) {
+    node.copyInformationFrom(basisNode);
+    node.putProp(Node.ORIGINALNAME_PROP, originalName);
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  static Node newName(String name, Node basisNode) {
+    Node nameNode = Node.newString(Token.NAME, name);
+    nameNode.copyInformationFrom(basisNode);
+    return nameNode;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  static Node newName(String name, Node basisNode, String originalName) {
+    Node nameNode = newName(name, basisNode);
+    nameNode.putProp(Node.ORIGINALNAME_PROP, originalName);
+    return nameNode;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  static boolean isLatin(String s) {
+    char LARGEST_BASIC_LATIN = 0x7f;
+    int len = s.length();
+    for (int index = 0; index < len; index++) {
+      char c = s.charAt(index);
+      if (c > LARGEST_BASIC_LATIN) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  
+
+
+
+  static boolean isValidPropertyName(String name) {
+    return TokenStream.isJSIdentifier(name) &&
+        !TokenStream.isKeyword(name) &&
+        
+        
+        
+        
+        
+        
+        NodeUtil.isLatin(name);
+  }
+
+  private static class VarCollector implements Visitor {
+    final Map<String, Node> vars = Maps.newLinkedHashMap();
+
+    public void visit(Node n) {
+      if (n.getType() == Token.NAME) {
+        Node parent = n.getParent();
+        if (parent != null && parent.getType() == Token.VAR) {
+          String name = n.getString();
+          if (!vars.containsKey(name)) {
+            vars.put(name, n);
+          }
+        }
+      }
+    }
+  }
+
+  
+
+
+  public static Collection<Node> getVarsDeclaredInBranch(Node root) {
+    VarCollector collector = new VarCollector();
+    visitPreOrder(
+        root,
+        collector,
+        Predicates.<Node>not(new NodeUtil.MatchNodeType(Token.FUNCTION)));
+    return collector.vars.values();
+  }
+
+  
+
+
+
+  static boolean isPrototypePropertyDeclaration(Node n) {
+    if (!NodeUtil.isExprAssign(n)) {
+      return false;
+    }
+    return isPrototypeProperty(n.getFirstChild().getFirstChild());
+  }
+
+  static boolean isPrototypeProperty(Node n) {
+    String lhsString = n.getQualifiedName();
+    if (lhsString == null) {
+      return false;
+    }
+    int prototypeIdx = lhsString.indexOf(".prototype.");
+    return prototypeIdx != -1;
+  }
+
+  
+
+
+  static Node getPrototypeClassName(Node qName) {
+    Node cur = qName;
+    while (isGetProp(cur)) {
+      if (cur.getLastChild().getString().equals("prototype")) {
+        return cur.getFirstChild();
+      } else {
+        cur = cur.getFirstChild();
+      }
+    }
+    return null;
+  }
+
+  
+
+
+  static String getPrototypePropertyName(Node qName) {
+    String qNameStr = qName.getQualifiedName();
+    int prototypeIdx = qNameStr.lastIndexOf(".prototype.");
+    int memberIndex = prototypeIdx + ".prototype".length() + 1;
+    return qNameStr.substring(memberIndex);
+  }
+
+  
+
+
+
+  static Node newUndefinedNode() {
+    
+    return new Node(Token.VOID, Node.newNumber(0));
+  }
+
+  
+
+
+  static Node newVarNode(String name, Node value) {
+    Node nodeName = Node.newString(Token.NAME, name);
+    if (value != null) {
+      nodeName.addChildrenToBack(value);
+    }
+    Node var = new Node(Token.VAR, nodeName);
+
+    return var;
+  }
+
+  
+
+
+  private static class MatchNameNode implements Predicate<Node>{
+    final String name;
+
+    MatchNameNode(String name){
+      this.name = name;
+    }
+
+    public boolean apply(Node n) {
+      return n.getType() == Token.NAME
+          && n.getString().equals(name);
+    }
+  }
+
+  
+
+
+  static class MatchNodeType implements Predicate<Node>{
+    final int type;
+
+    MatchNodeType(int type){
+      this.type = type;
+    }
+
+    public boolean apply(Node n) {
+      return n.getType() == type;
+    }
+  }
+
+  
+
+
+  static boolean isNodeTypeReferenced(Node node, int type) {
+    return isNodeTypeReferenced(node, type, Predicates.<Node>alwaysTrue());
+  }
+
+  
+
+
+  static boolean isNodeTypeReferenced(
+      Node node, int type, Predicate<Node> traverseChildrenPred) {
+    return has(node, new MatchNodeType(type), traverseChildrenPred);
+  }
+
+  
+
+
+  static int getNodeTypeReferenceCount(Node node, int type) {
+    return getCount(node, new MatchNodeType(type));
+  }
+
+  
+
+
+  static boolean isNameReferenced(Node node,
+                                  String name,
+                                  Predicate<Node> traverseChildrenPred) {
+    return has(node, new MatchNameNode(name), traverseChildrenPred);
+  }
+
+  
+
+
+  static boolean isNameReferenced(Node node, String name) {
+    return isNameReferenced(node, name, Predicates.<Node>alwaysTrue());
+  }
+
+  
+
+
+  static int getNameReferenceCount(Node node, String name) {
+    return getCount(node, new MatchNameNode(name) );
+  }
+
+  
+
+
+  static boolean has(Node node,
+                     Predicate<Node> pred,
+                     Predicate<Node> traverseChildrenPred) {
+    if (pred.apply(node)) {
+      return true;
+    }
+
+    if (!traverseChildrenPred.apply(node)) {
+      return false;
+    }
+
+    for (Node c = node.getFirstChild(); c != null; c = c.getNext()) {
+      if (has(c, pred, traverseChildrenPred)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  
+
+
+
+  static int getCount(Node n, Predicate<Node> pred) {
+    int total = 0;
+
+    if (pred.apply(n)) {
+      total++;
+    }
+
+    for (Node c = n.getFirstChild(); c != null; c = c.getNext()) {
+      total += getCount(c, pred);
+    }
+
+    return total;
+  }
+
+  
+
+
+
+  static interface Visitor {
+    void visit(Node node);
+  }
+
+  
+
+
+
+  static void visitPreOrder(Node node,
+                     Visitor vistor,
+                     Predicate<Node> traverseChildrenPred) {
+    vistor.visit(node);
+
+    if (traverseChildrenPred.apply(node)) {
+      for (Node c = node.getFirstChild(); c != null; c = c.getNext()) {
+        visitPreOrder(c, vistor, traverseChildrenPred);
+      }
+    }
+  }
+
+  
+
+
+
+  static void visitPostOrder(Node node,
+                     Visitor vistor,
+                     Predicate<Node> traverseChildrenPred) {
+    if (traverseChildrenPred.apply(node)) {
+      for (Node c = node.getFirstChild(); c != null; c = c.getNext()) {
+        visitPostOrder(c, vistor, traverseChildrenPred);
+      }
+    }
+
+    vistor.visit(node);
+  }
+
+  
+
+
+  static boolean hasFinally(Node n) {
+    Preconditions.checkArgument(n.getType() == Token.TRY);
+    return n.getChildCount() == 3;
+  }
+
+  
+
+
+
+  static Node getCatchBlock(Node n) {
+    Preconditions.checkArgument(n.getType() == Token.TRY);
+    return n.getFirstChild().getNext();
+  }
+
+  
+
+
+
+  static boolean hasCatchHandler(Node n) {
+    Preconditions.checkArgument(n.getType() == Token.BLOCK);
+    return n.hasChildren() && n.getFirstChild().getType() == Token.CATCH;
+  }
+
+  
+
+
+
+  static Node getFnParameters(Node fnNode) {
+   
+   Preconditions.checkArgument(fnNode.getType() == Token.FUNCTION);
+   return fnNode.getFirstChild().getNext();
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  static boolean isConstantName(Node node) {
+    return node.getString().contains(CONSTANT_MARKER);
+  }
+
+  
+
+
+
+  static JSDocInfo getInfoForNameNode(Node nameNode) {
+    JSDocInfo info = null;
+    Node parent = null;
+    if (nameNode != null) {
+      info = nameNode.getJSDocInfo();
+      parent = nameNode.getParent();
+    }
+
+    if (info == null && parent != null &&
+        ((parent.getType() == Token.VAR && parent.hasOneChild()) ||
+          parent.getType() == Token.FUNCTION)) {
+      info = parent.getJSDocInfo();
+    }
+    return info;
+  }
+
+  
+
+
+
+  static String getSourceName(Node n) {
+    String sourceName = null;
+    while (sourceName == null && n != null) {
+      sourceName = (String) n.getProp(Node.SOURCENAME_PROP);
+      n = n.getParent();
+    }
+    return sourceName;
+  }
+}

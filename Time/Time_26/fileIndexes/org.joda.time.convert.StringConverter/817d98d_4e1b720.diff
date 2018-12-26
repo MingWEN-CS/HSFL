@@ -1,0 +1,72 @@
+58c58,59
+< import org.joda.time.ReadWritableTimePeriod;
+---
+> import org.joda.time.DurationType;
+> import org.joda.time.MutableTimePeriod;
+60c61
+< import org.joda.time.ReadableDuration;
+---
+> import org.joda.time.ReadWritableTimePeriod;
+64,65d64
+< import org.joda.time.format.TimePeriodFormatter;
+< import org.joda.time.format.TimePeriodParser;
+67a67,68
+> import org.joda.time.format.TimePeriodFormatter;
+> import org.joda.time.format.TimePeriodParser;
+77,78c78,79
+<     implements InstantConverter, DurationConverter, IntervalConverter {
+<     
+---
+>         implements InstantConverter, DurationConverter, TimePeriodConverter, IntervalConverter {
+> 
+83c84
+<     
+---
+> 
+106c107
+<     
+---
+> 
+121c122
+<     
+---
+> 
+126,128d126
+<     public boolean isPrecise(Object object) {
+<         return false;
+<     }
+130c128
+<     
+---
+> 
+134c132,143
+<         throw new UnsupportedOperationException();
+---
+>         String str = (String) object;
+>         MutableTimePeriod period = new MutableTimePeriod(DurationType.getPreciseAllType());
+>         TimePeriodParser parser = ISOTimePeriodFormat.getInstance().standard();
+>         int pos = parser.parseInto(period, str, 0);
+>         if (pos < str.length()) {
+>             if (pos < 0) {
+>                 
+>                 parser.parseMutableTimePeriod(period.getDurationType(), str);
+>             }
+>             throw new IllegalArgumentException("Invalid format: \"" + str + '"');
+>         }
+>         return period.toDurationMillis();
+137a147
+>     
+146c156
+<     public void setInto(ReadWritableTimePeriod duration, Object object) {
+---
+>     public void setInto(ReadWritableTimePeriod period, Object object) {
+149c159
+<         int pos = parser.parseInto(duration, str, 0);
+---
+>         int pos = parser.parseInto(period, str, 0);
+153c163
+<                 parser.parseMutableTimePeriod(duration.getDurationType(), str);
+---
+>                 parser.parseMutableTimePeriod(period.getDurationType(), str);
+158a169
+>     

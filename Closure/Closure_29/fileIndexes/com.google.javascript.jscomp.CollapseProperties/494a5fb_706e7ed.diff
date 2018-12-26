@@ -1,0 +1,67 @@
+252c252,253
+<           (name.aliasingGets > 0 || name.localSets + name.globalSets > 1)) {
+---
+>           (name.aliasingGets > 0 || name.localSets + name.globalSets > 1 ||
+>            name.deleteProps > 0)) {
+259c260,265
+<           if (ref.type == Ref.Type.SET_FROM_GLOBAL ||
+---
+>           if (ref.type == Ref.Type.DELETE_PROP) {
+>             if (initialized) {
+>               warnAboutNamespaceRedefinition(name, ref);
+>             }
+>           } else if (
+>               ref.type == Ref.Type.SET_FROM_GLOBAL ||
+498c504,506
+<         if (!p.inExterns && canCollapseChildNames && p.declaration != null &&
+---
+>         if (!p.inExterns && canCollapseChildNames &&
+>             p.declaration != null &&
+>             p.canCollapse() &&
+836c844,845
+<       String propAlias = appendPropForAlias(alias, propName);
+---
+> 
+>       
+837a847,850
+>       Name p = nameMap.get(qName);
+>       if (p != null && !p.canCollapse()) {
+>         continue;
+>       }
+838a852
+>       String propAlias = appendPropForAlias(alias, propName);
+869,880c883,892
+<       if (isJsIdentifier) {
+<         
+<         
+<         
+<         Name p = nameMap.get(qName);
+<         if (p != null) {
+<           if (!discardKeys) {
+<             Ref newAlias =
+<                 p.declaration.cloneAndReclassify(Ref.Type.ALIASING_GET);
+<             newAlias.node = refNode;
+<             p.addRef(newAlias);
+<           }
+---
+>       
+>       
+>       
+>       if (isJsIdentifier && p != null) {
+>         if (!discardKeys) {
+>           Ref newAlias =
+>               p.declaration.cloneAndReclassify(Ref.Type.ALIASING_GET);
+>           newAlias.node = refNode;
+>           p.addRef(newAlias);
+>         }
+882c894
+<           p.declaration.node = nameNode;
+---
+>         p.declaration.node = nameNode;
+884,886c896,897
+<           if (value.getType() == Token.FUNCTION) {
+<             checkForHosedThisReferences(value, value.getJSDocInfo(), p);
+<           }
+---
+>         if (value.getType() == Token.FUNCTION) {
+>           checkForHosedThisReferences(value, value.getJSDocInfo(), p);

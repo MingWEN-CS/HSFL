@@ -1,0 +1,74 @@
+25a26,28
+> import org.joda.time.LocalDate;
+> import org.joda.time.LocalDateTime;
+> import org.joda.time.LocalTime;
+658a662,730
+>             }
+>         } else {
+>             newPos = ~newPos;
+>         }
+>         throw new IllegalArgumentException(FormatUtils.createErrorMessage(text, newPos));
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDate parseLocalDate(String text) {
+>         return parseLocalDateTime(text).toLocalDate();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalTime parseLocalTime(String text) {
+>         return parseLocalDateTime(text).toLocalTime();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public LocalDateTime parseLocalDateTime(String text) {
+>         DateTimeParser parser = requireParser();
+>         
+>         Chronology chrono = selectChronology(null).withUTC();  
+>         DateTimeParserBucket bucket = new DateTimeParserBucket(0, chrono, iLocale, iPivotYear);
+>         int newPos = parser.parseInto(bucket, text, 0);
+>         if (newPos >= 0) {
+>             if (newPos >= text.length()) {
+>                 long millis = bucket.computeMillis(true, text);
+>                 if (bucket.getZone() == null) {  
+>                     int parsedOffset = bucket.getOffset();
+>                     DateTimeZone parsedZone = DateTimeZone.forOffsetMillis(parsedOffset);
+>                     chrono = chrono.withZone(parsedZone);
+>                 }
+>                 return new LocalDateTime(millis, chrono);

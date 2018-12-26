@@ -1,0 +1,85 @@
+469,470c469,470
+<       case Token.SET:
+<       case Token.GET:
+---
+>       case Token.SETTER_DEF:
+>       case Token.GETTER_DEF:
+794c794
+<       case Token.LP:
+---
+>       case Token.PARAM_LIST:
+1631c1631
+<       case Token.DEFAULT:
+---
+>       case Token.DEFAULT_CASE:
+1660c1660
+<       case Token.DEFAULT:
+---
+>       case Token.DEFAULT_CASE:
+1725c1725
+<     return n.isCase() || n.isDefault();
+---
+>     return n.isCase() || n.isDefaultCase();
+2034c2034
+<         || parent.isLP()
+---
+>         || parent.isParamList()
+2049,2050c2049,2050
+<       case Token.GET:
+<       case Token.SET:
+---
+>       case Token.GETTER_DEF:
+>       case Token.SETTER_DEF:
+2064,2065c2064,2065
+<       case Token.GET:
+<       case Token.SET:
+---
+>       case Token.GETTER_DEF:
+>       case Token.SETTER_DEF:
+2078c2078
+<         case Token.GET:
+---
+>         case Token.GETTER_DEF:
+2087c2087
+<         case Token.SET:
+---
+>         case Token.SETTER_DEF:
+2111,2112c2111,2112
+<       case Token.GET:
+<       case Token.SET:
+---
+>       case Token.GETTER_DEF:
+>       case Token.SETTER_DEF:
+2270c2270
+<     Node parameterParen = new Node(Token.LP, lineno, charno);
+---
+>     Node parameterParen = new Node(Token.PARAM_LIST, lineno, charno);
+3100a3101,3128
+>   }
+> 
+>   
+> 
+> 
+>   static boolean isExpressionResultUsed(Node expr) {
+>     
+>     Node parent = expr.getParent();
+>     switch (parent.getType()) {
+>       case Token.EXPR_RESULT:
+>         return false;
+>       case Token.HOOK:
+>       case Token.AND:
+>       case Token.OR:
+>         return (expr == parent.getFirstChild())
+>             ? true : isExpressionResultUsed(parent);
+>       case Token.COMMA:
+>         return (expr == parent.getFirstChild())
+>             ? false : isExpressionResultUsed(parent);
+>       case Token.FOR:
+>         if (!NodeUtil.isForIn(parent)) {
+>           
+>           
+>           return (parent.getChildAtIndex(1) == expr);
+>         }
+>         break;
+>     }
+>     return true;

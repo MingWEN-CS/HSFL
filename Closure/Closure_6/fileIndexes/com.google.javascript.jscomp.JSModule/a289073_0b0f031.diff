@@ -1,0 +1,153 @@
+19a20,22
+> import com.google.common.collect.ArrayListMultimap;
+> import com.google.common.collect.HashMultimap;
+> import com.google.common.collect.HashMultiset;
+21a25,27
+> import com.google.common.collect.Multimap;
+> import com.google.common.collect.Multimaps;
+> import com.google.common.collect.Multiset;
+25a32,33
+> import java.util.Collections;
+> import java.util.Comparator;
+28a37
+> import java.util.PriorityQueue;
+38d46
+< 
+196d203
+<     
+197a205
+>     
+205,209c213,214
+<     
+<     
+<     
+<     List<CompilerInput> list = Lists.newArrayList();
+<     Set<CompilerInput> set = Sets.newHashSet();
+---
+>     final Multimap<CompilerInput, CompilerInput> deps =
+>         HashMultimap.create();
+211,212c216,221
+<       addInputAndDeps(input, provides, compiler, list, set,
+<                       Sets.<CompilerInput>newHashSet());
+---
+>       for (String req : input.getRequires(compiler)) {
+>         CompilerInput dep = provides.get(req);
+>         if (dep != null) {
+>           deps.put(input, dep);
+>         }
+>       }
+216c225,226
+<     Preconditions.checkState(inputs.size() == list.size());
+---
+>     List<CompilerInput> sortedList = topologicalStableSort(
+>         inputs, deps);
+218c228
+<     inputs.addAll(list);
+---
+>     inputs.addAll(sortedList);
+230,231c240
+<     List<JSModule> list = Lists.newArrayList();
+<     Set<JSModule> set = Sets.newHashSet();
+---
+>     final Multimap<JSModule, JSModule> deps = HashMultimap.create();
+233c242,244
+<       addModuleAndDeps(module, list, set, Sets.<JSModule>newHashSet());
+---
+>       for (JSModule dep : module.getDependencies()) {
+>         deps.put(module, dep);
+>       }
+235c246,250
+<     return list.toArray(new JSModule[list.size()]);
+---
+> 
+>     
+>     List<JSModule> sortedList = topologicalStableSort(
+>         Lists.newArrayList(modules), deps);
+>     return sortedList.toArray(new JSModule[sortedList.size()]);
+238c253,258
+<   
+---
+>   private static <T> List<T> topologicalStableSort(
+>       List<T> items, Multimap<T, T> deps) {
+>     final Map<T, Integer> originalIndex = Maps.newHashMap();
+>     for (int i = 0; i < items.size(); i++) {
+>       originalIndex.put(items.get(i), i);
+>     }
+239a260,268
+>     PriorityQueue<T> inDegreeZero = new PriorityQueue<T>(items.size(),
+>         new Comparator<T>() {
+>       @Override
+>       public int compare(T a, T b) {
+>         return originalIndex.get(a).intValue() -
+>             originalIndex.get(b).intValue();
+>       }
+>     });
+>     List<T> result = Lists.newArrayList();
+240a270,272
+>     Multiset<T> inDegree = HashMultiset.create();
+>     Multimap<T, T> reverseDeps = ArrayListMultimap.create();
+>     Multimaps.invertFrom(deps, reverseDeps);
+242,249c274,279
+<   private static void addInputAndDeps(
+<       CompilerInput input, Map<String, CompilerInput> provides,
+<       Compiler compiler, List<CompilerInput> list, Set<CompilerInput> set,
+<       Set<CompilerInput> inProgress) {
+<     if (!set.contains(input)) {
+<       if (inProgress.contains(input)) {
+<         throw new IllegalArgumentException(
+<             "Circular dependency involving input: " + input.getName());
+---
+>     
+>     for (T item : items) {
+>       Collection<T> itemDeps = deps.get(item);
+>       inDegree.add(item, itemDeps.size());
+>       if (itemDeps.isEmpty()) {
+>         inDegreeZero.add(item);
+251c281
+<       inProgress.add(input);
+---
+>     }
+253,256c283,290
+<       for (String require : input.getRequires(compiler)) {
+<         if (provides.containsKey(require)) {
+<           addInputAndDeps(provides.get(require), provides, compiler, list, set,
+<                           inProgress);
+---
+>     
+>     while (!inDegreeZero.isEmpty()) {
+>       T item = inDegreeZero.remove();
+>       result.add(item);
+>       for (T inWaiting : reverseDeps.get(item)) {
+>         inDegree.remove(inWaiting, 1);
+>         if (inDegree.count(inWaiting) == 0) {
+>           inDegreeZero.add(inWaiting);
+259,261d292
+< 
+<       list.add(input);
+<       set.add(input);
+263,266d293
+<   }
+< 
+<   
+< 
+268,285c295
+< 
+<   private static void addModuleAndDeps(
+<       JSModule module, List<JSModule> list, Set<JSModule> set,
+<       Set<JSModule> inProgress) {
+<     if (!set.contains(module)) {
+<       if (inProgress.contains(module)) {
+<         throw new IllegalArgumentException(
+<             "Circular dependency involving module: " + module.getName());
+<       }
+<       inProgress.add(module);
+< 
+<       for (JSModule dep : module.getDependencies()) {
+<         addModuleAndDeps(dep, list, set, inProgress);
+<       }
+< 
+<       list.add(module);
+<       set.add(module);
+<     }
+---
+>     return result;

@@ -1,0 +1,34 @@
+2025c2025
+<   static boolean isLhs(Node n, Node parent) {
+---
+>   static boolean isVarOrSimpleAssignLhs(Node n, Node parent) {
+2027a2028,2056
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   static boolean isLValue(Node node) {
+>     int nType = node.getType();
+>     Preconditions.checkArgument(nType == Token.NAME || nType == Token.GETPROP ||
+>         nType == Token.GETELEM);
+>     Node parent = node.getParent();
+>     return (NodeUtil.isAssignmentOp(parent) && parent.getFirstChild() == node)
+>         || (NodeUtil.isForIn(parent) && parent.getFirstChild() == node)
+>         || NodeUtil.isVar(parent)
+>         || (parent.getType() == Token.FUNCTION &&
+>             parent.getFirstChild() == node)
+>         || parent.getType() == Token.DEC
+>         || parent.getType() == Token.INC
+>         || parent.getType() == Token.LP
+>         || parent.getType() == Token.CATCH;

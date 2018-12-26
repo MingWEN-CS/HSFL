@@ -1,0 +1,139 @@
+21a22
+> import org.apache.commons.math.util.ContinuedFraction;
+29c30,31
+< public class Gamma implements Serializable{
+---
+> public class Gamma implements Serializable {
+>     
+68a71,109
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double logGamma(double x) {
+>         double ret;
+> 
+>         if (Double.isNaN(x) || (x <= 0.0)) {
+>             ret = Double.NaN;
+>         } else {
+>             double g = 607.0 / 128.0;
+> 
+>             double sum = 0.0;
+>             for (int i = 1; i < lanczos.length; ++i) {
+>                 sum = sum + (lanczos[i] / (x + i));
+>             }
+>             sum = sum + lanczos[0];
+> 
+>             double tmp = x + g + .5;
+>             ret = ((x + .5) * Math.log(tmp)) - tmp +
+>                 (.5 * Math.log(2.0 * Math.PI)) + Math.log(sum) - Math.log(x);
+>         }
+> 
+>         return ret;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+74c115,116
+<     
+---
+>         
+>         
+112a155,158
+>         } else if (a > 1.0 && x > a) {
+>             
+>             
+>             ret = 1.0 - regularizedGammaQ(a, x, epsilon, maxIterations);
+135a182,186
+>     
+>     
+> 
+> 
+> 
+136a188,196
+> 
+> 
+> 
+>     public static double regularizedGammaQ(double a, double x)
+>         throws MathException
+>     {
+>         return regularizedGammaQ(a, x, DEFAULT_EPSILON, Integer.MAX_VALUE);
+>     }
+>     
+154c214,224
+<     public static double logGamma(double x) {
+---
+> 
+> 
+> 
+> 
+> 
+>     public static double regularizedGammaQ(final double a, 
+>                                            double x, 
+>                                            double epsilon, 
+>                                            int maxIterations) 
+>         throws MathException
+>     {
+157c227
+<         if (Double.isNaN(x) || (x <= 0.0)) {
+---
+>         if (Double.isNaN(a) || Double.isNaN(x) || (a <= 0.0) || (x < 0.0)) {
+158a229,234
+>         } else if (x == 0.0) {
+>             ret = 1.0;
+>         } else if (x < a || a <= 1.0) {
+>             
+>             
+>             ret = 1.0 - regularizedGammaP(a, x, epsilon, maxIterations);
+160,170c236,263
+<             double g = 607.0 / 128.0;
+< 
+<             double sum = 0.0;
+<             for (int i = 1; i < lanczos.length; ++i) {
+<                 sum = sum + (lanczos[i] / (x + i));
+<             }
+<             sum = sum + lanczos[0];
+< 
+<             double tmp = x + g + .5;
+<             ret = ((x + .5) * Math.log(tmp)) - tmp +
+<                 (.5 * Math.log(2.0 * Math.PI)) + Math.log(sum) - Math.log(x);
+---
+>             
+>             ContinuedFraction cf = new ContinuedFraction() {
+>                 protected double getA(int n, double x) {
+>                     double ret;
+>                     switch(n) {
+>                         case 0: ret = 0.0; break;
+>                         default:
+>                             ret = ((2.0 * n) - 1.0) - a + x; break;
+>                     }
+>                     return ret;
+>                 }
+> 
+>                 protected double getB(int n, double x) {
+>                     double ret;
+>                     double t;
+>                     switch(n) {
+>                         case 1: ret = 1.0; break;
+>                         default:
+>                             t = n - 1.0;
+>                             ret = t * (a - t);
+>                             break;
+>                     }
+>                     return ret;
+>                 }
+>             };
+>             
+>             ret = cf.evaluate(x, epsilon, maxIterations);
+>             ret = Math.exp(-x + (a * Math.log(x)) - logGamma(a)) * ret;

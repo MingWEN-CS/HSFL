@@ -1,0 +1,210 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+
+
+
+
+
+public abstract class PassConfig {
+
+  
+  final CompilerOptions options;
+
+  
+
+
+
+
+  MemoizedScopeCreator typedScopeCreator;
+
+  
+  Scope topScope = null;
+
+  public PassConfig(CompilerOptions options) {
+    this.options = options;
+  }
+
+  
+
+
+  ScopeCreator getScopeCreator() {
+    return typedScopeCreator;
+  }
+
+  
+
+
+  Scope getTopScope() {
+    return topScope;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+  abstract protected List<PassFactory> getChecks();
+
+  
+
+
+
+
+
+  abstract protected List<PassFactory> getOptimizations();
+
+  
+
+
+  final TypeInferencePass makeTypeInference(AbstractCompiler compiler) {
+    return new TypeInferencePass(
+        compiler, compiler.getReverseAbstractInterpreter(),
+        topScope, typedScopeCreator);
+  }
+
+  
+
+
+  final TypeCheck makeTypeCheck(AbstractCompiler compiler) {
+    return new TypeCheck(
+        compiler,
+        compiler.getReverseAbstractInterpreter(),
+        compiler.getTypeRegistry(),
+        topScope,
+        typedScopeCreator,
+        options.reportMissingOverride,
+        options.reportUnknownTypes)
+        .reportMissingProperties(options.enables(
+            DiagnosticGroup.forType(TypeCheck.INEXISTENT_PROPERTY)));
+  }
+
+  final static void addPassFactoryBefore(
+      List<PassFactory> factoryList, PassFactory factory, String passName) {
+    for (int i = 0; i < factoryList.size(); i++) {
+      if (factoryList.get(i).getName().equals(passName)) {
+        factoryList.add(i, factory);
+        return;
+      }
+    }
+
+    throw new IllegalArgumentException(
+        "No factory named '" + passName + "' in the factory list");
+  }
+
+  
+
+
+  final PassConfig getBasePassConfig() {
+    PassConfig current = this;
+    while (current instanceof PassConfigDelegate) {
+      current = ((PassConfigDelegate) current).delegate;
+    }
+    return current;
+  }
+
+  
+
+
+
+  abstract State getIntermediateState();
+
+  
+
+
+
+  abstract void setIntermediateState(State state);
+
+  
+
+
+
+  static class PassConfigDelegate extends PassConfig {
+
+    private final PassConfig delegate;
+
+    PassConfigDelegate(PassConfig delegate) {
+      super(delegate.options);
+      this.delegate = delegate;
+    }
+
+    @Override protected List<PassFactory> getChecks() {
+      return delegate.getChecks();
+    }
+
+    @Override protected List<PassFactory> getOptimizations() {
+      return delegate.getOptimizations();
+    }
+
+    @Override ScopeCreator getScopeCreator() {
+      return delegate.getScopeCreator();
+    }
+
+    @Override Scope getTopScope() {
+      return delegate.getTopScope();
+    }
+
+    @Override State getIntermediateState() {
+      return delegate.getIntermediateState();
+    }
+
+    @Override void setIntermediateState(State state) {
+      delegate.setIntermediateState(state);
+    }
+  }
+
+  
+
+
+  static class State implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    final Map<String, Integer> cssNames;
+    final Set<String> exportedNames;
+    final CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator;
+    final VariableMap variableMap;
+    final VariableMap propertyMap;
+    final VariableMap anonymousFunctionNameMap;
+    final FunctionNames functionNames;
+
+    State(Map<String, Integer> cssNames, Set<String> exportedNames,
+          CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator,
+          VariableMap variableMap, VariableMap propertyMap,
+          VariableMap anonymousFunctionNameMap, FunctionNames functionNames) {
+      this.cssNames = cssNames;
+      this.exportedNames = exportedNames;
+      this.crossModuleIdGenerator = crossModuleIdGenerator;
+      this.variableMap = variableMap;
+      this.propertyMap = propertyMap;
+      this.anonymousFunctionNameMap = anonymousFunctionNameMap;
+      this.functionNames = functionNames;
+    }
+  }
+}

@@ -1,0 +1,24 @@
+61,63c61,65
+< import org.joda.time.chrono.buddhist.BuddhistChronology;
+< import org.joda.time.chrono.gj.GJChronology;
+< import org.joda.time.chrono.iso.ISOChronology;
+---
+> import org.joda.time.chrono.BuddhistChronology;
+> import org.joda.time.chrono.GJChronology;
+> import org.joda.time.chrono.GregorianChronology;
+> import org.joda.time.chrono.JulianChronology;
+> import org.joda.time.chrono.ISOChronology;
+129,130c131,138
+<             return GJChronology.getInstance(zone, gc.getGregorianChange().getTime(), false);
+<             
+---
+>             long cutover = gc.getGregorianChange().getTime();
+>             if (cutover == Long.MIN_VALUE) {
+>                 return GregorianChronology.getInstance(zone);
+>             } else if (cutover == Long.MAX_VALUE) {
+>                 return JulianChronology.getInstance(zone);
+>             } else {
+>                 return GJChronology.getInstance(zone, cutover, 4);
+>             }
+133d140
+<             

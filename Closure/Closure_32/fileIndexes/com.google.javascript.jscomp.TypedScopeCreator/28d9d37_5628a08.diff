@@ -1,0 +1,510 @@
+160a161
+>     AbstractScopeBuilder scopeBuilder = null;
+165c166,167
+<       GlobalScopeBuilder scopeBuilder = new GlobalScopeBuilder(newScope);
+---
+>       GlobalScopeBuilder globalScopeBuilder = new GlobalScopeBuilder(newScope);
+>       scopeBuilder = globalScopeBuilder;
+167,168c169,174
+<       scopeBuilder.resolveStubDeclarations();
+<       scopeBuilder.resolveTypes();
+---
+>     } else {
+>       newScope = new Scope(parent, root);
+>       LocalScopeBuilder localScopeBuilder = new LocalScopeBuilder(newScope);
+>       scopeBuilder = localScopeBuilder;
+>       localScopeBuilder.build();
+>     }
+170,181c176,189
+<       
+<       
+<       
+<       for (Node functionNode : scopeBuilder.nonExternFunctions) {
+<         JSType type = functionNode.getJSType();
+<         if (type != null && type instanceof FunctionType) {
+<           FunctionType fnType = (FunctionType) type;
+<           ObjectType fnThisType = fnType.getTypeOfThis();
+<           if (!fnThisType.isUnknownType()) {
+<             NodeTraversal.traverse(compiler, functionNode.getLastChild(),
+<                 scopeBuilder.new CollectProperties(fnThisType));
+<           }
+---
+>     scopeBuilder.resolveStubDeclarations();
+>     scopeBuilder.resolveTypes();
+> 
+>     
+>     
+>     
+>     for (Node functionNode : scopeBuilder.nonExternFunctions) {
+>       JSType type = functionNode.getJSType();
+>       if (type != null && type instanceof FunctionType) {
+>         FunctionType fnType = (FunctionType) type;
+>         ObjectType fnThisType = fnType.getTypeOfThis();
+>         if (!fnThisType.isUnknownType()) {
+>           NodeTraversal.traverse(compiler, functionNode.getLastChild(),
+>               scopeBuilder.new CollectProperties(fnThisType));
+183a192
+>     }
+184a194
+>     if (parent == null) {
+187,191d196
+<     } else {
+<       newScope = new Scope(parent, root);
+<       LocalScopeBuilder scopeBuilder = new LocalScopeBuilder(newScope);
+<       scopeBuilder.build();
+<       scopeBuilder.resolveTypes();
+363a369,382
+>     private final List<Node> nonExternFunctions = Lists.newArrayList();
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private final List<StubDeclaration> stubDeclarations =
+>         Lists.newArrayList();
+> 
+>     
+> 
+> 
+406c425,476
+<     public abstract void visit(NodeTraversal t, Node n, Node parent);
+---
+>     public void visit(NodeTraversal t, Node n, Node parent) {
+>       attachLiteralTypes(n);
+> 
+>       switch (n.getType()) {
+>         case Token.CALL:
+>           checkForClassDefiningCalls(t, n, parent);
+>           break;
+> 
+>         case Token.FUNCTION:
+>           if (t.getInput() == null || !t.getInput().isExtern()) {
+>             nonExternFunctions.add(n);
+>           }
+> 
+>           
+>           
+>           if (parent.getType() != Token.ASSIGN &&
+>               parent.getType() != Token.NAME) {
+>             defineDeclaredFunction(n, parent);
+>           }
+> 
+>           break;
+> 
+>         case Token.ASSIGN:
+>           
+>           defineNamedTypeAssign(n, parent);
+> 
+>           
+>           Node firstChild = n.getFirstChild();
+>           if (firstChild.getType() == Token.GETPROP &&
+>               firstChild.isQualifiedName()) {
+>             maybeDeclareQualifiedName(t, n.getJSDocInfo(),
+>                 firstChild, n, firstChild.getNext());
+>           }
+>           break;
+> 
+>         case Token.CATCH:
+>           defineCatch(n, parent);
+>           break;
+> 
+>         case Token.VAR:
+>           defineVar(n, parent);
+>           break;
+> 
+>         case Token.GETPROP:
+>           
+>           if (parent.getType() == Token.EXPR_RESULT &&
+>               n.isQualifiedName()) {
+>             maybeDeclareQualifiedName(t, n.getJSDocInfo(), n, parent, null);
+>           }
+>           break;
+>       }
+>     }
+619c689
+<       if (rValue != null && rValue.isQualifiedName()) {
+---
+>       if (rValue != null && rValue.isQualifiedName() && scope.isGlobal()) {
+866,890d935
+<   }
+< 
+<   
+< 
+< 
+< 
+<   private final class GlobalScopeBuilder extends AbstractScopeBuilder {
+< 
+<     
+< 
+< 
+<     private final List<Node> nonExternFunctions = Lists.newArrayList();
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+<     private final List<StubDeclaration> stubDeclarations =
+<         Lists.newArrayList();
+< 
+<     private GlobalScopeBuilder(Scope scope) {
+<       super(scope);
+<     }
+900,950d944
+<     @Override public void visit(NodeTraversal t, Node n, Node parent) {
+<       attachLiteralTypes(n);
+< 
+<       switch (n.getType()) {
+<         case Token.CALL:
+<           checkForClassDefiningCalls(t, n, parent);
+<           break;
+< 
+<         case Token.FUNCTION:
+<           if (!t.getInput().isExtern()) {
+<             nonExternFunctions.add(n);
+<           }
+< 
+<           
+<           if (parent.getType() == Token.ASSIGN ||
+<               parent.getType() == Token.NAME) {
+<             return;
+<           }
+< 
+<           defineDeclaredFunction(n, parent);
+<           break;
+< 
+<         case Token.ASSIGN:
+<           
+<           defineNamedTypeAssign(n, parent);
+< 
+<           
+<           checkForOldStyleTypedef(t, n);
+< 
+<           
+<           Node firstChild = n.getFirstChild();
+<           if (firstChild.getType() == Token.GETPROP &&
+<               firstChild.isQualifiedName()) {
+<             maybeDeclareQualifiedName(t, n.getJSDocInfo(),
+<                 firstChild, n, firstChild.getNext());
+<           }
+<           break;
+< 
+<         case Token.CATCH:
+<           defineCatch(n, parent);
+<           break;
+< 
+<         case Token.VAR:
+<           defineVar(n, parent);
+< 
+<           
+<           if (n.hasOneChild()) {
+<             checkForOldStyleTypedef(t, n);
+<             checkForTypedef(t, n.getFirstChild(), n.getJSDocInfo());
+<           }
+<           break;
+952,959c946,956
+<         case Token.GETPROP:
+<           
+<           if (parent.getType() == Token.EXPR_RESULT &&
+<               n.isQualifiedName()) {
+<             checkForTypedef(t, n, n.getJSDocInfo());
+<             maybeDeclareQualifiedName(t, n.getJSDocInfo(), n, parent, null);
+<           }
+<           break;
+---
+>     private JSType getDeclaredGetPropType(NodeTraversal t, JSDocInfo info,
+>         Node n, Node rhsValue) {
+>       if (info != null && info.hasType()) {
+>         return getDeclaredTypeInAnnotation(t, n, info);
+>       } else if (info != null && info.hasEnumParameterType()) {
+>         return n.getJSType();
+>       } else if (rhsValue != null &&
+>           rhsValue.getType() == Token.FUNCTION) {
+>         return rhsValue.getJSType();
+>       } else {
+>         return getDeclaredTypeInAnnotation(t, n, info);
+1076,1145d1072
+<     private void checkForTypedef(
+<         NodeTraversal t, Node candidate, JSDocInfo info) {
+<       if (info == null || !info.hasTypedefType()) {
+<         return;
+<       }
+< 
+<       String typedef = candidate.getQualifiedName();
+<       if (typedef == null) {
+<         return;
+<       }
+< 
+<       
+<       
+<       
+<       typeRegistry.forwardDeclareType(typedef);
+< 
+<       JSType realType = info.getTypedefType().evaluate(scope, typeRegistry);
+<       if (realType == null) {
+<         compiler.report(
+<             JSError.make(
+<                 t.getSourceName(), candidate, MALFORMED_TYPEDEF, typedef));
+<       }
+< 
+<       typeRegistry.declareType(typedef, realType);
+<       if (candidate.getType() == Token.GETPROP) {
+<         defineSlot(candidate, candidate.getParent(),
+<             getNativeType(NO_TYPE), false);
+<       }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     
+<     private void checkForOldStyleTypedef(NodeTraversal t, Node candidate) {
+<       
+<       String typedef = codingConvention.identifyTypeDefAssign(candidate);
+<       if (typedef != null) {
+<         
+<         
+<         
+<         typeRegistry.forwardDeclareType(typedef);
+< 
+<         JSDocInfo info = candidate.getJSDocInfo();
+<         JSType realType = null;
+<         if (info != null && info.getType() != null) {
+<           realType = info.getType().evaluate(scope, typeRegistry);
+<         }
+< 
+<         if (realType == null) {
+<           compiler.report(
+<               JSError.make(
+<                   t.getSourceName(), candidate, MALFORMED_TYPEDEF, typedef));
+<         }
+< 
+<         typeRegistry.declareType(typedef, realType);
+< 
+<         
+<         
+<       }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+1150c1077
+<     private void maybeDeclareQualifiedName(NodeTraversal t, JSDocInfo info,
+---
+>     void maybeDeclareQualifiedName(NodeTraversal t, JSDocInfo info,
+1196c1123,1125
+<               n, t.getInput().isExtern(), ownerName));
+---
+>               n,
+>               t.getInput() != null && t.getInput().isExtern(),
+>               ownerName));
+1221c1150
+<           boolean isExtern = t.getInput().isExtern();
+---
+>           boolean isExtern = t.getInput() != null && t.getInput().isExtern();
+1271,1294c1200
+< 
+< 
+< 
+< 
+< 
+<     private JSType getDeclaredGetPropType(NodeTraversal t, JSDocInfo info,
+<         Node n, Node rhsValue) {
+<       if (info != null && info.hasType()) {
+<         return getDeclaredTypeInAnnotation(t, n, info);
+<       } else if (info != null && info.hasEnumParameterType()) {
+<         return n.getJSType();
+<       } else if (rhsValue != null &&
+<           rhsValue.getType() == Token.FUNCTION) {
+<         return rhsValue.getJSType();
+<       } else {
+<         return getDeclaredTypeInAnnotation(t, n, info);
+<       }
+<     }
+< 
+<     
+< 
+< 
+< 
+<     private void resolveStubDeclarations() {
+---
+>     void resolveStubDeclarations() {
+1329,1343d1234
+<     private final class StubDeclaration {
+<       private final Node node;
+<       private final boolean isExtern;
+<       private final String ownerName;
+< 
+<       private StubDeclaration(Node node, boolean isExtern, String ownerName) {
+<         this.node = node;
+<         this.isExtern = isExtern;
+<         this.ownerName = ownerName;
+<       }
+<     }
+< 
+<     
+< 
+< 
+1390a1282,1413
+>   }
+> 
+>   
+> 
+> 
+>   private static final class StubDeclaration {
+>     private final Node node;
+>     private final boolean isExtern;
+>     private final String ownerName;
+> 
+>     private StubDeclaration(Node node, boolean isExtern, String ownerName) {
+>       this.node = node;
+>       this.isExtern = isExtern;
+>       this.ownerName = ownerName;
+>     }
+>   }
+> 
+>   
+> 
+> 
+> 
+>   private final class GlobalScopeBuilder extends AbstractScopeBuilder {
+> 
+>     private GlobalScopeBuilder(Scope scope) {
+>       super(scope);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     @Override public void visit(NodeTraversal t, Node n, Node parent) {
+>       super.visit(t, n, parent);
+> 
+>       switch (n.getType()) {
+> 
+>         case Token.ASSIGN:
+>           
+>           checkForOldStyleTypedef(t, n);
+>           break;
+> 
+>         case Token.VAR:
+>           
+>           if (n.hasOneChild()) {
+>             checkForOldStyleTypedef(t, n);
+>             checkForTypedef(t, n.getFirstChild(), n.getJSDocInfo());
+>           }
+>           break;
+>       }
+>     }
+> 
+>     @Override
+>     void maybeDeclareQualifiedName(
+>         NodeTraversal t, JSDocInfo info,
+>         Node n, Node parent, Node rhsValue) {
+>       checkForTypedef(t, n, info);
+>       super.maybeDeclareQualifiedName(t, info, n, parent, rhsValue);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+>     private void checkForTypedef(
+>         NodeTraversal t, Node candidate, JSDocInfo info) {
+>       if (info == null || !info.hasTypedefType()) {
+>         return;
+>       }
+> 
+>       String typedef = candidate.getQualifiedName();
+>       if (typedef == null) {
+>         return;
+>       }
+> 
+>       
+>       
+>       
+>       typeRegistry.forwardDeclareType(typedef);
+> 
+>       JSType realType = info.getTypedefType().evaluate(scope, typeRegistry);
+>       if (realType == null) {
+>         compiler.report(
+>             JSError.make(
+>                 t.getSourceName(), candidate, MALFORMED_TYPEDEF, typedef));
+>       }
+> 
+>       typeRegistry.declareType(typedef, realType);
+>       if (candidate.getType() == Token.GETPROP) {
+>         defineSlot(candidate, candidate.getParent(),
+>             getNativeType(NO_TYPE), false);
+>       }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     
+>     private void checkForOldStyleTypedef(NodeTraversal t, Node candidate) {
+>       
+>       String typedef = codingConvention.identifyTypeDefAssign(candidate);
+>       if (typedef != null) {
+>         
+>         
+>         
+>         typeRegistry.forwardDeclareType(typedef);
+> 
+>         JSDocInfo info = candidate.getJSDocInfo();
+>         JSType realType = null;
+>         if (info != null && info.getType() != null) {
+>           realType = info.getType().evaluate(scope, typeRegistry);
+>         }
+> 
+>         if (realType == null) {
+>           compiler.report(
+>               JSError.make(
+>                   t.getSourceName(), candidate, MALFORMED_TYPEDEF, typedef));
+>         }
+> 
+>         typeRegistry.declareType(typedef, realType);
+> 
+>         
+>         
+>       }
+>     }
+1428,1445c1451
+<       attachLiteralTypes(n);
+<       switch (n.getType()) {
+<         case Token.FUNCTION:
+<           
+<           if (parent.getType() == Token.NAME) {
+<             return;
+<           }
+<           defineDeclaredFunction(n, parent);
+<           break;
+< 
+<         case Token.CATCH:
+<           defineCatch(n, parent);
+<           break;
+< 
+<         case Token.VAR:
+<           defineVar(n, parent);
+<           break;
+<       }
+---
+>       super.visit(t, n, parent);

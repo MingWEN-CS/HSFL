@@ -1,0 +1,63 @@
+473,474c473
+<           Node arg = NodeUtil.getArgumentForCallOrNew(
+<               site.node.getParent(), argIndex);
+---
+>           Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex);
+498,499c497
+<           Node arg = NodeUtil.getArgumentForCallOrNew(
+<               site.node.getParent(), argIndex);
+---
+>           Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex);
+533,535c531
+< 
+<         Node arg = NodeUtil.getArgumentForCallOrNew(
+<             site.node.getParent(), argIndex);
+---
+>         Node arg = getArgumentForCallOrNewOrDotCall(site, argIndex);
+551a548,561
+>     private static Node getArgumentForCallOrNewOrDotCall(UseSite site,
+>         final int argIndex) {
+>       int adjustedArgIndex = argIndex;
+>       Node parent = site.node.getParent();
+>       if (NodeUtil.isFunctionObjectCall(parent)) {
+>         adjustedArgIndex++;
+>       }
+>       return NodeUtil.getArgumentForCallOrNew(parent, adjustedArgIndex);
+>     }
+> 
+>     
+> 
+> 
+> 
+599c609
+<           && !NodeUtil.isFunctionObjectCallOrApply(site.node.getParent());
+---
+>           && !NodeUtil.isFunctionObjectApply(site.node.getParent());
+607a618
+>       CodingConvention convention = compiler.getCodingConvention();
+612a624,625
+>         Node parent = site.node.getParent();
+> 
+614,615c627,634
+<         if (!SimpleDefinitionFinder.isCallOrNewSite(site)) {
+<           return false;
+---
+>         if (parent == null) {
+>           continue;
+>         }
+> 
+>         
+>         if (NodeUtil.isCall(parent) &&
+>             convention.getClassesDefinedByCall(parent) != null) {
+>           continue;
+619c638,645
+<         if (NodeUtil.isFunctionObjectCallOrApply(site.node.getParent())) {
+---
+>         if (!SimpleDefinitionFinder.isCallOrNewSite(site)) {
+>           if (!(NodeUtil.isGetProp(parent) &&
+>               NodeUtil.isFunctionObjectCall(parent.getParent()))) {
+>             return false;
+>           }
+>         }
+> 
+>         if (NodeUtil.isFunctionObjectApply(parent)) {

@@ -1,0 +1,109 @@
+455,456c455,456
+<     if (n.canCollapse() && canCollapseChildNames) {
+<       updateObjLitOrFunctionDeclaration(n, alias);
+---
+>     if (n.canCollapse()) {
+>       updateObjLitOrFunctionDeclaration(n, alias, canCollapseChildNames);
+565c565,587
+<   private void updateObjLitOrFunctionDeclaration(Name n, String alias) {
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   private void updateObjLitOrFunctionDeclaration(
+>       Name n, String alias, boolean canCollapseChildNames) {
+>     if (n.declaration == null) {
+>       
+>       
+>       return;
+>     }
+> 
+>     if (n.declaration.getTwin() != null) {
+>       
+>       
+>       return;
+>     }
+> 
+568c590,591
+<         updateObjLitOrFunctionDeclarationAtAssignNode(n, alias);
+---
+>         updateObjLitOrFunctionDeclarationAtAssignNode(
+>             n, alias, canCollapseChildNames);
+571c594
+<         updateObjLitOrFunctionDeclarationAtVarNode(n);
+---
+>         updateObjLitOrFunctionDeclarationAtVarNode(n, canCollapseChildNames);
+574c597
+<         updateFunctionDeclarationAtFunctionNode(n);
+---
+>         updateFunctionDeclarationAtFunctionNode(n, canCollapseChildNames);
+588c611
+<       Name n, String alias) {
+---
+>       Name n, String alias, boolean canCollapseChildNames) {
+598a622
+>     boolean insertedVarNode = false;
+603a628
+>       insertedVarNode = true;
+605c630,631
+<     } else {
+---
+>     } else if (!n.isSimpleName()) {
+>       
+625a652
+>       insertedVarNode = true;
+628,634c655,660
+<     if (isObjLit) {
+<       declareVarsForObjLitValues(
+<           n, alias, rvalue,
+<           varNode, varParent.getChildBefore(varNode), varParent);
+<     }
+< 
+<     addStubsForUndeclaredProperties(n, alias, varParent, varNode);
+---
+>     if (canCollapseChildNames) {
+>       if (isObjLit) {
+>         declareVarsForObjLitValues(
+>             n, alias, rvalue,
+>             varNode, varParent.getChildBefore(varNode), varParent);
+>       }
+636,637c662
+<     if (!varNode.hasChildren()) {
+<       varParent.removeChild(varNode);
+---
+>       addStubsForUndeclaredProperties(n, alias, varParent, varNode);
+640c665,670
+<     compiler.reportCodeChange();
+---
+>     if (insertedVarNode) {
+>       if (!varNode.hasChildren()) {
+>         varParent.removeChild(varNode);
+>       }
+>       compiler.reportCodeChange();
+>     }
+673c703,708
+<   private void updateObjLitOrFunctionDeclarationAtVarNode(Name n) {
+---
+>   private void updateObjLitOrFunctionDeclarationAtVarNode(
+>       Name n, boolean canCollapseChildNames) {
+>     if (!canCollapseChildNames) {
+>       return;
+>     }
+> 
+715c750,755
+<   private void updateFunctionDeclarationAtFunctionNode(Name n) {
+---
+>   private void updateFunctionDeclarationAtFunctionNode(
+>       Name n, boolean canCollapseChildNames) {
+>     if (!canCollapseChildNames) {
+>       return;
+>     }
+> 
+834a875
+>     Preconditions.checkState(n.canCollapseUnannotatedChildNames());

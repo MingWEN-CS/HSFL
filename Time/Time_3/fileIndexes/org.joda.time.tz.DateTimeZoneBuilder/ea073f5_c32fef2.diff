@@ -1,0 +1,245 @@
+16,53d15
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+62a25
+> import java.text.DateFormatSymbols;
+66a30
+> import java.util.Locale;
+69a34
+> import org.joda.time.DateTime;
+71a37,38
+> import org.joda.time.Period;
+> import org.joda.time.PeriodType;
+363c330,331
+<     public DateTimeZone toDateTimeZone(String id) {
+---
+> 
+>     public DateTimeZone toDateTimeZone(String id, boolean outputID) {
+427c395
+<         PrecalculatedZone zone = new PrecalculatedZone(id, transitions, tailZone);
+---
+>         PrecalculatedZone zone = PrecalculatedZone.create(id, outputID, transitions, tailZone);
+472c440,441
+<     public void writeTo(OutputStream out) throws IOException {
+---
+> 
+>     public void writeTo(String zoneID, OutputStream out) throws IOException {
+474c443
+<             writeTo((DataOutput)out);
+---
+>             writeTo(zoneID, (DataOutput)out);
+476c445
+<             writeTo((DataOutput)new DataOutputStream(out));
+---
+>             writeTo(zoneID, (DataOutput)new DataOutputStream(out));
+486c455,456
+<     public void writeTo(DataOutput out) throws IOException {
+---
+> 
+>     public void writeTo(String zoneID, DataOutput out) throws IOException {
+488c458
+<         DateTimeZone zone = toDateTimeZone("");
+---
+>         DateTimeZone zone = toDateTimeZone(zoneID, false);
+826a797,804
+> 
+>         Recurrence rename(String nameKey) {
+>             return new Recurrence(iOfYear, nameKey, iSaveMillis);
+>         }
+> 
+>         Recurrence renameAppend(String appendNameKey) {
+>             return rename((iNameKey + appendNameKey).intern());
+>         }
+1193,1195c1171,1173
+<         private final int iStandardOffset;
+<         private final Recurrence iStartRecurrence;
+<         private final Recurrence iEndRecurrence;
+---
+>         final int iStandardOffset;
+>         final Recurrence iStartRecurrence;
+>         final Recurrence iEndRecurrence;
+1237a1216,1218
+>             } catch (ArithmeticException e) {
+>                 
+>                 start = instant;
+1249a1231,1233
+>             } catch (ArithmeticException e) {
+>                 
+>                 end = instant;
+1275a1260,1262
+>             } catch (ArithmeticException e) {
+>                 
+>                 start = instant;
+1287a1275,1277
+>             } catch (ArithmeticException e) {
+>                 
+>                 end = instant;
+1326a1317,1319
+>             } catch (ArithmeticException e) {
+>                 
+>                 start = instant;
+1334a1328,1330
+>             } catch (ArithmeticException e) {
+>                 
+>                 end = instant;
+1386,1392d1381
+<         private final long[] iTransitions;
+< 
+<         private final int[] iWallOffsets;
+<         private final int[] iStandardOffsets;
+<         private final String[] iNameKeys;
+< 
+<         private final DSTZone iTailZone;
+1394,1403d1382
+<         PrecalculatedZone(String id, long[] transitions, int[] wallOffsets,
+<                           int[] standardOffsets, String[] nameKeys, DSTZone tailZone)
+<         {
+<             super(id);
+<             iTransitions = transitions;
+<             iWallOffsets = wallOffsets;
+<             iStandardOffsets = standardOffsets;
+<             iNameKeys = nameKeys;
+<             iTailZone = tailZone;
+<         }
+1405d1383
+<         
+1409,1410d1386
+<         PrecalculatedZone(String id, ArrayList transitions, DSTZone tailZone) {
+<             super(id);
+1411a1388
+>         static PrecalculatedZone create(String id, boolean outputID, ArrayList transitions, DSTZone tailZone) {
+1417,1420c1394,1397
+<             iTransitions = new long[size];
+<             iWallOffsets = new int[size];
+<             iStandardOffsets = new int[size];
+<             iNameKeys = new String[size];
+---
+>             long[] trans = new long[size];
+>             int[] wallOffsets = new int[size];
+>             int[] standardOffsets = new int[size];
+>             String[] nameKeys = new String[size];
+1430,1433c1407,1410
+<                 iTransitions[i] = tr.getMillis();
+<                 iWallOffsets[i] = tr.getWallOffset();
+<                 iStandardOffsets[i] = tr.getStandardOffset();
+<                 iNameKeys[i] = tr.getNameKey();
+---
+>                 trans[i] = tr.getMillis();
+>                 wallOffsets[i] = tr.getWallOffset();
+>                 standardOffsets[i] = tr.getStandardOffset();
+>                 nameKeys[i] = tr.getNameKey();
+1437a1415,1492
+>             
+>             
+>             String[] zoneNameData = new String[5];
+>             String[][] zoneStrings = new DateFormatSymbols(Locale.ENGLISH).getZoneStrings();
+>             for (int j = 0; j < zoneStrings.length; j++) {
+>                 String[] set = zoneStrings[j];
+>                 if (set != null && set.length == 5 && id.equals(set[0])) {
+>                     zoneNameData = set;
+>                 }
+>             }
+>             for (int i = 0; i < nameKeys.length - 1; i++) {
+>                 String curNameKey = nameKeys[i];
+>                 String nextNameKey = nameKeys[i + 1];
+>                 long curOffset = wallOffsets[i];
+>                 long nextOffset = wallOffsets[i + 1];
+>                 long curStdOffset = standardOffsets[i];
+>                 long nextStdOffset = standardOffsets[i + 1];
+>                 Period p = new Period(trans[i], trans[i + 1], PeriodType.yearMonthDay());
+>                 if (curOffset != nextOffset &&
+>                         curStdOffset == nextStdOffset &&
+>                         curNameKey.equals(nextNameKey) &&
+>                         p.getYears() == 0 && p.getMonths() > 4 && p.getMonths() < 8 &&
+>                         curNameKey.equals(zoneNameData[2]) &&
+>                         curNameKey.equals(zoneNameData[4])) {
+>                     
+>                     System.out.println("Fixing duplicate name key - " + nextNameKey);
+>                     System.out.println("     - " + new DateTime(trans[i]) + " - " + new DateTime(trans[i + 1]));
+>                     if (curOffset > nextOffset) {
+>                         nameKeys[i] = (curNameKey + "-Summer").intern();
+>                     } else if (curOffset < nextOffset) {
+>                         nameKeys[i + 1] = (nextNameKey + "-Summer").intern();
+>                         i++;
+>                     }
+>                 }
+>             }
+>             if (tailZone != null) {
+>                 if (tailZone.iStartRecurrence.getNameKey().equals(tailZone.iEndRecurrence.getNameKey())) {
+>                     System.out.println("Fixing duplicate recurrent name key - " + tailZone.iStartRecurrence.getNameKey());
+>                     if (tailZone.iStartRecurrence.getSaveMillis() > 0) {
+>                         tailZone = new DSTZone(
+>                             tailZone.getID(),
+>                             tailZone.iStandardOffset,
+>                             tailZone.iStartRecurrence.renameAppend("-Summer"),
+>                             tailZone.iEndRecurrence);
+>                     } else {
+>                         tailZone = new DSTZone(
+>                             tailZone.getID(),
+>                             tailZone.iStandardOffset,
+>                             tailZone.iStartRecurrence,
+>                             tailZone.iEndRecurrence.renameAppend("-Summer"));
+>                     }
+>                 }
+>             }
+>             
+>             return new PrecalculatedZone((outputID ? id : ""), trans, wallOffsets, standardOffsets, nameKeys, tailZone);
+>         }
+> 
+>         
+> 
+>         private final long[] iTransitions;
+> 
+>         private final int[] iWallOffsets;
+>         private final int[] iStandardOffsets;
+>         private final String[] iNameKeys;
+> 
+>         private final DSTZone iTailZone;
+> 
+>         
+> 
+> 
+>         private PrecalculatedZone(String id, long[] transitions, int[] wallOffsets,
+>                           int[] standardOffsets, String[] nameKeys, DSTZone tailZone)
+>         {
+>             super(id);
+>             iTransitions = transitions;
+>             iWallOffsets = wallOffsets;
+>             iStandardOffsets = standardOffsets;
+>             iNameKeys = nameKeys;

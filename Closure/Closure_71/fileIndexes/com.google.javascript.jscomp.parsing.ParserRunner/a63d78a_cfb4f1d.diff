@@ -1,0 +1,34 @@
+26a27
+> import com.google.javascript.jscomp.parsing.Config.LanguageMode;
+48,53c49
+<     return createConfig(isIdeMode, false);
+<   }
+< 
+<   @Deprecated
+<   public static Config createConfig(boolean isIdeMode, boolean isES5Mode) {
+<     return createConfig(isIdeMode, isES5Mode, false);
+---
+>     return createConfig(isIdeMode, LanguageMode.ECMASCRIPT3, false);
+57c53
+<                                     boolean isES5Mode,
+---
+>                                     LanguageMode languageMode,
+60c56,57
+<     return new Config(annotationNames, suppressionNames, isIdeMode, isES5Mode,
+---
+>     return new Config(annotationNames, suppressionNames,
+>                       isIdeMode, languageMode,
+106c103,104
+<     compilerEnv.setWarnTrailingComma(!config.acceptES5);
+---
+>     compilerEnv.setWarnTrailingComma(
+>         config.languageMode == LanguageMode.ECMASCRIPT3);
+108c106,107
+<     if (config.isIdeMode) {
+---
+>     if (config.isIdeMode || config.languageMode != LanguageMode.ECMASCRIPT3) {
+>       
+109a109,111
+>     }
+> 
+>     if (config.isIdeMode) {

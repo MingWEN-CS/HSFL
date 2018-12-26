@@ -1,0 +1,20 @@
+733,734c733,735
+<         if (windowType instanceof ObjectType) {
+<           globalThis.setImplicitPrototype((ObjectType) windowType);
+---
+>         ObjectType windowObjType = ObjectType.cast(windowType);
+>         if (windowObjType != null) {
+>           globalThis.setImplicitPrototype(windowObjType);
+1242,1247c1243,1247
+<           JSType maybeThisType =
+<               createFromTypeNodes(thisNode, sourceName, scope)
+<               .restrictByNotNullOrUndefined();
+<           if (maybeThisType instanceof ObjectType) {
+<             thisType = (ObjectType) maybeThisType;
+<           } else {
+---
+>           thisType =
+>               ObjectType.cast(
+>                   createFromTypeNodes(thisNode, sourceName, scope)
+>                   .restrictByNotNullOrUndefined());
+>           if (thisType == null) {

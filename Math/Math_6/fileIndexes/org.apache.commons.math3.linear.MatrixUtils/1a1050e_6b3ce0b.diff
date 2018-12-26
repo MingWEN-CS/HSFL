@@ -1,0 +1,43 @@
+54a55,59
+> 
+> 
+> 
+> 
+> 
+56c61,62
+<         return new DenseRealMatrix(rows, columns);
+---
+>         return (rows * columns <= 4096) ?
+>                 new RealMatrixImpl(rows, columns) : new BlockRealMatrix(rows, columns);
+69a76,79
+> 
+> 
+> 
+> 
+73c83,84
+<         return new DenseFieldMatrix<T>(field, rows, columns);
+---
+>         return (rows * columns <= 4096) ?
+>                 new FieldMatrixImpl<T>(field, rows, columns) : new BlockFieldMatrix<T>(field, rows, columns);
+86a98,104
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+88c106,107
+<         return new DenseRealMatrix(data);
+---
+>         return (data.length * data[0].length <= 4096) ?
+>                 new RealMatrixImpl(data) : new BlockRealMatrix(data);
+105a125,127
+> 
+> 
+> 
+107c129,130
+<         return new DenseFieldMatrix<T>(data);
+---
+>         return (data.length * data[0].length <= 4096) ?
+>                 new FieldMatrixImpl<T>(data) : new BlockFieldMatrix<T>(data);

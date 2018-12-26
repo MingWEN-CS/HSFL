@@ -1,0 +1,82 @@
+19c19
+< import com.google.common.base.Predicate;
+---
+> import com.google.common.base.Preconditions;
+24,25c24,25
+< import com.google.javascript.jscomp.graph.GraphNode;
+< import com.google.javascript.jscomp.graph.GraphReachability.EdgeTuple;
+---
+> import com.google.javascript.jscomp.graph.DiGraph.DiGraphEdge;
+> import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+30a31
+> import java.util.List;
+76,77c77,78
+<     new GraphReachability<Node, ControlFlowGraph.Branch>(
+<         curCfg, new ReachablePredicate()).compute(curCfg.getEntry().getValue());
+---
+>     new GraphReachability<Node, ControlFlowGraph.Branch>(curCfg)
+>         .compute(curCfg.getEntry().getValue());
+89a91
+>   @SuppressWarnings("fallthrough")
+114c116
+<     GraphNode<Node, Branch> gNode = curCfg.getNode(n);
+---
+>     DiGraphNode<Node, Branch> gNode = curCfg.getDirectedGraphNode(n);
+120a123,156
+>       return;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     switch (n.getType()) {
+>       case Token.RETURN:
+>         if (n.hasChildren()) {
+>           break;
+>         }
+>       case Token.BREAK:
+>       case Token.CONTINUE:
+> 
+>         
+>         
+>         
+>         List<DiGraphEdge<Node,Branch>> outEdges = gNode.getOutEdges();
+>         if (outEdges.size() == 1 &&
+> 
+>             
+>             (n.getNext() == null || n.getNext().getType() == Token.FUNCTION)) {
+>           Preconditions.checkState(outEdges.get(0).getValue() == Branch.UNCOND);
+>           Node fallThrough = ControlFlowAnalysis.computeFollowNode(n);
+>           if (outEdges.get(0).getDestination().getValue() == fallThrough) {
+>             removeDeadExprStatementSafely(n, parent);
+>           }
+>         }
+147,168d182
+<   }
+<   
+<   private final class ReachablePredicate implements
+<       Predicate<EdgeTuple<Node, ControlFlowGraph.Branch>> {
+< 
+<     @Override
+<     public boolean apply(EdgeTuple<Node, Branch> input) {
+<       Branch branch = input.edge;
+<       if (!branch.isConditional()) {
+<         return true;
+<       }
+<       Node predecessor = input.sourceNode;
+<       Node condition = NodeUtil.getConditionExpression(predecessor);
+<   
+<       
+<       
+<       if (condition != null && NodeUtil.isImmutableValue(condition)) {
+<         return NodeUtil.getBooleanValue(condition).toBoolean(true) ==
+<             (branch == Branch.ON_TRUE);
+<       }
+<       return true;
+<     }

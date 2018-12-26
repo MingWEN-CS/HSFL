@@ -1,0 +1,56 @@
+56d55
+< import java.util.Locale;
+57a57,59
+> import java.util.Locale;
+> 
+> import org.joda.time.Chronology;
+58a61
+> import org.joda.time.DateTimeFieldType;
+61a65
+> import org.joda.time.ReadablePartial;
+102a107,115
+>     public DateTimeFieldType getFieldType() {
+>         return getField().getType();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+336a350
+> 
+342c356,386
+<         int otherValue = instant.get(getField());
+---
+>         Chronology chrono = DateTimeUtils.getChronology(instant.getChronology());
+>         int otherValue = getFieldType().getField(chrono).get(instant.getMillis());
+>         if (thisValue < otherValue) {
+>             return -1;
+>         } else if (thisValue > otherValue) {
+>             return 1;
+>         } else {
+>             return 0;
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int compareTo(ReadablePartial partial) {
+>         if (partial == null) {
+>             throw new IllegalArgumentException("The instant must not be null");
+>         }
+>         int thisValue = get();
+>         int otherValue = partial.get(getFieldType());

@@ -1,0 +1,400 @@
+19a20
+> import com.google.common.collect.Lists;
+22d22
+< import com.google.javascript.jscomp.CheckLevel;
+27,28d26
+< import java.util.ArrayList;
+< import java.util.HashMap;
+95,96c93,99
+<   private final List<UnrecognizedRequire> unrecognizedRequires;
+<   private final Map<String, ProvidedNode> providedNodes;
+---
+> 
+>   
+>   private final Map<String, ProvidedName> providedNames =
+>       Maps.newLinkedHashMap();
+> 
+>   private final List<UnrecognizedRequire> unrecognizedRequires =
+>       Lists.newArrayList();
+105,106d107
+<     this.unrecognizedRequires = new ArrayList<UnrecognizedRequire>();
+<     this.providedNodes = new HashMap<String, ProvidedNode>();
+111c112,113
+<     providedNodes.put(GOOG, new ProvidedNode(null, null, null));
+---
+>     providedNames.put(GOOG,
+>         new ProvidedName(GOOG, null, null, false ));
+124,127c126,127
+<     for (ProvidedNode pn : providedNodes.values()) {
+<       if (pn != null) {
+<         pn.maybeRemove();
+<       }
+---
+>     for (ProvidedName pn : providedNames.values()) {
+>       pn.replace();
+133c133
+<         if (providedNodes.get(r.namespace) != null) {
+---
+>         if (providedNames.get(r.namespace) != null) {
+149a150
+>     
+171,172c172,173
+<                 ProvidedNode provided = providedNodes.get(ns);
+<                 if (provided == null) {
+---
+>                 ProvidedName provided = providedNames.get(ns);
+>                 if (provided == null || !provided.isExplicitlyProvided()) {
+177c178
+<                   if (module != provided.module  &&
+---
+>                   if (module != provided.firstModule  &&
+179c180
+<                           provided.module)) {
+---
+>                           provided.firstModule)) {
+182c183
+<                             provided.module.getName(),
+---
+>                             provided.firstModule.getName(),
+202,206c203,210
+<                 if (providedNodes.get(ns) != null) {
+<                   compiler.report(
+<                       JSError.make(t, n, DUPLICATE_NAMESPACE_ERROR, ns));
+<                 } else if (!providedNodes.containsKey(ns)) {
+<                   replaceProvide(t, parent, parent.getParent(), ns);
+---
+>                 if (providedNames.containsKey(ns)) {
+>                   ProvidedName previouslyProvided = providedNames.get(ns);
+>                   if (!previouslyProvided.isExplicitlyProvided()) {
+>                     previouslyProvided.addProvide(parent, t.getModule(), true);
+>                   } else {
+>                     compiler.report(
+>                         JSError.make(t, n, DUPLICATE_NAMESPACE_ERROR, ns));
+>                   }
+208,211c212,214
+<                   
+<                   parent.getParent().removeChild(parent);
+<                   providedNodes.put(ns,
+<                       new ProvidedNode(null, null, t.getModule()));
+---
+>                   registerAnyProvidedPrefixes(ns, parent, t.getModule());
+>                   providedNames.put(
+>                       ns, new ProvidedName(ns, parent, t.getModule(), true));
+213d215
+<                 compiler.reportCodeChange();
+256c258
+<               ProvidedNode pn = providedNodes.get(name);
+---
+>               ProvidedName pn = providedNames.get(name);
+258c260
+<                 pn.addCandidate(parent, parent.getParent());
+---
+>                 pn.addDefinition(parent);
+273c275
+<             ProvidedNode pn = providedNodes.get(name);
+---
+>             ProvidedName pn = providedNames.get(name);
+275c277
+<               pn.addCandidate(parent, parent.getParent());
+---
+>               pn.addDefinition(parent);
+286c288
+<           ProvidedNode pn = providedNodes.get(name);
+---
+>           ProvidedName pn = providedNames.get(name);
+454c456
+<     if (!providedNodes.containsKey(name)) {
+---
+>     if (!providedNames.containsKey(name)) {
+456,457d457
+<       providedNodes.put(name, new ProvidedNode(
+<           parent, parent.getParent(), t.getModule()));
+459c459,468
+<       maybeProvidePrefixes(parent, parent.getParent(), name);
+---
+>       Node expr = new Node(Token.EXPR_RESULT);
+>       expr.copyInformationFromForTree(parent);
+>       parent.getParent().addChildBefore(expr, parent);
+>       compiler.reportCodeChange();
+> 
+>       registerAnyProvidedPrefixes(name, expr, t.getModule());
+> 
+>       ProvidedName provided = new ProvidedName(name, expr, t.getModule(), true);
+>       providedNames.put(name, provided);
+>       provided.addDefinition(parent);
+464a474
+>         compiler.reportCodeChange();
+482c492
+<       final Map<String,String> cssNames = Maps.newHashMap();
+---
+>       final Map<String, String> cssNames = Maps.newHashMap();
+610,627d619
+<   private void replaceProvide(
+<       NodeTraversal t, Node node, Node parent, String ns) {
+<     Node newNode;
+<     if (ns.indexOf('.') == -1) {
+<       newNode = makeVarDeclNode(ns, node);
+<       parent.replaceChild(node, newNode);
+<     } else {
+<       newNode = makeAssignmentExprNode(ns, node);
+<       parent.replaceChild(node, newNode);
+<       maybeProvidePrefixes(newNode, parent, ns);
+<     }
+<     providedNodes.put(ns, new ProvidedNode(newNode, parent, t.getModule()));
+<   }
+< 
+<   
+< 
+< 
+< 
+629,633c621,623
+< 
+< 
+<   private void maybeProvidePrefixes(Node node, Node parent, String ns) {
+<     int pos = ns.lastIndexOf('.');
+<     Node nodeToAddBefore = node;
+---
+>   private void registerAnyProvidedPrefixes(
+>       String ns, Node node, JSModule module) {
+>     int pos = ns.indexOf('.');
+636,638c626,629
+<       pos = prefixNs.lastIndexOf('.');
+<       if (providedNodes.containsKey(prefixNs)) {
+<         break;
+---
+>       pos = ns.indexOf('.', pos + 1);
+>       if (providedNames.containsKey(prefixNs)) {
+>         providedNames.get(prefixNs).addProvide(
+>             node, module, false );
+640,647c631,633
+<         
+<         
+<         providedNodes.put(prefixNs, null);
+<         Node newNode = (pos == -1
+<                         ? makeVarDeclNode(prefixNs, node)
+<                         : makeAssignmentExprNode(prefixNs, node));
+<         parent.addChildBefore(newNode, nodeToAddBefore);
+<         nodeToAddBefore = newNode;
+---
+>         providedNames.put(
+>             prefixNs,
+>             new ProvidedName(prefixNs, node, module, false ));
+654,675d639
+< 
+< 
+< 
+< 
+< 
+<   private Node makeVarDeclNode(String namespace, Node sourceNode) {
+<     Node name = Node.newString(Token.NAME, namespace);
+<     name.addChildToFront(new Node(Token.OBJECTLIT));
+< 
+<     Node decl = new Node(Token.VAR, name);
+<     decl.putBooleanProp(Node.IS_NAMESPACE, true);
+< 
+<     
+<     if (compiler.getCodingConvention().isConstant(namespace)) {
+<       name.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+<     }
+< 
+<     Preconditions.checkState(isNamespacePlaceholder(decl));
+<     decl.copyInformationFromForTree(sourceNode);
+<     return decl;
+<   }
+< 
+678a643,644
+>   private class ProvidedName {
+>     private final String namespace;
+679a646,649
+>     
+>     
+>     private final Node firstNode;
+>     private final JSModule firstModule;
+680a651,653
+>     
+>     
+>     private Node explicitNode = null;
+681a655,656
+>     
+>     private Node candidateDefinition = null;
+683,692c658,665
+<   private Node makeAssignmentExprNode(String namespace, Node node) {
+<     Node decl = new Node(Token.EXPR_RESULT,
+<         new Node(Token.ASSIGN,
+<             NodeUtil.newQualifiedNameNode(namespace, node, namespace),
+<             new Node(Token.OBJECTLIT)));
+<     decl.putBooleanProp(Node.IS_NAMESPACE, true);
+<     Preconditions.checkState(isNamespacePlaceholder(decl));
+<     decl.copyInformationFromForTree(node);
+<     return decl;
+<   }
+---
+>     ProvidedName(String namespace, Node node, JSModule module,
+>         boolean explicit) {
+>       Preconditions.checkArgument(
+>           node == null  ||
+>           NodeUtil.isExpressionNode(node));
+>       this.namespace = namespace;
+>       this.firstNode = node;
+>       this.firstModule = module;
+694c667,668
+<   
+---
+>       addProvide(node, module, explicit);
+>     }
+696c670
+<   
+---
+>     
+699,704c673,681
+<   private class ProvidedNode {
+<     private final Node providedNode;
+<     private final Node providedParent;
+<     private final JSModule module;
+<     private Node replacementCandidate;
+<     private Node replacementCandidateParent;
+---
+>     void addProvide(Node node, JSModule module, boolean explicit) {
+>       
+>       
+>       if (explicit) {
+>         Preconditions.checkState(explicitNode == null);
+>         Preconditions.checkArgument(NodeUtil.isExpressionNode(node));
+>         explicitNode = node;
+>       }
+>     }
+706,715c683,684
+<     ProvidedNode(Node node, Node parent, JSModule module) {
+<       Preconditions.checkArgument((node == null) ||
+<                                   NodeUtil.isVar(node) ||
+<                                   NodeUtil.isExpressionNode(node));
+<       Preconditions.checkArgument((node == null) == (parent == null));
+<       this.providedNode = node;
+<       this.providedParent = parent;
+<       this.replacementCandidate = null;
+<       this.replacementCandidateParent = null;
+<       this.module = module;
+---
+>     boolean isExplicitlyProvided() {
+>       return explicitNode != null;
+724c693
+<     void addCandidate(Node node, Node parent) {
+---
+>     void addDefinition(Node node) {
+728,732c697,699
+<       Preconditions.checkArgument(providedNode != node);
+< 
+<       if ((replacementCandidate == null) || !NodeUtil.isExpressionNode(node)) {
+<         replacementCandidate = node;
+<         replacementCandidateParent = parent;
+---
+>       Preconditions.checkArgument(explicitNode != node);
+>       if ((candidateDefinition == null) || !NodeUtil.isExpressionNode(node)) {
+>         candidateDefinition = node;
+742,746c709,719
+<     void maybeRemove() {
+<       if ((providedNode != null)
+<           && (replacementCandidate != null)
+<           && isNamespacePlaceholder(providedNode)) {
+<         providedParent.removeChild(providedNode);
+---
+> 
+>     void replace() {
+>       if (firstNode == null) {
+>         
+>         return;
+>       }
+> 
+>       
+>       
+>       if (candidateDefinition != null && explicitNode != null) {
+>         explicitNode.detachFromParent();
+749,751c722,725
+<         if (NodeUtil.isExpressionNode(replacementCandidate)) {
+<           replacementCandidate.putBooleanProp(Node.IS_NAMESPACE, true);
+<           Node assignNode = replacementCandidate.getFirstChild();
+---
+>         
+>         if (NodeUtil.isExpressionNode(candidateDefinition)) {
+>           candidateDefinition.putBooleanProp(Node.IS_NAMESPACE, true);
+>           Node assignNode = candidateDefinition.getFirstChild();
+760,762c734,736
+<             varNode.copyInformationFrom(replacementCandidate);
+<             replacementCandidateParent.replaceChild(replacementCandidate,
+<                                                     varNode);
+---
+>             varNode.copyInformationFrom(candidateDefinition);
+>             candidateDefinition.getParent().replaceChild(
+>                 candidateDefinition, varNode);
+766a741,756
+>       } else {
+>         
+>         Node declaration = createDeclarationNode();
+> 
+>         
+>         
+>         if (explicitNode != firstNode) {
+>           firstNode.getParent().addChildBefore(declaration, firstNode);
+>           if (explicitNode != null) {
+>             explicitNode.detachFromParent();
+>           }
+>         } else {
+>           Preconditions.checkNotNull(explicitNode);
+>           explicitNode.getParent().replaceChild(explicitNode, declaration);
+>         }
+>         compiler.reportCodeChange();
+767a758,811
+>     }
+> 
+>     
+> 
+> 
+> 
+>     private Node createDeclarationNode() {
+>       if (namespace.indexOf('.') == -1) {
+>         return makeVarDeclNode(namespace, firstNode);
+>       } else {
+>         return makeAssignmentExprNode(namespace, firstNode);
+>       }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private Node makeVarDeclNode(String namespace, Node sourceNode) {
+>       Node name = Node.newString(Token.NAME, namespace);
+>       name.addChildToFront(new Node(Token.OBJECTLIT));
+> 
+>       Node decl = new Node(Token.VAR, name);
+>       decl.putBooleanProp(Node.IS_NAMESPACE, true);
+> 
+>       
+>       if (compiler.getCodingConvention().isConstant(namespace)) {
+>         name.putBooleanProp(Node.IS_CONSTANT_NAME, true);
+>       }
+> 
+>       Preconditions.checkState(isNamespacePlaceholder(decl));
+>       decl.copyInformationFromForTree(sourceNode);
+>       return decl;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     private Node makeAssignmentExprNode(String namespace, Node node) {
+>       Node decl = new Node(Token.EXPR_RESULT,
+>           new Node(Token.ASSIGN,
+>             NodeUtil.newQualifiedNameNode(namespace, node, namespace),
+>               new Node(Token.OBJECTLIT)));
+>       decl.putBooleanProp(Node.IS_NAMESPACE, true);
+>       Preconditions.checkState(isNamespacePlaceholder(decl));
+>       decl.copyInformationFromForTree(node);
+>       return decl;

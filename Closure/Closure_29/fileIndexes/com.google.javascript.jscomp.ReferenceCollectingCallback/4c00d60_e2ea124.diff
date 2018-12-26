@@ -1,0 +1,77 @@
+45c45,46
+< class ReferenceCollectingCallback implements ScopedCallback, CompilerPass {
+---
+> class ReferenceCollectingCallback implements ScopedCallback,
+>     HotSwapCompilerPass {
+98a100
+>   @Override
+105a108,115
+>   @Override
+>   public void hotSwapScript(Node scriptRoot) {
+>     NodeTraversal.traverse(compiler, scriptRoot, this);
+>   }
+> 
+>   
+> 
+> 
+154c164,170
+<     behavior.afterExitScope(t, referenceMap);
+---
+>     if (t.getScope().isGlobal()) {
+>       
+>       compiler.updateGlobalVarReferences(referenceMap, t.getScopeRoot());
+>       behavior.afterExitScope(t, compiler.getGlobalVarReferences());
+>     } else {
+>       behavior.afterExitScope(t, new ReferenceMapWrapper(referenceMap));
+>     }
+215a232,248
+>   interface ReferenceMap {
+>     ReferenceCollection getReferences(Var var);
+>   }
+> 
+>   private static class ReferenceMapWrapper implements ReferenceMap {
+>     private final Map<Var, ReferenceCollection> referenceMap;
+> 
+>     public ReferenceMapWrapper(Map<Var, ReferenceCollection> referenceMap) {
+>       this.referenceMap = referenceMap;
+>     }
+> 
+>     @Override
+>     public ReferenceCollection getReferences(Var var) {
+>       return referenceMap.get(var);
+>     }
+>   }
+> 
+224,225c257
+<     void afterExitScope(NodeTraversal t,
+<         Map<Var, ReferenceCollection> referenceMap);
+---
+>     void afterExitScope(NodeTraversal t, ReferenceMap referenceMap);
+230,231c262
+<     public void afterExitScope(NodeTraversal t,
+<         Map<Var, ReferenceCollection> referenceMap) {}
+---
+>     public void afterExitScope(NodeTraversal t, ReferenceMap referenceMap) {}
+602a634,645
+> 
+> 
+> 
+> 
+>     boolean isGlobalScopeBlock() {
+>       return getParent() == null;
+>     }
+> 
+>     
+> 
+> 
+> 
+615c658,664
+<       return currentBlock == this;
+---
+>       if (currentBlock == this) {
+>         return true;
+>       }
+>       if (isGlobalScopeBlock() && thatBlock.isGlobalScopeBlock()) {
+>         return true;
+>       }
+>       return false;

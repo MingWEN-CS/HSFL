@@ -1,0 +1,79 @@
+204c204,208
+<         return Double.NaN;
+---
+>         if (mayHaveSideEffects(n.getFirstChild())) {
+>           return null;
+>         } else {
+>           return Double.NaN;
+>         }
+206a211
+>         
+226a232
+>         String s = trimJsWhiteSpace(n.getString());
+228,230d233
+<         
+<         String s = n.getString();
+< 
+238c241
+<             
+---
+>           
+242c245
+<             return null;
+---
+>             return Double.NaN;
+245a249,264
+>         if (s.length() > 3
+>             && (s.charAt(0) == '-' || s.charAt(0) == '+')
+>             && s.charAt(1) == '0'
+>             && (s.charAt(2) == 'x' || s.charAt(2) == 'X')) {
+>           
+>           return null;
+>         }
+> 
+>         
+>         
+>         if (s.equals("infinity")
+>             || s.equals("-infinity")
+>             || s.equals("+infinity")) {
+>           return null;
+>         }
+> 
+249c268
+<           return null;
+---
+>           return Double.NaN;
+253a273,305
+>   }
+> 
+>   static String trimJsWhiteSpace(String s) {
+>     int start = 0;
+>     int end = s.length();
+>     while (end > 0 && isStrWhiteSpaceChar(s.charAt(end-1))) {
+>       end--;
+>     }
+>     while (start < end && isStrWhiteSpaceChar(s.charAt(start))) {
+>       start++;
+>     }
+>     return s.substring(start, end);
+>   }
+> 
+>   
+> 
+> 
+>   static boolean isStrWhiteSpaceChar(int c) {
+>     switch (c) {
+>       case ' ': 
+>       case '\n': 
+>       case '\r': 
+>       case '\t': 
+>       case '\u00A0': 
+>       case '\u000C': 
+>       case '\u000B': 
+>       case '\u2028': 
+>       case '\u2029': 
+>       case '\uFEFF': 
+>         return true;
+>       default:
+>         return Character.getType(c) == Character.SPACE_SEPARATOR;
+>     }

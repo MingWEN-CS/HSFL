@@ -1,0 +1,39 @@
+289a290,306
+>     reconcileOptionsWithGuards();
+> 
+>     
+>     List<WarningsGuard> guards = Lists.newArrayList();
+>     guards.add(
+>         new SuppressDocWarningsGuard(
+>             getDiagnosticGroups().getRegisteredGroups()));
+>     guards.add(options.getWarningsGuard());
+> 
+>     this.warningsGuard = new ComposeWarningsGuard(guards);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   protected void reconcileOptionsWithGuards() {
+319,327d335
+<     List<WarningsGuard> guards = Lists.newArrayList();
+<     guards.add(
+<         new SuppressDocWarningsGuard(
+<             getDiagnosticGroups().getRegisteredGroups()));
+<     guards.add(options.getWarningsGuard());
+< 
+<     ComposeWarningsGuard composedGuards = new ComposeWarningsGuard(guards);
+< 
+<     
+333,335c341,343
+<         !composedGuards.enables(DiagnosticGroups.CHECK_VARIABLES)) {
+<       composedGuards.addGuard(new DiagnosticGroupWarningsGuard(
+<           DiagnosticGroups.CHECK_VARIABLES, CheckLevel.OFF));
+---
+>         !options.enables(DiagnosticGroups.CHECK_VARIABLES)) {
+>       options.setWarningLevel(
+>           DiagnosticGroups.CHECK_VARIABLES, CheckLevel.OFF);
+337,338d344
+< 
+<     this.warningsGuard = composedGuards;

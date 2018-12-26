@@ -1,0 +1,39 @@
+304a305,322
+>     @Option(name = "--process_common_js_modules",
+>         usage = "Process Common JS modules to a concatenable form.")
+>     private boolean process_common_js_modules = false;
+> 
+>     @Option(name = "--common_js_module_path_prefix",
+>         usage = "Path prefix to be removed from Common JS module names.")
+>     private String common_js_path_prefix =
+>         ProcessCommonJSModules.DEFAULT_FILENAME_PREFIX;
+> 
+>     @Option(name = "--common_js_entry_module",
+>         usage = "Root of your common JS dependency hierarchy. "+
+>             "Your main script.")
+>     private String common_js_entry_module;
+> 
+>     @Option(name = "--transform_amd_modules",
+>         usage = "Transform AMD to Common JS modules.")
+>     private boolean transform_amd_modules = false;
+> 
+629a648,659
+>     if (flags.process_common_js_modules) {
+>       flags.process_closure_primitives = true;
+>       flags.manage_closure_dependencies = true;
+>       if (flags.common_js_entry_module == null) {
+>         err.println("Please specify --common_js_entry_module.");
+>         err.flush();
+>         isConfigValid = false;
+>       }
+>       flags.closure_entry_point = Lists.newArrayList(
+>           ProcessCommonJSModules.toModuleName(flags.common_js_entry_module));
+>     }
+> 
+665c695,698
+<           .setLanguageIn(flags.language_in);
+---
+>           .setLanguageIn(flags.language_in)
+>           .setProcessCommonJSModules(flags.process_common_js_modules)
+>           .setCommonJSModulePathPrefix(flags.common_js_path_prefix)
+>           .setTransformAMDToCJSModules(flags.transform_amd_modules);

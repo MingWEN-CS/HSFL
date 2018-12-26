@@ -1,0 +1,86 @@
+25d24
+< import java.util.Arrays;
+27d25
+< import java.util.Comparator;
+334,360d331
+<     
+< 
+< 
+<     private static class KeyValue {
+<         public String key;
+<         public int value;
+< 
+<         
+< 
+< 
+< 
+< 
+<         public KeyValue(String key, int value) {
+<             this.key= key;
+<             this.value= value;
+<         }
+<     }
+< 
+<     
+< 
+< 
+<     private static final Comparator<KeyValue> IGNORE_CASE_COMPARATOR = new Comparator<KeyValue> () {
+<         @Override
+<         public int compare(KeyValue left, KeyValue right) {
+<             return left.key.compareToIgnoreCase(right.key);
+<         }
+<     };
+369,384c340,341
+<     private static KeyValue[] getDisplayNames(int field, Calendar definingCalendar, Locale locale) {
+< 		List<KeyValue> keyValues = new ArrayList<KeyValue>(24);
+< 		addNamesToKeyValues(keyValues, definingCalendar.getDisplayNames(field, Calendar.ALL_STYLES, locale));
+<         return createKeyValues(keyValues);
+<     }
+< 
+< 	private static void addNamesToKeyValues(List<KeyValue> keyValues, Map<String, Integer> displayNames) {
+<         for(Map.Entry<String, Integer> me : displayNames.entrySet()) {
+<         	keyValues.add(new KeyValue(me.getKey(), me.getValue()));
+<         }
+<     }
+< 
+<     private static KeyValue[] createKeyValues(List<KeyValue> keyValues) {
+<         KeyValue[] fieldKeyValues= keyValues.toArray(new KeyValue[keyValues.size()]);
+<         Arrays.sort(fieldKeyValues, IGNORE_CASE_COMPARATOR);
+<         return fieldKeyValues;
+---
+>     private static Map<String, Integer> getDisplayNames(int field, Calendar definingCalendar, Locale locale) {
+>         return definingCalendar.getDisplayNames(field, Calendar.ALL_STYLES, locale);
+505c462
+<     @SuppressWarnings("unchecked")
+---
+>     @SuppressWarnings("unchecked") 
+531c488
+<     	Strategy strategy= cache.get(field);
+---
+>     	Strategy strategy= cache.get(Integer.valueOf(field));
+592c549
+<         private final KeyValue[] keyValues;
+---
+>         private final Map<String, Integer> keyValues;
+617,618c574,575
+<             for(KeyValue textKeyValue : keyValues) {
+<                 escapeRegex(regex, textKeyValue.key, false).append('|');
+---
+>             for(String textKeyValue : keyValues.keySet()) {
+>                 escapeRegex(regex, textKeyValue, false).append('|');
+629,630c586,587
+<             int idx= Arrays.binarySearch(keyValues, new KeyValue(value, -1), IGNORE_CASE_COMPARATOR);
+<             if(idx<0) {
+---
+>             Integer iVal = keyValues.get(value);
+>             if(iVal == null) {
+633,634c590,591
+<                 for(KeyValue textKeyValue : keyValues) {
+<                     sb.append(textKeyValue.key).append(' ');
+---
+>                 for(String textKeyValue : keyValues.keySet()) {
+>                     sb.append(textKeyValue).append(' ');
+639c596
+<             cal.set(field, keyValues[idx].value);
+---
+>             cal.set(field, iVal.intValue());

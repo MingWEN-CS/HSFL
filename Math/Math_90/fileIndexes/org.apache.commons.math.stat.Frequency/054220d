@@ -1,0 +1,372 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat;
+
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.Comparator;
+import java.text.NumberFormat;
+
+import org.apache.commons.collections.ComparatorUtils;
+import org.apache.commons.collections.SortedBag;
+import org.apache.commons.collections.TreeBag;
+
+
+
+
+
+
+
+
+
+
+
+public class Frequency implements Serializable {
+    
+    
+    private SortedBag freqTable = null;
+
+    
+
+
+    public Frequency() {
+        freqTable = new TreeBag();
+    }
+    
+    
+
+
+
+    public Frequency(Comparator comparator) {
+        freqTable = new TreeBag(comparator);
+    }
+
+    
+
+
+
+
+    public String toString() {
+        NumberFormat nf = NumberFormat.getPercentInstance();
+        StringBuffer outBuffer = new StringBuffer();
+        outBuffer.append("Value \t Freq. \t Pct. \t Cum Pct. \n");
+        Iterator iter = freqTable.uniqueSet().iterator();
+        while (iter.hasNext()) {
+            Object value = iter.next();
+            outBuffer.append(value);
+            outBuffer.append('\t');
+            outBuffer.append(getCount(value));
+            outBuffer.append('\t');
+            outBuffer.append(nf.format(getPct(value)));
+            outBuffer.append('\t');
+            outBuffer.append(nf.format(getCumPct(value)));
+            outBuffer.append('\n');
+        }
+        return outBuffer.toString();
+    }
+
+    
+
+
+
+    public void addValue(Object v) {
+        try {
+            freqTable.add(v);
+        } catch (ClassCastException ex) {   
+            
+            throw new IllegalArgumentException("Value not comparable to existing values.");
+        }
+    }
+
+    
+
+
+
+    public void addValue(int v) {
+        addValue(new Long(v));
+    }
+
+    
+
+
+
+    public void addValue(long v) {
+        addValue(new Long(v));
+    }
+    
+    
+
+
+
+    public void addValue(char v) {
+        addValue(new Character(v));
+    }
+    
+    
+    public void clear() {
+        freqTable.clear();
+    }
+    
+    
+
+
+
+    public Iterator valuesIterator() {
+        return freqTable.uniqueSet().iterator();
+    }
+    
+    
+    
+    
+
+
+
+    public long getSumFreq() {
+        return freqTable.size();
+    }
+
+    
+
+
+
+
+    public long getCount(Object v) {
+        long result = 0;
+        try { 
+            result = freqTable.getCount(v);
+        } catch (Exception ex) {
+            
+        }
+        return result;
+    }
+
+    
+
+
+
+
+    public long getCount(int v) {
+        long result = 0;
+        try { 
+            result = freqTable.getCount(new Long(v));
+        } catch (Exception ex) {
+            
+        }
+        return result;
+    }
+    
+    
+
+
+
+
+    public long getCount(long v) {
+        long result = 0;
+        try { 
+            result = freqTable.getCount(new Long(v));
+        } catch (Exception ex) {
+            
+        }
+        return result;
+    }
+    
+    
+
+
+
+
+    public long getCount(char v) {
+        long result = 0;
+        try { 
+            result = freqTable.getCount(new Character(v));
+        } catch (Exception ex) {
+            
+        }
+        return result;
+    }
+    
+    
+
+    
+
+
+
+
+
+    public double getPct(Object v) {
+        return (double) getCount(v) / (double) getSumFreq();        
+    }
+    
+    
+
+
+
+
+
+    public double getPct(int v) {
+        return getPct(new Long(v));       
+    }
+    
+    
+
+
+
+
+
+    public double getPct(long v) {
+        return getPct(new Long(v));         
+    }
+    
+    
+
+
+
+
+
+    public double getPct(char v) {
+        return getPct(new Character(v));         
+    }
+    
+    
+    
+    
+
+
+
+
+
+
+
+    public long getCumFreq(Object v) {
+        Comparator c = freqTable.comparator();
+        if (c == null) {
+            c = ComparatorUtils.NATURAL_COMPARATOR;
+        }
+        long result = 0;
+        try {
+            result = freqTable.getCount(v);
+        } catch (ClassCastException ex) {
+            return result;   
+        }
+        if (c.compare(v, freqTable.first()) < 0) {
+            return
+        System.out.println("iterating..."); 0;   
+        }
+        if (c.compare(v, freqTable.last()) >= 0) {
+            return getSumFreq();    
+        }
+        Iterator values = valuesIterator();
+        while (values.hasNext()) {
+            Object nextValue = values.next();
+            if (c.compare(v, nextValue) > 0) {
+                result += getCount(nextValue);
+            } else {
+                return result;
+            }
+        }
+        return result;
+    }
+    
+     
+
+
+
+
+
+
+
+    public long getCumFreq(int v) {
+        return getCumFreq(new Long(v));       
+    }
+    
+     
+
+
+
+
+
+
+
+    public long getCumFreq(long v) {
+        return getCumFreq(new Long(v));         
+    }
+    
+    
+
+
+
+
+
+
+
+    public long getCumFreq(char v) {
+        return getCumFreq(new Character(v));         
+    }
+    
+    
+    
+     
+
+
+
+
+
+
+
+
+    public double getCumPct(Object v) {
+        return (double) getCumFreq(v) / (double) getSumFreq();        
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public double getCumPct(int v) {
+        return getCumPct(new Long(v));       
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public double getCumPct(long v) {
+        return getCumPct(new Long(v));         
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public double getCumPct(char v) {
+        return getCumPct(new Character(v));         
+    }
+}

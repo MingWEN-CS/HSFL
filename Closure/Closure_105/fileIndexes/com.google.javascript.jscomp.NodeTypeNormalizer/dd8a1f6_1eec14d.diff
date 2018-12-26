@@ -1,0 +1,25 @@
+29c29
+<   private CodeChangeHandler changeHandler;
+---
+>   private final boolean assertOnChange;
+32c32
+<     this(null);
+---
+>     this(false);
+35,36c35,36
+<   NodeTypeNormalizer(CodeChangeHandler changeHandler) {
+<     this.changeHandler = changeHandler;
+---
+>   NodeTypeNormalizer(boolean forbidChanges) {
+>     this.assertOnChange = forbidChanges;
+40,41c40,41
+<     if (changeHandler != null) {
+<       changeHandler.reportChange();
+---
+>     if (assertOnChange) {
+>       Preconditions.checkState(false, "normalizeNodeType constraints violated");
+98,99c98
+<       n.removeProp(Node.FUNCTION_PROP);
+<       reportChange();
+---
+>       Preconditions.checkState(n.getProp(Node.FUNCTION_PROP) == null);

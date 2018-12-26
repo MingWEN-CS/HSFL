@@ -1,0 +1,587 @@
+23a24
+> import com.google.common.collect.Sets;
+30a32
+> import java.io.FileReader;
+31a34
+> import java.text.ParseException;
+32a36
+> import java.util.Collections;
+34a39
+> import java.util.Set;
+66a72,79
+>   private static final DiagnosticType INPUT_MAP_PROP_PARSE =
+>       DiagnosticType.error("JSC_INPUT_MAP_PROP_PARSE",
+>           "Input property map parse error: {0}");
+> 
+>   private static final DiagnosticType INPUT_MAP_VAR_PARSE =
+>       DiagnosticType.error("JSC_INPUT_MAP_VAR_PARSE",
+>           "Input variable map parse error: {0}");
+> 
+78a92,119
+>   
+>   private Set<String> exportedNames = null;
+> 
+>   
+> 
+> 
+> 
+>   private CrossModuleMethodMotion.IdGenerator crossModuleIdGenerator =
+>       new CrossModuleMethodMotion.IdGenerator();
+> 
+>   
+> 
+> 
+> 
+>   private Map<String, Integer> cssNames = null;
+> 
+>   
+>   private VariableMap variableMap = null;
+> 
+>   
+>   private VariableMap propertyMap = null;
+> 
+>   
+>   private VariableMap anonymousFunctionNameMap = null;
+> 
+>   
+>   private FunctionNames functionNames = null;
+> 
+83a125,147
+>   State getIntermediateState() {
+>     return new State(
+>         cssNames == null ? null : Maps.newHashMap(cssNames),
+>         exportedNames == null ? null :
+>             Collections.unmodifiableSet(exportedNames),
+>         crossModuleIdGenerator, variableMap, propertyMap,
+>         anonymousFunctionNameMap, functionNames);
+>   }
+> 
+>   @Override
+>   void setIntermediateState(State state) {
+>     this.cssNames = state.cssNames == null ? null :
+>         Maps.newHashMap(state.cssNames);
+>     this.exportedNames = state.exportedNames == null ? null :
+>         Sets.newHashSet(state.exportedNames);
+>     this.crossModuleIdGenerator = state.crossModuleIdGenerator;
+>     this.variableMap = state.variableMap;
+>     this.propertyMap = state.propertyMap;
+>     this.anonymousFunctionNameMap = state.anonymousFunctionNameMap;
+>     this.functionNames = state.functionNames;
+>   }
+> 
+>   @Override
+86a151,161
+>     if (options.nameAnonymousFunctionsOnly) {
+>       if (options.anonymousFunctionNaming ==
+>           AnonymousFunctionNamingPolicy.MAPPED) {
+>         checks.add(nameMappedAnonymousFunctions);
+>       } else if (options.anonymousFunctionNaming ==
+>           AnonymousFunctionNamingPolicy.UNMAPPED) {
+>         checks.add(nameUnmappedAnonymousFunctions);
+>       }
+>       return checks;
+>     }
+> 
+200a276,281
+> 
+>     if (options.instrumentationTemplate != null ||
+>         options.recordFunctionInformation) {
+>       checks.add(computeFunctionNames);
+>     }
+> 
+320a402,514
+>     if (options.flowSensitiveInlineVariables) {
+>       passes.add(flowSensitiveInlineVariables);
+>     }
+> 
+>     if (options.collapseAnonymousFunctions) {
+>       passes.add(collapseAnonymousFunctions);
+>     }
+> 
+>     
+>     if (options.moveFunctionDeclarations) {
+>       passes.add(moveFunctionDeclarations);
+>     }
+> 
+>     if (options.anonymousFunctionNaming ==
+>         AnonymousFunctionNamingPolicy.MAPPED) {
+>       passes.add(nameMappedAnonymousFunctions);
+>     }
+> 
+>     
+>     
+>     
+>     
+>     
+>     
+>     if (options.extractPrototypeMemberDeclarations &&
+>         (options.propertyRenaming != PropertyRenamingPolicy.HEURISTIC &&
+>          options.propertyRenaming !=
+>             PropertyRenamingPolicy.AGGRESSIVE_HEURISTIC)) {
+>       passes.add(extractPrototypeMemberDeclarations);
+>     }
+> 
+>     if (options.coalesceVariableNames) {
+>       passes.add(coalesceVariableNames);
+>     }
+> 
+>     if (options.ambiguateProperties &&
+>         (options.propertyRenaming == PropertyRenamingPolicy.ALL_UNQUOTED)) {
+>       passes.add(ambiguateProperties);
+>     }
+> 
+>     if (options.propertyRenaming != PropertyRenamingPolicy.OFF) {
+>       passes.add(renameProperties);
+>     }
+> 
+>     
+>     
+>     if (options.convertToDottedProperties) {
+>       passes.add(convertToDottedProperties);
+>     }
+> 
+>     
+>     
+>     
+>     
+>     if (options.rewriteFunctionExpressions) {
+>       passes.add(rewriteFunctionExpressions);
+>     }
+> 
+>     
+>     
+>     if (!options.aliasableStrings.isEmpty() || options.aliasAllStrings) {
+>       passes.add(aliasStrings);
+>     }
+> 
+>     if (options.aliasExternals) {
+>       passes.add(aliasExternals);
+>     }
+> 
+>     if (options.aliasKeywords) {
+>       passes.add(aliasKeywords);
+>     }
+> 
+>     if (options.collapseVariableDeclarations) {
+>       passes.add(collapseVariableDeclarations);
+>     }
+> 
+>     passes.add(denormalize);
+> 
+>     if (options.instrumentationTemplate != null) {
+>       passes.add(instrumentFunctions);
+>     }
+> 
+>     if (options.variableRenaming != VariableRenamingPolicy.ALL) {
+>       
+>       
+>       
+>       passes.add(invertContextualRenaming);
+>     }
+> 
+> 
+>     if (options.variableRenaming != VariableRenamingPolicy.OFF) {
+>       passes.add(renameVars);
+>     }
+> 
+>     
+>     if (options.processObjectPropertyString) {
+>       passes.add(objectPropertyStringPostprocess);
+>     }
+> 
+>     if (options.labelRenaming) {
+>       passes.add(renameLabels);
+>     }
+> 
+>     if (options.anonymousFunctionNaming ==
+>         AnonymousFunctionNamingPolicy.UNMAPPED) {
+>       passes.add(nameUnmappedAnonymousFunctions);
+>     }
+> 
+>     
+>     if (options.checkSymbols) {
+>       passes.add(sanityCheckVars);
+>     }
+> 
+495c689
+<           setExportedNames(pass.getExportedVariableNames());
+---
+>           exportedNames = pass.getExportedVariableNames();
+526c720
+<           Map<String, Integer> cssNames = null;
+---
+>           Map<String, Integer> newCssNames = null;
+528c722
+<             cssNames = Maps.newHashMap();
+---
+>             newCssNames = Maps.newHashMap();
+530c724
+<           (new ReplaceCssNames(compiler, cssNames)).process(
+---
+>           (new ReplaceCssNames(compiler, newCssNames)).process(
+532c726
+<           setCssNames(cssNames);
+---
+>           cssNames = newCssNames;
+795a990,998
+>   private final PassFactory computeFunctionNames =
+>       new PassFactory("computeFunctionNames", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return ((functionNames = new FunctionNames(compiler)));
+>     }
+>   };
+> 
+>   
+1134c1337
+<           compiler, getCrossModuleIdGenerator(),
+---
+>           compiler, crossModuleIdGenerator,
+1141a1345,1678
+>   private final PassFactory flowSensitiveInlineVariables =
+>       new PassFactory("flowSensitiveInlineVariables", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new FlowSensitiveInlineVariables(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory coalesceVariableNames =
+>       new PassFactory("coalesceVariableNames", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new CoalesceVariableNames(compiler);
+>     }
+>   };
+> 
+>   
+> 
+> 
+> 
+>   private final PassFactory collapseVariableDeclarations =
+>       new PassFactory("collapseVariableDeclarations", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       compiler.setUnnormalized();
+>       return new CollapseVariableDeclarations(compiler);
+>     }
+>   };
+> 
+>   
+> 
+> 
+>   private final PassFactory extractPrototypeMemberDeclarations =
+>       new PassFactory("extractPrototypeMemberDeclarations", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new ExtractPrototypeMemberDeclarations(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory rewriteFunctionExpressions =
+>       new PassFactory("rewriteFunctionExpressions", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new FunctionRewriter(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory collapseAnonymousFunctions =
+>       new PassFactory("collapseAnonymousFunctions", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new CollapseAnonymousFunctions(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory moveFunctionDeclarations =
+>       new PassFactory("moveFunctionDeclarations", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new MoveFunctionDeclarations(compiler);
+>     }
+>   };
+> 
+>   private final PassFactory nameUnmappedAnonymousFunctions =
+>       new PassFactory("nameAnonymousFunctions", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new NameAnonymousFunctions(compiler);
+>     }
+>   };
+> 
+>   private final PassFactory nameMappedAnonymousFunctions =
+>       new PassFactory("nameAnonymousFunctions", true) {
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       return new CompilerPass() {
+>         @Override public void process(Node externs, Node root) {
+>           NameAnonymousFunctionsMapped naf =
+>               new NameAnonymousFunctionsMapped(compiler);
+>           naf.process(externs, root);
+>           anonymousFunctionNameMap = naf.getFunctionMap();
+>         }
+>       };
+>     }
+>   };
+> 
+>   
+>   private final PassFactory aliasExternals =
+>       new PassFactory("aliasExternals", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new AliasExternals(compiler, compiler.getModuleGraph(),
+>           options.unaliasableGlobals, options.aliasableGlobals);
+>     }
+>   };
+> 
+>   
+> 
+> 
+> 
+>   private final PassFactory aliasStrings =
+>       new PassFactory("aliasStrings", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new AliasStrings(
+>           compiler,
+>           compiler.getModuleGraph(),
+>           options.aliasAllStrings ? null : options.aliasableStrings,
+>           options.aliasStringsBlacklist,
+>           options.outputJsStringUsage);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory aliasKeywords =
+>       new PassFactory("aliasKeywords", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new AliasKeywords(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory objectPropertyStringPostprocess =
+>       new PassFactory("ObjectPropertyStringPostprocess", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new ObjectPropertyStringPostprocess(compiler);
+>     }
+>   };
+> 
+>   
+> 
+> 
+> 
+>   private final PassFactory ambiguateProperties =
+>       new PassFactory("ambiguateProperties", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new AmbiguateProperties(
+>           compiler, options.anonymousFunctionNaming.getReservedCharacters());
+>     }
+>   };
+> 
+>   
+>   private final PassFactory normalize =
+>       new PassFactory("normalize", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       compiler.setNormalized();
+>       return new Normalize(compiler, false);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory denormalize =
+>       new PassFactory("denormalize", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       compiler.setUnnormalized();
+>       return new Denormalize(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory invertContextualRenaming =
+>       new PassFactory("invertNames", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return MakeDeclaredNamesUnique.getContextualRenameInverter(compiler);
+>     }
+>   };
+> 
+>   
+> 
+> 
+>   private final PassFactory renameProperties =
+>       new PassFactory("renameProperties", true) {
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       VariableMap map = null;
+>       if (options.inputPropertyMapSerialized != null) {
+>         try {
+>           map = VariableMap.fromBytes(options.inputPropertyMapSerialized);
+>         } catch (ParseException e) {
+>           return new ErrorPass(compiler,
+>               JSError.make(INPUT_MAP_PROP_PARSE, e.getMessage()));
+>         }
+>       }
+> 
+>       final VariableMap prevPropertyMap = map;
+>       return new CompilerPass() {
+>         @Override public void process(Node externs, Node root) {
+>           propertyMap = runPropertyRenaming(
+>               compiler, prevPropertyMap, externs, root);
+>         }
+>       };
+>     }
+>   };
+> 
+>   private VariableMap runPropertyRenaming(
+>       AbstractCompiler compiler, VariableMap prevPropertyMap,
+>       Node externs, Node root) {
+>     char[] reservedChars =
+>         options.anonymousFunctionNaming.getReservedCharacters();
+>     switch (options.propertyRenaming) {
+>       case HEURISTIC:
+>         RenamePrototypes rproto = new RenamePrototypes(compiler, false,
+>             reservedChars, prevPropertyMap);
+>         rproto.process(externs, root);
+>         return rproto.getPropertyMap();
+> 
+>       case AGGRESSIVE_HEURISTIC:
+>         RenamePrototypes rproto2 = new RenamePrototypes(compiler, true,
+>             reservedChars, prevPropertyMap);
+>         rproto2.process(externs, root);
+>         return rproto2.getPropertyMap();
+> 
+>       case ALL_UNQUOTED:
+>         RenameProperties rprop = new RenameProperties(
+>             compiler, options.generatePseudoNames, prevPropertyMap,
+>             reservedChars);
+>         rprop.process(externs, root);
+>         return rprop.getPropertyMap();
+> 
+>       default:
+>         throw new IllegalStateException(
+>             "Unrecognized property renaming policy");
+>     }
+>   }
+> 
+>   
+>   private final PassFactory renameVars =
+>       new PassFactory("renameVars", true) {
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       VariableMap map = null;
+>       if (options.inputVariableMapSerialized != null) {
+>         try {
+>           map = VariableMap.fromBytes(options.inputVariableMapSerialized);
+>         } catch (ParseException e) {
+>           return new ErrorPass(compiler,
+>               JSError.make(INPUT_MAP_VAR_PARSE, e.getMessage()));
+>         }
+>       }
+> 
+>       final VariableMap prevVariableMap = map;
+>       return new CompilerPass() {
+>         @Override public void process(Node externs, Node root) {
+>           variableMap = runVariableRenaming(
+>               compiler, prevVariableMap, externs, root);
+>         }
+>       };
+>     }
+>   };
+> 
+>   private VariableMap runVariableRenaming(
+>       AbstractCompiler compiler, VariableMap prevVariableMap,
+>       Node externs, Node root) {
+>     char[] reservedChars =
+>         options.anonymousFunctionNaming.getReservedCharacters();
+>     boolean preserveAnonymousFunctionNames =
+>         options.anonymousFunctionNaming != AnonymousFunctionNamingPolicy.OFF;
+>     RenameVars rn = new RenameVars(
+>         compiler,
+>         options.renamePrefix,
+>         options.variableRenaming == VariableRenamingPolicy.LOCAL,
+>         preserveAnonymousFunctionNames,
+>         options.generatePseudoNames,
+>         prevVariableMap,
+>         reservedChars,
+>         exportedNames);
+>     rn.process(externs, root);
+>     return rn.getVariableMap();
+>   }
+> 
+>   
+>   private final PassFactory renameLabels =
+>       new PassFactory("renameLabels", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new RenameLabels(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory convertToDottedProperties =
+>       new PassFactory("convertToDottedProperties", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new ConvertToDottedProperties(compiler);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory sanityCheckVars =
+>       new PassFactory("sanityCheckVars", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new VarCheck(compiler, true);
+>     }
+>   };
+> 
+>   
+>   private final PassFactory instrumentFunctions =
+>       new PassFactory("instrumentFunctions", true) {
+>     @Override
+>     protected CompilerPass createInternal(final AbstractCompiler compiler) {
+>       return new CompilerPass() {
+>         @Override public void process(Node externs, Node root) {
+>           try {
+>             FileReader templateFile =
+>                 new FileReader(options.instrumentationTemplate);
+>             (new InstrumentFunctions(
+>                 compiler, functionNames,
+>                 options.instrumentationTemplate,
+>                 options.appNameStr,
+>                 templateFile)).process(externs, root);
+>           } catch (IOException e) {
+>             compiler.report(
+>                 JSError.make(AbstractCompiler.READ_ERROR,
+>                     options.instrumentationTemplate));
+>           }
+>         }
+>       };
+>     }
+>   };
+> 
+>   
+1213c1750
+<     private final DiagnosticType error;
+---
+>     private final JSError error;
+1215a1753,1756
+>       this(compiler, JSError.make(error));
+>     }
+> 
+>     private ErrorPass(AbstractCompiler compiler, JSError error) {
+1222c1763
+<       compiler.report(JSError.make(error));
+---
+>       compiler.report(error);

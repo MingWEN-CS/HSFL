@@ -1,0 +1,71 @@
+526c526
+<         return join(array, "");
+---
+>         return join(array, null);
+541,542c541,557
+<         if (separator == null) {
+<             separator = "";
+---
+>         int arraySize = array.length;
+> 
+>         
+>         
+>         
+>         int bufSize 
+>             = ((arraySize == 0) ? 0 
+>                 : arraySize * (array[0].toString().length() 
+>                     + ((separator != null) ? separator.length(): 0)));
+> 
+>         StringBuffer buf = new StringBuffer(bufSize);
+> 
+>         for (int i = 0; i < arraySize; i++) {
+>             if ((separator != null) && (i > 0)) {
+>                 buf.append(separator);
+>          }
+>             buf.append(array[i]);
+543a559,572
+>         return buf.toString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String join(Object[] array, char separator) {
+545,546c574
+<         int bufSize = (arraySize == 0 ? 0 : (array[0].toString().length() +
+<                                  separator.length()) * arraySize);
+---
+>         int bufSize = (arraySize == 0 ? 0 : (array[0].toString().length() + 1) * arraySize);
+570,572c598,618
+<         if (separator == null) {
+<             separator = "";
+<         }
+---
+>         StringBuffer buf = new StringBuffer(256);  
+>         while (iterator.hasNext()) {
+>             buf.append(iterator.next());
+>             if ((separator != null) && iterator.hasNext()) {
+>                 buf.append(separator);
+>             }
+>          }
+>         return buf.toString();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static String join(Iterator iterator, char separator) {

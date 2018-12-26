@@ -1,0 +1,460 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.stat;
+
+import java.io.Serializable;
+import java.text.NumberFormat;
+import java.util.Iterator;
+import java.util.Comparator;
+import java.util.TreeMap;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class Frequency implements Serializable {
+    
+    
+    private static final long serialVersionUID = -3845586908418844111L;
+
+    
+    private TreeMap freqTable = null;
+
+    
+
+
+    public Frequency() {
+        freqTable = new TreeMap();
+    }
+    
+    
+
+
+
+
+    public Frequency(Comparator comparator) {
+        freqTable = new TreeMap(comparator);
+    }
+
+    
+
+
+
+
+
+    public String toString() {
+        NumberFormat nf = NumberFormat.getPercentInstance();
+        StringBuffer outBuffer = new StringBuffer();
+        outBuffer.append("Value \t Freq. \t Pct. \t Cum Pct. \n");
+        Iterator iter = freqTable.keySet().iterator();
+        while (iter.hasNext()) {
+            Object value = iter.next();
+            outBuffer.append(value);
+            outBuffer.append('\t');
+            outBuffer.append(getCount(value));
+            outBuffer.append('\t');
+            outBuffer.append(nf.format(getPct(value)));
+            outBuffer.append('\t');
+            outBuffer.append(nf.format(getCumPct(value)));
+            outBuffer.append('\n');
+        }
+        return outBuffer.toString();
+    }
+
+    
+
+
+
+
+
+    public void addValue(Object v) {
+        Object obj = v;
+        if (v instanceof Integer) {
+           obj = Long.valueOf(((Integer) v).longValue());
+        }
+        try {
+            Long count = (Long) freqTable.get(obj);
+            if (count == null) {
+                freqTable.put(obj, Long.valueOf(1));
+            } else {
+                freqTable.put(obj, Long.valueOf(count.longValue() + 1));
+            }
+        } catch (ClassCastException ex) {   
+            
+            throw new IllegalArgumentException("Value not comparable to existing values.");
+        }
+    }
+
+    
+
+
+
+
+    public void addValue(int v) {
+        addValue(Long.valueOf(v));
+    }
+    
+    
+
+
+
+
+    public void addValue(Integer v) {
+        addValue(Long.valueOf(v.longValue()));
+    }
+
+    
+
+
+
+
+    public void addValue(long v) {
+        addValue(Long.valueOf(v));
+    }
+    
+    
+
+
+
+
+    public void addValue(char v) {
+        addValue(new Character(v));
+    }
+    
+    
+    public void clear() {
+        freqTable.clear();
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public Iterator valuesIterator() {
+        return freqTable.keySet().iterator();
+    }
+    
+    
+    
+    
+
+
+
+
+    public long getSumFreq() {
+        long result = 0;
+        Iterator iterator = freqTable.values().iterator();
+        while (iterator.hasNext())  {
+            result += ((Long) iterator.next()).longValue();
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+    public long getCount(Object v) {
+        if (v instanceof Integer) {
+            return getCount(((Integer) v).longValue());
+        }
+        long result = 0;
+        try { 
+            Long count =  (Long) freqTable.get(v);
+            if (count != null) {
+                result = count.longValue();
+            }
+        } catch (ClassCastException ex) {
+            
+        }
+        return result;
+    }
+
+    
+
+
+
+
+
+    public long getCount(int v) {
+        return getCount(Long.valueOf(v));
+    }
+    
+    
+
+
+
+
+
+    public long getCount(long v) {
+        return getCount(Long.valueOf(v));
+    }
+    
+    
+
+
+
+
+
+    public long getCount(char v) {
+        return getCount(new Character(v));
+    }
+    
+    
+
+    
+
+
+
+
+
+
+
+
+    public double getPct(Object v) {
+        if (getSumFreq() == 0) {
+            return Double.NaN;
+        }
+        return (double) getCount(v) / (double) getSumFreq();        
+    }
+    
+    
+
+
+
+
+
+
+    public double getPct(int v) {
+        return getPct(Long.valueOf(v));       
+    }
+    
+    
+
+
+
+
+
+
+    public double getPct(long v) {
+        return getPct(Long.valueOf(v));         
+    }
+    
+    
+
+
+
+
+
+
+    public double getPct(char v) {
+        return getPct(new Character(v));         
+    }
+    
+    
+    
+    
+
+
+
+
+
+
+
+    public long getCumFreq(Object v) {
+        if (getSumFreq() == 0) {
+            return 0;
+        }
+        if (v instanceof Integer) {
+            return getCumFreq(((Integer) v).longValue());
+        }
+        Comparator c = freqTable.comparator();
+        if (c == null) {
+            c = new NaturalComparator();
+        }
+        long result = 0;
+        
+        try {
+            Long value = (Long) freqTable.get(v);
+            if (value != null) {
+                result = value.longValue();
+            }
+        } catch (ClassCastException ex) {
+            return result;   
+        }
+        
+        if (c.compare(v, freqTable.firstKey()) < 0) {
+            return 0;  
+        }
+        
+        if (c.compare(v, freqTable.lastKey()) >= 0) {
+            return getSumFreq();    
+        }
+        
+        Iterator values = valuesIterator();
+        while (values.hasNext()) {
+            Object nextValue = values.next();
+            if (c.compare(v, nextValue) > 0) {
+                result += getCount(nextValue);
+            } else {
+                return result;
+            }
+        }
+        return result;
+    }
+    
+     
+
+
+
+
+
+
+
+    public long getCumFreq(int v) {
+        return getCumFreq(Long.valueOf(v));       
+    }
+    
+     
+
+
+
+
+
+
+
+    public long getCumFreq(long v) {
+        return getCumFreq(Long.valueOf(v));         
+    }
+    
+    
+
+
+
+
+
+
+
+    public long getCumFreq(char v) {
+        return getCumFreq(new Character(v));         
+    }
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+    public double getCumPct(Object v) {
+        if (getSumFreq() == 0) {
+            return Double.NaN;
+        }
+        return (double) getCumFreq(v) / (double) getSumFreq();        
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public double getCumPct(int v) {
+        return getCumPct(Long.valueOf(v));       
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public double getCumPct(long v) {
+        return getCumPct(Long.valueOf(v));         
+    }
+    
+    
+
+
+
+
+
+
+
+
+    public double getCumPct(char v) {
+        return getCumPct(new Character(v));         
+    }
+    
+    
+
+
+
+    private static class NaturalComparator implements Comparator, Serializable {
+
+        
+        private static final long serialVersionUID = -3852193713161395148L;
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        public int compare(Object o1, Object o2) {
+            return ((Comparable)o1).compareTo(o2);
+        }
+    }
+}

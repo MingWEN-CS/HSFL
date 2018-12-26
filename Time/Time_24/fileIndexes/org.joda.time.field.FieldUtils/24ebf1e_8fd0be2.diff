@@ -1,0 +1,54 @@
+117,118c117,140
+<     public static long safeMultiply(long val1, long val2) {
+<         if (val1 == 0 || val2 == 0) {
+---
+> 
+>     public static int safeMultiply(int val1, int val2) {
+>         long total = (long) val1 * (long) val2;
+>         if (total < Integer.MIN_VALUE || total > Integer.MAX_VALUE) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " * " + val2);
+>         }
+>         return (int) total;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static long safeMultiply(long val1, int scalar) {
+>         switch (scalar) {
+>         case -1:
+>             return -val1;
+>         case 0:
+119a142,166
+>         case 1:
+>             return val1;
+>         }
+>         long total = val1 * scalar;
+>         if (total / scalar != val1) {
+>             throw new ArithmeticException
+>                 ("The calculation caused an overflow: " + val1 + " * " + scalar);
+>         }
+>         return total;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static long safeMultiply(long val1, long val2) {
+>         if (val2 == 1) {
+>             return val1;
+>         }
+>         if (val2 == 0) {
+>             return 0;

@@ -1,0 +1,142 @@
+92a93
+> 
+164c165
+<             return sep.finish(toFormatter(formatters.subList(1, size)));
+---
+>             return sep.finish((BasePeriodFormatter) toFormatter(formatters.subList(1, size)));
+166c167
+<         return createComposite(formatters);
+---
+>         return (PeriodFormatter) createComposite(formatters);
+191,193c192
+<     public PeriodFormatterBuilder append(PeriodFormatter formatter)
+<         throws IllegalArgumentException
+<     {
+---
+>     public PeriodFormatterBuilder append(PeriodFormatter formatter) {
+196a196,198
+>         if (formatter instanceof BasePeriodFormatter == false) {
+>             throw new IllegalArgumentException("Formatter must extend BasePeriodFormatter");
+>         }
+675c677
+<             PeriodFormatter composite = createComposite(formatters);
+---
+>             BasePeriodFormatter composite = createComposite(formatters);
+690c692
+<     private static PeriodFormatter createComposite(List formatters) {
+---
+>     private static BasePeriodFormatter createComposite(List formatters) {
+695c697
+<                 return (PeriodFormatter) formatters.get(0);
+---
+>                 return (BasePeriodFormatter) formatters.get(0);
+706c708
+<     private static interface PeriodFieldAffix {
+---
+>     static interface PeriodFieldAffix {
+728c730
+<     private static final class SimpleAffix implements PeriodFieldAffix {
+---
+>     static class SimpleAffix implements PeriodFieldAffix {
+774c776
+<     private static final class PluralAffix implements PeriodFieldAffix {
+---
+>     static class PluralAffix implements PeriodFieldAffix {
+849c851
+<     private static final class CompositeAffix implements PeriodFieldAffix {
+---
+>     static class CompositeAffix implements PeriodFieldAffix {
+894,896c896,898
+<     private static final class FieldFormatter extends AbstractPeriodFormatter
+<         implements PeriodFormatter
+<     {
+---
+>     static class FieldFormatter
+>             extends BasePeriodFormatter
+>             implements PeriodFormatter {
+1368,1370c1370,1372
+<     private static final class Literal extends AbstractPeriodFormatter
+<         implements PeriodFormatter
+<     {
+---
+>     static class Literal
+>             extends BasePeriodFormatter
+>             implements PeriodFormatter {
+1408,1410c1410,1412
+<     private static final class Separator extends AbstractPeriodFormatter
+<         implements PeriodFormatter
+<     {
+---
+>     static class Separator
+>             extends BasePeriodFormatter
+>             implements PeriodFormatter {
+1417,1418c1419,1420
+<         private PeriodFormatter iBefore;
+<         private PeriodFormatter iAfter;
+---
+>         private BasePeriodFormatter iBefore;
+>         private BasePeriodFormatter iAfter;
+1420c1422
+<         Separator(String text, String finalText, PeriodFormatter before, boolean useBefore, boolean useAfter) {
+---
+>         Separator(String text, String finalText, BasePeriodFormatter before, boolean useBefore, boolean useAfter) {
+1437,1438c1439,1440
+<             PeriodPrinter before = iBefore;
+<             PeriodPrinter after = iAfter;
+---
+>             BasePeriodFormatter before = iBefore;
+>             BasePeriodFormatter after = iAfter;
+1462,1463c1464,1465
+<             PeriodPrinter before = iBefore;
+<             PeriodPrinter after = iAfter;
+---
+>             BasePeriodFormatter before = iBefore;
+>             BasePeriodFormatter after = iAfter;
+1484,1485c1486,1487
+<             PeriodPrinter before = iBefore;
+<             PeriodPrinter after = iAfter;
+---
+>             BasePeriodFormatter before = iBefore;
+>             BasePeriodFormatter after = iAfter;
+1527c1529
+<         Separator finish(PeriodFormatter after) {
+---
+>         Separator finish(BasePeriodFormatter after) {
+1537,1540c1539,1543
+<     private static final class Composite extends AbstractPeriodFormatter
+<         implements PeriodFormatter
+<     {
+<         private final PeriodFormatter[] iFormatters;
+---
+>     static class Composite
+>             extends BasePeriodFormatter
+>             implements PeriodFormatter {
+>         
+>         private final BasePeriodFormatter[] iFormatters;
+1543,1544c1546,1547
+<             iFormatters = (PeriodFormatter[])formatters.toArray
+<                 (new PeriodFormatter[formatters.size()]);
+---
+>             iFormatters = (BasePeriodFormatter[]) formatters.toArray(
+>                 new BasePeriodFormatter[formatters.size()]);
+1549c1552
+<             PeriodPrinter[] printers = iFormatters;
+---
+>             BasePeriodFormatter[] printers = iFormatters;
+1558c1561
+<             PeriodPrinter[] printers = iFormatters;
+---
+>             BasePeriodFormatter[] printers = iFormatters;
+1566c1569
+<             PeriodPrinter[] printers = iFormatters;
+---
+>             BasePeriodFormatter[] printers = iFormatters;
+1574c1577
+<             PeriodPrinter[] printers = iFormatters;
+---
+>             BasePeriodFormatter[] printers = iFormatters;
+1583,1584c1586
+<             PeriodParser[] parsers = iFormatters;
+< 
+---
+>             BasePeriodFormatter[] parsers = iFormatters;

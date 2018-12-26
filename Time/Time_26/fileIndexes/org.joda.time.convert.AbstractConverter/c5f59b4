@@ -1,0 +1,174 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.convert;
+
+import org.joda.time.Chronology;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.PeriodType;
+import org.joda.time.ReadablePartial;
+import org.joda.time.chrono.ISOChronology;
+import org.joda.time.format.DateTimeFormatter;
+
+
+
+
+
+
+
+public abstract class AbstractConverter implements Converter {
+
+    
+
+
+    protected AbstractConverter() {
+        super();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, Chronology chrono) {
+        return DateTimeUtils.currentTimeMillis();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public long getInstantMillis(Object object, Chronology chrono, DateTimeFormatter parser) {
+        return getInstantMillis(object, chrono);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object, DateTimeZone zone) {
+        return ISOChronology.getInstance(zone);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public Chronology getChronology(Object object, Chronology chrono) {
+        return DateTimeUtils.getChronology(chrono);
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    public int[] getPartialValues(ReadablePartial fieldSource, Object object, Chronology chrono) {
+        long instant = getInstantMillis(object, chrono);
+        return chrono.get(fieldSource, instant);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int[] getPartialValues(ReadablePartial fieldSource, Object object, Chronology chrono,
+                                  DateTimeFormatter parser)
+    {
+        long instant = getInstantMillis(object, chrono, parser);
+        return chrono.get(fieldSource, instant);
+    }
+
+    
+    
+
+
+
+
+
+    public PeriodType getPeriodType(Object object) {
+        return PeriodType.standard();
+    }
+
+    
+    
+
+
+
+
+
+
+
+
+    public boolean isReadableInterval(Object object, Chronology chrono) {
+        return false;
+    }
+
+    
+    
+
+
+
+
+    public String toString() {
+        return "Converter[" + (getSupportedType() == null ? "null" : getSupportedType().getName()) + "]";
+    }
+
+}

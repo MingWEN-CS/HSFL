@@ -1,0 +1,124 @@
+2754a2755,2877
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Object[] join(Object[] array1, Object[] array2) {
+>         if (array1 == null) {
+>             return array2;
+>         } else if (array2 == null) {
+>             return array1;
+>         } else {
+>             Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length
+>                 + array2.length);
+>             System.arraycopy(array1, 0, joinedArray, 0, array1.length);
+>             System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+>             return joinedArray;
+>         }
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Object[] add(Object[] array, Object element) {
+>         Object joinedArray;
+>         int elementPos;
+>         if (array != null) {
+>             joinedArray = Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+>             System.arraycopy(array, 0, joinedArray, 0, array.length);
+>             elementPos = array.length;
+>         } else {
+>             
+>             joinedArray = Array.newInstance(element != null ? element.getClass() : Object.class, 1);
+>             elementPos = 0;
+>         }
+>         Array.set(joinedArray, elementPos, element);
+>         return (Object[]) joinedArray;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Object[] add(final Object[] array, final int index, final Object element) {
+>         if (array == null) {
+>             if (index != 0) {
+>                 throw new IndexOutOfBoundsException("Index: " + index + ", Length: 0");
+>             }
+>             Object joinedArray = Array.newInstance(element != null ? element.getClass() : Object.class, 1);
+>             Array.set(joinedArray, 0, element);
+>             return (Object[]) joinedArray;
+>         }
+>         int length = array.length;
+>         if (index > length || index < 0) {
+>             throw new IndexOutOfBoundsException("Index: " + index + ", Length: " + length);
+>         }
+>         Object result = Array.newInstance(array.getClass().getComponentType(), length + 1);
+>         System.arraycopy(array, 0, result, 0, index);
+>         Array.set(result, index, element);
+>         if (index < length) {
+>             System.arraycopy(array, index, result, index + 1, length - index);
+>         }
+>         return (Object[]) result;
+>     }

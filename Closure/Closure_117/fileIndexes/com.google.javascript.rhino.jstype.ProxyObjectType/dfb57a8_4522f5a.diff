@@ -1,0 +1,138 @@
+41a42
+> import com.google.common.collect.ImmutableSet;
+44a46
+> import java.util.Collections;
+57c59,60
+<   ObjectType referencedType;
+---
+>   private JSType referencedType;
+>   private ObjectType referencedObjType;
+59c62
+<   ProxyObjectType(JSTypeRegistry registry, ObjectType referencedType) {
+---
+>   ProxyObjectType(JSTypeRegistry registry, JSType referencedType) {
+60a64,71
+>     setReferencedType(referencedType);
+>   }
+> 
+>   JSType getReferencedTypeInternal() {
+>     return referencedType;
+>   }
+> 
+>   void setReferencedType(JSType referencedType) {
+61a73,77
+>     if (referencedType instanceof ObjectType) {
+>       this.referencedObjType = (ObjectType) referencedType;
+>     } else {
+>       this.referencedObjType = null;
+>     }
+66c82,83
+<     return referencedType.getReferenceName();
+---
+>     return referencedObjType == null ?
+>         "" : referencedObjType.getReferenceName();
+71c88,89
+<     return referencedType.hasReferenceName();
+---
+>     return referencedObjType == null ?
+>         null : referencedObjType.hasReferenceName();
+159c177,178
+<     return referencedType.getCtorImplementedInterfaces();
+---
+>     return referencedObjType == null ? Collections.<ObjectType>emptyList() :
+>         referencedObjType.getCtorImplementedInterfaces();
+187c206,207
+<     return referencedType.getImplicitPrototype();
+---
+>     return referencedObjType == null ? null :
+>         referencedObjType.getImplicitPrototype();
+193,194c213,215
+<     return referencedType.defineProperty(propertyName, type, inferred,
+<                                          inExterns);
+---
+>     return referencedObjType == null ? true :
+>         referencedObjType.defineProperty(
+>             propertyName, type, inferred, inExterns);
+199c220,221
+<     return referencedType.isPropertyTypeDeclared(propertyName);
+---
+>     return referencedObjType == null ? false :
+>         referencedObjType.isPropertyTypeDeclared(propertyName);
+204c226,227
+<     return referencedType.isPropertyTypeInferred(propertyName);
+---
+>     return referencedObjType == null ? false :
+>         referencedObjType.isPropertyTypeInferred(propertyName);
+209c232,233
+<     return referencedType.isPropertyInExterns(propertyName);
+---
+>     return referencedObjType == null ? false :
+>         referencedObjType.isPropertyInExterns(propertyName);
+214c238,239
+<     return referencedType.getPropertiesCount();
+---
+>     return referencedObjType == null ? 0 :
+>         referencedObjType.getPropertiesCount();
+219c244,246
+<     referencedType.collectPropertyNames(props);
+---
+>     if (referencedObjType != null) {
+>       referencedObjType.collectPropertyNames(props);
+>     }
+229c256,258
+<     return referencedType.getPropertyType(propertyName);
+---
+>     return referencedObjType == null ?
+>         getNativeType(JSTypeNative.UNKNOWN_TYPE) :
+>         referencedObjType.getPropertyType(propertyName);
+239c268,270
+<     referencedType.setJSDocInfo(info);
+---
+>     if (referencedObjType != null) {
+>       referencedObjType.setJSDocInfo(info);
+>     }
+244c275,276
+<     return referencedType.getOwnPropertyJSDocInfo(propertyName);
+---
+>     return referencedObjType == null ? null :
+>         referencedObjType.getOwnPropertyJSDocInfo(propertyName);
+250c282,284
+<     referencedType.setPropertyJSDocInfo(propertyName, info, inExterns);
+---
+>     if (referencedObjType != null) {
+>       referencedObjType.setPropertyJSDocInfo(propertyName, info, inExterns);
+>     }
+255c289,290
+<     return referencedType.hasProperty(propertyName);
+---
+>     return referencedObjType == null ? false :
+>         referencedObjType.hasProperty(propertyName);
+260c295,296
+<     return referencedType.hasOwnProperty(propertyName);
+---
+>     return referencedObjType == null ? false :
+>         referencedObjType.hasOwnProperty(propertyName);
+265c301,302
+<     return referencedType.getOwnPropertyNames();
+---
+>     return referencedObjType == null ? ImmutableSet.<String>of() :
+>         referencedObjType.getOwnPropertyNames();
+270c307,308
+<     return referencedType.getConstructor();
+---
+>     return referencedObjType == null ? null :
+>         referencedObjType.getConstructor();
+275c313,314
+<     return referencedType.getParameterType();
+---
+>     return referencedObjType == null ? null :
+>         referencedObjType.getParameterType();
+280c319,320
+<     return referencedType.getIndexType();
+---
+>     return referencedObjType == null ? null :
+>         referencedObjType.getIndexType();
+290c330
+<     referencedType = (ObjectType) referencedType.resolve(t, scope);
+---
+>     setReferencedType(referencedType.resolve(t, scope));

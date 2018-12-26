@@ -1,0 +1,62 @@
+303c303
+<       String propAlias = alias + '$' + p.name;
+---
+>       String propAlias = appendPropForAlias(alias, p.name);
+451c451,452
+<         collapseDeclarationOfNameAndDescendants(p, alias + '$' + p.name);
+---
+>         collapseDeclarationOfNameAndDescendants(
+>             p, appendPropForAlias(alias, p.name));
+457c458,459
+<           updateSimpleDeclaration(alias + '$' + p.name, p.declaration);
+---
+>           updateSimpleDeclaration(
+>               appendPropForAlias(alias, p.name), p, p.declaration);
+473c475,476
+<   private void updateSimpleDeclaration(String alias, Ref ref) {
+---
+> 
+>   private void updateSimpleDeclaration(String alias, Name refName, Ref ref) {
+482c485
+<         alias.replace("$", "."));
+---
+>         refName.fullName());
+612c615
+<           alias, rvalue,
+---
+>           n, alias, rvalue,
+669c672
+<           name, rvalue, varNode, gramps.getChildBefore(varNode),
+---
+>           n, name, rvalue, varNode, gramps.getChildBefore(varNode),
+722,723c725,726
+<       String alias, Node objlit, Node varNode, Node nameToAddAfter,
+<       Node varParent, boolean discardKeys) {
+---
+>       Name objlitName, String alias, Node objlit, Node varNode,
+>       Node nameToAddAfter, Node varParent, boolean discardKeys) {
+739,742c742,745
+<       String propAlias = alias + '$' +
+<           (isJsIdentifier ? key.getString()
+<               : String.valueOf(++arbitraryNameCounter));
+<       String qName = propAlias.replace('$', '.');
+---
+>       String propName = isJsIdentifier ?
+>           key.getString() : String.valueOf(++arbitraryNameCounter);
+>       String propAlias = appendPropForAlias(alias, propName);
+>       String qName = objlitName.fullName() + '.' + propName;
+818c821
+<           String propAlias = alias + '$' + p.name;
+---
+>           String propAlias = appendPropForAlias(alias, p.name);
+839a843,852
+>   }
+> 
+>   private static String appendPropForAlias(String root, String prop) {
+>     if (prop.indexOf('$') != -1) {
+>       
+>       
+>       
+>       prop = prop.replaceAll("\\$", "\\$0");
+>     }
+>     return root + '$' + prop;

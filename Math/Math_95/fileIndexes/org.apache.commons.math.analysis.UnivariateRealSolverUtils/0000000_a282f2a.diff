@@ -1,0 +1,176 @@
+1a2,176
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.apache.commons.math.analysis;
+> 
+> import org.apache.commons.math.MathException;
+> 
+> 
+> 
+> 
+> 
+> public class UnivariateRealSolverUtils {
+>     
+> 
+> 
+>     private UnivariateRealSolverUtils() {
+>         super();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double solve(UnivariateRealFunction f, double x0, double x1)
+>         throws MathException
+>     {
+>         if(f == null){
+>             throw new IllegalArgumentException("f can not be null.");    
+>         }
+>         
+>         return UnivariateRealSolverFactory.newInstance().newDefaultSolver(f)
+>             .solve(x0, x1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double solve(
+>         UnivariateRealFunction f,
+>         double x0,
+>         double x1,
+>         double absoluteAccuracy)
+>         throws MathException
+>     {
+>         if(f == null){
+>             throw new IllegalArgumentException("f can not be null.");    
+>         }
+>             
+>         UnivariateRealSolver solver = UnivariateRealSolverFactory.newInstance()
+>             .newDefaultSolver(f);
+>         solver.setAbsoluteAccuracy(absoluteAccuracy);
+>         return solver.solve(x0, x1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double[] bracket(UnivariateRealFunction function,
+>                                    double initial,
+>                                    double lowerBound,
+>                                    double upperBound) throws MathException {
+>         return bracket( function, initial, lowerBound, upperBound,
+>             Integer.MAX_VALUE ) ;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static double[] bracket(UnivariateRealFunction function,
+>                                    double initial,
+>                                    double lowerBound,
+>                                    double upperBound,
+>                                    int maximumIterations) throws MathException {
+>         double a = initial;
+>         double b = initial;
+>         double fa;
+>         double fb;
+>         int numIterations = 0 ;
+>     
+>         do {
+>             a = Math.max(a - 1.0, lowerBound);
+>             b = Math.min(b + 1.0, upperBound);
+>             fa = function.value(a);
+>             fb = function.value(b);
+>             numIterations += 1 ;
+>         } while ( (fa * fb > 0.0) && ( numIterations < maximumIterations ) );
+>     
+>         return new double[]{a, b};
+>     }
+> }

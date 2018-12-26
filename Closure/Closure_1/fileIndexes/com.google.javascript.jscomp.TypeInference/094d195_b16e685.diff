@@ -1,0 +1,103 @@
+75a76,80
+>   static final DiagnosticType FUNCTION_LITERAL_UNDEFINED_THIS =
+>     DiagnosticType.warning(
+>         "JSC_FUNCTION_LITERAL_UNDEFINED_THIS",
+>         "Function literal argument refers to undefined this argument");
+> 
+871,878c876,881
+<         if (i + 1 >= childCount) {
+<           
+<           return;
+<         }
+<         Node iArgument = n.getChildAtIndex(i + 1);
+<         JSType iArgumentType = getJSType(iArgument);
+<         if (iArgumentType != null) {
+<           iArgumentType = iArgumentType.restrictByNotNullOrUndefined();
+---
+>         JSType iArgumentType = null;
+>         boolean foundTemplateTypeArgument = false;
+>         if (i + 1 < childCount) {
+>           foundTemplateTypeArgument = true;
+>           Node iArgument = n.getChildAtIndex(i + 1);
+>           iArgumentType = getJSType(iArgument).restrictByNotNullOrUndefined();
+882c885
+<                              TEMPLATE_TYPE_NOT_OBJECT_TYPE));
+---
+>                     TEMPLATE_TYPE_NOT_OBJECT_TYPE));
+884a888
+>         }
+886,894c890,900
+<           
+<           boolean foundTemplateTypeOfThisParameter = false;
+<           int j = 0;
+<           for (Node jParameter : fnType.getParameters()) {
+<             JSType jParameterType = getJSType(jParameter);
+<             if (jParameterType instanceof FunctionType) {
+<               FunctionType jParameterFnType = (FunctionType) jParameterType;
+<               if (jParameterFnType.getTypeOfThis().equals(iParameterType)) {
+<                 foundTemplateTypeOfThisParameter = true;
+---
+>         
+>         boolean foundTemplateTypeOfThisParameter = false;
+>         int j = 0;
+>         for (Node jParameter : fnType.getParameters()) {
+>           JSType jParameterType = getJSType(jParameter);
+>           if (jParameterType instanceof FunctionType) {
+>             FunctionType jParameterFnType = (FunctionType) jParameterType;
+>             if (jParameterFnType.getTypeOfThis().equals(iParameterType)) {
+>               foundTemplateTypeOfThisParameter = true;
+>               
+>               if (j + 1 >= childCount) {
+896,903c902,908
+<                 if (j + 1 >= childCount) {
+<                   
+<                   return;
+<                 }
+<                 Node jArgument = n.getChildAtIndex(j + 1);
+<                 JSType jArgumentType = getJSType(jArgument);
+<                 if (jArgument.getType() == Token.FUNCTION &&
+<                     jArgumentType instanceof FunctionType) {
+---
+>                 return;
+>               }
+>               Node jArgument = n.getChildAtIndex(j + 1);
+>               JSType jArgumentType = getJSType(jArgument);
+>               if (jArgument.getType() == Token.FUNCTION &&
+>                   jArgumentType instanceof FunctionType) {
+>                 if (foundTemplateTypeArgument) {
+906c911
+<                   FunctionType jArgumentFnType =(FunctionType) jArgumentType;
+---
+>                   FunctionType jArgumentFnType = (FunctionType) jArgumentType;
+913a919,925
+>                 } else {
+>                   
+>                   if (NodeUtil.referencesThis(
+>                           NodeUtil.getFunctionBody(jArgument))) {
+>                     compiler.report(JSError.make(NodeUtil.getSourceName(n), n,
+>                         FUNCTION_LITERAL_UNDEFINED_THIS));
+>                   }
+915,916d926
+<                 
+<                 
+917a928,929
+>               
+>               
+919d930
+<             j++;
+920a932,933
+>           j++;
+>         }
+922,927c935,939
+<           if (!foundTemplateTypeOfThisParameter) {
+<             Node source = fnType.getSource();
+<             compiler.report(JSError.make(NodeUtil.getSourceName(source), source,
+<                                          TEMPLATE_TYPE_OF_THIS_EXPECTED));
+<             return;
+<           }
+---
+>         if (!foundTemplateTypeOfThisParameter) {
+>           Node source = fnType.getSource();
+>           compiler.report(JSError.make(NodeUtil.getSourceName(source), source,
+>               TEMPLATE_TYPE_OF_THIS_EXPECTED));
+>           return;

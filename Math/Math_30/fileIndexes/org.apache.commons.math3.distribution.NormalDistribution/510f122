@@ -1,0 +1,235 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math3.distribution;
+
+import org.apache.commons.math3.exception.NotStrictlyPositiveException;
+import org.apache.commons.math3.exception.NumberIsTooLargeException;
+import org.apache.commons.math3.exception.util.LocalizedFormats;
+import org.apache.commons.math3.special.Erf;
+import org.apache.commons.math3.util.FastMath;
+
+
+
+
+
+
+
+
+public class NormalDistribution extends AbstractRealDistribution {
+    
+
+
+
+    public static final double DEFAULT_INVERSE_ABSOLUTE_ACCURACY = 1e-9;
+    
+    private static final long serialVersionUID = 8589540077390120676L;
+    
+    private static final double SQRT2PI = FastMath.sqrt(2 * FastMath.PI);
+    
+    private static final double SQRT2 = FastMath.sqrt(2.0);
+    
+    private final double mean;
+    
+    private final double standardDeviation;
+    
+    private final double solverAbsoluteAccuracy;
+
+    
+
+
+
+
+
+
+    public NormalDistribution(double mean, double sd)
+        throws NotStrictlyPositiveException {
+        this(mean, sd, DEFAULT_INVERSE_ABSOLUTE_ACCURACY);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public NormalDistribution(double mean, double sd, double inverseCumAccuracy)
+        throws NotStrictlyPositiveException {
+        if (sd <= 0) {
+            throw new NotStrictlyPositiveException(LocalizedFormats.STANDARD_DEVIATION, sd);
+        }
+
+        this.mean = mean;
+        standardDeviation = sd;
+        solverAbsoluteAccuracy = inverseCumAccuracy;
+    }
+
+    
+
+
+
+    public NormalDistribution() {
+        this(0, 1);
+    }
+
+    
+
+
+
+
+    public double getMean() {
+        return mean;
+    }
+
+    
+
+
+
+
+    public double getStandardDeviation() {
+        return standardDeviation;
+    }
+
+    
+
+
+
+
+
+
+    public double probability(double x) {
+        return 0.0;
+    }
+
+    
+    public double density(double x) {
+        final double x0 = x - mean;
+        final double x1 = x0 / standardDeviation;
+        return FastMath.exp(-0.5 * x1 * x1) / (standardDeviation * SQRT2PI);
+    }
+
+    
+
+
+
+
+
+
+    public double cumulativeProbability(double x)  {
+        final double dev = x - mean;
+        if (FastMath.abs(dev) > 40 * standardDeviation) {
+            return dev < 0 ? 0.0d : 1.0d;
+        }
+        return 0.5 * (1 + Erf.erf(dev / (standardDeviation * SQRT2)));
+    }
+
+    
+    @Override
+    public double cumulativeProbability(double x0, double x1)
+        throws NumberIsTooLargeException {
+        if (x0 > x1) {
+            throw new NumberIsTooLargeException(LocalizedFormats.LOWER_ENDPOINT_ABOVE_UPPER_ENDPOINT,
+                                                x0, x1, true);
+        }
+        final double denom = standardDeviation * SQRT2;
+        final double v0 = (x0 - mean) / denom;
+        final double v1 = (x1 - mean) / denom;
+        return 0.5 * Erf.erf(v0, v1);
+    }
+
+    
+    @Override
+    protected double getSolverAbsoluteAccuracy() {
+        return solverAbsoluteAccuracy;
+    }
+
+    
+
+
+
+
+    public double getNumericalMean() {
+        return getMean();
+    }
+
+    
+
+
+
+
+    public double getNumericalVariance() {
+        final double s = getStandardDeviation();
+        return s * s;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public double getSupportLowerBound() {
+        return Double.NEGATIVE_INFINITY;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public double getSupportUpperBound() {
+        return Double.POSITIVE_INFINITY;
+    }
+
+    
+    public boolean isSupportLowerBoundInclusive() {
+        return false;
+    }
+
+    
+    public boolean isSupportUpperBoundInclusive() {
+        return false;
+    }
+
+    
+
+
+
+
+
+
+    public boolean isSupportConnected() {
+        return true;
+    }
+
+    
+    @Override
+    public double sample()  {
+        return randomData.nextGaussian(mean, standardDeviation);
+    }
+}

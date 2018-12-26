@@ -1,0 +1,74 @@
+76,78d75
+<   private enum PropAccess { ANY, STRUCT, DICT }
+< 
+<   
+103,107d99
+<   private PropAccess propAccess;
+< 
+<   
+< 
+< 
+140,142c132,134
+<                ArrowType arrowType, ObjectType typeOfThis,
+<                ImmutableList<String> templateTypeNames,
+<                boolean isConstructor, boolean nativeType) {
+---
+>       ArrowType arrowType, ObjectType typeOfThis,
+>       ImmutableList<String> templateTypeNames,
+>       boolean isConstructor, boolean nativeType) {
+151a144
+>     this.kind = isConstructor ? Kind.CONSTRUCTOR : Kind.ORDINARY;
+153,154d145
+<       this.kind = Kind.CONSTRUCTOR;
+<       this.propAccess = PropAccess.ANY;
+158d148
+<       this.kind = Kind.ORDINARY;
+209,256d198
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   public boolean makesStructs() {
+<     if (!isConstructor()) {
+<       return false;
+<     }
+<     if (propAccess == PropAccess.STRUCT) {
+<       return true;
+<     }
+<     FunctionType superc = getSuperClassConstructor();
+<     if (superc != null && superc.makesStructs()) {
+<       setStruct();
+<       return true;
+<     }
+<     return false;
+<   }
+< 
+<   
+< 
+< 
+< 
+< 
+<   public boolean makesDicts() {
+<     if (!isConstructor()) {
+<       return false;
+<     }
+<     if (propAccess == PropAccess.DICT) {
+<       return true;
+<     }
+<     FunctionType superc = getSuperClassConstructor();
+<     if (superc != null && superc.makesDicts()) {
+<       setDict();
+<       return true;
+<     }
+<     return false;
+<   }
+< 
+<   public void setStruct() {
+<     propAccess = PropAccess.STRUCT;
+<   }
+< 
+<   public void setDict() {
+<     propAccess = PropAccess.DICT;

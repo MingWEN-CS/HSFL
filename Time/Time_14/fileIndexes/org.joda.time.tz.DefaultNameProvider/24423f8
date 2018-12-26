@@ -1,0 +1,89 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time.tz;
+
+import java.text.DateFormatSymbols;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import org.joda.time.DateTimeUtils;
+
+
+
+
+
+
+
+
+
+
+@SuppressWarnings("unchecked")
+public class DefaultNameProvider implements NameProvider {
+    
+    private HashMap<Locale, Map<String, Map<String, Object>>> iByLocaleCache = createCache();
+
+    public DefaultNameProvider() {
+    }
+
+    public String getShortName(Locale locale, String id, String nameKey) {
+        String[] nameSet = getNameSet(locale, id, nameKey);
+        return nameSet == null ? null : nameSet[0];
+    }
+    
+    public String getName(Locale locale, String id, String nameKey) {
+        String[] nameSet = getNameSet(locale, id, nameKey);
+        return nameSet == null ? null : nameSet[1];
+    }
+
+    private synchronized String[] getNameSet(Locale locale, String id, String nameKey) {
+        if (locale == null || id == null || nameKey == null) {
+            return null;
+        }
+
+        Map<String, Map<String, Object>> byIdCache = iByLocaleCache.get(locale);
+        if (byIdCache == null) {
+            iByLocaleCache.put(locale, byIdCache = createCache());
+        }
+
+        Map<String, Object> byNameKeyCache = byIdCache.get(id);
+        if (byNameKeyCache == null) {
+            byIdCache.put(id, byNameKeyCache = createCache());
+            String[][] zoneStrings = DateTimeUtils.getDateFormatSymbols(locale).getZoneStrings();
+            for (int i=0; i<zoneStrings.length; i++) {
+                String[] set = zoneStrings[i];
+                if (set != null && set.length == 5 && id.equals(set[0])) {
+                    byNameKeyCache.put(set[2], new String[] {set[2], set[1]});
+                    
+                    
+                    
+                    if (set[2].equals(set[4])) {
+                        byNameKeyCache.put(set[4] + "-Summer", new String[] {set[4], set[3]});
+                    } else {
+                        byNameKeyCache.put(set[4], new String[] {set[4], set[3]});
+                    }
+                    break;
+                }
+            }
+        }
+
+        return (String[])byNameKeyCache.get(nameKey);
+    }
+
+    private HashMap createCache() {
+        return new HashMap(7);
+    }
+}

@@ -1,0 +1,142 @@
+127a128,146
+>     
+>     
+> 
+> 
+> 
+>     public final static int MODIFY_TRUNCATE = 0;
+> 
+>     
+> 
+> 
+> 
+>     public final static int MODIFY_ROUND = 1;
+>     
+>     
+> 
+> 
+> 
+>     public final static int MODIFY_CEILING= 2;
+>     
+587c606
+<         modify(gval, field, true);
+---
+>         modify(gval, field, MODIFY_ROUND);
+624c643
+<         modify(rounded, field, true);
+---
+>         modify(rounded, field, MODIFY_ROUND);
+694c713
+<         modify(gval, field, false);
+---
+>         modify(gval, field, MODIFY_TRUNCATE);
+719c738
+<         modify(truncated, field, false);
+---
+>         modify(truncated, field, MODIFY_TRUNCATE);
+754a774,858
+>     
+>   
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Date ceiling(Date date, int field) {
+>         if (date == null) {
+>             throw new IllegalArgumentException("The date must not be null");
+>         }
+>         Calendar gval = Calendar.getInstance();
+>         gval.setTime(date);
+>         modify(gval, field, MODIFY_CEILING);
+>         return gval.getTime();
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Calendar ceiling(Calendar date, int field) {
+>         if (date == null) {
+>             throw new IllegalArgumentException("The date must not be null");
+>         }
+>         Calendar ceiled = (Calendar) date.clone();
+>         modify(ceiled, field, MODIFY_CEILING);
+>         return ceiled;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static Date ceiling(Object date, int field) {
+>         if (date == null) {
+>             throw new IllegalArgumentException("The date must not be null");
+>         }
+>         if (date instanceof Date) {
+>             return ceiling((Date) date, field);
+>         } else if (date instanceof Calendar) {
+>             return ceiling((Calendar) date, field).getTime();
+>         } else {
+>             throw new ClassCastException("Could not find ceiling of for type: " + date.getClass());
+>         }
+>     }
+765c869
+<     private static void modify(Calendar val, int field, boolean round) {
+---
+>     private static void modify(Calendar val, int field, int modType) {
+786c890
+<         if (!round || millisecs < 500) {
+---
+>         if (MODIFY_TRUNCATE == modType || millisecs < 500) {
+795c899
+<         if (!done && (!round || seconds < 30)) {
+---
+>         if (!done && (MODIFY_TRUNCATE == modType || seconds < 30)) {
+804c908
+<         if (!done && (!round || minutes < 30)) {
+---
+>         if (!done && (MODIFY_TRUNCATE == modType || minutes < 30)) {
+820c924
+<                     if (round && roundUp) {
+---
+>                     if (modType == MODIFY_CEILING || (modType == MODIFY_ROUND && roundUp)) {

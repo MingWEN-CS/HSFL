@@ -1,0 +1,52 @@
+402c402
+<         return withPivotYear(new Integer(pivotYear));
+---
+>         return withPivotYear(Integer.valueOf(pivotYear));
+707c707
+<         if (iOffsetParsed && bucket.getZone() == null) {
+---
+>         if (iOffsetParsed && bucket.getOffset() != null) {
+710a711,712
+>         } else if (bucket.getZone() != null) {
+>             chrono = chrono.withZone(bucket.getZone());
+712a715,717
+>         if (iZone != null) {
+>             instant.setZone(iZone);
+>         }
+803c808
+<                 if (bucket.getZone() == null) {  
+---
+>                 if (bucket.getOffset() != null) {  
+806a812,813
+>                 } else if (bucket.getZone() != null) {
+>                     chrono = chrono.withZone(bucket.getZone());
+842c849
+<                 if (iOffsetParsed && bucket.getZone() == null) {
+---
+>                 if (iOffsetParsed && bucket.getOffset() != null) {
+845a853,858
+>                 } else if (bucket.getZone() != null) {
+>                     chrono = chrono.withZone(bucket.getZone());
+>                 }
+>                 DateTime dt = new DateTime(millis, chrono);
+>                 if (iZone != null) {
+>                     dt = dt.withZone(iZone);
+847c860
+<                 return new DateTime(millis, chrono);
+---
+>                 return dt;
+881c894
+<                 if (iOffsetParsed && bucket.getZone() == null) {
+---
+>                 if (iOffsetParsed && bucket.getOffset() != null) {
+884a898,903
+>                 } else if (bucket.getZone() != null) {
+>                     chrono = chrono.withZone(bucket.getZone());
+>                 }
+>                 MutableDateTime dt = new MutableDateTime(millis, chrono);
+>                 if (iZone != null) {
+>                     dt.setZone(iZone);
+886c905
+<                 return new MutableDateTime(millis, chrono);
+---
+>                 return dt;

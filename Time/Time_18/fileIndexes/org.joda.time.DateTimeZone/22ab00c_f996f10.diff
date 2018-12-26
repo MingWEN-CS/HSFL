@@ -1,0 +1,100 @@
+25,27d24
+< import java.lang.reflect.InvocationTargetException;
+< import java.lang.reflect.Method;
+< import java.util.Date;
+32d28
+< import java.util.SimpleTimeZone;
+139,152d134
+<     private static final Method OFFSET_METHOD;
+<     static {
+<         Method m = null;
+<         try {
+<             m = TimeZone.class.getDeclaredMethod("getOffset", new Class[] {Long.TYPE});
+<         } catch (SecurityException ex) {
+<             
+<         } catch (NoSuchMethodException ex) {
+<             
+<         }
+<         OFFSET_METHOD = m;
+<     }
+< 
+<     
+862,939d843
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public long getMillisJDKKeepLocal(long instant) {
+<         return getMillisJDKKeepLocal(toTimeZone(), instant);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public long getMillisJDKKeepLocal(TimeZone jdkZone, long instant) {
+<         if (jdkZone == null) {
+<             jdkZone = toTimeZone();
+<         }
+<         Integer val;
+<         if (OFFSET_METHOD == null) {
+<             if (jdkZone instanceof SimpleTimeZone) {
+<                 SimpleTimeZone zone = (SimpleTimeZone) jdkZone;
+<                 long millisLocal = instant + getOffset(instant);
+<                 long jdkOffset = getJDKOffset(zone, millisLocal - getJDKOffset(zone, millisLocal));
+<                 return millisLocal - jdkOffset;
+<             }
+<             return instant;
+<         } else {
+<             try {
+<                 val = (Integer) OFFSET_METHOD.invoke(
+<                         jdkZone, new Object[] {new Long(instant)});
+<             } catch (IllegalAccessException ex) {
+<                 return instant;
+<             } catch (InvocationTargetException ex) {
+<                 return instant;
+<             }
+<         }
+<         
+<         long millisLocal = instant - val.intValue();
+<         return millisLocal + getOffsetFromLocal(millisLocal);
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+<     private long getJDKOffset(SimpleTimeZone zone, long instant) {
+<         long offset = zone.getRawOffset();
+<         if (zone.inDaylightTime(new Date(instant)))  {
+<             offset += zone.getDSTSavings();
+<         }
+<         return offset;
+<     }
+< 
+<     

@@ -1,0 +1,105 @@
+19d18
+< import com.google.common.base.Join;
+21d19
+< import com.google.common.collect.Sets;
+30d27
+< import com.google.javascript.jscomp.graph.GraphNode;
+32c29
+< import com.google.javascript.jscomp.graph.UndiGraph;
+---
+> import com.google.javascript.jscomp.graph.GraphNode;
+34a32
+> import com.google.javascript.jscomp.graph.UndiGraph;
+65,66c63,66
+<   private final Deque<GraphColoring<Var, Void>> colorings;
+<   private final boolean usePseudoNames;
+---
+>   private final Deque<GraphColoring<Var, ?>> colorings;
+> 
+>   
+>   private StringBuilder coalescedLog;
+75,79c75
+<   
+< 
+< 
+< 
+<   CoalesceVariableNames(AbstractCompiler compiler, boolean usePseudoNames) {
+---
+>   CoalesceVariableNames(AbstractCompiler compiler) {
+82c78
+<     this.usePseudoNames = usePseudoNames;
+---
+>     coalescedLog = new StringBuilder();
+87a84,87
+> 
+>     
+>     compiler.addToDebugLog("JS vars coalesced:\n" + coalescedLog.toString());
+>     coalescedLog = new StringBuilder();
+110c110
+<     GraphColoring<Var, Void> coloring =
+---
+>     GraphColoring<Var, ?> coloring =
+140,146c140
+<     
+<     if (!usePseudoNames) {
+<       if (vNode.getValue().equals(coalescedVar)) {
+<         
+<         return;
+<       }
+< 
+---
+>     if (vNode.getValue().equals(coalescedVar)) {
+148,149c142,143
+<       n.setString(coalescedVar.name);
+<       compiler.reportCodeChange();
+---
+>       return;
+>     }
+151,179c145,154
+<       if (NodeUtil.isVar(parent)) {
+<         removeVarDeclaration(n);
+<       }
+<     } else {
+<       
+<       
+<       
+<       String pseudoName = null;
+<       Set<String> allMergedNames = Sets.newTreeSet();
+<       for (Iterator<Var> i = t.getScope().getVars(); i.hasNext();) {
+<         Var iVar = i.next();
+<         if (coalescedVar.equals(colorings.peek().getPartitionSuperNode(iVar))) {
+<           allMergedNames.add(iVar.name);
+<         }
+<       }
+<       
+<       
+<       if (allMergedNames.size() == 1) {
+<         return;
+<       }
+<       
+<       pseudoName = Join.join("_", allMergedNames);
+<       
+<       while (t.getScope().isDeclared(pseudoName, true)) {
+<         pseudoName += "$";
+<       }
+<       
+<       n.setString(pseudoName);
+<       compiler.reportCodeChange();
+---
+>     if (var.getNameNode() == n) {
+>       coalescedLog.append(n.getString()).append(" => ")
+>           .append(coalescedVar.name).append(" in ")
+>           .append(t.getSourceName()).append(':')
+>           .append(n.getLineno()).append('\n');
+>     }
+> 
+>     
+>     n.setString(coalescedVar.name);
+>     compiler.reportCodeChange();
+181,183c156,157
+<       if (!vNode.getValue().equals(coalescedVar) && NodeUtil.isVar(parent)) {
+<         removeVarDeclaration(n);
+<       }
+---
+>     if (NodeUtil.isVar(parent)) {
+>       removeVarDeclaration(n);

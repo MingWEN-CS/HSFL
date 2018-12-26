@@ -1,0 +1,55 @@
+1335d1334
+<     public static double log1p(final double x) {
+1336a1336,1337
+> 
+>     public static double log1p(final double x) {
+1338c1339
+<             return x/0.0;   
+---
+>             return Double.NEGATIVE_INFINITY;
+1341,1342c1342,1343
+<         if (x > 0 && 1/x == 0) { 
+<             return x;
+---
+>         if (x == Double.POSITIVE_INFINITY) {
+>             return Double.POSITIVE_INFINITY;
+1345,1349c1346,1349
+<         if (x>1e-6 || x<-1e-6) {
+<             double xpa = 1.0 + x;
+<             double xpb = -(xpa - 1.0 - x);
+< 
+<             double hiPrec[] = new double[2];
+---
+>         if (x > 1e-6 ||
+>             x < -1e-6) {
+>             final double xpa = 1 + x;
+>             final double xpb = -(xpa - 1 - x);
+1350a1351
+>             final double[] hiPrec = new double[2];
+1352c1353
+<             if (Double.isInfinite(lores)){ 
+---
+>             if (Double.isInfinite(lores)) { 
+1358,1363c1359,1365
+<             double fx1 = xpb/xpa;
+< 
+<             double epsilon = 0.5 * fx1 + 1.0;
+<             epsilon = epsilon * fx1;
+< 
+<             return epsilon + hiPrec[1] + hiPrec[0];
+---
+>             final double fx1 = xpb / xpa;
+>             final double epsilon = 0.5 * fx1 + 1;
+>             return epsilon * fx1 + hiPrec[1] + hiPrec[0];
+>         } else {
+>             
+>             final double y = (x * F_1_3 - F_1_2) * x + 1;
+>             return y * x;
+1365,1371d1366
+< 
+<         
+<         double y = x * F_1_3 - F_1_2;
+<         y = y * x + 1.0;
+<         y = y * x;
+< 
+<         return y;

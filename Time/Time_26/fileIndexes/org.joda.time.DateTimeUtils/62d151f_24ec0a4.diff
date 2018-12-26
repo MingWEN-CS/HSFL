@@ -1,0 +1,23 @@
+97c97,98
+<     public static void setCurrentMillisSystem() {
+---
+>     public static void setCurrentMillisSystem() throws SecurityException {
+>         checkPermission();
+109c110,111
+<     public static void setCurrentMillisFixed(long fixedMillis) {
+---
+>     public static void setCurrentMillisFixed(long fixedMillis) throws SecurityException {
+>         checkPermission();
+122c124,125
+<     public static void setCurrentMillisOffset(long offsetMillis) {
+---
+>     public static void setCurrentMillisOffset(long offsetMillis) throws SecurityException {
+>         checkPermission();
+123a127,133
+>     }
+> 
+>     private static void checkPermission() throws SecurityException {
+>         SecurityManager sm = System.getSecurityManager();
+>         if (sm != null) {
+>             sm.checkPermission(new JodaTimePermission("CurrentTime.setProvider"));
+>         }

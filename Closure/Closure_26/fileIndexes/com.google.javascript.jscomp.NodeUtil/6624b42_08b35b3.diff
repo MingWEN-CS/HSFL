@@ -1,0 +1,23 @@
+1741c1741
+<   static Node newUndefinedNode() {
+---
+>   static Node newUndefinedNode(Node srcReferenceNode) {
+1743c1743,1747
+<     return new Node(Token.VOID, Node.newNumber(0));
+---
+>     Node node = new Node(Token.VOID, Node.newNumber(0));
+>     if (srcReferenceNode != null) {
+>         node.copyInformationFromForTree(srcReferenceNode);
+>     }
+>     return node;
+1752c1756,1758
+<       nodeName.addChildrenToBack(value);
+---
+>       Preconditions.checkState(value.getNext() == null);
+>       nodeName.addChildToBack(value);
+>       nodeName.copyInformationFrom(value);
+1754c1760,1761
+<     Node var = new Node(Token.VAR, nodeName);
+---
+>     Node var = new Node(Token.VAR, nodeName)
+>         .copyInformationFrom(nodeName);

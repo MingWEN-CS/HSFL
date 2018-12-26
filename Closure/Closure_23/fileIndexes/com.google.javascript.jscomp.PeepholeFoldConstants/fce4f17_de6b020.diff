@@ -1,0 +1,188 @@
+20a21
+> import com.google.javascript.jscomp.mozilla.rhino.ScriptRuntime;
+79a81
+>       case Token.POS:
+81a84
+>         tryReduceOperandsForOp(subtree);
+84a88
+>         tryReduceOperandsForOp(subtree);
+157a162,253
+>   private void tryReduceOperandsForOp(Node n) {
+>     switch (n.getType()) {
+>       case Token.ADD:
+>         Node left = n.getFirstChild();
+>         Node right = n.getLastChild();
+>         if (!NodeUtil.mayBeString(left) && !NodeUtil.mayBeString(right)) {
+>           tryConvertOperandsToNumber(n);
+>         }
+>         break;
+>       case Token.ASSIGN_BITOR:
+>       case Token.ASSIGN_BITXOR:
+>       case Token.ASSIGN_BITAND:
+>         
+>       case Token.ASSIGN_LSH:
+>       case Token.ASSIGN_RSH:
+>       case Token.ASSIGN_URSH:
+>       case Token.ASSIGN_SUB:
+>       case Token.ASSIGN_MUL:
+>       case Token.ASSIGN_MOD:
+>       case Token.ASSIGN_DIV:
+>         tryConvertToNumber(n.getLastChild());
+>         break;
+>       case Token.BITNOT:
+>       case Token.BITOR:
+>       case Token.BITXOR:
+>       case Token.BITAND:
+>       case Token.LSH:
+>       case Token.RSH:
+>       case Token.URSH:
+>       case Token.SUB:
+>       case Token.MUL:
+>       case Token.MOD:
+>       case Token.DIV:
+>       case Token.POS:
+>       case Token.NEG:
+>         tryConvertOperandsToNumber(n);
+>         break;
+>     }
+>   }
+> 
+>   private void tryConvertOperandsToNumber(Node n) {
+>     Node next;
+>     for (Node c = n.getFirstChild(); c != null; c = next) {
+>       next = c.getNext();
+>       tryConvertToNumber(c);
+>     }
+>   }
+> 
+>   private void tryConvertToNumber(Node n) {
+>     switch (n.getType()) {
+>       case Token.NUMBER:
+>         
+>         return;
+>       case Token.AND:
+>       case Token.OR:
+>       case Token.COMMA:
+>         tryConvertToNumber(n.getLastChild());
+>         return;
+>       case Token.HOOK:
+>         tryConvertToNumber(n.getChildAtIndex(1));
+>         tryConvertToNumber(n.getLastChild());
+>         return;
+>       case Token.NAME:
+>         if (!NodeUtil.isUndefined(n)) {
+>           return;
+>         }
+>         break;
+>     }
+> 
+>     Double result = NodeUtil.getNumberValue(n);
+>     if (result == null) {
+>       return;
+>     }
+> 
+>     double value = result;
+> 
+>     Node replacement;
+>     if (Double.isNaN(value)) {
+>       replacement = Node.newString(Token.NAME, "NaN");
+>     } else if (value == Double.POSITIVE_INFINITY) {
+>       replacement = Node.newString(Token.NAME, "Infinity");
+>     } else if (value == Double.NEGATIVE_INFINITY) {
+>       replacement = new Node(Token.NEG, Node.newString(Token.NAME, "Infinity"));
+>       replacement.copyInformationFromForTree(n);
+>     } else {
+>       replacement = Node.newNumber(value);
+>     }
+> 
+>     n.getParent().replaceChild(n, replacement);
+>     reportCodeChange();
+>   }
+> 
+236a333,340
+>       case Token.POS:
+>         if (NodeUtil.isNumericResult(left)) {
+>           
+>           parent.replaceChild(n, left.detachFromParent());
+>           reportCodeChange();
+>           return left;
+>         }
+>         return n;
+508a613
+>       result.copyInformationFromForTree(n);
+529a635,637
+>     
+>     
+> 
+544,547c652
+<         if (!areValidInts(lval, rval)) {
+<           return null;
+<         }
+<         result = (int)lval & (int)rval;
+---
+>         result = ScriptRuntime.toInt32(lval) & ScriptRuntime.toInt32(rval);
+550,553c655
+<         if (!areValidInts(lval, rval)) {
+<           return null;
+<         }
+<         result = (int)lval | (int)rval;
+---
+>         result = ScriptRuntime.toInt32(lval) | ScriptRuntime.toInt32(rval);
+556,559c658
+<         if (!areValidInts(lval, rval)) {
+<           return null;
+<         }
+<         result = (int)lval ^ (int)rval;
+---
+>         result = ScriptRuntime.toInt32(lval) ^ ScriptRuntime.toInt32(rval);
+612,627d710
+<   private boolean isValidInt(double val) {
+<     return !(val < Integer.MIN_VALUE || val > Integer.MAX_VALUE)
+<         && val == (int)val;
+<   }
+< 
+<   
+< 
+< 
+< 
+<   private boolean areValidInts(double val1, double val2) {
+<     return isValidInt(val1) && isValidInt(val2);
+<   }
+< 
+<   
+< 
+< 
+638a722
+> 
+640c724,726
+<     if (right.getType() == Token.NUMBER && left.getType() == opType) {
+---
+>     
+>     Double rightValObj = NodeUtil.getNumberValue(right);
+>     if (rightValObj != null && left.getType() == opType) {
+646,649c732,734
+<       Node valueToCombine;
+<       if (ll.getType() == Token.NUMBER) {
+<         valueToCombine = ll;
+<       } else if (lr.getType() == Token.NUMBER) {
+---
+>       Node valueToCombine = ll;
+>       Node replacement = performArithmeticOp(opType, valueToCombine, right);
+>       if (replacement == null) {
+651,653c736
+<       } else {
+<         
+<         return n;
+---
+>         replacement = performArithmeticOp(opType, valueToCombine, right);
+655,656d737
+< 
+<       Node replacement = performArithmeticOp(opType, valueToCombine, right);
+657a739
+>         
+658a741
+>         
+659a743,745
+>         
+>         
+>         replacement.copyInformationFromForTree(right);

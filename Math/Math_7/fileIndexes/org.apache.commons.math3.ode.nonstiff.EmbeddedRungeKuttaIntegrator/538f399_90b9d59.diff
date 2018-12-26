@@ -1,0 +1,44 @@
+22c22
+< import org.apache.commons.math.ode.FirstOrderDifferentialEquations;
+---
+> import org.apache.commons.math.ode.ExpandableFirstOrderDifferentialEquations;
+192,194c192,194
+<   public double integrate(final FirstOrderDifferentialEquations equations,
+<                           final double t0, final double[] y0,
+<                           final double t, final double[] y)
+---
+>   public double integrate(final ExpandableFirstOrderDifferentialEquations equations,
+>                           final double t0, final double[] z0,
+>                           final double t, final double[] z)
+197c197
+<     sanityChecks(equations, t0, y0, t, y);
+---
+>     sanityChecks(equations, t0, z0, t, z);
+202a203,208
+>     final int totalDim = equations.getDimension();
+>     final int mainDim  = equations.getMainSetDimension();
+>     final double[] y0  = new double[totalDim];
+>     final double[] y   = new double[totalDim];
+>     System.arraycopy(z0, 0, y0, 0, mainDim);
+>     System.arraycopy(equations.getCurrentAdditionalStates(), 0, y0, mainDim, totalDim - mainDim);
+205c211
+<       System.arraycopy(y0, 0, y, 0, y0.length);
+---
+>       System.arraycopy(y0, 0, y, 0, totalDim);
+207,209c213,215
+<     final double[][] yDotK = new double[stages][y0.length];
+<     final double[] yTmp    = new double[y0.length];
+<     final double[] yDotTmp = new double[y0.length];
+---
+>     final double[][] yDotK = new double[stages][totalDim];
+>     final double[] yTmp    = new double[totalDim];
+>     final double[] yDotTmp = new double[totalDim];
+251c257
+<           hNew = initializeStep(equations, forward, getOrder(), scale,
+---
+>           hNew = initializeStep(forward, getOrder(), scale,
+326a333,336
+> 
+>     
+>     System.arraycopy(y, 0, z, 0, z.length);
+>     equations.setCurrentAdditionalState(y);

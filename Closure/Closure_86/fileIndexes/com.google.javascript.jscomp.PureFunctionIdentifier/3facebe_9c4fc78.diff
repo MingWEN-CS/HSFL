@@ -1,0 +1,44 @@
+35a36,38
+> import com.google.javascript.rhino.jstype.FunctionType;
+> import com.google.javascript.rhino.jstype.JSType;
+> import com.google.javascript.rhino.jstype.JSTypeNative;
+608,610c611,622
+<         
+<         
+<         sideEffectInfo.setTaintsReturn();
+---
+>         JSType jstype = node.getJSType();
+>         boolean knownLocalResult = false;
+>         if (jstype != null && jstype.isFunctionType()) {
+>           FunctionType functionType = (FunctionType) jstype;
+>           JSType jstypeReturn = functionType.getReturnType();
+>           if (isLocalValueType(jstypeReturn, true)) {
+>             knownLocalResult = true;
+>           }
+>         }
+>         if (!knownLocalResult) {
+>           sideEffectInfo.setTaintsReturn();
+>         }
+654a667,678
+>     private boolean isLocalValueType(JSType jstype, boolean recurse) {
+>       Preconditions.checkNotNull(jstype);
+>       JSType subtype =  jstype.getGreatestSubtype(
+>           compiler.getTypeRegistry().getNativeType(JSTypeNative.OBJECT_TYPE));
+>       
+>       
+>       return subtype.isNoType();
+>     }
+> 
+>     
+> 
+> 
+717c741
+<   private static boolean isKnownLocalValue(Node value) {
+---
+>   private static boolean isKnownLocalValue(final Node value) {
+721a746,748
+>           case Token.ASSIGN:
+>             
+>             return false;
+728d754
+< 

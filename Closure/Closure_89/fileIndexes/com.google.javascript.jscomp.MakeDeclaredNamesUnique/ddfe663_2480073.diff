@@ -1,0 +1,37 @@
+243a244,262
+>     public static String getOrginalName(String name) {
+>       int index = indexOfSeparator(name);
+>       return (index == -1) ? name : name.substring(0, index);
+>     }
+> 
+>     private static int indexOfSeparator(String name) {
+>       return name.lastIndexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR);
+>     }
+> 
+>     private static String getOrginalNameInternal(String name, int index) {
+>       return name.substring(0, index);
+>     }
+> 
+>     private static String getNameSuffix(String name, int index) {
+>       return name.substring(
+>           index + ContextualRenamer.UNIQUE_ID_SEPARATOR.length(),
+>           name.length());
+>     }
+> 
+258,264c277,280
+<             String newName = oldName.substring(
+<                 0, oldName.lastIndexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR));
+<             String suffix = oldName.substring(
+<                 oldName.lastIndexOf(ContextualRenamer.UNIQUE_ID_SEPARATOR)
+<                     + ContextualRenamer.UNIQUE_ID_SEPARATOR.length(),
+<                 oldName.length());
+<             
+---
+>             int index = indexOfSeparator(oldName);
+>             String newName = getOrginalNameInternal(oldName, index);
+>             String suffix = getNameSuffix(oldName, index);
+> 
+278c294
+<             
+---
+> 

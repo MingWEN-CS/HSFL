@@ -1,0 +1,729 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.joda.time;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
+import org.joda.time.tz.DateTimeZonePermission;
+import org.joda.time.tz.DefaultNameProvider;
+import org.joda.time.tz.FixedDateTimeZone;
+import org.joda.time.tz.NameProvider;
+import org.joda.time.tz.Provider;
+import org.joda.time.tz.UTCProvider;
+import org.joda.time.tz.ZoneInfoProvider;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public abstract class DateTimeZone implements Serializable {
+    
+    static final long serialVersionUID = 5546345482340108586L;
+
+    
+    public static final DateTimeZone UTC = new FixedDateTimeZone("UTC", "UTC", 0, 0);
+
+    private static Provider cProvider;
+    private static NameProvider cNameProvider;
+    private static Set cAvailableIDs;
+
+    private static DateTimeZone cDefault;
+
+    private static DateTimeFormatter cOffsetFormatter;
+
+    
+
+
+    private static Map cZoneIdConversion;
+
+    static {
+        setProvider0(null);
+        setNameProvider0(null);
+
+        try {
+            try {
+                cDefault = getInstance(System.getProperty("user.timezone"));
+            } catch (RuntimeException e) {
+            }
+            cDefault = getInstance(java.util.TimeZone.getDefault());
+        } catch (IllegalArgumentException e) {
+        }
+
+        if (cDefault == null) {
+            cDefault = UTC;
+        }
+    }
+
+    
+
+
+
+
+    public static DateTimeZone getDefault() {
+        return cDefault;
+    }
+
+    
+
+
+
+
+
+    public static void setDefault(DateTimeZone zone) throws SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new DateTimeZonePermission("setDefault"));
+        }
+        if (zone == null) {
+            throw new IllegalArgumentException("The datetime zone must not be null");
+        }
+        cDefault = zone;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static DateTimeZone getInstance(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException("The datetime zone id must not be null");
+        }
+        if (id.equals("UTC")) {
+            return DateTimeZone.UTC;
+        }
+        DateTimeZone zone = cProvider.getDateTimeZone(id);
+        if (zone != null) {
+            return zone;
+        }
+        if (id.startsWith("+") || id.startsWith("-")) {
+            int offset = -(int)offsetFormatter().parseMillis(id);
+            
+            id = offsetFormatter().print(0, UTC, offset);
+            return new FixedDateTimeZone(id, null, offset, offset);
+        }
+        throw new IllegalArgumentException("The datetime zone id is not recognised: " + id);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public static DateTimeZone getInstance(java.util.TimeZone zone) {
+        if (zone == null) {
+            throw new IllegalArgumentException("The TimeZone must not be null");
+        }
+        final String id = zone.getID();
+        if (id.equals("UTC")) {
+            return DateTimeZone.UTC;
+        }
+
+        DateTimeZone dtz;
+        
+        String convId = getConvertedId(id);
+        if (convId == null || (dtz = cProvider.getDateTimeZone(convId)) == null) {
+            dtz = cProvider.getDateTimeZone(id);
+        }
+        if (dtz != null) {
+            return dtz;
+        }
+
+        
+        if (convId == null) {
+            convId = zone.getDisplayName();
+            if (convId.startsWith("GMT+") || convId.startsWith("GMT-")) {
+                convId = convId.substring(3);
+                int offset = -(int)offsetFormatter().parseMillis(convId);
+                
+                convId = offsetFormatter().print(0, UTC, offset);
+                return new FixedDateTimeZone(convId, null, offset, offset);
+            }
+        }
+
+        throw new IllegalArgumentException("The datetime zone id is not recognised: " + id);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    public static Set getAvailableIDs() {
+        return cAvailableIDs;
+    }
+
+    public static Provider getProvider() {
+        return cProvider;
+    }
+
+    
+
+
+    public static void setProvider(Provider provider) throws SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new DateTimeZonePermission("setProvider"));
+        }
+        setProvider0(provider);
+    }
+
+    
+
+
+    private static void setProvider0(Provider provider) {
+        if (provider == null) {
+            provider = getDefaultProvider();
+        }
+        Set ids = provider.getAvailableIDs();
+        if (ids == null || ids.size() == 0) {
+            throw new IllegalArgumentException
+                ("The provider doesn't have any available ids");
+        }
+        if (!ids.contains("UTC")) {
+            throw new IllegalArgumentException("The provider doesn't support UTC");
+        }
+        if (!UTC.equals(provider.getDateTimeZone("UTC"))) {
+            throw new IllegalArgumentException("Invalid UTC zone provided");
+        }
+        cProvider = provider;
+        cAvailableIDs = ids;
+    }
+
+    public static NameProvider getNameProvider() {
+        return cNameProvider;
+    }
+
+    
+
+
+    public static void setNameProvider(NameProvider nameProvider) throws SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new DateTimeZonePermission("setNameProvider"));
+        }
+        setNameProvider0(nameProvider);
+    }
+
+    
+
+
+    private static void setNameProvider0(NameProvider nameProvider) {
+        if (nameProvider == null) {
+            nameProvider = getDefaultNameProvider();
+        }
+        cNameProvider = nameProvider;
+    }
+
+    private static synchronized String getConvertedId(String id) {
+        Map map = cZoneIdConversion;
+        if (map == null) {
+            
+            map = new HashMap();
+            map.put("GMT", "UTC");
+            map.put("MIT", "Pacific/Apia");
+            map.put("HST", "Pacific/Honolulu");
+            map.put("AST", "America/Anchorage");
+            map.put("PST", "America/Los_Angeles");
+            map.put("MST", "America/Denver");
+            map.put("PNT", "America/Phoenix");
+            map.put("CST", "America/Chicago");
+            map.put("EST", "America/New_York");
+            map.put("IET", "America/Indianapolis");
+            map.put("PRT", "America/Puerto_Rico");
+            map.put("CNT", "America/St_Johns");
+            map.put("AGT", "America/Buenos_Aires");
+            map.put("BET", "America/Sao_Paulo");
+            map.put("WET", "Europe/London");
+            map.put("ECT", "Europe/Paris");
+            map.put("ART", "Africa/Cairo");
+            map.put("CAT", "Africa/Harare");
+            map.put("EET", "Europe/Bucharest");
+            map.put("EAT", "Africa/Addis_Ababa");
+            map.put("MET", "Asia/Tehran");
+            map.put("NET", "Asia/Yerevan");
+            map.put("PLT", "Asia/Karachi");
+            map.put("IST", "Asia/Calcutta");
+            map.put("BST", "Asia/Dhaka");
+            map.put("VST", "Asia/Saigon");
+            map.put("CTT", "Asia/Shanghai");
+            map.put("JST", "Asia/Tokyo");
+            map.put("ACT", "Australia/Darwin");
+            map.put("AET", "Australia/Sydney");
+            map.put("SST", "Pacific/Guadalcanal");
+            map.put("NST", "Pacific/Auckland");
+            cZoneIdConversion = map;
+        }
+        return (String)map.get(id);
+    }
+
+    private static synchronized DateTimeFormatter offsetFormatter() {
+        if (cOffsetFormatter == null) {
+            cOffsetFormatter = new DateTimeFormatterBuilder(UTC)
+                .appendTimeZoneOffset(null, true, 2, 4)
+                .toFormatter();
+        }
+        return cOffsetFormatter;
+    }
+
+    private static Provider getDefaultProvider() {
+        Provider provider = null;
+
+        try {
+            String providerClass =
+                System.getProperty("org.joda.time.DateTimeZone.Provider");
+            if (providerClass != null) {
+                try {
+                    provider = (Provider)Class.forName(providerClass).newInstance();
+                }
+                catch (Exception e) {
+                    Thread t = Thread.currentThread();
+                    t.getThreadGroup().uncaughtException(t, e);
+                }
+            }
+        } catch (SecurityException e) {
+        }
+
+        if (provider == null) {
+            try {
+                provider = new ZoneInfoProvider("org/joda/time/tz/data");
+            } catch (Exception e) {
+                Thread t = Thread.currentThread();
+                t.getThreadGroup().uncaughtException(t, e);
+            }
+        }
+
+        if (provider == null) {
+            provider = new UTCProvider();
+        }
+
+        return provider;
+    }
+
+    private static NameProvider getDefaultNameProvider() {
+        NameProvider nameProvider = null;
+
+        try {
+            String providerClass =
+                System.getProperty("org.joda.time.DateTimeZone.NameProvider");
+            if (providerClass != null) {
+                try {
+                    nameProvider = (NameProvider)Class.forName(providerClass).newInstance();
+                }
+                catch (Exception e) {
+                    Thread t = Thread.currentThread();
+                    t.getThreadGroup().uncaughtException(t, e);
+                }
+            }
+        } catch (SecurityException e) {
+        }
+
+        if (nameProvider == null) {
+            nameProvider = new DefaultNameProvider();
+        }
+
+        return nameProvider;
+    }
+
+    
+    
+
+    private final String iID;
+
+    public DateTimeZone(String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Id must not be null");
+        }
+        iID = id;
+    }
+
+    
+    
+
+    
+
+
+
+
+    public final String getID() {
+        return iID;
+    }
+
+    
+
+
+
+
+
+
+    public abstract String getNameKey(long instant);
+
+    
+
+
+
+
+
+
+
+
+
+    public final String getShortName(long instant) {
+        return getShortName(instant, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public String getShortName(long instant, Locale locale) {
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
+        String nameKey = getNameKey(instant);
+        if (nameKey == null) {
+            return iID;
+        }
+        String name = cNameProvider.getShortName(locale, iID, nameKey);
+        if (name != null) {
+            return name;
+        }
+        return offsetFormatter().print(instant, this);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public final String getName(long instant) {
+        return getName(instant, null);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public String getName(long instant, Locale locale) {
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
+        String nameKey = getNameKey(instant);
+        if (nameKey == null) {
+            return iID;
+        }
+        String name = cNameProvider.getName(locale, iID, nameKey);
+        if (name != null) {
+            return name;
+        }
+        return offsetFormatter().print(instant, this);
+    }
+
+    
+
+
+
+
+
+    public abstract int getOffset(long instant);
+
+    
+
+
+
+
+
+
+    public final int getOffset(ReadableInstant instant) {
+        if (instant == null) {
+            throw new IllegalArgumentException("The instant must not be null");
+        }
+        return getOffset(instant.getMillis());
+    }
+
+    
+
+
+
+
+
+
+    public abstract int getStandardOffset(long instant);
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int getOffsetFromLocal(long instantLocal) {
+        return getOffset(instantLocal - getOffset(instantLocal));
+    }
+
+    
+
+
+
+
+    public abstract boolean isFixed();
+
+    
+
+
+
+
+
+
+
+    public abstract long nextTransition(long instant);
+
+    
+
+
+
+
+
+
+
+    public abstract long previousTransition(long instant);
+
+    
+    
+
+    
+
+
+
+
+    public java.util.TimeZone toTimeZone() {
+        return java.util.TimeZone.getTimeZone(iID);
+    }
+
+    
+
+
+
+
+
+    public abstract boolean equals(Object object);
+
+    
+
+
+
+
+    public int hashCode() {
+        return 57 + getID().hashCode();
+    }
+
+    
+
+
+    public String toString() {
+        return getID();
+    }
+
+    
+
+
+
+
+    protected Object writeReplace() throws ObjectStreamException {
+        return new Stub(iID);
+    }
+
+    
+
+
+    private static final class Stub implements Serializable {
+        static final long serialVersionUID = -6471952376487863581L;
+
+        private transient String iID;
+
+        Stub(String id) {
+            iID = id;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.writeUTF(iID);
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException {
+            iID = in.readUTF();
+        }
+
+        protected Object readResolve() throws ObjectStreamException {
+            return getInstance(iID);
+        }
+    }
+}

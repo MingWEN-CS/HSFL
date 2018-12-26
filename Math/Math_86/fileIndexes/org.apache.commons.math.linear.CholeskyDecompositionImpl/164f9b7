@@ -1,0 +1,359 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.linear;
+
+import org.apache.commons.math.MathRuntimeException;
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class CholeskyDecompositionImpl implements CholeskyDecomposition {
+
+    
+    private static final long serialVersionUID = -2036131698031167221L;
+
+    
+
+    public static final double DEFAULT_RELATIVE_SYMMETRY_THRESHOLD = 1.0e-15;
+
+    
+
+    public static final double DEFAULT_ABSOLUTE_POSITIVITY_THRESHOLD = 1.0e-10;
+
+    
+    private double[][] lTData;
+
+    
+    private RealMatrix cachedL;
+
+    
+    private RealMatrix cachedLT;
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public CholeskyDecompositionImpl(final RealMatrix matrix)
+        throws NonSquareMatrixException,
+               NotSymmetricMatrixException, NotPositiveDefiniteMatrixException {
+        this(matrix, DEFAULT_RELATIVE_SYMMETRY_THRESHOLD,
+             DEFAULT_ABSOLUTE_POSITIVITY_THRESHOLD);
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public CholeskyDecompositionImpl(final RealMatrix matrix,
+                                     final double relativeSymmetryThreshold,
+                                     final double absolutePositivityThreshold)
+        throws NonSquareMatrixException,
+               NotSymmetricMatrixException, NotPositiveDefiniteMatrixException {
+
+        if (!matrix.isSquare()) {
+            throw new NonSquareMatrixException(matrix.getRowDimension(),
+                                               matrix.getColumnDimension());
+        }
+
+        final int order = matrix.getRowDimension();
+        lTData   = matrix.getData();
+        cachedL  = null;
+        cachedLT = null;
+
+        
+        for (int i = 0; i < order; ++i) {
+
+            final double[] lI = lTData[i];
+
+            
+            if (lTData[i][i] < absolutePositivityThreshold) {
+                throw new NotPositiveDefiniteMatrixException();
+            }
+
+            
+            for (int j = i + 1; j < order; ++j) {
+                final double[] lJ = lTData[j];
+                final double lIJ = lI[j];
+                final double lJI = lJ[i];
+                final double maxDelta =
+                    relativeSymmetryThreshold * Math.max(Math.abs(lIJ), Math.abs(lJI));
+                if (Math.abs(lIJ - lJI) > maxDelta) {
+                    throw new NotSymmetricMatrixException();
+                }
+                lJ[i] = 0;
+           }
+        }
+
+        
+        for (int i = 0; i < order; ++i) {
+
+            final double[] ltI = lTData[i];
+            ltI[i] = Math.sqrt(ltI[i]);
+            final double inverse = 1.0 / ltI[i];
+
+            for (int q = order - 1; q > i; --q) {
+                ltI[q] *= inverse;
+                final double[] ltQ = lTData[q];
+                for (int p = q; p < order; ++p) {
+                    ltQ[p] -= ltI[q] * ltI[p];
+                }
+            }
+
+        }
+
+    }
+
+    
+    public RealMatrix getL() {
+        if (cachedL == null) {
+            cachedL = getLT().transpose();
+        }
+        return cachedL;
+    }
+
+    
+    public RealMatrix getLT() {
+
+        if (cachedLT == null) {
+            cachedLT = MatrixUtils.createRealMatrix(lTData);
+        }
+
+        
+        return cachedLT;
+
+    }
+
+    
+    public double getDeterminant() {
+        double determinant = 1.0;
+        for (int i = 0; i < lTData.length; ++i) {
+            double lTii = lTData[i][i];
+            determinant *= lTii * lTii;
+        }
+        return determinant;
+    }
+
+    
+    public DecompositionSolver getSolver() {
+        return new Solver(lTData);
+    }
+
+    
+    private static class Solver implements DecompositionSolver {
+
+        
+        private static final long serialVersionUID = -7288829864732555901L;
+
+        
+        private final double[][] lTData;
+
+        
+
+
+
+        private Solver(final double[][] lTData) {
+            this.lTData = lTData;
+        }
+
+        
+        public boolean isNonSingular() {
+            
+            return true;
+        }
+
+        
+        public double[] solve(double[] b)
+            throws IllegalArgumentException, InvalidMatrixException {
+
+            final int m = lTData.length;
+            if (b.length != m) {
+                throw MathRuntimeException.createIllegalArgumentException(
+                        "vector length mismatch: got {0} but expected {1}",
+                        new Object[] { b.length, m });
+            }
+
+            final double[] x = b.clone();
+
+            
+            for (int j = 0; j < m; j++) {
+                final double[] lJ = lTData[j];
+                x[j] /= lJ[j];
+                final double xJ = x[j];
+                for (int i = j + 1; i < m; i++) {
+                    x[i] -= xJ * lJ[i];
+                }
+            }
+
+            
+            for (int j = m - 1; j >= 0; j--) {
+                x[j] /= lTData[j][j];
+                final double xJ = x[j];
+                for (int i = 0; i < j; i++) {
+                    x[i] -= xJ * lTData[i][j];
+                }
+            }
+
+            return x;
+
+        }
+
+        
+        public RealVector solve(RealVector b)
+            throws IllegalArgumentException, InvalidMatrixException {
+            try {
+                return solve((RealVectorImpl) b);
+            } catch (ClassCastException cce) {
+
+                final int m = lTData.length;
+                if (b.getDimension() != m) {
+                    throw MathRuntimeException.createIllegalArgumentException(
+                            "vector length mismatch: got {0} but expected {1}",
+                            new Object[] { b.getDimension(), m });
+                }
+
+                final double[] x = b.getData();
+
+                
+                for (int j = 0; j < m; j++) {
+                    final double[] lJ = lTData[j];
+                    x[j] /= lJ[j];
+                    final double xJ = x[j];
+                    for (int i = j + 1; i < m; i++) {
+                        x[i] -= xJ * lJ[i];
+                    }
+                }
+
+                
+                for (int j = m - 1; j >= 0; j--) {
+                    x[j] /= lTData[j][j];
+                    final double xJ = x[j];
+                    for (int i = 0; i < j; i++) {
+                        x[i] -= xJ * lTData[i][j];
+                    }
+                }
+
+                return new RealVectorImpl(x, false);
+
+            }
+        }
+
+        
+
+
+
+
+
+
+        public RealVectorImpl solve(RealVectorImpl b)
+            throws IllegalArgumentException, InvalidMatrixException {
+            return new RealVectorImpl(solve(b.getDataRef()), false);
+        }
+
+        
+        public RealMatrix solve(RealMatrix b)
+            throws IllegalArgumentException, InvalidMatrixException {
+
+            final int m = lTData.length;
+            if (b.getRowDimension() != m) {
+                throw MathRuntimeException.createIllegalArgumentException(
+                        "dimensions mismatch: got {0}x{1} but expected {2}x{3}",
+                        new Object[] { b.getRowDimension(), b.getColumnDimension(), m, "n"});
+            }
+
+            final int nColB = b.getColumnDimension();
+            double[][] x = b.getData();
+
+            
+            for (int j = 0; j < m; j++) {
+                final double[] lJ = lTData[j];
+                final double lJJ = lJ[j];
+                final double[] xJ = x[j];
+                for (int k = 0; k < nColB; ++k) {
+                    xJ[k] /= lJJ;
+                }
+                for (int i = j + 1; i < m; i++) {
+                    final double[] xI = x[i];
+                    final double lJI = lJ[i];
+                    for (int k = 0; k < nColB; ++k) {
+                        xI[k] -= xJ[k] * lJI;
+                    }
+                }
+            }
+
+            
+            for (int j = m - 1; j >= 0; j--) {
+                final double lJJ = lTData[j][j];
+                final double[] xJ = x[j];
+                for (int k = 0; k < nColB; ++k) {
+                    xJ[k] /= lJJ;
+                }
+                for (int i = 0; i < j; i++) {
+                    final double[] xI = x[i];
+                    final double lIJ = lTData[i][j];
+                    for (int k = 0; k < nColB; ++k) {
+                        xI[k] -= xJ[k] * lIJ;
+                    }
+                }
+            }
+
+            return new RealMatrixImpl(x, false);
+
+        }
+
+        
+        public RealMatrix getInverse() throws InvalidMatrixException {
+            return solve(MatrixUtils.createRealIdentityMatrix(lTData.length));
+        }
+
+    }
+
+}

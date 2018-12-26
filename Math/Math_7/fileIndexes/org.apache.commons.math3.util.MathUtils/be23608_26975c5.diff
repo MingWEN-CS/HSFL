@@ -1,0 +1,137 @@
+1951a1952,2045
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean isMonotone(Comparable[] val, OrderDirection dir,
+>             boolean strict){
+>         Comparable previous = val[0];
+>         int max = val.length;
+>         int comp;
+>         for (int i = 1; i < max; i++) {
+>             switch (dir) {
+>             case INCREASING:
+>                 comp = -val[i].compareTo(previous);
+>                 if (strict) {
+>                     if (0 <= comp) {
+>                         return false;
+>                     }
+>                 } else {
+>                     if ( comp > 0) {
+>                         return false;
+>                     }
+>                 }
+>                 break;
+>             case DECREASING:
+>                 comp = val[i].compareTo(previous);
+>                 if (strict) {
+>                     if (comp >= 0) {
+>                         return false;
+>                     }
+>                 } else {
+>                     if (comp > 0) {
+>                        return false;
+>                     }
+>                 }
+>                 break;
+>             default:
+>                 
+>                 throw new IllegalArgumentException();
+>             }
+> 
+>             previous = val[i];
+>         }
+>         return true;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public static boolean isMonotone( double[] val, OrderDirection dir,
+>                                       boolean strict){
+>         double previous = val[0];
+>         int max = val.length;
+>         for (int i = 1; i < max; i++) {
+>             switch (dir) {
+>             case INCREASING:
+>                 if (strict) {
+>                     if (val[i] <= previous) {
+>                         return false;
+>                     }
+>                 } else {
+>                     if (val[i] < previous) {
+>                         return false;
+>                     }
+>                 }
+>                 break;
+>             case DECREASING:
+>                 if (strict) {
+>                     if (val[i] >= previous) {
+>                         return false;
+>                     }
+>                 } else {
+>                     if (val[i] > previous) {
+>                         return false;
+>                     }
+>                 }
+>                 break;
+>             default:
+>                 
+>                 throw new IllegalArgumentException();
+>             }
+>             previous = val[i];
+>         }
+> 
+>         return true;
+>     }
+1967,1968d2060
+<         boolean ok = true;
+< 
+1975c2067,2070
+<                         ok = false;
+---
+>                         if (abort) {
+>                             throw new NonMonotonousSequenceException((Number)val[i], (Number)previous, i, dir, strict);
+>                         }
+>                         return false;
+1979c2074,2077
+<                         ok = false;
+---
+>                         if (abort) {
+>                             throw new NonMonotonousSequenceException((Number)val[i], (Number)previous, i, dir, strict);
+>                         }
+>                         return false;
+1986c2084,2087
+<                         ok = false;
+---
+>                         if (abort) {
+>                             throw new NonMonotonousSequenceException((Number)val[i], (Number)previous, i, dir, strict);
+>                         }
+>                         return false;
+1990c2091,2094
+<                         ok = false;
+---
+>                         if (abort) {
+>                             throw new NonMonotonousSequenceException((Number)val[i], (Number)previous, i, dir, strict);
+>                         }
+>                         return false;
+1998,2002d2101
+< 
+<             if (!ok &&
+<                 abort) {
+<                 throw new NonMonotonousSequenceException(val[i], previous, i, dir, strict);
+<             }
+2005,2006c2104
+< 
+<         return ok;
+---
+>         return true;

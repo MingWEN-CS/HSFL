@@ -1,0 +1,49 @@
+19a20,21
+> import com.google.common.base.Predicate;
+> import com.google.common.base.Predicates;
+22d23
+< import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+26a28
+> import com.google.javascript.jscomp.graph.DiGraph.DiGraphNode;
+37d38
+< 
+43a45,57
+>   
+>   
+>   
+>   private static final Predicate<Node> matchRemovableAssigns =
+>       new Predicate<Node>() {
+>     @Override
+>     public boolean apply(Node n) {
+>       return (NodeUtil.isAssignmentOp(n) &&
+>               n.getFirstChild().getType() == Token.NAME) ||
+>           n.getType() == Token.INC || n.getType() == Token.DEC;
+>     }
+>   };
+> 
+68,74c82,84
+<     if (!NodeUtil.containsFunction(
+<         t.getScopeRoot().getLastChild())) {
+<       
+<       ControlFlowGraph<Node> cfg = t.getControlFlowGraph();
+<       liveness = new LiveVariablesAnalysis(cfg, scope, compiler);
+<       liveness.analyze();
+<       tryRemoveDeadAssignments(t, cfg);
+---
+>     Node fnBlock = t.getScopeRoot().getLastChild();
+>     if (NodeUtil.containsFunction(fnBlock)) {
+>       return;
+75a86,98
+> 
+>     
+>     
+>     if (!NodeUtil.has(fnBlock, matchRemovableAssigns,
+>             Predicates.<Node>alwaysTrue())) {
+>       return;
+>     }
+> 
+>     
+>     ControlFlowGraph<Node> cfg = t.getControlFlowGraph();
+>     liveness = new LiveVariablesAnalysis(cfg, scope, compiler);
+>     liveness.analyze();
+>     tryRemoveDeadAssignments(t, cfg);

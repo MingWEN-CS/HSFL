@@ -1,0 +1,217 @@
+83a84
+> 
+106a108,109
+> import org.jfree.chart.entity.AxisLabelEntity;
+> import org.jfree.chart.entity.EntityCollection;
+133,134c136,137
+<     public static final Font DEFAULT_AXIS_LABEL_FONT 
+<         = new Font("SansSerif", Font.PLAIN, 12);
+---
+>     public static final Font DEFAULT_AXIS_LABEL_FONT = new Font(
+>             "SansSerif", Font.PLAIN, 12);
+141c144
+<         = new RectangleInsets(3.0, 3.0, 3.0, 3.0);
+---
+>             = new RectangleInsets(3.0, 3.0, 3.0, 3.0);
+153,154c156,157
+<     public static final Font DEFAULT_TICK_LABEL_FONT 
+<         = new Font("SansSerif", Font.PLAIN, 10);
+---
+>     public static final Font DEFAULT_TICK_LABEL_FONT = new Font("SansSerif", 
+>             Font.PLAIN, 10);
+161c164
+<         = new RectangleInsets(2.0, 4.0, 2.0, 4.0);
+---
+>             = new RectangleInsets(2.0, 4.0, 2.0, 4.0);
+194a198,207
+>     
+>     
+> 
+> 
+> 
+> 
+>     private String labelToolTip;
+> 
+>     
+> 
+195a209,212
+> 
+> 
+>     private String labelURL;
+>     
+262a280,281
+>         this.labelToolTip = null;
+>         this.labelURL = null;
+471a491,546
+>     public String getLabelToolTip() {
+>         return this.labelToolTip;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setLabelToolTip(String text) {
+>         this.labelToolTip = text;
+>         notifyListeners(new AxisChangeEvent(this));
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public String getLabelURL() {
+>         return this.labelURL;
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public void setLabelURL(String url) {
+>         this.labelURL = url;
+>         notifyListeners(new AxisChangeEvent(this));        
+>     }
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+1015,1020c1090,1093
+<     protected AxisState drawLabel(String label,
+<                                   Graphics2D g2, 
+<                                   Rectangle2D plotArea, 
+<                                   Rectangle2D dataArea,
+<                                   RectangleEdge edge, 
+<                                   AxisState state) {
+---
+> 
+>     protected AxisState drawLabel(String label, Graphics2D g2, 
+>             Rectangle2D plotArea, Rectangle2D dataArea, RectangleEdge edge, 
+>             AxisState state, PlotRenderingInfo plotState) {
+1037c1110,1111
+< 
+---
+>         Shape hotspot = null;
+>         
+1039d1112
+< 
+1045,1050c1118,1126
+<             double labelx = dataArea.getCenterX();
+<             double labely = state.getCursor() - insets.getBottom() 
+<                             - labelBounds.getHeight() / 2.0;
+<             TextUtilities.drawRotatedString(label, g2, (float) labelx, 
+<                     (float) labely, TextAnchor.CENTER, getLabelAngle(), 
+<                     TextAnchor.CENTER);
+---
+>             float w = (float) labelBounds.getWidth();
+>             float h = (float) labelBounds.getHeight();
+>             float labelx = (float) dataArea.getCenterX();
+>             float labely = (float) (state.getCursor() - insets.getBottom() 
+>                     - h / 2.0);
+>             TextUtilities.drawRotatedString(label, g2, labelx, labely, 
+>                     TextAnchor.CENTER, getLabelAngle(), TextAnchor.CENTER);
+>             hotspot = new Rectangle2D.Float(labelx - w / 2.0f, 
+>                     labely - h / 2.0f, w, h);
+1053d1128
+< 
+1056d1130
+< 
+1062,1067c1136,1144
+<             double labelx = dataArea.getCenterX();
+<             double labely = state.getCursor() 
+<                             + insets.getTop() + labelBounds.getHeight() / 2.0;
+<             TextUtilities.drawRotatedString(label, g2, (float) labelx, 
+<                     (float) labely, TextAnchor.CENTER, getLabelAngle(), 
+<                     TextAnchor.CENTER);
+---
+>             float w = (float) labelBounds.getWidth();
+>             float h = (float) labelBounds.getHeight();
+>             float labelx = (float) dataArea.getCenterX();
+>             float labely = (float) (state.getCursor() + insets.getTop() 
+>                     + h / 2.0);
+>             TextUtilities.drawRotatedString(label, g2, labelx, labely, 
+>                     TextAnchor.CENTER, getLabelAngle(), TextAnchor.CENTER);
+>             hotspot = new Rectangle2D.Float(labelx - w / 2.0f, 
+>                     labely - h / 2.0f, w, h);
+1070d1146
+< 
+1073d1148
+< 
+1079,1084c1154,1163
+<             double labelx = state.getCursor() 
+<                             - insets.getRight() - labelBounds.getWidth() / 2.0;
+<             double labely = dataArea.getCenterY();
+<             TextUtilities.drawRotatedString(label, g2, (float) labelx, 
+<                     (float) labely, TextAnchor.CENTER, 
+<                     getLabelAngle() - Math.PI / 2.0, TextAnchor.CENTER);
+---
+>             float w = (float) labelBounds.getWidth();
+>             float h = (float) labelBounds.getHeight();
+>             float labelx = (float) (state.getCursor() - insets.getRight() 
+>                     - w / 2.0);
+>             float labely = (float) dataArea.getCenterY();
+>             TextUtilities.drawRotatedString(label, g2, labelx, labely, 
+>                     TextAnchor.CENTER, getLabelAngle() - Math.PI / 2.0, 
+>                     TextAnchor.CENTER);
+>             hotspot = new Rectangle2D.Float(labelx - w / 2.0f, 
+>                     labely - h / 2.0f, w, h);
+1095,1100c1174,1184
+<             double labelx = state.getCursor() 
+<                             + insets.getLeft() + labelBounds.getWidth() / 2.0;
+<             double labely = dataArea.getY() + dataArea.getHeight() / 2.0;
+<             TextUtilities.drawRotatedString(label, g2, (float) labelx, 
+<                     (float) labely, TextAnchor.CENTER,
+<                     getLabelAngle() + Math.PI / 2.0, TextAnchor.CENTER);
+---
+>             float w = (float) labelBounds.getWidth();
+>             float h = (float) labelBounds.getHeight();
+>             float labelx = (float) (state.getCursor() 
+>                             + insets.getLeft() + w / 2.0);
+>             float labely = (float) (dataArea.getY() + dataArea.getHeight() 
+>                     / 2.0);
+>             TextUtilities.drawRotatedString(label, g2, labelx, labely, 
+>                     TextAnchor.CENTER, getLabelAngle() + Math.PI / 2.0, 
+>                     TextAnchor.CENTER);
+>             hotspot = new Rectangle2D.Float(labelx - w / 2.0f, 
+>                     labely - h / 2.0f, w, h);
+1105c1189,1196
+< 
+---
+>         if (plotState != null && hotspot != null) {
+>             EntityCollection entities = plotState.getOwner()
+>                     .getEntityCollection();
+>             if (entities != null) {
+>                 entities.add(new AxisLabelEntity(this, hotspot, 
+>                         this.labelToolTip, this.labelURL));
+>             }
+>         }
+1190a1282,1287
+>             return false;
+>         }
+>         if (!ObjectUtilities.equal(this.labelToolTip, that.labelToolTip)) {
+>             return false;
+>         }
+>         if (!ObjectUtilities.equal(this.labelURL, that.labelURL)) {

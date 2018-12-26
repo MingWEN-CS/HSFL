@@ -1,0 +1,86 @@
+21a22
+> import org.apache.commons.math3.linear.RealMatrix;
+23d23
+< import org.apache.commons.math3.linear.EigenDecomposition;
+26,27c26
+< import org.apache.commons.math3.linear.RealMatrix;
+< import org.apache.commons.math3.optim.ConvergenceChecker;
+---
+> import org.apache.commons.math3.linear.EigenDecomposition;
+28a28
+> import org.apache.commons.math3.optim.ConvergenceChecker;
+30,32d29
+< import org.apache.commons.math3.optim.nonlinear.vector.JacobianMultivariateVectorOptimizer;
+< import org.apache.commons.math3.optim.nonlinear.vector.MultivariateVectorOptimizer;
+< import org.apache.commons.math3.optim.nonlinear.vector.NonCorrelatedWeight;
+33a31
+> import org.apache.commons.math3.optim.nonlinear.vector.JacobianMultivariateVectorOptimizer;
+46,48d43
+< 
+< 
+<     @Deprecated
+51,52d45
+<     private double[] weightSquareRoot;
+<     
+71,87c64
+< 
+<         final double[][] jacobian = computeJacobian(params);
+< 
+<         if (weightSquareRoot != null) {
+<             for (int i = 0; i < jacobian.length; ++i) {
+<                 final double wi = weightSquareRoot[i];
+<                 final double[] row = jacobian[i];
+<                 for (int j = 0; j < row.length; ++j) {
+<                     row[j] *= wi;
+<                 }
+<             }
+<             return MatrixUtils.createRealMatrix(jacobian);
+<         } else {
+<             
+<             return weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(jacobian));
+<         }
+< 
+---
+>         return weightMatrixSqrt.multiply(MatrixUtils.createRealMatrix(computeJacobian(params)));
+99,105c76
+<         final double[] weight = getNonCorrelatedWeight();
+<         double sum = 0;
+<         for (int i = 0; i < r.getDimension(); ++i) {
+<             final double ri = r.getEntry(i);
+<             sum += ri * weight[i] * ri;
+<         }
+<         return FastMath.sqrt(sum);
+---
+>         return FastMath.sqrt(r.dotProduct(getWeight().operate(r)));
+138,139d108
+< 
+<     @Deprecated
+275a245
+> 
+280a251,252
+>                 weightMatrixSqrt = squareRoot(((Weight) data).getWeight());
+>                 
+282,291c254
+<                 weightSquareRoot = null;
+<                 final RealMatrix w = ((Weight) data).getWeight();
+<                 final EigenDecomposition dec = new EigenDecomposition(w);
+<                 weightMatrixSqrt = dec.getSquareRoot();
+<             } else if (data instanceof NonCorrelatedWeight) {
+<                 weightSquareRoot = ((NonCorrelatedWeight) data).getWeight();
+<                 for (int i = 0; i < weightSquareRoot.length; ++i) {
+<                     weightSquareRoot[i] = FastMath.sqrt(weightSquareRoot[i]);
+<                 }
+<                 weightMatrixSqrt = null;
+---
+>                 break;
+295a259,268
+>     
+> 
+> 
+> 
+> 
+> 
+>     private RealMatrix squareRoot(RealMatrix m) {
+>         final EigenDecomposition dec = new EigenDecomposition(m);
+>         return dec.getSquareRoot();
+>     }

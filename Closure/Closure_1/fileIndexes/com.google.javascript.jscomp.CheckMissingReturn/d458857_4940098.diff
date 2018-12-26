@@ -1,0 +1,39 @@
+42c42
+<           "missing return statement");
+---
+>           "Missing return statement. Function expected to return {0}.");
+93c93,94
+<     if (!explicitReturnExpected(t.getScopeRoot())) {
+---
+>     JSType returnType = explicitReturnExpected(t.getScopeRoot());
+>     if (returnType == null) {
+110c111,112
+<           t.makeError(t.getScopeRoot(), level, MISSING_RETURN_STATEMENT));
+---
+>           t.makeError(t.getScopeRoot(), level,
+>               MISSING_RETURN_STATEMENT, returnType.toString()));
+147c149,150
+<   private boolean explicitReturnExpected(Node scope) {
+---
+> 
+>   private JSType explicitReturnExpected(Node scope) {
+151c154
+<       return false;
+---
+>       return null;
+155c158
+<       return false;
+---
+>       return null;
+161c164,168
+<       return false;
+---
+>       return null;
+>     }
+> 
+>     if (!isVoidOrUnknown(returnType)) {
+>       return returnType;
+164c171
+<     return !isVoidOrUnknown(returnType);
+---
+>     return null;

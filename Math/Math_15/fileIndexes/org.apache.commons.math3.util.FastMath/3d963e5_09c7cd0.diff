@@ -1,0 +1,387 @@
+211,226d210
+<     public static double acos(final double a) {
+<         return Math.acos(a);
+<     }
+< 
+<     
+< 
+< 
+< 
+<     public static double asin(final double a) {
+<         return Math.asin(a);
+<     }
+< 
+<     
+< 
+< 
+< 
+443a428,431
+>                 if (hiPrec != null) {
+>                     hiPrec[0] = 0.0;
+>                     hiPrec[1] = 0.0;
+>                 }
+476a465,468
+>                 if (hiPrec != null) {
+>                     hiPrec[0] = Double.POSITIVE_INFINITY;
+>                     hiPrec[1] = 0.0;
+>                 }
+1173a1166,1173
+>         if (x == -1) {
+>             return x/0.0;   
+>         }
+> 
+>         if (x > 0 && 1/x == 0) { 
+>             return x;
+>         }
+> 
+1230,1237c1230,1231
+<         
+<         if (x < 0) {
+<             if (y == (long) y) {
+<                 
+<                 return ((long)y & 1) == 0 ? pow(-x, y) : -pow(-x, y);
+<             } else {
+<                 return Double.NaN;
+<             }
+---
+>         if (x != x) { 
+>             return x;
+1239a1234
+> 
+1244c1239,1241
+<                 if (y < 0 && y == (long)y)
+---
+>                 long yi = (long) y;
+> 
+>                 if (y < 0 && y == yi && (yi & 1) == 1) {
+1245a1243,1251
+>                 }
+> 
+>                 if (y < 0 && y == yi && (yi & 1) == 1) {
+>                     return -0.0;
+>                 }
+> 
+>                 if (y > 0 && y == yi && (yi & 1) == 1) {
+>                     return -0.0;
+>                 }
+1258a1265,1267
+>             if (y != y) { 
+>                 return y;
+>             }
+1266a1276,1278
+>             if (x * x == 1.0)
+>               return Double.NaN;
+> 
+1273a1286,1309
+>         if (x == Double.NEGATIVE_INFINITY) {
+>             if (y != y) { 
+>                 return y;
+>             }
+> 
+>             if (y < 0) {
+>                 long yi = (long) y;
+>                 if (y == yi && (yi & 1) == 1) {
+>                     return -0.0;
+>                 }
+> 
+>                 return 0.0;
+>             }
+> 
+>             if (y > 0)  {
+>                 long yi = (long) y;
+>                 if (y == yi && (yi & 1) == 1) {
+>                     return Double.NEGATIVE_INFINITY;
+>                 }
+> 
+>                 return Double.POSITIVE_INFINITY;
+>             }
+>         }
+> 
+1275,1276c1311,1317
+<             if (x*x < 1.0) {
+<                 return Double.NEGATIVE_INFINITY;
+---
+> 
+>             if (x * x == 1.0) {
+>                 return Double.NaN;
+>             }
+> 
+>             if (x * x < 1.0) {
+>                 return Double.POSITIVE_INFINITY;
+1283,1285c1324,1350
+<         double tmp1 = y * 1073741824.0;
+<         final double ya = y + tmp1 - tmp1;
+<         final double yb = y - ya;
+---
+>         if (x < 0) {
+>             
+>             if (y >= 4503599627370496.0 || y <= -4503599627370496.0) {
+>                 return pow(-x, y);
+>             }
+> 
+>             if (y == (long) y) {
+>                 
+>                 return ((long)y & 1) == 0 ? pow(-x, y) : -pow(-x, y);
+>             } else {
+>                 return Double.NaN;
+>             }
+>         }
+> 
+>         
+>         double ya;
+>         double yb;
+>         if (y < 8e298 && y > -8e298) {
+>             double tmp1 = y * 1073741824.0;
+>             ya = y + tmp1 - tmp1;
+>             yb = y - ya;
+>         } else {
+>             double tmp1 = y * 9.31322574615478515625E-10;
+>             double tmp2 = tmp1 * 9.31322574615478515625E-10;
+>             ya = (tmp1 + tmp2 - tmp1) * 1073741824.0 * 1073741824.0;
+>             yb = y - ya;
+>         }
+1293,1294c1358,1359
+<         tmp1 = lna * 1073741824.0;
+<         final double tmp2 = lna + tmp1 - tmp1;
+---
+>         double tmp1 = lna * 1073741824.0;
+>         double tmp2 = lna + tmp1 - tmp1;
+2378,2379c2443,2444
+<             xa = a;
+<             xb = b;
+---
+>             xa = a + b;
+>             xb = -(xa - a - b);
+2415d2479
+<         boolean recip = false;
+2522,2524d2585
+<         if (recip) {
+<             final double pi2a = 1.5707963267948966;
+<             final double pi2b = 6.123233995736766E-17;
+2526,2534c2587,2592
+<             double za = pi2a - ya;
+<             double zb = -(za - pi2a + ya);
+<             temp = za - EIGHTHES[idx];
+<             zb += -(temp - za + EIGHTHES[idx]);
+<             za = temp;
+< 
+<             zb += pi2b - yb;
+<             ya = za;
+<             yb = zb;
+---
+>         
+>         double za = EIGHTHES[idx] + ya;
+>         double zb = -(za - EIGHTHES[idx] - ya);
+>         temp = za + yb;
+>         zb += -(temp - za - yb);
+>         za = temp;
+2536,2548c2594,2595
+<             result = yb + ya;
+<             resultb = -(result - yb - ya);
+<         } else {
+<             
+<             double za = EIGHTHES[idx] + ya;
+<             double zb = -(za - EIGHTHES[idx] - ya);
+<             temp = za + yb;
+<             zb += -(temp - za - yb);
+<             za = temp;
+< 
+<             result = za + zb;
+<             resultb = -(result - za - zb);
+<         }
+---
+>         result = za + zb;
+>         resultb = -(result - za - zb);
+2555,2556c2602,2603
+<             final double za = pia - result;
+<             double zb = -(za - pia + result);
+---
+>             za = pia - result;
+>             zb = -(za - pia + result);
+2588c2635,2639
+<                 return 0.0;
+---
+>                 if (x > 0) {
+>                     return 0.0;
+>                 } else {
+>                     return Math.PI;
+>                 }
+2692a2744,2892
+>     public static double asin(double x) {
+>       if (x != x) {
+>           return Double.NaN;
+>       }
+> 
+>       if (x > 1.0 || x < -1.0) {
+>           return Double.NaN;
+>       }
+> 
+>       if (x == 1.0) {
+>           return Math.PI/2.0;
+>       }
+> 
+>       if (x == -1.0) {
+>           return -Math.PI/2.0;
+>       }
+> 
+>       
+> 
+>       
+>       double temp = x * 1073741824.0;
+>       final double xa = x + temp - temp;
+>       final double xb = x - xa;
+> 
+>       
+>       double ya = xa*xa;
+>       double yb = xa*xb*2.0 + xb*xb;
+> 
+>       
+>       ya = -ya;
+>       yb = -yb;
+> 
+>       double za = 1.0 + ya;
+>       double zb = -(za - 1.0 - ya);
+> 
+>       temp = za + yb;
+>       zb += -(temp - za - yb);
+>       za = temp;
+> 
+>       
+>       double y;
+>       y = sqrt(za);
+>       temp = y * 1073741824.0;
+>       ya = y + temp - temp;
+>       yb = y - ya;
+> 
+>       
+>       yb += (za - ya*ya - 2*ya*yb - yb*yb) / (2.0*y);
+> 
+>       
+>       double dx = zb / (2.0*y);
+> 
+>       
+>       double r = x/y;
+>       temp = r * 1073741824.0;
+>       double ra = r + temp - temp;
+>       double rb = r - ra;
+> 
+>       rb += (x - ra*ya - ra*yb - rb*ya - rb*yb) / y;  
+>       rb += -x * dx / y / y;  
+> 
+>       temp = ra + rb;
+>       rb = -(temp - ra - rb);
+>       ra = temp;
+> 
+>       return atan(ra, rb, false);
+>     }
+> 
+>     
+> 
+> 
+> 
+>     public static double acos(double x) {
+>       if (x != x) {
+>           return Double.NaN;
+>       }
+> 
+>       if (x > 1.0 || x < -1.0) {
+>           return Double.NaN;
+>       }
+> 
+>       if (x == -1.0) {
+>           return Math.PI;
+>       }
+> 
+>       if (x == 1.0) {
+>           return 0.0;
+>       }
+> 
+>       if (x == 0) {
+>           return Math.PI/2.0;
+>       }
+> 
+>       
+> 
+>       
+>       double temp = x * 1073741824.0;
+>       final double xa = x + temp - temp;
+>       final double xb = x - xa;
+> 
+>       
+>       double ya = xa*xa;
+>       double yb = xa*xb*2.0 + xb*xb;
+> 
+>       
+>       ya = -ya;
+>       yb = -yb;
+> 
+>       double za = 1.0 + ya;
+>       double zb = -(za - 1.0 - ya);
+> 
+>       temp = za + yb;
+>       zb += -(temp - za - yb);
+>       za = temp;
+> 
+>       
+>       double y = sqrt(za);
+>       temp = y * 1073741824.0;
+>       ya = y + temp - temp;
+>       yb = y - ya;
+> 
+>       
+>       yb += (za - ya*ya - 2*ya*yb - yb*yb) / (2.0*y);
+> 
+>       
+>       yb += zb / (2.0*y);
+>       y = ya+yb;
+>       yb = -(y - ya - yb);
+> 
+>       
+>       double r = y/x;
+>       temp = r * 1073741824.0;
+>       double ra = r + temp - temp;
+>       double rb = r - ra;
+> 
+>       rb += (y - ra*xa - ra*xb - rb*xa - rb*xb) / x;  
+>       rb += yb / x;  
+> 
+>       temp = ra + rb;
+>       rb = -(temp - ra - rb);
+>       ra = temp;
+> 
+>       return atan(ra, rb, x<0);
+>     }
+> 
+>     
+> 
+> 
+> 
+2831a3032,3035
+>         if (x != x) { 
+>             return x;
+>         }
+> 
+2837c3041
+<         if (x < 0) {
+---
+>         if (x < 0 && y != x) {
+2840a3045,3048
+>         if (y == 0) {
+>             return x*y;
+>         }
+> 
+2850a3059,3062
+>         if (x != x) { 
+>             return x;
+>         }
+> 
+2856c3068,3074
+<         return y + 1.0;
+---
+>         y += 1.0;
+> 
+>         if (y == 0) {
+>             return x*y;
+>         }
+> 
+>         return y;

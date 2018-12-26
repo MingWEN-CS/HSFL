@@ -1,0 +1,30 @@
+169a170
+> import org.jfree.chart.util.SortOrder;
+1789a1791
+>         LegendItemCollection result = new LegendItemCollection();
+1791c1793
+<             return new LegendItemCollection();
+---
+>             return result;
+1793d1794
+<         LegendItemCollection result = new LegendItemCollection();
+1797c1798,1801
+<             int seriesCount = dataset.getRowCount();
+---
+>             return result;
+>         }
+>         int seriesCount = dataset.getRowCount();
+>         if (plot.getRowRenderingOrder().equals(SortOrder.ASCENDING)) {
+1806c1810,1819
+< 
+---
+>         }
+>         else {
+>             for (int i = seriesCount - 1; i >= 0; i--) {
+>                 if (isSeriesVisibleInLegend(i)) {
+>                     LegendItem item = getLegendItem(index, i);
+>                     if (item != null) {
+>                         result.add(item);
+>                     }
+>                 }
+>             }

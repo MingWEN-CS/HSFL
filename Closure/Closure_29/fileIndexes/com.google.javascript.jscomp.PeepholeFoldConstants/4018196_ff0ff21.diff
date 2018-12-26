@@ -1,0 +1,15 @@
+339,340c339,345
+<     Node leftChild = right.getFirstChild();
+<     if (!areNodesEqualForInlining(left, leftChild)) {
+---
+>     Node newRight;
+>     if (areNodesEqualForInlining(left, right.getFirstChild())) {
+>       newRight = right.getLastChild();
+>     } else if (NodeUtil.isCommutative(right.getType()) &&
+>           areNodesEqualForInlining(left, right.getLastChild())) {
+>       newRight = right.getFirstChild();
+>     } else {
+384c389
+<         left.detachFromParent(), right.getLastChild().detachFromParent());
+---
+>         left.detachFromParent(), newRight.detachFromParent());

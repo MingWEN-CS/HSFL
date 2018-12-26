@@ -1,0 +1,32 @@
+54a55
+>       boolean visitedFunction = false;
+61,64d61
+<         
+<         
+<         
+<         
+66c63,64
+<           info = NodeUtil.getFunctionJSDocInfo(current);
+---
+>           info = NodeUtil.getBestJSDocInfo(current);
+>           visitedFunction = true;
+69,72c67,80
+<         } else if (type == Token.ASSIGN) {
+<           Node rhs = current.getLastChild();
+<           if (rhs.isFunction()) {
+<             info = NodeUtil.getFunctionJSDocInfo(rhs);
+---
+>         } else if (current.isVar() || current.isAssign()) {
+>           
+>           
+>           
+>           
+>           Node rhs = NodeUtil.getRValueOfLValue(current.getFirstChild());
+>           if (rhs != null) {
+>             if (rhs.isCast()) {
+>               rhs = rhs.getFirstChild();
+>             }
+> 
+>             if (rhs.isFunction() && !visitedFunction) {
+>               info = NodeUtil.getBestJSDocInfo(current);
+>             }

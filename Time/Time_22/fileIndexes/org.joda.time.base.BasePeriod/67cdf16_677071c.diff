@@ -1,0 +1,39 @@
+121d120
+<             chrono = DateTimeUtils.getChronology(chrono);
+150,154c149,159
+<         if (start.size() != end.size()) {
+<             throw new IllegalArgumentException("ReadablePartial objects must have the same set of fields");
+<         }
+<         for (int i = 0, isize = start.size(); i < isize; i++) {
+<             if (start.getFieldType(i) != end.getFieldType(i)) {
+---
+>         if (start instanceof BaseLocal && end instanceof BaseLocal && start.getClass() == end.getClass()) {
+>             
+>             type = checkPeriodType(type);
+>             long startMillis = ((BaseLocal) start).getLocalMillis();
+>             long endMillis = ((BaseLocal) end).getLocalMillis();
+>             Chronology chrono = start.getChronology();
+>             chrono = DateTimeUtils.getChronology(chrono);
+>             iType = type;
+>             iValues = chrono.get(this, startMillis, endMillis);
+>         } else {
+>             if (start.size() != end.size()) {
+156a162,172
+>             for (int i = 0, isize = start.size(); i < isize; i++) {
+>                 if (start.getFieldType(i) != end.getFieldType(i)) {
+>                     throw new IllegalArgumentException("ReadablePartial objects must have the same set of fields");
+>                 }
+>             }
+>             if (DateTimeUtils.isContiguous(start) == false) {
+>                 throw new IllegalArgumentException("ReadablePartial objects must be contiguous");
+>             }
+>             iType = checkPeriodType(type);
+>             Chronology chrono = DateTimeUtils.getChronology(start.getChronology()).withUTC();
+>             iValues = chrono.get(this, chrono.set(start, 0L), chrono.set(end, 0L));
+158,163d173
+<         if (DateTimeUtils.isContiguous(start) == false) {
+<             throw new IllegalArgumentException("ReadablePartial objects must be contiguous");
+<         }
+<         iType = checkPeriodType(type);
+<         Chronology chrono = DateTimeUtils.getChronology(start.getChronology()).withUTC();
+<         iValues = chrono.get(this, chrono.set(start, 0L), chrono.set(end, 0L));

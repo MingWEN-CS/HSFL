@@ -1,0 +1,32 @@
+89a90,92
+>   private static final java.util.regex.Pattern GLOBAL_SYMBOL_NAMESPACE_PATTERN =
+>     java.util.regex.Pattern.compile("^[a-zA-Z0-9$_]+$");
+> 
+524c527,530
+<     if (options.moveFunctionDeclarations) {
+---
+>     if (options.moveFunctionDeclarations ||
+>         
+>         
+>         options.renamePrefixNamespace != null) {
+647a654,663
+>     if (options.renamePrefixNamespace != null) {
+>       if (!GLOBAL_SYMBOL_NAMESPACE_PATTERN.matcher(
+>           options.renamePrefixNamespace).matches()) {
+>         throw new IllegalArgumentException(
+>             "Illegal character in renamePrefixNamespace name: "
+>             + options.renamePrefixNamespace);
+>       }
+>       passes.add(rescopeGlobalSymbols);
+>     }
+> 
+1366a1383,1391
+>     }
+>   };
+> 
+>   
+>   final PassFactory rescopeGlobalSymbols =
+>       new PassFactory("rescopeGlobalSymbols", true) {
+>     @Override
+>     protected CompilerPass createInternal(AbstractCompiler compiler) {
+>       return new RescopeGlobalSymbols(compiler, options.renamePrefixNamespace);

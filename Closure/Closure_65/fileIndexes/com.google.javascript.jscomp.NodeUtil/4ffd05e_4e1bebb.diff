@@ -1,0 +1,65 @@
+45a46,47
+>   final static String JSC_PROPERTY_NAME_FN = "JSCompiler_renameProperty";
+> 
+641,643c643,646
+<     Preconditions.checkArgument(
+<         callNode.getType() == Token.NEW,
+<         "Expected NEW node, got " + Token.name(callNode.getType()));
+---
+>     if (callNode.getType() != Token.NEW) {
+>       throw new IllegalStateException(
+>           "Expected NEW node, got " + Token.name(callNode.getType()));
+>     }
+688,690c691,694
+<     Preconditions.checkArgument(
+<         callNode.getType() == Token.CALL,
+<         "Expected CALL node, got " + Token.name(callNode.getType()));
+---
+>     if (callNode.getType() != Token.CALL) {
+>       throw new IllegalStateException(
+>           "Expected CALL node, got " + Token.name(callNode.getType()));
+>     }
+1382a1387,1394
+> 
+>   static boolean isCallOrNew(Node node) {
+>     return NodeUtil.isCall(node) || NodeUtil.isNew(node);
+>   }
+> 
+>   
+> 
+> 
+2387a2400,2433
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private static Node getNthSibling(Node first, int index) {
+>     Node sibling = first;
+>     while (index != 0 && sibling != null) {
+>       sibling = sibling.getNext();
+>       index--;
+>     }
+>     return sibling;
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static Node getArgumentForFunction(Node function, int index) {
+>     Preconditions.checkState(isFunction(function));
+>     return getNthSibling(
+>         function.getFirstChild().getNext().getFirstChild(), index);
+>   }
+> 
+>   
+> 
+> 
+> 
+>   static Node getArgumentForCallOrNew(Node call, int index) {
+>     Preconditions.checkState(isCallOrNew(call));
+>     return getNthSibling(
+>       call.getFirstChild().getNext(), index);

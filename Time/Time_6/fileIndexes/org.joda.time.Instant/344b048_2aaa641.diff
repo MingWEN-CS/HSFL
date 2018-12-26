@@ -1,0 +1,106 @@
+61c61,71
+< import org.joda.time.format.ISODateTimeFormat;
+---
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+143a154,170
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Instant withDurationAdded(long durationToAdd, int scalar) {
+>         if (durationToAdd == 0 || scalar == 0) {
+>             return this;
+>         }
+>         long instant = getChronology().add(getMillis(), durationToAdd, scalar);
+>         return withMillis(instant);
+>     }
+> 
+149,150c176,185
+<     public long getMillis() {
+<         return iMillis;
+---
+> 
+> 
+> 
+> 
+> 
+>     public Instant withDurationAdded(ReadableDuration durationToAdd, int scalar) {
+>         if (durationToAdd == null || scalar == 0) {
+>             return this;
+>         }
+>         return withDurationAdded(durationToAdd.getMillis(), scalar);
+153a189
+>     
+161a198,200
+>     public Instant plus(long duration) {
+>         return withDurationAdded(duration, 1);
+>     }
+163,164c202,212
+<     public Chronology getChronology() {
+<         return null;
+---
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Instant plus(ReadableDuration duration) {
+>         return withDurationAdded(duration, 1);
+176,177c224,258
+<     public String toString() {
+<         return ISODateTimeFormat.getInstanceUTC().dateTime().print(this);
+---
+> 
+>     public Instant minus(long duration) {
+>         return withDurationAdded(duration, -1);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Instant minus(ReadableDuration durationToAdd) {
+>         return withDurationAdded(durationToAdd, -1);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+>     public long getMillis() {
+>         return iMillis;
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+>     public Chronology getChronology() {
+>         return Chronology.getISOUTC();

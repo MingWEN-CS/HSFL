@@ -1,0 +1,57 @@
+60a61,62
+> import java.lang.ref.Reference;
+> import java.lang.ref.SoftReference;
+133a136
+>     private static Map iFixedOffsetCache;
+135c138
+< 
+---
+>     
+227c230
+<                 return new FixedDateTimeZone(id, null, offset, offset);
+---
+>                 return fixedOffsetZone(id, offset);
+277c280
+<                     return new FixedDateTimeZone(convId, null, offset, offset);
+---
+>                     return fixedOffsetZone(convId, offset);
+285,306c288,303
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+---
+>     private static synchronized DateTimeZone fixedOffsetZone(String id, int offset) {
+>         if (iFixedOffsetCache == null) {
+>             iFixedOffsetCache = new HashMap();
+>         }
+>         DateTimeZone zone;
+>         Reference ref = (Reference) iFixedOffsetCache.get(id);
+>         if (ref != null) {
+>             zone = (DateTimeZone) ref.get();
+>             if (zone != null) {
+>                 return zone;
+>             }
+>         }
+>         zone = new FixedDateTimeZone(id, null, offset, offset);
+>         iFixedOffsetCache.put(id, new SoftReference(zone));
+>         return zone;
+>     }

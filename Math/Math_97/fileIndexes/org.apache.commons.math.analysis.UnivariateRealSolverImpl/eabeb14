@@ -1,0 +1,248 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package org.apache.commons.math.analysis;
+
+import java.io.Serializable;
+
+import org.apache.commons.math.MathException;
+
+
+
+
+
+
+
+public abstract class UnivariateRealSolverImpl
+    implements UnivariateRealSolver, Serializable {
+
+    
+    protected double absoluteAccuracy;
+
+    
+    protected double relativeAccuracy;
+
+    
+    protected double functionValueAccuracy;
+
+    
+    protected int maximalIterationCount;
+
+    
+    protected double defaultAbsoluteAccuracy;
+
+    
+    protected double defaultRelativeAccuracy;
+
+    
+    protected double defaultFunctionValueAccuracy;
+
+    
+    protected int defaultMaximalIterationCount;
+
+    
+    protected boolean resultComputed = false;
+
+    
+    protected double result;
+
+    
+    
+    protected int iterationCount;
+
+    
+    protected UnivariateRealFunction f;
+
+    
+
+
+
+
+
+
+    protected UnivariateRealSolverImpl(
+        UnivariateRealFunction f,
+        int defaultMaximalIterationCount,
+        double defaultAbsoluteAccuracy) {
+        
+        super();
+        
+        if (f == null) {
+            throw new IllegalArgumentException("function can not be null.");
+        }
+        
+        this.f = f;
+        this.defaultAbsoluteAccuracy = defaultAbsoluteAccuracy;
+        this.defaultRelativeAccuracy = 1E-14;
+        this.defaultFunctionValueAccuracy = 1E-15;
+        this.absoluteAccuracy = defaultAbsoluteAccuracy;
+        this.relativeAccuracy = defaultRelativeAccuracy;
+        this.functionValueAccuracy = defaultFunctionValueAccuracy;
+        this.defaultMaximalIterationCount = defaultMaximalIterationCount;
+        this.maximalIterationCount = defaultMaximalIterationCount;
+    }
+
+    
+
+
+
+
+    public double getResult() throws MathException {
+        if (resultComputed) {
+            return result;
+        } else {
+            throw new MathException("No result available");
+        }
+    }
+
+    
+
+
+
+
+
+    public int getIterationCount() throws MathException {
+        if (resultComputed) {
+            return iterationCount;
+        } else {
+            throw new MathException("No result available");
+        }
+    }
+
+    
+
+
+
+
+    protected final void setResult(double result, int iterationCount) {
+        this.result = result;
+        this.iterationCount = iterationCount;
+        this.resultComputed = true;
+    }
+
+    
+
+
+    protected final void clearResult() {
+        this.resultComputed = false;
+    }
+
+    
+
+
+
+
+
+
+    public void setAbsoluteAccuracy(double accuracy)
+        throws MathException {
+        absoluteAccuracy = accuracy;
+    }
+
+    
+
+
+
+
+    public double getAbsoluteAccuracy() {
+        return absoluteAccuracy;
+    }
+
+    
+
+
+    public void resetAbsoluteAccuracy() {
+        absoluteAccuracy = defaultAbsoluteAccuracy;
+    }
+
+    
+
+
+
+
+    public void setMaximalIterationCount(int count) {
+        maximalIterationCount = count;
+    }
+
+    
+
+
+
+
+    public int getMaximalIterationCount() {
+        return maximalIterationCount;
+    }
+
+    
+
+
+    public void resetMaximalIterationCount() {
+        maximalIterationCount = defaultMaximalIterationCount;
+    }
+
+    
+
+
+
+
+
+
+    public void setRelativeAccuracy(double accuracy) throws MathException {
+        relativeAccuracy = accuracy;
+    }
+
+    
+
+
+
+    public double getRelativeAccuracy() {
+        return relativeAccuracy;
+    }
+
+    
+
+
+    public void resetRelativeAccuracy() {
+        relativeAccuracy = defaultRelativeAccuracy;
+    }
+
+    
+
+
+
+
+
+
+    public void setFunctionValueAccuracy(double accuracy)
+        throws MathException {
+        functionValueAccuracy = accuracy;
+    }
+
+    
+
+
+
+    public double getFunctionValueAccuracy() {
+        return functionValueAccuracy;
+    }
+
+    
+
+
+    public void resetFunctionValueAccuracy() {
+        functionValueAccuracy = defaultFunctionValueAccuracy;
+    }
+}

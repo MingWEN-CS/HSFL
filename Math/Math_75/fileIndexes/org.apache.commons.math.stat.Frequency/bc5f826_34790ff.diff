@@ -1,0 +1,122 @@
+68,69c68,70
+<     public Frequency(Comparator comparator) {
+<         freqTable = new TreeMap<Comparable<?>, Long>(comparator);
+---
+>     @SuppressWarnings("unchecked")
+>     public Frequency(Comparator<?> comparator) {
+>         freqTable = new TreeMap<Comparable<?>, Long>((Comparator<? super Comparable<?>>) comparator);
+83c84
+<         Iterator<?> iter = freqTable.keySet().iterator();
+---
+>         Iterator<Comparable<?>> iter = freqTable.keySet().iterator();
+85c86
+<             Object value = iter.next();
+---
+>             Comparable<?> value = iter.next();
+214c215
+<         Iterator<?> iterator = freqTable.values().iterator();
+---
+>         Iterator<Long> iterator = freqTable.values().iterator();
+216c217
+<             result += ((Long) iterator.next()).longValue();
+---
+>             result += iterator.next().longValue();
+227a229,230
+> 
+>     @Deprecated
+228a232,242
+>         return getCount((Comparable<?>) v);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long getCount(Comparable<?> v) {
+284a299,300
+> 
+>     @Deprecated
+285a302,314
+>         return getCumPct((Comparable<?>) v);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getPct(Comparable<?> v) {
+335a365,366
+> 
+>     @Deprecated
+336a368,380
+>         return getCumFreq((Comparable<?>) v);
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     @SuppressWarnings("unchecked")
+>         public long getCumFreq(Comparable<?> v) {
+343c387
+<         Comparator c = freqTable.comparator();
+---
+>         Comparator<Comparable<?>> c = (Comparator<Comparable<?>>) freqTable.comparator();
+357c401
+<         
+---
+> 
+366c410
+<         Iterator<?> values = valuesIterator();
+---
+>         Iterator<Comparable<?>> values = valuesIterator();
+368c412
+<             Object nextValue = values.next();
+---
+>             Comparable<?> nextValue = values.next();
+426a471,472
+> 
+>     @Deprecated
+427a474,489
+>         return getCumPct((Comparable<?>) v);
+>         
+>     }
+> 
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public double getCumPct(Comparable<?> v) {
+478c540
+<     private static class NaturalComparator implements Comparator, Serializable {
+---
+>     private static class NaturalComparator<T extends Comparable<T>> implements Comparator<Comparable<T>>, Serializable {
+496,498c558,560
+<         @SuppressWarnings("unchecked") 
+<         public int compare(Object o1, Object o2) {
+<             return ((Comparable<Object>)o1).compareTo(o2);
+---
+>         @SuppressWarnings("unchecked")
+>         public int compare(Comparable<T> o1, Comparable<T> o2) {
+>             return (o1.compareTo((T) o2));
+528a591
+> 

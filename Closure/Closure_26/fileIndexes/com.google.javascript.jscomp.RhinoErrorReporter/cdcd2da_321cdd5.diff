@@ -1,0 +1,30 @@
+37a38,40
+>   static final DiagnosticType TYPE_PARSE_ERROR =
+>       DiagnosticType.warning("JSC_TYPE_PARSE_ERROR", "{0}");
+> 
+56c59
+<   private final Map<String, DiagnosticType> typeMap;
+---
+>   private final Map<Pattern, DiagnosticType> typeMap;
+65c68
+<   private String replacePlaceHolders(String s) {
+---
+>   private Pattern replacePlaceHolders(String s) {
+67c70
+<     return s.replaceAll("\\{\\d+\\}", "\\\\E.*\\\\Q");
+---
+>     return Pattern.compile(s.replaceAll("\\{\\d+\\}", "\\\\E.*\\\\Q"));
+93c96,100
+<         BAD_JSDOC_ANNOTATION);
+---
+>         BAD_JSDOC_ANNOTATION,
+> 
+>         
+>         Pattern.compile("^Bad type annotation.*"),
+>         TYPE_PARSE_ERROR);
+122,123c129,130
+<     for (Entry<String, DiagnosticType> entry : typeMap.entrySet()) {
+<       if (message.matches(entry.getKey())) {
+---
+>     for (Entry<Pattern, DiagnosticType> entry : typeMap.entrySet()) {
+>       if (entry.getKey().matcher(message).matches()) {

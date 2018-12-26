@@ -1,0 +1,416 @@
+56d55
+< import java.io.Serializable;
+72,77c71
+< 
+< 
+< public abstract class DateTimeField implements Serializable {
+< 
+<     
+<     private final String iName;
+---
+> public interface DateTimeField {
+83a78
+>     public String getName();
+85,90d79
+<     protected DateTimeField(String name) {
+<         super();
+<         
+<         iName = name;
+<     }
+<     
+96,98c85
+<     public String getName() {
+<         return iName;
+<     }
+---
+>     public boolean isSupported();
+101,102d87
+<     
+<     
+108d92
+<     public abstract int get(long millis);
+109a94,97
+>     public boolean isLenient();
+> 
+>     
+>     
+115a104
+>     public int get(long instant);
+116a106
+>     
+124,126c114
+<     public String getAsText(long millis, Locale locale) {
+<         return Integer.toString(get(millis));
+<     }
+---
+>     public String getAsText(long instant, Locale locale);
+134,137c122
+< 
+<     public final String getAsText(long millis) {
+<         return getAsText(millis, null);
+<     }
+---
+>     public String getAsText(long instant);
+147,156c132
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public String getAsShortText(long millis, Locale locale) {
+<         return getAsText(millis, locale);
+<     }
+---
+>     public String getAsShortText(long instant, Locale locale);
+165,167c141
+<     public final String getAsShortText(long millis) {
+<         return getAsShortText(millis, null);
+<     }
+---
+>     public String getAsShortText(long instant);
+190c164
+<     public abstract long add(long millis, int value);
+---
+>     public long add(long instant, int value);
+202c176
+<     public abstract long add(long millis, long value);
+---
+>     public long add(long instant, long value);
+225,230c199
+<     public long addWrapped(long millis, int value) {
+<         int current = get(millis);
+<         int wrapped = getWrappedValue
+<             (current, value, getMinimumValue(millis), getMaximumValue(millis));
+<         return set(millis, wrapped);
+<     }
+---
+>     public long addWrapped(long instant, int value) ;
+251,272c220
+< 
+< 
+< 
+< 
+<     public long getDifference(long minuendMillis, long subtrahendMillis) {
+<         if (minuendMillis < subtrahendMillis) {
+<             return -getDifference(subtrahendMillis, minuendMillis);
+<         }
+< 
+<         long difference = (minuendMillis - subtrahendMillis) / getUnitMillis();
+<         if (add(subtrahendMillis, difference) < minuendMillis) {
+<             do {
+<                 difference++;
+<             } while (add(subtrahendMillis, difference) <= minuendMillis);
+<             difference--;
+<         } else if (add(subtrahendMillis, difference) > minuendMillis) {
+<             do {
+<                 difference--;
+<             } while (add(subtrahendMillis, difference) > minuendMillis);
+<         }
+<         return difference;
+<     }
+---
+>     public int getDifference(long minuendInstant, long subtrahendInstant);
+285,288d232
+<     public abstract long set(long millis, int value);
+< 
+<     
+< 
+297,310c241
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public long set(long millis, String text, Locale locale) {
+<         try {
+<             return set(millis, Integer.parseInt(text));
+<         } catch (NumberFormatException ex) {
+<             throw new IllegalArgumentException("Invalid " + getName() + " text: " + text);
+<         }
+<     }
+---
+>     public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant);
+321,333d251
+<     public final long set(long millis, String text) {
+<         return set(millis, text, null);
+<     }
+< 
+<     
+<     
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+336,339c254
+< 
+<     public boolean isLeap(long millis) {
+<         return false;
+<     }
+---
+>     public long set(long instant, int value);
+349,359d263
+<     public int getLeapAmount(long millis) {
+<         return 0;
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+< 
+< 
+363c267
+<     public abstract long getUnitMillis();
+---
+>     public long set(long instant, String text, Locale locale);
+374,376c278
+< 
+< 
+<     public abstract long getRangeMillis();
+---
+>     public long set(long instant, String text);
+379,385c281
+< 
+< 
+< 
+< 
+< 
+<     public abstract int getMinimumValue();
+< 
+---
+>     
+393,396c289
+< 
+<     public int getMinimumValue(long millis) {
+<         return getMinimumValue();
+<     }
+---
+>     public DurationField getDurationField();
+404c297
+<     public abstract int getMaximumValue();
+---
+>     public DurationField getRangeDurationField();
+414,416c307
+<     public int getMaximumValue(long millis) {
+<         return getMaximumValue();
+<     }
+---
+>     public boolean isLeap(long instant);
+424,437c315
+< 
+<     public int getMaximumTextLength(Locale locale) {
+<         int max = getMaximumValue();
+<         if (max >= 0) {
+<             if (max < 10) {
+<                 return 1;
+<             } else if (max < 100) {
+<                 return 2;
+<             } else if (max < 1000) {
+<                 return 3;
+<             }
+<         }
+<         return Integer.toString(max).length();
+<     }
+---
+>     public int getLeapAmount(long instant);
+442a321
+>     public DurationField getLeapDurationField();
+444,451d322
+< 
+< 
+<     public int getMaximumShortTextLength(Locale locale) {
+<         return getMaximumTextLength(locale);
+<     }
+< 
+<     
+<     
+457a329
+>     public int getMinimumValue();
+458a331
+>     
+464c337
+<     public abstract long roundFloor(long millis);
+---
+>     public int getMinimumValue(long instant);
+471a345
+>     public int getMaximumValue();
+472a347
+>     
+478,488c353
+< 
+< 
+< 
+< 
+<     public long roundCeiling(long millis) {
+<         long newMillis = roundFloor(millis);
+<         if (newMillis != millis) {
+<             millis = add(newMillis, 1);
+<         }
+<         return millis;
+<     }
+---
+>     public int getMaximumValue(long instant);
+496,512c361
+< 
+< 
+< 
+<     public long roundHalfFloor(long millis) {
+<         long floor = roundFloor(millis);
+<         long ceiling = roundCeiling(millis);
+< 
+<         long diffFromFloor = millis - floor;
+<         long diffToCeiling = ceiling - millis;
+< 
+<         if (diffFromFloor <= diffToCeiling) {
+<             
+<             return floor;
+<         } else {
+<             return ceiling;
+<         }
+<     }
+---
+>     public int getMaximumTextLength(Locale locale);
+520,536c369
+< 
+< 
+< 
+<     public long roundHalfCeiling(long millis) {
+<         long floor = roundFloor(millis);
+<         long ceiling = roundCeiling(millis);
+< 
+<         long diffFromFloor = millis - floor;
+<         long diffToCeiling = ceiling - millis;
+< 
+<         if (diffToCeiling <= diffFromFloor) {
+<             
+<             return ceiling;
+<         } else {
+<             return floor;
+<         }
+<     }
+---
+>     public int getMaximumShortTextLength(Locale locale);
+538a372,373
+>     
+>     
+550,572c385
+< 
+<     public long roundHalfEven(long millis) {
+<         long floor = roundFloor(millis);
+<         long ceiling = roundCeiling(millis);
+< 
+<         long diffFromFloor = millis - floor;
+<         long diffToCeiling = ceiling - millis;
+< 
+<         if (diffFromFloor < diffToCeiling) {
+<             
+<             return floor;
+<         } else if (diffToCeiling < diffFromFloor) {
+<             
+<             return ceiling;
+<         } else {
+<             
+<             
+<             if ((get(ceiling) & 1) == 0) {
+<                 return ceiling;
+<             }
+<             return floor;
+<         }
+<     }
+---
+>     public long roundFloor(long instant);
+585a399
+>     public long roundCeiling(long instant);
+587,595d400
+< 
+< 
+< 
+<     public long remainder(long millis) {
+<         return millis - roundFloor(millis);
+<     }
+< 
+<     
+<     
+604,623d408
+<     protected void verifyValueBounds(int value, int lowerBound, int upperBound) {
+<         if ((value < lowerBound) || (value > upperBound)) {
+<             throw new IllegalArgumentException(
+<                 "Value: "
+<                     + value
+<                     + " for "
+<                     + iName
+<                     + " must be in the range ("
+<                     + lowerBound
+<                     + ','
+<                     + upperBound
+<                     + ')');
+<         }
+<     }
+< 
+<     
+< 
+< 
+< 
+< 
+624a410
+>     public long roundHalfFloor(long instant);
+625a412
+>     
+634,637c421
+<     protected final int getWrappedValue(int currentValue, int wrapValue,
+<                                         int minValue, int maxValue) {
+<         return getWrappedValue(currentValue + wrapValue, minValue, maxValue);
+<     }
+---
+>     public long roundHalfCeiling(long instant);
+651,654d434
+<     protected final int getWrappedValue(int value, int minValue, int maxValue) {
+<         if (minValue >= maxValue) {
+<             throw new IllegalArgumentException("MIN > MAX");
+<         }
+656,657c436
+<         int wrapRange = maxValue - minValue + 1;
+<         value -= minValue;
+---
+>     public long roundHalfEven(long instant);
+659,661c438
+<         if (value >= 0) {
+<             return (value % wrapRange) + minValue;
+<         }
+---
+>     
+663d439
+<         int remByRange = (-value) % wrapRange;
+665,669d440
+<         if (remByRange == 0) {
+<             return 0 + minValue;
+<         }
+<         return (wrapRange - remByRange) + minValue;
+<     }
+671d441
+<     
+680,687c450
+<     protected long addLong(long millis, long value) {
+<         int i_value = (int)value;
+<         if (i_value == value) {
+<             return add(millis, i_value);
+<         }
+<         throw new IllegalArgumentException
+<             ("Magnitude of add amount is too large: " + value);
+<     }
+---
+>     public long remainder(long instant);
+694,696c457
+<     public String toString() {
+<         return "DateTimeField[" + iName + ']';
+<     }
+---
+>     public String toString();

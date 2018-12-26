@@ -1,0 +1,205 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.google.javascript.jscomp;
+
+import com.google.javascript.jscomp.AnalyzePrototypeProperties.NameInfo;
+import com.google.javascript.jscomp.AnalyzePrototypeProperties.Property;
+import com.google.javascript.jscomp.AnalyzePrototypeProperties.Symbol;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.logging.Logger;
+
+
+
+
+
+
+class CrossModuleMethodMotion implements CompilerPass {
+
+  private static final Logger logger =
+    Logger.getLogger(CrossModuleMethodMotion.class.getName());
+
+  
+  static final DiagnosticType NULL_COMMON_MODULE_ERROR = DiagnosticType.error(
+      "JSC_INTERNAL_ERROR_MODULE_DEPEND",
+      "null deepest common module");
+
+  private final AbstractCompiler compiler;
+  private final IdGenerator idGenerator;
+  private final AnalyzePrototypeProperties analyzer;
+  private final JSModuleGraph moduleGraph;
+
+  static final String STUB_METHOD_NAME = "JSCompiler_stubMethod";
+  static final String UNSTUB_METHOD_NAME = "JSCompiler_unstubMethod";
+
+  
+  static final String STUB_DECLARATIONS =
+      "var JSCompiler_stubMap = [];" +
+      "function JSCompiler_stubMethod(id) {" +
+      "  return function() {" +
+      "    return JSCompiler_stubMap[id].apply(this, arguments);" +
+      "  };" +
+      "}" +
+      "function JSCompiler_unstubMethod(id, body) {" +
+      "  return JSCompiler_stubMap[id] = body;" +
+      "}";
+
+  
+
+
+
+
+
+
+  CrossModuleMethodMotion(AbstractCompiler compiler, IdGenerator idGenerator,
+      boolean canModifyExterns) {
+    this.compiler = compiler;
+    this.idGenerator = idGenerator;
+    this.moduleGraph = compiler.getModuleGraph();
+    this.analyzer = new AnalyzePrototypeProperties(compiler, moduleGraph,
+        canModifyExterns, false);
+  }
+
+  public void process(Node externRoot, Node root) {
+    
+    
+    if (moduleGraph != null && moduleGraph.getModuleCount() > 1) {
+      analyzer.process(externRoot, root);
+      moveMethods(analyzer.getAllNameInfo());
+    }
+  }
+
+  
+
+
+  private void moveMethods(Collection<NameInfo> allNameInfo) {
+    boolean hasStubDeclaration = idGenerator.hasGeneratedAnyIds();
+    for (NameInfo nameInfo : allNameInfo) {
+      if (!nameInfo.isReferenced()) {
+        
+        
+        
+        continue;
+      }
+      
+      if (nameInfo.readsClosureVariables()) {
+        continue;
+      }
+
+      JSModule deepestCommonModuleRef = nameInfo.getDeepestCommonModuleRef();
+      if(deepestCommonModuleRef == null) {
+        compiler.report(JSError.make(NULL_COMMON_MODULE_ERROR));
+        continue;
+      }
+
+      Iterator<Symbol> declarations =
+          nameInfo.getDeclarations().descendingIterator();
+      while (declarations.hasNext()) {
+        Symbol symbol = declarations.next();
+        if (!(symbol instanceof Property)) {
+          continue;
+        }
+        Property prop = (Property) symbol;
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        Node value = prop.getValue();
+        if (moduleGraph.dependsOn(deepestCommonModuleRef, prop.getModule()) &&
+            value.getType() == Token.FUNCTION) {
+          Node valueParent = prop.getValueParent();
+          Node proto = prop.getPrototype();
+          int stubId = idGenerator.newId();
+
+          
+          valueParent.replaceChild(value,
+              
+              new Node(Token.CALL,
+                  Node.newString(Token.NAME, STUB_METHOD_NAME),
+                  Node.newNumber(stubId)));
+
+          
+          Node unstubParent = compiler.getNodeForCodeInsertion(
+              deepestCommonModuleRef);
+          unstubParent.addChildToFront(
+              
+              new Node(Token.EXPR_RESULT,
+                  new Node(Token.ASSIGN,
+                      new Node(Token.GETPROP,
+                          proto.cloneTree(),
+                          Node.newString(Token.STRING, nameInfo.name)),
+                      new Node(Token.CALL,
+                          Node.newString(Token.NAME, UNSTUB_METHOD_NAME),
+                          Node.newNumber(stubId),
+                          value))));
+
+          compiler.reportCodeChange();
+          logger.fine("Moved method: " +
+              proto.getQualifiedName() + "." + nameInfo.name +
+              " from module " + prop.getModule() + " to module " +
+              deepestCommonModuleRef);
+        }
+      }
+    }
+
+    if (!hasStubDeclaration && idGenerator.hasGeneratedAnyIds()) {
+      
+      Node declarations = compiler.parseSyntheticCode(STUB_DECLARATIONS);
+      compiler.getNodeForCodeInsertion(null).addChildrenToFront(
+          declarations.removeChildren());
+    }
+  }
+
+  static class IdGenerator implements Serializable {
+    private static final long serialVersionUID = 0L;
+
+    
+
+
+
+    private int currentId = 0;
+
+    
+
+
+    boolean hasGeneratedAnyIds() {
+      return currentId != 0;
+    }
+
+    
+
+
+    int newId() {
+      return currentId++;
+    }
+  }
+}

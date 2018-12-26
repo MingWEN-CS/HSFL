@@ -1,0 +1,240 @@
+50c50,51
+<         return tryFoldHookExpr(subtree);
+---
+>         subtree = tryFoldExpr(subtree);
+>         return subtree;
+75a77,220
+> 
+>   private Node tryFoldExpr(Node subtree) {
+>     if (subtree.getParent().getType() != Token.LABEL) {
+>       Node result = trySimpilifyUnusedResult(subtree.getFirstChild());
+>       if (result == null) {
+>         
+>         subtree.detachFromParent();
+>         subtree = null;
+>       }
+>     }
+>     return subtree;
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private Node trySimpilifyUnusedResult(Node n) {
+>     return trySimpilifyUnusedResult(n, true);
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>   private Node trySimpilifyUnusedResult(Node n, boolean removeUnused) {
+>     Node result = n;
+> 
+>     
+>     switch (n.getType()) {
+>       case Token.HOOK:
+>         Node trueNode = trySimpilifyUnusedResult(n.getFirstChild().getNext());
+>         Node falseNode = trySimpilifyUnusedResult(n.getLastChild());
+>         
+>         
+>         
+>         
+>         
+>         
+>         if (trueNode == null && falseNode != null) {
+>           n.setType(Token.OR);
+>           Preconditions.checkState(n.getChildCount() == 2);
+>         } else if (trueNode != null && falseNode == null) {
+>           n.setType(Token.AND);
+>           Preconditions.checkState(n.getChildCount() == 2);
+>         } else if (trueNode == null && falseNode == null) {
+>           result = trySimpilifyUnusedResult(n.getFirstChild());
+>         } else {
+>           
+>           result = n;
+>         }
+>         break;
+>       case Token.AND:
+>       case Token.OR:
+>         
+>         
+>         
+>         Node conditionalResultNode = trySimpilifyUnusedResult(
+>             n.getLastChild());
+>         if (conditionalResultNode == null) {
+>           Preconditions.checkState(n.hasOneChild());
+>           
+>           
+>           result = trySimpilifyUnusedResult(n.getFirstChild());
+>         }
+>         break;
+>       case Token.FUNCTION:
+>         
+>         
+>         result = null;
+>         break;
+>       case Token.COMMA:
+>         
+>         
+>         
+>         
+>         Node left = trySimpilifyUnusedResult(n.getFirstChild());
+>         Node right = trySimpilifyUnusedResult(n.getLastChild());
+>         if (left == null && right == null) {
+>           result = null;
+>         } else if (left == null) {
+>           result = right;
+>         } else if (right == null){
+>           result = left;
+>         } else {
+>           
+>           result = n;
+>         }
+>         break;
+>       default:
+>         if (!NodeUtil.nodeTypeMayHaveSideEffects(n)) {
+>           
+>           
+>           Node resultList = null;
+>           for (Node next, c = n.getFirstChild(); c != null; c = next) {
+>             next = c.getNext();
+>             c = trySimpilifyUnusedResult(c);
+>             if (c != null) {
+>               c.detachFromParent();
+>               if (resultList == null)  {
+>                 
+>                 resultList = c;
+>               } else {
+>                 
+>                 
+>                 resultList = new Node(Token.COMMA, resultList, c)
+>                     .copyInformationFrom(c);
+>               }
+>             }
+>           }
+>           result = resultList;
+>         }
+>     }
+> 
+>     
+>     if (n != result) {
+>       Node parent = n.getParent();
+>       if (result == null) {
+>         if (removeUnused) {
+>           parent.removeChild(n);
+>         } else {
+>           result = new Node(Token.EMPTY).copyInformationFrom(n);
+>           parent.replaceChild(n, result);
+>         }
+>       } else {
+>         
+>         if (result.getParent() != null) {
+>           result.detachFromParent();
+>         }
+>         n.getParent().replaceChild(n, result);
+>       }
+>       reportCodeChange();
+>     }
+> 
+>     return result;
+>   }
+> 
+>   
+> 
+> 
+240c385,386
+<     if (!mayHaveSideEffects(left)) {
+---
+>     left = trySimpilifyUnusedResult(left, false);
+>     if (left == null || !mayHaveSideEffects(left)) {
+274a421,423
+>         
+>         
+>         
+529,588d677
+<   private Node tryFoldHookExpr(Node n) {
+<     Preconditions.checkState(NodeUtil.isExpressionNode(n));
+<     Node hook = n.getFirstChild();
+<     
+<     if (hook.getType() != Token.HOOK) {
+<       return n;
+<     }
+< 
+<     Node parent = n.getParent();
+<     Preconditions.checkNotNull(parent);
+<     Node cond = hook.getFirstChild();
+<     Node thenBody = cond.getNext();
+<     Node elseBody = thenBody.getNext();
+< 
+<     
+<     if (!mayHaveSideEffects(thenBody)) {
+<       
+<       Node ifNode = new Node(Token.IF);
+<       if (cond.getType() == Token.NOT) {
+<         Node expr = cond.getFirstChild();
+<         cond.removeChild(expr);
+<         ifNode.addChildToBack(expr);
+<       } else {
+<         Node not = new Node(Token.NOT).copyInformationFrom(cond);
+<         hook.removeChild(cond);
+<         not.addChildToBack(cond);
+<         ifNode.addChildToBack(not);
+<       }
+< 
+<       hook.removeChild(elseBody);
+<       ifNode.addChildToBack(
+<           new Node(Token.BLOCK, NodeUtil.newExpr(elseBody))
+<               .copyInformationFrom(elseBody));
+< 
+<       parent.replaceChild(n, ifNode);
+<       reportCodeChange();
+<       return ifNode;
+<     } else if (!mayHaveSideEffects(elseBody)) {
+<       
+<       Node ifNode = new Node(Token.IF);
+<       hook.removeChild(cond);
+<       ifNode.addChildToBack(cond);
+<       hook.removeChild(thenBody);
+< 
+<       ifNode.addChildToBack(
+<           new Node(Token.BLOCK, NodeUtil.newExpr(thenBody))
+<               .copyInformationFrom(thenBody));
+< 
+<       parent.replaceChild(n, ifNode);
+<       reportCodeChange();
+<       return ifNode;
+<     }
+< 
+<     return n;
+<   }
+< 
+<   
+< 
+< 
+< 
+641c730
+<     if (n.getChildCount() != 4) {
+---
+>     if (NodeUtil.isForIn(n)) {
+643a733,745
+> 
+>     Node init = n.getFirstChild();
+>     Node cond = init.getNext();
+>     Node increment = cond.getNext();
+> 
+>     if (init.getType() != Token.EMPTY && init.getType() != Token.VAR) {
+>       init = trySimpilifyUnusedResult(init, false);
+>     }
+> 
+>     if (increment.getType() != Token.EMPTY) {
+>       increment = trySimpilifyUnusedResult(increment, false);
+>     }
+> 
+649d750
+<     Node cond = NodeUtil.getConditionExpression(n);

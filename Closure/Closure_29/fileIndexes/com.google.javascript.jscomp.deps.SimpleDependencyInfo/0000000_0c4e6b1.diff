@@ -1,0 +1,105 @@
+1a2,105
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package com.google.javascript.jscomp.deps;
+> 
+> import com.google.common.base.Objects;
+> import com.google.common.collect.ImmutableList;
+> import com.google.common.collect.Lists;
+> 
+> import java.util.Collection;
+> import java.util.Collections;
+> import java.util.List;
+> 
+> 
+> 
+> 
+> 
+> 
+> public class SimpleDependencyInfo implements DependencyInfo {
+> 
+>   
+>   private final List<String> provides;
+> 
+>   
+>   private final List<String> requires;
+> 
+>   
+>   private final String srcPathRelativeToClosure;
+> 
+>   
+>   private final String pathOfDefiningFile;
+> 
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>   public SimpleDependencyInfo(
+>       String srcPathRelativeToClosure, String pathOfDefiningFile,
+>       List<String> provides, List<String> requires) {
+>     this.srcPathRelativeToClosure = srcPathRelativeToClosure;
+>     this.pathOfDefiningFile = pathOfDefiningFile;
+>     this.provides = provides;
+>     this.requires = requires;
+>   }
+> 
+>   @Override
+>   public String getName() {
+>     return pathOfDefiningFile;
+>   }
+> 
+>   @Override
+>   public String getPathRelativeToClosureBase() {
+>     return srcPathRelativeToClosure;
+>   }
+> 
+>   @Override
+>   public Collection<String> getProvides() {
+>     return Collections.<String>unmodifiableList(provides);
+>   }
+> 
+>   @Override
+>   public Collection<String> getRequires() {
+>     return Collections.<String>unmodifiableList(requires);
+>   }
+> 
+>   @Override
+>   public boolean equals(Object obj) {
+>     if (!(obj instanceof SimpleDependencyInfo)) {
+>       return false;
+>     }
+>     SimpleDependencyInfo other = (SimpleDependencyInfo)obj;
+>     return Objects.equal(other.srcPathRelativeToClosure,
+>             srcPathRelativeToClosure) &&
+>         Objects.equal(other.pathOfDefiningFile, pathOfDefiningFile) &&
+>         Objects.equal(other.requires, this.requires) &&
+>         Objects.equal(other.provides, this.provides);
+>   }
+> 
+>   @Override
+>   public String toString() {
+>     return String.format("DependencyInfo(relativePath='%1$s', path='%2$s', "
+>         + "provides=%3$s, requires=%4$s)", srcPathRelativeToClosure,
+>         pathOfDefiningFile, provides, requires);
+>   }
+> }

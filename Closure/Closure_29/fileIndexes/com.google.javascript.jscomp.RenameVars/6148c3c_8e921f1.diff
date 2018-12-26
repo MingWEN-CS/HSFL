@@ -1,0 +1,74 @@
+19a20
+> import com.google.common.collect.ArrayListMultimap;
+22a24,25
+> import com.google.javascript.jscomp.NodeTraversal.ScopedCallback;
+> import com.google.javascript.jscomp.Scope.Var;
+29a33
+> import java.util.Iterator;
+45d48
+< 
+81a85,90
+>   
+>   
+>   private Set<Var> localBleedingFunctions = Sets.newHashSet();
+>   private ArrayListMultimap<Scope, Var> localBleedingFunctionsPerScope =
+>       ArrayListMultimap.create();
+> 
+177c186,187
+<   class ProcessVars extends AbstractPostOrderCallback {
+---
+>   class ProcessVars extends AbstractPostOrderCallback
+>       implements ScopedCallback {
+184a195,212
+>     public void enterScope(NodeTraversal t) {
+>       if (t.inGlobalScope()) return;
+> 
+>       Iterator<Var> it = t.getScope().getVars();
+>       while (it.hasNext()) {
+>         Var current = it.next();
+>         if (current.isBleedingFunction()) {
+>           localBleedingFunctions.add(current);
+>           localBleedingFunctionsPerScope.put(
+>               t.getScope().getParent(), current);
+>         }
+>       }
+>     }
+> 
+>     @Override
+>     public void exitScope(NodeTraversal t) {}
+> 
+>     @Override
+248c276
+<         String tempName = LOCAL_VAR_PREFIX + var.getLocalVarIndex();
+---
+>         String tempName = LOCAL_VAR_PREFIX + getLocalVarIndex(var);
+508a537,565
+>   }
+> 
+>   
+> 
+> 
+> 
+> 
+>   private int getLocalVarIndex(Var v) {
+>     int num = v.index;
+>     Scope s = v.scope.getParent();
+>     if (s == null) {
+>       throw new IllegalArgumentException("Var is not local");
+>     }
+> 
+>     boolean isBleedingIntoScope = s.getParent() != null &&
+>         localBleedingFunctions.contains(v);
+> 
+>     while (s.getParent() != null) {
+>       if (isBleedingIntoScope) {
+>         num += localBleedingFunctionsPerScope.get(s).indexOf(v) + 1;
+>         isBleedingIntoScope = false;
+>       } else {
+>         num += localBleedingFunctionsPerScope.get(s).size();
+>       }
+> 
+>       num += s.getVarCount();
+>       s = s.getParent();
+>     }
+>     return num;

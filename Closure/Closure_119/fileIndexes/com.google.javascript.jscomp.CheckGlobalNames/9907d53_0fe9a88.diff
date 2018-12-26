@@ -1,0 +1,60 @@
+18a19,20
+> import com.google.common.base.Preconditions;
+> import com.google.common.collect.Sets;
+24a27,28
+> import java.util.Set;
+> 
+35a40,41
+>   private final Set<String> objectPrototypeProps = Sets.newHashSet();
+>   private final Set<String> functionPrototypeProps = Sets.newHashSet();
+65a72
+>     Preconditions.checkArgument(namespace.hasExternsRoot());
+72,73d78
+<     
+<     
+75c80
+<       namespace = new GlobalNamespace(compiler, root);
+---
+>       namespace = new GlobalNamespace(compiler, externs, root);
+77a83,87
+>     
+>     Preconditions.checkState(namespace.hasExternsRoot());
+>     findPrototypeProps("Object", objectPrototypeProps);
+>     findPrototypeProps("Function", functionPrototypeProps);
+> 
+78a89,97
+>       
+>       
+>       
+>       
+>       
+>       if (name.inExterns) {
+>         continue;
+>       }
+> 
+82a102,115
+>   private void findPrototypeProps(String type, Set<String> props) {
+>     Name slot = namespace.getSlot(type);
+>     if (slot != null) {
+>       for (Ref ref : slot.getRefs()) {
+>         if (ref.type == Ref.Type.PROTOTYPE_GET) {
+>           Node fullName = ref.getNode().getParent().getParent();
+>           if (fullName.isGetProp()) {
+>             props.add(fullName.getLastChild().getString());
+>           }
+>         }
+>       }
+>     }
+>   }
+> 
+191c224,226
+<   private static boolean propertyMustBeInitializedByFullName(Name name) {
+---
+>   private boolean propertyMustBeInitializedByFullName(Name name) {
+>     
+>     
+201c236,237
+<         name.parent.type == Name.Type.OBJECTLIT;
+---
+>         name.parent.type == Name.Type.OBJECTLIT &&
+>         !objectPrototypeProps.contains(name.getBaseName());

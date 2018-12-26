@@ -1,0 +1,45 @@
+26a27
+> import java.util.TimeZone;
+822a824,865
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public Date toDate() {
+>         int dom = getDayOfMonth();
+>         Date date = new Date(getYear() - 1900, getMonthOfYear() - 1, dom);
+>         LocalDate check = LocalDate.fromDateFields(date);
+>         if (check.isBefore(this)) {
+>             
+>             
+>             while (check.equals(this) == false) {
+>                 date.setTime(date.getTime() + 3600000);
+>                 check = LocalDate.fromDateFields(date);
+>             }
+>             
+>             while (date.getDate() == dom) {
+>                 date.setTime(date.getTime() - 1000);
+>             }
+>             
+>             date.setTime(date.getTime() + 1000);
+>         } else if (check.equals(this)) {
+>             
+>             Date earlier = new Date(date.getTime() - TimeZone.getDefault().getDSTSavings());
+>             if (earlier.getDate() == dom) {
+>                 date = earlier;
+>             }
+>         }
+>         return date;

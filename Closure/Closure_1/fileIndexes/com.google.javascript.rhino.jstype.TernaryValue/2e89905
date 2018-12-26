@@ -1,0 +1,198 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+package com.google.javascript.rhino.jstype;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public enum TernaryValue {
+  
+
+
+  FALSE {
+    @Override
+    public TernaryValue and(TernaryValue that) {
+      return FALSE;
+    }
+
+    @Override
+    public TernaryValue not() {
+      return TRUE;
+    }
+
+    @Override
+    public TernaryValue or(TernaryValue that) {
+      return that;
+    }
+
+    @Override
+    public TernaryValue xor(TernaryValue that) {
+      return that;
+    }
+
+    @Override
+    public boolean toBoolean(boolean unknown) {
+      return false;
+    }
+
+    @Override
+    public String toString() {
+      return "false";
+    }
+  },
+
+  
+
+
+  TRUE {
+    @Override
+    public TernaryValue and(TernaryValue that) {
+      return that;
+    }
+
+    @Override
+    public TernaryValue not() {
+      return FALSE;
+    }
+
+    @Override
+    public TernaryValue or(TernaryValue that) {
+      return TRUE;
+    }
+
+    @Override
+    public TernaryValue xor(TernaryValue that) {
+      return that.not();
+    }
+
+    @Override
+    public boolean toBoolean(boolean unknown) {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "true";
+    }
+  },
+
+  
+
+
+
+  UNKNOWN {
+    @Override
+    public TernaryValue and(TernaryValue that) {
+      return (FALSE.equals(that)) ? FALSE :  UNKNOWN;
+    }
+
+    @Override
+    public TernaryValue not() {
+      return UNKNOWN;
+    }
+
+    @Override
+    public TernaryValue or(TernaryValue that) {
+      return (TRUE.equals(that)) ? TRUE : UNKNOWN;
+    }
+
+    @Override
+    public TernaryValue xor(TernaryValue that) {
+      return UNKNOWN;
+    }
+
+    @Override
+    public boolean toBoolean(boolean unknown) {
+      return unknown;
+    }
+
+    @Override
+    public String toString() {
+      return "unknown";
+    }
+  };
+
+  
+
+
+  public abstract TernaryValue and(TernaryValue that);
+
+  
+
+
+  public abstract TernaryValue not();
+
+  
+
+
+  public abstract TernaryValue or(TernaryValue that);
+
+  
+
+
+  public abstract TernaryValue xor(TernaryValue that);
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  public abstract boolean toBoolean(boolean unknown);
+}

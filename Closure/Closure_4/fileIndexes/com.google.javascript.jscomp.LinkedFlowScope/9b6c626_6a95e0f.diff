@@ -1,0 +1,12 @@
+111c111
+<   public void inferQualifiedSlot(String symbol, JSType bottomType,
+---
+>   public void inferQualifiedSlot(Node node, String symbol, JSType bottomType,
+120c120,124
+<         functionScope.declare(symbol, null, bottomType, null);
+---
+>         int firstDot = symbol.indexOf(".");
+>         Preconditions.checkState(firstDot != -1);
+>         Var owner = functionScope.getVar(symbol.substring(0, firstDot));
+>         Scope ownerScope = owner == null ? functionScope : owner.getScope();
+>         ownerScope.declare(symbol, node, bottomType, null);

@@ -1,0 +1,340 @@
+1a2,340
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> package org.joda.time.chrono;
+> 
+> import org.joda.time.DateTimeConstants;
+> import org.joda.time.DateTimeFieldType;
+> import org.joda.time.DurationField;
+> import org.joda.time.field.FieldUtils;
+> import org.joda.time.field.ImpreciseDateTimeField;
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> class BasicMonthOfYearDateTimeField extends ImpreciseDateTimeField {
+> 
+>     
+>     private static final long serialVersionUID = -8258715387168736L;
+> 
+>     private static final int MIN = DateTimeConstants.JANUARY;
+>     private static final int MAX = DateTimeConstants.DECEMBER;
+> 
+>     private final BaseGJChronology iChronology;
+>     private final int iLeapMonth;
+> 
+>     
+> 
+> 
+> 
+> 
+>     BasicMonthOfYearDateTimeField(BaseGJChronology chronology, int leapMonth) {
+>         super(DateTimeFieldType.monthOfYear(), chronology.getAverageMillisPerMonth());
+>         iChronology = chronology;
+>         iLeapMonth = leapMonth;
+>     }
+> 
+>     
+>     public boolean isLenient() {
+>         return false;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public int get(long instant) {
+>         return iChronology.getMonthOfYear(instant);
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long add(long instant, int months) {
+>         if (months == 0) {
+>             return instant; 
+>         }
+>         
+>         
+>         
+>         long timePart = iChronology.getMillisOfDay(instant);
+>         
+>         
+>         
+>         
+>         int thisYear = iChronology.getYear(instant);
+>         int thisMonth = iChronology.getMonthOfYear(instant, thisYear);
+>         
+>         
+>         
+>         
+>         
+>         int yearToUse;
+>         
+>         int monthToUse = thisMonth - 1 + months;
+>         if (monthToUse >= 0) {
+>             yearToUse = thisYear + (monthToUse / MAX);
+>             monthToUse = (monthToUse % MAX) + 1;
+>         } else {
+>             yearToUse = thisYear + (monthToUse / MAX) - 1;
+>             monthToUse = Math.abs(monthToUse);
+>             int remMonthToUse = monthToUse % MAX;
+>             
+>             if (remMonthToUse == 0) {
+>                 remMonthToUse = MAX;
+>             }
+>             monthToUse = MAX - remMonthToUse + 1;
+>             
+>             if (monthToUse == 1) {
+>                 yearToUse += 1;
+>             }
+>         }
+>         
+>         
+> 
+>         
+>         
+>         
+>         int dayToUse = iChronology.getDayOfMonth(instant, thisYear, thisMonth);
+>         int maxDay = iChronology.getDaysInYearMonth(yearToUse, monthToUse);
+>         if (dayToUse > maxDay) {
+>             dayToUse = maxDay;
+>         }
+>         
+>         
+>         
+>         long datePart =
+>             iChronology.getYearMonthDayMillis(yearToUse, monthToUse, dayToUse);
+>         return datePart + timePart;
+>     }
+> 
+>     
+>     public long add(long instant, long months) {
+>         int i_months = (int)months;
+>         if (i_months == months) {
+>             return add(instant, i_months);
+>         }
+> 
+>         
+> 
+>         long timePart = iChronology.getMillisOfDay(instant);
+> 
+>         int thisYear = iChronology.getYear(instant);
+>         int thisMonth = iChronology.getMonthOfYear(instant, thisYear);
+> 
+>         long yearToUse;
+>         long monthToUse = thisMonth - 1 + months;
+>         if (monthToUse >= 0) {
+>             yearToUse = thisYear + (monthToUse / MAX);
+>             monthToUse = (monthToUse % MAX) + 1;
+>         } else {
+>             yearToUse = thisYear + (monthToUse / MAX) - 1;
+>             monthToUse = Math.abs(monthToUse);
+>             int remMonthToUse = (int)(monthToUse % MAX);
+>             if (remMonthToUse == 0) {
+>                 remMonthToUse = MAX;
+>             }
+>             monthToUse = MAX - remMonthToUse + 1;
+>             if (monthToUse == 1) {
+>                 yearToUse += 1;
+>             }
+>         }
+> 
+>         if (yearToUse < iChronology.getMinYear() ||
+>             yearToUse > iChronology.getMaxYear()) {
+> 
+>             throw new IllegalArgumentException
+>                 ("Magnitude of add amount is too large: " + months);
+>         }
+> 
+>         int i_yearToUse = (int)yearToUse;
+>         int i_monthToUse = (int)monthToUse;
+> 
+>         int dayToUse = iChronology.getDayOfMonth(instant, thisYear, thisMonth);
+>         int maxDay = iChronology.getDaysInYearMonth(i_yearToUse, i_monthToUse);
+>         if (dayToUse > maxDay) {
+>             dayToUse = maxDay;
+>         }
+> 
+>         long datePart =
+>             iChronology.getYearMonthDayMillis(i_yearToUse, i_monthToUse, dayToUse);
+>         return datePart + timePart;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long addWrapField(long instant, int months) {
+>         return set(instant, FieldUtils.getWrappedValue(get(instant), months, MIN, MAX));
+>     }
+> 
+>     
+>     public long getDifferenceAsLong(long minuendInstant, long subtrahendInstant) {
+>         if (minuendInstant < subtrahendInstant) {
+>             return -getDifference(subtrahendInstant, minuendInstant);
+>         }
+> 
+>         int minuendYear = iChronology.getYear(minuendInstant);
+>         int minuendMonth = iChronology.getMonthOfYear(minuendInstant, minuendYear);
+>         int subtrahendYear = iChronology.getYear(subtrahendInstant);
+>         int subtrahendMonth = iChronology.getMonthOfYear(subtrahendInstant, subtrahendYear);
+> 
+>         long difference = (minuendYear - subtrahendYear) * 12L + minuendMonth - subtrahendMonth;
+> 
+>         
+>         
+>         int minuendDom = iChronology.getDayOfMonth
+>             (minuendInstant, minuendYear, minuendMonth);
+>         if (minuendDom == iChronology.getDaysInYearMonth(minuendYear, minuendMonth)) {
+>             
+>             int subtrahendDom = iChronology.getDayOfMonth
+>                 (subtrahendInstant, subtrahendYear, subtrahendMonth);
+>             if (subtrahendDom > minuendDom) {
+>                 
+>                 
+>                 
+>                 subtrahendInstant = iChronology.dayOfMonth().set(subtrahendInstant, minuendDom);
+>             }
+>         }
+> 
+>         
+>         long minuendRem = minuendInstant
+>             - iChronology.getYearMonthMillis(minuendYear, minuendMonth);
+>         long subtrahendRem = subtrahendInstant
+>             - iChronology.getYearMonthMillis(subtrahendYear, subtrahendMonth);
+> 
+>         if (minuendRem < subtrahendRem) {
+>             difference--;
+>         }
+> 
+>         return difference;
+>     }
+> 
+>     
+>     
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>     public long set(long instant, int month) {
+>         FieldUtils.verifyValueBounds(this, month, MIN, MAX);
+>         
+>         int thisYear = iChronology.getYear(instant);
+>         
+>         int thisDom = iChronology.getDayOfMonth(instant, thisYear);
+>         int maxDom = iChronology.getDaysInYearMonth(thisYear, month);
+>         if (thisDom > maxDom) {
+>             
+>             thisDom = maxDom;
+>         }
+>         
+>         return iChronology.getYearMonthDayMillis(thisYear, month, thisDom) +
+>             iChronology.getMillisOfDay(instant);
+>     }
+> 
+>     
+>     public DurationField getRangeDurationField() {
+>         return iChronology.years();
+>     }
+> 
+>     
+>     public boolean isLeap(long instant) {
+>         int thisYear = iChronology.getYear(instant);
+>         if (iChronology.isLeapYear(thisYear)) {
+>             return (iChronology.getMonthOfYear(instant, thisYear) == iLeapMonth);
+>         }
+>         return false;
+>     }
+> 
+>     
+>     public int getLeapAmount(long instant) {
+>         return isLeap(instant) ? 1 : 0;
+>     }
+> 
+>     
+>     public DurationField getLeapDurationField() {
+>         return iChronology.days();
+>     }
+> 
+>     
+>     public int getMinimumValue() {
+>         return MIN;
+>     }
+> 
+>     
+>     public int getMaximumValue() {
+>         return MAX;
+>     }
+> 
+>     
+>     public long roundFloor(long instant) {
+>         int year = iChronology.getYear(instant);
+>         int month = iChronology.getMonthOfYear(instant, year);
+>         return iChronology.getYearMonthMillis(year, month);
+>     }
+> 
+>     
+>     public long remainder(long instant) {
+>         return instant - roundFloor(instant);
+>     }
+> 
+>     
+>     
+> 
+> 
+>     private Object readResolve() {
+>         return iChronology.monthOfYear();
+>     }
+> }

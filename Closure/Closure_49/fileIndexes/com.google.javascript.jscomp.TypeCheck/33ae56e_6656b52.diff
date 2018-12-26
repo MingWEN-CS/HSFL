@@ -1,0 +1,82 @@
+869,875c869
+<       
+<       if (info != null && info.hasEnumParameterType()) {
+<         checkEnumInitializer(
+<             t, rvalue, info.getEnumParameterType().evaluate(
+<                 t.getScope(), typeRegistry));
+<         return;
+<       }
+---
+>       checkEnumAlias(t, info, rvalue);
+974a969,975
+> 
+>     JSType allowedValueType = keyType;
+>     if (allowedValueType.isEnumElementType()) {
+>       allowedValueType =
+>           allowedValueType.toMaybeEnumElementType().getPrimitiveType();
+>     }
+> 
+976c977
+<         rightType, keyType,
+---
+>         rightType, allowedValueType,
+1407,1413c1408,1410
+<         if (info != null && info.hasEnumParameterType()) {
+<           
+<           
+<           checkEnumInitializer(
+<               t, value,
+<               info.getEnumParameterType().evaluate(t.getScope(), typeRegistry));
+<         } else if (var.isTypeInferred()) {
+---
+> 
+>         checkEnumAlias(t, info, value);
+>         if (var.isTypeInferred()) {
+1758d1754
+<   
+1759a1756
+>   
+1774,1779c1771,1775
+<   private void checkEnumInitializer(
+<       NodeTraversal t, Node value, JSType primitiveType) {
+<     if (value.getType() == Token.OBJECTLIT) {
+<       for (Node key = value.getFirstChild();
+<            key != null; key = key.getNext()) {
+<         Node propValue = key.getFirstChild();
+---
+>   private void checkEnumAlias(
+>       NodeTraversal t, JSDocInfo declInfo, Node value) {
+>     if (declInfo == null || !declInfo.hasEnumParameterType()) {
+>       return;
+>     }
+1781,1798c1777,1779
+<         
+<         validator.expectCanAssignTo(
+<             t, propValue, getJSType(propValue), primitiveType,
+<             "element type must match enum's type");
+<       }
+<     } else if (value.getJSType() instanceof EnumType) {
+<       
+<       
+<       
+<       
+<       
+<       EnumType valueEnumType = (EnumType) value.getJSType();
+<       JSType valueEnumPrimitiveType =
+<           valueEnumType.getElementsType().getPrimitiveType();
+<       validator.expectCanAssignTo(t, value, valueEnumPrimitiveType,
+<           primitiveType, "incompatible enum element types");
+<     } else {
+<       
+---
+>     JSType valueType = getJSType(value);
+>     if (!valueType.isEnumType()) {
+>       return;
+1799a1781,1787
+> 
+>     EnumType valueEnumType = valueType.toMaybeEnumType();
+>     JSType valueEnumPrimitiveType =
+>         valueEnumType.getElementsType().getPrimitiveType();
+>     validator.expectCanAssignTo(t, value, valueEnumPrimitiveType,
+>         declInfo.getEnumParameterType().evaluate(t.getScope(), typeRegistry),
+>         "incompatible enum element types");

@@ -1,0 +1,349 @@
+132a133
+> 
+290c291,299
+<             return add(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             final int dim = vData.length;
+>             checkVectorDimensions(dim);
+>             ArrayRealVector result = new ArrayRealVector(dim);
+>             double[] resultData = result.data;
+>             for (int i = 0; i < dim; i++) {
+>                 resultData[i] = data[i] + vData[i];
+>             }
+>             return result;
+304,323d312
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public ArrayRealVector add(double[] v) {
+<         final int dim = v.length;
+<         checkVectorDimensions(dim);
+<         ArrayRealVector result = new ArrayRealVector(dim);
+<         double[] resultData = result.data;
+<         for (int i = 0; i < dim; i++) {
+<             resultData[i] = data[i] + v[i];
+<         }
+<         return result;
+<     }
+< 
+<     
+326,327c315,324
+<         if (v instanceof ArrayRealVector) {
+<             return subtract(((ArrayRealVector) v).data);
+---
+>         if (v instanceof ArrayRealVector) { 
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             final int dim = vData.length;
+>             checkVectorDimensions(dim);
+>             ArrayRealVector result = new ArrayRealVector(dim);
+>             double[] resultData = result.data;
+>             for (int i = 0; i < dim; i++) {
+>                 resultData[i] = data[i] - vData[i];
+>             }
+>             return result;
+341,360d337
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public ArrayRealVector subtract(double[] v) {
+<         final int dim = v.length;
+<         checkVectorDimensions(dim);
+<         ArrayRealVector result = new ArrayRealVector(dim);
+<         double[] resultData = result.data;
+<         for (int i = 0; i < dim; i++) {
+<             resultData[i] = data[i] - v[i];
+<         }
+<         return result;
+<     }
+< 
+<     
+415c392,400
+<             return ebeMultiply(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             final int dim = vData.length;
+>             checkVectorDimensions(dim);
+>             ArrayRealVector result = new ArrayRealVector(dim);
+>             double[] resultData = result.data;
+>             for (int i = 0; i < dim; i++) {
+>                 resultData[i] = data[i] * vData[i];
+>             }
+>             return result;
+427,445d411
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public ArrayRealVector ebeMultiply(double[] v) {
+<         final int dim = v.length;
+<         checkVectorDimensions(dim);
+<         ArrayRealVector result = new ArrayRealVector(dim);
+<         double[] resultData = result.data;
+<         for (int i = 0; i < dim; i++) {
+<             resultData[i] = data[i] * v[i];
+<         }
+<         return result;
+<     }
+< 
+<     
+448c414,422
+<             return ebeDivide(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             final int dim = vData.length;
+>             checkVectorDimensions(dim);
+>             ArrayRealVector result = new ArrayRealVector(dim);
+>             double[] resultData = result.data;
+>             for (int i = 0; i < dim; i++) {
+>                 resultData[i] = data[i] / vData[i];
+>             }
+>             return result;
+460,478d433
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public ArrayRealVector ebeDivide(double[] v) {
+<         final int dim = v.length;
+<         checkVectorDimensions(dim);
+<         ArrayRealVector result = new ArrayRealVector(dim);
+<         double[] resultData = result.data;
+<         for (int i = 0; i < dim; i++) {
+<             resultData[i] = data[i] / v[i];
+<         }
+<         return result;
+<     }
+< 
+<     
+498c453,459
+<             return dotProduct(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             checkVectorDimensions(vData.length);
+>             double dot = 0;
+>             for (int i = 0; i < data.length; i++) {
+>                 dot += data[i] * vData[i];
+>             }
+>             return dot;
+512,528d472
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public double dotProduct(double[] v) {
+<         checkVectorDimensions(v.length);
+<         double dot = 0;
+<         for (int i = 0; i < data.length; i++) {
+<             dot += data[i] * v[i];
+<         }
+<         return dot;
+<     }
+< 
+<     
+562c506,513
+<             return getDistance(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             checkVectorDimensions(vData.length);
+>             double sum = 0;
+>             for (int i = 0; i < data.length; ++i) {
+>                 final double delta = data[i] - vData[i];
+>                 sum += delta * delta;
+>             }
+>             return FastMath.sqrt(sum);
+575,597d525
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public double getDistance(double[] v) {
+<         checkVectorDimensions(v.length);
+<         double sum = 0;
+<         for (int i = 0; i < data.length; ++i) {
+<             final double delta = data[i] - v[i];
+<             sum += delta * delta;
+<         }
+<         return FastMath.sqrt(sum);
+<     }
+< 
+<     
+601c529,536
+<             return getL1Distance(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             checkVectorDimensions(vData.length);
+>             double sum = 0;
+>             for (int i = 0; i < data.length; ++i) {
+>                 final double delta = data[i] - vData[i];
+>                 sum += FastMath.abs(delta);
+>             }
+>             return sum;
+614,636d548
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public double getL1Distance(double[] v) {
+<         checkVectorDimensions(v.length);
+<         double sum = 0;
+<         for (int i = 0; i < data.length; ++i) {
+<             final double delta = data[i] - v[i];
+<             sum += FastMath.abs(delta);
+<         }
+<         return sum;
+<     }
+< 
+<     
+640c552,559
+<             return getLInfDistance(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             checkVectorDimensions(vData.length);
+>             double max = 0;
+>             for (int i = 0; i < data.length; ++i) {
+>                 final double delta = data[i] - vData[i];
+>                 max = FastMath.max(max, FastMath.abs(delta));
+>             }
+>             return max;
+653,674d571
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public double getLInfDistance(double[] v) {
+<         checkVectorDimensions(v.length);
+<         double max = 0;
+<         for (int i = 0; i < data.length; ++i) {
+<             final double delta = data[i] - v[i];
+<             max = FastMath.max(max, FastMath.abs(delta));
+<         }
+<         return max;
+<     }
+< 
+<     
+703c600,609
+<             return outerProduct(((ArrayRealVector) v).data);
+---
+>             final double[] vData = ((ArrayRealVector) v).data;
+>             final int m = data.length;
+>             final int n = vData.length;
+>             final RealMatrix out = MatrixUtils.createRealMatrix(m, n);
+>             for (int i = 0; i < m; i++) {
+>                 for (int j = 0; j < n; j++) {
+>                     out.setEntry(i, j, data[i] * vData[j]);
+>                 }
+>             }
+>             return out;
+718,736d623
+< 
+< 
+< 
+< 
+< 
+< 
+<     public RealMatrix outerProduct(double[] v) {
+<         final int m = data.length;
+<         final int n = v.length;
+<         final RealMatrix out = MatrixUtils.createRealMatrix(m, n);
+<         for (int i = 0; i < m; i++) {
+<             for (int j = 0; j < n; j++) {
+<                 out.setEntry(i, j, data[i] * v[j]);
+<             }
+<         }
+<         return out;
+<     }
+< 
+<     
+964,979d850
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public ArrayRealVector combine(double a, double b, double[] y) {
+<         return copy().combineToSelf(a, b, y);
+<     }
+< 
+<     
+986,1005d856
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+< 
+<     public ArrayRealVector combineToSelf(double a, double b, double[] y) {
+<         checkVectorDimensions(y.length);
+<         for (int i = 0; i < this.data.length; i++) {
+<             data[i] = a * data[i] + b * y[i];
+<         }
+<         return this;
+<     }
+< 
+<     
+1009c860,864
+<             return combineToSelf(a, b, ((ArrayRealVector) y).data);
+---
+>             final double[] yData = ((ArrayRealVector) y).data;
+>             checkVectorDimensions(yData.length);
+>             for (int i = 0; i < this.data.length; i++) {
+>                 data[i] = a * data[i] + b * yData[i];
+>             }
+1015d869
+<             return this;
+1016a871
+>         return this;

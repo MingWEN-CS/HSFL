@@ -1,0 +1,29 @@
+158,161c158
+<   private String templateTypeName;
+< 
+<   
+<   private TemplateType templateType;
+---
+>   private Map<String, TemplateType> templateTypes = Maps.newHashMap();
+876c873,874
+<     if (jsTypeName.equals(templateTypeName)) {
+---
+>     TemplateType templateType = templateTypes.get(jsTypeName);
+>     if (templateType != null) {
+1678,1680c1676,1680
+<   public void setTemplateTypeName(String name) {
+<     templateTypeName = name;
+<     templateType = new TemplateType(this, name);
+---
+>   public void setTemplateTypeNames(List<String> names) {
+>     Preconditions.checkNotNull(names);
+>     for (String name : names) {
+>       templateTypes.put(name, new TemplateType(this, name));
+>     }
+1686,1688c1686,1687
+<   public void clearTemplateTypeName() {
+<     templateTypeName = null;
+<     templateType = null;
+---
+>   public void clearTemplateTypeNames() {
+>     templateTypes.clear();
